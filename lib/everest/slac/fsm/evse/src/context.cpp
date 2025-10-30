@@ -52,9 +52,27 @@ void Context::signal_state(const std::string& state) {
     }
 }
 
+void Context::log_debug(const std::string& text) {
+    if (callbacks.log_debug) {
+        callbacks.log_debug(text);
+    }
+}
+
 void Context::log_info(const std::string& text) {
-    if (callbacks.log) {
-        callbacks.log(text);
+    if (callbacks.log_info) {
+        callbacks.log_info(text);
+    }
+}
+
+void Context::log_warn(const std::string& text) {
+    if (callbacks.log_warn) {
+        callbacks.log_warn(text);
+    }
+}
+
+void Context::log_error(const std::string& text) {
+    if (callbacks.log_error) {
+        callbacks.log_error(text);
     }
 }
 

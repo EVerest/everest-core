@@ -61,7 +61,10 @@ void slacImpl::run() {
 
     callbacks.signal_error_routine_request = [this]() { publish_request_error_routine(nullptr); };
 
-    callbacks.log = [](const std::string& text) { EVLOG_info << text; };
+    callbacks.log_debug = [](const std::string& text) { EVLOG_debug << text; };
+    callbacks.log_info = [](const std::string& text) { EVLOG_info << text; };
+    callbacks.log_warn = [](const std::string& text) { EVLOG_warning << text; };
+    callbacks.log_error = [](const std::string& text) { EVLOG_error << text; };
 
     if (config.publish_mac_on_first_parm_req) {
         callbacks.signal_ev_mac_address_parm_req = [this](const std::string& mac) { publish_ev_mac_address(mac); };
