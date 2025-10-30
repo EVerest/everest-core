@@ -540,6 +540,12 @@ mod tests {
                 })
                 .return_once(|_| Ok(()));
 
+            everest_mock
+                .payment_terminal
+                .expect_clear_all_errors()
+                .times(1)
+                .return_once(|| ());
+
             let pt_module: PaymentTerminalModule = feig_mock.into();
             assert!(pt_module.read_card(&everest_mock).is_ok());
         }
@@ -578,6 +584,12 @@ mod tests {
                     &arg.id_token.value == id_token && arg.authorization_type == authorization_type
                 })
                 .return_once(|_| Ok(()));
+
+            everest_mock
+                .payment_terminal
+                .expect_clear_all_errors()
+                .times(1)
+                .return_once(|| ());
 
             let pt_module: PaymentTerminalModule = feig_mock.into();
             assert!(pt_module.read_card(&everest_mock).is_ok());
@@ -632,6 +644,12 @@ mod tests {
                     &arg.id_token.value == id_token && arg.authorization_type == authorization_type
                 })
                 .return_once(|_| Ok(()));
+
+            everest_mock
+                .payment_terminal
+                .expect_clear_all_errors()
+                .times(1)
+                .return_once(|| ());
 
             feig_mock.expect_configure().times(1).return_once(|| Ok(()));
 
