@@ -65,9 +65,13 @@ void ovm_api::set_cb_message(evse_bsp_cb_to_host const& msg) {
     const double voltage_V = msg.hv_mV * 0.001;
     send_voltage_measurement_V(voltage_V);
 
-    if (msg.error_flags.dc_hv_ov not_eq m_cb_status.error_flags.dc_hv_ov) {
-        handle_dc_hv_ov(msg.error_flags.dc_hv_ov not_eq 0, voltage_V);
+    if (msg.error_flags.flags.dc_hv_ov_emergency not_eq m_cb_status.error_flags.flags.dc_hv_ov_emergency) {
+        handle_dc_hv_ov_emergency(msg.error_flags.flags.dc_hv_ov_emergency not_eq 0);
     }
+    if (msg.error_flags.flags.dc_hv_ov_error not_eq m_cb_status.error_flags.flags.dc_hv_ov_error) {
+        handle_dc_hv_ov_error(msg.error_flags.flags.dc_hv_ov_error not_eq 0);
+    }
+
     if (msg.cp_state not_eq m_cb_status.cp_state) {
         handle_cp_state(static_cast<CpState>(msg.cp_state));
     }
@@ -100,17 +104,24 @@ void ovm_api::clear_comm_fault() {
     send_clear_error(API_OVM::ErrorEnum::CommunicationFault, "ChargeBridge not available");
 }
 
-void ovm_api::handle_dc_hv_ov(bool high, double voltage_V) {
+void ovm_api::handle_dc_hv_ov_emergency(bool high) {
+    static const std::string subtype = "Emergency";
     if (high) {
-        auto severity = (voltage_V > m_limits.emergency_limit_V) ? API_OVM::ErrorSeverityEnum::High
-                                                                 : API_OVM::ErrorSeverityEnum::Medium;
-        send_raise_error(API_OVM::ErrorEnum::MREC5OverVoltage, "", "", severity);
-        std::cout << "OVM: status high" << std::endl;
+        send_raise_error(API_OVM::ErrorEnum::MREC5OverVoltage, subtype, "", API_OVM::ErrorSeverityEnum::High);
     } else {
-        send_clear_error(API_OVM::ErrorEnum::MREC5OverVoltage, "");
-        std::cout << "OVM: status low" << std::endl;
+        send_clear_error(API_OVM::ErrorEnum::MREC5OverVoltage, subtype);
     }
 }
+
+void ovm_api::handle_dc_hv_ov_error(bool high) {
+    static const std::string subtype = "Error";
+    if (high) {
+        send_raise_error(API_OVM::ErrorEnum::MREC5OverVoltage, subtype, "", API_OVM::ErrorSeverityEnum::Medium);
+    } else {
+        send_clear_error(API_OVM::ErrorEnum::MREC5OverVoltage, subtype);
+    }
+}
+
 
 void ovm_api::handle_cp_state(CpState state) {
     if (state == CpState_A) {
@@ -121,8 +132,8 @@ void ovm_api::handle_cp_state(CpState state) {
 void ovm_api::receive_set_limits(std::string const& payload) {
     static auto const V_to_mV_factor = 1000;
     if (everest::lib::API::deserialize(payload, m_limits)) {
-        host_status.ovm_limit_9ms_mV = static_cast<uint32_t>(m_limits.emergency_limit_V * V_to_mV_factor);
-        host_status.ovm_limit_400ms_mV = static_cast<uint32_t>(m_limits.error_limit_V * V_to_mV_factor);
+        host_status.ovm_limit_emergency_mV = static_cast<uint32_t>(m_limits.emergency_limit_V * V_to_mV_factor);
+        host_status.ovm_limit_error_mV = static_cast<uint32_t>(m_limits.error_limit_V * V_to_mV_factor);
     } else {
         std::cerr << "ovm_api::receive_set_limits: payload invalid -> " << payload << std::endl;
     }
@@ -130,6 +141,7 @@ void ovm_api::receive_set_limits(std::string const& payload) {
 
 void ovm_api::receive_start() {
     host_status.ovm_enable = 1;
+    host_status.ovm_reset_errors = 0;
 }
 
 void ovm_api::receive_stop() {
@@ -138,7 +150,7 @@ void ovm_api::receive_stop() {
 
 void ovm_api::receive_reset_over_voltage_error() {
     std::cout << "reset_over_voltage_error()" << std::endl;
-    // TODO Do something
+    host_status.ovm_reset_errors = 1;
 }
 
 void ovm_api::receive_heartbeat() {
