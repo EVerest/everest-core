@@ -307,6 +307,11 @@ template <> struct convert<SafetyConfig> {
         } else {
             rhs.cp_avg_ms = 10;
         }
+        if (node["temperature_limit_pt1000_C"]) {
+            rhs.temperature_limit_pt1000_C = node["temperature_limit_pt1000_C"].as<uint8_t>(0);
+        } else {
+            rhs.temperature_limit_pt1000_C = 0;
+        }
 
         if (node["inverted_emergency_input"]) {
             rhs.inverted_emergency_input = node["inverted_emergency_input"].as<uint8_t>(0);
