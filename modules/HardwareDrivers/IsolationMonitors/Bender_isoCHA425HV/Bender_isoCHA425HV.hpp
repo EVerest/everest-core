@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef BENDER_ISO_CHA425HV_HPP
 #define BENDER_ISO_CHA425HV_HPP
 

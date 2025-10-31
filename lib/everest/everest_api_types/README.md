@@ -22,7 +22,7 @@ Therfore, all type files which the *everest_API_types* library depends upon and 
 
 To detect changes to EVerest's types and interfaces definitions, the files
 
-```
+```bash
 tests/expected_types_file_hashes.csv
 tests/expected_interfaces_file_hashes.csv
 ```
@@ -32,7 +32,14 @@ When building EVerest, the actual hashes of all files listed in these files are 
 A unit test compares them with the stored hashes and fails if any of them differs.
 CMake will also issue a warning if there is a mismatch, but not fail the build or the CI pipeline.
 
-The list of monitored files must be updated manually.
+The list of monitored files must be updated manually. 
+In order to compute the checksum simply run sha256sum tool on the file that has been changed and copy the hash in the respective CSV file.
+Here is how this can look like (example):
+
+```bash
+$ sha256sum types/isolation_monitor.yaml
+45d98b5072fa5d02a476860fe7d45a7b02f8a05eb6be94327f32dbe159d4ec40  types/isolation_monitor.yaml
+```
 
 ### Type and Interface Mismatches
 

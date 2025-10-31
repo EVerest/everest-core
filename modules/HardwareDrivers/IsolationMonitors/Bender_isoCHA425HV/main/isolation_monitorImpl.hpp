@@ -39,6 +39,7 @@ struct Conf {
     bool selftest_enable_gridconnection;
     bool selftest_enable_at_start;
     bool always_publish_measurements;
+    bool voltage_to_earth_monitoring_alarm_enable;
 };
 
 class isolation_monitorImpl : public isolation_monitorImplBase {

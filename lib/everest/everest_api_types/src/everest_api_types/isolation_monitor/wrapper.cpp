@@ -10,12 +10,16 @@ IsolationMeasurement_Internal to_internal_api(IsolationMeasurement_External cons
     IsolationMeasurement_Internal result;
     result.resistance_F_Ohm = val.resistance_F_Ohm;
     result.voltage_V = val.voltage_V;
+    result.voltage_to_earth_l1e_V = val.voltage_to_earth_l1e_V;
+    result.voltage_to_earth_l2e_V = val.voltage_to_earth_l2e_V;
     return result;
 }
 IsolationMeasurement_External to_external_api(IsolationMeasurement_Internal const& val) {
     IsolationMeasurement_External result;
     result.resistance_F_Ohm = val.resistance_F_Ohm;
     result.voltage_V = val.voltage_V;
+    result.voltage_to_earth_l1e_V = val.voltage_to_earth_l1e_V;
+    result.voltage_to_earth_l2e_V = val.voltage_to_earth_l2e_V;
     return result;
 }
 

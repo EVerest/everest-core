@@ -17,6 +17,7 @@ void isolation_monitorImpl::configure_device() {
     bool successful = true;
     do {
         successful = true;
+        successful &= send_to_imd(3000, (config.voltage_to_earth_monitoring_alarm_enable ? 1 : 0));
         successful &= send_to_imd(3005, config.r1_prealarm_kohm);
         successful &= send_to_imd(3007, config.r2_alarm_kohm);
         successful &= send_to_imd(3008, (config.undervoltage_alarm_enable ? 1 : 0));
@@ -63,12 +64,11 @@ void isolation_monitorImpl::start_self_test() {
             types::serial_comm_hub_requests::StatusCodeEnum::Success) {
             set_deviceFault("Failed to start self test");
             self_test_started = false;
+            return;
         }
-    } else {
-        EVLOG_info << "Self test already running, no need to start again";
-        self_test_started = true;
-        self_test_timeout = 30;
     }
+    self_test_started = true;
+    self_test_timeout = 30;
 }
 
 void isolation_monitorImpl::set_deviceFault(const std::string& message) {
@@ -164,14 +164,28 @@ void isolation_monitorImpl::handle_start_self_test(double& test_voltage_V) {
 void isolation_monitorImpl::read_imd_values() {
     // Read rF
     auto rf = read_register(ImdRegisters::RESISTANCE_R_F_OHM);
-    EVLOG_debug << to_string(rf);
+    EVLOG_debug << "Resistance: " << to_string(rf);
 
     last_test = rf.test;
     last_alarm = rf.alarm;
 
     // Read Voltage
     auto voltage = read_register(ImdRegisters::VOLTAGE_U_N_V);
-    EVLOG_debug << to_string(voltage);
+    EVLOG_debug << "Voltage: " << to_string(voltage);
+
+    isolation_monitorImpl::MeasurementValue voltage_to_earth_l1e;
+    isolation_monitorImpl::MeasurementValue voltage_to_earth_l2e;
+    // Read Voltage to Earth L1E and L2E only if the device is not in self test mode and only it
+    // we are in a measuring cycle. We have seen that Bender sometimes is overwhelmed
+    if ((last_test == TestType::NoTest) and (enable_publishing or config.always_publish_measurements)) {
+        // Read Voltage to Earth L1E
+        voltage_to_earth_l1e = read_register(ImdRegisters::VOLTAGE_U_L1E_V);
+        EVLOG_debug << "Voltage to Earth L1E: " << to_string(voltage_to_earth_l1e);
+
+        // Read Voltage to Earth L2E
+        voltage_to_earth_l2e = read_register(ImdRegisters::VOLTAGE_U_L2E_V);
+        EVLOG_debug << "Voltage to Earth L2E: " << to_string(voltage_to_earth_l2e);
+    }
 
     if (last_alarm == AlarmType::DeviceError) {
         set_deviceFault("Device Error");
@@ -186,16 +200,29 @@ void isolation_monitorImpl::read_imd_values() {
             valid_readings = false;
         }
 
-        if (rf.valid not_eq ValidType::Invalid) {
-            m.resistance_F_Ohm = rf.value;
-            if (last_test == TestType::NoTest) {
-                if (not error_state_monitor->is_error_active("isolation_monitor/DeviceFault", "")) {
-                    // do not publish values if in error state
-                    publish_isolation_measurement(m);
-                }
-            }
+        if (voltage_to_earth_l1e.valid not_eq ValidType::Invalid) {
+            m.voltage_to_earth_l1e_V = voltage_to_earth_l1e.value;
         } else {
             valid_readings = false;
+        }
+
+        if (voltage_to_earth_l2e.valid not_eq ValidType::Invalid) {
+            m.voltage_to_earth_l2e_V = voltage_to_earth_l2e.value;
+        } else {
+            valid_readings = false;
+        }
+
+        if (rf.valid not_eq ValidType::Invalid) {
+            m.resistance_F_Ohm = rf.value;
+        } else {
+            valid_readings = false;
+        }
+
+        // do not publish values if in error state or the device is in self test mode
+        if (last_test == TestType::NoTest) {
+            if (not error_state_monitor->is_error_active("isolation_monitor/DeviceFault", "")) {
+                publish_isolation_measurement(m);
+            }
         }
     }
     // let at least one round of values unpublished not to use unstable ones
