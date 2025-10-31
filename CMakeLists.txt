@@ -105,14 +105,20 @@ include(ev-define-dependency)
 
 include("module-dependencies.cmake")
 
+# this policy allows us to continue using the removed FindBoost module for now
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 OLD)
+endif()
+
 find_package(Boost
     COMPONENTS
         filesystem
         program_options
-        system
         thread
     REQUIRED
 )
+
+include(compatibility/boost)
 
 if(NOT DISABLE_EDM)
     # FIXME (aw): this implicit definition for child projects is hacky
