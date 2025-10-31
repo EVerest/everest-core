@@ -213,7 +213,7 @@ bool sync_fw_updater::upload_transfer(const fs::path& file_path, uint16_t& secto
 
     bool processed_file = filesystem_utils::process_file(
         file, sub_chunk_size, [&](const std::vector<uint8_t>& buffer, bool last_chunk) -> bool {
-            if (buffer.size() > 0) {
+            if (buffer.size() >= 0) {
                 total_bytes += buffer.size();
 
                 // Care must be taken when sending this over, since on the
