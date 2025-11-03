@@ -1,0 +1,22 @@
+{
+    "id": 12,
+    "stackLevel": 3,
+    "chargingProfilePurpose": "TxDefaultProfile",
+    "chargingProfileKind": "Absolute",
+    "validFrom": "2020-01-01T00:00:00",
+    "validTo": "2021-01-01T00:00:00",
+    "chargingSchedule": [
+        {
+            "id": 1,
+            "startSchedule": "2020-12-25T00:00:00",
+            "duration": 86400,
+            "chargingRateUnit": "W",
+            "chargingSchedulePeriod": [
+                {
+                    "startPeriod": 0,
+                    "limit": 999999
+                }
+            ]
+        }
+    ]
+}
