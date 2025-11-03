@@ -1,0 +1,12 @@
+[package]
+name = "RsExample"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+everestrs = { workspace = true }
+serde = { version = "1.0.200", features = ["derive"] }
+serde_json = "1"
+
+[build-dependencies]
+everestrs-build = { workspace = true }

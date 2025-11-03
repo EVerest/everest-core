@@ -1,0 +1,24 @@
+description: >-
+  Using the "PacketSniffer" EVerest module it is possible to capture and
+  store the different packets on the PLC interface.
+config:
+  device:
+    description: >-
+      The ethernet device on which the messages are to be captured
+    type: string
+    default: eth1
+  session_logging_path:
+    description: Output directory for session capture dump files
+    type: string
+    default: /tmp
+provides:
+  main:
+    description: EVerest API
+    interface: empty
+requires:
+  evse_manager:
+    interface: evse_manager
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Sebastian Lukas

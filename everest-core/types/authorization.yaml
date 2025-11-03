@@ -1,0 +1,291 @@
+description: Auth token validator types
+types:
+  AuthorizationStatus:
+    description: Authorization Status enum
+    type: string
+    enum:
+      - Accepted
+      - Blocked
+      - ConcurrentTx
+      - Expired
+      - Invalid
+      - NoCredit
+      - NotAllowedTypeEVSE
+      - NotAtThisLocation
+      - NotAtThisTime
+      - Unknown
+  CertificateStatus:
+    description: Certificate status information
+    type: string
+    enum:
+      - Accepted
+      - SignatureError
+      - CertificateExpired
+      - CertificateRevoked
+      - NoCertificateAvailable
+      - CertChainError
+      - ContractCancelled
+  TokenValidationStatus:
+    description: Ongoing token validation status
+    type: string
+    enum:
+      - Processing
+      - Accepted
+      - Rejected
+      # Occurs when the token has been authorized but no connector is selected within connection_timeout seconds
+      - TimedOut
+      - Withdrawn
+  CustomIdToken:
+    description: Type for a custom id token with a free-form type
+    type: object
+    additionalProperties: false
+    required:
+      - value
+      - type
+    properties:
+      value:
+        description: Arbitrary value of the IdToken
+        type: string
+        minLength: 0
+        maxLength: 36
+      type:
+        description: Custom type of the token
+        type: string
+        minLength: 0
+        maxLength: 50
+  IdToken:
+    description: Type for an id token
+    type: object
+    additionalProperties: false
+    required:
+      - value
+      - type
+    properties:
+      value:
+        description: >-
+          Arbitrary value of the IdToken: This has to be printable case insensitive ascii
+        type: string
+        minLength: 0
+        maxLength: 36
+      type:
+        description: Type of the token
+        type: string
+        $ref: /authorization#/IdTokenType
+      additional_info:
+        description: A list of additional custom id tokens than can be used for providing additional information for validation
+        type: array
+        items:
+          type: object
+          $ref: /authorization#/CustomIdToken
+  ProvidedIdToken:
+    description: Type for IdToken provided by auth token providers. Contains additional information about the IdToken like the source and purpose
+    type: object
+    additionalProperties: false
+    required:
+      - id_token
+      - authorization_type
+    properties:
+      request_id:
+        description: >-
+          Id of the authorization request of this token. Could be used to put remoteStartId of OCPP2.0.1
+        type: integer
+      id_token:
+        description: IdToken of the provided token
+        type: object
+        $ref: /authorization#/IdToken
+      parent_id_token:
+        description: Parent IdToken of the provided token
+        type: object
+        $ref: /authorization#/IdToken
+      authorization_type:
+        description: Authorization type of the token.
+        type: string
+        $ref: /authorization#/AuthorizationType
+        minLength: 2
+        maxLength: 32
+      connectors:
+        description: A list of connector ids to which the authorization can be assigned
+        type: array
+        items:
+          minimum: 1
+          type: integer
+      prevalidated:
+        description: Indicates that the id token is already validated by the provider
+        type: boolean
+      certificate:
+        description: The X.509 certificated presented by EV and encoded in PEM format
+        type: string
+        maxLength: 5500
+      iso15118CertificateHashData:
+        description: >-
+          Contains the information needed to verify the EV Contract Certificate
+          via OCSP
+        type: array
+        items:
+          description: An array of contract certificate infos
+          type: object
+          $ref: /iso15118#/CertificateHashDataInfo
+        minItems: 1
+        maxItems: 4
+  TokenValidationStatusMessage:
+    description: The token validation status
+    type: object
+    additionalProperties: false
+    required:
+      - token
+      - status
+    properties:
+      token:
+        description: The id tag assigned to this transaction
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+      status:
+        type: string
+        $ref: /authorization#/TokenValidationStatus
+      messages:
+        type: array
+        items:
+          type: object
+          $ref: /text_message#/MessageContent
+  ValidationResult:
+    description: >-
+      Result object containing authorization status enum value and an optional
+      parentIdTag
+    type: object
+    additionalProperties: false
+    required:
+      - authorization_status
+      - tariff_messages # defined as required to default initialize the vector, may be empty
+    properties:
+      authorization_status:
+        type: string
+        $ref: /authorization#/AuthorizationStatus
+      certificate_status:
+        type: string
+        $ref: /authorization#/CertificateStatus
+      tariff_messages:
+        description: >-
+          Messages that can contain session price information to show the user. The array can contain multiple messages in different languages. The first message in this array shall be used to start the transaction at the powermeter (for OCMF).  Empty if no messages are available.
+        type: array
+        items:
+          description: Message with pricing information in a specific language
+          type: object
+          $ref: /text_message#/MessageContent
+      expiry_time:
+        description: Absolute UTC time point when reservation expires in RFC3339 format
+        type: string
+        format: date-time
+      parent_id_token:
+        description: Parent Id Tag of the validated token
+        type: object
+        $ref: /authorization#/IdToken
+      evse_ids:
+        description: >-
+          Only used when the id token is valid for one or more specific evses,
+          not for the whole charging station. Indicates for which evse ids the
+          provided token is valid
+        type: array
+        items:
+          minimum: 1
+          type: integer
+      reservation_id:
+        description: The reservation id that is used with this validated token.
+        type: integer
+      allowed_energy_transfer_modes:
+        description: >-
+          This is only used when we want to specify which energy transfer modes are allowed for
+          the respective authorization request.
+        type: array
+        items:
+          type: string
+          $ref: /iso15118#/EnergyTransferMode
+        minItems: 1
+  SelectionAlgorithm:
+    description: >-
+      The selection algorithm defines the logic to select one connector
+      for an incoming token.
+
+      SelectionAlgorithm enum:
+        UserInput: This algorithm waits for a user to input for which connector the authorization is provided
+        PlugEvents: This algorithms derives the selected connector based on the order of plug in events of EVs
+        FindFirst: This algorithm chooses the first referenced EVSE that is available
+    type: string
+    enum:
+      - UserInput
+      - PlugEvents
+      - FindFirst
+  AuthorizationType:
+    description: >-
+      Type of authorization of the provided token. The value
+      of AuthorizationType can influence the authorization process
+    type: string
+    enum:
+      - OCPP
+      - RFID
+      - Autocharge
+      - PlugAndCharge
+      - BankCard
+  IdTokenType:
+    description: >-
+      IdTokenType of the provided token. Required by OCPP2.0.1 to distinguish between different types of tokens.
+    type: string
+    enum:
+      - Central
+      - eMAID
+      - MacAddress
+      - ISO14443
+      - ISO15693
+      - KeyCode
+      - Local
+      - NoAuthorization
+  WithdrawAuthorizationRequest:
+    description: >-
+      Request to withdraw granted authorization.
+      If only the evse_id is given, the granted authorization for this EVSE will be withdrawn.
+      If only the id_token is given, the granted authorization for every EVSE where this id_token is placed will be
+        withdrawn
+      If both parameters are given, the granted authorization for the given EVSE will be withdrawn, if the placed
+        id_token matches the given id_token
+      If no parameter is given, all granted authorizations for all EVSEs will be removed
+    type: object
+    properties:
+      evse_id:
+        description: The evse id to withdraw authorization for.
+        type: integer
+      id_token:
+        description: The id token to withdraw authorization for.
+        type: object
+        $ref: /authorization#/IdToken
+  WithdrawAuthorizationResult:
+    description: >-
+      The result of a WithdrawAuthorizationRequest:
+      Accepted in case requested authorization was removed
+      AuthorizationNotFound in case no match for request was found
+      EvseNotFound in case no match for evse_id was found
+      Rejected in case module could not process the request for other reasons
+    type: string
+    enum:
+      - Accepted
+      - AuthorizationNotFound
+      - EvseNotFound
+      - Rejected
+  ValidationResultUpdate:
+    description: >-
+      Result object containing an updated validation result for a given token.
+      This is needed since certain information can be updated at a later time.
+    type: object
+    additionalProperties: false
+    required:
+      - validation_result
+      - connector_id
+    properties:
+      validation_result:
+        description: >-
+          Result object containing authorization status enum value and an optional
+          parentIdTag
+        type: object
+        $ref: /authorization#/ValidationResult
+      connector_id:
+        description: >-
+          Id of the connector on which the id token information has been updated.
+        type: integer

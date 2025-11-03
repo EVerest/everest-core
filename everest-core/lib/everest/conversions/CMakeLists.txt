@@ -1,0 +1,6 @@
+if(EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY)
+    add_subdirectory(evse_security)
+endif()
+if(EVEREST_DEPENDENCY_ENABLED_LIBOCPP)
+    add_subdirectory(ocpp)
+endif()

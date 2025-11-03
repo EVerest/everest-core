@@ -1,0 +1,13 @@
+add_executable(EnumFlagsTest
+    EnumFlagsTest.cpp
+    EnumFlagsTest_B.cpp
+)
+
+target_link_libraries(EnumFlagsTest
+    PRIVATE
+        GTest::gtest_main
+        everest::util
+)
+
+include(GoogleTest)
+gtest_discover_tests(EnumFlagsTest)

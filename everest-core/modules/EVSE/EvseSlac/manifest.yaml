@@ -1,0 +1,84 @@
+description: Implementation of SLAC data link negotiation according to ISO15118-3.
+provides:
+  main:
+    interface: slac
+    description: SLAC interface implementation.
+    config:
+      device:
+        description: Ethernet device used for PLC.
+        type: string
+        default: eth1
+      number_of_sounds:
+        description: SLAC number of sounds.
+        type: integer
+        default: 10
+      ac_mode_five_percent:
+        description: >-
+          Use AC 5% mode according to ISO15118-3. This restarts SLAC sessions if they fail according to the standard.
+          The standard only allows the retries for AC, not for DC. However, it is strongly recommended to always
+          set this option to true, also for DC, otherwise some EVs in the field will fail to do SLAC frequently.
+        type: boolean
+        default: true
+      set_key_timeout_ms:
+        description: Timeout for CM_SET_KEY.REQ. Default works for QCA7000/QCA7005/CG5317.
+        type: integer
+        default: 1000
+      sounding_attenuation_adjustment:
+        description: Offset in dB that should be added to the calculated sounding attenuation
+        type: integer
+        default: 0
+      publish_mac_on_match_cnf:
+        description: >-
+          Publish the EV MAC address on the token_provider interface when matching is confirmed (CM_SLAC_MATCH.CNF).
+          This can be used for autocharge as an alternative to the EVCCID derived from HLC and published by EvseManager. 
+          This can be used for AC autocharge on cars that do not support actual HLC on AC.
+        type: boolean
+        default: true
+      publish_mac_on_first_parm_req:
+        description: >-
+          Publish the EV MAC address when the first CM_SLAC_PARM.REQ.
+          This should not be used as it is quite error prone: The MAC address might be from another car via cross talk.
+          It is better to wait for the matching to be done.
+        type: boolean
+        default: false
+      do_chip_reset:
+        description: Perform a chip reset after setting NMK using the RS_DEV.REQ Vendor MME Extension (Only works on Qualcomm chips)
+        type: boolean
+        default: false
+      chip_reset_delay_ms:
+        description: Delay between SET_KEY.CNF and RS_DEV.REQ
+        type: integer
+        default: 100
+      chip_reset_timeout_ms:
+        description: Timeout for RS_DEV.REQ (waiting for RS_DEV.CNF)
+        type: integer
+        default: 500
+      link_status_detection:
+        description: After matching.cnf, wait for link to come up before sending out d_link_ready=connected using LINK_STATUS Vendor MME Extension (Works on Qualcomm and Lumissil chips)
+        type: boolean
+        default: false
+      link_status_retry_ms:
+        description: Delay between retries of LINK_STATUS requests after matching request
+        type: integer
+        default: 100
+      link_status_timeout_ms:
+        description: Timeout for Link to come up after matching request
+        type: integer
+        default: 10000
+      debug_simulate_failed_matching:
+        description: Only for debugging. Simulate failed matching by sending a wrong NMK to the EV.
+        type: boolean
+        default: false
+      reset_instead_of_fail:
+        description: >-
+          Go to reset state instead of failed state. This is against the ISO15118-3.
+          But some cars directly send a CM_SLAC_PARAM.req message when the SLAC process aborts.
+          To react to this message and restart the SLAC process, the EVSE go to the reset state here.
+        type: boolean
+        default: true
+metadata:
+  base_license: https://directory.fsf.org/wiki/License:BSD-3-Clause-Clear
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - aw@pionix.de
+    - Cornelius Claussen (Pionix GmbH)

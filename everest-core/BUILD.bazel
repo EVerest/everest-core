@@ -1,0 +1,8 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "dependencies.yaml",
+    "MODULE.bazel",
+])

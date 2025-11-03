@@ -1,0 +1,49 @@
+description: This class defines the global Sunspec scanner
+cmds:
+  scan_unit:
+    description: Scans specific unit at a device's port
+    arguments:
+      ip_address:
+        description: local IP-address of the Sunspec device
+        type: string
+        pattern: ^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$
+      port:
+        description: Modbus port
+        type: integer
+        minimum: 0
+      unit:
+        description: Modbus unit id
+        type: integer
+        minimum: 0
+    result:
+      description: Returns a json overview of the scan
+      type: object
+  scan_port:
+    description: Scans all units at a device's port
+    arguments:
+      ip_address:
+        description: local IP-address of the Sunspec device
+        type: string
+        pattern: ^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$
+      port:
+        description: Modbus port
+        type: integer
+        minimum: 0
+    result:
+      description: Returns a json overview of the scan
+      type: object
+  scan_device:
+    description: Scans complete device
+    arguments:
+      ip_address:
+        description: local IP-address of the Sunspec device
+        type: string
+        pattern: ^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$
+    result:
+      description: Returns a json overview of the scan
+      type: object
+  scan_network:
+    description: Scans local network
+    result:
+      description: Returns a json overview of the scan
+      type: object

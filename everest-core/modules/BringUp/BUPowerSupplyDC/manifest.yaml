@@ -1,0 +1,12 @@
+description: Interactive bring up helper for power supply DC interface
+provides:
+  main:
+    interface: empty
+    description: This module does not provide anything
+requires:
+  psu:
+    interface: power_supply_DC
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen

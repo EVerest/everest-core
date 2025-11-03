@@ -1,0 +1,57 @@
+description: Energy price information types
+types:
+  PricePerkWh:
+    description: Price information for this timepoint
+    type: object
+    additionalProperties: false
+    required:
+      - timestamp
+      - value
+      - currency
+    properties:
+      timestamp:
+        description: Absolute timestamp for this sample in RFC3339 UTC format
+        type: string
+        format: date-time
+      value:
+        description: Price per kWh (cost)
+        type: number
+      currency:
+        description: Currency in 3 digit ISO 4217
+        type: string
+        minLength: 3
+        maxLength: 3
+  EnergyPriceSchedule:
+    required:
+      - schedule_import
+      - schedule_export
+    description: >-
+      Forecast JSON Object containing timestamps and the price forecast
+      for both import and export.
+    type: object
+    additionalProperties: false
+    properties:
+      schedule_import:
+        description: >-
+          Pricing time series. The first entry is special as it will be
+          active already now even if the timestamp is in the future, so it is good
+          practice to set the first entry to current time. The time series can have
+          arbitrary time difference between entries and all timestamps are absolute
+          UTC time.
+        type: array
+        items:
+          description: One entry for the time series
+          type: object
+          $ref: /energy_price_information#/PricePerkWh
+      schedule_export:
+        description: >-
+          Pricing time series. The first entry is special as it will be
+          active already now even if the timestamp is in the future, so it is good
+          practice to set the first entry to current time. The time series can have
+          arbitrary time difference between entries and all timestamps are absolute
+          UTC time.
+        type: array
+        items:
+          description: One entry for the time series
+          type: object
+          $ref: /energy_price_information#/PricePerkWh

@@ -1,0 +1,41 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Pionix GmbH and Contributors to EVerest
+
+#include "ocpp_data_transferImpl.hpp"
+
+#include <conversions.hpp>
+
+namespace module {
+namespace data_transfer {
+
+void ocpp_data_transferImpl::init() {
+}
+
+void ocpp_data_transferImpl::ready() {
+}
+
+types::ocpp::DataTransferResponse
+ocpp_data_transferImpl::handle_data_transfer(types::ocpp::DataTransferRequest& request) {
+
+    if (this->mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot data transfer command";
+        types::ocpp::DataTransferResponse response;
+        response.status = types::ocpp::DataTransferStatus::Offline;
+        return response;
+    }
+
+    ocpp::v2::DataTransferRequest ocpp_request = conversions::to_ocpp_data_transfer_request(request);
+    auto ocpp_response = mod->charge_point->data_transfer_req(ocpp_request);
+
+    types::ocpp::DataTransferResponse response;
+
+    if (ocpp_response.has_value()) {
+        response = conversions::to_everest_data_transfer_response(ocpp_response.value());
+    } else {
+        response.status = types::ocpp::DataTransferStatus::Offline;
+    }
+    return response;
+}
+
+} // namespace data_transfer
+} // namespace module
