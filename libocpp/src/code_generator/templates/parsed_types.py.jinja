@@ -1,0 +1,143 @@
+{% if first %}
+#ifndef OCPP1_6_OCPP_TYPES_HPP
+#define OCPP1_6_OCPP_TYPES_HPP
+
+#include <map>
+#include <string>
+
+#include <boost/optional.hpp>
+#include <nlohmann/json-schema.hpp>
+#include <nlohmann/json.hpp>
+
+#include <ocpp1_6/enums.hpp>
+#include <ocpp1_6/types.hpp>
+
+namespace ocpp1_6 {
+{% endif %}
+{%- if parsed_types|length %}
+{%- for type in parsed_types %}
+{% if not type.name.endswith('Request') and not type.name.endswith('Response') %}
+
+struct {{type.name}} {
+{% for property in type.properties %}
+    {{ 'boost::optional<' if not property.required -}}
+    {{ property.type -}}
+    {{ '>' if not property.required -}}
+    {{ ' ' + property.name + ';' }}
+{% endfor %}
+
+    friend void to_json(json& j, const {{ type.name }}& k) {
+        // the required parts of the message
+{% if type.properties|selectattr('required')|list|length %}
+        j = json{
+{%- endif %}
+{%- for property in type.properties %}
+{%- if property.required %}{"{{property.name}}",
+    {%- if property.enum %}
+ conversions::{{- property.type | snake_case}}_to_string(k.{{property.name}})
+    {%- else %}
+        {%- if property.type == 'DateTime' %}
+k.{{property.name}}.to_rfc3339()
+        {%- else %}
+k.{{property.name}}
+        {%- endif %}
+    {%- endif %}},
+{%- endif %}
+{%- endfor %}
+{% if not type.properties|selectattr('required')|list|length %}
+        j = json ({});
+{%- else %}
+};
+{%- endif %}
+
+        // the optional parts of the message
+{% for property in type.properties %}
+{% if not property.required %}
+        if (k.{{property.name}}) {
+            {% if property.type.startswith('std::vector<') %}
+            {%- if type.properties|selectattr('required')|list|length %}
+j["{{property.name}}"] = json::array();
+            {%- else %}
+{#only optional keys in json#}
+{#TODO: add key to json when there are no required keys but multiple optional keys#}
+if (j.size() == 0) {
+                j = json{{'{{"'+property.name+'", json::array()}};'}}
+            } else {
+                j["{{property.name}}"] = json::array();
+            }
+{% endif %}
+            for (auto val : k.{{property.name}}.value()) {
+                j["{{property.name}}"].push_back(val);
+            }
+{% else %}
+{%- if property.enum %}
+j["{{property.name}}"] = conversions::{{- property.type | snake_case}}_to_string(k.{{property.name}}.value());
+    {%- else %}
+        {%- if property.type == 'DateTime' %}
+j["{{property.name}}"] = k.{{property.name}}.value().to_rfc3339();
+        {%- else %}
+j["{{property.name}}"] = k.{{property.name}}.value();
+        {%- endif %}
+    {%- endif %}
+{% endif %}
+
+        }
+{% endif %}
+{% endfor %}
+    }
+
+    friend void from_json(const json& j, {{ type.name }}& k) {
+        // the required parts of the message
+{% for property in type.properties %}
+{% if property.required %}
+{% if property.type.startswith('std::vector<') %}
+        for (auto val : j.at("{{property.name}}")) {
+            k.{{property.name}}.push_back(val);
+        }
+{% else %}
+        k.{{property.name}} =
+    {%- if property.enum %}
+ conversions::string_to_{{- property.type | snake_case}}(j.at("{{property.name}}"))
+    {%- else %}
+        {%- if property.type == 'DateTime' %}
+ DateTime(std::string(j.at("{{property.name}}")));
+        {%- else %}
+ j.at("{{property.name}}")
+        {%- endif %}
+    {%- endif %};
+{% endif %}
+{% endif %}
+{%- endfor %}
+
+        // the optional parts of the message
+{% for property in type.properties %}
+{% if not property.required %}
+        if (j.contains("{{property.name}}")) {
+{% if property.type.startswith('std::vector<') %}
+            json arr = j.at("{{property.name}}");
+            {{property.type}} vec;
+            for (auto val : arr) {
+                vec.push_back(val);
+            }
+            k.{{property.name}}.emplace(vec);
+{% else %}
+            k.{{property.name}}.emplace(j.at("{{property.name}}"));
+{% endif %}
+        }
+{% endif %}
+{% endfor %}
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const {{ type.name }}& k) {
+        os << json(k).dump(4);
+        return os;
+    }
+};
+{% endif %}
+{% endfor %}
+{%- endif %}
+{% if last %}
+} // namespace ocpp1_6
+
+#endif // OCPP1_6_OCPP_TYPES_HPP
+{% endif %}
