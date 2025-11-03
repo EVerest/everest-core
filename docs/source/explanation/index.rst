@@ -26,4 +26,5 @@ Below that, you will be presented with a categorized list of all articles.
 .. toctree::
     :maxdepth: 1
 
-    modules/index.rst
+    modules/index
+    module-configurations
