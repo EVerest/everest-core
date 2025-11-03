@@ -1,0 +1,33 @@
+description: This module implements system wide operations
+config:
+  DefaultRetries:
+    description: Specifies how many times Charge Point tries to upload or download files on previous failure.
+    type: number
+    default: 1
+  DefaultRetryInterval:
+    description: >-
+      Specifies in seconds after which time a retry of an upload or download on previous failure may be attempted.
+    type: number
+    default: 1
+  ResetDelay:
+    description: >-
+      When receiving a reset request, then the actual execution can be delayed by this amount of time (given in seconds).
+      This might be necessary, for example, when the reset request arrives via the network and the call acknowledgement
+      should be given some time to travel the return path to the caller.
+      Defaults to zero, which means that the reset is executed directly without delay.
+    type: integer
+    minimum: 0
+    default: 0
+provides:
+  main:
+    description: Implements the system interface
+    interface: system
+requires:
+  store:
+    interface: kvs
+    min_connections: 0
+    max_connections: 1
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Piet Gömpel

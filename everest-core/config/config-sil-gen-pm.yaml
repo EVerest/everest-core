@@ -1,0 +1,19 @@
+active_modules:
+  serial_comm_hub:
+    module: SerialCommHub
+    config_implementation:
+      main:
+        serial_port: /dev/ttyUSB0
+        baudrate: 19200
+        parity: 0
+        ignore_echo: false
+  PowerMeter:
+    module: GenericPowermeter
+    config_implementation:
+      main:
+        powermeter_device_id: 22
+        model: test_dummy
+    connections:
+      serial_comm_hub:
+      - module_id: serial_comm_hub
+        implementation_id: main

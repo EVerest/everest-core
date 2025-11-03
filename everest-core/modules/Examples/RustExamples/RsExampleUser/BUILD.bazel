@@ -1,0 +1,31 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("@rules_rust//cargo:defs.bzl", "cargo_build_script")
+load("@everest_core_crate_index//:defs.bzl", "all_crate_deps")
+
+cargo_build_script(
+    name = "build_script",
+    srcs = ["build.rs"],
+    edition="2021",
+    build_script_env = {
+        "EVEREST_CORE_ROOT": "../../../../",
+    },
+    deps = all_crate_deps(build=True),
+    data= [
+        "//types:types",
+        "//interfaces:interfaces",
+        "manifest.yaml",
+    ],
+)
+
+rust_binary(
+    name = "RsExampleUser",
+    srcs = glob(["src/**/*.rs"]),
+    visibility = ["//visibility:public"],
+    edition = "2021",
+    deps = all_crate_deps() + [
+        "@everest-framework//everestrs/everestrs:everestrs_sys",
+        "@everest-framework//everestrs/everestrs:everestrs_bridge",
+        ":build_script",
+    ],
+    proc_macro_deps = all_crate_deps(proc_macro=True),
+)

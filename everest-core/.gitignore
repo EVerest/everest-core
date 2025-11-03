@@ -1,4 +1,10 @@
 *build
 *build-cross
-generated/**/
+.cache/
 workspace.yaml
+.vscode/
+/bazel-*
+/modules/target
+CMakeLists.txt.user
+.idea/
+MODULE.bazel.lock

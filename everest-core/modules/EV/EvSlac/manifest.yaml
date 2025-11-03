@@ -1,0 +1,19 @@
+description: Implementation of EV SLAC data link negotiation according to ISO15118-3.
+provides:
+  main:
+    interface: ev_slac
+    description: SLAC interface implementation.
+    config:
+      device:
+        description: Ethernet device used for PLC.
+        type: string
+        default: eth1
+      set_key_timeout_ms:
+        description: Timeout for CM_SET_KEY.REQ. Default works for QCA7000/QCA7005/CG5317.
+        type: integer
+        default: 500
+metadata:
+  base_license: https://directory.fsf.org/wiki/License:BSD-3-Clause-Clear
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - aw@pionix.de

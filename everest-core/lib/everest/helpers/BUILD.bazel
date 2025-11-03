@@ -1,0 +1,15 @@
+cc_library(
+    name = "helpers",
+    srcs = ["src/helpers.cpp"],
+    hdrs = ["include/everest/helpers/helpers.hpp",],
+    copts = ["-std=c++17"],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib/everest/tls",
+        "//types:types_lib",
+        "@boost.uuid",
+        "@com_github_fmtlib_fmt//:fmt",
+        "@com_github_nlohmann_json//:json",
+    ],
+)

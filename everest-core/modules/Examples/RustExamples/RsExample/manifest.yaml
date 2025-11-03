@@ -1,0 +1,34 @@
+description: Simple example module written in Rust
+config:
+  some_string_config:
+    description: A module level string config.
+    type: string
+    default: Hello world
+  some_number_config:
+    description: A module level number config.
+    type: number
+    default: 42
+provides:
+  foobar:
+    interface: example
+    description: This implements an example interface that uses multiple framework features
+    config:
+      some_bool_config:
+        description: An interface level bool config
+        type: boolean
+        default: true
+      some_integer_config:
+        description: An interface level integer config.
+        type: integer
+        default: 1234
+  my_store:
+    interface: kvs
+    description: This implements the kvs interface, mostly for testing multiple interfaces in one manifest
+requires:
+  their_store:
+    interface: kvs
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Holger Rapp
+enable_external_mqtt: false

@@ -1,0 +1,140 @@
+description: >-
+  This interface allows to control an OCPP service and set and get data from the OCPP service. It is designed
+  to be used for both OCPP1.6 and OCPP2.0.1 module implementations. Therefore, the vars, commands and types
+  are based more on the definitions of OCPP2.0.1, as this offers more flexibility and it is easier to transfer
+  to the capabilities of OCPP1.6 than vice versa.
+cmds:
+  stop:
+    description: >-
+      Disconnects the websocket connection and stops the OCPP communication.
+      No OCPP messages will be stored and sent after a restart.
+    result:
+      type: boolean
+      description: >-
+        Returns true if the service could be stopped successfully, else
+        false
+  restart:
+    description: >-
+      Connects the websocket and enables OCPP communication after a previous
+      stop call.
+    result:
+      type: boolean
+      description: >-
+        Returns true if the service could be restarted successfully, else
+        false
+  security_event:
+    description: >-
+      Triggers a SecurityEventNotification.req at the CSMS if it is deemed critical, either by setting the flag in this event or if absent automatically by libocpp
+    arguments:
+      event:
+        description: A security event
+        type: object
+        $ref: /ocpp#/SecurityEvent
+  get_variables:
+    description: >-
+      Command to get a variable from OCPP.
+      With OCPP1.6: Retrieves a configuration key.
+      With OCPP2.0.1: Retrieves a variable with value from the device model storage
+    arguments:
+      requests:
+        description: List of GetVariableRequest
+        type: array
+        items:
+          minimum: 0
+          type: object
+          $ref: /ocpp#/GetVariableRequest
+    result:
+      description: >-
+        List of GetVariableResult containing the result for every requested value. Preserves the order of the input requests.
+      type: array
+      items:
+        type: object
+        $ref: /ocpp#/GetVariableResult
+  set_variables:
+    description: >-
+      Command to set a variable at OCPP.
+      With OCPP1.6: This command can be used to set custom configuration keys (others will be rejected)
+      With OCPP2.0.1: This command can be used to set variables in the device model storage
+    arguments:
+      requests:
+        description: List of SetVariableRequests
+        type: array
+        items:
+          minimum: 0
+          type: object
+          $ref: /ocpp#/SetVariableRequest
+      source:
+        description: Source of variable values
+        type: string
+    result:
+      description: >-
+        List of SetVariableResult containing the result for every requested set operation
+      type: array
+      items:
+        type: object
+        $ref: /ocpp#/SetVariableResult
+  change_availability:
+    description: >-
+      Allows to send a ChangeAvailabilityRequest internally (as can be done by the CSMS).
+    arguments:
+      request:
+        description: >-
+          The ChangeAvailabilityRequest as specified in OCPP2.0.1.
+          For OCPP 1.6:
+        type: object
+        $ref: /ocpp#/ChangeAvailabilityRequest
+    result:
+      description: >-
+        Response to ChangeAvailabilityRequest as specified in OCPP 2.0.1
+      type: object
+      $ref: /ocpp#/ChangeAvailabilityResponse
+  monitor_variables:
+    description: >-
+      Command to start monitoring the given ComponentVariable(s). Any of the provided
+      configuration keys will be published on change by the CSMS.
+      Consecutive calls of this operation will not override but extend the existing monitors.
+      With OCPP1.6: This command can be used to monitor configuration keys
+      With OCPP2.0.1: This command can be used to monitor any kind of variable in the device model storage
+    arguments:
+      component_variables:
+        description: List of ComponentVariable(s) to monitor
+        type: array
+        items:
+          type: object
+          $ref: /ocpp#/ComponentVariable
+vars:
+  ocpp_transaction_event:
+    description: Emits events related to OCPP transactions
+    type: object
+    $ref: /ocpp#/OcppTransactionEvent
+  ocpp_transaction_event_response:
+    description: Emits OCPP transaction responses
+    type: object
+    $ref: /ocpp#/OcppTransactionEventResponse
+  charging_schedules:
+    description: >-
+      Object that contains OCPP charging schedules of all connectors. The
+      object contains one composite charging schedule for each connector id starting
+      from connector 0. Connector 0 contains a schedule for the whole charging station.
+    type: object
+    $ref: /ocpp#/ChargingSchedules
+  is_connected:
+    description: Indicates if chargepoint is connected to CSMS
+    type: boolean
+  security_event:
+    description: Published when an internal security event occurred
+    type: object
+    $ref: /ocpp#/SecurityEvent
+  event_data:
+    description: >-
+      Published for a component variable combination when a variable with a monitor has been changed
+      For OCPP1.6: The object may only contain the required properties of the EventData type because in OCPP1.6
+        there is not more information available or required.
+      For OCPP2.0.1: The object may contain all available properties
+    type: object
+    $ref: /ocpp#/EventData
+  boot_notification_response:
+    description: >-
+      Published any time a BootNotificationResponse message is received from the CSMS
+    type: object
+    $ref: /ocpp#/BootNotificationResponse

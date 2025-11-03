@@ -1,0 +1,9 @@
+description: Example display message module
+provides:
+  display_message:
+    description: module to show a message
+    interface: display_message
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Maaike Zijderveld

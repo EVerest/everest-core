@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = [
+   "HardwareDrivers/PowerMeters/RsIskraMeter",
+   "HardwareDrivers/Payment/RsPaymentTerminal",
+   "Examples/RustExamples/RsExample",
+   "Examples/RustExamples/RsExampleUser",
+]
+
+[workspace.dependencies]
+everestrs = { git = "https://github.com/everest/everest-framework.git", tag = "v0.23.1" }
+everestrs-build = { git = "https://github.com/everest/everest-framework.git", tag = "v0.23.1" }
