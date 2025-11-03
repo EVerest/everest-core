@@ -1,0 +1,49 @@
+description: >-
+  This module implements the evse_security interface. It uses the filesystem to store certificates
+  and keys
+config:
+  csms_ca_bundle:
+    description: Path to csms_ca_bundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: ca/csms/CSMS_ROOT_CA.pem
+  mf_ca_bundle:
+    description: Path to mf_ca_bundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: ca/mf/MF_ROOT_CA.pem
+  mo_ca_bundle:
+    description: Path to mo_ca_bundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: ca/mo/MO_ROOT_CA.pem
+  v2g_ca_bundle:
+    description: Path to v2g_ca_bundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: ca/v2g/V2G_ROOT_CA.pem
+  csms_leaf_cert_directory:
+    description: Directory where CSMS leaf certificates are stored. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: client/csms
+  csms_leaf_key_directory:
+    description: Directory where CSMS private keys are stored. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: client/csms
+  secc_leaf_cert_directory:
+    description: Directory where SECC leaf certificates are stored. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: client/cso
+  secc_leaf_key_directory:
+    description: Directory where SECC private keys are stored. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    default: client/cso
+  private_key_password:
+    description: Password for encrypted private keys.
+    type: string
+    default: ""
+provides:
+  main:
+    description: Implementation of the evse_security interface
+    interface: evse_security 
+enable_telemetry: false
+metadata:
+  license: https://spdx.org/licenses/Apache-2.0.html
+  authors:
+    - Piet Gömpel

@@ -1,0 +1,507 @@
+description: >-
+  The definition of the currency and price types.
+types:
+  CurrencyCode:
+    description: >-
+      Currency in 3 alphabetical characters according to ISO 4217.
+      The list of values is taken from the 
+      https://www.six-group.com/en/products-services/financial-information/data-standards.html
+      Technical values like "Testing Code", "No Currency"
+      as well as metal and bond-market codes are excluded.
+    type: string
+    minLength: 3
+    maxLength: 3
+    enum:
+      # 784, UAE Dirham, UNITED ARAB EMIRATES (THE)
+      - AED
+      # 971, Afghani, AFGHANISTAN
+      - AFN
+      # 008, Lek, ALBANIA
+      - ALL
+      # 051, Armenian Dram, ARMENIA
+      - AMD
+      # 532, Netherlands Antillean Guilder, CURAÇAO
+      # SINT MAARTEN (DUTCH PART)
+      - ANG
+      # 973, Kwanza, ANGOLA
+      - AOA
+      # 032, Argentine Peso, ARGENTINA
+      - ARS
+      # 036, Australian Dollar, AUSTRALIA
+      # CHRISTMAS ISLAND
+      # COCOS (KEELING) ISLANDS (THE)
+      # HEARD ISLAND AND McDONALD ISLANDS
+      # KIRIBATI
+      # NAURU
+      # NORFOLK ISLAND
+      # TUVALU
+      - AUD
+      # 533, Aruban Florin, ARUBA
+      - AWG
+      # 944, Azerbaijan Manat, AZERBAIJAN
+      - AZN
+      # 977, Convertible Mark, BOSNIA AND HERZEGOVINA
+      - BAM
+      # 052, Barbados Dollar, BARBADOS
+      - BBD
+      # 050, Taka, BANGLADESH
+      - BDT
+      # 975, Bulgarian Lev, BULGARIA
+      - BGN
+      # 048, Bahraini Dinar, BAHRAIN
+      - BHD
+      # 108, Burundi Franc, BURUNDI
+      - BIF
+      # 060, Bermudian Dollar, BERMUDA
+      - BMD
+      # 096, Brunei Dollar, BRUNEI DARUSSALAM
+      - BND
+      # 068, Boliviano, BOLIVIA (PLURINATIONAL STATE OF)
+      - BOB
+      # 984, Mvdol, BOLIVIA (PLURINATIONAL STATE OF)
+      - BOV
+      # 986, Brazilian Real, BRAZIL
+      - BRL
+      # 044, Bahamian Dollar, BAHAMAS (THE)
+      - BSD
+      # 064, Ngultrum, BHUTAN
+      - BTN
+      # 072, Pula, BOTSWANA
+      - BWP
+      # 933, Belarusian Ruble, BELARUS
+      - BYN
+      # 084, Belize Dollar, BELIZE
+      - BZD
+      # 124, Canadian Dollar, CANADA
+      - CAD
+      # 976, Congolese Franc, CONGO (THE DEMOCRATIC REPUBLIC OF THE)
+      - CDF
+      # 947, WIR Euro, SWITZERLAND
+      - CHE
+      # 756, Swiss Franc, LIECHTENSTEIN
+      # SWITZERLAND
+      - CHF
+      # 948, WIR Franc, SWITZERLAND
+      - CHW
+      # 990, Unidad de Fomento, CHILE
+      - CLF
+      # 152, Chilean Peso, CHILE
+      - CLP
+      # 156, Yuan Renminbi, CHINA
+      - CNY
+      # 170, Colombian Peso, COLOMBIA
+      - COP
+      # 970, Unidad de Valor Real, COLOMBIA
+      - COU
+      # 188, Costa Rican Colon, COSTA RICA
+      - CRC
+      # 931, Peso Convertible, CUBA
+      - CUC
+      # 192, Cuban Peso, CUBA
+      - CUP
+      # 132, Cabo Verde Escudo, CABO VERDE
+      - CVE
+      # 203, Czech Koruna, CZECHIA
+      - CZK
+      # 262, Djibouti Franc, DJIBOUTI
+      - DJF
+      # 208, Danish Krone, DENMARK
+      # FAROE ISLANDS (THE)
+      # GREENLAND
+      - DKK
+      # 214, Dominican Peso, DOMINICAN REPUBLIC (THE)
+      - DOP
+      # 012, Algerian Dinar, ALGERIA
+      - DZD
+      # 818, Egyptian Pound, EGYPT
+      - EGP
+      # 232, Nakfa, ERITREA
+      - ERN
+      # 230, Ethiopian Birr, ETHIOPIA
+      - ETB
+      # 978, Euro, ÅLAND ISLANDS
+      # ANDORRA
+      # AUSTRIA
+      # BELGIUM
+      # CROATIA
+      # CYPRUS
+      # ESTONIA
+      # EUROPEAN UNION
+      # FINLAND
+      # FRANCE
+      # FRENCH GUIANA
+      # FRENCH SOUTHERN TERRITORIES (THE)
+      # GERMANY
+      # GREECE
+      # GUADELOUPE
+      # HOLY SEE (THE)
+      # IRELAND
+      # ITALY
+      # LATVIA
+      # LITHUANIA
+      # LUXEMBOURG
+      # MALTA
+      # MARTINIQUE
+      # MAYOTTE
+      # MONACO
+      # MONTENEGRO
+      # NETHERLANDS (THE)
+      # PORTUGAL
+      # RÉUNION
+      # SAINT BARTHÉLEMY
+      # SAINT MARTIN (FRENCH PART)
+      # SAINT PIERRE AND MIQUELON
+      # SAN MARINO
+      # SLOVAKIA
+      # SLOVENIA
+      # SPAIN
+      - EUR
+      # 242, Fiji Dollar, FIJI
+      - FJD
+      # 238, Falkland Islands Pound, FALKLAND ISLANDS (THE) [MALVINAS]
+      - FKP
+      # 826, Pound Sterling, GUERNSEY
+      # ISLE OF MAN
+      # JERSEY
+      # UNITED KINGDOM OF GREAT BRITAIN AND NORTHERN IRELAND (THE)
+      - GBP
+      # 981, Lari, GEORGIA
+      - GEL
+      # 936, Ghana Cedi, GHANA
+      - GHS
+      # 292, Gibraltar Pound, GIBRALTAR
+      - GIP
+      # 270, Dalasi, GAMBIA (THE)
+      - GMD
+      # 324, Guinean Franc, GUINEA
+      - GNF
+      # 320, Quetzal, GUATEMALA
+      - GTQ
+      # 328, Guyana Dollar, GUYANA
+      - GYD
+      # 344, Hong Kong Dollar, HONG KONG
+      - HKD
+      # 340, Lempira, HONDURAS
+      - HNL
+      # 332, Gourde, HAITI
+      - HTG
+      # 348, Forint, HUNGARY
+      - HUF
+      # 360, Rupiah, INDONESIA
+      - IDR
+      # 376, New Israeli Sheqel, ISRAEL
+      - ILS
+      # 356, Indian Rupee, BHUTAN
+      # INDIA
+      - INR
+      # 368, Iraqi Dinar, IRAQ
+      - IQD
+      # 364, Iranian Rial, IRAN (ISLAMIC REPUBLIC OF)
+      - IRR
+      # 352, Iceland Krona, ICELAND
+      - ISK
+      # 388, Jamaican Dollar, JAMAICA
+      - JMD
+      # 400, Jordanian Dinar, JORDAN
+      - JOD
+      # 392, Yen, JAPAN
+      - JPY
+      # 404, Kenyan Shilling, KENYA
+      - KES
+      # 417, Som, KYRGYZSTAN
+      - KGS
+      # 116, Riel, CAMBODIA
+      - KHR
+      # 174, Comorian Franc , COMOROS (THE)
+      - KMF
+      # 408, North Korean Won, KOREA (THE DEMOCRATIC PEOPLE’S REPUBLIC OF)
+      - KPW
+      # 410, Won, KOREA (THE REPUBLIC OF)
+      - KRW
+      # 414, Kuwaiti Dinar, KUWAIT
+      - KWD
+      # 136, Cayman Islands Dollar, CAYMAN ISLANDS (THE)
+      - KYD
+      # 398, Tenge, KAZAKHSTAN
+      - KZT
+      # 418, Lao Kip, LAO PEOPLE’S DEMOCRATIC REPUBLIC (THE)
+      - LAK
+      # 422, Lebanese Pound, LEBANON
+      - LBP
+      # 144, Sri Lanka Rupee, SRI LANKA
+      - LKR
+      # 430, Liberian Dollar, LIBERIA
+      - LRD
+      # 426, Loti, LESOTHO
+      - LSL
+      # 434, Libyan Dinar, LIBYA
+      - LYD
+      # 504, Moroccan Dirham, MOROCCO
+      # WESTERN SAHARA
+      - MAD
+      # 498, Moldovan Leu, MOLDOVA (THE REPUBLIC OF)
+      - MDL
+      # 969, Malagasy Ariary, MADAGASCAR
+      - MGA
+      # 807, Denar, NORTH MACEDONIA
+      - MKD
+      # 104, Kyat, MYANMAR
+      - MMK
+      # 496, Tugrik, MONGOLIA
+      - MNT
+      # 446, Pataca, MACAO
+      - MOP
+      # 929, Ouguiya, MAURITANIA
+      - MRU
+      # 480, Mauritius Rupee, MAURITIUS
+      - MUR
+      # 462, Rufiyaa, MALDIVES
+      - MVR
+      # 454, Malawi Kwacha, MALAWI
+      - MWK
+      # 484, Mexican Peso, MEXICO
+      - MXN
+      # 979, Mexican Unidad de Inversion (UDI), MEXICO
+      - MXV
+      # 458, Malaysian Ringgit, MALAYSIA
+      - MYR
+      # 943, Mozambique Metical, MOZAMBIQUE
+      - MZN
+      # 516, Namibia Dollar, NAMIBIA
+      - NAD
+      # 566, Naira, NIGERIA
+      - NGN
+      # 558, Cordoba Oro, NICARAGUA
+      - NIO
+      # 578, Norwegian Krone, BOUVET ISLAND
+      # NORWAY
+      # SVALBARD AND JAN MAYEN
+      - NOK
+      # 524, Nepalese Rupee, NEPAL
+      - NPR
+      # 554, New Zealand Dollar, COOK ISLANDS (THE)
+      # NEW ZEALAND
+      # NIUE
+      # PITCAIRN
+      # TOKELAU
+      - NZD
+      # 512, Rial Omani, OMAN
+      - OMR
+      # 590, Balboa, PANAMA
+      - PAB
+      # 604, Sol, PERU
+      - PEN
+      # 598, Kina, PAPUA NEW GUINEA
+      - PGK
+      # 608, Philippine Peso, PHILIPPINES (THE)
+      - PHP
+      # 586, Pakistan Rupee, PAKISTAN
+      - PKR
+      # 985, Zloty, POLAND
+      - PLN
+      # 600, Guarani, PARAGUAY
+      - PYG
+      # 634, Qatari Rial, QATAR
+      - QAR
+      # 946, Romanian Leu, ROMANIA
+      - RON
+      # 941, Serbian Dinar, SERBIA
+      - RSD
+      # 643, Russian Ruble, RUSSIAN FEDERATION (THE)
+      - RUB
+      # 646, Rwanda Franc, RWANDA
+      - RWF
+      # 682, Saudi Riyal, SAUDI ARABIA
+      - SAR
+      # 090, Solomon Islands Dollar, SOLOMON ISLANDS
+      - SBD
+      # 690, Seychelles Rupee, SEYCHELLES
+      - SCR
+      # 938, Sudanese Pound, SUDAN (THE)
+      - SDG
+      # 752, Swedish Krona, SWEDEN
+      - SEK
+      # 702, Singapore Dollar, SINGAPORE
+      - SGD
+      # 654, Saint Helena Pound, SAINT HELENA, ASCENSION AND TRISTAN DA CUNHA
+      - SHP
+      # 925, Leone, SIERRA LEONE
+      - SLE
+      # 694, Leone, SIERRA LEONE
+      - SLL
+      # 706, Somali Shilling, SOMALIA
+      - SOS
+      # 968, Surinam Dollar, SURINAME
+      - SRD
+      # 728, South Sudanese Pound, SOUTH SUDAN
+      - SSP
+      # 930, Dobra, SAO TOME AND PRINCIPE
+      - STN
+      # 222, El Salvador Colon, EL SALVADOR
+      - SVC
+      # 760, Syrian Pound, SYRIAN ARAB REPUBLIC
+      - SYP
+      # 748, Lilangeni, ESWATINI
+      - SZL
+      # 764, Baht, THAILAND
+      - THB
+      # 972, Somoni, TAJIKISTAN
+      - TJS
+      # 934, Turkmenistan New Manat, TURKMENISTAN
+      - TMT
+      # 788, Tunisian Dinar, TUNISIA
+      - TND
+      # 776, Pa’anga, TONGA
+      - TOP
+      # 949, Turkish Lira, TÜRKİYE
+      - TRY
+      # 780, Trinidad and Tobago Dollar, TRINIDAD AND TOBAGO
+      - TTD
+      # 901, New Taiwan Dollar, TAIWAN (PROVINCE OF CHINA)
+      - TWD
+      # 834, Tanzanian Shilling, TANZANIA, UNITED REPUBLIC OF
+      - TZS
+      # 980, Hryvnia, UKRAINE
+      - UAH
+      # 800, Uganda Shilling, UGANDA
+      - UGX
+      # 840, US Dollar, AMERICAN SAMOA
+      # BONAIRE, SINT EUSTATIUS AND SABA
+      # BRITISH INDIAN OCEAN TERRITORY (THE)
+      # ECUADOR
+      # EL SALVADOR
+      # GUAM
+      # HAITI
+      # MARSHALL ISLANDS (THE)
+      # MICRONESIA (FEDERATED STATES OF)
+      # NORTHERN MARIANA ISLANDS (THE)
+      # PALAU
+      # PANAMA
+      # PUERTO RICO
+      # TIMOR-LESTE
+      # TURKS AND CAICOS ISLANDS (THE)
+      # UNITED STATES MINOR OUTLYING ISLANDS (THE)
+      # UNITED STATES OF AMERICA (THE)
+      # VIRGIN ISLANDS (BRITISH)
+      # VIRGIN ISLANDS (U.S.)
+      - USD
+      # 997, US Dollar (Next day), UNITED STATES OF AMERICA (THE)
+      - USN
+      # 940, Uruguay Peso en Unidades Indexadas (UI), URUGUAY
+      - UYI
+      # 858, Peso Uruguayo, URUGUAY
+      - UYU
+      # 927, Unidad Previsional, URUGUAY
+      - UYW
+      # 860, Uzbekistan Sum, UZBEKISTAN
+      - UZS
+      # 926, Bolívar Soberano, VENEZUELA (BOLIVARIAN REPUBLIC OF)
+      - VED
+      # 928, Bolívar Soberano, VENEZUELA (BOLIVARIAN REPUBLIC OF)
+      - VES
+      # 704, Dong, VIET NAM
+      - VND
+      # 548, Vatu, VANUATU
+      - VUV
+      # 882, Tala, SAMOA
+      - WST
+      # 950, CFA Franc BEAC, CAMEROON
+      # CENTRAL AFRICAN REPUBLIC (THE)
+      # CHAD
+      # CONGO (THE)
+      # EQUATORIAL GUINEA
+      # GABON
+      - XAF
+      # 951, East Caribbean Dollar, ANGUILLA
+      # ANTIGUA AND BARBUDA
+      # DOMINICA
+      # GRENADA
+      # MONTSERRAT
+      # SAINT KITTS AND NEVIS
+      # SAINT LUCIA
+      # SAINT VINCENT AND THE GRENADINES
+      - XCD
+      # 960, SDR (Special Drawing Right), INTERNATIONAL MONETARY FUND (IMF) 
+      - XDR
+      # 952, CFA Franc BCEAO, BENIN
+      # BURKINA FASO
+      # CÔTE D'IVOIRE
+      # GUINEA-BISSAU
+      # MALI
+      # NIGER (THE)
+      # SENEGAL
+      # TOGO
+      - XOF
+      # 953, CFP Franc, FRENCH POLYNESIA
+      # NEW CALEDONIA
+      # WALLIS AND FUTUNA
+      - XPF
+      # 994, Sucre, SISTEMA UNITARIO DE COMPENSACION REGIONAL DE PAGOS SUCRE
+      - XSU
+      # 965, ADB Unit of Account, MEMBER COUNTRIES OF THE AFRICAN DEVELOPMENT BANK GROUP
+      - XUA
+      # 886, Yemeni Rial, YEMEN
+      - YER
+      # 710, Rand, LESOTHO
+      # NAMIBIA
+      # SOUTH AFRICA
+      - ZAR
+      # 967, Zambian Kwacha, ZAMBIA
+      - ZMW
+      # 932, Zimbabwe Dollar, ZIMBABWE
+      - ZWL
+  Currency:
+    description: >-
+      Currency object containing the currency code and the accuracy of the minor
+      unit according to ISO 4217.
+    type: object
+    additionalProperties: false
+    properties:
+      code:
+        description: >-
+          Currency code.
+        type: string
+        $ref: /money#/CurrencyCode
+      decimals:
+        description: >-
+          The number of digits after the decimal separator, that are expressed
+          by the minor units of the currency.
+          For example for Euro, Euro cents express 2 digits after the
+          decimal separator.
+          In other words, the price in the main currency units would be the
+          `value * 10^(-decimals)`.
+        type: integer
+        minimum: 0
+        default: 2
+  MoneyAmount:
+    description: >-
+      Money amount is expressed as an amount of minor units of the currency.
+      Example price of 1.23 EUR is expressed as { value: 123 }
+    type: object
+    additionalProperties: false
+    required:
+      - value
+    properties:
+      value:
+        description: >-
+          The amount of minor units of the currency. 
+        type: integer
+  Price:
+    description: >-
+      Price object containing the currency and the value of money.
+    type: object
+    additionalProperties: false
+    required:
+      - currency
+      - value
+    properties:
+      currency:
+        description: >-
+          Currency of the price.
+        type: object
+        $ref: /money#/Currency
+      value:
+        description: >-
+          Value in the minor units of the currency.
+        type: object
+        $ref: /money#/MoneyAmount

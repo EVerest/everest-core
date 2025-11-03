@@ -1,0 +1,60 @@
+name: Feature Request
+description: Thanks for taking the time to fill out this feature request!
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the problem
+      description: What problem is your feature request targeting and why is it a problem? Please describe.
+      placeholder: |
+        A clear and concise description of what the problem is.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: affected-domain
+    attributes:
+      label: EVerest Domain
+      description: Can you specify a specific domain for which the feature is requested? Mark multiple if applicable.
+      options:
+        - Authorization
+        - Charge Control
+        - CHAdeMO
+        - Energy Management
+        - Hardware Drivers
+        - ISO15118
+        - Power Supplies
+        - OCPP
+        - OCPP1.6
+        - OCPP2.0.1
+        - Simulation
+        - SLAC
+        - Compilation
+        - Utility
+        - Testing
+        - Other
+      multiple: true
+    validations:
+      required: true
+
+  - type: textarea
+    id: affected-module
+    attributes:
+      label: Affected EVerest Module
+      description: |
+        Can you specify a module in which this feature shall be implemented? If you are not sure, please leave this field empty.
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe your solution
+      description: Describe the solution you'd like
+      placeholder: |
+        A clear and concise description of what you want to happen.
+
+  - type: textarea
+    id: other
+    attributes:
+      label: Additional context
+      placeholder: Add any other context about the feature request here.

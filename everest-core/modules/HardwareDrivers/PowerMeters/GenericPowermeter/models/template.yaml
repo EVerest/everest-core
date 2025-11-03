@@ -1,0 +1,206 @@
+# (<start_register> of length <num_registers>) * <multiplier> * 10^(<exponent_register>)
+#
+# if <start_register> is "0", then this value does not exist in the powermeter
+#
+# use <multiplier> to manually scale (e.g. set to 0.001 if device returns "kWh", but the parameter is "Wh") and <exponent_register> to scale by device value
+#
+# if <exponent_register> is "0", then no exponent register exists and multiplier needs to be set accordingly
+# 
+# if measuring AC, the first level of registers is always "total/sum" of a certain value and the L1/2/3 registers are for the distinct phases
+# if measuring DC, only use the first level of registers
+energy_Wh_import:
+  start_register: 0
+  function_code_start_reg: 3
+  num_registers: 0
+  multiplier: 0.001
+  exponent_register: 0
+  function_code_exp_reg: 3
+  L1:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L2:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L3:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+energy_Wh_export:
+  start_register: 0
+  function_code_start_reg: 3
+  num_registers: 0
+  multiplier: 0.001
+  exponent_register: 0
+  function_code_exp_reg: 3
+  L1:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L2:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L3:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+power_W:
+  start_register: 0
+  function_code_start_reg: 3
+  num_registers: 0
+  multiplier: 1
+  exponent_register: 0
+  function_code_exp_reg: 3
+  L1:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L2:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L3:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+voltage_V:
+  start_register: 0
+  function_code_start_reg: 3
+  num_registers: 0
+  multiplier: 1
+  exponent_register: 0
+  function_code_exp_reg: 3
+  L1:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L2:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L3:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+reactive_power_VAR:
+  start_register: 0
+  function_code_start_reg: 3
+  num_registers: 0
+  multiplier: 0.001
+  exponent_register: 0
+  function_code_exp_reg: 3
+  L1:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L2:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L3:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+current_A:
+  start_register: 0
+  function_code_start_reg: 3
+  num_registers: 0
+  multiplier: 1
+  exponent_register: 0
+  function_code_exp_reg: 3
+  L1:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L2:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L3:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+frequency_Hz:
+  start_register: 0
+  function_code_start_reg: 3
+  num_registers: 0
+  multiplier: 1
+  exponent_register: 0
+  function_code_exp_reg: 3
+  L1:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L2:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3
+  L3:
+    start_register: 0
+    function_code_start_reg: 3
+    num_registers: 0
+    multiplier: 1
+    exponent_register: 0
+    function_code_exp_reg: 3

@@ -1,0 +1,37 @@
+description: Simple example module written in C++
+provides:
+  example:
+    interface: example
+    description: This implements an example interface that uses multiple framework features
+    config:
+      current:
+        description: The current the physical connector can supply
+        type: number
+        minimum: 1
+        maximum: 60
+      enum_test:
+        description: A config value that tests the enum type
+        type: string
+        enum:
+          - one
+          - two
+          - three
+      enum_test2:
+        description: Another config value that tests the enum type
+        type: integer
+        enum:
+          - 1
+          - 2
+          - 3
+  store:
+    interface: kvs
+    description: This implements the kvs interface, mostly for testing multiple interfaces in one manifest
+requires:
+  kvs:
+    interface: kvs
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Kai-Uwe Hermann
+    - Andreas Heinrich

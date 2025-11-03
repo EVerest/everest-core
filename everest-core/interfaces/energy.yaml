@@ -1,0 +1,17 @@
+description: >-
+  This interface is the internal energy management interface between nodes.
+cmds:
+  enforce_limits:
+    description: The EnergyManager enforces a limit using this command.
+    arguments:
+      value:
+        description: Limit object that will be routed through the tree.
+        type: object
+        $ref: /energy#/EnforcedLimits
+vars:
+  energy_flow_request:
+    description: >-
+      Request energy flow to supply/limit energy import (direction from grid
+      to car) and/or consume/limit energy export (car to grid).
+    type: object
+    $ref: /energy#/EnergyFlowRequest

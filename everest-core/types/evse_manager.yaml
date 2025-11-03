@@ -1,0 +1,587 @@
+description: EVSE manager types
+types:
+  StopTransactionRequest:
+    description: >-
+      Request for a stop transaction containing the reason and an optional
+      id tag
+    type: object
+    required:
+      - reason
+    properties:
+      reason:
+        description: Reason for stopping the transaction
+        type: string
+        $ref: /evse_manager#/StopTransactionReason
+      id_tag:
+        description: Id tag that was used to stop the transaction. Only present if transaction was stopped locally.
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+  StopTransactionReason:
+    description: >-
+      Reason for stopping transaction
+        EmergencyStop: Emergency stop button was used
+        EVDisconnected: Disconnecting of cable, vehicle moved away from inductive charge unit
+        HardReset: A hard reset command was received previously
+        Local: Stopped locally on request of the user at the Charge Point. This is a regular termination of a transaction. Examples: presenting an RFID tag, pressing a button to stop
+        Other: Any other reason
+        PowerLoss: Complete loss of power
+        Reboot: A locally initiated reset/reboot occurred
+        Remote: Stopped remotely on request of the user. This is a regular termination of a transaction. Examples: termination using a smartphone app, exceeding a (non local) prepaid credit
+        SoftReset: A soft reset command was received
+        UnlockCommand: Central System sent an Unlock Connector command
+        DeAuthorized: The transaction was stopped because of the authorization status in a StartTransaction.conf
+        EnergyLimitReached: Maximum energy of charging reached. For example: in a pre-paid charging solution
+        GroundFault: A GroundFault has occurred
+        LocalOutOfCredit: A local credit limit enforced through the Charging Station has been exceeded.
+        MasterPass: The transaction was stopped using a token with a MasterPassGroupId.
+        OvercurrentFault: A larger than intended electric current has occurred
+        PowerQuality: Quality of power too low, e.g. voltage too low/high, phase imbalance, etc.
+        SOCLimitReached: Electric vehicle has reported reaching a locally enforced maximum battery State of Charge (SOC)
+        StoppedByEV: The transaction was stopped by the EV
+        TimeLimitReached: EV charging session reached a locally enforced time limit
+        Timeout: EV not connected within timeout
+        ReqEnergyTransferRejected: OCPP CSMS cannot accept the requested energy transfer type.
+    type: string
+    enum:
+      - EmergencyStop
+      - EVDisconnected
+      - HardReset
+      - Local
+      - Other
+      - PowerLoss
+      - Reboot
+      - Remote
+      - SoftReset
+      - UnlockCommand
+      - DeAuthorized
+      - EnergyLimitReached
+      - GroundFault
+      - LocalOutOfCredit
+      - MasterPass
+      - OvercurrentFault
+      - PowerQuality
+      - SOCLimitReached
+      - StoppedByEV
+      - TimeLimitReached
+      - Timeout
+      - ReqEnergyTransferRejected
+  StartSessionReason:
+    description: >-
+      Reason for session start
+        EVConnected: Session was started because an EV was plugged in
+        Authorized: Session was started because a valid authorization was presented and the EVSE is authorized to start a transaction immediately when an EV is plugged in
+    type: string
+    enum:
+      - EVConnected
+      - Authorized
+  SwitchThreePhasesWhileChargingResult:
+    description: >-
+      Returns success or error code
+        Success: Switching phases was successful
+        Error_NotSupported: Switching phases is not supported
+        Error_NotCharging: EVSE is not charging
+        Error_Hardware: There was a hardware error on switching phases
+    type: string
+    enum:
+      - Success
+      - Error_NotSupported
+      - Error_NotCharging
+      - Error_Hardware
+  SessionEventEnum:
+    description: >-
+      Session Event enum
+        Authorized: Signaled when the EVSE is authorized for charging
+        Deauthorized: Signaled when the EVSE is not authorized for charging (anymore)
+        Enabled: Signaled when the EVSE is enabled (e.g. after an enable command)
+        Disabled: Signaled when the EVSE is disabled (e.g. after a disable command)
+        SessionStarted: Signaled when a session has been started. A session has been started either when an EV is plugged in or the user has been authorized to start a transaction (e.g. after an authorize command)
+        AuthRequired: Signaled when an EVSE needs authorization to start a transaction
+        TransactionStarted: Signaled when a transaction has been started. Transaction starts at the point that all conditions for charging are met: EV is connected and user has been authorized
+        PrepareCharging: EVSE started to prepare for charging. DC: CableCheck, PreCharge, PowerDelivery. AC: wait for the car to proceed to state C/D
+        ChargingStarted: DC: CurrentDemand has started. AC: Auth is ok and car requested power (state C/D)
+        ChargingPausedEV: Signaled when charging is paused by the EV
+        ChargingPausedEVSE: Signaled when charging is paused by the EVSE
+        ChargingResumed: Charging has resumed from a pause
+        StoppingCharging: EVSE has started to stop the charging process. DC: CurrentDemand has finished, now doing WeldingCheck etc, AC: Wait for car to return to state B or A
+        ChargingFinished: Charging is finished. Essentially the same as TransactionFinished, but emitted for clarity
+        TransactionFinished: Signaled when the transaction finished. Transaction finishes at the point where one of the preconditions for charging irrevocably becomes false: When a user swipes to stop the transaction and the stop is authorized.
+        SessionFinished: Session finishes at the point that the EVSE is available again (no cable plugged)
+        ReservationStart: Signaled when a reservation starts
+        ReservationEnd: Signaled when a reservation ends
+        ReplugStarted: Signaled when the EVSE Manager virtually replugs without interrupting the session or transaction
+        ReplugFinished: Signaled when the virtual replug process has finished
+        PluginTimeout: Signaled when an EV has been plugged in but no authorization is present within specified ConnectionTimeout
+        SwitchingPhases: Signaled when the EVSE Manager starts switching phases
+        SessionResumed: Signaled when a session is resumed at startup (e.g. because of previous powerloss)
+    type: string
+    enum:
+      - Authorized
+      - Deauthorized
+      - Enabled
+      - Disabled
+      - SessionStarted
+      - AuthRequired
+      - TransactionStarted
+      - PrepareCharging
+      - ChargingStarted
+      - ChargingPausedEV
+      - ChargingPausedEVSE
+      - WaitingForEnergy
+      - ChargingResumed
+      - StoppingCharging
+      - ChargingFinished
+      - TransactionFinished
+      - SessionFinished
+      - ReservationStart
+      - ReservationEnd
+      - ReplugStarted
+      - ReplugFinished
+      - PluginTimeout
+      - SwitchingPhases
+      - SessionResumed
+  SessionStarted:
+    description: Data for the SessionStarted event
+    type: object
+    additionalProperties: false
+    required:
+      - reason
+      - meter_value
+    properties:
+      reason:
+        description: Reason for session start
+        type: string
+        $ref: /evse_manager#/StartSessionReason
+      id_tag:
+        description: The id tag assigned to this session
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+      meter_value:
+        description: Exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
+      signed_meter_value:
+        description: The signed meter value report of the started session
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      reservation_id:
+        description: Id of the reservation
+        type: integer
+      logging_path:
+        description: >-
+          File system path where additional log files are stored, such as
+          event logs, raw ethernet dumps, ocpp session logs etc.
+          Filenames should start with "incomplete-" when they are not finished yet,
+          this allows other process to wait for the completion after the SessionFinished event.
+        type: string
+  SessionFinished:
+    description: Data for the SessionFinished event
+    type: object
+    additionalProperties: false
+    required:
+      - meter_value
+    properties:
+      meter_value:
+        description: Exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
+  TransactionStarted:
+    description: Data for the TransactionStarted event
+    type: object
+    additionalProperties: false
+    required:
+      - id_tag
+      - meter_value
+    properties:
+      id_tag:
+        description: The id tag assigned to this transaction
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+      meter_value:
+        description: Exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
+      signed_meter_value:
+        description: The signed meter value report of the started transaction
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      reservation_id:
+        description: Id of the reservation
+        type: integer
+  TransactionFinished:
+    description: Data for TransactionFinished event
+    type: object
+    additionalProperties: false
+    required:
+      - meter_value
+    properties:
+      meter_value:
+        description: Transaction finished meter value
+        type: object
+        $ref: /powermeter#/Powermeter
+      start_signed_meter_value:
+        description: The starting signed meter value report of the stopped transaction. If not included in the `signed_meter_value` object, it must be included here.
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      signed_meter_value:
+        description: The signed meter value report of the stopped transaction
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      reason:
+        description: Reason for stopping transaction
+        type: string
+        $ref: /evse_manager#/StopTransactionReason
+      id_tag:
+        description: Id tag that was used to stop the transaction. Only present if transaction was stopped locally.
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+  ChargingStateChangedEvent:
+    description: Context for ChargingStateChanged event
+    type: object
+    additionalProperties: false
+    required:
+      - meter_value
+    properties:
+      meter_value:
+        description: Exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
+  AuthorizationEvent:
+    description: Context for authorization event (Authorized or Deauthorized)
+    type: object
+    additionalProperties: false
+    required:
+      - meter_value
+    properties:
+      meter_value:
+        description: Exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
+  EnableDisableSource:
+    description: >-
+      Source of a Enable or Disable command/event
+    type: object
+    required:
+      - enable_source
+      - enable_state
+      - enable_priority
+    properties:
+      enable_source:
+        description: Specifies the source
+        type: string
+        enum:
+        - Unspecified
+        - LocalAPI
+        - LocalKeyLock
+        - ServiceTechnician
+        - RemoteKeyLock
+        - MobileApp
+        - FirmwareUpdate
+        - CSMS
+      enable_state:
+        description: Specifies the state for this entry
+        type: string
+        enum:
+        - Unassigned
+        - Disable
+        - Enable
+      enable_priority:
+        description: Priority of this entry. The highest priority is 0.
+        type: integer
+        minimum: 0
+        maximum: 10000
+  SessionEvent:
+    description: Emits all events related to sessions
+    type: object
+    additionalProperties: false
+    required:
+      - uuid
+      - event
+      - timestamp
+    properties:
+      uuid:
+        description: >-
+          An EVSE generated UUID for this session, can be used e.g. for
+          database storage.
+        type: string
+      timestamp:
+        description: Session start time in RFC3339 format
+        type: string
+        format: date-time
+      connector_id:
+        description: >-
+          Id of the connector of this EVSE.
+          If the connector_id is not specified, its assumed to be 1
+        type: integer
+      event:
+        description: >-
+          Event enum. For some events an additional object is set, see
+          below.
+        type: string
+        $ref: /evse_manager#/SessionEventEnum
+      session_started:
+        description: data for SessionStarted event
+        type: object
+        $ref: /evse_manager#/SessionStarted
+      session_finished:
+        description: data for the SessionFinished event
+        type: object
+        $ref: /evse_manager#/SessionFinished
+      transaction_started:
+        description: data for TransactionStarted event
+        type: object
+        $ref: /evse_manager#/TransactionStarted
+      transaction_finished:
+        description: >-
+          data for TransactionFinished event that happens when car is plugged
+          out
+        type: object
+        $ref: /evse_manager#/TransactionFinished
+      charging_state_changed_event:
+        description: >-
+          Data for ChargingStateChangedEvent. Shall be set for the following SessionEventEnums:
+          ChargingStarted, ChargingResumed, ChargingPausedEV, Charging
+        type: object
+        $ref: /evse_manager#/ChargingStateChangedEvent
+      authorization_event:
+        description: >-
+          Data for Authorization event. Shall be set for the following SessionEventEnums:
+          Authorized, Deauthorized
+        type: object
+        $ref: /evse_manager#/AuthorizationEvent
+      source:
+        description: >-
+          Additional data for Enabled/Disabled events. Specifies the source of the command that changed the state.
+        type: object
+        $ref: /evse_manager#/EnableDisableSource
+  Limits:
+    description: Limits of this EVSE
+    type: object
+    additionalProperties: false
+    required:
+      - max_current
+      - nr_of_phases_available
+    properties:
+      uuid:
+        description: This module's UUID for global identification
+        type: string
+      max_current:
+        description: Instantaneous maximum current available to car
+        type: number
+      nr_of_phases_available:
+        description: Instantaneous phase count available to car
+        type: integer
+        minimum: 1
+        maximum: 3
+  EVInfo:
+    description: Information about the connected EV if available
+    type: object
+    additionalProperties: false
+    properties:
+      soc:
+        description: State of charge of the vehicle's battery in percent
+        type: number
+        minimum: 0
+        maximum: 100
+      present_voltage:
+        description: Current voltage of the vehicles battery [V]
+        type: number
+      present_current:
+        description: Current current of the vehicles battery [A]
+        type: number
+      target_voltage:
+        description: Target voltage that the vehicle requested [V]
+        type: number
+      target_current:
+        description: Target current that the vehicle requested [A]
+        type: number
+      maximum_current_limit:
+        description: Maximum current that the vehicle supports [A]
+        type: number
+      minimum_current_limit:
+        description: Charging below this limit is not energy efficient [A]
+        type: number
+      maximum_voltage_limit:
+        description: Maximum voltage that the vehicle supports [V]
+        type: number
+      maximum_power_limit:
+        description: Maximum power that the vehicle supports [W]
+        type: number
+      estimated_time_full:
+        description: Estimated time when the vehicle is fully charged
+        type: string
+        format: date-time
+      departure_time:
+        description: Time when the vehicle intends to depart (If set by the user)
+        type: string
+        format: date-time
+      estimated_time_bulk:
+        description: Estimated time when the vehicle finished bulk charging (e.g. 80%)
+        type: string
+        format: date-time
+      evcc_id:
+        description: EVCC ID (typically MAC address)
+        type: string
+        pattern: ^[A-Fa-f0-9]{2}(:[A-Fa-f0-9]{2}){5}$
+      remaining_energy_needed:
+        description: Remaining energy needed to fulfill charging goal [Wh]
+        type: number
+      battery_capacity:
+        description: Vehicle's battery capacity [Wh]
+        type: number
+      battery_full_soc:
+        description: SoC which the vehicle considers fully charged [%]
+        type: number
+        minimum: 0
+        maximum: 100
+      battery_bulk_soc:
+        description: SoC which the vehicle considers bulk charging reached [%]
+        type: number
+        minimum: 0
+        maximum: 100
+      target_energy_request:
+        description: Energy request to fulfil the target SoC from the EV [Wh]
+        type: number
+      max_energy_request:
+        description: Maximum acceptable energy level of the EV [Wh]
+        type: number
+      min_energy_request:
+        description: Energy request to fulfil the minimum SoC [Wh]
+        type: number
+      ac_max_charge_power:
+        description: Ac maximum power supported by the EV [W]
+        type: number
+      ac_min_charge_power:
+        description: Ac minimum power supported by the EV [W]
+        type: number
+      ac_max_discharge_power:
+        description: Ac maximum discharge power supported by the EV [W]
+        type: number
+      ac_min_discharge_power:
+        description: Ac minimum discharge power supported by the EV [W]
+        type: number
+      ac_present_active_power:
+        description: Ac present total active power measured by the EV [W]
+        type: number
+      ac_present_reactive_power:
+        description: Ac present total reactive power measured by the EV [W]
+        type: number
+  CarManufacturer:
+    description: >-
+      Enum type for car manufacturers derived from MAC address.
+      May be different from actual brand, so e.g. Skoda falls under Volkswagen_Group.
+    type: string
+    enum:
+      - VolkswagenGroup
+      - Tesla
+      - Unknown
+  Connector:
+    description: >-
+      Type for a connector which is an independently operated and managed electrical outlet of an EVSE. It corresponds
+      to a single physical connector
+    type: object
+    additionalProperties: false
+    required:
+      - id
+    properties:
+      id:
+        description: Id of the connector. Connectors should be numbered starting with 1 counting upwards
+        type: integer
+        minimum: 1
+      type:
+        description: Type of the connector
+        type: string
+        $ref: /evse_manager#/ConnectorTypeEnum
+  ConnectorTypeEnum:
+    description: >-
+      Type of a physical connector
+      cCCS1: Combined Charging System 1 a.k.a. Combo 1
+      cCCS2: Combined Charging System 2 a.k.a. Combo 2
+      cG105: JARI G105-1993 a.k.a. CHAdeMO
+      cTesla: Tesla Connector
+      cType1: IEC62196-2 Type 1 connector a.k.a. J1772
+      cType2: IEC62196-2 Type 2 connector a.k.a. Mennekes connector
+      s309_1P_16A: 16A 1 phase IEC60309 socket
+      s309_1P_32A: 32A 1 phase IEC60309 socket
+      s309_3P_16A: 16A 3 phase IEC60309 socket
+      s309_3P_32A: 32A 3 phase IEC60309 socket
+      sBS1361: UK domestic socket a.k.a. 13Amp
+      sCEE-7_7: CEE 7/7 16A socket a.k.a Schuko
+      sType2: IEC62196-2 Type 2 socket a.k.a. Mennekes connector
+      sType3: IEC62196-2 Type 2 socket a.k.a. Scame
+      Other1PhMax16A: Other single phase (domestic) sockets not mentioned above, rated at no more than 16A. CEE7/17, AS3112,
+                      NEMA 5-15, NEMA 5-20, JISC8303, TIS166, SI 32, CPCS-CCC, SEV1011, etc
+      Other1PhOver16A: Other single phase sockets not mentioned above (over 16A)
+      Other3Ph: Other 3 phase sockets not mentioned above. NEMA14-30, NEMA14-50.
+      Pan: Pantograph connector
+      wInductive: Wireless inductively coupled connection (generic)
+      wResonant: Wireless resonant coupled connection (generic)
+      Undetermined: Yet to be determined (e.g. before plugged in)
+      Unknown: Unknown
+    type: string
+    enum:
+      - cCCS1
+      - cCCS2
+      - cG105
+      - cTesla
+      - cType1
+      - cType2
+      - s309_1P_16A
+      - s309_1P_32A
+      - s309_3P_16A
+      - s309_3P_32A
+      - sBS1361
+      - sCEE_7_7
+      - sType2
+      - sType3
+      - Other1PhMax16A
+      - Other1PhOver16A
+      - Other3Ph
+      - Pan
+      - wInductive
+      - wResonant
+      - Undetermined
+      - Unknown
+  Evse:
+    description: Type that defines properties of an EVSE including its connectors
+    type: object
+    required:
+      - id
+      - connectors
+    properties:
+      id:
+        description: ID of the EVSE
+        type: integer
+        minimum: 1
+        maximum: 128
+      connectors:
+        description: List of connectors of this EVSE
+        type: array
+        items:
+          description: A single connector
+          type: object
+          $ref: /evse_manager#/Connector
+        minItems: 1
+        maxItems: 128
+  PlugAndChargeConfiguration:
+    description: Configuration for contract authorization
+    type: object
+    properties:
+      pnc_enabled:
+        description: >-
+          If false, contract shall not be present in PaymentOptionList.
+          If true, contract may be present in PaymentOptionList if TLS is used.
+        type: boolean
+      central_contract_validation_allowed:
+        description: Indicates if the contract may be forwarded to and validated by a CSMS in case local validation was not successful
+        type: boolean
+      contract_certificate_installation_enabled:
+        description: Indicates if ISO 15118 contract certificate installation/update is enabled
+        type: boolean
+  UpdateAllowedEnergyTransferModesResult:
+    description: Enum used to indicate whether an UpdateAllowedEnergyTransferModes cmd was successful or not.
+    type: string
+    enum:
+      - Accepted
+      - IncompatibleEnergyTransfer
+      - ServiceRenegotiationFailed
+      - NoHlc

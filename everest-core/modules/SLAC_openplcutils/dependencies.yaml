@@ -1,4 +1,0 @@
----
-open-plc-utils:
-  git: git@github.com:EVerest/ext-open-plc-utils.git
-  git_tag: master

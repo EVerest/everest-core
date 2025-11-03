@@ -1,0 +1,238 @@
+description: >-
+  This interface provides security related functions and access to secure storage that an EVSE needs to provide.
+  This includes the handling of all security related functions specified within OCPP and ISO15118. The modules
+  that implement this interface are responsible for checking the validity period of the leaf certificates and
+  initiate certificate signing request if leaf certificates are about to expire.
+cmds:
+  install_ca_certificate:
+    description: Command to install a new CA certificate
+    arguments:
+      certificate:
+        description: A PEM encoded X.509 certificate.
+        type: string
+      certificate_type:
+        description: Indicates the type of the certificate
+        type: string
+        $ref: /evse_security#/CaCertificateType
+    result:
+      description: Result of the attempt to install a CA certificate
+      type: string
+      $ref: /evse_security#/InstallCertificateResult
+  delete_certificate:
+    description: Command to delete a certificate
+    arguments:
+      certificate_hash_data:
+        description: Indicates the certificate that should be deleted
+        type: object
+        $ref: /evse_security#/CertificateHashData
+    result:
+      description: Result of the attempt to delete a certificate
+      type: string
+      $ref: /evse_security#/DeleteCertificateResult
+  update_leaf_certificate:
+    description: Command to install or update SECC or CSMS leaf certificate
+    arguments:
+      certificate_chain:
+        description: Leaf certificate or certificate chain that should be installed
+        type: string
+      certificate_type:
+        description: Indicates the type of the certificate
+        type: string
+        $ref: /evse_security#/LeafCertificateType
+    result:
+      description: Result of the attempt to install or update a leaf certificate
+      type: string
+      $ref: /evse_security#/InstallCertificateResult
+  verify_certificate:
+    description: Command to verify the given certificate
+    arguments:
+      certificate_chain:
+        description: Leaf certificate or certificate chain that is to be verified
+        type: string
+      certificate_types:
+        description: Indicates the type of the certificate
+        type: array
+        items:
+          minimum: 1
+          type: string
+          $ref: /evse_security#/LeafCertificateType
+    result:
+      description: Result of the verification
+      type: string
+      $ref: /evse_security#/CertificateValidationResult
+  get_installed_certificates:
+    description: Command to retrieve installed certificates of the EVSE
+    arguments:
+      certificate_types:
+        description: Types of certificates to be retrieved
+        type: array
+        items:
+          minimum: 0
+          type: string
+          $ref: /evse_security#/CertificateType
+    result:
+      description: Indicates the result of the command and optional certificate hash data
+      type: object
+      $ref: /evse_security#/GetInstalledCertificatesResult
+  get_v2g_ocsp_request_data:
+    description: >-
+      Command to retrieve the OCSP request data of the V2G certificates. Contains OCSP data for each
+      certificate that is present in the chain (excluding the root).
+    result:
+      description: The OCSP request data of all V2G CA certificates including the Sub CAs (excluding the root)
+      type: object
+      $ref: /evse_security#/OCSPRequestDataList
+  get_mo_ocsp_request_data:
+    description: >-
+        Command to retrieve the OCSP request data of the given MO certificate chain. Contains OCSP data
+        for each certificate that is present in the chain (excluding the root)
+    arguments:
+      certificate_chain:
+        description: Certificate chain for which the OCSP data is retrieved
+        type: string
+    result:
+      description: >-
+          The OCSP request data of the given certificate chain. Contains OCSP data for each
+          certificate in the given chain.
+      type: object
+      $ref: /evse_security#/OCSPRequestDataList
+  update_ocsp_cache:
+    description: Command to update the OCSP cache with the given data
+    arguments:
+      certificate_hash_data:
+        description: Certificate hash data that identifies the certificate for which the cache should be updated
+        type: object
+        $ref: /evse_security#/CertificateHashData
+      ocsp_response:
+        description: OCSPResponse class as defined in IETF RFC 6960. DER and then base64 encoded
+        type: string
+  is_ca_certificate_installed:
+    description: Command that indicates of the given CA certificate type is installed
+    arguments:
+      certificate_type:
+        description: Specifies that CA certificate type
+        type: string
+        $ref: /evse_security#/CaCertificateType
+    result:
+      description: True if CA certificate is installed, else false
+      type: boolean
+  generate_certificate_signing_request:
+    description: Command to generate a certificate signing request for the given use
+    arguments:
+      certificate_type:
+        description: Specifies the leaf certificate type
+        type: string
+        $ref: /evse_security#/LeafCertificateType
+      country:
+        description: Specifies the country name (C) of the certificate
+        type: string
+      organization:
+        description: Specifies the organization name (O) of the certificate
+        type: string
+      common:
+        description: Specifies the common name (CN) of the certificate
+        type: string
+      use_tpm:
+        description: Specifies if the CSR should store the private key on the TPM
+        type: boolean
+    result:
+      description: The certificate signing request in PEM format
+      type: object
+      $ref: /evse_security#/GetCertificateSignRequestResult
+  get_leaf_certificate_info:
+    description: Command to get the paths of the certificate and the respective key
+    arguments:
+      certificate_type:
+        description: Specifies the leaf certificate type
+        type: string
+        $ref: /evse_security#/LeafCertificateType
+      encoding:
+        description: Specifies the encoding of the key
+        type: string
+        $ref: /evse_security#/EncodingFormat
+      include_ocsp:
+        description: Specifies whether per-certificate OCSP data is also requested
+        type: boolean
+    result:
+      description: The response to the requested command
+      type: object
+      $ref: /evse_security#/GetCertificateInfoResult
+  get_all_valid_certificates_info:
+    description:  >-
+        Finds the latest valid leafs, for each root certificate that is present on the filesystem,
+        and returns all the newest valid leafs that are present for different roots
+    arguments:
+      certificate_type:
+        description: Specifies the leaf certificate type
+        type: string
+        $ref: /evse_security#/LeafCertificateType
+      encoding:
+        description: Specifies the encoding of the key
+        type: string
+        $ref: /evse_security#/EncodingFormat
+      include_ocsp:
+        description: Specifies whether per-certificate OCSP data is also requested
+        type: boolean
+    result:
+      description: The response to the requested command
+      type: object
+      $ref: /evse_security#/GetCertificateFullInfoResult
+  get_verify_file:
+    description: Command to get the file path of a CA bundle that can be used for verification
+    arguments:
+      certificate_type:
+        description: Specifies that CA certificate type
+        type: string
+        $ref: /evse_security#/CaCertificateType
+    result:
+      description: The path of the CA bundle file
+      type: string
+  get_verify_location:
+    description: Command to get the file path of the CA root directory that can be used for verification. Will also invoke c_rehash for that directory
+    arguments:
+      certificate_type:
+        description: Specifies that CA certificate type
+        type: string
+        $ref: /evse_security#/CaCertificateType
+    result:
+      description: The path of the CA certificates directory
+      type: string
+  get_leaf_expiry_days_count:
+    description: >-
+      Command to get the days count until the given leaf certificate expires.
+      If no leaf certificate is installed this command will return 0
+    arguments:
+      certificate_type:
+        description: Indicates the type of the certificate
+        type: string
+        $ref: /evse_security#/LeafCertificateType
+    result:
+      description: days count until given leaf certificate expires
+      type: integer
+  verify_file_signature:
+    description: >-
+      Verify the file at the given path using the provided certificate and signature
+    arguments:
+      file_path:
+        description: Path to the file that should be verified
+        type: string
+      signing_certificate:
+        description: >-
+          Certificate with which the file was signed. PEM encoded X.509 certificate
+        type: string
+      signature:
+        description: Base64 encoded file signature
+        type: string
+    result:
+      description: True if verification succeeded, false if not
+      type: boolean
+vars:
+  certificate_store_update:
+    description: >-
+      Variable that indicates that the certificate store has been updated, i.e. either a certificate has been installed or deleted.
+      This is used to notify other modules that the certificate store has changed.
+    type: object
+    $ref: /evse_security#/CertificateStoreUpdate
+
+
+

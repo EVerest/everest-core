@@ -1,0 +1,156 @@
+description: Unit types
+types:
+  SignedMeterValue:
+    description: Representation of a signed meter value
+    type: object
+    additionalProperties: false
+    required:
+      - signed_meter_data
+      - signing_method
+      - encoding_method
+    properties:
+      signed_meter_data:
+        description: Signed meter data (encoded in a string representation with eg. Base64)
+        type: string
+      signing_method:
+        description: Method used to create the signature
+        type: string
+      encoding_method:
+        description: Method used to encode the meter values before signing them
+        type: string
+      public_key:
+        description: Public key (encoded in a string representation with eg. Base64)
+        type: string
+      timestamp:
+        description: Timestamp of measurement
+        type: string
+        format: date-time
+  Current:
+    description: Current in Ampere
+    type: object
+    additionalProperties: false
+    properties:
+      DC:
+        description: DC current
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L1:
+        description: AC L1 value only
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L2:
+        description: AC L2 value only
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L3:
+        description: AC L3 value only
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      N:
+        description: AC Neutral value only
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+  Voltage:
+    description: Voltage in Volt
+    type: object
+    additionalProperties: false
+    properties:
+      DC:
+        description: DC voltage
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L1:
+        description: AC L1 value only
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L2:
+        description: AC L2 value only
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L3:
+        description: AC L3 value only
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+  Frequency:
+    description: "AC only: Frequency in Hertz"
+    type: object
+    additionalProperties: false
+    properties:
+      L1:
+        description: AC L1 value
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L2:
+        description: AC L2 value
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L3:
+        description: AC L3 value
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+  Power:
+    description:
+      Instantaneous power in Watt. Negative values are exported, positive
+      values imported Energy.
+    type: object
+    additionalProperties: false
+    properties:
+      total:
+        description: DC / AC Sum value
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L1:
+        description: AC L1 value only
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L2:
+        description: AC L2 value only
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L3:
+        description: AC L3 value only
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+  Energy:
+    description: Energy in Wh.
+    type: object
+    additionalProperties: false
+    properties:
+      total:
+        description: DC / AC Sum value (which is relevant for billing)
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L1:
+        description: AC L1 value only
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L2:
+        description: AC L2 value only
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L3:
+        description: AC L3 value only
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+  ReactivePower:
+    description: Reactive power VAR
+    type: object
+    additionalProperties: false
+    properties:
+      total:
+        description: VAR total
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L1:
+        description: VAR phase A
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L2:
+        description: VAR phase B
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      L3:
+        description: VAR phase C
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+  

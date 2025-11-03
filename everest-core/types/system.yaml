@@ -1,0 +1,226 @@
+description: EVerest system types
+types:
+  FirmwareUpdateRequest:
+    description: Type defining a Firmware update request
+    type: object
+    additionalProperties: true
+    required:
+      - location
+      - request_id
+    properties:
+      retries:
+        description: >-
+          This specifies how many times the system must try to download
+          the firmware before giving up.
+        type: integer
+        minimum: 1
+      retry_interval_s:
+        description: The interval in seconds after which a retry may be attempted
+        type: integer
+      request_id:
+        description: The Id of this request
+        type: integer
+      location:
+        description: URI defining the origin of the firmware
+        type: string
+      retrieve_timestamp:
+        description: Time when the firmware update shall be retrieved in RFC3339 format
+        type: string
+        format: date-time
+      install_timestamp:
+        description: Time when the firmware update shall be installed in RFC3339 format
+        type: string
+        format: date-time
+      signing_certificate:
+        description: >-
+          Certificate with which the firmware was signed. PEM encoded X.509
+          certificate
+        type: string
+      signature:
+        description: Base64 encoded firmware signature
+        type: string
+  UpdateFirmwareResponse:
+    description: >-
+      Enum for the response of an update_firmware command
+        Accepted: Accepted this firmware update request. This does not mean the firmware update is successful, the system will now start the firmware update process
+        Rejected: Firmware update request rejected
+        AcceptedCanceled: Accepted this firmware update request, but in doing this has cancelled an ongoing firmware update
+        InvalidCertificate: The certificate is invalid
+        RevokedCertificate: Failure end state. The Firmware Signing certificate has been revoked
+    type: string
+    enum:
+      - Accepted
+      - Rejected
+      - AcceptedCanceled
+      - InvalidCertificate
+      - RevokedCertificate
+  UploadLogsRequest:
+    description: Type defining an upload logs request.
+    type: object
+    additionalProperties: true
+    required:
+      - location
+    properties:
+      retries:
+        description: >-
+          This specifies how many the system must try to upload the logs
+          before giving up.
+        type: integer
+        minimum: 1
+      retry_interval_s:
+        description: The interval in seconds after which an upload retry may be attempted
+        type: integer
+      oldest_timestamp:
+        description: >-
+          Oldest timestamp that should be incluced in the log in RFC3339
+          format
+        type: string
+        format: date-time
+      latest_timestamp:
+        description: >-
+          Latest timestamp that should be incluced in the log in RFC3339
+          format
+        type: string
+        format: date-time
+      location:
+        description: >-
+          The URL of the location at the remote system where the log should
+          be stored.
+        type: string
+      type:
+        description: >-
+          The type of the log (e.g. in OCPP there is the SecurityLog and
+          the DiagnosticsLog
+        type: string
+      request_id:
+        description: The id of the request
+        type: integer
+  UploadLogsStatus:
+    description: >-
+      Enum for the upload logs status response
+        Accepted: Request to upload logs has been accepted
+        Rejected: Request to upload logs has been rejected
+        AcceptedCanceled: Accepted this log upload, but in doing this has cancelled an ongoing log file upload
+    type: string
+    enum:
+      - Accepted
+      - Rejected
+      - AcceptedCanceled
+  UploadLogsResponse:
+    description: Response to a upload logs request
+    type: object
+    additionalProperties: false
+    required:
+      - upload_logs_status
+    properties:
+      file_name:
+        description: This contains the name of the log file that will be uploaded.
+        type: string
+      upload_logs_status:
+        description: The log status enum
+        type: string
+        $ref: /system#/UploadLogsStatus
+  LogStatusEnum:
+    description: >-
+      State describing the current status of log upload of the system
+        BadMessage: A badly formatted packet or other protocol incompatibility was detected
+        Idle: The system is not uploading a log file
+        NotSupportedOperation: The server does not support the operation
+        PermissionDenied: Insufficient permissions to perform the operation
+        Uploaded: File has been uploaded successfully
+        UploadFailure: Failed to upload the requested file
+        Uploading: File is being uploaded
+    type: string
+    enum:
+      - BadMessage
+      - Idle
+      - NotSupportedOperation
+      - PermissionDenied
+      - Uploaded
+      - UploadFailure
+      - Uploading
+      - AcceptedCanceled
+  LogStatus:
+    description: Type defining the status of a log upload
+    type: object
+    required:
+      - log_status
+      - request_id
+    properties:
+      log_status:
+        description: State describing the current status of log upload of the system
+        type: string
+        $ref: /system#/LogStatusEnum
+      request_id:
+        description: Id of the request
+        type: integer
+  FirmwareUpdateStatusEnum:
+    description: >-
+      State describing the current download/upload status of a firmware
+      update of the system
+        Downloaded: Intermediate state. New firmware has been downloaded by System
+        DownloadFailed: Failure end state. System failed to download firmware
+        Downloading: Intermediate state. Firmware is being downloaded
+        DownloadScheduled: Intermediate state. Downloading of new firmware has been scheduled
+        DownloadPaused: Intermediate state. Downloading has been paused
+        Idle: System is not performing firmware update related tasks
+        InstallationFailed: Failure end state. Installation of new firmware has failed
+        Installing: Intermediate state. Firmware is being installed
+        Installed: Successful end state. New firmware has successfully been installed in System
+        InstallRebooting: Intermediate state. System is about to reboot to activate new firmware
+        InstallScheduled: Intermediate state. Installation of the downloaded firmware is scheduled to take place on installDateTime
+        InstallVerificationFailed: Failure end state. Verification of the new firmware (e.g. using a checksum or some other means) has failed and installation will not proceed. (Final failure state)
+        InvalidSignature: Failure end state. The firmware signature is not valid
+        SignatureVerified: Intermediate state. Provide signature successfully verified
+    type: string
+    enum:
+      - Downloaded
+      - DownloadFailed
+      - Downloading
+      - DownloadScheduled
+      - DownloadPaused
+      - Idle
+      - InstallationFailed
+      - Installing
+      - Installed
+      - InstallRebooting
+      - InstallScheduled
+      - InstallVerificationFailed
+      - InvalidSignature
+      - SignatureVerified
+  FirmwareUpdateStatus:
+    description: Type defining the status of a firmware update
+    type: object
+    required:
+      - firmware_update_status
+      - request_id
+    properties:
+      firmware_update_status:
+        description: >-
+          State describing the current status of firmware update of the
+          system
+        type: string
+        $ref: /system#/FirmwareUpdateStatusEnum
+      request_id:
+        description: Id of the request
+        type: integer
+  ResetType:
+    description: Enum defining the type of a reset
+    type: string
+    enum:
+      - Soft
+      - Hard
+      - NotSpecified
+  BootReason:
+    description: Enum defining the boot reason
+    type: string
+    enum:
+      - ApplicationReset
+      - FirmwareUpdate
+      - LocalReset
+      - PowerUp
+      - RemoteReset
+      - ScheduledReset
+      - Triggered
+      - Unknown
+      - Watchdog

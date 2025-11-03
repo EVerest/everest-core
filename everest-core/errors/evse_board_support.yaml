@@ -1,0 +1,60 @@
+description: >-
+  Errors for the evse_board_support interface.
+  All error codes that begin with MREC need to be implemented to fulfill the Minimum Required Error Codes defined by the ChargeX consortium:
+
+  https://inl.gov/content/uploads/2023/07/ChargeX_MREC_Rev5_09.12.23.pdf
+errors:
+  - name: DiodeFault
+    description: The CP diode in the EV is shorted.
+  - name: VentilationNotAvailable
+    description: EV requested state D but no ventilation is available.
+  - name: BrownOut
+    description: The hardware/MCU detected a brown out.
+  - name: EnergyManagement
+    description: Energy could not be delivered because an (external) energy management failed.
+  - name: PermanentFault
+    description: The EVSE is permanently broken and requires repair.
+  - name: MREC2GroundFailure
+    description: Ground fault circuit interrupter has been activated.
+  - name: MREC3HighTemperature
+    description: High temperature inside the EVSE is derating power delivery.
+  - name: MREC4OverCurrentFailure
+    description: Over current protection device has tripped.
+  - name: MREC5OverVoltage
+    description: Input voltage to the vehicle has risen above an acceptable level.
+  - name: MREC6UnderVoltage
+    description: Input voltage to the vehicle has dropped below an acceptable level.
+  - name: MREC8EmergencyStop
+    description: Emergency stop is pressed by the user (required if equipped).
+  - name: MREC10InvalidVehicleMode
+    description: The vehicle is in an invalid mode for charging (Reported by IEC stack)
+  - name: MREC14PilotFault
+    description: The control pilot voltage is out of range.
+  - name: MREC15PowerLoss
+    description: The EVSE is unable to supply any power due to mains failure
+  - name: MREC17EVSEContactorFault
+    description: Contactors fail to open or close on EVSE's side. May also include welding related errors.
+  - name: MREC18CableOverTempDerate
+    description: Temperature of charging cable or connector assembly is too high, resulting in reduced power operation.
+  - name: MREC19CableOverTempStop
+    description: Temperature of charging cable or connector assembly is too high, resulting in a stopped charging session.
+  - name: MREC20PartialInsertion
+    description: Cable latch is raised due to incomplete insertion into the vehicle charging port.
+  - name: MREC23ProximityFault
+    description: The proximity voltage is out of range.
+  - name: MREC24ConnectorVoltageHigh
+    description: The output voltage of EVSE is high before charging starts or after charging ends.
+  - name: MREC25BrokenLatch
+    description: The latch on the connector is broken.
+  - name: MREC26CutCable
+    description: The output cable has been severed from the EVSE.
+  - name: VendorError
+    description: >-
+      Vendor specific error code. Will stop charging session.
+  - name: VendorWarning
+    description: >-
+      Vendor specific error code. Charging may continue.
+  - name: CommunicationFault
+    description: >-
+      The communication to the hardware or underlying driver is lost or has errors.
+

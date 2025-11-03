@@ -1,0 +1,23 @@
+description: SIL Implementation of an Isolation Monitoring Device (IMD) for DC charging
+provides:
+  main:
+    interface: isolation_monitor
+    description: Main interface for the IMD
+    config:
+      resistance_F_Ohm:
+        description: Resistance to return for the simulated measurements in Ohm
+        type: number
+        default: 900000
+      interval:
+        description: Measurement update interval in milliseconds
+        type: integer
+        default: 1000
+      selftest_success:
+        description: Set to true for successful self testing, false for fault
+        type: boolean
+        default: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Fabian Hartung (chargebyte GmbH)
+    - Cornelius Claussen (Pionix GmbH)

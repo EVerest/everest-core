@@ -1,0 +1,16 @@
+cc_library(
+    name = "everest-sqlite",
+    srcs = glob([
+        "lib/**/*.cpp",
+    ]),
+    hdrs = glob([
+        "include/**/*.hpp",
+    ]),
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@everest-framework//:framework",
+    ],
+    copts = ["-std=c++17"],
+)
+

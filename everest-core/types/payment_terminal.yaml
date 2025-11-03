@@ -1,0 +1,48 @@
+description: >-
+  Types needed for payment terminal - bookkeeping bank transactions, card types
+types:
+  BankSessionToken:
+    description: >-
+      In some setups the unique token needs to be provided in the bank statement.
+    type: object
+    additionalProperties: false
+    properties:
+      token:
+        description: >-
+          Arbitrary token string. Typically short string that is printable case insensitive
+          ascii.
+        type: string
+  BankTransactionSummary:
+    description: >-
+      Summary of a bank transaction. Depends on bank and the backend. Therefore
+      it's mostly opaque data at the moment.
+    type: object
+    additionalProperties: false
+    properties:
+      session_token:
+        description: >-
+          Token to identify the session. This token can be used to download the
+          invoices.
+        type: object
+        $ref: /payment_terminal#/BankSessionToken
+      transaction_data:
+        description: >-
+          Arbitrary data that is needed to identify the transaction. This is
+          mostly opaque data at the moment.
+        type: string
+  CardType:
+    description: types of cards for the payment terminal
+    type: string
+    enum:
+        - BankCard
+        - RfidCard
+  RejectionReason:
+    description: Indicates the reason why the card was rejected
+    type: string
+    enum:
+        - PinRequired
+        - InsufficientFunds
+        - CardNotSupported
+        - Aborted
+        - Timeout
+        - Unknown

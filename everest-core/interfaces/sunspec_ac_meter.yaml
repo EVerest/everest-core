@@ -1,0 +1,14 @@
+description: Get sunspec ac meter measurement
+cmds:
+  get_sunspec_ac_meter_value:
+    description: Returns a sunspec ac meter model
+    arguments:
+      auth_token:
+        description: Auth token
+        type: string
+        minLength: 1
+        maxLength: 20
+    result:
+      description: Sunspec ac meter model
+      type: object
+      $ref: /sunspec_ac_meter#/Result

@@ -1,0 +1,8 @@
+settings:
+  telemetry_enabled: true
+active_modules:
+  lem_dcbm_controller:
+    config_module:
+      ip_address: "localhost"
+      port: 8000
+    module: LemDCBM400600

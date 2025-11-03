@@ -1,0 +1,150 @@
+active_modules:
+  connector_1:
+    module: EvseManager
+    config_module:
+      connector_id: 1
+      has_ventilation: true
+      evse_id: "1"
+      session_logging: true
+      session_logging_xml: false
+      ac_hlc_enabled: false
+      ac_hlc_use_5percent: false
+      ac_enforce_hlc: false
+    connections:
+      bsp:
+        - module_id: yeti_driver_1
+          implementation_id: board_support
+      powermeter_grid_side:
+        - module_id: yeti_driver_1
+          implementation_id: powermeter
+  connector_2:
+    module: EvseManager
+    config_module:
+      connector_id: 2
+      has_ventilation: true
+      evse_id: "2"
+      session_logging: true
+      session_logging_xml: false
+      ac_hlc_enabled: false
+      ac_hlc_use_5percent: false
+      ac_enforce_hlc: false
+    connections:
+      bsp:
+        - module_id: yeti_driver_2
+          implementation_id: board_support
+      powermeter_grid_side:
+        - module_id: yeti_driver_2
+          implementation_id: powermeter
+  yeti_driver_1:
+    module: YetiSimulator
+    config_module:
+      connector_id: 1
+  yeti_driver_2:
+    module: YetiSimulator
+    config_module:
+      connector_id: 2
+  car_simulator_1:
+    module: EvManager
+    config_module:
+      connector_id: 1
+      auto_enable: true
+      auto_exec: false
+      auto_exec_commands: sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
+    connections:
+      ev_board_support:
+        - module_id: yeti_driver_1
+          implementation_id: ev_board_support
+  car_simulator_2:
+    module: EvManager
+    config_module:
+      connector_id: 2
+      auto_enable: true
+      auto_exec: false
+    connections:
+      ev_board_support:
+        - module_id: yeti_driver_2
+          implementation_id: ev_board_support
+  ocpp:
+    module: OCPP201
+    config_module:
+      EnableExternalWebsocketControl: true
+    connections:
+      evse_manager:
+        - module_id: connector_1
+          implementation_id: evse
+        - module_id: connector_2
+          implementation_id: evse
+      auth:
+        - module_id: auth
+          implementation_id: main
+      system:
+        - module_id: system
+          implementation_id: main
+      security:
+        - module_id: evse_security
+          implementation_id: main
+      reservation:
+        - module_id: auth
+          implementation_id: reservation
+  persistent_store:
+    module: PersistentStore
+    config_module:
+      sqlite_db_file_path: persistent_store.db
+  evse_security:
+    module: EvseSecurity
+    config_module:
+      csms_ca_bundle: "ca/csms/CSMS_ROOT_CA.pem"
+      csms_leaf_cert_directory: "client/csms"
+      csms_leaf_key_directory: "client/csms"
+      mf_ca_bundle: "ca/mf/MF_ROOT_CA.pem"
+      mo_ca_bundle: "ca/mo/MO_ROOT_CA.pem"
+      v2g_ca_bundle: "ca/v2g/V2G_ROOT_CA.pem"
+      secc_leaf_cert_directory: "client/cso"
+      secc_leaf_key_directory: "client/cso"
+      private_key_password: "123456"
+  auth:
+    module: Auth
+    config_module:
+      connection_timeout: 30
+      selection_algorithm: FindFirst
+    connections:
+      token_provider:
+        - module_id: ocpp
+          implementation_id: auth_provider
+        - module_id: token_provider_manual
+          implementation_id: main
+      token_validator:
+        - module_id: ocpp
+          implementation_id: auth_validator
+      evse_manager:
+        - module_id: connector_1
+          implementation_id: evse
+        - module_id: connector_2
+          implementation_id: evse
+  token_provider_manual:
+    module: DummyTokenProviderManual
+  energy_manager:
+    module: EnergyManager
+    connections:
+      energy_trunk:
+        - module_id: grid_connection_point
+          implementation_id: energy_grid
+  grid_connection_point:
+    module: EnergyNode
+    config_module:
+      fuse_limit_A: 40.0
+      phase_count: 3
+    connections:
+      price_information: []
+      energy_consumer:
+        - module_id: connector_1
+          implementation_id: energy_grid
+        - module_id: connector_2
+          implementation_id: energy_grid
+      powermeter:
+        - module_id: yeti_driver_1
+          implementation_id: powermeter
+  system:
+    module: System
+
+x-module-layout: {}
