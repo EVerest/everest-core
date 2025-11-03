@@ -1,3 +1,5 @@
+:orphan:
+
 .. _everest_modules_handwritten_error_history_consumer_API:
 
 *******************************************

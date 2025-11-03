@@ -1,3 +1,5 @@
+:orphan:
+
 .. _everest_modules_handwritten_power_supply_DC_API:
 
 *******************************************

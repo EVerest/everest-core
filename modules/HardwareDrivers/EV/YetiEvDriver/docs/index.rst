@@ -1,3 +1,5 @@
+:orphan:
+
 .. _everest_modules_handwritten_YetiEvDriver:
 
 ..  This file is a placeholder for optional multiple files
