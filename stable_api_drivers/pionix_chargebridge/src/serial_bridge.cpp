@@ -36,7 +36,10 @@ serial_bridge::serial_bridge(serial_bridge_config const& config) :
     });
 
     m_tcp.set_error_handler([this, identifier](auto id, auto const& msg) {
-        utilities::print_error(identifier, "SERIAL/TCP", id) << msg << std::endl;
+        if (m_tcp_last_error_id not_eq id) {
+            utilities::print_error(identifier, "SERIAL/TCP", id) << msg << std::endl;
+            m_tcp_last_error_id = id;
+        }
         if (id not_eq 0) {
             m_tcp.reset();
         }

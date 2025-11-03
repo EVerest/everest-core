@@ -33,6 +33,7 @@ private:
     everest::lib::io::serial::event_pty m_pty;
     everest::lib::io::tcp::tcp_client m_tcp;
     utilities::symlink m_symlink;
+    int m_tcp_last_error_id = -1;
 //    everest::lib::io::event::timer_fd m_timer;
 };
 
