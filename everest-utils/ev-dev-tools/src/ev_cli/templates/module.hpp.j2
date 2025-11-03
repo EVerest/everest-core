@@ -1,0 +1,89 @@
+{% from "helper_macros.j2" import print_template_info, insert_block, cpp_type %}
+#ifndef {{ info.hpp_guard }}
+#define {{ info.hpp_guard }}
+
+{{ print_template_info('0.0.1', 'marked regions will be kept') }}
+
+#include "{{ info.ld_ev_header }}"
+
+{% for impl in provides %}
+{% if loop.first %}
+// headers for provided interface implementations
+{% endif %}
+#include <{{ impl.base_class_header }}>
+{% endfor %}
+
+{% for interface in requires %}
+{% if loop.first %}
+// headers for required interface implementations
+{% endif %}
+#include <{{ interface.exports_header }}>
+{% endfor %}
+
+{{ insert_block(info.blocks.add_headers) }}
+
+namespace module {
+
+struct Conf {
+    {% for item in info.module_config %}
+    {{ cpp_type(item) }} {{ item.name }};
+    {% endfor %}
+};
+
+class {{ info.class_name }} : public Everest::ModuleBase {
+public:
+    {{ info.class_name }}() = delete;
+    {{ info.class_name }}(
+        {% if info.enable_external_mqtt %}
+        Everest::MqttProvider& mqtt_provider,
+        {% endif %}
+        {% for impl in provides %}
+        std::unique_ptr<{{ impl.base_class }}> p_{{ impl.id }},
+        {% endfor %}
+        {% for interface in requires %}
+        std::unique_ptr<{{ interface.class_name }}> r_{{ interface.id }},
+        {% endfor %}
+        Conf& config
+    ) :
+        {% if info.enable_external_mqtt %}
+        mqtt(mqtt_provider),
+        {% endif %}
+        {% for impl in provides %}
+        p_{{ impl.id }}(std::move(p_{{ impl.id }})),
+        {% endfor %}
+        {% for interface in requires %}
+        r{{ 'o' if interface.optional }}_{{ interface.id }}(std::move(r_{{ interface.id }})),
+        {% endfor %}
+        config(config)
+    {};
+
+    const Conf& config;
+    {% if info.enable_external_mqtt %}
+    Everest::MqttProvider& mqtt;
+    {% endif %}
+    {% for impl in provides %}
+    const std::unique_ptr<{{ impl.base_class }}> p_{{ impl.id }};
+    {% endfor %}
+    {% for interface in requires %}
+    const std::unique_ptr<{{ interface.class_name }}> r{{ 'o' if interface.optional }}_{{ interface.id }};
+    {% endfor %}
+
+    {{ insert_block(info.blocks.public_defs, indent=4) }}
+
+protected:
+    {{ insert_block(info.blocks.protected_defs, indent=4) }}
+
+private:
+    friend class LdEverest;
+    void init();
+    void ready();
+
+    {{ insert_block(info.blocks.private_defs, indent=4) }}
+
+};
+
+{{ insert_block(info.blocks.after_class) }}
+
+} // namespace module
+
+#endif // {{ info.hpp_guard }}
