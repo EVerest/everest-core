@@ -1,0 +1,5 @@
+{
+    "valid_manifest_missing_interface": {
+		"module": "TESTValidManifestMissingInterface"
+	}
+}
