@@ -60,6 +60,7 @@ struct Conf {
     int RequestCompositeScheduleDurationS;
     std::string RequestCompositeScheduleUnit;
     int DelayOcppStart;
+    int ResetStopDelay;
 };
 
 class OCPP201 : public Everest::ModuleBase {
