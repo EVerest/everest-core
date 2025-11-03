@@ -1,0 +1,11 @@
+description: ModuleB
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - author@example.com
+provides:
+  impl1:
+    description: test description
+    interface: test_interface_cmd_var
+requires: {}
+config: {}

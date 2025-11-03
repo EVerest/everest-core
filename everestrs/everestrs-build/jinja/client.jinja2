@@ -1,0 +1,121 @@
+/// {{trait.description | replace("\n", " ")}}
+pub(crate) trait {{trait.name | title}}ClientSubscriber: Sync + Send {
+{% for var in trait.vars %}
+    fn on_{{ var.name | snake }}(&self, context: &Context, value: {{ var.data_type.name }});
+{% endfor %}
+
+{%- if trait.errors %}
+    fn on_error_raised(&self, context: &Context, error: crate::generated::errors::{{ trait.name | snake }}::Error);
+
+    fn on_error_cleared(&self, context: &Context, error: crate::generated::errors::{{ trait.name | snake }}::Error);
+{%- endif %}
+
+}
+
+fn dispatch_variable_to_{{ trait.name | snake }}(
+   context: &Context,
+   client_subscriber: &dyn {{trait.name | title}}ClientSubscriber,
+   name: &str,
+   value: __serde_json::Value,
+) -> ::everestrs::Result<()> {
+    match name {
+{%- for var in trait.vars %}
+        "{{ var.name }}" => {
+            let v: {{ var.data_type.name }} = __serde_json::from_value(value)
+                .map_err(|e| ::everestrs::Error::MessageParsingError(format!("Failed to deserialize variable `{{ var.name }}`: {e:?})")))?;
+            client_subscriber.on_{{ var.name | snake }}(context, v);
+            Ok(())
+        },
+{%- endfor %}
+        other => Err(::everestrs::Error::MessageParsingError(format!("Unknown variable {other} received.").to_string())),
+   }
+}
+
+fn dispatch_error_to_{{ trait.name | snake }} (
+    context: &Context,
+    client_subscriber: &dyn {{ trait.name | title }}ClientSubscriber,
+    error: ::everestrs::ErrorType,
+    raised: bool
+) {
+{%- if trait.errors %}
+    // The type is crate::generated::errors::{{ trait.name | snake }}::Error
+    let Ok(v) = __serde_yaml::from_str(&error.error_type) else {
+        everestrs::log::error!("Failed to deserialize error `{}`", error.error_type);
+        return;
+    };
+    if raised {
+        client_subscriber.on_error_raised(context, v);
+    } else {
+        client_subscriber.on_error_cleared(context, v);
+    }
+{%- endif %}
+}
+
+pub(crate) mod __mockall_{{trait.name | snake }}_client {
+
+use super::__serde_json;
+
+#[derive(Clone)]
+pub(crate) struct {{trait.name | title }}ClientPublisher {
+   pub(super) implementation_id: &'static str,
+   pub(super) runtime: ::std::pin::Pin<::std::sync::Arc<::everestrs::Runtime>>,
+   pub(super) index: usize,
+}
+
+impl {{trait.name | title }}ClientPublisher {
+{%- for cmd in trait.cmds %}
+   /// {{cmd.description | replace("\n", " ")}}
+   ///
+   {%- for arg in cmd.arguments %}
+   /// `{{arg.name}}`: {{arg.description | replace("\n", " ")}}
+   {%- endfor %}
+   {% if cmd.result -%}
+   ///
+   /// Returns: {{cmd.result.description | replace("\n", " ")}}
+   {% endif -%}
+   pub(crate) fn {{cmd.name | identifier}}(&self,
+   {%- for arg in cmd.arguments %}
+      {{arg.name | identifier }}: {{arg.data_type.name}},
+   {%- endfor %}
+   ) -> ::everestrs::Result<{%- if cmd.result -%}
+      {{cmd.result.data_type.name}}
+   {%- else -%}
+      ()
+   {%- endif -%}
+      > {
+        let args = __serde_json::json!({
+{%- for arg in cmd.arguments %}
+            "{{arg.name}}": {{arg.name | identifier}},
+{%- endfor %}
+        });
+        self.runtime.call_command(self.implementation_id, self.index, "{{ cmd.name }}", &args)
+      }
+{% endfor %}
+
+}
+
+#[cfg(feature="mockall")]
+mockall::mock!{
+   pub(crate) {{trait.name | title }}ClientPublisher {
+{%- for cmd in trait.cmds %}
+   pub(crate) fn {{cmd.name | identifier}}(&self,
+   {%- for arg in cmd.arguments %}
+      {{arg.name | identifier }}: {{arg.data_type.name}},
+   {%- endfor %}
+   ) -> ::everestrs::Result<{%- if cmd.result -%}
+      {{cmd.result.data_type.name}}
+   {%- else -%}
+      ()
+   {%- endif -%}
+      >;
+{% endfor %}
+   }
+
+   impl Clone for {{trait.name | title }}ClientPublisher {
+      fn clone(&self) -> Self;
+   }
+}
+
+}
+#[cfg_attr(feature="mockall", mockall_double::double)]
+pub(crate) use __mockall_{{trait.name | snake }}_client::{{trait.name | title }}ClientPublisher;
