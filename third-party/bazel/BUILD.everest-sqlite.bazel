@@ -1,0 +1,15 @@
+cc_library(
+    name = "everest-sqlite",
+    srcs = glob(["lib/everest/database/sqlite/*.cpp"]),
+    hdrs = glob(["include/**/*.hpp"]),
+    deps = [
+        "@sqlite3",
+        "@com_github_nlohmann_json//:json",
+        "@com_github_everest_liblog//:liblog",
+    ],
+    visibility = [
+        "//visibility:public",
+    ],
+    strip_include_prefix = "include",
+    copts = ["-std=c++17"],
+)

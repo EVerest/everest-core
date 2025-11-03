@@ -1,30 +1,45 @@
-add_executable(main main.cpp)
-
-target_link_libraries(main
+add_executable(manager)
+target_sources(manager
     PRIVATE
-        everest ${CMAKE_DL_LIBS}
-        everest::log
-        Boost::thread
-        Boost::program_options
-        mqttc
+        system_unix.cpp
+        manager.cpp
 )
-
-# needs c++ 14
-target_compile_features(main PRIVATE cxx_std_14)
-
-add_executable(manager manager.cpp)
+# generate version information header
+evc_generate_version_information()
+target_include_directories(manager
+    PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}/generated/include
+)
 
 target_link_libraries(manager
     PRIVATE
-        everest ${CMAKE_DL_LIBS}
-        everest::log
-        Boost::thread
+        everest::framework
         Boost::program_options
-        mqttc
+        PkgConfig::libcap
 )
 
-# needs c++ 14
-target_compile_features(manager PRIVATE cxx_std_14)
+if (EVEREST_ENABLE_ADMIN_PANEL_BACKEND)
+    target_link_libraries(manager
+        PRIVATE
+            controller-ipc
+    )
 
-install(TARGETS main manager
-        RUNTIME)
+    target_compile_definitions(manager PRIVATE ENABLE_ADMIN_PANEL)
+
+    add_subdirectory(controller)
+endif ()
+
+target_compile_options(manager PRIVATE ${COMPILER_WARNING_OPTIONS})
+
+target_compile_features(manager PRIVATE cxx_std_17)
+
+install(
+    TARGETS manager
+    RUNTIME
+)
+
+# FIXME (aw): the www folder currently always needs to exist, so that the manager does not complain
+install(
+    DIRECTORY # intentionally left blank
+    DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/everest/www"
+)

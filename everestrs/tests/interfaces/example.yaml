@@ -1,0 +1,20 @@
+description: >-
+  This interface defines an example interface that uses multiple framework
+  features
+cmds:
+  uses_something:
+    description: This command checks if something is stored under a given key
+    arguments:
+      key:
+        description: Key to check the existence for
+        type: string
+        pattern: ^[A-Za-z0-9_.]+$
+    result:
+      description: Returns 'True' if something was stored for this key
+      type: boolean
+vars:
+  max_current:
+    description: Provides maximum current of this supply in ampere
+    type: number
+errors:
+  - reference: /errors/example_errors

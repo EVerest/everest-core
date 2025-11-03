@@ -1,125 +1,141 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef UTILS_CONFIG_HPP
 #define UTILS_CONFIG_HPP
 
-#include <regex>
+#include <filesystem>
+#include <list>
+#include <optional>
 #include <set>
 #include <string>
+#include <tuple>
+#include <unordered_map>
 
-#include <boost/filesystem.hpp>
 #include <nlohmann/json-schema.hpp>
 
+#include <utils/config/mqtt_settings.hpp>
+#include <utils/config/settings.hpp>
+#include <utils/config/storage_userconfig.hpp>
+#include <utils/config_cache.hpp>
+
+#include <utils/error.hpp>
+#include <utils/error/error_type_map.hpp>
+#include <utils/module_config.hpp>
 #include <utils/types.hpp>
 
 namespace Everest {
-using json = nlohmann::json;
-using json_uri = nlohmann::json_uri;
-using json_validator = nlohmann::json_schema::json_validator;
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
+
+using everest::config::ModuleConfig;
+using everest::config::ModuleConfigurations;
+
+struct ManagerSettings;
+struct RuntimeSettings;
 
 ///
 /// \brief A structure that contains all available schemas
 ///
-struct schemas {
-    json config;     ///< The config schema
-    json manifest;   ///< The manifest scheme
-    json interface;  ///< The interface schema
+struct Schemas {
+    nlohmann::json config;                 ///< The config schema
+    nlohmann::json manifest;               ///< The manifest scheme
+    nlohmann::json interface;              ///< The interface schema
+    nlohmann::json type;                   ///< The type schema
+    nlohmann::json error_declaration_list; ///< The error-declaration-list schema
+};
+
+struct Validators {
+    nlohmann::json_schema::json_validator config;
+    nlohmann::json_schema::json_validator manifest;
+    nlohmann::json_schema::json_validator type;
+    nlohmann::json_schema::json_validator interface;
+    nlohmann::json_schema::json_validator error_declaration_list;
+};
+
+struct SchemaValidation {
+    Schemas schemas;
+    Validators validators;
+};
+
+struct ImplementationInfo {
+    std::string module_id;
+    std::string module_name;
+    std::string impl_id;
+    std::string impl_intf;
 };
 
 ///
-/// \brief Contains config and manifest parsing
+/// \brief A simple json schema loader that uses the builtin draft7 schema of
+/// the json schema validator when it encounters it, throws an exception
+/// otherwise
+void loader(const nlohmann::json_uri& uri, nlohmann::json& schema);
+
 ///
-class Config {
-private:
-    std::string schemas_dir;
-    std::string modules_dir;
-    std::string interfaces_dir;
+/// \brief An extension to the default format checker of the json schema
+/// validator supporting uris
+void format_checker(const std::string& format, const std::string& value);
 
-    json main;
+///
+/// \brief loads and validates a json schema at the provided \p path
+///
+/// \returns the loaded json schema as a json object as well as a related schema validator
+std::tuple<nlohmann::json, nlohmann::json_schema::json_validator> load_schema(const fs::path& path);
 
-    json manifests;
-    json interfaces;
-    json base_interfaces;
-    schemas _schemas;
+///
+/// \brief loads the config.json and manifest.json in the schemes subfolder of
+/// the provided \p schemas_dir
+///
+/// \returns the loaded configs and related validators
+SchemaValidation load_schemas(const fs::path& schemas_dir);
 
-    const std::regex optional_requirement_regex = std::regex("^optional:.*$");
+/// \brief Serializes the given \p module_configuration and related data to JSON.
+///
+/// Includes the module's config, mappings (own and connected), and telemetry if present.
+///
+/// \param module_id ID of the module to serialize.
+/// \param module_configurations Map of all module configurations.
+/// \return JSON object with the serialized module configuration.
+json get_serialized_module_config(const std::string& module_id, const ModuleConfigurations& module_configurations);
 
-    ///
-    /// \brief loads the contents of the interface file referenced by the give \p intf_name from disk and validates its
-    /// contents
-    ///
-    /// \returns a json object containing the interface definition
-    json load_interface_file(const std::string& intf_name);
+///
+/// \brief Base class for configs
+///
+class ConfigBase {
+protected:
+    ModuleConfigurations module_configs;
+    nlohmann::json settings;
 
-    ///
-    /// \brief resolves inheritance tree of json interface \p intf_name, throws an exception if variables or commands
-    /// would be overwritten
-    ///
-    /// \returns the resulting interface definiion
-    json resolve_interface(const std::string& intf_name, std::set<std::string>& seen_interfaces);
+    nlohmann::json manifests;
+    nlohmann::json interfaces;
+    nlohmann::json interface_definitions;
+    nlohmann::json types;
+    Schemas schemas;
+    // experimental caches
+    std::unordered_map<std::string, std::string> module_names;
 
-    ///
-    /// \brief extracts information about the provided module given via \p module_id from the config and manifest
-    ///
-    /// \returns a json object containing module_id, module_name, impl_id and impl_intf
-    json extract_implementation_info(const std::string& module_id);
+    error::ErrorTypeMap error_map;
 
-    ///
-    /// \brief extracts information about the provided implementation given via \p module_id and \p impl_id from the
-    /// config and
-    /// manifest
-    ///
-    /// \returns a json object containing module_id, module_name, impl_id and impl_intf
-    json extract_implementation_info(const std::string& module_id, const std::string& impl_id);
-    void resolve_all_requirements();
+    const MQTTSettings mqtt_settings;
 
 public:
     ///
-    /// \brief creates a new Config object, looking for the config.json and schemes folder relative to the provided \p
-    /// main_dir
-    explicit Config(std::string schemas_dir, std::string config_file, std::string modules_dir, std::string interfaces_dir);
-
-    ///
-    /// \brief checks if the given \p module_id provides the requirement given in \p requirement_id
-    ///
-    /// \returns a json object that contains the requirement
-    json resolve_requirement(const std::string& module_id, const std::string& requirement_id);
-
-    ///
-    /// \brief checks if the config contains the given \p module_id
-    ///
-    bool contains(const std::string& module_id);
-
-    ///
-    /// \returns a json object that contains the main config
-    json get_main_config();
-
-    ///
-    /// \returns a map of module config options
-    ModuleConfigs get_module_configs(const std::string& module_id);
-
-    ///
-    /// \returns a json object that contains the module config options
-    json get_module_json_config(const std::string& module_id);
-
-    ///
-    /// \returns a json object that contains the manifests
-    json get_manifests();
-
-    ///
-    /// \returns a json object that contains the available interfaces
-    json get_interfaces();
+    /// \brief Create a ConfigBase with the provided \p mqtt_settings
+    explicit ConfigBase(const MQTTSettings& mqtt_settings) : mqtt_settings(mqtt_settings){};
 
     ///
     /// \brief turns then given \p module_id into a printable identifier
     ///
     /// \returns a string with the printable identifier
-    std::string printable_identifier(const std::string& module_id);
+    std::string printable_identifier(const std::string& module_id) const;
 
     ///
     /// \brief turns then given \p module_id and \p impl_id into a printable identifier
     ///
     /// \returns a string with the printable identifier
-    std::string printable_identifier(const std::string& module_id, const std::string& impl_id);
+    std::string printable_identifier(const std::string& module_id, const std::string& impl_id) const;
+
+    ///
+    /// \returns the module name matching the provided \p module_id
+    std::string get_module_name(const std::string& module_id) const;
 
     ///
     /// \brief turns the given \p module_id and \p impl_id into a mqtt prefix
@@ -129,46 +145,262 @@ public:
     ///
     /// \brief turns the given \p module_id into a mqtt prefix
     ///
-    std::string mqtt_module_prefix(const std::string& module_id);
+    std::string mqtt_module_prefix(const std::string& module_id) const;
 
     ///
-    /// \brief loads the config.json and manifest.json in the schemes subfolder of
-    /// the provided \p schemas_dir
-    ///
-    /// \returns the config and manifest schemas
-    static schemas load_schemas(std::string schemas_dir);
+    /// \returns a json object that contains the main config
+    const ModuleConfigurations& get_module_configurations() const;
 
     ///
-    /// \brief loads and validates a json schema at the provided \p path
+    /// \brief checks if the config contains the given \p module_id
+    bool contains(const std::string& module_id) const;
+
     ///
-    /// \returns the loaded json schema as a json object
-    static json load_schema(const fs::path& path);
+    /// \returns a json object that contains the manifests
+    const nlohmann::json& get_manifests() const;
+
+    ///
+    /// \returns a json object that contains the interface definitions
+    const nlohmann::json& get_interface_definitions() const;
+
+    ///
+    /// \returns a json object that contains the available interfaces
+    const nlohmann::json& get_interfaces() const;
+
+    ///
+    /// \returns a json object that contains the settings
+    const nlohmann::json& get_settings() const;
+
+    ///
+    /// \returns a json object that contains the schemas
+    const nlohmann::json get_schemas() const;
+
+    ///
+    /// \returns a json object that contains the schemas
+    nlohmann::json get_error_types();
+
+    ///
+    /// \returns a json object that contains the types
+    const nlohmann::json& get_types() const;
+
+    ///
+    /// \return the cached mapping of module ids to module names
+    std::unordered_map<std::string, std::string> get_module_names() const;
+
+    ///
+    /// \brief checks if the given \p module_id provides the requirement given in \p requirement_id
+    ///
+    /// \returns a json object that contains the requirement
+    std::vector<Fulfillment> resolve_requirement(const std::string& module_id, const std::string& requirement_id) const;
+
+    ///
+    /// \brief resolves all Requirements of the given \p module_id to their Fulfillments
+    ///
+    /// \returns a map indexed by Requirements
+    std::map<Requirement, Fulfillment> resolve_requirements(const std::string& module_id) const;
+
+    ///
+    /// \returns a list of Requirements for \p module_id
+    std::list<Requirement> get_requirements(const std::string& module_id) const;
+
+    ///
+    /// \brief A Fulfillment is a combination of a Requirement and the module and implementation ids where this is
+    /// implemented
+    /// \returns a map of Fulfillments for \p module_id
+    std::map<std::string, std::vector<Fulfillment>> get_fulfillments(const std::string& module_id) const;
+};
+
+///
+/// \brief Config intended to be created by the manager for validation and serialization. Contains config and
+/// manifest parsing
+///
+class ManagerConfig : public ConfigBase {
+private:
+    const ManagerSettings& ms;
+    Validators validators;
+    std::unique_ptr<nlohmann::json_schema::json_validator> draft7_validator;
+    std::unique_ptr<everest::config::UserConfigStorage> user_config_storage;
+    std::map<everest::config::ConfigurationParameterIdentifier, everest::config::GetConfigurationParameterResponse>
+        database_get_config_parameter_response_cache;
+
+    nlohmann::json apply_user_config_and_defaults();
+
+    ///
+    /// \brief loads and validates the manifest of the \p module_config
+    void load_and_validate_manifest(ModuleConfig& module_config);
+
+    ///
+    /// \brief loads and validates the given file \p file_path with the schema \p schema
+    ///
+    /// \returns the loaded json and how long the validation took in ms
+    std::tuple<nlohmann::json, int64_t> load_and_validate_with_schema(const fs::path& file_path,
+                                                                      const nlohmann::json& schema);
+
+    ///
+    /// \brief resolves inheritance tree of json interface \p intf_name, throws an exception if variables or
+    /// commands would be overwritten
+    ///
+    /// \returns the resulting interface definition
+    nlohmann::json resolve_interface(const std::string& intf_name);
+
+    ///
+    /// \brief loads the contents of the interface file referenced by the give \p intf_name from disk and validates
+    /// its contents
+    ///
+    /// \returns a json object containing the interface definition
+    nlohmann::json load_interface_file(const std::string& intf_name);
+
+    ///
+    /// \brief loads the contents of an error or an error list referenced by the given \p reference.
+    ///
+    /// \returns a list of json objects containing the error definitions
+    std::list<nlohmann::json> resolve_error_ref(const std::string& reference);
+
+    ///
+    /// \brief replaces all error references in the given \p interface_json with the actual error definitions
+    ///
+    /// \returns the interface_json with replaced error references
+    nlohmann::json replace_error_refs(nlohmann::json& interface_json);
+
+    ///
+    /// \brief resolves all requirements (connections) of the modules in the main config
+    void resolve_all_requirements();
+
+    ///
+    /// \brief parses the provided \p config resolving types, errors, manifests, requirements and 3 tier module
+    /// mappings
+    void parse(ModuleConfigurations& module_configs);
+
+    ///
+    /// \brief Parses the 3 tier model mappings in the config
+    /// A "mapping" can be specified in the following way:
+    /// You can set a EVSE id called "evse" and Connector id called "connector" for the whole module.
+    /// Alternatively you can set individual mappings for implementations.
+    /// mapping:
+    ///   module:
+    ///     evse: 1
+    ///     connector: 1
+    ///   implementations:
+    ///     implementation_id:
+    ///       evse: 1
+    ///       connector: 1
+    /// If no mappings are found it will be assumed that the module is mapped to the charging station.
+    /// If only a module mapping is defined alle implementations are mapped to this module mapping.
+    /// Implementations can have overwritten mappings.
+    void parse_3_tier_model_mapping();
+
+public:
+    ///
+    /// \brief Create a ManagerConfig from the provided ManagerSettings \p ms
+    explicit ManagerConfig(const ManagerSettings& ms);
+
+    /// \brief Sets the config \p value associated with the \p identifier
+    /// \returns if the setting of the value was successful or not
+    everest::config::SetConfigStatus
+    set_config_value(const everest::config::ConfigurationParameterIdentifier& identifier,
+                     const everest::config::ConfigEntry& value);
+
+    /// \brief Gets the configuration parameter associated with the \p identifier
+    /// \returns a result containing the configuration item or an error
+    everest::config::GetConfigurationParameterResponse
+    get_config_value(const everest::config::ConfigurationParameterIdentifier& identifier);
+};
+
+///
+/// \brief Contains intended to be used by modules using a pre-parsed and validated config json serialized from
+/// ManagerConfig
+///
+class Config : public ConfigBase {
+private:
+    ModuleConfig module_config;
+    std::unordered_map<std::string, ModuleTierMappings> tier_mappings;
+    std::optional<TelemetryConfig> telemetry_config;
+    std::unordered_map<std::string, ConfigCache> module_config_cache;
+
+    void populate_module_config_cache();
+
+    void populate_error_map();
+
+public:
+    ///
+    /// \brief creates a new Config object form the given \p mqtt_settings and \p config
+    explicit Config(const MQTTSettings& mqtt_settings, const nlohmann::json& config);
+
+    ///
+    /// \returns object that contains the module config options
+    ModuleConfig get_module_config() const;
+
+    ///
+    /// \returns the ErrorTypeMap
+    error::ErrorTypeMap get_error_map() const;
+
+    ///
+    /// \returns true if the module \p module_name provides the implementation \p impl_id
+    bool module_provides(const std::string& module_name, const std::string& impl_id);
+
+    ///
+    /// \returns the commands that the modules \p module_name implements from the given implementation \p impl_id
+    const nlohmann::json& get_module_cmds(const std::string& module_name, const std::string& impl_id);
+
+    ///
+    /// \brief A RequirementInitialization contains everything needed to initialize a requirement in user code. This
+    /// includes the Requirement, its Fulfillment and an optional Mapping
+    /// \returns a RequirementInitialization
+    RequirementInitialization get_requirement_initialization(const std::string& module_id) const;
+
+    ///
+    /// \returns a map of module config options
+    ModuleConfigs get_module_configs(const std::string& module_id) const;
+
+    //
+    /// \returns the 3 tier model mappings for the given \p module_id
+    std::optional<ModuleTierMappings> get_module_3_tier_model_mappings(const std::string& module_id) const;
+
+    //
+    /// \returns the 3 tier model mapping for the given \p module_id and \p impl_id
+    std::optional<Mapping> get_3_tier_model_mapping(const std::string& module_id, const std::string& impl_id) const;
+
+    ///
+    /// \brief assemble basic information about the module (id, name,
+    /// authors, license)
+    ///
+    /// \returns a ModuleInfo object
+    ModuleInfo get_module_info(const std::string& module_id) const;
+
+    ///
+    /// \returns a TelemetryConfig if this has been configured
+    std::optional<TelemetryConfig> get_telemetry_config();
+
+    ///
+    /// \returns a json object that contains the interface definition
+    nlohmann::json get_interface_definition(const std::string& interface_name) const;
+
+    ///
+    /// \brief A json schema loader that can handle type refs and otherwise uses the builtin draft7 schema of
+    /// the json schema validator when it encounters it. Throws an exception
+    /// otherwise
+    void ref_loader(const nlohmann::json_uri& uri, nlohmann::json& schema);
 
     ///
     /// \brief loads all module manifests relative to the \p main_dir
     ///
     /// \returns all module manifests as a json object
-    static json load_all_manifests(std::string modules_dir, std::string schemas_dir);
+    static nlohmann::json load_all_manifests(const std::string& modules_dir, const std::string& schemas_dir);
 
     ///
     /// \brief Extracts the keys of the provided json \p object
     ///
     /// \returns a set of object keys
-    static std::set<std::string> keys(json object);
-
-    ///
-    /// \brief A simple json schema loader that uses the builtin draft7 schema of
-    /// the json schema validator when it encounters it, throws an exception
-    /// otherwise
-    ///
-    static void loader(const json_uri& uri, json& schema);
-
-    ///
-    /// \brief An extension to the default format checker of the json schema
-    /// validator supporting uris
-    ///
-    static void format_checker(const std::string& format, const std::string& value);
+    static std::set<std::string> keys(const nlohmann::json& object);
 };
 } // namespace Everest
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+template <> struct adl_serializer<Everest::Schemas> {
+    static void to_json(nlohmann::json& j, const Everest::Schemas& s);
+
+    static void from_json(const nlohmann::json& j, Everest::Schemas& s);
+};
+NLOHMANN_JSON_NAMESPACE_END
 
 #endif // UTILS_CONFIG_HPP

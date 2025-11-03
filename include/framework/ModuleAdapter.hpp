@@ -1,37 +1,19 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #ifndef MODULE_ADAPTER_HPP
 #define MODULE_ADAPTER_HPP
 
 #include "everest.hpp"
-#include <iostream>
+#include <everest/logging.hpp>
+#include <utils/conversions.hpp>
+#include <utils/date.hpp>
+#include <utils/error.hpp>
 
 #include <iomanip>
+#include <iostream>
+#include <memory>
 
 namespace Everest {
-
-// FIXME (aw): proper namespacing for these utility classes and functions
-
-namespace detail_module_adapter {
-template <class Ret> bool any_to_variant_impl(Ret& var, const boost::any& val) noexcept {
-    // we didn't find any proper type to convert to :(
-    return false;
-}
-
-template <class Ret, class F, class... R> bool any_to_variant_impl(Ret& var, const boost::any& val) noexcept {
-    if (val.type() == typeid(F)) {
-        var = boost::any_cast<F>(val);
-        return true;
-    }
-
-    return any_to_variant_impl<Ret, R...>(var, val);
-}
-
-class ToAnyVisitor : public boost::static_visitor<boost::any> {
-public:
-    template <typename T> boost::any operator()(const T& value) const {
-        return value;
-    }
-};
-} // namespace detail_module_adapter
 
 // FIXME (aw): does the standard library already has something like this?
 template <typename T> class PtrContainer {
@@ -72,94 +54,99 @@ private:
 };
 
 class ModuleBase {
-protected:
-    void invoke_init(ImplementationBase& impl) {
-        impl.init();
-    }
+public:
+    ModuleBase(const ModuleInfo& info);
+    virtual ~ModuleBase() = default;
 
-    void invoke_ready(ImplementationBase& impl) {
-        impl.ready();
-    }
+    const ModuleInfo& info;
+
+protected:
+    void invoke_init(ImplementationBase& impl);
+
+    void invoke_ready(ImplementationBase& impl);
 };
 
+namespace error {
+struct ErrorManagerImpl;
+struct ErrorManagerReq;
+struct ErrorManagerReqGlobal;
+struct ErrorStateMonitor;
+struct ErrorFactory;
+} // namespace error
 struct ModuleAdapter {
-    using CallFunc = std::function<Result(const std::string&, const std::string&, Parameters)>;
+    using CallFunc = std::function<Result(const Requirement&, const std::string&, Parameters)>;
     using PublishFunc = std::function<void(const std::string&, const std::string&, Value)>;
-    using SubscribeFunc = std::function<void(const std::string&, const std::string&, ValueCallback)>;
+    using SubscribeFunc = std::function<void(const Requirement&, const std::string&, ValueCallback)>;
+    using GetErrorManagerImplFunc = std::function<std::shared_ptr<error::ErrorManagerImpl>(const std::string&)>;
+    using GetErrorStateMonitorImplFunc = std::function<std::shared_ptr<error::ErrorStateMonitor>(const std::string&)>;
+    using GetErrorFactoryFunc = std::function<std::shared_ptr<error::ErrorFactory>(const std::string&)>;
+    using GetErrorManagerReqFunc = std::function<std::shared_ptr<error::ErrorManagerReq>(const Requirement&)>;
+    using GetGlobalErrorManagerFunc = std::function<std::shared_ptr<error::ErrorManagerReqGlobal>()>;
+    using GetGlobalErrorStateMonitorFunc = std::function<std::shared_ptr<error::ErrorStateMonitor>()>;
+    using GetErrorStateMonitorReqFunc = std::function<std::shared_ptr<error::ErrorStateMonitor>(const Requirement&)>;
     using ExtMqttPublishFunc = std::function<void(const std::string&, const std::string&)>;
-    using ExtMqttSubscribeFunc = std::function<void(const std::string&, StringHandler)>;
+    using ExtMqttSubscribeFunc = std::function<UnsubscribeToken(const std::string&, StringHandler)>;
+    using ExtMqttSubscribePairFunc = std::function<UnsubscribeToken(const std::string&, StringPairHandler)>;
+    using TelemetryPublishFunc =
+        std::function<void(const std::string&, const std::string&, const std::string&, const TelemetryMap&)>;
+    using GetMappingFunc = std::function<std::optional<ModuleTierMappings>()>;
+    using GetConfigServiceClientFunc = std::function<std::shared_ptr<config::ConfigServiceClient>()>;
 
     CallFunc call;
     PublishFunc publish;
     SubscribeFunc subscribe;
+    GetErrorManagerImplFunc get_error_manager_impl;
+    GetErrorStateMonitorImplFunc get_error_state_monitor_impl;
+    GetErrorFactoryFunc get_error_factory;
+    GetErrorManagerReqFunc get_error_manager_req;
+    GetErrorStateMonitorReqFunc get_error_state_monitor_req;
+    GetGlobalErrorManagerFunc get_global_error_manager;
+    GetGlobalErrorStateMonitorFunc get_global_error_state_monitor;
     ExtMqttPublishFunc ext_mqtt_publish;
     ExtMqttSubscribeFunc ext_mqtt_subscribe;
+    ExtMqttSubscribePairFunc ext_mqtt_subscribe_pair;
     std::vector<cmd> registered_commands;
+    TelemetryPublishFunc telemetry_publish;
+    GetMappingFunc get_mapping;
+    GetConfigServiceClientFunc get_config_service_client;
 
-    void check_complete() {
-        // FIXME (aw): I should throw if some of my handlers are not set
-        return;
-    }
+    void check_complete();
 
-    void gather_cmds(ImplementationBase& impl) {
-        impl._gather_cmds(registered_commands);
-    }
-
-    // FIXME (aw): Depending on the unrolling performance and usage with different types
-    //             this template function should automatically generated for the Exports hpps
-    template <class... Ts> static boost::variant<Ts...> any_to_variant(const boost::any& val) {
-        boost::variant<Ts...> var;
-        if (detail_module_adapter::any_to_variant_impl<boost::variant<Ts...>, Ts...>(var, val))
-            return var;
-
-        throw std::runtime_error(
-            // FIXME (aw): propably we could be more explicit on the types here
-            "The given boost::any object doesn't contain any type, the boost::variant is aware of");
-    }
-
-    template <typename Variant> static boost::any variant_to_any(const Variant& var) {
-        static auto visitor = detail_module_adapter::ToAnyVisitor();
-        return boost::apply_visitor(visitor, var);
-    }
+    void gather_cmds(ImplementationBase& impl);
 };
 
 class MqttProvider {
 public:
-    MqttProvider(ModuleAdapter& ev) : ev(ev){};
+    MqttProvider(ModuleAdapter& ev);
 
-    void publish(const std::string& topic, const std::string& data) {
-        ev.ext_mqtt_publish(topic, data);
-    }
+    void publish(const std::string& topic, const std::string& data);
 
-    void publish(const std::string& topic, const char* data) {
-        ev.ext_mqtt_publish(topic, std::string(data));
-    }
+    void publish(const std::string& topic, const char* data);
 
-    void publish(const std::string& topic, bool data) {
-        if (data) {
-            ev.ext_mqtt_publish(topic, "true");
-        } else {
-            ev.ext_mqtt_publish(topic, "false");
-        }
-    }
+    void publish(const std::string& topic, bool data);
 
-    void publish(const std::string& topic, int data) {
-        ev.ext_mqtt_publish(topic, std::to_string(data));
-    }
+    void publish(const std::string& topic, int data);
 
-    void publish(const std::string& topic, double data, int precision) {
-        std::stringstream stream;
-        stream << std::fixed << std::setprecision(precision) << data;
-        ev.ext_mqtt_publish(topic, stream.str());
-    }
+    void publish(const std::string& topic, double data, int precision);
 
-    void publish(const std::string& topic, double data) {
-        this->publish(topic, data, 5);
-    }
+    void publish(const std::string& topic, double data);
 
-    void subscribe(const std::string& topic, StringHandler handler) {
-        ev.ext_mqtt_subscribe(topic, handler);
-    }
+    UnsubscribeToken subscribe(const std::string& topic, StringHandler handler) const;
+
+    UnsubscribeToken subscribe(const std::string& topic, StringPairHandler handler) const;
+
+private:
+    ModuleAdapter& ev;
+};
+
+class TelemetryProvider {
+public:
+    TelemetryProvider(ModuleAdapter& ev);
+
+    void publish(const std::string& category, const std::string& subcategory, const std::string& type,
+                 const TelemetryMap& telemetry);
+
+    void publish(const std::string& category, const std::string& subcategory, const TelemetryMap& telemetry);
 
 private:
     ModuleAdapter& ev;
