@@ -1,0 +1,3 @@
+// the configured options and settings for YetiDriver
+#define yeti_fwupdate_VERSION_MAJOR @yeti_fwupdate_VERSION_MAJOR@
+#define yeti_fwupdate_VERSION_MINOR @yeti_fwupdate_VERSION_MINOR@

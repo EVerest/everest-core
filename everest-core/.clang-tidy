@@ -1,0 +1,11 @@
+Checks: >
+    *,
+    -llvmlibc*,
+    -fuchsia-default-arguments-calls,
+    -fuchsia-overloaded-operator,
+    -fuchsia-statically-constructed-objects,
+    -readability-function-cognitive-complexity,
+    -modernize-use-trailing-return-type,
+    -abseil-string-find-startswith,
+    -abseil-string-find-str-contains
+HeaderFilterRegex:  ".*"

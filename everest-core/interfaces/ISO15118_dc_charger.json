@@ -1,0 +1,226 @@
+{
+    "description": "This interface defines an ISO15118 DC Charger",
+    "parent": "ISO15118_charger",
+    "cmds": {
+        "MISSING_set_evse_energy_to_be_delivered":{
+            "description": "Optional: Amount of energy to be delivered by the EVSE.",
+            "arguments": {
+                "energy": {
+                    "description": "Energy in Watthours",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 200000
+                }
+            }
+        },
+        "set_evse_peak_current_ripple":{
+            "description": "Peak-to-peak magnitude of the current ripple of the EVSE",
+            "arguments": {
+                "current": {
+                    "description": "Current in Ampere",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 400
+                }
+            }
+        },
+        "MISSING_set_evse_current_regulation_tolerance":{
+            "description": "Optional: Sets the absolute magnitude of the current regulation tolerance of the EVSE",
+            "arguments": {
+                "current": {
+                    "description": "Current in Ampere",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 400
+                }
+            }
+        },
+        "set_evse_minimum_voltage_limit":{
+            "description": "Sets the minimum voltage the EVSE can deliver with the expected accuracy",
+            "arguments": {
+                "min_voltage": {
+                    "description": "Minimum voltage in Volt",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                }
+            }
+        },
+        "set_evse_minimum_current_limit":{
+            "description": "Sets the minimum current the EVSE can deliver with the expected accuracy.",
+            "arguments": {
+                "min_current": {
+                    "description": "Minimum current in Ampere",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 400
+                }
+            }
+        },
+        "set_evse_maximum_voltage_limit":{
+            "description": "Optional: Sets the maximum voltage the EVSE can deliver.",
+            "arguments": {
+                "max_voltage": {
+                    "description": "Maximum voltage in Volt",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                }
+            }
+        },
+        "set_evse_maximum_current_limit":{
+            "description": "Optional: Sets the maximum current the EVSE can deliver.",
+            "arguments": {
+                "max_current": {
+                    "description": "Maximum current in Ampere",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 400
+                }
+            }
+        },
+        "set_evse_maximum_power_limit":{
+            "description": "Optional: Sets the maximum power the EVSE can deliver.",
+            "arguments": {
+                "max_power": {
+                    "description": "Maximum power in Watt",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 200000
+                }
+            }
+        },
+        "set_evse_current_limit_achieved": {
+            "description": "Sets the EVSECurrentLimitAchieved flag that indicates whether the EVSE has reached its current limit.",
+            "arguments": {
+                "current_limit_achieved": {
+                    "description": "True, if the EVSE has reached its current limit, false otherwise",
+                    "type": "boolean"
+                }
+            }
+        },
+        "set_evse_voltage_limit_achieved": {
+            "description": "Sets the EVSEVoltageLimitAchieved flag that indicates whether the EVSE has reached its voltage limit.",
+            "arguments": {
+                "voltage_limit_achieved": {
+                    "description": "True, if the EVSE has reached its voltage limit, false otherwise",
+                    "type": "boolean"
+                }
+            }
+        },
+        "set_evse_power_limit_achieved": {
+            "description": "Sets the EVSEPowerLimitAchieved flag that indicates whether the EVSE has reached its power limit.",
+            "arguments": {
+                "power_limit_achieved": {
+                    "description": "True, if the EVSE has reached its power limit, false otherwise",
+                    "type": "boolean"
+                }
+            }
+        },
+        "set_evse_present_voltage":{
+            "description": "Sets the output voltage of the EVSE.",
+            "arguments" : {
+                "voltage": {
+                    "description": "Output voltage in Volt",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                }
+            }
+        },
+        "set_evse_present_current":{
+            "description": "Sets the output current of the EVSE",
+            "arguments": {
+                "current": {
+                    "description": "Output current in Ampere",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 400
+                }
+            }
+        }
+    },
+    "vars": {
+        "dc_evse_status":{
+            "description": "Current status of the EVSE",
+            "type": "object"
+        },
+        "ev_target_voltage":{
+            "description": "Target voltage (unit: V) requested by the EV",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+        },
+		"ev_target_current":{
+            "description": "Instantaneous current (unit: A) requested by the EV",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 400
+        },
+		"ev_maximum_voltage_limit":{
+            "description": "Maximum EV voltage (unit: V) limit",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+        },
+		"ev_maximum_current_limit":{
+            "description": "Maximum EV current (unit: A) limit",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 400
+        },
+		"ev_maximum_power_limit":{
+            "description": "Maximum EV power (unit: W) limit",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 200000
+        },
+        "ev_energy_capacity":{
+            "description": "Optional: Energy capacity (unit: Wh) of the EV",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 200000
+        },
+        "ev_energy_request":{
+            "description": "Optional: Amount of energy (unit: Wh) the EV requests from the EVSE",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 200000
+        },
+        "MISSING_bulk_charging_complete":{
+            "description": "If set to true, the EV indicates that bulk charge (approx. 80% SOC) is complete.",
+            "type": "boolean"
+        },
+        "MISSING_charging_complete":{
+            "description": "If set to true, the EV indicates that full charge (100% SOC)is complete.",
+            "type": "boolean"
+        },
+        "remaining_time_to_full_soc":{
+            "description": "Optional: Estimated or calculated time (unit: s) until full charge (100% SOC) is complete.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 172800
+        },
+        "remaining_time_to_bulk_soc":{
+            "description": "Optional: Estimated or calculated time (unit: s) until bulk charge (80% SOC) is complete.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 172800
+        },
+        "MISSING_ev_soc":{
+            "description": "State of charge (soc) of the EV's battery.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+        },
+        "MISSING_ev_ready_for_charging":{
+            "description": "If set to TRUE, the EV is ready to charge.",
+            "type": "boolean"
+        },
+        "MISSING_ev_dc_error_code":{
+            "description": "Indicates the EV internal status.",
+            "type": "string",
+            "enum": ["NO_ERROR", "FAILED_RESSTemperatureInhibit", "FAILED_EV_ShiftPosition", "FAILED_ChargerConnerctorLockFault", "FAILED_EVRESSMalfunction", "FAILED_ChargingCurrentdifferential", "FAILED_ChargingVoltageOutOfRange", "Reserved A-C" ,"FAILED_ChargingSystemIncompatibility", "NoData"]
+        }
+    }
+}

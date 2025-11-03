@@ -1,0 +1,21 @@
+---
+nlohmann_json:
+  git: https://github.com/nlohmann/json
+  git_tag: v3.9.1
+  options: ["JSON_BuildTests OFF"]
+sigslot:
+  git: https://github.com/palacaze/sigslot
+  git_tag: v1.2.0
+liblog:
+  git: git@github.com:EVerest/liblog.git
+  git_tag: main
+  options: ["BUILD_EXAMPLES OFF"]
+libmodbus:
+  git: git@github.com:EVerest/libmodbus.git
+  git_tag: main
+libsunspec:
+  git: git@github.com:EVerest/libsunspec.git
+  git_tag: main
+everest-framework:
+  git: git@github.com:EVerest/everest-framework.git
+  git_tag: main
