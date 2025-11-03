@@ -6,7 +6,6 @@
 #include <cstring>
 #include <everest/io/event/fd_event_handler.hpp>
 #include <everest/io/netlink/vcan_netlink_manager.hpp>
-#include <iostream>
 #include <memory>
 #include <protocol/cb_can_message.h>
 
@@ -47,7 +46,9 @@ bool is_data_msg([[maybe_unused]] cb_can_message const& msg) {
 } // namespace
 
 can_bridge::can_bridge(can_bridge_config const& config) :
-    m_udp(config.cb_remote, config.cb_port), m_can_device(config.can_device) {
+    m_udp(config.cb_remote, config.cb_port),
+    m_can_device(config.can_device),
+    m_last_msg_to_cb(std::chrono::steady_clock::now() - 24h) {
 
     auto& manager = everest::lib::io::netlink::vcan_netlink_manager::Instance();
     auto success = manager.create(config.can_device) && manager.bring_up(config.can_device);
@@ -69,9 +70,6 @@ can_bridge::can_bridge(can_bridge_config const& config) :
         everest::lib::io::can::socket_can::ClientPayloadT pl;
         cb_can_message msg;
         std::memcpy(&msg, data.buffer.data(), sizeof(cb_can_message));
-        // std::cout << "bitrate: " << (int)msg.bitrate << ", error_state: " << (int)msg.error_state << std::endl;
-        // std::cout << " stats tx: " << msg.statistics.frames_tx << ":" << msg.statistics.event_tx_buf_full << "\n"
-        //           << " stats rx: " << msg.statistics.frames_rx << ":" << msg.statistics.event_tx_buf_full << std::endl;
 
         msg_cb_to_host(msg, pl);
         if (is_data_msg(msg)) {
@@ -94,6 +92,8 @@ can_bridge::can_bridge(can_bridge_config const& config) :
             m_udp.reset();
         }
     });
+
+    m_heartbeat_timer.set_timeout(10s);
 }
 
 can_bridge::~can_bridge() {
@@ -105,19 +105,22 @@ can_bridge::~can_bridge() {
 }
 
 bool can_bridge::register_events(everest::lib::io::event::fd_event_handler& handler) {
-    // clang-format off
-    return
-        handler.register_event_handler(m_can.get()) &&
-        handler.register_event_handler(&m_udp);
-    // clang-format on
+    auto result = handler.register_event_handler(m_can.get());
+    result = handler.register_event_handler(&m_udp) && result;
+    result = handler.register_event_handler(&m_heartbeat_timer, [this](auto&) { handle_heartbeat_timer(); }) && result;
+
+    if (result) {
+        handler.add_action([this]() { handle_heartbeat_timer(); });
+    }
+
+    return result;
 }
 
 bool can_bridge::unregister_events(everest::lib::io::event::fd_event_handler& handler) {
-    // clang-format off
-    return
-        handler.unregister_event_handler(m_can.get()) &&
-        handler.unregister_event_handler(&m_udp);
-    // clang-format on
+    auto result = handler.unregister_event_handler(m_can.get());
+    result = handler.unregister_event_handler(&m_udp) && result;
+    result = handler.unregister_event_handler(&m_heartbeat_timer) && result;
+    return result;
 }
 
 void can_bridge::send_can_to_udp(cb_can_message const& msg) {
@@ -125,6 +128,16 @@ void can_bridge::send_can_to_udp(cb_can_message const& msg) {
     udp_pl.buffer.resize(sizeof(cb_can_message));
     std::memcpy(udp_pl.buffer.data(), &msg, sizeof(cb_can_message));
     m_udp.tx(udp_pl);
+    m_last_msg_to_cb = std::chrono::steady_clock::now();
+}
+
+void can_bridge::handle_heartbeat_timer() {
+    auto delta = std::chrono::steady_clock::now() - m_last_msg_to_cb;
+    if (delta > 10s) {
+        cb_can_message msg = cb_can_message_set_zero;
+        msg.packet_type = CanPacketType_Keep_Alive;
+        send_can_to_udp(msg);
+    }
 }
 
 } // namespace charge_bridge

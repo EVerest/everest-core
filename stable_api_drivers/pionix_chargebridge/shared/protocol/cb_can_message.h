@@ -45,9 +45,14 @@ typedef struct CB_COMPILER_ATTR_PACK _CanStatistics {
     uint32_t event_tx_buf_full;
 } CanStatistics;
 
+typedef enum _CanPacketType : uint8_t{
+    CanPacketType_Regular = 0,
+    CanPacketType_Keep_Alive = 1,
+} CanPacketType;
+
 struct CB_COMPILER_ATTR_PACK cb_can_message {
     uint8_t version;
-    uint8_t packet_type; // 0: regular CAN packet, 1: dummy keep-alive packet
+    CanPacketType packet_type; // 0: regular CAN packet, 1: dummy keep-alive packet
     CanErrorState error_state;
     CanStatistics statistics;
     CanBitrate bitrate;
@@ -73,7 +78,7 @@ struct CB_COMPILER_ATTR_PACK cb_can_message {
 };
 
 #define cb_can_message_set_zero                                                                                        \
-    {0, CanErrorState_Error_Active, {0, 0, 0, 0}, CanBitrate_125kbps, CanFDBitrate_1MBps, 0, 0,       \
+    {0, CanPacketType_Regular, CanErrorState_Error_Active, {0, 0, 0, 0}, CanBitrate_125kbps, CanFDBitrate_1MBps, 0, 0, \
      0, {0, 0, 0, 0, 0, 0, 0, 0}};
 
 #include "test/cb_can_message_test.h"

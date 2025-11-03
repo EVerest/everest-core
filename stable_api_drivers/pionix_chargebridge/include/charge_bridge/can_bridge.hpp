@@ -8,6 +8,7 @@
 #include <everest/io/event/timer_fd.hpp>
 #include <everest/io/udp/udp_client.hpp>
 #include <memory>
+#include <chrono>
 
 extern "C" struct cb_can_message;
 
@@ -37,6 +38,8 @@ private:
     everest::lib::io::udp::udp_client m_udp;
     std::string m_can_device;
     std::string identifier;
+    everest::lib::io::event::timer_fd m_heartbeat_timer;
+    std::chrono::steady_clock::time_point m_last_msg_to_cb;
 };
 
 } // namespace charge_bridge
