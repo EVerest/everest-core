@@ -1,0 +1,60 @@
+{% from "helper_macros.j2" import handle_cmd_signature, print_template_info, insert_block, cpp_type %}
+#ifndef {{ info.hpp_guard }}
+#define {{ info.hpp_guard }}
+
+{{ print_template_info('0.0.1', 'marked regions will be kept') }}
+
+#include <{{ info.base_class_header }}>
+
+#include "{{ info.module_header }}"
+
+{{ insert_block(info.blocks.add_headers) }}
+
+namespace module {
+namespace {{ info.interface_implementation_id }} {
+
+struct Conf {
+    {% for item in info.config %}
+    {{ cpp_type(item) }} {{ item.name }};
+    {% endfor %}
+};
+
+class {{ info.class_name }} : public {{ info.class_parent}} {
+public:
+    {{ info.class_name }}() = delete;
+    {{ info.class_name }}(Everest::ModuleAdapter* ev, const Everest::PtrContainer<{{ info.module_class }}> &mod, Conf& config) :
+        {{ info.class_parent }}(ev, "{{ info.interface_implementation_id }}"),
+        mod(mod),
+        config(config)
+    {};
+
+    {{ insert_block(info.blocks.public_defs, indent=4) }}
+
+protected:
+    {% if not cmds %}
+    // no commands defined for this interface
+    {% else %}
+    // command handler functions (virtual)
+    {% for cmd in cmds %}
+    {{ handle_cmd_signature(cmd) }} override;
+    {% endfor %}
+    {% endif %}
+
+    {{ insert_block(info.blocks.protected_defs, indent=4) }}
+
+private:
+    const Everest::PtrContainer<{{ info.module_class }}>& mod;
+    const Conf& config;
+
+    virtual void init() override;
+    virtual void ready() override;
+
+    {{ insert_block(info.blocks.private_defs, indent=4) }}
+};
+
+{{ insert_block(info.blocks.after_class) }}
+
+} // namespace {{ info.interface_implementation_id }}
+} // namespace module
+
+#endif // {{ info.hpp_guard }}

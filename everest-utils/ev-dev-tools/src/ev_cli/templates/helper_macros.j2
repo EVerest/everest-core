@@ -1,0 +1,70 @@
+{% macro cpp_type(type) -%}
+{% if type -%}
+{% if type.is_variant -%}
+boost::variant<{{ type.cpp_type|join(', ') }}>
+{%- else -%}
+{{ type.cpp_type }}
+{%- endif %}
+{%- else -%}
+void
+{%- endif %}
+{%- endmacro %}
+
+{% macro var_to_any(var, name) -%}
+{% if var.is_variant -%}
+Everest::ModuleAdapter::variant_to_any({{ name }})
+{%- else -%}
+boost::any({{ name }})
+{%- endif %}
+{%- endmacro %}
+
+{% macro var_to_cpp(arg) -%}
+{% if arg.is_variant -%}
+Everest::ModuleAdapter::any_to_variant<{{ arg.cpp_type|join(', ')}}>
+{%- else -%}
+boost::any_cast<{{ arg.cpp_type }}>
+{%- endif %}
+{%- endmacro %}
+
+{% macro call_cmd_signature(cmd) -%}
+{{ cpp_type(cmd.result) }} call_{{ cmd.name }}(
+{%- for arg in cmd.args -%}
+{{ cpp_type(arg) }} {{ arg.name }}{{ ', ' if not loop.last }}
+{%- endfor -%}
+)
+{%- endmacro %}
+
+{% macro handle_cmd_signature(cmd, class_name=None) -%}
+{% if not class_name %}virtual {% endif -%}
+{{ cpp_type(cmd.result) }} {% if class_name %}{{ class_name }}::{% endif -%}
+handle_{{ cmd.name }}(
+{%- for arg in cmd.args -%}
+{{ cpp_type(arg) }}& {{ arg.name }}{{ ', ' if not loop.last }}
+{%- endfor -%}
+)
+{%- endmacro %}
+
+{% macro list_json_types(json_type) -%}
+{% if json_type is iterable and json_type is not string -%}
+{
+{%- for type in json_type -%}
+"{{ type }}"{{ ', ' if not loop.last}}
+{%- endfor -%}
+}
+{%- else -%}
+{"{{ json_type }}"}
+{%- endif %}
+{%- endmacro %}
+
+{% macro insert_block(block, indent=0) %}
+{{ block.tag }}
+{{ " "*indent if block.first_use }}{{ block.content }}
+{{ " "*indent }}{{ block.tag }}
+{%- endmacro %}
+
+{% macro print_template_info(version, title='DO NOT EDIT!', comment_sep='//') %}
+{{ comment_sep }}
+{{ comment_sep }} AUTO GENERATED - {{ title|upper }}
+{{ comment_sep }} template version {{ version }}
+{{ comment_sep }}
+{%- endmacro %}

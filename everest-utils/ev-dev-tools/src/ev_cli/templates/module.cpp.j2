@@ -1,0 +1,17 @@
+#include "{{ info.module_header }}"
+
+namespace module {
+
+void {{ info.class_name }}::init() {
+    {% for impl in provides %}
+    invoke_init(*p_{{ impl.id }});
+    {% endfor %}
+}
+
+void {{ info.class_name }}::ready() {
+    {% for impl in provides %}
+    invoke_ready(*p_{{ impl.id }});
+    {% endfor %}
+}
+
+} // namespace module
