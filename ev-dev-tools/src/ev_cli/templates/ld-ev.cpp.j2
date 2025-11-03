@@ -1,0 +1,126 @@
+{% from "helper_macros.j2" import print_template_info, var_to_cpp %}
+{{ print_template_info('0.0.1') }}
+
+#include "{{ info.ld_ev_header }}"
+
+#include "{{ info.module_header }}"
+{% for impl in provides %}
+#include "{{ impl.class_header }}"
+{% endfor %}
+
+#include <boost/dll/alias.hpp>
+
+namespace module {
+
+static Everest::ModuleAdapter adapter {};
+static Everest::PtrContainer<{{info.class_name }}> mod_ptr {};
+
+// per module configs
+{# FIXME (aw): instead of being static, this could also be inside a map #}
+{% for impl in provides %}
+static {{ impl.id }}::Conf {{ impl.id }}_config;
+{% endfor %}
+static Conf module_conf;
+
+void LdEverest::init(ModuleConfigs module_configs) {
+    EVLOG(debug) << "init() called on module {{ info.name }}";
+
+    // populate config for provided implementations
+    {% for impl in provides %}
+    auto {{ impl.id }}_config_input = std::move(module_configs["{{ impl.id }}"]);
+    {% for item in impl.config %}
+    {{ impl.id }}_config.{{ item.name }} = boost::get<{{ item.cpp_type }}>({{ impl.id }}_config_input["{{ item.name }}"]);
+    {% endfor %}
+
+    {% endfor %}
+    {% if info.module_config|length %}
+
+    {% for item in info.module_config %}
+    module_conf.{{ item.name }} = boost::get<{{ item.cpp_type }}>(module_configs["!module"]["{{ item.name }}"]);
+    {% endfor %}
+    {% endif %}
+
+    mod_ptr->init();
+}
+
+void LdEverest::ready() {
+    EVLOG(debug) << "ready() called on module {{ info.name }}";
+    mod_ptr->ready();
+}
+
+void register_call_handler(Everest::ModuleAdapter::CallFunc call) {
+    EVLOG(debug) << "registering call_cmd callback for {{ info.name }}";
+    adapter.call = std::move(call);
+}
+
+void register_publish_handler(Everest::ModuleAdapter::PublishFunc publish) {
+    EVLOG(debug) << "registering publish_var callback for {{ info.name }}";
+    adapter.publish = std::move(publish);
+}
+
+void register_subscribe_handler(Everest::ModuleAdapter::SubscribeFunc subscribe) {
+    EVLOG(debug) << "registering subscribe_var callback for {{ info.name }}";
+    adapter.subscribe = std::move(subscribe);
+}
+
+void register_ext_mqtt_publish_handler(Everest::ModuleAdapter::ExtMqttPublishFunc ext_mqtt_publish) {
+    EVLOG(debug) << "registering external_mqtt_publish callback for {{ info.name }}";
+    adapter.ext_mqtt_publish = std::move(ext_mqtt_publish);
+}
+
+void register_ext_mqtt_subscribe_handler(Everest::ModuleAdapter::ExtMqttSubscribeFunc ext_mqtt_subscribe) {
+    EVLOG(debug) << "registering external_mqtt_handler callback for {{ info.name }}";
+    adapter.ext_mqtt_subscribe = std::move(ext_mqtt_subscribe);
+}
+
+std::vector<Everest::cmd> everest_register() {
+    EVLOG(debug) << "everest_register() called on module {{ info.name }}";
+
+    adapter.check_complete();
+
+    {% for impl in provides %}
+    auto p_{{ impl.id }} = std::make_unique<{{ impl.id }}::{{ impl.class_name }}>(&adapter, mod_ptr, {{ impl.id }}_config);
+    adapter.gather_cmds(*p_{{ impl.id }});
+
+    {% endfor %}
+    {% for interface in requires %}
+    auto r_{{ interface.id }} = std::make_unique<{{ interface.class_name }}>(&adapter, "{{ 'optional:' if interface.optional }}{{ interface.id }}");
+    {% endfor %}
+
+    {% if info.enable_external_mqtt %}
+    static Everest::MqttProvider mqtt_provider(adapter);
+    {% endif %}
+
+    static {{ info.class_name }} module(
+    {%- if info.enable_external_mqtt %}mqtt_provider, {% endif -%}
+    {%- for impl in provides -%}
+    std::move(p_{{ impl.id }}){{ ', ' }}
+    {%- endfor -%}
+    {%- for interface in requires -%}
+    std::move(r_{{ interface.id }}){{ ', ' }}
+    {%- endfor -%}
+    module_conf);
+
+    mod_ptr.set(&module);
+
+    return adapter.registered_commands;
+}
+
+} // namespace module
+
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
+BOOST_DLL_ALIAS(module::LdEverest::init, init)
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
+BOOST_DLL_ALIAS(module::LdEverest::ready, ready)
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
+BOOST_DLL_ALIAS(module::everest_register, everest_register)
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
+BOOST_DLL_ALIAS(module::register_call_handler, everest_register_call_cmd_callback)
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
+BOOST_DLL_ALIAS(module::register_publish_handler, everest_register_publish_var_callback)
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
+BOOST_DLL_ALIAS(module::register_subscribe_handler, everest_register_subscribe_var_callback)
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
+BOOST_DLL_ALIAS(module::register_ext_mqtt_publish_handler, everest_register_external_mqtt_publish_callback)
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr,cppcoreguidelines-avoid-non-const-global-variables)
+BOOST_DLL_ALIAS(module::register_ext_mqtt_subscribe_handler, everest_register_external_mqtt_handler_callback)
