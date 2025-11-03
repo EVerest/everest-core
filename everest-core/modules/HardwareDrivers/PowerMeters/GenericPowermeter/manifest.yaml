@@ -1,0 +1,29 @@
+description: Powermeter driver for various powermeter hardware
+provides:
+  main:
+    description: Implementation of the driver functionality
+    interface: powermeter
+    config:
+      model:
+        description: Selector for the powermeter configuration file to be used
+        type: string
+        default: test_dummy
+      powermeter_device_id:
+        description: The powermeter's address on the serial bus
+        type: integer
+        minimum: 1
+        maximum: 247
+        default: 1
+      modbus_base_address:
+        description: The base address for register access
+        type: integer
+        minimum: 0
+        maximum: 65535
+        default: 30001
+requires:
+  serial_comm_hub:
+    interface: serial_communication_hub
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Lars Dieckmann

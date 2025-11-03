@@ -1,0 +1,188 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for SecurityCtrlr",
+  "name": "SecurityCtrlr",
+  "type": "object",
+  "properties": {
+    "SecurityCtrlrEnabled": {
+      "variable_name": "Enabled",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": false
+        }
+      ],
+      "default": true,
+      "type": "boolean"
+    },
+    "AdditionalRootCertificateCheck": {
+      "variable_name": "AdditionalRootCertificateCheck",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Required for all security profiles except profile 1.",
+      "default": false,
+      "type": "boolean"
+    },
+    "BasicAuthPassword": {
+      "variable_name": "BasicAuthPassword",
+      "characteristics": {
+        "minLimit": 16,
+        "maxLimit": 40,
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "WriteOnly",
+          "value": "DEADBEEFDEADBEEF"
+        }
+      ],
+      "description": "The basic authentication password is used for HTTP Basic Authentication.",
+      "minimum": 16,
+      "maximum": 40,
+      "default": "DEADBEEFDEADBEEF",
+      "type": "string"
+    },
+    "CertificateEntries": {
+      "variable_name": "CertificateEntries",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly",
+          "value": 100
+        }
+      ],
+      "description": "Amount of Certificates currently installed on the Charging Station",
+      "type": "integer"
+    },
+    "CertSigningRepeatTimes": {
+      "variable_name": "CertSigningRepeatTimes",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 2
+        }
+      ],
+      "description": "Number of times to resend a SignCertificateRequest when CSMS does nor return a signed certificate.",
+      "default": "3",
+      "type": "integer"
+    },
+    "CertSigningWaitMinimum": {
+      "variable_name": "CertSigningWaitMinimum",
+      "characteristics": {
+        "unit": "s",
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 30
+        }
+      ],
+      "description": "Seconds to wait before generating another CSR in case CSMS does not return a signed certificate.",
+      "default": "30",
+      "type": "integer"
+    },
+    "SecurityCtrlrIdentity": {
+      "variable_name": "Identity",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly",
+          "value": "cp001"
+        }
+      ],
+      "description": "The Charging Station identity.",
+      "default": "cp001",
+      "type": "string"
+    },
+    "MaxCertificateChainSize": {
+      "variable_name": "MaxCertificateChainSize",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Limit of the size of the 'certificateChain' field from the CertificateSignedRequest",
+      "type": "integer"
+    },
+    "OrganizationName": {
+      "variable_name": "OrganizationName",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": "Pionix"
+        }
+      ],
+      "description": "The organization name of the CSO or an organization trusted by the CSO. This organization name is used to specify the subject field in the client certificate.",
+      "default": "Pionix",
+      "type": "string"
+    },
+    "SecurityProfile": {
+      "variable_name": "SecurityProfile",
+      "characteristics": {
+        "minLimit": 1,
+        "maxLimit": 3,
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly",
+          "value": 1
+        }
+      ],
+      "description": "The security profile used by the Charging Station.",
+      "minimum": 1,
+      "maximum": 3,
+      "default": "1",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "CertificateEntries",
+    "OrganizationName",
+    "SecurityCtrlrIdentity",
+    "SecurityProfile"
+  ]
+}

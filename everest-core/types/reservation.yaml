@@ -1,0 +1,135 @@
+description: Auth module types
+types:
+  ReservationResult:
+    description: >-
+      Data of a ReservationResult
+        Accepted: Reservation has been made
+        Faulted: Reservation has not been made, because evses / connectors or specified evse / connector are in a
+                 faulted state
+        Occupied: Reservation has not been made. All evses or the specified evse / connector is occupied
+        Rejected: Reservation has not been made. Charge Point is not configured to accept reservations
+        Unavailable: Reservation has not been made, because evses or specified evse / connector are in an unavailable
+                     state
+    type: string
+    enum:
+      - Accepted
+      - Faulted
+      - Occupied
+      - Rejected
+      - Unavailable
+  Reservation:
+    description: Details on Reservation
+    type: object
+    additionalProperties: false
+    required:
+      - reservation_id
+      - id_token
+      - expiry_time
+    properties:
+      evse_id:
+        description: >-
+          The id of the evse to be reserved. When dismissed means that the reservation is not for a
+          specific evse
+        type: integer
+      reservation_id:
+        description: Id of the reservation
+        type: integer
+      id_token:
+        description: id token of the reservation
+        type: string
+      expiry_time:
+        description: Absolute UTC time point when reservation expires in RFC3339 format
+        type: string
+        format: date-time
+      parent_id_token:
+        description: parent_id
+        type: string
+      connector_type:
+        description: The connector type to make a reservation for
+        type: string
+        $ref: /evse_manager#/ConnectorTypeEnum
+  ReservationEndReason:
+    description: >-
+      Reason for reservation end
+        Expired: When the reservation expired before the reserved token was used for a session
+        Cancelled: When the reservation was cancelled manually
+        UsedToStartCharging: When the reservation ended because the reserved token was used for a session
+        GlobalReservationRequirementDropped: When the reservation ended for that specific EVSE because there is a
+                                             connector free and there are less reservations than available evse's
+                                             (reservation is still there but it is not occupying this EVSE anymore).
+    type: string
+    enum:
+      - Expired
+      - Cancelled
+      - UsedToStartCharging
+      - GlobalReservationRequirementDropped
+  ReservationEnd:
+    description: Details on Reservation End
+    type: object
+    additionalProperties: false
+    required:
+      - reason
+      - reservation_id
+    properties:
+      reason:
+        description: Reason why reservation ends
+        type: string
+        $ref: /reservation#/ReservationEndReason
+      reservation_id:
+        description: reservation_id
+        type: integer
+  ReservationCheckStatus:
+    description: >-
+      The reservation status of an evse id.
+      NotReserved: There is no reservation for the given evse id.
+      NotReservedForToken: There is a reservation for the given evse id, but not for this token.
+      ReservedForOtherToken: Reserved for other token and reservation has no parent token or parent token does not match.
+      ReservedForOtherTokenAndHasParentToken: There is a reservation for another id token, but the reservation also has
+                                              a group id token (which was not given when calling this function).
+    type: string
+    enum:
+      - NotReserved
+      - ReservedForToken
+      - ReservedForOtherToken
+      - ReservedForOtherTokenAndHasParentToken
+  ReservationCheck:
+    description: Check for a reserved token
+    type: object
+    additionalProperties: false
+    required:
+      - id_token
+    properties:
+      evse_id:
+        description: >-
+          The id of the evse to check. When it is dismissed, it means that the reservation is not for a
+          specific evse.
+        type: integer
+      id_token:
+        description: The id token to check the reservation for.
+        type: string
+      group_id_token:
+        description: >-
+          The group / parent id token to check the reservation for. If id_token is set and group_id_token as well, and
+          id_token is incorrect, the group_id_token will be checked. If that one is correct, there is a reservation
+          made for this group id token.
+        type: string
+  ReservationUpdateStatus:
+    description: Status of a reservation
+    type: object
+    additionalProperties: false
+    required:
+      - reservation_id
+      - reservation_status
+    properties:
+      reservation_id:
+        description: The reservation id
+        type: integer
+      reservation_status:
+        description: The reservation status
+        type: string
+        enum:
+          - Expired
+          - Removed
+          - Placed
+          - Cancelled
+          - Used

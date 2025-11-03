@@ -1,0 +1,48 @@
+description: >-
+  The EVerest Setup module for setting up a LAN or WIFI network connection. This module needs privileged access and
+  should not run during normal operations
+config:
+  setup_wifi:
+    description: Allow wifi setup
+    type: boolean
+    default: false
+  localization:
+    description: Enable localization support
+    type: boolean
+    default: false
+  setup_simulation:
+    description: Allow simulation setup
+    type: boolean
+    default: false
+  online_check_host:
+    description: Hostname or IP to use to check for internet connectivity
+    type: string
+    default: lfenergy.org
+  initialized_by_default:
+    description: Always report as if the charger was initialized
+    type: boolean
+    default: true
+  release_metadata_file:
+    description: Location of the release metadata file relative to the EVerest prefix
+    type: string
+    default: "release.json"
+  ap_interface:
+    description: Wifi interface for AP mode
+    type: string
+    default: wlan0
+  ap_ipv4:
+    description: IPv4 address of the AP
+    type: string
+    default: "192.168.1.1/24"
+provides:
+  main:
+    description: EVerest Setup
+    interface: empty
+requires:
+  store:
+    interface: kvs
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Kai-Uwe Hermann

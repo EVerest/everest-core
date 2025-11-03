@@ -1,0 +1,15 @@
+description: Simple example module written in Rust and using the other example module
+provides:
+  main:
+    interface: example_user
+    description: This implements the example_user interface
+requires:
+  their_example:
+    interface: example
+  another_example:
+    interface: example
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Holger Rapp
+enable_external_mqtt: false

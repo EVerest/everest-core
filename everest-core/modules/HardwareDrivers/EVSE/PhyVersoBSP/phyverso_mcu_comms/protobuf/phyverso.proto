@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+/*
+ This container message is send from EVerest to MCU and may contain any allowed message in that direction.
+*/
+message EverestToMcu {
+ oneof payload {
+    KeepAlive keep_alive = 1;
+    bool firmware_update = 2;
+    bool connector_lock = 3; // false: unlock, true: lock
+    uint32 pwm_duty_cycle = 4; // in 0.01 %, 0 = State F, 10000 = X1
+    CoilState set_coil_state_request = 5;
+    bool reset = 6;
+    BootConfigResponse config_response = 8;
+    FanState set_fan_state = 9;
+    RcdCommand rcd_cmd = 10;
+  }
+  int32 connector = 7; // 0: None, 1: Connector 1, 2: Connector 2
+}
+
+/*
+ This container message is send from MCU to EVerest and may contain any allowed message in that direction.
+*/
+message McuToEverest {
+ oneof payload {
+  KeepAlive keep_alive = 1;
+  ResetReason reset = 2;
+  CpState cp_state = 3;
+  CoilState set_coil_state_response = 4;
+  ErrorFlags error_flags = 5;
+  Telemetry telemetry = 7;
+  PpState pp_state = 8;
+  FanState fan_state = 9;
+  LockState lock_state = 10;
+  BootConfigRequest config_request = 11;
+ }
+ int32 connector = 6; // 0: None, 1: Connector 1, 2: Connector 2
+}
+
+enum CpState {
+  STATE_A = 0;
+  STATE_B = 1;
+  STATE_C = 2;
+  STATE_D = 3;
+  STATE_E = 4;
+  STATE_F = 5;
+}
+
+message ErrorFlags {
+  bool diode_fault = 1;
+  bool rcd_selftest_failed = 2;
+  bool rcd_triggered = 3;
+  bool ventilation_not_available = 4;
+  bool connector_lock_failed = 5;
+  bool cp_signal_fault = 6;
+}
+
+enum ResetReason {
+  USER = 0;
+  WATCHDOG = 1;
+}
+
+message KeepAlive {
+  uint32 time_stamp = 1;
+  uint32 hw_type = 2;
+  uint32 hw_revision = 3;
+  string sw_version_string = 6;
+}
+
+message Telemetry {
+  uint32 cp_voltage_hi = 1;
+  uint32 cp_voltage_lo = 2;
+}
+
+enum PpState {
+  STATE_NC = 0;
+  STATE_13A = 1;
+  STATE_20A = 2;
+  STATE_32A = 3;
+  STATE_70A = 4;
+  STATE_FAULT = 5;
+}
+
+message FanState {
+  uint32 fan_id = 1;
+  bool enabled = 2;
+  uint32 duty = 3;  // in 0.1%, 1000 = 100%
+  uint32 rpm = 4;
+}
+
+enum LockState {
+  UNDEFINED = 0;
+  UNLOCKED = 1;
+  LOCKED = 2;
+}
+
+message CoilState {
+  CoilType coil_type = 1;
+  bool coil_state = 2;    // true -> on; false -> off
+}
+
+enum CoilType {
+	COIL_UNKNOWN = 0;
+	COIL_AC = 1;
+	COIL_DC1 = 2;
+	// add precharge and discharge coils here later
+	COIL_DC2 = 3;
+	COIL_DC3 = 4;
+}
+
+message BootConfigRequest {
+  // TODO
+}
+
+message BootConfigResponse {
+  ConfigHardwareRevision hw_rev = 1;
+  ConfigMotorLockType lock_1 = 2;
+  ConfigMotorLockType lock_2 = 3;
+}
+
+message ConfigMotorLockType {
+  MotorLockType type = 1;
+}
+
+enum ConfigHardwareRevision {
+  HW_REV_UNKNOWN = 0;
+  HW_REV_A = 1;
+  HW_REV_B = 2;
+}
+
+enum MotorLockType {
+  MOTOR_LOCK_UNKNOWN = 0;
+  MOTOR_LOCK_QWELLO = 1;
+  MOTOR_LOCK_DEBUG_VALEO_HVAC = 2;
+}
+
+message RcdCommand {
+  bool test = 1;  // true -> set TEST pin high, false -> set TEST pin low
+  bool reset = 2; // reset RCD/emergency off if set to true
+}

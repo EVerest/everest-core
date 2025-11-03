@@ -1,0 +1,84 @@
+description: >-
+  This interface defines an testing interface that allows to control the
+  usage of error handling features
+cmds:
+  clear_error:
+    description: This command clears all errors of a specific type
+    arguments:
+      type:
+        description: This argument allows to specify the type
+          cleared
+        type: string
+        enum:
+          - test_errors/TestErrorA
+          - test_errors/TestErrorB
+          - test_errors/TestErrorC
+          - test_errors/TestErrorD
+      sub_type:
+        description: This argument allows to specify the sub type
+        type: string
+  clear_all_errors:
+    description: This command clears all errors that are raised by this implementation
+  raise_error:
+    description: This command raises an error
+    arguments:
+      type:
+        description: This argument allows to specify the type
+          raised
+        type: string
+        enum:
+          - test_errors/TestErrorA
+          - test_errors/TestErrorB
+          - test_errors/TestErrorC
+          - test_errors/TestErrorD
+      sub_type:
+        description: This argument allows to specify the sub type
+        type: string
+      message:
+        description: This argument allows to specify the message
+        type: string
+      severity:
+        description: This argument allows to specify the severity
+        type: string
+        enum:
+          - Low
+          - Medium
+          - High
+vars:
+  errors_subscribe_TestErrorA:
+    description: >-
+      This variable publishes the errors raised by error_raiser
+    type: object
+  errors_cleared_subscribe_TestErrorA:
+    description: >-
+      This variable publishes the errors that are cleared by error_raiser
+    type: object
+  errors_subscribe_TestErrorB:
+    description: >-
+      This variable publishes the errors raised by error_raiser
+    type: object
+  errors_cleared_subscribe_TestErrorB:
+    description: >-
+      This variable publishes the errors that are cleared by error_raiser
+    type: object
+  errors_subscribe_all:
+    description: >-
+      This variable publishes the errors raised by error_raiser
+    type: object
+  errors_cleared_subscribe_all:
+    description: >-
+      This variable publishes the errors that are cleared by error_raiser
+    type: object
+  errors_subscribe_global_all:
+    description: >-
+      This variable publishes the errors raised by any module/implementation
+    type: object
+  errors_cleared_subscribe_global_all:
+    description: >-
+      This variable publishes the errors that are cleared by any module/implementation
+    type: object
+errors:
+  - reference: /errors/test_errors#/TestErrorA
+  - reference: /errors/test_errors#/TestErrorB
+  - reference: /errors/test_errors#/TestErrorC
+  - reference: /errors/test_errors#/TestErrorD

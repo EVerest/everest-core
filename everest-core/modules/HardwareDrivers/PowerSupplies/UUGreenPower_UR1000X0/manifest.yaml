@@ -1,0 +1,38 @@
+description: Driver for UUGreenPower_UR1000X0 ACDC power supply. Currently supports only one module.
+config:
+  can_device:
+    description: CAN interface name
+    type: string
+    default: can0
+  module_addresses:
+    description: >-
+      Module Addresses to use. Set to "0" for broadcast. Make sure to connect only one PSU on the CAN bus in broadcast mode, otherwise
+      it will charge at a too high current (as every module will produce the full current the EV requests!)
+      If you have multiple PSUs, use individual addresses and list them comma separated, e.g. "1,2". Then it will share the current between
+      these PSUs.
+    type: string
+    default: "0"
+  voltage_mode:
+    description: Set to 0 for automatic switching, 1 for high voltage mode, 2 for low voltage mode
+    type: integer
+    default: 0
+  max_export_current_A:
+    description: Maximum current that the PSU module can deliver. When using multiple PSUs in parallel, this refers to each individual PSU current capability.
+    type: integer
+    default: 100
+  max_export_power_W:
+    description: Maximum power that the PSU module can deliver. When using multiple PSUs in parallel, this refers to each individual PSU power capability.
+    type: integer
+    default: 40000
+provides:
+  main:
+    description: Main interface
+    interface: power_supply_DC
+    config: {}
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+  - Cornelius Claussen
+  - Jan Christoph Habig
+  - Andreas Heinrich
+  - Florin Mihut

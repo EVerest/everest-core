@@ -1,0 +1,14 @@
+description: Example cost and price message module
+provides:
+  main:
+    description: EVerest API
+    interface: empty
+requires:
+  session_cost:
+    interface: session_cost
+    min_connections: 1
+    max_connections: 1
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Maaike Zijderveld

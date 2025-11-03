@@ -1,0 +1,78 @@
+description: Interface for system wide operations of EVerest
+cmds:
+  update_firmware:
+    description: Call to start a firmware update
+    arguments:
+      firmware_update_request:
+        description: Meta data containing information about the firmware request
+        type: object
+        $ref: /system#/FirmwareUpdateRequest
+    result:
+      description: Returns the result of the attempt to update the firmware
+      type: string
+      $ref: /system#/UpdateFirmwareResponse
+  allow_firmware_installation:
+    description: Call to allow a firmware installation to proceed
+  upload_logs:
+    description: Call to start a log upload
+    arguments:
+      upload_logs_request:
+        description: Meta data containing information about the log request request
+        type: object
+        $ref: /system#/UploadLogsRequest
+    result:
+      description: Returns the result of the attempt to upload the logs
+      type: object
+      $ref: /system#/UploadLogsResponse
+  is_reset_allowed:
+    description: Call to determine if a reset of the system is allowed
+    arguments:
+      type:
+        description: Type of the reset (Soft or Hard)
+        type: string
+        $ref: /system#/ResetType
+    result:
+      description: >-
+        Indicates if the system can be reset
+      type: boolean
+  reset:
+    description: Call to reset the system immediately
+    arguments:
+      type:
+        description: Type of the reset (Soft or Hard)
+        type: string
+        $ref: /system#/ResetType
+      scheduled:
+        description: >-
+          Indicates if this reset command was scheduled or immediately executed. A scheduled reset means that the system was waiting for
+          all transactions to finish before this command was executed. This value is only informational.
+        type: boolean 
+  set_system_time:
+    description: Call to set the system time of EVerest
+    arguments:
+      timestamp:
+        description: The new system time in RFC3339 format
+        type: string
+        format: date-time
+    result:
+      description: >-
+        Returns true if the system time could be set successfully, else
+        false
+      type: boolean
+  get_boot_reason:
+    description: Call to get the boot reason of the system
+    result:
+      description: Returns the boot reason of the system
+      type: string
+      $ref: /system#/BootReason
+vars:
+  firmware_update_status:
+    description: Describes the current status of a firmware update of the system
+    type: object
+    $ref: /system#/FirmwareUpdateStatus
+  log_status:
+    description: Describes the current status of log upload of the system
+    type: object
+    $ref: /system#/LogStatus
+errors:
+  - reference: /errors/system

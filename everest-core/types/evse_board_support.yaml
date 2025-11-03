@@ -1,0 +1,116 @@
+description: Board support types
+types:
+  HardwareCapabilities:
+    description: Hardware capability/limits
+    type: object
+    additionalProperties: false
+    required:
+      - max_current_A_import
+      - min_current_A_import
+      - max_phase_count_import
+      - min_phase_count_import
+      - max_current_A_export
+      - min_current_A_export
+      - max_phase_count_export
+      - min_phase_count_export
+      - supports_changing_phases_during_charging
+      - connector_type
+    properties:
+      max_current_A_import:
+        description: Maximum current (ampere) the hardware can handle (import from grid)
+        type: number
+      min_current_A_import:
+        description: >-
+          Minimum current (ampere) the hardware can use to charge. Values
+          below may be set but may result in pause instead.  (import from grid)
+        type: number
+      max_phase_count_import:
+        description: Max nr of phases the hardware can use  (import from grid)
+        type: integer
+        minimum: 1
+        maximum: 3
+      min_phase_count_import:
+        description: Minimum nr of phases the hardware can use  (import from grid)
+        type: integer
+        minimum: 1
+        maximum: 3
+      max_current_A_export:
+        description: Maximum current (ampere) the hardware can handle (export to grid)
+        type: number
+      min_current_A_export:
+        description: >-
+          Minimum current (ampere) the hardware can use to charge. Values
+          below may be set but may result in pause instead. (export to grid)
+        type: number
+      max_phase_count_export:
+        description: Max nr of phases the hardware can use (export to grid)
+        type: integer
+        minimum: 1
+        maximum: 3
+      min_phase_count_export:
+        description: Minimum nr of phases the hardware can use (export to grid)
+        type: integer
+        minimum: 1
+        maximum: 3
+      supports_changing_phases_during_charging:
+        description: >-
+          Indicates whether changing number of phases is supported during
+          charging (true) or not (false)
+        type: boolean
+      max_plug_temperature_C:
+        type: number
+      connector_type:
+        description: Type of charging connector available at this EVSE
+        type: string
+        enum:
+          - IEC62196Type2Cable
+          - IEC62196Type2Socket
+  Telemetry:
+    description: Other telemetry
+    type: object
+    additionalProperties: false
+    required:
+      - evse_temperature_C
+      - fan_rpm
+      - supply_voltage_12V
+      - supply_voltage_minus_12V
+      - relais_on
+    properties:
+      evse_temperature_C:
+        description: Current temperature of the EVSE in degree celsius
+        type: number
+      plug_temperature_C:
+        description: Current temperature of the plug in degree celsius
+        type: number
+      fan_rpm:
+        description: RPM of the fan. 0 if off or no fan available.
+        type: number
+      supply_voltage_12V:
+        description: Internal 12V supply voltage
+        type: number
+      supply_voltage_minus_12V:
+        description: Internal -12V supply voltage
+        type: number
+      relais_on:
+        description: true if power to the car is currently on, false if off
+        type: boolean
+  PowerOnOff:
+    description: Flag and context for switching power on/off. In some architectures e.g. DC power 
+      train needs to know whether it should switch on with limited current or full current on the output contactors.
+    type: object
+    additionalProperties: false
+    required:
+      - allow_power_on
+      - reason
+    properties:
+      allow_power_on:
+        description: Allow switching on (true) or force switching off (false)
+        type: boolean
+      reason:
+        description: Reason for switching on/off
+        type: string
+        enum:
+          - DCCableCheck
+          - DCPreCharge
+          - FullPowerCharging
+          - PowerOff

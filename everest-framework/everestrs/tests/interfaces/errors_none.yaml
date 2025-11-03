@@ -1,0 +1,4 @@
+description: >-
+  We make sure that we can parse the error files which don't define any errors
+errors:
+  - reference: /errors/no_errors

@@ -1,0 +1,65 @@
+description: EV and EVSE board support types
+types:
+  BspEvent:
+    description: >-
+      Event stream from ControlPilot signal/relais.
+
+      A-F: CP states as defined in IEC61851-1
+      PowerOn: Hardware confirms that contactors switched on correctly (typically mirror contacts indicated successful switch on)
+      PowerOff: Hardware confirms that contactors switched off correctly and are not welded (typically mirror contacts indicated successful switch off)
+
+      EvseReplugStarted: Special testing sequence: virtual replugging started
+      EvseReplugFinished: Special testing sequence: virtual replugging stopped
+      Disconnected: Only used on EV side: Not connected to a charging station. Do not use on EVSE side.
+    type: object
+    additionalProperties: false
+    required:
+      - event
+    properties:
+      event:
+        type: string
+        enum:
+          - 'A'
+          - 'B'
+          - 'C'
+          - 'D'
+          - 'E'
+          - 'F'
+          - 'PowerOn'
+          - 'PowerOff'
+          - 'EvseReplugStarted'
+          - 'EvseReplugFinished'
+          - 'Disconnected'
+  ProximityPilot:
+    description: Current capability (ampacity) of the cable
+    type: object
+    additionalProperties: false
+    required:
+      - ampacity
+    properties:
+      ampacity:
+        description: Ampacity value of the cable assembly
+        type: string
+        enum:
+          - None
+          - A_13
+          - A_20
+          - A_32
+          - A_63_3ph_70_1ph
+  BspMeasurement:
+    description: Bsp Measurement
+    type: object
+    required:
+      - cp_pwm_duty_cycle
+      - proximity_pilot
+    properties:
+      proximity_pilot:
+        description: Current capability of the cable
+        type: object
+        $ref: /board_support_common#/ProximityPilot
+      rcd_current_mA:
+        description: RCD current in mA
+        type: number
+      cp_pwm_duty_cycle:
+        description: CP PWM Duty Cycle in percent (0-100)
+        type: number

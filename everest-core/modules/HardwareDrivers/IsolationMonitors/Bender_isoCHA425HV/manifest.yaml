@@ -1,0 +1,115 @@
+description: IMD driver for Bender isoCHA425HV IMD devices.
+provides:
+  main:
+    description: Implementation of the driver functionality
+    interface: isolation_monitor
+    config:
+      imd_device_id:
+        description: The IMD's address on the ModBus
+        type: integer
+        minimum: 0
+        maximum: 255
+        default: 3
+      r1_prealarm_kohm:
+        description: >-
+          3005 The IMD's internal measurement resistance for signaling an alarm in kiloohms
+          (the internal resistance is only used for switching the IMDs relays,
+          EVerest handles any isolation issue internaly inside the EVSE manager)
+          Note the maximum value is 600k on isoCHA and 500k on isoEV units.
+        type: integer
+        minimum: 15
+        maximum: 600
+        default: 250
+      r2_alarm_kohm:
+        description: >-
+          3007 This value must be smaller than r1_prealarm_kohm
+        type: integer
+        minimum: 15
+        maximum: 600
+        default: 100
+      undervoltage_alarm_enable:
+        description: >-
+          3008 Enable under voltage alarm
+        type: boolean
+        default: false
+      undervoltage_alarm_threshold_V:
+        description: >-
+          3009 Threshold in volt for the under voltage alarm
+        type: integer
+        default: 30
+      overvoltage_alarm_enable:
+        description: >-
+          3010 Enable over voltage alarm
+        type: boolean
+        default: false
+      overvoltage_alarm_threshold_V:
+        description: >-
+          3011 Threshold in volt for the over voltage alarm
+        type: integer
+        default: 1050
+      alarm_memory_enable:
+        description: >-
+          3012 Enable memory for alarm events
+        type: boolean
+        default: false
+      relais_r1_mode:
+        description: >-
+          3013 false: normally open, true: normally closed
+        type: boolean
+        default: false
+      relais_r2_mode:
+        description: >-
+          3014 false: normally open, true: normally closed
+        type: boolean
+        default: false
+      delay_startup_device:
+        description: >-
+          3018 Delay when device is starting up
+        type: integer
+        maximum: 10
+        minimum: 0
+        default: 5
+      delay_t_on_k1_k2:
+        description: >-
+          3019 delay for switching relais on
+        type: integer
+        maximum: 99
+        minimum: 0
+        default: 5
+      delay_t_off_k1_k2:
+        description: >-
+          3020 delay for switching relais off
+        type: integer
+        maximum: 99
+        minimum: 0
+        default: 5
+      chademo_mode:
+        description: >-
+          3023: false: CCS, true: ChaDeMo
+        type: boolean
+        default: false
+      selftest_enable_gridconnection:
+        description: >-
+          3024: Test grid connection while testing device nEt
+        type: boolean
+        default: false
+      selftest_enable_at_start:
+        description: >-
+          3025 Perform self test at start up of device
+        type: boolean
+        default: true
+      always_publish_measurements:
+        description: >-
+          Always publish measurement even if stopped by EVerest
+        type: boolean
+        default: false
+requires:
+  serial_comm_hub:
+    interface: serial_communication_hub
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen
+    - Florin Mihut
+    - Jan Christoph Habig
+    - Lars Dieckmann
