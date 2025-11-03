@@ -400,8 +400,9 @@ void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match
         return;
     }
 
-    if (session->state != MatchingSubState::WAIT_FOR_SLAC_MATCH) {
-        session_log(ctx, *session, LogLevel::WARN, "needs to be in state WAIT_FOR_SLAC_MATCH for CM_SLAC_MATCH_REQ");
+    if (session->state != MatchingSubState::WAIT_FOR_SLAC_MATCH && session->state != MatchingSubState::MATCH_COMPLETE) {
+        session_log(ctx, *session, LogLevel::WARN,
+                    "needs to be in state WAIT_FOR_SLAC_MATCH or MATCH_COMPLETE for CM_SLAC_MATCH_REQ");
         return;
     }
 
