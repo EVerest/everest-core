@@ -29,6 +29,7 @@ public:
 
     void print_fw_version();
     bool print_switch_bank();
+    bool quick_check_connection();
     bool check_connection();
     bool check_if_correct_fw_installed();
 

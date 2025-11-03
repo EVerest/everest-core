@@ -46,14 +46,20 @@ charge_bridge::~charge_bridge() {
 
 bool charge_bridge::update_firmware(bool force) {
     firmware_update::sync_fw_updater updater(m_config.firmware);
-    auto do_update = force or (m_config.firmware.fw_update_on_start and not updater.check_if_correct_fw_installed());
+    auto is_connected = updater.quick_check_connection();
+    if (not is_connected) {
+        return false;
+    }
     updater.print_fw_version();
-    auto result = not do_update;
-    if (do_update) {
-        result = updater.upload_fw() && updater.check_connection();
-        if (not result) {
-            std::cout << "Error: could not install correct firmware version" << std::endl;
-        }
+
+    auto do_update = force or (m_config.firmware.fw_update_on_start and not updater.check_if_correct_fw_installed());
+
+    if (not do_update) {
+        return true;
+    }
+    auto result = updater.upload_fw() && updater.check_connection();
+    if (not result) {
+        std::cout << "Error: could not install correct firmware version" << std::endl;
     }
     return result;
 }

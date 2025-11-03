@@ -90,6 +90,15 @@ bool sync_fw_updater::check_if_correct_fw_installed() {
     }
 }
 
+bool sync_fw_updater::quick_check_connection() {
+    everest::lib::io::udp::udp_payload pl = make_ping_command();
+
+    auto result = m_udp.request_reply(pl, 200, 10).has_value();
+    utilities::print_error(m_config.cb, "FIRMWARE", not result)
+        << (result ? "ChargeBride Connected" : "No connection to ChargeBridge") << std::endl;
+    return result;
+}
+
 bool sync_fw_updater::check_connection() {
     everest::lib::io::udp::udp_payload pl = make_ping_command();
 
