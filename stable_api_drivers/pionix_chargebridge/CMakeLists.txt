@@ -34,6 +34,7 @@ add_executable(pionix_chargebridge_tool
   src/utilities/filesystem.cpp
   src/utilities/logging.cpp
   src/utilities/parse_config.cpp
+  src/utilities/print_config.cpp
   src/utilities/string.cpp
   src/utilities/symlink.cpp
   src/utilities/sync_udp_client.cpp

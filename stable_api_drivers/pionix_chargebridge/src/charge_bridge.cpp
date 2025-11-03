@@ -2,8 +2,10 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "charge_bridge/gpio_bridge.hpp"
 #include "charge_bridge/heartbeat_service.hpp"
+#include "protocol/cb_config.h"
 #include <charge_bridge/charge_bridge.hpp>
 #include <charge_bridge/firmware_update/sync_fw_updater.hpp>
+#include <charge_bridge/utilities/print_config.hpp>
 #include <charge_bridge/utilities/sync_udp_client.hpp>
 #include <everest/io/event/fd_event_sync_interface.hpp>
 #include <everest/io/netlink/vcan_netlink_manager.hpp>
@@ -139,19 +141,35 @@ void charge_bridge::print_config() {
 }
 
 void print_charge_bridge_config(charge_bridge_config const& c) {
+    using namespace utilities;
     std::cout << "ChargeBridge: " << c.cb_name << std::endl;
     std::cout << " * remote:    " << c.cb_remote << std::endl;
     if (c.serial1) {
-        std::cout << " * serial 1:  " << c.serial1->serial_device << std::endl;
+        std::cout << " * serial 1:  " << c.serial1->serial_device;
+        if (c.heartbeat.has_value() && CB_NUMBER_OF_UARTS >= 1) {
+            std::cout << " " << to_string(c.heartbeat->cb_config.uarts[0]);
+        }
+        std::cout << std::endl;
     }
     if (c.serial2) {
-        std::cout << " * serial 2:  " << c.serial2->serial_device << std::endl;
+        std::cout << " * serial 2:  " << c.serial2->serial_device;
+        if (c.heartbeat.has_value() && CB_NUMBER_OF_UARTS >= 2) {
+            std::cout << " " << to_string(c.heartbeat->cb_config.uarts[1]);
+        }
+        std::cout << std::endl;
     }
     if (c.serial3) {
-        std::cout << " * serial 3:  " << c.serial3->serial_device << std::endl;
+        std::cout << " * serial 3:  " << c.serial3->serial_device;
+        if (c.heartbeat.has_value() && CB_NUMBER_OF_UARTS >= 3) {
+            std::cout << " " << to_string(c.heartbeat->cb_config.uarts[2]);
+        }
+        std::cout << std::endl;
     }
     if (c.can0) {
-        std::cout << " * can 0:     " << c.can0->can_device << std::endl;
+        std::cout << " * can 0:     " << c.can0->can_device;
+        if (c.heartbeat.has_value()) {
+            std::cout << " " << to_string(c.heartbeat->cb_config.can.baudrate) << "bps" << std::endl;
+        }
     }
     if (c.plc) {
         std::cout << " * plc:       " << c.plc->plc_tap << std::flush;
@@ -165,7 +183,7 @@ void print_charge_bridge_config(charge_bridge_config const& c) {
         std::cout << " module " << c.evse->api.bsp.module_id;
         std::cout << " MQTT " << c.evse->api.mqtt_remote << ":" << c.evse->api.mqtt_port;
         std::cout << " ping " << c.evse->api.mqtt_ping_interval_ms << "ms";
-        if(c.evse->api.ovm.enabled){
+        if (c.evse->api.ovm.enabled) {
             std::cout << " OVM module " << c.evse->api.ovm.module_id;
         }
         std::cout << std::endl;
@@ -174,7 +192,7 @@ void print_charge_bridge_config(charge_bridge_config const& c) {
         std::cout << " * heartbeat: " << c.cb_remote << ":" << c.cb_port;
         std::cout << " heartbeat interval " << c.heartbeat->interval_s << "s" << std::endl;
     }
-    if (c.heartbeat) {
+    if (c.gpio) {
         std::cout << " * gpio:      " << c.cb_remote << ":" << c.cb_port;
         std::cout << " send interval " << c.gpio->interval_s << "s" << std::endl;
     }

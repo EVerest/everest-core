@@ -3,7 +3,6 @@
 #pragma once
 
 #include <charge_bridge/charge_bridge.hpp>
-#include <everest_api_types/evse_board_support/API.hpp>
 
 namespace charge_bridge::utilities {
 
