@@ -1,145 +1,61 @@
-#include <boost/current_function.hpp>
-
-#include <everest/exceptions.hpp>
-#include <everest/logging.hpp>
-
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Pionix GmbH and Contributors to EVerest
 #include <utils/conversions.hpp>
 
 namespace Everest {
+namespace conversions {
+constexpr auto CMD_ERROR_TYPE_MESSAGE_PARSING_ERROR = "MessageParsingError";
+constexpr auto CMD_ERROR_TYPE_SCHEMA_VALIDATION_ERROR = "SchemaValidationError";
+constexpr auto CMD_ERROR_TYPE_HANDLER_EXCEPTION = "HandlerException";
+constexpr auto CMD_ERROR_TYPE_CMD_TIMEOUT = "CmdTimeout";
+constexpr auto CMD_ERROR_TYPE_SHUTDOWN = "Shutdown";
+constexpr auto CMD_ERROR_TYPE_NOT_READY = "NotReady";
 
-template <> json convertTo<json>(Result retval) {
-    BOOST_LOG_FUNCTION();
-    if (retval == boost::none) {
-        return json(nullptr);
-    } else {
-        auto ret_any = retval.get();
-        if (ret_any.type() == typeid(std::string)) {
-            return boost::any_cast<std::string>(ret_any);
-        } else if (ret_any.type() == typeid(double)) {
-            return boost::any_cast<double>(ret_any);
-        } else if (ret_any.type() == typeid(int)) {
-            return boost::any_cast<int>(ret_any);
-        } else if (ret_any.type() == typeid(bool)) {
-            return boost::any_cast<bool>(ret_any);
-        } else if (ret_any.type() == typeid(Array)) {
-            return boost::any_cast<Array>(ret_any);
-        } else if (ret_any.type() == typeid(Object)) {
-            return boost::any_cast<Object>(ret_any);
-        } else {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "WRONG C++ TYPE: ", ret_any.type().name())); // FIXME
-        }
+std::string cmd_error_type_to_string(CmdErrorType cmd_error) {
+    switch (cmd_error) {
+    case CmdErrorType::MessageParsingError:
+        return CMD_ERROR_TYPE_MESSAGE_PARSING_ERROR;
+    case CmdErrorType::SchemaValidationError:
+        return CMD_ERROR_TYPE_SCHEMA_VALIDATION_ERROR;
+    case CmdErrorType::HandlerException:
+        return CMD_ERROR_TYPE_HANDLER_EXCEPTION;
+    case CmdErrorType::CmdTimeout:
+        return CMD_ERROR_TYPE_CMD_TIMEOUT;
+    case CmdErrorType::Shutdown:
+        return CMD_ERROR_TYPE_SHUTDOWN;
+    case CmdErrorType::NotReady:
+        return CMD_ERROR_TYPE_NOT_READY;
     }
+
+    throw std::runtime_error("Unknown CmdError");
 }
 
-template <> Result convertTo<Result>(json data) {
-    BOOST_LOG_FUNCTION();
-    Result retval;
-    if (data.is_string()) {
-        retval = data.get<std::string>();
-    } else if (data.is_number_float()) {
-        retval = data.get<double>();
-    } else if (data.is_number_integer()) {
-        retval = data.get<int>();
-    } else if (data.is_boolean()) {
-        retval = data.get<bool>();
-    } else if (data.is_array()) {
-        retval = data.get<Array>();
-    } else if (data.is_object()) {
-        retval = data.get<Object>();
-    } else if (data.is_null()) {
-        retval = nullptr;
-    } else {
-        EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "WRONG JSON TYPE: ", data.type_name())); // FIXME
+CmdErrorType string_to_cmd_error_type(const std::string& cmd_error_string) {
+    if (cmd_error_string == CMD_ERROR_TYPE_MESSAGE_PARSING_ERROR) {
+        return CmdErrorType::MessageParsingError;
+    } else if (cmd_error_string == CMD_ERROR_TYPE_SCHEMA_VALIDATION_ERROR) {
+        return CmdErrorType::SchemaValidationError;
+    } else if (cmd_error_string == CMD_ERROR_TYPE_HANDLER_EXCEPTION) {
+        return CmdErrorType::HandlerException;
+    } else if (cmd_error_string == CMD_ERROR_TYPE_CMD_TIMEOUT) {
+        return CmdErrorType::CmdTimeout;
+    } else if (cmd_error_string == CMD_ERROR_TYPE_SHUTDOWN) {
+        return CmdErrorType::Shutdown;
+    } else if (cmd_error_string == CMD_ERROR_TYPE_NOT_READY) {
+        return CmdErrorType::NotReady;
     }
-    return retval;
+
+    throw std::runtime_error("Unknown CmdError");
+}
+} // namespace conversions
+
+void to_json(nlohmann::json& j, const CmdResultError& e) {
+    j = {{conversions::ERROR_TYPE, conversions::cmd_error_type_to_string(e.event)}, {conversions::ERROR_MSG, e.msg}};
 }
 
-template <> json convertTo<json>(Parameters params) {
-    BOOST_LOG_FUNCTION();
-    json j = json({});
-    for (auto const& param : params) {
-        if (param.second.type() == typeid(std::string)) {
-            j[param.first] = boost::any_cast<std::string>(param.second);
-        } else if (param.second.type() == typeid(double)) {
-            j[param.first] = boost::any_cast<double>(param.second);
-        } else if (param.second.type() == typeid(int)) {
-            j[param.first] = boost::any_cast<int>(param.second);
-        } else if (param.second.type() == typeid(bool)) {
-            j[param.first] = boost::any_cast<bool>(param.second);
-        } else if (param.second.type() == typeid(Array)) {
-            j[param.first] = boost::any_cast<Array>(param.second);
-        } else if (param.second.type() == typeid(Object)) {
-            j[param.first] = boost::any_cast<Object>(param.second);
-        } else {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "WRONG C++ TYPE: ", param.second.type().name())); // FIXME
-        }
-    }
-    return j;
-}
-
-template <> Parameters convertTo<Parameters>(json data) {
-    BOOST_LOG_FUNCTION();
-    Parameters params;
-    for (auto const& arg : data.items()) {
-        json value = arg.value();
-        if (value.is_string()) {
-            params[arg.key()] = value.get<std::string>();
-        } else if (value.is_number_float()) {
-            params[arg.key()] = value.get<double>();
-        } else if (value.is_number_integer()) {
-            params[arg.key()] = value.get<int>();
-        } else if (value.is_boolean()) {
-            params[arg.key()] = value.get<bool>();
-        } else if (value.is_array()) {
-            params[arg.key()] = value.get<Array>();
-        } else if (value.is_object()) {
-            params[arg.key()] = value.get<Object>();
-        } else if (value.is_null()) {
-            params[arg.key()] = nullptr;
-        } else {
-            EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "WRONG JSON TYPE: ", value.type_name(),
-                                        " FOR ENTRY: ", arg.key())); // FIXME
-        }
-    }
-    return params;
-}
-
-template <> json convertTo<json>(Value value) {
-    BOOST_LOG_FUNCTION();
-    if (value.type() == typeid(std::string)) {
-        return boost::any_cast<std::string>(value);
-    } else if (value.type() == typeid(double)) {
-        return boost::any_cast<double>(value);
-    } else if (value.type() == typeid(int)) {
-        return boost::any_cast<int>(value);
-    } else if (value.type() == typeid(bool)) {
-        return boost::any_cast<bool>(value);
-    } else if (value.type() == typeid(Array)) {
-        return boost::any_cast<Array>(value);
-    } else if (value.type() == typeid(Object)) {
-        return boost::any_cast<Object>(value);
-    } else {
-        EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "WRONG C++ TYPE: ", value.type().name())); // FIXME
-    }
-}
-
-template <> Value convertTo<Value>(json data) {
-    BOOST_LOG_FUNCTION();
-    if (data.is_string()) {
-        return data.get<std::string>();
-    } else if (data.is_number_float()) {
-        return data.get<double>();
-    } else if (data.is_number_integer()) {
-        return data.get<int>();
-    } else if (data.is_boolean()) {
-        return data.get<bool>();
-    } else if (data.is_array()) {
-        return data.get<Array>();
-    } else if (data.is_object()) {
-        return data.get<Object>();
-    } else {
-        EVLOG_AND_THROW(EVEXCEPTION(EverestApiError, "WRONG JSON TYPE: ", data.type_name())); // FIXME
-    }
+void from_json(const nlohmann::json& j, CmdResultError& e) {
+    e.event = conversions::string_to_cmd_error_type(j.at(conversions::ERROR_TYPE));
+    e.msg = j.at(conversions::ERROR_MSG);
 }
 
 } // namespace Everest

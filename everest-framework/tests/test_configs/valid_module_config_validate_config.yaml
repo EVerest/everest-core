@@ -1,0 +1,20 @@
+active_modules:
+  valid_module:
+    module: TESTValidManifestCmdVar
+    config_module:
+      valid_config_entry: "hello there"
+      unknown_config_entry: 42 # this just logs an error nowadays
+    config_implementation:
+      main:
+        valid_config_entry: "hello there"
+        unknown_config_entry: 42 # this just logs an error nowadays
+    
+settings:
+  validate_schema: true
+  interfaces_dir: "interfaces"
+  modules_dir: "modules"
+  types_dir: "types"
+  errors_dir: "errors"
+  schemas_dir: "schemas"
+  www_dir: "www"
+  logging_config_file: "logging.ini"

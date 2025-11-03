@@ -1,54 +1,97 @@
-set(HEADERS
-    "${PROJECT_SOURCE_DIR}/include/utils/config.hpp"
-    "${PROJECT_SOURCE_DIR}/include/utils/exceptions.hpp"
-    "${PROJECT_SOURCE_DIR}/include/utils/logging.hpp"
-    "${PROJECT_SOURCE_DIR}/include/utils/mqtt_abstraction.hpp"
-    "${PROJECT_SOURCE_DIR}/include/utils/types.hpp"
-	"${PROJECT_SOURCE_DIR}/include/utils/conversions.hpp"
-    "${PROJECT_SOURCE_DIR}/include/framework/everest.hpp"
-)
-
 set(INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
 
 # EVerest framework
-add_library(everest SHARED)
-target_sources(everest
+# by default build as static
+set(DEFAULT_LINKAGE SHARED)
+# FIXME (aw): the following does not play well with CPM, because it get set by other dependencies ...
+#if (DEFINED BUILD_SHARED_LIBS AND NOT BUILD_SHARED_LIBS)
+#    message(FATAL_ERROR "everest-framework library does not support static build yet")
+#endif()
+add_library(framework ${DEFAULT_LINKAGE})
+add_library(everest::framework ALIAS framework)
+
+set_target_properties(framework PROPERTIES SOVERSION ${PROJECT_VERSION})
+
+target_sources(framework
     PRIVATE
         config.cpp
+        config/mqtt_settings.cpp
+        config/settings.cpp
+        config/sqlite_storage.cpp
+        config/storage_types.cpp
+        config/userconfig_storage.cpp
+        config/types.cpp
+        config_cache.cpp
+        config_service.cpp
+        conversions.cpp
+        error/error.cpp
+        error/error_database_map.cpp
+        error/error_filter.cpp
+        error/error_manager_impl.cpp
+        error/error_manager_req.cpp
+        error/error_manager_req_global.cpp
+        error/error_type_map.cpp
+        error/error_state_monitor.cpp
+        error/error_factory.cpp
         everest.cpp
+        formatter.cpp
+        filesystem.cpp
+        message_queue.cpp
+        module_adapter.cpp
+        module_config.cpp
         mqtt_abstraction.cpp
         mqtt_abstraction_impl.cpp
-        conversions.cpp
         thread.cpp
+        types.cpp
+        serial.cpp
+        status_fifo.cpp
+        date.cpp
+        runtime.cpp
+        yaml_loader.cpp
 )
-target_include_directories(everest PUBLIC ${INCLUDE_DIR})
-target_link_libraries(everest
+
+# FIXME (aw): c++17 doesn't need necessarily to be public, but our
+#             headers are messed up
+target_compile_features(framework PUBLIC cxx_std_17)
+
+target_compile_options(framework PRIVATE ${COMPILER_WARNING_OPTIONS})
+
+target_include_directories(framework
+    PUBLIC
+        $<BUILD_INTERFACE:${EVEREST_FRAMEWORK_GENERATED_INC_DIR}>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/everest>
+)
+
+target_link_libraries(framework
+    PUBLIC
+        date::date-tz
+        nlohmann_json::nlohmann_json
+        nlohmann_json_schema_validator
+        fmt::fmt
+
+        everest::log
+        everest::sqlite
+        ${STD_FILESYSTEM_COMPAT_LIB}
     PRIVATE
-        Boost::filesystem
         Boost::system
         Boost::thread
-        date
-        everest::log
+        Boost::program_options
         mqttc
-        nlohmann_json::nlohmann_json
-        nlohmann_json_schema_validator::nlohmann_json_schema_validator
-        Pal::Sigslot
+        ryml::ryml
 )
 
-# this is important to allow our headers to find the nlohmann_* headers
-target_link_libraries(everest
-    INTERFACE
-        nlohmann_json_schema_validator::nlohmann_json_schema_validator)
+collect_migration_files(
+     LOCATION ${PROJECT_SOURCE_DIR}/schemas/migrations
+     INSTALL_DESTINATION "${CMAKE_INSTALL_DATADIR}/everest/migrations"
+)
 
-# needs c++ 14
-target_compile_features(everest PUBLIC cxx_std_14)
+target_compile_definitions(framework
+    PRIVATE
+        TARGET_MIGRATION_FILE_VERSION=${TARGET_MIGRATION_FILE_VERSION}
+)
 
-source_group(
-    TREE "${INCLUDE_DIR}"
-    PREFIX "Headers"
-    FILES ${HEADERS})
-
-install(TARGETS everest
-    LIBRARY
-    DESTINATION lib
+set_target_properties(framework
+    PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
 )

@@ -1,0 +1,5 @@
+description: >-
+  We make sure that we respect a subset of errors
+errors:
+  - reference: /errors/example_errors#/ExampleErrorA
+  - reference: /errors/example_errors#/ExampleErrorB

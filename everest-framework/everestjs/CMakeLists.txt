@@ -1,51 +1,120 @@
-#cmake_policy(SET CMP0042 NEW)
+find_program(
+    NODE
+    node
+    REQUIRED
+)
 
-add_library(everestjs SHARED everestjs.cpp conversions.cpp js_exec_ctx.cpp)
-set_target_properties(everestjs PROPERTIES PREFIX "" SUFFIX ".node")
+execute_process(
+    COMMAND ${NODE} --version
+    OUTPUT_VARIABLE NODE_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
-target_link_libraries(everestjs
-        PRIVATE everest everest::log
+# We need Node-API version 6 or higher
+set(NODE_API_VERSION_REQUIRED 6)
+include(NodeApiVersion)
+require_node_api_version("${NODE_VERSION}" "${NODE_API_VERSION_REQUIRED}")
+
+find_program(
+    NPM
+    npm
+    REQUIRED
 )
 
 # Include Node-API wrappers
 # FIXME (aw): we want this as an requirement, not implicitely install it by ourself
-execute_process(COMMAND npm install node-addon-api
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+execute_process(
+    COMMAND
+        ${NPM} list -p node-addon-api --loglevel=error | grep node-addon-api
+    WORKING_DIRECTORY
+        ${CMAKE_CURRENT_BINARY_DIR}
+    OUTPUT_VARIABLE
+        NODE_ADDON_API_PACKAGE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-execute_process(COMMAND node -p "require('node-addon-api').include"
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        OUTPUT_VARIABLE NODE_ADDON_API_DIR
+set(NODE_ADDON_API_INSTALL_VERSION "8.1")
+message(STATUS "Adding node-addon-api@${NODE_ADDON_API_INSTALL_VERSION}")
+if (NOT NODE_ADDON_API_PACKAGE_DIR)
+    execute_process(
+        COMMAND
+            ${NPM} install node-addon-api@${NODE_ADDON_API_INSTALL_VERSION}
+        WORKING_DIRECTORY
+            ${CMAKE_CURRENT_BINARY_DIR}
+        OUTPUT_QUIET
+        RESULT_VARIABLE
+            NPM_INSTALL_NODE_ADDON_API_FAILED
+    )
+
+    if (NPM_INSTALL_NODE_ADDON_API_FAILED)
+        message(FATAL_ERROR "Installation of node-addon-api failed")
+    endif ()
+endif ()
+
+execute_process(
+    COMMAND ${NODE} -p "require('node-addon-api').include"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    OUTPUT_VARIABLE NODE_ADDON_API_DIR
 )
 string(REGEX REPLACE "[\r\n\"]" "" NODE_ADDON_API_DIR "${NODE_ADDON_API_DIR}")
 
 find_path(NODEJS_INCLUDE_DIR "node_api.h"
-        PATH_SUFFIXES
+    PATH_SUFFIXES
         "node"
         "node16"
-        REQUIRED
+        "node17"
+        "node18"
+        "node19"
+        "node20"
+        "node21"
+        "node22"
+        "nodejs/src"
+    HINTS
+        "$ENV{HOME}/.nvm/versions/node/${NODE_VERSION}/include"
+    REQUIRED
 )
+
+add_library(everestjs SHARED)
+target_sources(everestjs
+    PRIVATE
+        everestjs.cpp
+        conversions.cpp
+        js_exec_ctx.cpp
+)
+
+target_compile_options(everestjs PRIVATE ${COMPILER_WARNING_OPTIONS})
+
+# define NAPI_VERSION
+target_compile_definitions(everestjs
+    PRIVATE
+        -DNAPI_VERSION=${NODE_API_VERSION_REQUIRED}
+        -DNAPI_CPP_EXCEPTIONS
+)
+
+set_target_properties(everestjs PROPERTIES PREFIX "" SUFFIX ".node")
 
 target_include_directories(everestjs
     PRIVATE
-        ${NODE_ADDON_API_DIR}
-        ${NODEJS_INCLUDE_DIR}
-        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        $<BUILD_INTERFACE:${NODE_ADDON_API_DIR}>
+        $<BUILD_INTERFACE:${NODEJS_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-# needs c++ 14
-target_compile_features(everestjs PRIVATE cxx_std_14)
+target_link_libraries(everestjs
+    PRIVATE
+        everest::framework
+        everest::log
+)
 
-# define NAPI_VERSION
-add_definitions(-DNAPI_VERSION=6)
-add_definitions(-DNAPI_CPP_EXCEPTIONS)
+install(
+    TARGETS everestjs
+    LIBRARY
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/everest/node_modules/everestjs
+)
 
-install(TARGETS everestjs
-        LIBRARY
-        DESTINATION everestjs/node_modules/everestjs)
-
-install(FILES index.js
-        DESTINATION everestjs/node_modules/everestjs)
-
-install(FILES package.json
-        DESTINATION everestjs/node_modules/everestjs)
+install(
+    FILES
+        index.js
+        package.json
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/everest/node_modules/everestjs
+)

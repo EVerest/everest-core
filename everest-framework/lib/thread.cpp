@@ -1,24 +1,29 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #include <utils/thread.hpp>
 
 namespace Everest {
-Thread::Thread() {
-    exitFuture = exitSignal.get_future();
-}
 
 Thread::~Thread() {
-    exitSignal.set_value();
-    if (handle.joinable())
+    stop();
+}
+
+void Thread::stop() {
+    if (handle.joinable()) {
+        exit_signal = true;
         handle.join();
+    }
+    exit_signal = false;
 }
 
 bool Thread::shouldExit() {
-    if (exitFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
-        return true;
-    return false;
+    return exit_signal;
 }
 
-void Thread::operator=(std::thread&& t) {
+Thread& Thread::operator=(std::thread&& t) {
+    stop();
     handle = std::move(t);
+    return *this;
 }
 
 } // namespace Everest

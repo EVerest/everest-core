@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #ifndef UTILS_THREAD_HPP
 #define UTILS_THREAD_HPP
 
@@ -8,16 +10,16 @@
 namespace Everest {
 class Thread {
 public:
-    Thread();
     ~Thread();
 
+    void stop();
+
     bool shouldExit();
-    void operator=(std::thread&&);
+    Thread& operator=(std::thread&&);
 
 private:
     std::thread handle;
-    std::promise<void> exitSignal;
-    std::future<void> exitFuture;
+    std::atomic_bool exit_signal{false};
 };
 } // namespace Everest
 

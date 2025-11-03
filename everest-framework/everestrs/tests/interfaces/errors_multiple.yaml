@@ -1,0 +1,5 @@
+description: >-
+  We make sure that we respect multiple error definitions
+errors:
+  - reference: /errors/example_errors
+  - reference: /errors/more_errors
