@@ -11,6 +11,7 @@
 #include <everest/io/netlink/vcan_netlink_manager.hpp>
 
 #include <iostream>
+#include <thread>
 
 namespace charge_bridge {
 
@@ -34,7 +35,8 @@ charge_bridge::charge_bridge(charge_bridge_config const& config) : m_config(conf
         bsp = std::make_unique<evse_bridge>(config.evse.value());
     }
     if (config.heartbeat.has_value()) {
-        heartbeat = std::make_unique<heartbeat_service>(config.heartbeat.value());
+        heartbeat = std::make_unique<heartbeat_service>(config.heartbeat.value(),
+                                                        [this](bool connected) { m_is_connected.store(connected); });
     }
     if (config.gpio.has_value()) {
         gpio = std::make_unique<gpio_bridge>(config.gpio.value());
@@ -42,6 +44,34 @@ charge_bridge::charge_bridge(charge_bridge_config const& config) : m_config(conf
 }
 
 charge_bridge::~charge_bridge() {
+}
+
+void charge_bridge::manage(everest::lib::io::event::fd_event_handler& handler, std::atomic_bool const& run,
+                           bool force_update) {
+    using namespace std::chrono_literals;
+    m_event_handler = &handler;
+    m_force_firmware_update = force_update;
+
+    auto action = [this]() {
+        if (m_was_connected and not m_is_connected.load()) {
+            m_event_handler->add_action([this]() { unregister_events(*m_event_handler); });
+            m_was_connected = false;
+        }
+        if (not m_was_connected) {
+            if (update_firmware(m_force_firmware_update)) {
+                m_event_handler->add_action([this]() { register_events(*m_event_handler); });
+                m_was_connected = true;
+            }
+        }
+    };
+
+    std::thread manager([&run, action]() {
+        while (run.load()) {
+            action();
+            std::this_thread::sleep_for(20s);
+        }
+    });
+    manager.detach();
 }
 
 bool charge_bridge::update_firmware(bool force) {

@@ -14,7 +14,9 @@
 namespace charge_bridge {
 using namespace std::chrono_literals;
 
-heartbeat_service::heartbeat_service(heartbeat_config const& config) : m_udp(config.cb_remote, config.cb_port, 1000) {
+heartbeat_service::heartbeat_service(heartbeat_config const& config,
+                                     std::function<void(bool)> const& publish_connection_status) :
+    m_udp(config.cb_remote, config.cb_port, 1000), m_publish_connection_status(publish_connection_status) {
     m_identifier = config.cb + "/" + config.item;
     std::memcpy(&m_config_message.data, &config.cb_config, sizeof(CbConfig));
     m_config_message.type = CbStructType::CST_HostToCb_Heartbeat;
@@ -74,6 +76,9 @@ void heartbeat_service::handle_heartbeat_timer() {
     else if (not timeout and not m_cb_connected) {
         utilities::print_error(m_identifier, "HEARTBEAT/UDP", 0) << "ChargeBridge connected" << std::endl;
         m_cb_connected = true;
+    }
+    if (m_publish_connection_status) {
+        m_publish_connection_status(m_cb_connected);
     }
 }
 

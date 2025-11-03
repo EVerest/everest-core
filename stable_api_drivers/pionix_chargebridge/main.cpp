@@ -99,14 +99,14 @@ int main(int argc, char* argv[]) {
             cb_handler.push_back(std::make_unique<::charge_bridge::charge_bridge>(config));
             auto& cb = *cb_handler.rbegin();
 
-            auto force_update = mode_of_operation == mode::update || mode_of_operation == mode::update_only;
-            if (not cb->update_firmware(force_update)) {
-                return -1;
-            }
             if (mode_of_operation == mode::update_only) {
-                return 0;
+                cb->update_firmware(true);
             }
-            ev_handler.register_event_handler(cb.get());
+
+            auto force_update = mode_of_operation == mode::update;
+            cb->manage(ev_handler, g_run_application, force_update);
+
+//            ev_handler.register_event_handler(cb.get());
         }
     }
 

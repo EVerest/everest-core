@@ -24,7 +24,7 @@ struct heartbeat_config {
 
 class heartbeat_service : public everest::lib::io::event::fd_event_register_interface {
 public:
-    heartbeat_service(heartbeat_config const& config);
+    heartbeat_service(heartbeat_config const& config, std::function<void(bool)> const& publish_connection_status);
     ~heartbeat_service();
 
     bool register_events(everest::lib::io::event::fd_event_handler& handler) override;
@@ -44,6 +44,7 @@ private:
     bool m_cb_connected{false};
     bool m_inital_cb_commcheck{true};
     std::chrono::milliseconds m_heartbeat_interval;
+    std::function<void(bool)> m_publish_connection_status;
 };
 
 } // namespace charge_bridge

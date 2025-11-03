@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#include <atomic>
 #include <charge_bridge/can_bridge.hpp>
 #include <charge_bridge/evse_bridge.hpp>
 #include <charge_bridge/firmware_update/sync_fw_updater.hpp>
@@ -51,6 +52,8 @@ public:
     bool register_events(everest::lib::io::event::fd_event_handler& handler) override;
     bool unregister_events(everest::lib::io::event::fd_event_handler& handler) override;
 
+    void manage(everest::lib::io::event::fd_event_handler& handler, std::atomic_bool const& exit, bool force_update);
+
 private:
     std::unique_ptr<can_bridge> can_0_client;
     std::unique_ptr<serial_bridge> pty_1;
@@ -60,6 +63,11 @@ private:
     std::unique_ptr<plc_bridge> plc;
     std::unique_ptr<heartbeat_service> heartbeat;
     std::unique_ptr<gpio_bridge> gpio;
+
+    everest::lib::io::event::fd_event_handler* m_event_handler{nullptr};
+    bool m_force_firmware_update{false};
+    std::atomic_bool m_is_connected{false};
+    bool m_was_connected{false};
 
     const charge_bridge_config m_config;
 };
