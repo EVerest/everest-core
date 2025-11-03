@@ -361,6 +361,7 @@ void MatchingState::handle_cm_atten_char_rsp(const slac::messages::cm_atten_char
 
 void MatchingState::handle_cm_validate_req(const slac::messages::cm_validate_req& msg) {
     // NOTE: CM_VALIDATE.REQ does not specify its session
+    // EVSE allowed to not implement: [V2G3-A09-51]
     ctx.log_warn("Received CM_VALIDATE.REQ / not implemented - will return failure code");
 
     slac::messages::cm_validate_cnf validate_cnf;
