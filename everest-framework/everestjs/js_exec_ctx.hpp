@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+
 //
 // author: aw@pionix.de
 //
@@ -18,7 +21,7 @@ private:
 public:
     using TsfnType = Napi::TypedThreadSafeFunction<std::nullptr_t, JsExecCtx, JsExecCtx::tramp>;
     using ArgFuncType = std::function<std::vector<napi_value>(Napi::Env&)>;
-    using ResFuncType = std::function<void(const Napi::Value&, bool)>;
+    using ResFuncType = std::function<void(const Napi::CallbackInfo&, bool)>;
 
     // FIXME (aw): proper module_instance handling if nullptr
     JsExecCtx(const Napi::Env& env, const Napi::Function& func, const std::string& res_name = "RequestDispatcher") :
@@ -43,9 +46,9 @@ private:
     ResFuncType res_func;
     // FIXME (aw): will the referenced object be GC'd when the references get destroyed?
     //             and is okay to be destroyed in our async thread?
+    TsfnType tsfn;
     Napi::ObjectReference result_handler_ref;
     Napi::FunctionReference func_ref{};
-    TsfnType tsfn;
     std::mutex exec_mutex;
     std::promise<void> promise;
 };

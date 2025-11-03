@@ -1,0 +1,8 @@
+cc_library(
+    name = "debugbreak",
+    hdrs = [
+        "debugbreak.h",
+    ],
+    include_prefix = "c4/ext/debugbreak",
+    visibility = ["//visibility:public"],
+)

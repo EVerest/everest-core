@@ -1,3 +1,10 @@
-install(FILES interface.json config.json manifest.json
-        DESTINATION schemas
+install(
+    FILES
+        interface.yaml
+        config.yaml
+        manifest.yaml
+        type.yaml
+        error-declaration-list.yaml
+        error-object.yaml
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/everest/schemas"
 )
