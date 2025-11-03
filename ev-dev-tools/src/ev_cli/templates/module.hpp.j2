@@ -1,8 +1,9 @@
-{% from "helper_macros.j2" import print_template_info, insert_block, cpp_type %}
+{% from "helper_macros.j2" import print_template_info, insert_block, cpp_type, print_license_header %}
+{{ print_license_header(info.license_header) }}
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('0.0.1', 'marked regions will be kept') }}
+{{ print_template_info('2', 'marked regions will be kept') }}
 
 #include "{{ info.ld_ev_header }}"
 
@@ -34,39 +35,58 @@ class {{ info.class_name }} : public Everest::ModuleBase {
 public:
     {{ info.class_name }}() = delete;
     {{ info.class_name }}(
+        const ModuleInfo& info,
         {% if info.enable_external_mqtt %}
         Everest::MqttProvider& mqtt_provider,
+        {% endif %}
+        {% if info.enable_telemetry %}
+        Everest::TelemetryProvider& telemetry,
         {% endif %}
         {% for impl in provides %}
         std::unique_ptr<{{ impl.base_class }}> p_{{ impl.id }},
         {% endfor %}
-        {% for interface in requires %}
-        std::unique_ptr<{{ interface.class_name }}> r_{{ interface.id }},
+        {% for requirement in requires %}
+        {% if requirement.is_vector %}
+        std::vector<std::unique_ptr<{{ requirement.class_name }}>> r_{{ requirement.id }},
+        {% else %}
+        std::unique_ptr<{{ requirement.class_name }}> r_{{ requirement.id }},
+        {% endif %}
         {% endfor %}
         Conf& config
     ) :
+        ModuleBase(info),
         {% if info.enable_external_mqtt %}
         mqtt(mqtt_provider),
+        {% endif %}
+        {% if info.enable_telemetry %}
+        telemetry(telemetry),
         {% endif %}
         {% for impl in provides %}
         p_{{ impl.id }}(std::move(p_{{ impl.id }})),
         {% endfor %}
-        {% for interface in requires %}
-        r{{ 'o' if interface.optional }}_{{ interface.id }}(std::move(r_{{ interface.id }})),
+        {% for requirement in requires %}
+        r_{{ requirement.id }}(std::move(r_{{ requirement.id }})),
         {% endfor %}
         config(config)
     {};
 
-    const Conf& config;
     {% if info.enable_external_mqtt %}
     Everest::MqttProvider& mqtt;
+    {% endif %}
+    {% if info.enable_telemetry %}
+    Everest::TelemetryProvider& telemetry;
     {% endif %}
     {% for impl in provides %}
     const std::unique_ptr<{{ impl.base_class }}> p_{{ impl.id }};
     {% endfor %}
-    {% for interface in requires %}
-    const std::unique_ptr<{{ interface.class_name }}> r{{ 'o' if interface.optional }}_{{ interface.id }};
+    {% for requirement in requires %}
+    {% if requirement.is_vector %}
+    const std::vector<std::unique_ptr<{{ requirement.class_name }}>> r_{{ requirement.id }};
+    {% else %}
+    const std::unique_ptr<{{ requirement.class_name }}> r_{{ requirement.id }};
+    {% endif %}
     {% endfor %}
+    const Conf& config;
 
     {{ insert_block(info.blocks.public_defs, indent=4) }}
 
