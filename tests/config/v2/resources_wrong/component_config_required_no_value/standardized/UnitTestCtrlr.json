@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for UnitTestCtrlr",
+  "name": "UnitTestCtrlr",
+  "type": "object",
+  "evse_id": 2,
+  "connector_id": 3,
+  "properties": {
+    "UnitTestPropertyA": {
+      "variable_name": "UnitTestPropertyAName",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "type": "boolean"
+    },
+    "UnitTestPropertyB": {
+      "variable_name": "UnitTestPropertyBName",
+      "characteristics": {
+        "supportsMonitoring": false,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly",
+          "value": "test_value"
+        }
+      ],
+      "type": "string"
+    },
+    "UnitTestPropertyC": {
+      "variable_name": "UnitTestPropertyCName",
+      "characteristics": {
+        "supportsMonitoring": false,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Target",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "type": "integer",
+      "default": 42
+    },
+    "UnitTestPropertyD": {
+      "variable_name": "UnitTestPropertyDName",
+      "characteristics": {
+        "supportsMonitoring": false,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "type": "integer",
+      "default": 42
+    }
+  },
+  "required": [
+    "UnitTestPropertyA",
+    "UnitTestPropertyB",
+    "UnitTestPropertyC",
+    "UnitTestPropertyD"
+  ]
+}
