@@ -1,0 +1,191 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Json schema for Core Profile config",
+    "type": "object",
+    "required": [
+        "AuthorizeRemoteTxRequests",
+        "ClockAlignedDataInterval",
+        "ConnectionTimeOut",
+        "ConnectorPhaseRotation",
+        "GetConfigurationMaxKeys",
+        "HeartbeatInterval",
+        "LocalAuthorizeOffline",
+        "LocalPreAuthorize",
+        "MeterValuesAlignedData",
+        "MeterValuesSampledData",
+        "MeterValueSampleInterval",
+        "NumberOfConnectors",
+        "ResetRetries",
+        "StopTransactionOnEVSideDisconnect",
+        "StopTransactionOnInvalidId",
+        "StopTxnAlignedData",
+        "StopTxnSampledData",
+        "SupportedFeatureProfiles",
+        "TransactionMessageAttempts",
+        "TransactionMessageRetryInterval",
+        "UnlockConnectorOnEVSideDisconnect"
+    ],
+    "properties": {
+        "AllowOfflineTxForUnknownId": {
+            "type": "boolean",
+            "readOnly": false,
+            "description": "If this config entry exists the charge point supports Unknown Offline Auth. If it is set to true the feature is enabled"
+        },
+        "AuthorizationCacheEnabled": {
+            "type": "boolean",
+            "readOnly": false,
+            "description": "If this config entry exists the charge point supports an Auth Cache. If it is set to true the feature is enabled"
+        },
+        "AuthorizeRemoteTxRequests": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "Authorize a RemoteStartTransaction request like a local StartTransaction. Readonly setting is up to the implementation."
+        },
+        "BlinkRepeat": {
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0
+        },
+        "ClockAlignedDataInterval": {
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0
+        },
+        "ConnectionTimeOut": {
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0
+        },
+        "ConnectorPhaseRotation": {
+            "type": "string",
+            "readOnly": false
+        },
+        "ConnectorPhaseRotationMaxLength": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0
+        },
+        "GetConfigurationMaxKeys": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0
+        },
+        "HeartbeatInterval": {
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0
+        },
+        "LightIntensity": {
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0,
+            "maximum": 100
+        },
+        "LocalAuthorizeOffline": {
+            "type": "boolean",
+            "readOnly": false
+        },
+        "LocalPreAuthorize": {
+            "type": "boolean",
+            "readOnly": false
+        },
+        "MaxEnergyOnInvalidId": {
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0
+        },
+        "MeterValuesAlignedData": {
+            "type": "string",
+            "readOnly": false
+        },
+        "MeterValuesAlignedDataMaxLength": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0
+        },
+        "MeterValuesSampledData": {
+            "type": "string",
+            "readOnly": false
+        },
+        "MeterValuesSampledDataMaxLength": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0
+        },
+        "MeterValueSampleInterval": {
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0
+        },
+        "MinimumStatusDuration": {
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0
+        },
+        "NumberOfConnectors": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0
+        },
+        "ResetRetries": {
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0
+        },
+        "StopTransactionOnEVSideDisconnect": {
+            "type": "boolean",
+            "readOnly": false
+        },
+        "StopTransactionOnInvalidId": {
+            "type": "boolean",
+            "readOnly": false
+        },
+        "StopTxnAlignedData": {
+            "type": "string",
+            "readOnly": false
+        },
+        "StopTxnAlignedDataMaxLength": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0
+        },
+        "StopTxnSampledData": {
+            "type": "string",
+            "readOnly": false
+        },
+        "StopTxnSampledDataMaxLength": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0
+        },
+        "SupportedFeatureProfiles": {
+            "type": "string",
+            "readOnly": true
+        },
+        "SupportedFeatureProfilesMaxLength": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0
+        },
+        "TransactionMessageAttempts": {
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0
+        },
+        "TransactionMessageRetryInterval": {
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0
+        },
+        "UnlockConnectorOnEVSideDisconnect": {
+            "type": "boolean",
+            "readOnly": false
+        },
+        "WebsocketPingInterval": {
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0
+        }
+    },
+    "additionalProperties": false
+}
