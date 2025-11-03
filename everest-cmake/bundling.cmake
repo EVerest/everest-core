@@ -4,16 +4,11 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/dist" CACHE PATH "..." FORCE)
 endif()
 
-# FIXME (aw): our packaging does not play well with lib64 and these kind of
-#             variations.  Either we need to change our directory layout or ...?
-set(CMAKE_INSTALL_LIBDIR lib)
-
 # set RPATH to the planned install path of lib folder
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
 # bundling
 # FIXME (aw): in case of dist folder, we could only clean up the dist folder
-# FIXME (aw): we need add stripping
 
 add_custom_target(bundle
     COMMAND "${CMAKE_COMMAND}" -E remove_directory ${CMAKE_BINARY_DIR}/bundle
@@ -21,6 +16,7 @@ add_custom_target(bundle
     COMMAND "${CMAKE_COMMAND}"
         -E env DESTDIR=bundle
         "${CMAKE_COMMAND}" --install "${CMAKE_BINARY_DIR}"
+        $<$<NOT:$<BOOL:${EVEREST_CMAKE_DISABLE_STRIPPING_BUNDLE}>>:--strip>
     COMMAND rm -rf
         bundle/${CMAKE_INSTALL_PREFIX}/include
         bundle/${CMAKE_INSTALL_PREFIX}/lib/cmake
