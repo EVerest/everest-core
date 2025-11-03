@@ -13,6 +13,4 @@ Have a look at this categorized list of all guides:
 .. toctree::
     :maxdepth: 1
 
-    x.rst
-    y.rst
-    z.rst
+    configure-pnc
