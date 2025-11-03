@@ -164,10 +164,14 @@ void powermeterImpl::time_sync() {
     std::chrono::time_point<std::chrono::system_clock> timepoint = std::chrono::system_clock::now();
     int8_t gmt_offset_quarters_of_an_hour = app_layer.get_utc_offset_in_quarter_hours(timepoint);
 
-    std::uint64_t diff =
-        abs(static_cast<std::uint32_t>(
-                std::chrono::duration_cast<std::chrono::seconds>(timepoint.time_since_epoch()).count()) -
-            device_data_obj.utc_time_s);
+    std::uint64_t diff = 0;
+    const auto time_since_epoch_count = static_cast<std::uint32_t>(
+        std::chrono::duration_cast<std::chrono::seconds>(timepoint.time_since_epoch()).count());
+    if (device_data_obj.utc_time_s < time_since_epoch_count) {
+        diff = time_since_epoch_count - device_data_obj.utc_time_s;
+    } else {
+        diff = device_data_obj.utc_time_s - time_since_epoch_count;
+    }
     if (diff > config.max_clock_diff_s) {
         EVLOG_info << "time diff is: " << diff << " s";
         EVLOG_info << "clock is out of sync --> time is set";
