@@ -221,6 +221,7 @@ struct Context {
     void log_error(const std::string& text);
 
     ModemVendor modem_vendor{ModemVendor::Unknown};
+    uint8_t evse_mac[ETH_ALEN];
 
 private:
     const ContextCallbacks& callbacks;
