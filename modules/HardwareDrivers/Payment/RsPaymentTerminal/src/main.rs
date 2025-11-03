@@ -570,6 +570,16 @@ mod tests {
         }
     }
 
+    impl<'a> From<&'a ModulePublisher> for Context<'a> {
+        fn from(everest_mock: &'a ModulePublisher) -> Context<'a> {
+            Context {
+                name: "foo",
+                publisher: &everest_mock,
+                index: 0,
+            }
+        }
+    }
+
     #[test]
     fn payment_terminal_module__read_card__get_bank_session_token_failed() {
         let PARAMETERS = [
@@ -796,16 +806,11 @@ mod tests {
 
         for session_cost in parameters {
             let everest_mock = ModulePublisher::default();
-            let context = Context {
-                name: "foo",
-                publisher: &everest_mock,
-                index: 0,
-            };
             let feig = SyncFeig::default();
             let pt_module: PaymentTerminalModule = feig.into();
 
             assert!(pt_module
-                .on_session_cost_impl(&context, session_cost)
+                .on_session_cost_impl(&(&everest_mock).into(), session_cost)
                 .is_ok());
         }
     }
@@ -937,11 +942,6 @@ mod tests {
                 .times(1)
                 .returning(|_| Ok(()));
 
-            let context = Context {
-                name: "foo",
-                publisher: &everest_mock,
-                index: 0,
-            };
             let mut feig = SyncFeig::default();
             feig.expect_commit_transaction()
                 .times(1)
@@ -958,7 +958,7 @@ mod tests {
             let pt_module: PaymentTerminalModule = feig.into();
 
             assert!(pt_module
-                .on_session_cost_impl(&context, session_cost)
+                .on_session_cost_impl(&(&everest_mock).into(), session_cost)
                 .is_ok());
         }
     }
@@ -974,13 +974,8 @@ mod tests {
 
             let provided_token = ProvidedIdToken::new("some_token".to_string(), auth_type, None);
             let everest_mock = ModulePublisher::default();
-            let context = Context {
-                name: "test",
-                publisher: &everest_mock,
-                index: 0,
-            };
 
-            let result = pt_module.validate_token(&context, provided_token);
+            let result = pt_module.validate_token(&(&everest_mock).into(), provided_token);
             assert!(result.is_ok());
             let validation_result = result.unwrap();
             assert_eq!(
@@ -1002,13 +997,8 @@ mod tests {
             None,
         );
         let everest_mock = ModulePublisher::default();
-        let context = Context {
-            name: "test",
-            publisher: &everest_mock,
-            index: 0,
-        };
 
-        let result = pt_module.validate_token(&context, provided_token);
+        let result = pt_module.validate_token(&(&everest_mock).into(), provided_token);
         assert!(result.is_ok());
         let validation_result = result.unwrap();
         assert_eq!(
@@ -1032,13 +1022,8 @@ mod tests {
         let provided_token =
             ProvidedIdToken::new("valid_token".to_string(), AuthorizationType::BankCard, None);
         let everest_mock = ModulePublisher::default();
-        let context = Context {
-            name: "test",
-            publisher: &everest_mock,
-            index: 0,
-        };
 
-        let result = pt_module.validate_token(&context, provided_token);
+        let result = pt_module.validate_token(&(&everest_mock).into(), provided_token);
         assert!(result.is_ok());
         let validation_result = result.unwrap();
         assert_eq!(
@@ -1092,13 +1077,8 @@ mod tests {
             let provided_token =
                 ProvidedIdToken::new("valid_token".to_string(), AuthorizationType::BankCard, None);
             let everest_mock = ModulePublisher::default();
-            let context = Context {
-                name: "test",
-                publisher: &everest_mock,
-                index: 0,
-            };
 
-            let result = pt_module.validate_token(&context, provided_token);
+            let result = pt_module.validate_token(&(&everest_mock).into(), provided_token);
             assert!(result.is_ok());
             let validation_result = result.unwrap();
             assert_eq!(
@@ -1124,13 +1104,8 @@ mod tests {
         let provided_token =
             ProvidedIdToken::new("valid_token".to_string(), AuthorizationType::BankCard, None);
         let everest_mock = ModulePublisher::default();
-        let context = Context {
-            name: "test",
-            publisher: &everest_mock,
-            index: 0,
-        };
 
-        let result = pt_module.validate_token(&context, provided_token);
+        let result = pt_module.validate_token(&(&everest_mock).into(), provided_token);
         assert!(result.is_ok());
         let validation_result = result.unwrap();
         assert_eq!(
@@ -1263,13 +1238,12 @@ mod tests {
             };
 
             let everest_mock = ModulePublisher::default();
-            let context = Context {
-                name: "test",
-                publisher: &everest_mock,
-                index: 0,
-            };
 
-            let result = pt_module.enable_card_reading(&context, connector_id, supported_cards);
+            let result = pt_module.enable_card_reading(
+                &(&everest_mock).into(),
+                connector_id,
+                supported_cards,
+            );
             assert!(result.is_ok());
 
             let actual_map = pt_module.card_type_to_connector.lock().unwrap();
