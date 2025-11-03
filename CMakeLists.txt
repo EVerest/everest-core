@@ -66,6 +66,7 @@ option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 option(EVEREST_BUILD_API_DOCS "Build EVerest API documentation" OFF)
 option(ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES "Automatically generate and install certificates for development purposes" ON)
 option(EVEREST_ENABLE_RUN_SCRIPT_GENERATION "Enables the generation of run scripts (convenience scripts for starting available configurations)" ON)
+option(EVEREST_BUILD_DOCS "Build EVerest documentation" OFF)
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(EVEREST_ENABLE_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag" OFF)
@@ -148,6 +149,9 @@ else()
     find_package(sdbus-c++ REQUIRED)
 endif()
 
+if(EVEREST_BUILD_DOCS)
+    add_subdirectory(docs)
+endif()
 
 include(ev-project-bootstrap)
 
