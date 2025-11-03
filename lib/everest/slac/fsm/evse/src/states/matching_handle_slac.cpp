@@ -431,13 +431,13 @@ void MatchingState::finalize_sounding(MatchingSession& session) {
         aag_overall_sum += atten_char.attenuation_profile.aag[i];
     }
     std::ostringstream ss;
-    ss << "Average attenuation: " << std::fixed << std::setprecision(1)
+    ss << "Avg atten.: " << std::fixed << std::setprecision(1)
        << (static_cast<double>(aag_overall_sum) / slac::defs::AAG_LIST_LEN) << " dB";
     if (ctx.slac_config.sounding_atten_adjustment != 0) {
         ss << " plus offset " << std::to_string(ctx.slac_config.sounding_atten_adjustment) << " dB";
     }
     ss << ", from " << std::to_string(slac::defs::AAG_LIST_LEN) << " groups, " << session.captured_sounds << " sounds";
-    ctx.log_info(ss.str());
+    session_log(ctx, session, LogLevel::INFO, ss.str());
 }
 
 } // namespace slac::fsm::evse
