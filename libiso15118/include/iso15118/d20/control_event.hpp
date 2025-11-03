@@ -1,0 +1,94 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2023 Pionix GmbH and Contributors to EVerest
+#pragma once
+
+#include <cstdint>
+#include <optional>
+#include <variant>
+#include <vector>
+
+#include <iso15118/d20/ac_powers.hpp>
+#include <iso15118/d20/dynamic_mode_parameters.hpp>
+#include <iso15118/d20/limits.hpp>
+
+namespace iso15118::d20 {
+class CableCheckFinished {
+public:
+    explicit CableCheckFinished(bool success_) : success(success_) {
+    }
+
+    operator bool() const {
+        return success;
+    }
+
+private:
+    bool success;
+};
+
+struct PresentVoltageCurrent {
+    float voltage;
+    float current;
+};
+
+class AuthorizationResponse {
+public:
+    explicit AuthorizationResponse(bool authorized_) : authorized(authorized_) {
+    }
+
+    operator bool() const {
+        return authorized;
+    }
+
+private:
+    bool authorized;
+};
+
+class StopCharging {
+public:
+    explicit StopCharging(bool stop_) : stop(stop_) {
+    }
+
+    operator bool() const {
+        return stop;
+    }
+
+private:
+    bool stop;
+};
+
+class PauseCharging {
+public:
+    explicit PauseCharging(bool pause_) : pause(pause_) {
+    }
+
+    operator bool() const {
+        return pause;
+    }
+
+private:
+    bool pause;
+};
+
+using EnergyServices = std::vector<message_20::datatypes::ServiceCategory>;
+
+class ClosedContactor {
+public:
+    explicit ClosedContactor(bool closed_) : closed(closed_) {
+    }
+
+    operator bool() const {
+        return closed;
+    }
+
+private:
+    bool closed;
+};
+
+// TODO(SL): Define this globally for message and states
+using SupportedVASs = std::vector<uint16_t>;
+
+using ControlEvent = std::variant<CableCheckFinished, PresentVoltageCurrent, AuthorizationResponse, StopCharging,
+                                  PauseCharging, DcTransferLimits, AcTransferLimits, UpdateDynamicModeParameters,
+                                  ClosedContactor, AcTargetPower, AcPresentPower, EnergyServices, SupportedVASs>;
+
+} // namespace iso15118::d20
