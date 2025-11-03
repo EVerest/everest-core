@@ -1018,7 +1018,7 @@ impl generated::OnReadySubscriber for IskraMeter {
                 Err(e) => {
                     log::error!("Failed to read meter value {:?}", e);
                     power_meter_clone
-                        .raise_error(Error::Powermeter(PowermeterError::CommunicationFault));
+                        .raise_error(Error::Powermeter(PowermeterError::CommunicationFault).into());
                 }
             };
             // Check the time status. In case of failure we just carry on.
