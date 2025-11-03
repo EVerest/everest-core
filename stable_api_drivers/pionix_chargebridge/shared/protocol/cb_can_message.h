@@ -47,6 +47,7 @@ typedef struct CB_COMPILER_ATTR_PACK _CanStatistics {
 
 struct CB_COMPILER_ATTR_PACK cb_can_message {
     uint8_t version;
+    uint8_t packet_type; // 0: regular CAN packet, 1: dummy keep-alive packet
     CanErrorState error_state;
     CanStatistics statistics;
     CanBitrate bitrate;
