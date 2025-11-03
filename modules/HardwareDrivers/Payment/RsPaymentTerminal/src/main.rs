@@ -218,6 +218,21 @@ impl Hash for AuthorizationType {
 
 impl Eq for AuthorizationType {}
 
+impl From<AuthorizationStatus> for ValidationResult {
+    fn from(value: AuthorizationStatus) -> Self {
+        ValidationResult {
+            authorization_status: value,
+            tariff_messages: Vec::new(),
+            allowed_energy_transfer_modes: None,
+            certificate_status: None,
+            evse_ids: None,
+            expiry_time: None,
+            parent_id_token: None,
+            reservation_id: None,
+        }
+    }
+}
+
 /// Main struct for this module.
 pub struct PaymentTerminalModule {
     /// Sender for the `ModulePublisher` -> to get the publisher from `on_ready`
@@ -390,21 +405,6 @@ impl SessionCostClientSubscriber for PaymentTerminalModule {
     fn on_tariff_message(&self, _context: &Context, value: TariffMessage) {
         for message in value.messages {
             log::debug!("Received tariff message {0:}", message.content);
-        }
-    }
-}
-
-impl From<AuthorizationStatus> for ValidationResult {
-    fn from(value: AuthorizationStatus) -> Self {
-        ValidationResult {
-            authorization_status: value,
-            tariff_messages: Vec::new(),
-            allowed_energy_transfer_modes: None,
-            certificate_status: None,
-            evse_ids: None,
-            expiry_time: None,
-            parent_id_token: None,
-            reservation_id: None,
         }
     }
 }
@@ -745,66 +745,32 @@ mod tests {
     /// We test that we don't commit anything for inputs which should be ignored.
     fn payment_terminal__on_session_cost_impl__noop() {
         let parameters = [
-            SessionCost {
-                cost_chunks: None,
-                currency: Currency {
-                    code: Some(CurrencyCode::EUR),
-                    decimals: None,
-                },
-                id_tag: Some(ProvidedIdToken::new(
-                    String::new(),
-                    AuthorizationType::OCPP,
-                    None,
-                )),
-                status: SessionStatus::Finished,
-                session_id: String::new(),
-                idle_price: None,
-                charging_price: None,
-                next_period: None,
-                message: None,
-                qr_code: None,
-            },
-            SessionCost {
-                cost_chunks: None,
-                currency: Currency {
-                    code: Some(CurrencyCode::EUR),
-                    decimals: None,
-                },
-                id_tag: Some(ProvidedIdToken::new(
-                    String::new(),
-                    AuthorizationType::RFID,
-                    None,
-                )),
-                status: SessionStatus::Finished,
-                session_id: String::new(),
-                idle_price: None,
-                charging_price: None,
-                next_period: None,
-                message: None,
-                qr_code: None,
-            },
-            SessionCost {
-                cost_chunks: None,
-                currency: Currency {
-                    code: Some(CurrencyCode::EUR),
-                    decimals: None,
-                },
-                id_tag: Some(ProvidedIdToken::new(
-                    String::new(),
-                    AuthorizationType::BankCard,
-                    None,
-                )),
-                status: SessionStatus::Running,
-                session_id: String::new(),
-                idle_price: None,
-                charging_price: None,
-                next_period: None,
-                message: None,
-                qr_code: None,
-            },
+            (AuthorizationType::OCPP, SessionStatus::Finished),
+            (AuthorizationType::RFID, SessionStatus::Finished),
+            (AuthorizationType::BankCard, SessionStatus::Running),
         ];
 
-        for session_cost in parameters {
+        for (auth_type, status) in parameters {
+            let session_cost = SessionCost {
+                cost_chunks: None,
+                currency: Currency {
+                    code: Some(CurrencyCode::EUR),
+                    decimals: None,
+                },
+                id_tag: Some(ProvidedIdToken::new(
+                    String::new(),
+                    auth_type,
+                    None,
+                )),
+                status,
+                session_id: String::new(),
+                idle_price: None,
+                charging_price: None,
+                next_period: None,
+                message: None,
+                qr_code: None,
+            };
+
             let everest_mock = ModulePublisher::default();
             let feig = SyncFeig::default();
             let pt_module: PaymentTerminalModule = feig.into();
@@ -820,121 +786,44 @@ mod tests {
     /// us.
     fn payment_terminal__on_session_cost_impl() {
         let parameters = [
-            (
-                SessionCost {
-                    cost_chunks: None,
-                    currency: Currency {
-                        code: Some(CurrencyCode::EUR),
-                        decimals: None,
-                    },
-                    id_tag: Some(ProvidedIdToken::new(
-                        "token".to_string(),
-                        AuthorizationType::BankCard,
-                        None,
-                    )),
-                    status: SessionStatus::Finished,
-                    session_id: String::new(),
-                    idle_price: None,
-                    charging_price: None,
-                    next_period: None,
-                    message: None,
-                    qr_code: None,
-                },
-                0,
-            ),
-            (
-                SessionCost {
-                    cost_chunks: Some(Vec::new()),
-                    currency: Currency {
-                        code: Some(CurrencyCode::EUR),
-                        decimals: None,
-                    },
-                    id_tag: Some(ProvidedIdToken::new(
-                        "token".to_string(),
-                        AuthorizationType::BankCard,
-                        None,
-                    )),
-                    status: SessionStatus::Finished,
-                    session_id: String::new(),
-                    idle_price: None,
-                    charging_price: None,
-                    next_period: None,
-                    message: None,
-                    qr_code: None,
-                },
-                0,
-            ),
-            (
-                SessionCost {
-                    cost_chunks: Some(vec![SessionCostChunk {
-                        category: None,
-                        cost: None,
-                        timestamp_from: None,
-                        timestamp_to: None,
-                        metervalue_from: None,
-                        metervalue_to: None,
-                    }]),
-                    currency: Currency {
-                        code: Some(CurrencyCode::EUR),
-                        decimals: None,
-                    },
-                    id_tag: Some(ProvidedIdToken::new(
-                        "token".to_string(),
-                        AuthorizationType::BankCard,
-                        None,
-                    )),
-                    status: SessionStatus::Finished,
-                    session_id: String::new(),
-                    idle_price: None,
-                    charging_price: None,
-                    next_period: None,
-                    message: None,
-                    qr_code: None,
-                },
-                0,
-            ),
-            (
-                SessionCost {
-                    cost_chunks: Some(vec![
-                        SessionCostChunk {
-                            category: None,
-                            cost: Some(MoneyAmount { value: 1 }),
-                            timestamp_from: None,
-                            timestamp_to: None,
-                            metervalue_from: None,
-                            metervalue_to: None,
-                        },
-                        SessionCostChunk {
-                            category: None,
-                            cost: Some(MoneyAmount { value: 2 }),
-                            timestamp_from: None,
-                            timestamp_to: None,
-                            metervalue_from: None,
-                            metervalue_to: None,
-                        },
-                    ]),
-                    currency: Currency {
-                        code: Some(CurrencyCode::EUR),
-                        decimals: None,
-                    },
-                    id_tag: Some(ProvidedIdToken::new(
-                        "token".to_string(),
-                        AuthorizationType::BankCard,
-                        None,
-                    )),
-                    status: SessionStatus::Finished,
-                    session_id: String::new(),
-                    idle_price: None,
-                    charging_price: None,
-                    next_period: None,
-                    message: None,
-                    qr_code: None,
-                },
-                3,
-            ),
+            (None, 0),
+            (Some(vec![]), 0),
+            (Some(vec![None]), 0),
+            (Some(vec![Some(1), Some(2)]), 3),
         ];
 
-        for (session_cost, amount) in parameters {
+        for (cost_chunks, amount) in parameters {
+            let session_cost = SessionCost {
+                cost_chunks: cost_chunks.map(|chunks| {
+                    chunks
+                        .into_iter()
+                        .map(|cost| SessionCostChunk {
+                            category: None,
+                            cost: cost.map(|value| MoneyAmount { value }),
+                            timestamp_from: None,
+                            timestamp_to: None,
+                            metervalue_from: None,
+                            metervalue_to: None,
+                        })
+                        .collect()
+                }),
+                currency: Currency {
+                    code: Some(CurrencyCode::EUR),
+                    decimals: None,
+                },
+                id_tag: Some(ProvidedIdToken::new(
+                    "token".to_string(),
+                    AuthorizationType::BankCard,
+                    None,
+                )),
+                status: SessionStatus::Finished,
+                session_id: String::new(),
+                idle_price: None,
+                charging_price: None,
+                next_period: None,
+                message: None,
+                qr_code: None,
+            };
             let mut everest_mock = ModulePublisher::default();
             everest_mock
                 .payment_terminal
