@@ -1,23 +1,14 @@
-set(HEADERS
-    "${PROJECT_SOURCE_DIR}/include/everest/timer.hpp"
-)
-
-set(INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
-
-# EVerest framework
 add_library(timer INTERFACE)
 add_library(everest::timer ALIAS timer)
 
-target_include_directories(timer INTERFACE ${INCLUDE_DIR})
-target_link_libraries(timer
-INTERFACE
-        Boost::system
+target_include_directories(timer
+    INTERFACE
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# needs c++ 14
-target_compile_features(timer INTERFACE cxx_std_14)
-
-source_group(
-    TREE "${INCLUDE_DIR}"
-    PREFIX "Headers"
-    FILES ${HEADERS})
+target_link_libraries(timer
+    INTERFACE
+        Boost::system
+        date::date-tz
+)

@@ -1,39 +1,79 @@
-cmake_minimum_required(VERSION 3.14.7)
+cmake_minimum_required(VERSION 3.11)
 
-project(timer VERSION 0.1
-            DESCRIPTION "EVerest timer library"
-            LANGUAGES CXX C)
+project(everest-timer
+    VERSION 0.1.2
+    DESCRIPTION "EVerest timer library"
+    LANGUAGES CXX C
+)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+find_package(everest-cmake 0.1 REQUIRED
+    PATHS ../everest-cmake
+)
 
-option(BUILD_EXAMPLES "Build examples" ON)
+# options
+option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
+option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
+option(BUILD_EXAMPLES "Build examples" OFF)
+option(TIMER_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
+option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 
-if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
+if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
+    set(LIBTIMER_BUILD_TESTING ON)
+    include(CTest)
+    add_subdirectory(tests)
 endif()
 
-option(EVEREST_CROSS_COMPILE "Cross compile the EVerest timer library" OFF)
-if(EVEREST_CROSS_COMPILE)
-    if(NOT BOOST_ROOT)
-        message(FATAL_ERROR "Please set BOOST_ROOT to a cross compiled version of Boost!")
-    endif()
-    set(Boost_USE_STATIC_LIBS ON)
-    set(CMAKE_SYSTEM_NAME Linux)
-    set(CMAKE_SYSTEM_PROCESSOR arm)
-    set(BOOST_LOG_DYN_LINK OFF)
-    set(BOOST_ALL_DYN_LINK OFF)
+# dependencies
+find_package(Boost COMPONENTS system REQUIRED)
+
+if (NOT DISABLE_EDM)
+    evc_setup_edm()
+
+    # In EDM mode, we can't install exports (because the dependencies usually do not install their exports)
+    set(TIMER_INSTALL OFF)
 else()
-    add_definitions(-DBOOST_LOG_DYN_LINK)
+    find_package(date REQUIRED)
 endif()
 
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/dist" CACHE PATH "..." FORCE)
+
+# logging library
+add_subdirectory(lib)
+
+if(BUILD_EXAMPLES)
+    add_subdirectory(examples)
 endif()
 
-option(BUILD_TESTING "Run unit tests" OFF)
+# packaging
+if (TIMER_INSTALL)
+    install(
+        TARGETS timer
+        EXPORT timer-targets
+    )
+
+    install(
+        DIRECTORY include/
+        TYPE INCLUDE
+    )
+
+    evc_setup_package(
+        NAME everest-timer
+        EXPORT timer-targets
+        NAMESPACE everest
+        ADDITIONAL_CONTENT
+            "find_dependency(Boost COMPONENTS system)"
+    )
+endif()
+
+# build doxygen documentation if doxygen is available
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+    set( DOXYGEN_OUTPUT_DIRECTORY dist/docs )
+    doxygen_add_docs(doxygen-${PROJECT_NAME} include lib src)
+else()
+    message("Doxygen is needed to generate documentation")
+endif()
 
 # configure clang-tidy if requested
-option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 if(CMAKE_RUN_CLANG_TIDY)
     message("Running clang-tidy")
     string(CONCAT CLANG_TIDY_CHECKS "*,"
@@ -50,56 +90,4 @@ if(CMAKE_RUN_CLANG_TIDY)
     clang-tidy;
     -header-filter='.*'
     -checks=${CLANG_TIDY_CHECKS})
-endif()
-
-# build doxygen documentation if doxygen is available
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-    set( DOXYGEN_OUTPUT_DIRECTORY dist/docs )
-    doxygen_add_docs(${PROJECT_NAME}doxygen include lib src)
-else()
-    message("Doxygen is needed to generate documentation")
-endif()
-
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-
-
-find_package(Boost COMPONENTS filesystem program_options system thread REQUIRED)
-
-# testing
-if(BUILD_TESTING)
-    include(CTest)
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
-
-    include(CodeCoverage)
-
-    append_coverage_compiler_flags()
-
-    add_subdirectory(tests)
-
-    setup_target_for_coverage_gcovr_html(
-        NAME gcovr_coverage
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
-    )
-
-    setup_target_for_coverage_lcov(
-        NAME lcov_coverage
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
-    )
-else()
-    message("Not running unit tests")
-endif()
-
-find_package(EDM REQUIRED)
-
-# logging library
-add_subdirectory(lib)
-
-if(BUILD_EXAMPLES)
-    # example code
-    add_subdirectory(examples)
 endif()
