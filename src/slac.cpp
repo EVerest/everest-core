@@ -65,30 +65,51 @@ void generate_nid_from_nmk(uint8_t nid[slac::defs::NID_LEN], const uint8_t nmk[s
 } // namespace utils
 
 namespace messages {
-void HomeplugMessage::setup_payload(void* payload, int len, uint16_t mmtype) {
-    assert(("Homeplug Payload length too long", len < sizeof(raw_msg.mmentry)));
 
-    // setup homeplug mme header
-    raw_msg.homeplug_header.mmv = defs::MMV_HOMEPLUG_GREENPHY;
+static constexpr auto effective_payload_length(const defs::MMV mmv) {
+    if (mmv == defs::MMV::AV_1_0) {
+        return sizeof(homeplug_message::payload);
+    } else {
+        return sizeof(homeplug_message::payload) - sizeof(homeplug_fragmentation_part);
+    }
+}
+
+void HomeplugMessage::setup_payload(void const* payload, int len, uint16_t mmtype, const defs::MMV mmv) {
+    // FIXME (aw): shouldn't this assert test for "<="? Furthermore it will just crash the client code ...
+    assert(("Homeplug Payload length too long", len < effective_payload_length(mmv)));
+    raw_msg.homeplug_header.mmv = static_cast<std::underlying_type_t<defs::MMV>>(mmv);
     raw_msg.homeplug_header.mmtype = htole16(mmtype);
-    raw_msg.homeplug_header.fmni = 0; // not used
-    raw_msg.homeplug_header.fmsn = 0; // not used
 
-    // copy payload
-    memcpy(raw_msg.mmentry, payload, len);
+    uint8_t* dst = raw_msg.payload;
 
-    // set the message size to at least MME_MIN_LENGTH
-    int padding_len = defs::MME_MIN_LENGTH - (sizeof(raw_msg.ethernet_header) + sizeof(raw_msg.homeplug_header) + len);
-    if (padding_len > 0) {
-        memset(raw_msg.mmentry + len, 0x00, padding_len);
+    if (mmv != defs::MMV::AV_1_0) {
+        homeplug_fragmentation_part fragmentation_part{};
+        fragmentation_part.fmni = 0;       // not implemented
+        fragmentation_part.fmsn = 0;       // not implemented
+        memcpy(dst, &fragmentation_part, sizeof(fragmentation_part));
+        dst += sizeof(fragmentation_part); // adjust effective payload start
     }
 
-    raw_msg_len =
-        std::max(sizeof(raw_msg.ethernet_header) + sizeof(raw_msg.homeplug_header) + len, (size_t)defs::MME_MIN_LENGTH);
+    // copy payload into place
+    memcpy(dst, payload, len);
+
+    // get pointer to the end of buffer
+    uint8_t* dst_end = dst + len;
+
+    // calculate raw message length
+    raw_msg_len = dst_end - reinterpret_cast<uint8_t*>(&raw_msg);
+
+    // do padding
+    auto padding_len = defs::MME_MIN_LENGTH - raw_msg_len;
+    if (padding_len > 0) {
+        memset(dst_end, 0x00, padding_len);
+        raw_msg_len = defs::MME_MIN_LENGTH;
+    }
 }
 
 void HomeplugMessage::setup_ethernet_header(const uint8_t dst_mac_addr[ETH_ALEN],
                                             const uint8_t src_mac_addr[ETH_ALEN]) {
+
     // ethernet frame byte order is big endian
     raw_msg.ethernet_header.ether_type = htons(defs::ETH_P_HOMEPLUG_GREENPHY);
     if (dst_mac_addr) {
@@ -103,11 +124,11 @@ void HomeplugMessage::setup_ethernet_header(const uint8_t dst_mac_addr[ETH_ALEN]
     }
 }
 
-uint16_t HomeplugMessage::get_mmtype() {
+uint16_t HomeplugMessage::get_mmtype() const {
     return le16toh(raw_msg.homeplug_header.mmtype);
 }
 
-const uint8_t* HomeplugMessage::get_src_mac() {
+uint8_t* HomeplugMessage::get_src_mac() {
     return raw_msg.ethernet_header.ether_shost;
 }
 
