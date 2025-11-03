@@ -9,6 +9,7 @@ Have a look at this categorized list of all EVerest tutorials:
 .. toctree::
     :maxdepth: 1
 
+    contribution.rst
     x.rst
     y.rst
     z.rst
