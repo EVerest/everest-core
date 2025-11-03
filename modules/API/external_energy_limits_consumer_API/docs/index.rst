@@ -1,3 +1,5 @@
+:orphan:
+
 .. _everest_modules_handwritten_external_energy_limits_consumer_API:
 
 *******************************************

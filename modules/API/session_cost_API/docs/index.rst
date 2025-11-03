@@ -1,4 +1,6 @@
-.. _everest_modules_handwritten_session_cost_API
+:orphan:
+
+.. _everest_modules_handwritten_session_cost_API:
 
 *******************************************
 session_cost_API

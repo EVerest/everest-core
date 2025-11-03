@@ -1,3 +1,5 @@
+:orphan:
+
 .. _everest_modules_handwritten_over_voltage_monitor_API:
 
 *******************************************

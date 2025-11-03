@@ -1,3 +1,5 @@
+:orphan:
+
 .. _everest_modules_handwritten_generic_error_raiser_API:
 
 *******************************************
