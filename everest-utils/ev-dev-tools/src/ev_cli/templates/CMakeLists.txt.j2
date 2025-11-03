@@ -1,49 +1,17 @@
 {% from "helper_macros.j2" import insert_block, print_template_info %}
-{{ print_template_info('0.0.1', 'marked regions will be kept', '#') }}
+{{ print_template_info('3', 'marked regions will be kept', '#') }}
 
-set(MODULE_NAME "{{ info.name }}")
-set(MOD_MODULE_NAME "mod${MODULE_NAME}")
-add_library(${MOD_MODULE_NAME} SHARED)
-add_dependencies(${MOD_MODULE_NAME} generate_interface_files)
+# module setup:
+#   - ${MODULE_NAME}: module name
+ev_setup_cpp_module()
 
 {{ insert_block(info.blocks.add_general) }}
 
-target_include_directories(${MOD_MODULE_NAME}
-    PUBLIC
-        "everest"
-        ${GENERATED_HEADER_DIR}
-        ${ADDITIONAL_MODULE_INCLUDES}
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-target_sources(${MOD_MODULE_NAME}
+target_sources(${MODULE_NAME}
     PRIVATE
-        ${MODULE_NAME}.cpp
-        "ld-ev.cpp"
         {% for impl in provides %}
         "{{ impl.cpp_file_rel_path }}"
         {% endfor %}
-        ${ADDITIONAL_MODULE_SOURCES}
-)
-
-target_link_libraries(${MOD_MODULE_NAME}
-    PRIVATE
-        everest ${CMAKE_DL_LIBS}
-        everest::log
-        nlohmann_json::nlohmann_json
-        ${ADDITIONAL_MODULE_LIBS}
-)
-
-target_compile_features(${MOD_MODULE_NAME} PRIVATE cxx_std_14)
-
-set({{ info.name|upper }}_DEST "modules/${MODULE_NAME}")
-install(TARGETS ${MOD_MODULE_NAME}
-    LIBRARY
-    DESTINATION {{ '${' + info.name|upper }}_DEST}
-)
-
-install(FILES manifest.json
-    DESTINATION {{ '${' + info.name|upper }}_DEST}
 )
 
 {{ insert_block(info.blocks.add_other) }}

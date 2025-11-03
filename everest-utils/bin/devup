@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+##################################################################
+# Check that docker is installed
+if ! command -v docker &> /dev/null
+then
+    echo "docker could not be found"
+    exit 1
+fi
+
+##################################################################
+# Setup Docker network if not there
+echo "Creating infranet_network Docker network "
+
+docker network create --driver bridge --ipv6  --subnet fd00::/80 infranet_network --attachable || true
+
+##################################################################
+# Standup Dev Docker Compose Environment
+echo "Standing up Dev Everest Docker Playground"
+
+docker compose -f "./docker/docker-compose.yml" up -d mqtt-server 
+docker compose -f "./docker/docker-compose.yml" up -d nodered
