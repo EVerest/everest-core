@@ -38,7 +38,7 @@ bool Channel::read(slac::messages::HomeplugMessage& msg, int timeout) {
     did_timeout = false;
     using IOResult = ::utils::PacketSocket::IOResult;
     if (socket) {
-        switch (socket->read(reinterpret_cast<uint8_t*>(&msg.get_raw_message()), timeout)) {
+        switch (socket->read(reinterpret_cast<uint8_t*>(msg.get_raw_message_ptr()), timeout)) {
         // FIXME (aw): this enum conversion looks ugly
         case IOResult::Failure:
             error = socket->get_error();
@@ -63,11 +63,11 @@ bool Channel::write(slac::messages::HomeplugMessage& msg, int timeout) {
     did_timeout = false;
 
     if (socket) {
-        auto& raw_msg = msg.get_raw_message();
+        auto raw_msg_ether_shost = msg.get_src_mac();
         if (!msg.keep_source_mac()) {
-            memcpy(raw_msg.ethernet_header.ether_shost, orig_if_mac, sizeof(orig_if_mac));
+            memcpy(raw_msg_ether_shost, orig_if_mac, sizeof(orig_if_mac));
         }
-        switch (socket->write(&raw_msg, msg.get_raw_msg_len(), timeout)) {
+        switch (socket->write(msg.get_raw_message_ptr(), msg.get_raw_msg_len(), timeout)) {
         case IOResult::Failure:
             error = socket->get_error();
             return false;
@@ -81,6 +81,10 @@ bool Channel::write(slac::messages::HomeplugMessage& msg, int timeout) {
 
     error = "No IO socket available\n";
     return false;
+}
+
+const uint8_t* Channel::get_mac_addr() {
+    return orig_if_mac;
 }
 
 } // namespace slac
