@@ -1,0 +1,12 @@
+description: Simple example module written in C++ to demonstrate error framework on subscriber side
+provides:
+  example_subscriber:
+    interface: example_error_framework
+    description: This implements the example interface
+requires:
+  example_raiser:
+    interface: example_error_framework
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Andreas Heinrich

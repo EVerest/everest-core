@@ -1,0 +1,18 @@
+active_modules:
+  error_history:
+    module: ErrorHistory
+  test_error_handling:
+    module: TestErrorHandling
+    connections:
+      error_raiser:
+        - module_id: probe
+          implementation_id: main
+  probe:
+    module: ProbeModule
+    connections:
+      test_error_handling:
+        - module_id: test_error_handling
+          implementation_id: main
+      error_history:
+        - module_id: error_history
+          implementation_id: error_history

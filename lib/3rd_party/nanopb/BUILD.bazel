@@ -1,0 +1,8 @@
+cc_library(
+    name = "nanopb",
+    srcs = glob(["nanopb/*.c"]),
+    hdrs = glob(["nanopb/*.h"]),
+    includes = ["."],
+    include_prefix = "everest/3rd_party",
+    visibility = ["//visibility:public"],
+)

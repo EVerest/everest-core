@@ -1,0 +1,35 @@
+description: Request types for the SerialCommHub Module
+types:
+  StatusCodeEnum:
+    description: Success or error indication of command
+    type: string
+    enum:
+      - Success
+      - Error
+  Result:
+    description: Return type for IO transfer functions with 16 bit return values
+    type: object
+    required:
+      - status_code
+    properties:
+      status_code:
+        type: string
+        $ref: /serial_comm_hub_requests#/StatusCodeEnum
+      value:
+        type: array
+        items:
+          type: integer
+          minimum: 0
+          maximum: 65535
+  VectorUint16:
+    description: Data content (raw data bytes)
+    type: object
+    required:
+      - data
+    properties:
+      data:
+        type: array
+        items:
+          type: integer
+          minimum: 0
+          maximum: 65535

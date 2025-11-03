@@ -1,0 +1,24 @@
+description: Checks provided tokens for validity
+cmds:
+  validate_token:
+    description: Validate auth token and return result (with optional reason string)
+    arguments:
+      provided_token:
+        description: >-
+          Contains information about the authorization request
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+    result:
+      description: >-
+        Result object containing validation result
+      type: object
+      $ref: /authorization#/ValidationResult
+vars:
+  validate_result_update:
+    description: >-
+      Updated validation result for a given token due to some changes. These
+      can be triggered by TransactionEvent messages or StartTransaction.
+    type: object
+    $ref: /authorization#/ValidationResultUpdate
+errors:
+  - reference: /errors/generic

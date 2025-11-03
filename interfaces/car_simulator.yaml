@@ -1,0 +1,22 @@
+description: >-
+  This defines a car simulator that can execute a full charging session,
+  from plugging in to plugging out. It uses HIL or SIL simulation controllers from
+  e.g. the Yeti HIL simulator.
+cmds:
+  enable:
+    description: >-
+      Enables or disables the simulation.
+    arguments:
+      value:
+        description: Enable/Disable simulation mode
+        type: boolean
+  execute_charging_session:
+    description: Executes a charging simulation string
+    arguments:
+      value:
+        description: Charging simulation string
+        type: string
+vars:
+  enabled:
+    description: Indicates whether simulation is currently enabled or not
+    type: boolean

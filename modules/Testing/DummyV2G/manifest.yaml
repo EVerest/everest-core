@@ -1,0 +1,10 @@
+description: >-
+  This module implements an empty dummy for HLC. It does not actually communicate with the car.
+provides:
+  main:
+    interface: ISO15118_charger
+    description: This module implements the ISO15118-2 implementation of an AC or DC charger
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen

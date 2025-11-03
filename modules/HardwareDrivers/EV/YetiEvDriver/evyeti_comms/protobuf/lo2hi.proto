@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+/*
+ This container message is send from Lo Level to Hi level and may contain any allowed message in that direction.
+*/
+message LoToHi {
+ oneof payload {
+  // Common Packets
+  KeepAliveLo keep_alive = 3;
+  ResetDone reset_done = 7;
+  // Packets only available in control_mode = 2 (low level control)
+  Event event = 6;
+  // HIL packets
+  Measurements measurements = 5;
+ }
+}
+
+message Event {
+  enum InterfaceEvent {
+    A = 0;
+    B = 1;
+    C = 2;
+    D = 3;
+    E = 4;
+    F = 5;
+    EF = 6;
+    DISCONNECTED = 8;
+    ERROR_RELAIS = 9;
+    RELAIS_ON = 10;
+    RELAIS_OFF = 11;
+  }
+  InterfaceEvent type = 1;
+}
+
+message Measurements {
+  float pwmDutyCycle = 1;
+  float evse_pwm_voltage_hi = 2;
+  float evse_pwm_voltage_lo = 3;
+  bool evse_pwm_running = 4;
+  uint32 relais_on = 5;
+}
+
+message KeepAliveLo {
+  uint32 time_stamp = 1;
+  uint32 hw_type = 2;
+  uint32 hw_revision = 3;
+  uint32 protocol_version_major = 4;
+  uint32 protocol_version_minor = 5;
+  string sw_version_string = 6;
+  float hwcap_max_current = 7;
+  float hwcap_min_current = 8;
+  uint32 hwcap_max_phase_count = 9;
+  uint32 hwcap_min_phase_count = 10;
+  bool supports_changing_phases_during_charging = 11;
+}
+
+message ResetDone {
+}

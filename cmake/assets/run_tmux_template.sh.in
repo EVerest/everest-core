@@ -1,0 +1,2 @@
+#!/bin/bash
+@HELPER_PREFIX@/run_tmux_helper.sh @CONFIG_FILE@ @CMAKE_INSTALL_PREFIX@

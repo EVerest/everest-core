@@ -1,0 +1,13 @@
+active_modules:
+  test_error_handling:
+    module: TestErrorHandling
+    connections:
+      error_raiser:
+        - module_id: probe
+          implementation_id: main
+  test_error_handling_not_req:
+    module: TestErrorHandling
+    connections:
+      error_raiser:
+        - module_id: probe
+          implementation_id: main

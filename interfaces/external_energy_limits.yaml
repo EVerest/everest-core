@@ -1,0 +1,15 @@
+description: >-
+  This interface allows to limit energy flow at a specific node of the energy tree from the outside (e.g. from ocpp).
+cmds:
+  set_external_limits:
+    description: Set additional external energy flow limits at this node.
+    arguments:
+      value:
+        description: External limits object
+        type: object
+        $ref: /energy#/ExternalLimits
+vars:
+  enforced_limits:
+    description: Enforced limits for this node (coming from the EnergyManager)
+    type: object
+    $ref: /energy#/EnforcedLimits

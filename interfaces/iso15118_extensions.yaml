@@ -1,0 +1,36 @@
+description: This interface is used to share data between ISO15118 and OCPP modules to support the requirements of the OCPP protocol
+cmds:
+  set_get_certificate_response:
+    description: >-
+      CertificateInstallationRes/CertificateUpdateRes - Set the new/updated Contract Certificate (including the certificate chain)
+      and the corresponding encrypted private key. Should be forwarded to EVCC.
+      This is an async response to a previously published iso15118_certificate_request
+    arguments:
+      certificate_response:
+        description: The response raw exi stream and the status from the CSMS system
+        type: object
+        $ref: /iso15118#/ResponseExiStreamStatus
+vars:
+  iso15118_certificate_request:
+    description: >-
+      The vehicle requests the SECC to deliver the certificate that belong
+      to the currently valid contract of the vehicle.
+      Response will be reported async via set_get_certificate_response
+    type: object
+    $ref: /iso15118#/RequestExiStreamSchema
+  charging_needs:
+    description: >-
+      The ISO15118-20 bidirectional charging is required to send this message for OCPP 2.1
+      during the 'ScheduleExchangeReq' state machine. For ISO15118-2 and OCPP 2.1 this message
+      has to be sent during the 'ChargeParameterDiscoveryReq' state machine
+    type: object
+    $ref: /iso15118#/ChargingNeeds
+  ev_info:
+    description: >-
+      The ISO15118 ev information concerning the certificates used for TLS, the supported protocols and evccId.
+    type: object
+    $ref: /iso15118#/EvInformation
+  service_renegotiation_supported:
+    description: >-
+      Indicates whether service renegotiation is supported or not.
+    type: boolean

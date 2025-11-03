@@ -1,0 +1,9 @@
+description: Simple example module written in C++ to demonstrate error handling on raiser side
+provides:
+  example_raiser:
+    interface: example_error_framework
+    description: This implements an example interface
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Andreas Heinrich

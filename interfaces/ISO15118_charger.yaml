@@ -1,0 +1,441 @@
+description: This interface defines a ISO15118 charger.
+cmds:
+# Setup the module
+  setup:
+    description: At startup all necessary info should be sent to the module once.
+    arguments:
+      evse_id:
+        description: >-
+          Set an ID that uniquely identifies the EVSE and the power outlet the
+          vehicle is connected to
+        type: object
+        $ref: /iso15118#/EVSEID
+      sae_j2847_mode:
+        description: Charger is supporting SAE J2847 V2G/V2H version
+        type: string
+        $ref: /iso15118#/SaeJ2847BidiMode
+      debug_mode:
+        description: Enable/Disable debug mode
+        type: boolean
+  set_charging_parameters:
+    description: >-
+      At startup, set the the charging parameters at least once. May be updated later on.
+      If a charging session is currently active, some updated values may only be used for the next charging session.
+    arguments:
+      physical_values:
+        description: Set up initial physical values for a AC or DC charging session
+        type: object
+        $ref: /iso15118#/SetupPhysicalValues
+  session_setup:
+    description: At each session start this info should be sent to the module.
+    arguments:
+      payment_options:
+        description: Providing a list of payment options to the EVCC
+        type: array
+        items:
+          description: These are the payment options a SECC offers to the EVCC
+          type: string
+          $ref: /iso15118#/PaymentOption
+        minItems: 1
+        maxItems: 2
+      supported_certificate_service:
+        description: >-
+          The charger supports the certificate installation/update service and has a
+          connection to an SA for this purpose
+        type: boolean
+      central_contract_validation_allowed:
+        description: >-
+          Indicates if the vehicle contract may be forwarded to and validated by a CSMS in case
+          local validation was not successful
+        type: boolean
+  bpt_setup:
+    description: >-
+      At startup, set the bpt setup for ISO15118-20 at least once. May be updated later on.
+    arguments:
+      bpt_config:
+        description: The required parameters for a BPT setup
+        type: object
+        $ref: /iso15118#/BptSetup
+# Response messages to vars:
+  authorization_response:
+    description: >-
+      This message is an async response to a previously published require_auth_eim
+      or require_auth_pnc. The SECC informs the EVCC whether the authorization
+      is accepted or not.
+    arguments:
+      authorization_status:
+        description: Authorization status of the ID Token
+        type: string
+        $ref: /authorization#/AuthorizationStatus
+      certificate_status:
+        description: Certificate status information
+        type: string
+        $ref: /authorization#/CertificateStatus
+  ac_contactor_closed:
+    description: >-
+      This message is an async response to a previously published ac_close_contactor
+      or ac_open_contactor.
+    arguments:
+      status:
+        description: Set to true when contactor is closed, false when contactor is open
+        type: boolean
+# Events
+  dlink_ready:
+    description: >-
+      Signals dlink_ready from SLAC layer according to ISO15118-3
+    arguments:
+      value:
+        description: >-
+          Set to true when link becomes ready, false when the link is terminated
+        type: boolean
+  cable_check_finished:
+    description: >-
+      Cable check is finished, voltage is under 20V and insulation resistor
+      on the cable is alright
+    arguments:
+      status:
+        description: Set to true when cable check is okay
+        type: boolean
+  receipt_is_required:
+    description: >-
+      This element is used by the SECC to indicate that the EVCC is required
+      to send a MeteringReceiptReq message for the purpose of signing the
+      meter info record.
+    arguments:
+      receipt_required:
+        description: >-
+          Set to true when receipt is required, set to false when not
+        type: boolean
+  stop_charging:
+    description: Stops the charging process
+    arguments:
+      stop:
+        description: Set to true when to stop, set to false when to continue
+        type: boolean
+  pause_charging:
+    description: Pause the charging process (only in ISO15118-20)
+    arguments:
+      pause:
+        description: Set to true when to pause, set to false when to continue
+        type: boolean
+  no_energy_pause_charging:
+    description: >-
+      Right now there is no power available for the charging process. According to
+      IEC61851-23:2023 CC3.5.3 the charger can pause the session before or after the cable check and
+      pre charge stage.
+    arguments:
+      mode:
+        description: >-
+          Set to different no energy pause modes. For PauseAfterPrecharge the charger should pause but
+          has power for cable check and pre charge. For PauseBeforeCableCheck the charger should pause
+          before cable check. For AllowEvToIgnorePause charger should ignore, that the ev will go to
+          CurrentDemand instead of pausing the session, this is against IEC61851-23:2023.
+        type: string
+        $ref: /iso15118#/NoEnergyPauseMode
+# Update physical values
+  update_energy_transfer_modes:
+    description: >-
+      Update the supported energy transfer modes. Call at least once during start up.
+      Typically for ISO15118-2 and basic charging we expect unidirectional charging modes.
+      For ISO15118-20 the user can set what type of modes the hardware supports, may that be
+      bidirectional, unidirectional, wireless, etc charging.
+    arguments:
+      supported_energy_transfer_modes:
+        description: Available energy transfer modes supported by the EVSE
+        type: array
+        items:
+          description: The different energy modes supported by the SECC
+          type: object
+          $ref: /iso15118#/EnergyTransferMode
+        minItems: 1
+        maxItems: 6
+  update_ac_max_current:
+    description: Update the maximum allowed line current restriction per phase. Call at least once during start up.
+    arguments:
+      max_current:
+        description: Max current in A
+        type: number
+        minimum: 0
+        maximum: 400
+  update_ac_parameters:
+    description: Update the d20 initial ac parameters. Call at least once during start up
+    arguments:
+      ac_parameters:
+        description: Ac parameters the EVSE is setting
+        type: object
+        $ref: /iso15118#/AcParameters
+  update_ac_maximum_limits:
+    description: Update the ac maximum limits. Call at least once during start up.
+    arguments:
+      maximum_limits:
+        description: Maximum values (charge and discharge) the EVSE can deliver
+        type: object
+        $ref: /iso15118#/AcEvseMaximumPower
+  update_ac_minimum_limits:
+    description: Update the ac minimum limits. Call at least once during start up.
+    arguments:
+      minimum_limits:
+        description: Minimum values (charge and discharge) the EVSE can deliver
+        type: object
+        $ref: /iso15118#/AcEvseMinimumPower
+  update_ac_target_values:
+    description: Update the ac target values. Call at least once before charging begins.
+    arguments:
+      target_values:
+        description: AC target values
+        type: object
+        $ref: /iso15118#/AcTargetValues
+  update_ac_present_power:
+    description: >-
+      Update the present power from the powermeter. Call at least once before charging begins
+    arguments:
+      present_power:
+        description: Present active power
+        type: object
+        $ref: /units#/Power
+  update_dc_maximum_limits:
+    description: Update the maximum limits. Call at least once during start up.
+    arguments:
+      maximum_limits:
+        description: Maximum values (current, power and voltage) the EVSE can deliver
+        type: object
+        $ref: /iso15118#/DcEvseMaximumLimits
+  update_dc_minimum_limits:
+    description: Update the minimum limits. Call at least once during start up.
+    arguments:
+      minimum_limits:
+        description: Minimum values (current and voltage) the EVSE can deliver
+        type: object
+        $ref: /iso15118#/DcEvseMinimumLimits
+  update_isolation_status:
+    description: Update the isolation condition
+    arguments:
+      isolation_status:
+        description: Result of the isolation monitoring
+        type: string
+        $ref: /iso15118#/IsolationStatus
+  update_dc_present_values:
+    description: Update the present values from the DC powersupply
+    arguments:
+      present_voltage_current:
+        description: Present voltage and current
+        type: object
+        $ref: /iso15118#/DcEvsePresentVoltageCurrent
+  update_meter_info:
+    description: Update meter info
+    arguments:
+      powermeter:
+        description: >-
+          Includes the meterInfo record containing the latest meter reading
+          and other meter relevant data
+        type: object
+        $ref: /powermeter#/Powermeter
+# Error handling
+  send_error:
+    description: An error has happened. Send this error to inform the EV.
+    arguments:
+      error:
+        description: The EVSE error enum
+        type: string
+        $ref: /iso15118#/EvseError
+  reset_error:
+    description: Reset all errors
+vars:
+  require_auth_eim:
+    description: An EIM authorization is required
+    type: "null"
+  require_auth_pnc:
+    description: >-
+      The EVCC provides the payment details for a PnC authorization by sending
+      the signature certificate chain and eMAID.
+    type: object
+    $ref: /authorization#/ProvidedIdToken
+  ac_close_contactor:
+    description: The contactor should be closed
+    type: "null"
+  ac_open_contactor:
+    description: The contactor should be opened
+    type: "null"
+  start_cable_check:
+    description: The charger should now start a cable check
+    type: "null"
+  start_pre_charge:
+    description: The charger should now start the pre charge phase
+    type: "null"
+  dc_open_contactor:
+    description: The contactor should be opened
+    type: "null"
+  v2g_setup_finished:
+    description: >-
+      v2g_setup_finished from ISO15118-3. Trigger when EV sends a PowerDeliveryReq
+      message with ChargeProgess equals Start or Stop
+    type: "null"
+  current_demand_started:
+    description: The charging process has started and the EV wants to be charged
+    type: "null"
+  current_demand_finished:
+    description: The charging process was finished
+    type: "null"
+  sae_bidi_mode_active:
+      description: The SAE J2847 bidi mode is active
+      type: "null"
+  evcc_id:
+    description:
+      Specifies the EVs identification in a readable format. It contains
+      the MAC address of the EVCC in uppercase
+    type: string
+    pattern: ^[A-F0-9]{2}(:[A-F0-9]{2}){5}$
+  selected_payment_option:
+    description: This element is used for indicating the payment type
+    type: string
+    $ref: /iso15118#/PaymentOption
+  requested_energy_transfer_mode:
+    description:
+      Selected energy transfer mode for charging that is requested by the
+      EVCC.
+    type: string
+    $ref: /iso15118#/EnergyTransferMode
+  departure_time:
+    description: >-
+      Optional: [RFC3339 UTC] This element is used to indicate when the
+      vehicle intends to finish the charging process
+    type: string
+    format: date-time
+  ac_eamount:
+    description: >-
+      [Wh] Amount of energy reflecting the EV's estimate how much energy
+      is needed to fulfill the user configured charging goal for the current charging
+      session
+    type: number
+    minimum: 0
+    maximum: 200000
+  ac_ev_max_voltage:
+    description: >-
+      [V] The RMS of the maximal nominal voltage the vehicle can accept,
+      measured between one phase and neutral
+    type: number
+    minimum: 0
+    maximum: 1000
+  ac_ev_max_current:
+    description: "[A] Maximum current supported by the EV per phase"
+    type: number
+    minimum: 0
+    maximum: 400
+  ac_ev_min_current:
+    description: >-
+      [A] EVMinCurrent is used to indicate to the SECC that charging below
+      this minimum is not energy/cost efficient for the EV
+    type: number
+    minimum: 0
+    maximum: 400
+  ac_ev_power_limits:
+    description: >-
+      Ac charge & discharge power values supported and allowed by the EV
+    type: object
+    $ref: /iso15118#/AcEvPowerLimits
+  ac_ev_present_powers:
+    description: Present active and reactive power measured from the EV
+    type: object
+    $ref: /iso15118#/AcEvPresentPowerValues
+  ac_ev_dynamic_control_mode:
+    description: >-
+      The parameters the EVCC offers and sets for ac dynamic control mode
+    type: object
+    $ref: /iso15118#/AcEvDynamicModeValues
+  dc_ev_energy_capacity:
+    description: "Optional: [Wh] Energy capacity of the EV"
+    type: number
+    minimum: 0
+    maximum: 200000
+  dc_ev_energy_request:
+    description: "Optional: [Wh] Amount of energy the EV requests from the EVSE"
+    type: number
+    minimum: 0
+    maximum: 200000
+  dc_full_soc:
+    description: >-
+      Optional: [%] SOC at which the EV considers the battery to be fully
+      charged
+    type: number
+    minimum: 0
+    maximum: 100
+  dc_bulk_soc:
+    description: >-
+      Optional: [%] SOC at which the EV considers a fast charge process
+      to end
+    type: number
+    minimum: 0
+    maximum: 100
+  dc_ev_status:
+    description: Current status of the EV
+    type: object
+    $ref: /iso15118#/DcEvStatus
+  dc_bulk_charging_complete:
+    description: >-
+      Optional: If set to TRUE, the EV indicates that bulk charge (approx.
+      80% SOC) is complete
+    type: boolean
+  dc_charging_complete:
+    description: >-
+      Optional: If set to TRUE, the EV indicates that full charge (100%
+      SOC) is complete
+    type: boolean
+  dc_ev_target_voltage_current:
+    description: Target voltage and current requested by the EV
+    type: object
+    $ref: /iso15118#/DcEvTargetValues
+  dc_ev_maximum_limits:
+    description:
+      Maximum Values (current, power and voltage) supported and allowed
+      by the EV
+    type: object
+    $ref: /iso15118#/DcEvMaximumLimits
+  dc_ev_remaining_time:
+    description: Estimated or calculated time until bulk and full charge is complete
+    type: object
+    $ref: /iso15118#/DcEvRemainingTime
+  dlink_terminate:
+    description: Terminate the data link and become UNMATCHED.
+    type: "null"
+  dlink_error:
+    description: Terminate the data link and restart the matching process.
+    type: "null"
+  dlink_pause:
+    description: Request power saving mode, while staying MATCHED.
+    type: "null"
+  ev_app_protocol:
+    description: >-
+      Debug_Lite - This request message provides a list of charging protocols
+      supported by the EVCC
+    type: object
+    $ref: /iso15118#/AppProtocols
+  v2g_messages:
+    description: >-
+      Debug - This element contains all V2G elements and should be used
+      for debug purposes only
+    type: object
+    $ref: /iso15118#/V2gMessages
+  selected_protocol:
+    description: >-
+      Debug - Contains the selected protocol
+    type: string
+  display_parameters:
+    description: >-
+      Parameters that may be displayed on the EVSE (Soc, battery capacity)
+    type: object
+    $ref: /iso15118#/DisplayParameters
+  d20_dc_dynamic_charge_mode:
+    description: >-
+      The parameters the EVCC offers and sets for dynamic control mode
+    type: object
+    $ref: /iso15118#/DcChargeDynamicModeValues
+  dc_ev_present_voltage:
+    description: Present Voltage measured from the EV
+    type: number
+  meter_info_requested:
+    description: The EV requested meter infos from the EVSE
+    type: "null"
+  selected_service_parameters:
+    description: From the EV selected service parameters
+    type: object
+    $ref: /iso15118#/SelectedServiceParameters

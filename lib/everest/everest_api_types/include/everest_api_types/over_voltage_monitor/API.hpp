@@ -1,0 +1,37 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+
+#pragma once
+
+#include <optional>
+#include <string>
+
+namespace everest::lib::API::V1_0::types::over_voltage_monitor {
+
+enum class ErrorEnum {
+    MREC5OverVoltage,
+    DeviceFault,
+    CommunicationFault,
+    VendorError,
+    VendorWarning
+};
+
+enum class ErrorSeverityEnum {
+    Low,
+    Medium,
+    High
+};
+
+struct Error {
+    ErrorEnum type;
+    std::optional<std::string> sub_type;
+    std::optional<std::string> message;
+    std::optional<ErrorSeverityEnum> severity;
+};
+
+struct OverVoltageLimits {
+    float emergency_limit_V;
+    float error_limit_V;
+};
+
+} // namespace everest::lib::API::V1_0::types::over_voltage_monitor

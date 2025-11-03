@@ -1,0 +1,89 @@
+description: Driver module for the Texas Instruments TIDA-010939 reference design
+config:
+  serial_port:
+    description: Serial port the TIDA010939 hardware is connected to
+    type: string
+    default: /dev/ttyUSB0
+  baud_rate:
+    description: Serial baud rate to use when communicating with TIDA010939 hardware
+    type: integer
+    minimum: 9600
+    maximum: 230400
+    default: 115200
+  reset_gpio_chip:
+    description: >-
+      Reset GPIO chip to use to HW reset TIDA010939. If set to empty string, it is disabled.
+    type: string
+    default: 'gpiochip0'
+  reset_gpio:
+    description: GPIO line to use to reset TIDA010939
+    type: integer
+    default: 27
+  max_current_A_import:
+    description: Maximum import current in amps
+    type: integer
+    minimum: 0
+    default: 16
+  min_current_A_import:
+    description: Minimum import current in amps
+    type: integer
+    minimum: 0
+    default: 6
+  min_phase_count_import:
+    description: Minimum phase count for import
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  max_phase_count_import:
+    description: Maximum phase count for import
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  min_current_A_export:
+    description: Minimum export current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 0
+  max_current_A_export:
+    description: Maximum export current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 0
+  min_phase_count_export:
+    description: Minimum phase count for export
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  max_phase_count_export:
+    description: Maximum phase count for export
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  has_socket:
+    description: Set to true if it has a socket, false if it has a permanently attached cable
+    type: boolean
+    default: false
+provides:
+  board_support:
+    interface: evse_board_support
+    description: provides the board support Interface to low level control control pilot, relais, motor lock
+  rcd:
+    interface: ac_rcd
+    description: RCD interface of the onboard RCD
+  connector_lock:
+    interface: connector_lock
+    description: Interface for the motor lock
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen
+    - Kai-Uwe Hermann
+    - Thilo Molitor
+    - Anton Wöllert
+    - Fabian Gajek

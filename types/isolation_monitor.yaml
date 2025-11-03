@@ -1,0 +1,15 @@
+description: Isolation monitor types
+types:
+  IsolationMeasurement:
+    description: Results of an isolation measurement
+    type: object
+    additionalProperties: false
+    required:
+      - resistance_F_Ohm
+    properties:
+      resistance_F_Ohm:
+        description: Isolation resistance between DC+/DC- and protective earth in Ohm
+        type: number
+      voltage_V:
+        description: DC voltage between positive and negative terminal in Volt
+        type: number

@@ -1,0 +1,126 @@
+# `git_tag` can be either a tag or a commit hash.
+# For the sake of unambiguity the `git_tag` field is treated as a hash
+# only if it is 40 characters long hexadecimal string.
+---
+everest-framework:
+  git: https://github.com/EVerest/everest-framework.git
+  git_tag: v0.23.1
+  options: [
+    "BUILD_TESTING OFF",
+    "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
+    "everest-framework_USE_PYTHON_VENV_PATH ${PROJECT_NAME}_USE_PYTHON_VENV_PATH",
+  ]
+sigslot:
+  git: https://github.com/palacaze/sigslot
+  git_tag: v1.2.3
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SIGSLOT"
+  options:
+    - "SIGSLOT_COMPILE_EXAMPLES OFF"
+    - "SIGSLOT_COMPILE_TESTS OFF"
+pugixml:
+  git: https://github.com/zeux/pugixml
+  git_tag: v1.15
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_PUGIXML"
+
+# Auth module
+libtimer:
+  git: https://github.com/EVerest/libtimer.git
+  git_tag: v0.1.2
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBTIMER"
+  options: ["BUILD_EXAMPLES OFF"]
+
+# Slac module
+libslac:
+  git: https://github.com/EVerest/libslac.git
+  git_tag: v0.3.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBSLAC"
+libfsm:
+  git: https://github.com/EVerest/libfsm.git
+  git_tag: v0.2.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBFSM"
+
+# libcbv2g
+libcbv2g:
+  git: https://github.com/EVerest/libcbv2g.git
+  git_tag: v0.3.1
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
+# libiso15118
+libiso15118:
+  git: https://github.com/EVerest/libiso15118.git
+  git_tag: v0.8.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
+
+# LEM DCBM 400/600, IsabellenhuetteIemDcr modules
+libcurl:
+  git: https://github.com/curl/curl.git
+  git_tag: curl-8_16_0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
+  options: [
+    "BUILD_EXAMPLES OFF",
+    "BUILD_LIBCURL_DOCS OFF",
+    "BUILD_MISC_DOCS OFF",
+    "BUILD_TESTING OFF",
+    "CURL_BROTLI OFF",
+    "CURL_DISABLE_LDAP ON",
+    "CURL_USE_LIBPSL OFF",
+    "CURL_USE_LIBSSH2 OFF",
+    "ENABLE_CURL_MANUAL OFF",
+    "USE_NGHTTP2 OFF",
+  ]
+
+# EvseSecurity
+# This has to appear before libocpp in this file since it is also a direct dependency
+# of libocpp and would otherwise be overwritten by the version used there
+libevse-security:
+  git: https://github.com/EVerest/libevse-security.git
+  git_tag: v0.9.9
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
+
+# OCPP
+libocpp:
+  git: https://github.com/EVerest/libocpp.git
+  git_tag: v0.30.2
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
+# Josev
+Josev:
+  git: https://github.com/EVerest/ext-switchev-iso15118.git
+  git_tag: 2025.9.0
+  cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
+# everest-testing and ev-dev-tools
+everest-utils:
+  git: https://github.com/EVerest/everest-utils.git
+  git_tag: v0.6.2
+# linux_libnfc-nci for RFID
+libnfc-nci:
+  git: https://github.com/EVerest/linux_libnfc-nci.git
+  git_tag: 2024.11.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBNFC_NCI"
+# UI library for BringUp modules
+ftxui:
+  git: https://github.com/ArthurSonzogni/ftxui
+  git_tag: v6.1.9
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_FTXUI"
+# everest/io library
+mqttc:
+  git: https://github.com/LiamBindle/MQTT-C.git
+  git_tag: v1.1.6
+  options: ["MQTT_C_EXAMPLES OFF", "CMAKE_POSITION_INDEPENDENT_CODE ON"]
+# Linux_Systemd_Rauc module
+sdbus-cpp:
+  git:  https://github.com/Kistler-Group/sdbus-cpp.git
+  git_tag: v2.1.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SDBUS_CPP"
+  options: ["CMAKE_POSITION_INDEPENDENT_CODE ON"]
+# unit testing
+gtest:
+  # GoogleTest now follows the Abseil Live at Head philosophy. We recommend updating to the latest commit in the main branch as often as possible.
+  git: https://github.com/google/googletest.git
+  git_tag: release-1.12.1
+  cmake_condition: "EVEREST_CORE_BUILD_TESTING"
+everest-sqlite:
+  git: https://github.com/EVerest/everest-sqlite.git
+  git_tag: v0.1.4
+catch2:
+  git: https://github.com/catchorg/Catch2.git
+  git_tag: v3.9.0
+  cmake_condition: "EVEREST_CORE_BUILD_TESTING"

@@ -1,0 +1,46 @@
+description: Driver module for the Micro Mega Watt DC Charging Tester v1.0
+config:
+  serial_port:
+    description: Serial port the uMWC hardware is connected to
+    type: string
+    default: /dev/ttyUSB0
+  baud_rate:
+    description: Serial baud rate to use when communicating with uMWC hardware
+    type: integer
+    minimum: 9600
+    maximum: 230400
+    default: 115200
+  reset_gpio_chip:
+    description: >-
+      Reset GPIO chip to use to HW reset uMWC. If set to empty string, it is disabled.
+    type: string
+    default: 'gpiochip0'
+  reset_gpio:
+    description: GPIO line to use to reset uMWC
+    type: integer
+    default: 27
+  dc_max_voltage:
+    description: Maximum voltage to support
+    type: integer
+    minimum: 50
+    maximum: 1000
+    default: 1000
+  connector_id:
+    description: Connector id
+    type: integer
+    default: 1
+provides:
+  dc_supply:
+    interface: power_supply_DC
+    description: Interface for the DC/DC output supply
+  powermeter:
+    interface: powermeter
+    description: Interface for the powermeter
+  board_support:
+    interface: evse_board_support
+    description: provides the board support Interface to low level control control pilot, relais, rcd, motor lock
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen

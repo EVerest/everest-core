@@ -1,0 +1,117 @@
+description: >-
+  This interface defines the board support driver for AC or DC minimal power path: ControlPilot,
+  output contactors. 
+  Other components of the power path such as IMD(DC)/RCD(AC)/Connector Lock etc have their own interfaces.
+cmds:
+  enable:
+    description: >-
+      Enables or disables the charging port. Typically disabled results in control
+      pilot state F. It must not accept cars for new charging sessions if disabled.
+    arguments:
+      value:
+        description: 'True: enabled, false: disabled.'
+        type: boolean
+  pwm_on:
+    description: Turns PWM on with duty cycle (in percent)
+    arguments:
+      value:
+        description: PWM duty cycle (>0, <100)
+        type: number
+        minimum: 0
+        maximum: 100
+  pwm_off:
+    description: Turns PWM off (constant high voltage)
+  pwm_F:
+    description: Turns PWM off with Error F (constant negative voltage)
+  allow_power_on:
+    description: >-
+      Sets allow_power_on flag. If false, Relais must never be switched
+      on.
+    arguments:
+      value:
+        description: Flag and context
+        type: object
+        $ref: /evse_board_support#/PowerOnOff
+  ac_switch_three_phases_while_charging:
+    description: >-
+      Optional, in case of doubt do not implement. Report in hardware_capabilites if this command is supported.
+      This command switches between one and three phase operation during an active charging session.
+      Some cars can be permanently destroyed by that, so the bsp needs to implement a special sequence for the switching.
+      The exact sequence can be defined by the BSP, but one example would be a C2->C1->B1->F->B1->B2->C2 or similar.
+      Use with caution.
+    arguments:
+      value:
+        description: 'True: switch to 3ph, False: switch to 1ph'
+        type: boolean
+  evse_replug:
+    description: >-
+      Optional, in case of doubt do not implement.
+      Special command initiate a virtual replug sequence without restarting
+      session. Emits a EvseReplugStarted event if supported and started. BSP will
+      take care to not emit other events such as CarPluggedIn/Out during that time.
+      Once finished it will emit a EvseReplugFinished. This is mainly for testing purposes,
+      don't implement for production use.
+    arguments:
+      value:
+        description: Time in ms for the duration of the replug sequence
+        type: integer
+  ac_read_pp_ampacity:
+    description: >-
+      Read the current carrying capacity of the connected cable in ampere for AC charging
+      with a socket. This function will be used by EvseManager to get the PP value at 
+      a distinct time. You should also publish the var pp_ampacity whenever the PP ampacity reading changes
+      to signal changes e.g. during the charging time.
+      This has no meaning for DC or AC charging with a fixed attached cable, it does not 
+      need to be implemented and the returned value is not used in those cases.
+    result:
+      description: Returns the current carrying capacity of the connected cable
+      type: object
+      $ref: /board_support_common#/ProximityPilot
+  ac_set_overcurrent_limit_A:
+    description: >-
+      Many chargers implement a fast over current shutdown directly in the hardware that triggers if the EV draws more current than
+      the PWM allows.
+      If the hardware does not have this functionality, just ignore this command. Do not use it to set the PWM duty cycle.
+      Otherwise this command reports a value that should be used for the overcurrent detection. 
+      A margin needs to be added to avoid false triggers. Do not use the PWM duty cycle to infer the current limit in the BSP,
+      as this will not work with HLC.
+    arguments:
+      value:
+        description: Ampere current limit value
+        type: number
+vars:
+  event:
+    description: Event from ControlPilot signal/output relais
+    type: object
+    $ref: /board_support_common#/BspEvent
+  ac_nr_of_phases_available:
+    description: Instantaneous phase count available to car
+    type: integer
+    minimum: 1
+    maximum: 3
+  telemetry:
+    description: Other telemetry
+    type: object
+    $ref: /evse_board_support#/Telemetry
+  capabilities:
+    description: >-
+      Hardware capabilities/limits. The BSP must publish this variable at least once during start up.
+      For AC, the capabilities are the limits of the AC hardware power path. For DC, this are the limits for the AC input for the AC/DC converter.
+      The BSP may publish this variable to update limits in case they change during runtime, e.g. if the maximum current changes because the hardware gets too hot.
+    type: object
+    $ref: /evse_board_support#/HardwareCapabilities
+  ac_pp_ampacity:
+    description: >-
+      Current carrying capacity of the connected cable in ampere for AC charging
+      with a socket. Publish whenever it changes.
+      This has no meaning for DC or AC charging with a fixed attached cable, it does not 
+      need to be implemented and the returned value is not used in those cases.
+    type: object
+    $ref: /board_support_common#/ProximityPilot
+  request_stop_transaction:
+    description: Publish to stop the transaction gracefully (e.g. user pressed the stop button)
+    type: object
+    $ref: /evse_manager#/StopTransactionRequest
+errors:
+  - reference: /errors/evse_board_support
+  - reference: /errors/ac_rcd

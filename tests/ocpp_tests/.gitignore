@@ -1,0 +1,10 @@
+build
+__pycache__
+*.egg-info
+.pytest_cache
+.venv
+results.xml
+result.xml
+report.html
+**/.DS_Store
+**/.idea
