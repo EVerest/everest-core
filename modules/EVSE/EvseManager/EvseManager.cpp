@@ -456,11 +456,53 @@ void EvseManager::ready() {
                 r_imd[0]->subscribe_isolation_measurement([this](types::isolation_monitor::IsolationMeasurement m) {
                     // new DC isolation monitoring measurement received
 
-                    // Are we in charge loop?
+                    // Check for isolation errors
                     if (charger->get_current_state() == Charger::EvseState::Charging and
                         not check_isolation_resistance_in_range(m.resistance_F_Ohm)) {
                         error_handling->raise_isolation_resistance_fault(
-                            fmt::format("Isolation resistance too low during charging: {} Ohm", m.resistance_F_Ohm));
+                            fmt::format("Isolation resistance too low during charging: {} Ohm", m.resistance_F_Ohm),
+                            "Resistance");
+                    }
+                    // Check L1e and L2e to PE as defined by IEC 61851-23:2023, $6.3.1.112.2
+                    if (charger->get_current_state() == Charger::EvseState::Charging) {
+                        bool is_in_range = check_voltage_to_protective_earth_in_range(m);
+                        auto now = std::chrono::steady_clock::now();
+
+                        if (not is_in_range) {
+                            // Voltage to earth is out of range
+                            if (voltage_to_earth_failure_count == 0) {
+                                // First failure - record the time
+                                first_voltage_to_earth_failure_time = now;
+                                voltage_to_earth_failure_count = 1;
+                                EVLOG_debug << "Voltage to earth out of range (first failure)";
+                            } else {
+                                // Subsequent failure - increment count
+                                voltage_to_earth_failure_count++;
+                                auto time_since_first_failure = std::chrono::duration_cast<std::chrono::seconds>(
+                                    now - first_voltage_to_earth_failure_time);
+
+                                EVLOG_debug << "Voltage to earth out of range. Failure count: "
+                                            << voltage_to_earth_failure_count
+                                            << ", time since first: " << time_since_first_failure.count() << "s";
+
+                                // Only raise error if we have at least 2 failures AND at least 2 seconds between first
+                                // and last
+                                if (voltage_to_earth_failure_count >= REQUIRED_CONSECUTIVE_FAILURES and
+                                    time_since_first_failure >= MIN_TIME_BETWEEN_FIRST_AND_LAST_FAILURE) {
+                                    error_handling->raise_isolation_resistance_fault(
+                                        fmt::format("Voltage to earth too high during charging L1e: {} V, L2e: {} V",
+                                                    m.voltage_to_earth_l1e_V.value_or(NAN),
+                                                    m.voltage_to_earth_l2e_V.value_or(NAN)),
+                                        "VoltageToEarth");
+                                }
+                            }
+                        } else {
+                            // Voltage to earth is in range - reset failure tracking
+                            if (voltage_to_earth_failure_count > 0) {
+                                EVLOG_debug << "Voltage to earth back in range, resetting failure counter";
+                                voltage_to_earth_failure_count = 0;
+                            }
+                        }
                     }
                     isolation_measurement = m;
                 });
@@ -788,7 +830,6 @@ void EvseManager::ready() {
             // EV_ChargingSession
             // dc_bulk_charging_complete
             // dc_charging_complete
-
         } else {
             EVLOG_error << "Unsupported charging mode.";
             exit(255);
@@ -1744,6 +1785,30 @@ bool EvseManager::cable_check_should_exit() {
     return charger->get_current_state() not_eq Charger::EvseState::PrepareCharging;
 }
 
+bool EvseManager::check_voltage_to_protective_earth_in_range(types::isolation_monitor::IsolationMeasurement m) {
+    static constexpr double MAX_VOLTAGE_STATIC = 550.0; // defined by IEC 61851-23:2023, $6.3.1.112.2
+    if (m.voltage_V.has_value() and m.voltage_to_earth_l1e_V.has_value() and m.voltage_to_earth_l2e_V.has_value()) {
+        // This may trigger while ramping down voltage so we should try to check against the minium valid voltage the
+        // the power supply can deliver. If the UL1e/2e is poorly synchronized to the actual voltage measurement it may
+        // trigger false positives thus limiting the checks to min_export_voltage
+        if (m.voltage_V.value() > powersupply_capabilities.min_export_voltage_V) {
+            // implemented according to the standard see IEC 61851-23:2023, $6.3.1.112.2
+            // if the charger rating is above 500, use as maximum value 110% of actual voltage
+            // if the charger rating is below 500, use as maxiumum value 550V
+            if (powersupply_capabilities.max_export_voltage_V > 500) {
+                double max_allowed_value = m.voltage_V.value() * 1.1;
+                return (std::fabs(m.voltage_to_earth_l1e_V.value()) < max_allowed_value and
+                        std::fabs(m.voltage_to_earth_l2e_V.value()) < max_allowed_value);
+            } else {
+                return (std::fabs(m.voltage_to_earth_l1e_V.value()) < MAX_VOLTAGE_STATIC and
+                        std::fabs(m.voltage_to_earth_l2e_V.value()) < MAX_VOLTAGE_STATIC);
+            }
+        }
+    }
+    // if we can't check, assume all good
+    return true;
+}
+
 bool EvseManager::check_isolation_resistance_in_range(double resistance) {
     if (resistance < CABLECHECK_INSULATION_FAULT_RESISTANCE_OHM) {
         session_log.evse(false, fmt::format("Isolation measurement FAULT R_F {}.", resistance));
@@ -1926,7 +1991,7 @@ void EvseManager::cable_check() {
                 imd_stop();
                 std::ostringstream oss;
                 oss << "Isolation resistance too low: " << m.resistance_F_Ohm << " Ohm";
-                error_handling->raise_isolation_resistance_fault(oss.str());
+                error_handling->raise_isolation_resistance_fault(oss.str(), "Resistance");
                 fail_cable_check(oss.str());
                 return;
             }

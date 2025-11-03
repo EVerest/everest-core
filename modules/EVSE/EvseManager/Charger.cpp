@@ -2070,7 +2070,8 @@ void Charger::clear_errors_on_unplug() {
     error_handling->clear_internal_error();
     error_handling->clear_powermeter_transaction_start_failed_error();
     error_handling->clear_authorization_timeout_error();
-    error_handling->clear_isolation_resistance_fault();
+    error_handling->clear_isolation_resistance_fault("Resistance");
+    error_handling->clear_isolation_resistance_fault("VoltageToEarth");
     error_handling->clear_cable_check_fault();
 }
 
