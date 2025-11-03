@@ -279,7 +279,7 @@ EVerest configuration file:
     The EnergyNode for *evse id* zero represents the energy sink for the
     complete charging station.
     Module typically used to fullfill this requirement:
-    EnergyNode, implementation_id: external_limits
+    :doc:`EnergyNode <reference/modules/EnergyNode>`
     More information about the energy management setup can be found in the
     :doc:`EnergyManager module documentation </explanation/modules/EnergyManager/index>`.
   - auth (interface: auth, 1): This connection is used to set the standardized
