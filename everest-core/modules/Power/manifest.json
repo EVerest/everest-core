@@ -1,0 +1,21 @@
+{
+    "description": "This implements a simple power regulator module publishing the max_current for the charger being the minimum of the incomng max_current values received from power_in and (optionally solar modules)",
+	"provides": {
+		"main": {
+			"interface": "power_result",
+			"description": "This implements the main logic of the module Power"
+		}
+	},
+	"requires": {
+		"powerin": {
+			"interface": "power_in"
+		},
+		"optional:solar": {
+			"interface": "power"
+		}
+	},
+	"metadata": {
+		"license": "https://opensource.org/licenses/Apache-2.0",
+		"authors": ["Kai-Uwe Hermann", "Thilo Molitor"]
+	}
+}

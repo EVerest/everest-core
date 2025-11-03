@@ -1,0 +1,24 @@
+{
+    "description": "This modules fetches data from the Tibber Price Energy Forecast API and publishes it.",
+    "provides": {
+        "main": {
+            "description": "This interface is responsible for providing the price forecast data",
+            "interface": "tibber_price_forecast",
+            "config": {
+                "api_key": {
+                    "description": "API key for forecast.solar",
+                    "type": "string"
+                },
+                "update_interval": {
+                    "description": "Update interval in minutes",
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "enable_external_mqtt": true,
+    "metadata": {
+        "license": "https://opensource.org/licenses/Apache-2.0",
+        "authors": ["Andreas Heinrich", "Leonardo Oliveira"]
+    }
+}
