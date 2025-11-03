@@ -1,36 +1,34 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2023 - 2023 Pionix GmbH and Contributors to EVerest
 #ifndef FSM_HPP
 #define FSM_HPP
 
+#include <fsm/buffer.hpp>
 #include <fsm/fsm.hpp>
 
-#include "fsm_defs.hpp"
-
-struct FSM {
-    using EventInfoType = fsm::EventInfo<EventBaseType, EventBufferType>;
-    using StateHandleType = fsm::StateHandle<EventInfoType, StateIDType>;
-    using TransitionType = StateHandleType::TransitionWrapperType;
-    using FSMContextType = StateHandleType::FSMContextType;
-
-    // define state descriptors
-    StateHandleType sd_light_off{{State::LightOff, "LightOff"}};
-
-    struct ManualModeStateType : public StateHandleType {
-        using StateHandleType::StateHandleType;
-        int cur_brightness{0};
-    } sd_manual_mode{{State::ManualMode, "ManualMode"}};
-
-    struct MotionModeHierarchy {
-        StateHandleType sd_mm_init{{State::MotionModeInit, "MotionModeInit"}};
-        StateHandleType sd_mm_detect{{State::MotionModeDetect, "MotionModeDetect"}};
-        MotionModeHierarchy();
-        StateHandleType::TransitionTableType super;
-    } sdh_motion_mode;
-
-    // define transitions
-    StateHandleType& t_manual_mode_init();
-    StateHandleType& t_manual_mode_on_press();
-
-    FSM();
+struct Context {
+    void set_brightness(int value);
 };
+
+enum class Event {
+    PRESSED_ON,
+    PRESSED_OFF,
+    ENTER_MOTION_MODE,
+    MOTION_DETECT,
+    MOTION_TIMEOUT,
+};
+
+#ifdef HEAP_FREE_MODE
+    using BufferType = fsm::buffer::SwapBuffer<24, 16, 2>;
+    using FSM = fsm::FSM<Event, int, BufferType>;
+#else
+    using FSM = fsm::FSM<Event, int>;
+#endif
+
+using SimpleState = fsm::states::StateWithContext<FSM::SimpleStateType, Context>;
+using CompoundState = fsm::states::StateWithContext<FSM::CompoundStateType, Context>;
+
+static const auto PASS_ON = FSM::StateAllocatorType::PASS_ON;
+static const auto HANDLED_INTERNALLY = FSM::StateAllocatorType::HANDLED_INTERNALLY;
 
 #endif // FSM_HPP

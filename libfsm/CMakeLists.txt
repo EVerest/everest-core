@@ -1,75 +1,67 @@
-cmake_minimum_required(VERSION 3.15.7)
+cmake_minimum_required(VERSION 3.11)
 
-include(FetchContent)
-
-project(fsm VERSION 0.1
-        DESCRIPTION "Finite State Machine library"
-		LANGUAGES CXX
+project(fsm
+    VERSION 0.2.0
+    DESCRIPTION "Finite State Machine library"
+    HOMEPAGE_URL "https://github.com/EVerest/libfsm"
+	LANGUAGES CXX
 )
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+find_package(everest-cmake 0.1 REQUIRED
+    PATHS ../everest-cmake
+)
 
-if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
-endif()
+#
+# options
+#
+option(BUILD_EXAMPLES "enable building of examples" OFF)
+option(FSM_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 
-add_library(Fsm INTERFACE)
-add_library(Fsm::Fsm ALIAS Fsm)
 
-target_include_directories(Fsm INTERFACE
+#
+# library declaration
+#
+add_library(fsm INTERFACE)
+add_library(fsm::fsm ALIAS fsm)
+
+target_include_directories(fsm INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
-install(TARGETS Fsm EXPORT FsmTargets
-    INCLUDES DESTINATION include
-)
-
-install(DIRECTORY include/ TYPE INCLUDE)
-
-install(EXPORT FsmTargets
-    FILE FsmTargets.cmake
-    NAMESPACE Fsm::
-    DESTINATION lib/cmake/fsm
-)
-
-
-include(CMakePackageConfigHelpers)
-
-configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/FsmConfig.cmake"
-    INSTALL_DESTINATION "lib/cmake/fsm"
-)
-
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/FsmConfigVersion.cmake"
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY SameMajorVersion
-)
-
-install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/FsmConfig.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/FsmConfigVersion.cmake
-    DESTINATION lib/cmake/fsm
-)
-
-export(EXPORT FsmTargets
-    FILE "${CMAKE_CURRENT_BINARY_DIR}/FsmTargets.cmake"
-)
-
-# build examples
-option(BUILD_EXAMPLES "enable building of examples" OFF)
-
+#
+# examples
+#
 if (BUILD_EXAMPLES)
-    add_subdirectory(examples/light_switch)
+    add_subdirectory(examples)
 endif()
 
-option(BUILD_EXAMPLES_WITH_FREERTOS_SUPPORT "enable building of examples which support the FreeRTOS x86 layer" OFF)
-if(BUILD_EXAMPLES_WITH_FREERTOS_SUPPORT)
-    FetchContent_Declare(freertos
-        GIT_REPOSITORY git@github.com:a-w50/freertos-posix-port.git
-        GIT_TAG main
+#
+# tests
+#
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+    include(CTest)
+    add_subdirectory(tests)
+endif()
+
+
+#
+# installation definition
+#
+if (FSM_INSTALL)
+    install(
+        TARGETS fsm
+        EXPORT fsm-targets
     )
 
-    FetchContent_MakeAvailable(freertos)
+    install(
+        DIRECTORY include/
+        TYPE INCLUDE
+    )
+
+    evc_setup_package(
+        NAME fsm
+        EXPORT fsm-targets
+        NAMESPACE fsm
+    )
 endif()

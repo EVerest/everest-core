@@ -1,355 +1,343 @@
-#ifndef FSM_FSM_HPP
-#define FSM_FSM_HPP
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2023 - 2023 Pionix GmbH and Contributors to EVerest
+#ifndef LIBFSM_FSM_HPP
+#define LIBFSM_FSM_HPP
 
-#include <iostream>
+#include <array>
+#include <memory>
+#include <vector>
 
-#include <condition_variable>
-#include <functional>
-#include <mutex>
-#include <thread>
+#include "_impl/common.hpp"
+#include "_impl/state_allocator.hpp"
+
+#include "states.hpp"
 
 namespace fsm {
 
-template <typename FunctionType, typename StorageType> class StaticFunctorWrapper;
+// FIXME (aw): we should treat internal unhandled events as errors because this doesn't make sense by design!
+enum class HandleEventResult {
+    SUCCESS,
+    UNHANDLED,
+    INTERNAL_ERROR,
+};
 
-template <typename R, typename... ArgTypes, typename StorageType>
-class StaticFunctorWrapper<R(ArgTypes...), StorageType> {
+// TODO (aw): would be good to know, if references or pointers can be passed as well
+template <typename ResultType> class FeedResult {
+private:
+    using InternalState = _impl::FeedResultState;
+
 public:
-    StaticFunctorWrapper() = default;
-    template <typename T> StaticFunctorWrapper(T lambda) {
-        static_assert(sizeof(T) <= sizeof(buf),
-                      "Size of passed StorageType is to small for storing the passed functor object");
-        // FIXME (aw): we would need to call the destructor by hand, but we restrict usage of this class to cases, where
-        // this is not neccessary
-        ::new (&buf) T(std::move(lambda));
-        fn_ptr = fn_tramp<T>;
-    }
-    template <typename T> StaticFunctorWrapper& operator=(T lambda) {
-        static_assert(sizeof(T) <= sizeof(buf),
-                      "Size of passed StorageType is to small for storing the passed functor object");
-        // FIXME (aw): we would need to call the destructor by hand, but we restrict usage of this class to cases, where
-        // this is not neccessary
-        ::new (&buf) T(std::move(lambda));
-        fn_ptr = fn_tramp<T>;
-        return *this;
+    FeedResult(InternalState state_) : state(state_){};
+    FeedResult(ResultType value_) : value(value_), state(InternalState::HAS_VALUE){};
+
+    bool has_value() const {
+        return (state == InternalState::HAS_VALUE);
     }
 
-    R operator()(ArgTypes... args) {
-        return (*fn_ptr)(&buf, args...);
+    bool internal_error() const {
+        return (state == InternalState::INTERNAL_ERROR);
     }
 
-    StorageType buf;
+    bool transition() const {
+        return (state == InternalState::TRANSITION);
+    }
 
-    operator bool() {
-        return fn_ptr != nullptr;
+    bool unhandled_event() const {
+        return (state == InternalState::UNHANDLED_EVENT);
+    }
+
+    ResultType& operator*() {
+        return value;
+    }
+
+    ResultType* operator->() {
+        return &value;
     }
 
 private:
-    R (*fn_ptr)(void* lambda, ArgTypes...){nullptr};
-    template <typename T> static R fn_tramp(void* lambda, ArgTypes... args) {
-        return (*static_cast<T*>(lambda))(args...);
-    }
+    ResultType value;
+    InternalState state;
 };
 
-template <typename FunctionType>
-using StaticThisFunctor = StaticFunctorWrapper<FunctionType, std::aligned_storage_t<sizeof(void*), alignof(void*)>>;
+template <typename EventType, typename ReturnType, typename AllocatorBufferType = void> class FSM;
 
-template <typename EventBaseType,
-          typename EventStorageType = std::aligned_storage_t<sizeof(EventBaseType), alignof(EventBaseType)>>
-struct EventInfo {
-    using BaseType = EventBaseType;
-    using StorageType = EventStorageType;
-};
-
-// TODO (aw): could we have a function template syntax here, that is R(EventBase) ?
-template <typename R, typename EventInfoType> class TransitionWrapper {
+template <typename EventType, typename ReturnType> class FSM<EventType, ReturnType, void> {
 public:
-    using EventBaseType = typename EventInfoType::BaseType;
+    using StateAllocatorType = states::StateAllocator<>;
+    using SimpleStateType = states::SimpleStateBase<EventType, ReturnType, StateAllocatorType>;
+    using CompoundStateType = states::CompoundStateBase<EventType, ReturnType, StateAllocatorType>;
 
-    // TODO (aw): properly handle reference values
-    void set(R value) {
-        ret_val = &value;
-        wrap_type = WrapType::InstRetVal;
+    FSM() = default;
+    FSM(const FSM& other) = delete;
+    FSM(FSM&& other) = delete;
+    FSM& operator=(const FSM& other) = delete;
+    FSM& operator=(FSM&& other) = delete;
+    ~FSM() = default;
+
+    template <typename StateType, typename... Args> void reset(Args&&... args) {
+        reset();
+
+        state_allocator.make_ready_for_allocation();
+        state_allocator.create_simple<StateType>(std::forward<Args>(args)...);
+        current_state.reset(state_allocator.pull_simple_state<SimpleStateType>());
+        current_state->enter();
     }
 
-    void set(R (*fn)()) {
-        fn_ptr = fn;
-        wrap_type = WrapType::FnWithoutEvent;
-    }
-
-    template <typename ED, R (*fn)(const ED&)> void set(const EventBaseType& event) {
-        ::new (&buffer) ED(event);
-        fn_v_ptr = &fn_tramp<ED, fn>;
-        wrap_type = WrapType::FnWithEvent;
-    }
-
-    template <typename ED, R (*fn)(const ED&, void*)> void set(const EventBaseType& event, void* ctx) {
-        ::new (&buffer) ED(event);
-        fn_v_v_ptr = &ctx_fn_tramp<ED, fn>;
-        this->_ctx = ctx;
-        wrap_type = WrapType::CtxFnWithEvent;
-    }
-
-    void set(R (*fn)(void*), void* ctx) {
-        fn_v_ptr = fn;
-        this->_ctx = ctx;
-        wrap_type = WrapType::CtxFnWithoutEvent;
-    }
-
-    template <typename T, R (T::*mem_fn)()> void set(T* inst) {
-        fn_v_ptr = &mem_fn_ne_tramp<T, mem_fn>;
-        this->_inst = inst;
-        wrap_type = WrapType::MemFnWithoutEvent;
-    }
-
-    template <typename ED, typename T, R (T::*mem_fn)(const ED&)> void set(const EventBaseType& event, T* inst) {
-        ::new (&buffer) ED(event);
-        fn_v_v_ptr = &mem_fn_tramp<ED, T, mem_fn>;
-        this->_inst = inst;
-        wrap_type = WrapType::MemFnWithEvent;
-    }
-
-    void reset() {
-        wrap_type = WrapType::None;
-    }
-
-    operator bool() {
-        return wrap_type != WrapType::None;
-    }
-
-    R operator()() {
-        switch (wrap_type) {
-        case WrapType::FnWithoutEvent:
-            return (*fn_ptr)();
-        case WrapType::FnWithEvent:
-            return (*fn_v_ptr)(&buffer);
-        case WrapType::CtxFnWithEvent:
-            return (*fn_v_v_ptr)(&buffer, _ctx);
-        case WrapType::CtxFnWithoutEvent:
-            return (*fn_v_ptr)(_ctx);
-        case WrapType::MemFnWithoutEvent:
-            return (*fn_v_ptr)(_inst);
-        case WrapType::MemFnWithEvent:
-            return (*fn_v_v_ptr)(_inst, &buffer);
-        case WrapType::InstRetVal:
-            return *ret_val;
-        default:
-            // FIXME (aw): how to forbid that?
-            return *ret_val;
+    HandleEventResult handle_event(EventType ev) {
+        if (current_state == nullptr) {
+            return HandleEventResult::INTERNAL_ERROR;
         }
-    }
 
-private:
-    enum class WrapType : uint8_t
-    {
-        None,
-        FnWithEvent,
-        FnWithoutEvent,
-        CtxFnWithEvent,
-        CtxFnWithoutEvent,
-        MemFnWithEvent,
-        MemFnWithoutEvent,
-        InstRetVal
-    };
+        auto next_nesting_level_to_handle = compound_stack.size();
+        auto state_allocator_wrapper = StateAllocatorType(state_allocator);
 
-    template <typename ED, R (*fn)(const ED&)> static R fn_tramp(void* buf) {
-        return (*fn)(*reinterpret_cast<ED*>(buf));
-    }
+        state_allocator.make_ready_for_allocation();
 
-    template <typename ED, R (*fn)(const ED&, void*)> static R ctx_fn_tramp(void* buf, void* ctx) {
-        return (*fn)(*reinterpret_cast<ED*>(buf), ctx);
-    }
+        auto result = current_state->handle_event(state_allocator_wrapper, ev);
 
-    template <typename ED, typename T, R (T::*mem_fn)(const ED&)> static R mem_fn_tramp(void* class_inst, void* buf) {
-        auto cast_class_inst = static_cast<T*>(class_inst);
-        return (cast_class_inst->*mem_fn)(*reinterpret_cast<ED*>(buf));
-    }
+        while (result.is_pass_on() && next_nesting_level_to_handle != 0) {
+            next_nesting_level_to_handle--;
+            state_allocator.make_ready_for_allocation();
+            result = compound_stack[next_nesting_level_to_handle]->handle_event(state_allocator_wrapper, ev);
+        }
 
-    template <typename T, R (T::*mem_fn)()> static R mem_fn_ne_tramp(void* class_inst) {
-        auto cast_class_inst = static_cast<T*>(class_inst);
-        return (cast_class_inst->*mem_fn)();
-    }
-
-    WrapType wrap_type{WrapType::None};
-
-    R (*fn_ptr)(){nullptr};
-    R (*fn_v_ptr)(void*){nullptr};
-    R (*fn_v_v_ptr)(void*, void*){nullptr};
-
-    void* _inst;
-    void* _ctx;
-
-    // TODO (aw): how to proper handle return value types?
-    std::remove_reference_t<R>* ret_val{nullptr};
-    typename EventInfoType::StorageType buffer;
-};
-
-template <typename EventBaseType> class FSMContext {
-public:
-    template <typename T> FSMContext(T lambda) : submit_event_cb(lambda) {
-    }
-    virtual void wait() = 0;
-
-    // wait_for should return true if timeout successful
-    virtual bool wait_for(int timeout_ms) = 0;
-    virtual bool got_cancelled() = 0;
-    bool submit_event(const EventBaseType& event) {
-        return submit_event_cb(event);
-    }
-
-    virtual ~FSMContext() = default;
-
-private:
-    StaticThisFunctor<bool(const EventBaseType& event)> submit_event_cb;
-    virtual void cancel() = 0;
-    virtual void reset() = 0;
-};
-
-template <typename EventInfoType, typename StateIDType> struct StateHandle {
-    StateHandle(const StateIDType& id) : id(id){};
-    using TransitionWrapperType = TransitionWrapper<StateHandle&, EventInfoType>;
-    using EventBaseType = typename EventInfoType::BaseType;
-    using TransitionTableType = StaticThisFunctor<void(const EventBaseType&, TransitionWrapperType&)>;
-    using FSMContextType = FSMContext<EventBaseType>;
-    using StateFunctionType = StaticThisFunctor<void(FSMContextType&)>;
-
-    TransitionTableType transitions;
-    StateFunctionType state_fun;
-    const StateIDType id;
-};
-
-template <typename StateHandleType, typename PushPullLockType, typename ThreadType, typename ContextType,
-          void (*LogFunction)(const std::string&) = nullptr>
-class BasicController {
-public:
-    enum class InternalEvent
-    {
-        NewTransition,
-        Break
-    };
-
-    BasicController() :
-        fsm_context([this](const typename StateHandleType::EventBaseType& event) { return submit_event(event); }) {
-    }
-
-    bool submit_event(const typename StateHandleType::EventBaseType& event, bool blocking = false) {
-        // prevent multiple invocation
-        auto push_lck = internal_change.get_push_lock();
-
-        if (internal_state == InternalState::NewTransition) {
-            // ongoing transition
-            log("Already in transition");
-            if (!blocking) {
-                return false;
+        if (result.is_pass_on()) {
+            if (state_allocator.has_staged_states()) {
+                state_allocator.release_staged_states<SimpleStateType, CompoundStateType>();
             }
-
-            log("Blocking submission - waiting for pull");
-
-            push_lck.wait_for_pull();
+            return HandleEventResult::UNHANDLED;
+        } else if (result.is_handled_internally()) {
+            if (state_allocator.has_staged_states()) {
+                state_allocator.release_staged_states<SimpleStateType, CompoundStateType>();
+            }
+            return HandleEventResult::SUCCESS;
+        } else if (result.is_allocation_error()) {
+            state_allocator.release_staged_states<SimpleStateType, CompoundStateType>();
+            return HandleEventResult::INTERNAL_ERROR;
         }
 
-        if (internal_state == InternalState::Break) {
-            log("Skipping, because ongoing break");
-            return false;
+        const auto handled_at_nesting_level = next_nesting_level_to_handle;
+
+        // fall-though: event has been handled, clear current state and all states up to the handled level
+
+        // note: this will change current_nesting_level
+        reset(handled_at_nesting_level, true);
+
+        auto const compound_state = state_allocator.pull_compound_state<CompoundStateType>();
+
+        if (compound_state != nullptr) {
+            compound_stack.emplace_back(compound_state);
+            compound_state->enter();
         }
 
-        // set the new transition
-        cur_state->transitions(event, cur_trans);
+        auto const next_state = state_allocator.pull_simple_state<SimpleStateType>();
+        if (next_state != nullptr) {
+            next_state->enter();
+            current_state.reset(next_state);
 
-        // check if the transition exists
-        if (!cur_trans) {
-            log("Transition does not exist for the current state");
-            return false;
+            return HandleEventResult::SUCCESS;
         }
 
-        internal_state = InternalState::NewTransition;
-
-        log("Setup new transition");
-
-        if (cur_state->state_fun) {
-            fsm_context.cancel();
-        }
-
-        push_lck.commit();
-
-        return true;
+        // this should never happen - i.e. when we come here that would mean, someone managed to return NEW_STATE from
+        // the handle_event callback but didn't set the next state
+        return HandleEventResult::INTERNAL_ERROR;
     }
 
-    void run(StateHandleType& initial_state) {
-        log("Starting with state: " + initial_state.id.name);
-        internal_state = InternalState::Idle;
-        cur_state = &initial_state;
-        loop_thread.template spawn<BasicController, &BasicController::loop>(this);
-    }
-
-    void stop() {
-        auto push_lck = internal_change.get_push_lock();
-
-        internal_state = InternalState::Break;
-
-        if (cur_state->state_fun) {
-            fsm_context.cancel();
+    FeedResult<ReturnType> feed() {
+        using FeedResultState = _impl::FeedResultState;
+        if (current_state == nullptr) {
+            return FeedResultState::INTERNAL_ERROR;
         }
 
-        push_lck.commit();
+        const auto result = current_state->callback();
 
-        loop_thread.join();
+        if (result.is_event) {
+            switch (handle_event(result.event)) {
+            case HandleEventResult::SUCCESS:
+                return FeedResultState::TRANSITION;
+            case HandleEventResult::UNHANDLED:
+                return FeedResultState::UNHANDLED_EVENT;
+            default:
+                // NOTE: everything else should be an internal error
+                return FeedResultState::INTERNAL_ERROR;
+            }
+        } else if (result.is_value_set) {
+            return result.value;
+        } else {
+            return FeedResultState::NO_VALUE;
+        }
     }
 
 private:
-    void loop() {
-        while (true) {
-            // run the state function
-
-            if (cur_state->state_fun) {
-                cur_state->state_fun(fsm_context);
+    void reset(size_t up_to_nested_level = 0, bool execute_leave = false) {
+        // leave and destroy everything allocated
+        if (current_state) {
+            if (execute_leave) {
+                current_state->leave();
             }
+            current_state.reset();
+        }
 
-            // wait for the next transition
-            auto pull_lck = internal_change.wait_for_pull_lock();
-
-            if (internal_state == InternalState::Break) {
-                // FIXME (aw): handle proper reset?
-                break;
+        while (compound_stack.size() > up_to_nested_level) {
+            if (execute_leave) {
+                compound_stack.back()->leave();
             }
-
-            const std::string old_state_name = cur_state->id.name;
-
-            cur_state = &cur_trans();
-
-            log("Went from " + old_state_name + " to " + cur_state->id.name);
-
-            internal_state = InternalState::Idle;
-            cur_trans.reset();
-            fsm_context.reset();
+            compound_stack.pop_back();
         }
     }
 
-    // FIXME (aw): does this get optimized away?
-    void log(const std::string& msg) {
-        if (LogFunction != nullptr) {
-            LogFunction(msg);
+    std::unique_ptr<SimpleStateType> current_state{nullptr};
+    std::vector<std::unique_ptr<CompoundStateType>> compound_stack{};
+
+    _impl::DynamicStateAllocator state_allocator;
+};
+
+template <typename EventType, typename ReturnType, typename AllocatorBufferType> class FSM {
+public:
+    using StateAllocatorType = states::StateAllocator<AllocatorBufferType>;
+    using SimpleStateType = states::SimpleStateBase<EventType, ReturnType, StateAllocatorType>;
+    using CompoundStateType = states::CompoundStateBase<EventType, ReturnType, StateAllocatorType>;
+
+    FSM(AllocatorBufferType& buffer) :
+        state_allocator(buffer){
+
+        };
+
+    FSM(const FSM& other) = delete;
+    FSM(FSM&& other) = delete;
+    FSM& operator=(const FSM& other) = delete;
+    FSM& operator=(FSM&& other) = delete;
+    ~FSM() {
+        state_allocator.template release_staged_states<SimpleStateType, CompoundStateType>();
+        reset();
+    }
+
+    template <typename StateType, typename... Args> void reset(Args&&... args) {
+        reset();
+
+        state_allocator.make_ready_for_nesting_level(0);
+        state_allocator.template create_simple<StateType>(std::forward<Args>(args)...);
+        current_state = state_allocator.template pull_simple_state<SimpleStateType>();
+        current_state->enter();
+    }
+
+    HandleEventResult handle_event(EventType ev) {
+        if (current_state == nullptr) {
+            return HandleEventResult::INTERNAL_ERROR;
+        }
+
+        auto next_nesting_level_to_handle = current_nesting_level;
+        auto state_allocator_wrapper = StateAllocatorType(state_allocator);
+
+        state_allocator.make_ready_for_nesting_level(next_nesting_level_to_handle);
+
+        auto result = current_state->handle_event(state_allocator_wrapper, ev);
+
+        while (result.is_pass_on() && next_nesting_level_to_handle != 0) {
+            next_nesting_level_to_handle--;
+            state_allocator.make_ready_for_nesting_level(next_nesting_level_to_handle);
+            result = compound_states[next_nesting_level_to_handle]->handle_event(state_allocator_wrapper, ev);
+        }
+
+        if (result.is_pass_on()) {
+            if (state_allocator.has_staged_states()) {
+                state_allocator.template release_staged_states<SimpleStateType, CompoundStateType>();
+            }
+            return HandleEventResult::UNHANDLED;
+        } else if (result.is_handled_internally()) {
+            if (state_allocator.has_staged_states()) {
+                state_allocator.template release_staged_states<SimpleStateType, CompoundStateType>();
+            }
+            return HandleEventResult::SUCCESS;
+        } else if (result.is_allocation_error()) {
+            state_allocator.template release_staged_states<SimpleStateType, CompoundStateType>();
+            return HandleEventResult::INTERNAL_ERROR;
+        }
+
+        const auto handled_at_nesting_level = next_nesting_level_to_handle;
+
+        // fall-though: event has been handled, clear current state and all states up to the handled level
+
+        // note: this will change current_nesting_level
+        reset(handled_at_nesting_level, true);
+
+        const auto compound_state = state_allocator.template pull_compound_state<CompoundStateType>();
+
+        if (compound_state != nullptr) {
+            // compound state has been set
+            current_nesting_level = handled_at_nesting_level + 1;
+            compound_states[handled_at_nesting_level] = compound_state;
+
+            compound_state->enter();
+        }
+
+        const auto next_state = state_allocator.template pull_simple_state<SimpleStateType>();
+        if (next_state != nullptr) {
+            next_state->enter();
+            current_state = next_state;
+
+            return HandleEventResult::SUCCESS;
+        }
+
+        // this should never happen - i.e. when we come here that would mean, someone managed to return NEW_STATE from
+        // the handle_event callback but didn't set the next state
+        return HandleEventResult::INTERNAL_ERROR;
+    }
+
+    FeedResult<ReturnType> feed() {
+        using FeedResultState = _impl::FeedResultState;
+        if (current_state == nullptr) {
+            return FeedResultState::INTERNAL_ERROR;
+        }
+
+        const auto result = current_state->callback();
+
+        if (result.is_event) {
+            switch (handle_event(result.event)) {
+            case HandleEventResult::SUCCESS:
+                return FeedResultState::TRANSITION;
+            case HandleEventResult::UNHANDLED:
+                return FeedResultState::UNHANDLED_EVENT;
+            default:
+                // NOTE: everything else should be an internal error
+                return FeedResultState::INTERNAL_ERROR;
+            }
+        } else if (result.is_value_set) {
+            return result.value;
+        } else {
+            return FeedResultState::NO_VALUE;
         }
     }
 
-    enum class InternalState
-    {
-        Idle,
-        NewTransition,
-        Break
-    };
+private:
+    void reset(size_t up_to_nested_level = 0, bool execute_leave = false) {
+        // leave and destroy everything allocated
+        if (current_state) {
+            if (execute_leave) {
+                current_state->leave();
+            }
+            current_state->~SimpleStateBase();
+            current_state = nullptr;
+        }
 
-    StateHandleType* cur_state{nullptr};
-    typename StateHandleType::TransitionWrapperType cur_trans;
+        while (current_nesting_level > up_to_nested_level) {
+            auto& compound_state = compound_states[current_nesting_level - 1];
+            if (execute_leave) {
+                compound_state->leave();
+            }
+            compound_state->~CompoundStateBase();
+            compound_state = nullptr;
+            current_nesting_level--;
+        }
+    }
 
-    ContextType fsm_context;
+    SimpleStateType* current_state{nullptr};
+    std::array<CompoundStateType*, AllocatorBufferType::MAX_NESTING_LEVEL> compound_states{};
+    size_t current_nesting_level{0};
 
-    ThreadType loop_thread;
-
-    PushPullLockType internal_change;
-    InternalState internal_state;
+    _impl::StateAllocator<AllocatorBufferType> state_allocator;
 };
 
 } // namespace fsm
 
-#endif // FSM_FSM_HPP
+#endif // LIBFSM_FSM_HPP
