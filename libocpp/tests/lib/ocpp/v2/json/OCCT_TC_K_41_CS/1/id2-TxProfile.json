@@ -1,0 +1,42 @@
+{
+    "chargingProfileKind": "Absolute",
+    "chargingProfilePurpose": "TxProfile",
+    "chargingSchedule": [
+        {
+            "chargingRateUnit": "A",
+            "chargingSchedulePeriod": [
+                {
+                    "limit": 8.000000,
+                    "numberPhases": 3,
+                    "startPeriod": 0
+                },
+                {
+                    "limit": 11.000000,
+                    "numberPhases": 3,
+                    "startPeriod": 50
+                },
+                {
+                    "limit": 16.000000,
+                    "numberPhases": 3,
+                    "startPeriod": 140
+                },
+                {
+                    "limit": 6.000000,
+                    "numberPhases": 3,
+                    "startPeriod": 200
+                },
+                {
+                    "limit": 12.000000,
+                    "numberPhases": 3,
+                    "startPeriod": 240
+                }
+            ],
+            "duration": 264,
+            "id": 1,
+            "startSchedule": "2024-08-21T12:24:36Z"
+        }
+    ],
+    "id": 2,
+    "stackLevel": 0,
+    "transactionId": "f1522902-1170-416f-8e43-9e3bce28fde7"
+}

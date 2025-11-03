@@ -1,0 +1,13 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Json schema for Reservation Profile config",
+    "type": "object",
+    "required": [],
+    "properties": {
+        "ReserveConnectorZeroSupported": {
+            "type": "boolean",
+            "readOnly": true
+        }
+    },
+    "additionalProperties": false
+}

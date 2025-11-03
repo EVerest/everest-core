@@ -1,0 +1,165 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for TxCtrlr",
+  "name": "TxCtrlr",
+  "type": "object",
+  "properties": {
+    "TxCtrlrEnabled": {
+      "variable_name": "Enabled",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": false
+        }
+      ],
+      "default": true,
+      "type": "boolean"
+    },
+    "ChargingTime": {
+      "variable_name": "ChargingTime",
+      "characteristics": {
+        "unit": "s",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "Time from earliest to latest substantive energy transfer",
+      "type": "number"
+    },
+    "EVConnectionTimeOut": {
+      "variable_name": "EVConnectionTimeOut",
+      "characteristics": {
+        "unit": "s",
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 120
+        }
+      ],
+      "description": "Interval from between \"starting\" of a transaction until incipient transaction is automatically canceled, due to failure of EV driver to (correctly) insert the charging cable connector(s) into the appropriate socket(s).",
+      "default": "120",
+      "type": "integer"
+    },
+    "MaxEnergyOnInvalidId": {
+      "variable_name": "MaxEnergyOnInvalidId",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Maximum amount of energy in Wh delivered when an identifier is deauthorized by the CSMS after start of a transaction.",
+      "default": "1000",
+      "type": "integer"
+    },
+    "StopTxOnEVSideDisconnect": {
+      "variable_name": "StopTxOnEVSideDisconnect",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly",
+          "value": true
+        }
+      ],
+      "description": "When set to true, the Charging Station SHALL deauthorize the transaction when the cable is unplugged from the EV.",
+      "default": true,
+      "type": "boolean"
+    },
+    "StopTxOnInvalidId": {
+      "variable_name": "StopTxOnInvalidId",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": true
+        }
+      ],
+      "description": "Whether the Charging Station will deauthorize an ongoing transaction when it receives a non- Accepted authorization status in TransactionEventResponse for this transaction.",
+      "default": true,
+      "type": "boolean"
+    },
+    "TxBeforeAcceptedEnabled": {
+      "variable_name": "TxBeforeAcceptedEnabled",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Allow charging before having received a BootNotificationResponse with RegistrationStatus: Accepted.",
+      "type": "boolean"
+    },
+    "TxStartPoint": {
+      "variable_name": "TxStartPoint",
+      "characteristics": {
+        "valuesList": "EVConnected,Authorized,PowerPathClosed,EnergyTransfer,DataSigned",
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": "PowerPathClosed"
+        }
+      ],
+      "description": "Defines when the Charging Station starts a new transaction",
+      "default": "PowerPathClosed",
+      "type": "string"
+    },
+    "TxStopPoint": {
+      "variable_name": "TxStopPoint",
+      "characteristics": {
+        "valuesList": "EVConnected,Authorized,PowerPathClosed,EnergyTransfer",
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": "EVConnected,Authorized"
+        }
+      ],
+      "description": "Defines when the Charging Station ends a transaction",
+      "default": "EVConnected,Authorized",
+      "type": "string"
+    }
+  },
+  "required": [
+    "EVConnectionTimeOut",
+    "StopTxOnEVSideDisconnect",
+    "StopTxOnInvalidId",
+    "TxStartPoint",
+    "TxStopPoint"
+  ]
+}
