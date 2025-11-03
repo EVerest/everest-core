@@ -305,12 +305,25 @@ void MatchingState::handle_cm_atten_profile_ind(const slac::messages::cm_atten_p
     session->set_next_timeout(FINALIZE_SOUNDING_DELAY_MS);
 }
 
-static bool validate_cm_atten_char_rsp(const slac::messages::cm_atten_char_rsp& msg) {
+static bool validate_cm_atten_char_rsp(const slac::messages::cm_atten_char_rsp& msg, const MatchingSession& session) {
 
     if (msg.application_type not_eq slac::defs::COMMON_APPLICATION_TYPE) {
         return false;
     }
     if (msg.security_type not_eq slac::defs::COMMON_SECURITY_TYPE) {
+        return false;
+    }
+    if (memcmp(msg.source_address, session.ev_mac, ETH_ALEN)) {
+        return false;
+    }
+    uint8_t source_id_ref[slac::messages::SOURCE_ID_LEN];
+    memset(source_id_ref, 0, sizeof(source_id_ref));
+    if (memcmp(source_id_ref, msg.source_id, slac::messages::SOURCE_ID_LEN)) {
+        return false;
+    }
+    uint8_t resp_id_ref[slac::messages::RESP_ID_LEN];
+    memset(resp_id_ref, 0, sizeof(resp_id_ref));
+    if (memcmp(resp_id_ref, msg.resp_id, slac::messages::RESP_ID_LEN)) {
         return false;
     }
     if (msg.result not_eq slac::defs::CM_ATTEN_CHAR_RSP_RESULT) {
@@ -322,14 +335,14 @@ static bool validate_cm_atten_char_rsp(const slac::messages::cm_atten_char_rsp& 
 
 void MatchingState::handle_cm_atten_char_rsp(const slac::messages::cm_atten_char_rsp& msg) {
 
-    if (not validate_cm_atten_char_rsp(msg)) {
-        ctx.log_warn("Invalid CM_ATTEN_CHAR_RSP received, ignoring");
-        return;
-    }
-
     auto session = find_session(sessions, tmp_ev_mac, msg.run_id);
     if (!session) {
         ctx.log_warn("No session found for CM_ATTEN_CHAR_RSP");
+        return;
+    }
+
+    if (not validate_cm_atten_char_rsp(msg, *session)) {
+        session_log(ctx, *session, LogLevel::WARN, "Invalid CM_ATTEN_CHAR_RSP received, ignoring");
         return;
     }
 
