@@ -1,0 +1,31 @@
+description: ISO15118-3 SLAC interface for EV side
+cmds:
+  reset:
+    description: Reset SLAC
+  trigger_matching:
+    description: Trigger start of matching process
+    result:
+      type: boolean
+      description: >-
+        True on success, returns False if transition was unexpected and
+        cannot be handled by SLAC state machine.
+vars:
+  state:
+    description: Provides the state enum.
+    type: string
+    enum:
+      - UNMATCHED
+      - MATCHING
+      - MATCHED
+  dlink_ready:
+    description: >-
+      Inform higher layers about a change in data link status. Emits true
+      if link was set up and false when the link is shut down.
+    type: boolean
+  ev_mac_address:
+    description: >-
+      Inform higher layers about the MAC address of the charging connector
+    type: string
+    pattern: ^[A-F0-9]{2}(:[A-F0-9]{2}){5}$
+errors:
+  - reference: /errors/generic

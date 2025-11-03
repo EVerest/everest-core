@@ -1,0 +1,13 @@
+description: Defines a module that uses error handling features on command
+provides:
+  main:
+    description: This implements an interface that provides control over error handling features
+    interface: test_error_handling
+requires:
+  error_raiser:
+    interface: test_error_raiser  
+enable_global_errors: true  
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Andreas Heinrich

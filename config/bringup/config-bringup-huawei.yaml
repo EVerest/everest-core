@@ -1,0 +1,12 @@
+active_modules:
+  cli:
+    connections:
+      psu:
+        - implementation_id: main
+          module_id: powersupply
+    module: BUPowerSupplyDC
+    standalone: true
+  powersupply:
+    config_module:
+      module_addresses: ""
+    module: Huawei_R100040Gx

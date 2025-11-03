@@ -1,0 +1,310 @@
+description: Powermeter types
+types:
+  TransactionReq:
+    description: Required input parameter for starting an OCMF transaction. These values will be included in the signed OCMF packet.
+    type: object
+    additionalProperties: false
+    required:
+      - evse_id
+      - transaction_id
+      - identification_status
+      - identification_type
+      - identification_flags
+    properties:
+      evse_id:
+        description: Id of this EVSE
+        type: string
+      transaction_id:
+        description: OCPP transaction UUID
+        type: string
+      identification_status:
+        description: >-
+          OCMF Identification Status (IS): General status for user assignment
+        type: string
+        $ref: /powermeter#/OCMFUserIdentificationStatus
+      identification_level:
+        description: >-
+          OCMF Identification Level (IL): Encoded overall status of the user assignment
+        type: string
+        $ref: /powermeter#/OCMFIdentificationLevel
+      identification_flags:
+        description: >-
+          OCMF Identification Flags (IF): Detailed statements about the user assignment, represented by one or more identifiers
+        type: array
+        items:
+          type: string
+          $ref: /powermeter#/OCMFIdentificationFlags
+        minItems: 0
+        maxItems: 4
+      identification_type:
+        description: >-
+          OCMF Identification Type (IT): Type of identification data
+        type: string
+        $ref: /powermeter#/OCMFIdentificationType
+      identification_data:
+        description: >-
+          OCMF Identification Data (ID): The actual identification data e.g. a hex-coded UID according to ISO 14443.
+        type: string
+      tariff_text:
+        description: >-
+          A textual description used to identify a unique tariff. 
+          This field is intended for the tariff designation in "Direct Payment" use case.
+        type: string
+        minLength: 0
+        maxLength: 250
+  TransactionRequestStatus:
+    description: Status of a transaction start or stop request.
+    type: string
+    enum:
+        - OK
+        - NOT_SUPPORTED
+        - UNEXPECTED_ERROR
+  TransactionStartResponse:
+    description: Return value when a transaction is started.
+    type: object
+    additionalProperties: false
+    required:
+      - status
+    properties:
+      status:
+        type: object
+        description: Response status that indicates whether the transaction start request could successfully be performed.
+        $ref: /powermeter#/TransactionRequestStatus
+      error:
+        description: If status is not OK, a verbose error message.
+        type: string
+      transaction_min_stop_time:
+        description: Earliest point in time the started transaction can be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
+        type: string
+        format: date-time
+      transaction_max_stop_time:
+        description:  Deadline for the transaction to be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
+        type: string
+        format: date-time
+  TransactionStopResponse:
+    description: Report returned when a signed transaction is requested to stop. If successful, includes the signed meter value object. In case of an error, an additional error message can be provided.
+    type: object
+    additionalProperties: false
+    required:
+      - status
+    properties:
+      status:
+        type: object
+        description: Response status that indicates whether the transaction stop request could successfully be performed.
+        $ref: /powermeter#/TransactionRequestStatus
+      start_signed_meter_value:
+        description: The signed meter value report for start of transaction. Needs to be filled if meter provides separate values for start and stop.
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      signed_meter_value:
+        description: The signed meter value report of the stopped transaction. Must be provided if status is OK.
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      error:
+        description: If status is not OK, a verbose error message.
+        type: string
+  OCMFIdentificationLevel:
+    description: >-
+      NONE: There is no user assignment. The other data for user assignment have no significance.
+      HEARSAY: The assignment is unsecured; e.g. by reading an RFID UID.
+      TRUSTED: The mapping can be trusted to some extent, but there is no absolute reliability. Example: Authorization by backend.
+      VERIFIED: The assignment has been verified by the signature component and special measures.
+      CERTIFIED: The assignment was verified by the signature component using a cryptographic signature that certifies the assignment.
+      SECURE: The mapping was established by a secure feature (e.g. secure RFID card, ISO 15118 with plug and charge, etc.).
+      MISMATCH: Error; UIDs do not match.
+      INVALID: Error; certificate not correct (check negative).
+      OUTDATED: Error; referenced trust certificate expired.
+      UNKNOWN: Certificate could not be successfully verified (no matching trust certificate found).
+    type: string
+    enum:
+      - NONE
+      - HEARSAY
+      - TRUSTED
+      - VERIFIED
+      - CERTIFIED
+      - SECURE
+      - MISMATCH
+      - INVALID
+      - OUTDATED
+      - UNKNOWN
+  OCMFIdentificationFlags:
+    description: >-
+      RFID_NONE: No assignment via RFID
+      RFID_PLAIN: Assignment via external RFID card reader
+      RFID_RELATED: Assignment via protected RFID card reader
+      RFID_PSK: A previously known shared key (pre-shared key) was used, e.g. with a secured RFID card.
+      OCPP_NONE: No user assignment by OCPP
+      OCPP_RS: Assignment by OCPP RemoteStart method
+      OCPP_AUTH: Assignment by OCPP Authorize method
+      OCPP_RS_TLS: Assignment by OCPP RemoteStart method, obtained via a secured TLS connection.
+      OCPP_AUTH_TLS: Assignment by OCPP Authorize method, obtained via a secured TLS connection.
+      OCPP_CACHE: Assignment by authorization cache of OCPP
+      OCPP_WHITELIST: Assignment by whitelist from OCPP
+      OCPP_CERTIFIED: A certificate of the backend was used which certifies the user mapping.
+      ISO15118_NONE: no user assignment by ISO 15118
+      ISO15118_PNC: Plug & Charge was used
+      PLMN_NONE: no user assignment
+      PLMN_RING: call
+      PLMN_SMS: short message
+    type: string
+    enum: 
+      - RFID_NONE
+      - RFID_PLAIN
+      - RFID_RELATED
+      - RFID_PSK
+      - OCPP_NONE
+      - OCPP_RS
+      - OCPP_AUTH
+      - OCPP_RS_TLS
+      - OCPP_AUTH_TLS
+      - OCPP_CACHE
+      - OCPP_WHITELIST
+      - OCPP_CERTIFIED
+      - ISO15118_NONE
+      - ISO15118_PNC
+      - PLMN_NONE
+      - PLMN_RING
+      - PLMN_SMS
+  OCMFIdentificationType:
+    description: >-
+      NONE: No assignment available
+      DENIED: Assignment currently not available (due to two-factor authorization)
+      UNDEFINED: Type not specified
+      ISO14443: UID of an RFID card according to ISO 14443. Represented as 4 or 7 bytes in hexadecimal notation.
+      ISO15693: UID of an RFID card according to ISO 15693. Represented as 8 bytes in hexadecimal notation.
+      EMAID: Electro-Mobility-Account-ID according to ISO/IEC 15118 (string with length 14 or 15)
+      EVCCID: ID of an electric vehicle according to ISO/IEC 15118 (maximum length 6 characters)
+      EVCOID: EV Contract ID according to DIN 91286.
+      ISO7812: Identification card format according to ISO/IEC 7812 (credit and bank cards, etc.)
+      CARD_TXN_NR: Card transaction number (CardTxNbr) for a payment with credit or bank card used in a terminal at the charging point.
+      CENTRAL: Centrally generated ID. No exact format defined, can be e.g. a UUID. (OCPP 2.0)
+      CENTRAL_1: Centrally generated ID, e.g. by start via SMS. No exact format defined. (until OCPP 1.6)
+      CENTRAL_2: Centrally generated ID, e.g. by operator start. No exact format defined. (until OCPP 1.6)
+      LOCAL: Locally generated ID. No exact format defined, might be e.g. a UUID. (OCPP 2.0)
+      LOCAL_1: Locally generated ID, e.g. ID generated internally by the charge point. No exact format defined. (until OCPP 1.6)
+      LOCAL_2: Locally generated ID, for other cases. No exact format defined. (until OCPP 1.6)
+      PHONE_NUMBER: International phone number with leading "+".
+      KEY_CODE: User-related private key code. No exact format defined.
+    type: string
+    enum:
+      - NONE
+      - DENIED
+      - UNDEFINED
+      - ISO14443
+      - ISO15693
+      - EMAID
+      - EVCCID
+      - EVCOID
+      - ISO7812
+      - CARD_TXN_NR
+      - CENTRAL
+      - CENTRAL_1
+      - CENTRAL_2
+      - LOCAL
+      - LOCAL_1
+      - LOCAL_2
+      - PHONE_NUMBER
+      - KEY_CODE
+  OCMFUserIdentificationStatus:
+    description: >-
+      General status for user assignment
+      ASSIGNED: user successfully assigned
+      NOT_ASSIGNED: user not assigned
+    type: string
+    enum:
+      - ASSIGNED
+      - NOT_ASSIGNED
+  Powermeter:
+    description: Measured dataset (AC or DC)
+    type: object
+    additionalProperties: false
+    required:
+      - timestamp
+      - energy_Wh_import
+    properties:
+      timestamp:
+        description: Timestamp of measurement
+        type: string
+        format: date-time
+      meter_id:
+        description: A (user defined) meter id (e.g. id printed on the case)
+        type: string
+      phase_seq_error:
+        description: "AC only: true for 3 phase rotation error (ccw)"
+        type: boolean
+      energy_Wh_import:
+        description: Imported energy in Wh (from grid)
+        type: object
+        $ref: /units#/Energy
+      energy_Wh_export:
+        description: Exported energy in Wh (to grid)
+        type: object
+        $ref: /units#/Energy
+      power_W:
+        description:
+          Instantaneous power in Watt. Negative values are exported, positive
+          values imported Energy.
+        type: object
+        $ref: /units#/Power
+      voltage_V:
+        description: Voltage in Volts
+        type: object
+        $ref: /units#/Voltage
+      VAR:
+        description: Reactive power VAR
+        type: object
+        $ref: /units#/ReactivePower
+      current_A:
+        description: Current in ampere
+        type: object
+        $ref: /units#/Current
+      frequency_Hz:
+        description: Grid frequency in Hertz
+        type: object
+        $ref: /units#/Frequency
+      # Extension for individual signed meter values
+      energy_Wh_import_signed:
+        description: Imported energy in Wh (from grid)
+        type: object
+        $ref: /units_signed#/Energy
+      energy_Wh_export_signed:
+        description: Exported energy in Wh (to grid)
+        type: object
+        $ref: /units_signed#/Energy
+      power_W_signed:
+        description:
+          Instantaneous power in Watt. Negative values are exported, positive
+          values imported Energy.
+        type: object
+        $ref: /units_signed#/Power
+      voltage_V_signed:
+        description: Voltage in Volts
+        type: object
+        $ref: /units_signed#/Voltage
+      VAR_signed:
+        description: Reactive power VAR
+        type: object
+        $ref: /units_signed#/ReactivePower
+      current_A_signed:
+        description: Current in ampere
+        type: object
+        $ref: /units_signed#/Current
+      frequency_Hz_signed:
+        description: Grid frequency in Hertz
+        type: object
+        $ref: /units_signed#/Frequency
+      signed_meter_value:
+        description: >-
+          Signed collection of instantaneous meter values if supported by the meter.
+          This is intended for meters that only support signing a collection of meter values.
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      temperatures:
+        description: >-
+          An array of temperature sensors expressed in C, their definition and meaning is product specific
+        type: array
+        items:
+          type: object
+          $ref: /temperature#/Temperature
+
+

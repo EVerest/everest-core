@@ -1,0 +1,46 @@
+cc_library(
+    name = "phyverso_config",
+    deps = [
+        "//lib/3rd_party/nanopb",
+        "@everest-framework//:framework",
+    ],
+    srcs = glob([
+        "protobuf/*.h",
+        "protobuf/*.c",
+    ]) + [
+        "evConfig.h",
+        "evConfig.cpp"
+    ],
+    visibility = ["//visibility:public"],
+    includes = [
+        ".",
+        "protobuf",
+    ],
+)
+
+cc_library(
+    name = "phyverso_mcu_comms",
+    deps = [
+        ":phyverso_config",
+        "//lib/3rd_party/nanopb",
+        "@com_github_HowardHinnant_date//:date",
+        "@everest-framework//:framework",
+        "@sigslot//:sigslot",
+    ],
+    srcs = glob([
+        "**/*.h",
+        "**/*.c",
+        "**/*.cpp",
+    ], 
+    exclude = [
+        "evConfig.h",
+        "evConfig.cpp",
+    ]),
+    visibility = ["//visibility:public"],
+    includes = [
+        ".",
+        "protobuf",
+        "bsl",
+    ],
+    copts = ["-std=c++17"],
+)

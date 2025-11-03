@@ -1,0 +1,64 @@
+exports_files(["config"])
+
+cc_library(
+    name = "websocketpp_utils",
+    hdrs = glob([
+        "3rd_party/websocketpp_utils/*.hpp",
+    ]),
+    includes = ["3rd_party"],
+    visibility = ["//visibility:private"],
+)
+
+cc_library(
+    name = "libocpp",
+    srcs = glob([
+        "lib/ocpp/common/*.cpp",
+        "lib/ocpp/common/database/*.cpp",
+        "lib/ocpp/v16/*.cpp",
+        "lib/ocpp/v2/*.cpp",
+        "lib/ocpp/v2/functional_blocks/*.cpp",
+        "lib/ocpp/v21/functional_blocks/*.cpp",
+        "lib/ocpp/common/websocket/*.cpp",
+        "lib/ocpp/v16/messages/*.cpp",
+        "lib/ocpp/v2/messages/*.cpp",
+        "lib/ocpp/v21/messages/*.cpp",
+    ]),
+    hdrs = glob([
+        "include/**/*.hpp",
+    ]),
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":websocketpp_utils",
+        "@openssl//:crypto",
+        "@openssl//:ssl",
+        "@com_github_nlohmann_json//:json",
+        "@com_github_HowardHinnant_date//:date",
+        "@everest-framework//:framework",
+        "@libtimer//:libtimer",
+        "@libevse-security//:libevse-security",
+        "@com_github_pboettch_json-schema-validator//:json-schema-validator",
+        "@com_github_warmcatt_libwebsockets//:libwebsockets",
+        "@everest_sqlite//:everest-sqlite",
+    ],
+    copts = [
+        "-std=c++17",
+        "-Wimplicit-fallthrough",
+        "-Werror=switch-enum",
+    ],
+    defines = [
+        "LIBOCPP_ENABLE_V16=1",
+        "LIBOCPP_ENABLE_V2=1",
+        "MIGRATION_FILE_VERSION_V16=1",
+        "MIGRATION_FILE_VERSION_V2=6",
+        "MIGRATION_DEVICE_MODEL_FILE_VERSION_V2=3",
+    ],
+    # See https://github.com/HowardHinnant/date/issues/324
+    local_defines = [
+        "BUILD_TZ_LIB=ON",
+        "USE_SYSTEM_TZ_DB=ON",
+        "USE_OS_TZDB=1",
+        "USE_AUTOLOAD=0",
+        "HAS_REMOTE_API=0",
+    ],
+)

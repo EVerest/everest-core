@@ -1,0 +1,63 @@
+description: This interface defines a simple ISO15118 ev.
+cmds:
+  start_charging:
+    description: Start the ev charging process
+    arguments:
+      EnergyTransferMode:
+        description: >-
+          Selected energy transfer mode for charging that is requested
+          by the EVCC
+        type: string
+        $ref: /iso15118#/EnergyTransferMode
+    result:
+      description: Returns true if the evcc simulation started
+      type: boolean
+  stop_charging:
+    description: Stop the ev charging communication process
+  pause_charging:
+    description: Pause the ev charging communication process  
+  set_fault:
+    description: >-
+      TODO_SL: Set the different ev faults to communicate these errors
+      to the charging station
+  set_dc_params:
+    description: Set the target parameters for a dc charging process 
+    arguments:
+      EvParameters:
+        description: Target parameters for dc charging
+        type: object
+        $ref: /iso15118#/DcEvParameters
+  set_bpt_dc_params:
+    description: Set the bpt parameters for dc charging
+    arguments:
+      EvBPTParameters:
+        description: BPT parameters for dc charging
+        type: object
+        $ref: /iso15118#/DcEvBPTParameters
+  enable_sae_j2847_v2g_v2h:
+    description: Enable the SAE J2847 2 V2H V2G
+vars:
+  v2g_session_finished:
+    description: The v2g session between the charger and the car is finished
+    type: 'null'
+  ev_power_ready:
+    description: The car is ready for power (HLC)
+    type: boolean
+  ac_evse_max_current:
+    description: EVSE max current per phase
+    type: number
+    minimum: 0
+    maximum: 400
+  ac_evse_target_power:
+    description: Evse AC max target power
+    type: object
+    $ref: /iso15118#/AcTargetPower
+  dc_power_on:
+    description: The ev wants to close the dc contactors
+    type: 'null'
+  stop_from_charger:
+    description: The charger wants to stop the charging process
+    type: 'null'
+  pause_from_charger:
+    description: The charger wants to pause the session (only d20)
+    type: 'null'

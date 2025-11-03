@@ -1,0 +1,14 @@
+description: This module provides a persistent error history
+provides:
+  error_history:
+    description: Error history
+    interface: error_history
+    config:
+      database_path:
+        type: string
+        description: Absolute path to the database file
+enable_global_errors: true
+metadata:
+  license: https://spdx.org/licenses/Apache-2.0.html
+  authors:
+    - Andreas Heinrich

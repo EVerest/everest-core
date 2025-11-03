@@ -1,0 +1,37 @@
+description: This interface defines a generic powermeter for 5 wire TN networks.
+cmds:
+  start_transaction:
+    description: Starts a transaction on the power meter (for signed metering according to German Eichrecht)
+    arguments:
+      value:
+        description: All information that should be included in the signed OCMF packet
+        type: object
+        $ref: /powermeter#/TransactionReq
+    result:
+      description: True on success, False if transaction could not be started in the power meter
+      type: object
+      $ref: /powermeter#/TransactionStartResponse
+  stop_transaction:
+    description: >-
+      Stop the transaction on the power meter and return the signed metering information.
+      If the transaction id is an empty string, all ongoing transaction should be cancelled.
+      This is used on start up to clear dangling transactions that might still be ongoing
+      in the power meter but are not known to the EvseManager.
+    arguments:
+      transaction_id:
+        description: Transaction id
+        type: string
+    result:
+      description: Response to transaction stop request including OCMF string.
+      type: object
+      $ref: /powermeter#/TransactionStopResponse
+vars:
+  powermeter:
+    description: Measured dataset
+    type: object
+    $ref: /powermeter#/Powermeter
+  public_key_ocmf:
+    description: The public key for OCMF
+    type: string
+errors:
+  - reference: /errors/powermeter

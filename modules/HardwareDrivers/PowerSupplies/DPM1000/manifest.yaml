@@ -1,0 +1,61 @@
+description: DC Power Supply Driver
+provides:
+  main:
+    description: Power supply driver for DPM 1000-30 from SCU Power. Currently supports only one module.
+    interface: power_supply_DC
+config:
+  device:
+    description: Interface name for can device
+    type: string
+    default: can0
+  device_address:
+    description: Device address (as selected on front LED panel)
+    type: integer
+    default: 0
+  power_limit_W:
+    description: Maximum Power Limit in Watt
+    type: number
+    maximum: 30000
+    default: 30000
+  current_limit_A:
+    description: Maximum Current Limit in Ampere
+    type: number
+    maximum: 100
+    default: 100
+  voltage_limit_V:
+    description: Maximum Voltage Limit in Volt. Will be limited by series parallel setting as well.
+    type: number
+    maximum: 1000
+    default: 1000
+  series_parallel_mode:
+    description: 
+      Select series (300-1000V), parallel (50-500) or automatic switching mode (50-1000). 
+      This switches the internal configuration of one module and should not be confused with parallel operation of multiple modules.
+    type: string
+    enum:
+      - Series
+      - Parallel
+      - Automatic
+    default: Series
+  discharge_gpio_chip:
+    description: >-
+      GPIO chip to use to switch external discharge load on and off. An empty string disables discharging.
+      Note that the hardware load must be designed to allow permanent discharge from the highest voltage (e.g. 1000V)
+    type: string
+    default: ''
+  discharge_gpio_line:
+    description: GPIO line to use to switch discharge load
+    type: integer
+    default: 0
+  discharge_gpio_polarity:
+    description: GPIO polarity, false means active low, true means active high
+    type: boolean
+    default: true
+  debug_print_all_telemetry:
+    description: Read and print all telemetry from the power module. Helpful while debugging.
+    type: boolean
+    default: false
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - aw@pionix.de

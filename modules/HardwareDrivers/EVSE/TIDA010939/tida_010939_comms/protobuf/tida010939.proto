@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+/**
+ * This container message is send from EVerest to MCU and may contain any allowed message in that direction.
+ */
+message EverestToMcu {
+ oneof payload {
+    FirmwareUpdate firmware_update = 1;
+
+    KeepAlive keep_alive = 2;
+
+    // false: unlock, true: lock
+    bool connector_lock = 3;
+
+    // in 0.01 %, 0 = State F, 10000 = X1
+    uint32 pwm_duty_cycle = 4; 
+    
+    bool allow_power_on = 5;
+    bool reset = 6;
+
+    RcdCommand rcd_cmd = 8;
+  }
+}
+
+/**
+ * This container message is send from MCU to EVerest and may contain any allowed message in that direction.
+ */
+message McuToEverest {
+  oneof payload {
+    KeepAliveLo keep_alive = 1;
+
+    ResetReason reset = 2;
+    CpState cp_state = 3;
+
+    // false: relais are off, true: relais are on
+    bool relais_state = 4;
+
+    ErrorFlags error_flags = 5;
+    Telemetry telemetry = 6;
+    PpState pp_state = 7;
+    LockState lock_state = 8;
+  }
+}
+
+enum CpState {
+  STATE_A = 0;
+  STATE_B = 1;
+  STATE_C = 2;
+  STATE_D = 3;
+  STATE_E = 4;
+  STATE_F = 5;
+}
+
+message ErrorFlags {
+  bool diode_fault = 1;
+  bool rcd_selftest_failed = 2;
+  bool rcd_triggered = 3;
+  bool ventilation_not_available = 4;
+  bool connector_lock_failed = 5;
+  bool cp_signal_fault = 6;
+  bool over_current = 7;
+}
+
+enum ResetReason {
+  USER = 0;
+  WATCHDOG = 1;
+}
+
+message KeepAliveLo {
+  uint32 time_stamp = 1;
+  uint32 hw_type = 2;
+  uint32 hw_revision = 3;
+  uint32 protocol_version_major = 4;
+  uint32 protocol_version_minor = 5;
+  string sw_version_string = 6;
+  float hwcap_max_current = 7;
+  float hwcap_min_current = 8;
+  uint32 hwcap_max_phase_count = 9;
+  uint32 hwcap_min_phase_count = 10;
+}
+
+message KeepAlive {
+  uint32 time_stamp = 1;
+  uint32 hw_type = 2;
+  uint32 hw_revision = 3;
+  string sw_version_string = 6;
+}
+
+message Telemetry {
+  float cp_voltage_hi = 1;
+  float cp_voltage_lo = 2;
+  float temp0 = 3;
+  float temp1 = 4;
+}
+
+enum PpState {
+  STATE_NC = 0;
+  STATE_13A = 1;
+  STATE_20A = 2;
+  STATE_32A = 3;
+  STATE_70A = 4;
+  STATE_FAULT = 5;
+}
+
+enum LockState {
+  UNDEFINED = 0;
+  UNLOCKED = 1;
+  LOCKED = 2;
+}
+
+message FirmwareUpdate {
+  bool invoke_rom_bootloader = 1;
+}
+
+message RcdCommand {
+  bool test = 1;  // true -> set TEST pin high, false -> set TEST pin low
+  bool reset = 2; // reset RCD/emergency off if set to true
+}

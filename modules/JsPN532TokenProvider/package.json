@@ -1,7 +1,0 @@
-{
-    "dependencies": {
-        "ndef": "^0.2.0",
-        "pn532": "^1.0.0",
-        "serialport": "^9.2.5"
-    }
-}

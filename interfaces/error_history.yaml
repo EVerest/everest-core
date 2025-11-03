@@ -1,0 +1,14 @@
+description: This interface provides access to the error history of the EVerest framework
+cmds:
+  get_errors:
+    description: Takes a list of filters and returns a list of errors
+    arguments:
+      filters:
+        type: object
+        description: Filters to apply to the list of errors
+        $ref: /error_history#/FilterArguments
+    result:
+      description: List of filtered errors
+      type: array
+      items:
+        $ref: /error_history#/ErrorObject

@@ -1,0 +1,49 @@
+description: Interface of authentication framework
+cmds:
+  set_connection_timeout:
+    description: Sets the connection timeout
+    arguments:
+      connection_timeout:
+        description: Connection timeout in seconds
+        type: integer
+        minimum: 10
+        maximum: 300
+  set_master_pass_group_id:
+    description: >-
+      Sets the master pass group id. IdTokens that have this id as parent_id_token belong to the Master Pass Group. 
+      This means they can stop any ongoing transaction, but cannot start transactions. This can, for example, be used by
+      law enforcement personal to stop any ongoing transaction when an EV has to be towed away. If master_pass_group_id 
+      is an empty string, it is not used.
+    arguments:
+      master_pass_group_id:
+        description: The master pass group id
+        type: string
+        maxLength: 36
+  withdraw_authorization:
+    description: >-
+      Withdraw granted authorization.
+      If only the evse_id is given, the granted authorization for this EVSE will be withdrawn.
+      If only the id_token is given, the granted authorization for every EVSE where this id_token is placed will be
+        withdrawn
+      If both parameters are given, the granted authorization for the given EVSE will be withdrawn, if the placed
+        id_token matches the given id_token
+      If no parameter is given, all granted authorizations for all EVSEs will be removed
+    arguments:
+      request:
+        description: The request
+        type: object
+        $ref: /authorization#/WithdrawAuthorizationRequest
+    result:
+      description: >-
+        Accepted in case requested authorization was removed
+        AuthorizationNotFound in case no match for request was found
+        Rejected in case module could not process the request for other reasons
+      type: string
+      $ref: /authorization#/WithdrawAuthorizationResult
+vars:
+  token_validation_status:
+    description: Emits all events related to current token validation
+    type: object
+    $ref: /authorization#/TokenValidationStatusMessage
+errors:
+  - reference: /errors/generic

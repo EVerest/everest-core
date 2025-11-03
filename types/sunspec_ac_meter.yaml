@@ -1,0 +1,119 @@
+description: sunspec ac powermeter types
+types:
+  Result:
+    description: Measured dataset
+    type: object
+    required:
+      - timestamp
+    properties:
+      timestamp:
+        description: Timestamp of measurement
+        type: integer
+      ID:
+        description: ID Model ID uinteger no 203 SunSpec Model AC Meter
+        type: integer
+      L:
+        description: L Model Payload Length uinteger no 105 Without the fields 'Model
+          ID' and 'Length of payload.
+        type: integer
+      A:
+        description: A Amps int16 A no
+        type: integer
+      AphA:
+        description: AphA Amps PhaseA int16 A no
+        type: integer
+      AphB:
+        description: AphB Amps PhaseB int16 A no
+        type: integer
+      AphC:
+        description: AphC Amps PhaseC int16 A no
+        type: integer
+      A_SF:
+        description: A_SF integer no
+        type: integer
+      PhVphA:
+        description: PhVphA Phase Voltage AN int16 V no
+        type: integer
+      PhVphB:
+        description: PhVphB Phase Voltage BN int16 V no
+        type: integer
+      PhVphC:
+        description: PhVphC Phase Voltage CN int16 V no
+        type: integer
+      V_SF:
+        description: V_SF sunssf no
+        type: integer
+      Hz:
+        description: Hz Hz int16 Hz no
+        type: integer
+      Hz_SF:
+        description: Hz_SF sunssf no
+        type: integer
+      W:
+        description: W Watts int16 W no
+        type: integer
+      WphA:
+        description: WphA Watts phase A int16 W no
+        type: integer
+      WphB:
+        description: WphB Watts phase B int16 W no
+        type: integer
+      WphC:
+        description: WphC Watts phase C int16 W no
+        type: integer
+      W_SF:
+        description: W_SF sunssf no
+        type: integer
+      VA:
+        description: VA VA int16 VA no
+        type: integer
+      VAphA:
+        description: VAphA VA phase A int16 VA no
+        type: integer
+      VAphB:
+        description: VAphB VA phase B int16 VA no
+        type: integer
+      VAphC:
+        description: VAphC VA phase C int16 VA no
+        type: integer
+      VA_SF:
+        description: VA_SF integer no
+        type: integer
+      VAR:
+        description: VAR VAR int16 var no
+        type: integer
+      VARphA:
+        description: VARphA VAR phase A int16 var no
+        type: integer
+      VARphB:
+        description: VARphB VAR phase B int16 var no
+        type: integer
+      VARphC:
+        description: VARphC VAR phase C int16 var no
+        type: integer
+      VAR_SF:
+        description: VAR_SF sunssf no
+        type: integer
+      PFphA:
+        description: PFphA PF phase A int16 Pct no
+        type: integer
+      PFphB:
+        description: PFphB PF phase B int16 Pct no
+        type: integer
+      PFphC:
+        description: PFphC PF phase C int16 Pct no
+        type: integer
+      PF_SF:
+        description: PF_SF sunssf no
+        type: integer
+      TotWhIm:
+        description: TotWhIm p Total Watt-hours Imported acc32 Wh no
+        type: integer
+      TotWh_SF:
+        description: TotWh_SF sunssf no
+        type: integer
+      Evt:
+        description: Evt Events bitfield32 no See chapter 17.5 Event flags of critical
+          events of counter and communication module. A problem exists if this value
+          is different from zero.
+        type: integer

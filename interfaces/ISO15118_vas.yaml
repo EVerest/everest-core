@@ -1,0 +1,32 @@
+description: Custom VAS provider for ISO 15118
+vars:
+  offered_vas:
+    description: List of offered VAS Service IDs
+    type: object
+    $ref: /iso15118_vas#/OfferedServices
+cmds:
+  get_service_parameters:
+    description: >-
+      This command dynamically returns the parameter sets for a single service.
+      It is called upon receiving ServiceDetailReq and returns the payload for ServiceDetailRes.
+    arguments:
+      service_id:
+        type: integer
+        description: Service ID
+    result:
+      type: array
+      description: Parameter Sets for this VAS
+      items:
+        type: object
+        $ref: /iso15118_vas#/ParameterSet
+  selected_services:
+    description: >-
+      Callback to notify the VAS provider which services and parameter sets were selected by the EV.
+      It is called upon receiving ServiceSelectionReq and called only once per Request.
+    arguments:
+      selected_services:
+        description: List of selected services and their parameter set IDs
+        type: array
+        items:
+          type: object
+          $ref: /iso15118_vas#/SelectedService

@@ -1,0 +1,83 @@
+description: >-
+  This module implements the authentication handling for the EVerest. It is responsible for providing authorization to
+  the connected evse managers. In addition to that, it handles the reservation management.
+config:
+  selection_algorithm:
+    description: >-
+      The selection algorithm contains the logic to select one connector for an incoming token. In case the charging station
+      has only one connector, the selection of a connector is pretty straight-forward because there is only one that is 
+      available. The selection algorithm becomes relevant in case the Auth  module manages authorization requests 
+      for multiple connectors. The following values can be set:
+      PlugEvents: Selection of connector is based on EV Plug In events
+      FindFirst: Simply selects the first available connector that has no active transaction
+      UserInput: Placeholder, not yet implemented
+    type: string
+    default: FindFirst
+  connection_timeout:
+    description: >-
+      Defines how many seconds an authorization is valid before it is discarded.
+      Defines how many seconds a user can provide authorization after the plug in
+      of a car
+    type: integer
+  master_pass_group_id:
+    description: >-
+      IdTokens that have this id as groupId belong to the Master Pass Group. Meaning they can stop any ongoing
+      transaction, but cannot start transactions. This can, for example, be used by law enforcement personal to stop any
+      ongoing transaction when an EV has to be towed away. If left empty, master_pass_group_id is not used.
+    type: string
+    default: ""
+  prioritize_authorization_over_stopping_transaction:
+    description: >-
+      Boolean value to describe the handling of parent id tokens.
+
+      If true, a new token will be preferably used for authorization of a new connector if a connector is available. It
+      will not be used to finish a transaction using its parent_id_token. parent_id_token will only be used to finish
+      transaction if no connector is available for authorization anymore.
+
+      If false, a new token will be used to finish a transaction if the parent_id_token of a present transaction matches
+      the parent_id_token of the provided_token. Authorization to available connectors will only be provided if no
+      transaction can be stopped using the given parent_id_token
+    type: boolean
+    default: true
+  ignore_connector_faults:
+    description: >-
+      Boolean value to describe the handling of faults on connectors.
+
+      If true, faults reported on connectors are ignored, i.e. they can still be authorized. This should be disabled in
+      most use cases, but e.g. in free charging applications it may be useful to allow a charging session in the following case:
+      A connector e.g. has an overtemperature fault that at some point will clear once it is cooled down. A car is plugged in before 
+      the error is cleared. The user would expect that the charging starts once it is cooled down. When this option is set to false, 
+      it will not be authorized on plug in as the connector is in fault state and it will never recover until the car is replugged.
+      If it is set to true, the authorization happens on the faulty connector and charging will start once the fault is cleared.
+
+      If false, faulty connectors are treated as not available and will not be authorized. This is a good setting for e.g. public chargers.
+    type: boolean
+    default: false
+provides:
+  main:
+    description: This implements the auth interface for EVerest
+    interface: auth
+  reservation:
+    description: This implements the reservation interface for EVerest.
+    interface: reservation
+requires:
+  token_provider:
+    interface: auth_token_provider
+    min_connections: 1
+    max_connections: 128
+  token_validator:
+    interface: auth_token_validator
+    min_connections: 1
+    max_connections: 128
+  evse_manager:
+    interface: evse_manager
+    min_connections: 1
+    max_connections: 128
+  kvs:
+    interface: kvs
+    min_connections: 0
+    max_connections: 1
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - 'Piet Gömpel'

@@ -1,0 +1,11 @@
+description: >-
+  Generic errors used by multiple modules
+errors:
+  - name: CommunicationFault
+    description: Communication with the underlying hardware or device has a fault
+  - name: VendorError
+    description: >-
+      Vendor specific error code.
+  - name: VendorWarning
+    description: >-
+      Vendor specific error code.

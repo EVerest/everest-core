@@ -1,9 +1,0 @@
-{
-    "description": "This interface defines the interface for an solar energy production forecast",
-    "vars": {
-        "forecast": {
-            "description": "Forecast JSON Object containing a timestamp and the energy forecast in watthours.",
-            "type": "object"
-        }
-    }
-}

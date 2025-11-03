@@ -1,0 +1,33 @@
+description: PN532 RFID/NFC token provider returning the token as soon as the tag can be read by the reader
+provides:
+  main:
+    description: Implementation of PN532 RFID/NFC token provider
+    interface: auth_token_provider
+    config:
+      serial_port:
+        description: Serial port the PN532 hardware is connected to
+        type: string
+        default: /dev/ttyS0
+      baud_rate:
+        description: Serial baud rate to use when communicating with PN532 hardware
+        type: integer
+        minimum: 9600
+        maximum: 230400
+        default: 115200
+      read_timeout:
+        description: Time between subsequent card reads (in s)
+        type: integer
+        minimum: 0
+        maximum: 120
+        default: 5
+      debug:
+        description: Show debug output on command line.
+        type: boolean
+        default: false
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen
+    - Kai-Uwe Hermann
+    - Thilo Molitor
+    - Anton Wöllert

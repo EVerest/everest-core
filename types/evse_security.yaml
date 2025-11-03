@@ -1,0 +1,309 @@
+description: Types for evse security
+types:
+  EncodingFormat:
+    description: Enum specifies the encoding of certificates or keys
+    type: string
+    enum:
+      - DER
+      - PEM
+  CaCertificateType:
+    description: Enum specifies the type of a CA certificate
+    type: string
+    enum:
+      - V2G
+      - MO
+      - CSMS
+      - MF
+  LeafCertificateType:
+    description: Enum specifies the type of a leaf certificate
+    type: string
+    enum:
+      - CSMS
+      - V2G
+      - MF
+      - MO
+  CertificateType:
+    description: Enum specifies certificate type of leaf and CA certificates
+    type: string
+    enum:
+      - V2GRootCertificate
+      - MORootCertificate
+      - CSMSRootCertificate
+      - V2GCertificateChain
+      - MFRootCertificate
+  HashAlgorithm:
+    description: Enum specifies a hash algorithm
+    type: string
+    enum:
+      - SHA256
+      - SHA384
+      - SHA512
+  InstallCertificateResult:
+    description: Result of the attempt to install a certificate
+    type: string
+    enum:
+      - InvalidSignature
+      - InvalidCertificateChain
+      - InvalidFormat
+      - InvalidCommonName
+      - NoRootCertificateInstalled
+      - Expired
+      - CertificateStoreMaxLengthExceeded
+      - WriteError
+      - Accepted
+  CertificateValidationResult:
+    description: Result of the attempt to validate a certificate
+    type: string
+    enum:
+      - Valid
+      - Expired
+      - InvalidSignature
+      - IssuerNotFound
+      - InvalidLeafSignature
+      - InvalidChain
+      - Unknown
+
+  DeleteCertificateResult:
+    description: Result of the attempt to delete a certificate
+    type: string
+    enum:
+      - Accepted
+      - Failed
+      - NotFound
+  GetInstalledCertificatesStatus:
+    description: Status indicates the result of the attempt to retrieve certificates
+    type: string
+    enum:
+      - Accepted
+      - NotFound
+  GetCertificateSignRequestStatus:
+    description: Status indicates the result to generate a certificate signing request
+    type: string
+    enum:
+      - Accepted
+      - InvalidRequestedType
+      - KeyGenError
+      - GenerationError
+  GetCertificateInfoStatus:
+    description: Status indicates the result of the attempt to retrieve a certificate
+    type: string
+    enum:
+      - Accepted
+      - Rejected
+      - NotFound
+      - NotFoundValid
+      - PrivateKeyNotFound
+  CertificateHashData:
+    description: >-
+      Type specifies the hash data of a certificate
+    type: object
+    required:
+      - hash_algorithm
+      - issuer_name_hash
+      - issuer_key_hash
+      - serial_number
+    properties:
+      hash_algorithm:
+        description: Algorithm used for the hashes provided
+        type: string
+        $ref: /evse_security#/HashAlgorithm
+      issuer_name_hash:
+        description: >-
+          The hash of the issuer's distinguished name (DN), calculated over the DER encoding of
+          the issuer's name field.
+        type: string
+        maxLength: 128
+      issuer_key_hash:
+        description: >-
+          The hash of the DER encoded public key: the value (excluding tag and length) of the
+          subject public key field
+        type: string
+        maxLength: 128
+      serial_number:
+        description: >-
+          The string representation of the hexadecimal value of the serial number without the
+          prefix "0x" and without leading zeroes.
+        type: string
+        maxLength: 40
+  CertificateHashDataChain:
+    description: Type specifies the hash data chain of a certificate
+    type: object
+    required:
+      - certificate_type
+      - certificate_hash_data
+    properties:
+      certificate_type:
+        description: Indicates the type of the certificate for which the hash data is provided
+        type: string
+        $ref: /evse_security#/CertificateType
+      certificate_hash_data:
+        description: Contains the hash data of the certificate
+        type: object
+        $ref: /evse_security#/CertificateHashData
+      child_certificate_hash_data:
+        description: Contains the hash data of the child's certificates
+        type: array
+        items:
+          minimum: 0
+          maximum: 4
+          type: object
+          $ref: /evse_security#/CertificateHashData
+  GetInstalledCertificatesResult:
+    description: Result to a request to retrieve certificates
+    type: object
+    required:
+      - status
+      - certificate_hash_data_chain
+    properties:
+      status:
+        description: Indicates the status of the request
+        type: string
+        $ref: /evse_security#/GetInstalledCertificatesStatus
+      certificate_hash_data_chain:
+        description: the hashed certificate data for each requested certificates
+        type: array
+        items:
+          minimum: 0
+          type: object
+          $ref: /evse_security#/CertificateHashDataChain
+  OCSPRequestData:
+    description: Type that specifies OCSP data
+    type: object
+    properties:
+      certificate_hash_data:
+        description: Contains the hash data of the certificate
+        type: object
+        $ref: /evse_security#/CertificateHashData
+      responder_url:
+        description: Contains the responder URL
+        type: string
+        maxLength: 512
+  OCSPRequestDataList:
+    description: List of OCSP Request data
+    type: object
+    required:
+      - ocsp_request_data_list
+    properties:
+      ocsp_request_data_list:
+        description: A list of OCSP request data
+        type: array
+        items:
+          minimum: 0
+          type: object
+          $ref: /evse_security#/OCSPRequestData
+  CertificateOCSP:
+    description: OCSP data related to requested the certificates
+    type: object
+    required:
+      - hash
+    properties:
+      hash:
+        description: Hash of certificate linked to the provided data
+        type: object
+        $ref: /evse_security#/CertificateHashData
+      ocsp_path:
+        description: OCSP path of the file containing the data
+        type: string
+  GetCertificateSignRequestResult:
+    description: Response related to a CSR generation
+    type: object
+    required:
+      - status
+    properties:
+      status:
+        description: Status of the request
+        type: string
+        $ref: /evse_security#/GetCertificateSignRequestStatus
+      csr:
+        description: PEM encoded certificate signing request
+        type: string
+  CertificateInfo:
+    description: Type that specifies the paths of a certificate and the respective private key
+    type: object
+    required:
+      - key
+      - certificate_count
+    properties:
+      key:
+        description: The path of the PEM or DER encoded private key
+        type: string
+      certificate_root:
+        description: The PEM of the root certificate that issued this leaf
+        type: string
+      certificate:
+        description: The path of the PEM or DER encoded certificate chain
+        type: string
+      certificate_single:
+        description: The path of the PEM or DER encoded single certificate
+        type: string
+      certificate_count:
+        description: The count of certificates in the chain
+        type: integer
+      password:
+        description: Specifies the password for the private key if encrypted
+        type: string
+      ocsp:
+        description: Certificate related OCSP data, if requested
+        type: array
+        items:
+          minimum: 0
+          type: object
+          $ref: /evse_security#/CertificateOCSP
+  GetCertificateInfoResult:
+    description: Response to the command get_leaf_certificate_info
+    type: object
+    required:
+      - status
+    properties:
+      status:
+        description: The status of the requested command
+        type: string
+        $ref: /evse_security#/GetCertificateInfoStatus
+      info:
+        description: The requested info
+        type: object
+        $ref: /evse_security#/CertificateInfo
+  GetCertificateFullInfoResult:
+    description: Response to the command get_all_valid_certificates_info
+    type: object
+    required:
+      - status
+      - info
+    properties:
+      status:
+        description: The status of the requested command
+        type: string
+        $ref: /evse_security#/GetCertificateInfoStatus
+      info:
+        description: The requested info
+        type: array
+        items:
+          minimum: 0
+          type: object
+          $ref: /evse_security#/CertificateInfo
+  CertificateStoreUpdateOperation:
+    description: Type that specifies the operation performed on the certificate store
+    type: string
+    enum:
+      - Installed
+      - Deleted
+  CertificateStoreUpdate:
+    description: >-
+      Type that specifies the update of the certificate store. One of leaf_certificate_type
+      or ca_certificate_type must be present.
+    type: object
+    required:
+      - operation
+    properties:
+      operation:
+        description: The operation performed on the certificate store
+        type: string
+        $ref: /evse_security#/CertificateStoreUpdateOperation
+      leaf_certificate_type:
+        description: The type of the leaf certificate that was installed or deleted. Only present if type of updated certificate is a leaf certificate
+        type: string
+        $ref: /evse_security#/LeafCertificateType
+      ca_certificate_type:
+        description: The type of the CA certificate that was installed or deleted. Only present if type of updated certificate is a CA certificate
+        type: string
+        $ref: /evse_security#/CaCertificateType

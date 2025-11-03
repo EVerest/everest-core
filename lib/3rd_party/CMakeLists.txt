@@ -1,0 +1,4 @@
+set(THIRDPARTY_INCLUDE_TMP_DIR ${LIB_INCLUDE_TMP_DIR}/3rd_party)
+set(THIRDPARTY_INCLUDE_INSTALL_DIR ${LIB_INCLUDE_INSTALL_DIR}/3rd_party)
+
+add_subdirectory(nanopb)
