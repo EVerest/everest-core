@@ -255,7 +255,7 @@ components:
         retry
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/NullType'
+        type: 'null'
     send_ev_mac_address:
       name: send_ev_mac_address
       title: 'EV MAC address'
@@ -335,9 +335,6 @@ components:
           description: >-
             Inform higher layers about a change in data link status. Emits true
             if link was set up and false when the link is shut down.
-    NullType:
-      type: 'null'
-      description: Placeholder for null type.
     MACAddress:
       type: object
       properties:

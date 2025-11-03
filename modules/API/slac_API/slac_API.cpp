@@ -18,7 +18,7 @@ using ev_API::deserialize;
 void slac_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "slac");
+    topics.setup(info.id, "slac", 1);
 }
 
 void slac_API::ready() {
@@ -80,12 +80,8 @@ void slac_API::generate_api_var_dlink_ready() {
 
 void slac_API::generate_api_var_request_error_routine() {
     subscribe_api_topic("request_error_routine", [=](const std::string& data) {
-        bool val = false;
-        if (deserialize(data, val)) {
-            p_main->publish_request_error_routine(nullptr);
-            return true;
-        }
-        return false;
+        p_main->publish_request_error_routine(nullptr);
+        return true;
     });
 }
 

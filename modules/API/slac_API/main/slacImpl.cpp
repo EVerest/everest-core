@@ -14,7 +14,6 @@ using namespace everest::lib::API;
 namespace generic = everest::lib::API::V1_0::types::generic;
 
 void slacImpl::init() {
-    timeout_s = mod->config.cfg_request_reply_to_s;
 }
 
 void slacImpl::ready() {

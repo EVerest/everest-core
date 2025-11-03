@@ -35,7 +35,6 @@ namespace module {
 struct Conf {
     int cfg_communication_check_to_s;
     int cfg_heartbeat_interval_ms;
-    int cfg_request_reply_to_s;
 };
 
 class slac_API : public Everest::ModuleBase {
@@ -47,7 +46,7 @@ public:
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         config(config),
-        comm_check("slac/CommunicationFault", "Bridge to implementation connection lost", this->p_main) {
+        comm_check("generic/CommunicationFault", "Bridge to implementation connection lost", this->p_main) {
     }
 
     Everest::MqttProvider& mqtt;

@@ -20,3 +20,5 @@ slac_API
 
 :ref:`Link <everest_modules_slac_API>` to the module's reference.
 API for SLAC communication
+
+See ``doc/everest_api_specs/slac_API/asyncapi.yaml`` for a full AsyncAPI specification.
