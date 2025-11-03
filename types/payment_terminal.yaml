@@ -30,19 +30,3 @@ types:
           Arbitrary data that is needed to identify the transaction. This is
           mostly opaque data at the moment.
         type: string
-  CardType:
-    description: types of cards for the payment terminal
-    type: string
-    enum:
-        - BankCard
-        - RfidCard
-  RejectionReason:
-    description: Indicates the reason why the card was rejected
-    type: string
-    enum:
-        - PinRequired
-        - InsufficientFunds
-        - CardNotSupported
-        - Aborted
-        - Timeout
-        - Unknown

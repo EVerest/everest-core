@@ -46,7 +46,9 @@ use generated::{
     PaymentTerminalServiceSubscriber, SessionCostClientSubscriber,
 };
 use std::cmp::min;
-use std::sync::{mpsc::channel, mpsc::Sender, Arc};
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
+use std::sync::{mpsc::channel, mpsc::Sender, Arc, Mutex};
 use std::time::Duration;
 use std::{net::Ipv4Addr, str::FromStr};
 use zvt::constants::ErrorMessages;
@@ -142,7 +144,11 @@ mod sync_feig {
 use sync_feig::SyncFeig;
 
 impl ProvidedIdToken {
-    fn new(id_token: String, authorization_type: AuthorizationType) -> Self {
+    fn new(
+        id_token: String,
+        authorization_type: AuthorizationType,
+        connectors: Option<Vec<i64>>,
+    ) -> Self {
         Self {
             parent_id_token: None,
             id_token: IdToken {
@@ -152,7 +158,7 @@ impl ProvidedIdToken {
             },
             authorization_type,
             certificate: None,
-            connectors: None,
+            connectors,
             iso_15118_certificate_hash_data: None,
             prevalidated: None,
             request_id: None,
@@ -204,6 +210,14 @@ impl From<ErrorMessages> for AuthorizationStatus {
     }
 }
 
+impl Hash for AuthorizationType {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        std::mem::discriminant(self).hash(state);
+    }
+}
+
+impl Eq for AuthorizationType {}
+
 /// Main struct for this module.
 pub struct PaymentTerminalModule {
     /// Sender for the `ModulePublisher` -> to get the publisher from `on_ready`
@@ -212,6 +226,10 @@ pub struct PaymentTerminalModule {
 
     /// The Feig interface.
     feig: SyncFeig,
+
+    /// The mapping of supported connectors for every card type. None means
+    /// no restrictions, Some(vec![]) means no connector.
+    card_type_to_connector: Mutex<HashMap<AuthorizationType, Option<Vec<i64>>>>,
 
     /// The configurable pre-auth.
     pre_authorization_amount: usize,
@@ -280,6 +298,7 @@ impl PaymentTerminalModule {
             }
         };
         let card_info = read_card_loop();
+        let mut map_guard = self.card_type_to_connector.lock().unwrap();
 
         let provided_token = match card_info {
             CardInfo::Bank => ProvidedIdToken::new(
@@ -287,10 +306,19 @@ impl PaymentTerminalModule {
                 // reject it in the validation.
                 token.unwrap_or(INVALID_BANK_TOKEN.to_string()),
                 AuthorizationType::BankCard,
+                map_guard
+                    .entry(AuthorizationType::BankCard)
+                    .or_default()
+                    .clone(),
             ),
-            CardInfo::MembershipCard(id_token) => {
-                ProvidedIdToken::new(id_token, AuthorizationType::RFID)
-            }
+            CardInfo::MembershipCard(id_token) => ProvidedIdToken::new(
+                id_token,
+                AuthorizationType::RFID,
+                map_guard
+                    .entry(AuthorizationType::RFID)
+                    .or_default()
+                    .clone(),
+            ),
         };
         publishers.token_provider.provided_token(provided_token)?;
         Ok(())
@@ -342,8 +370,6 @@ impl PaymentTerminalModule {
 impl AuthTokenProviderServiceSubscriber for PaymentTerminalModule {}
 
 impl BankSessionTokenProviderClientSubscriber for PaymentTerminalModule {}
-
-
 
 impl OnReadySubscriber for PaymentTerminalModule {
     fn on_ready(&self, publishers: &ModulePublisher) {
@@ -424,7 +450,45 @@ impl AuthTokenValidatorServiceSubscriber for PaymentTerminalModule {
     }
 }
 
-impl PaymentTerminalServiceSubscriber for PaymentTerminalModule {}
+impl PaymentTerminalServiceSubscriber for PaymentTerminalModule {
+    fn enable_card_reading(
+        &self,
+        _context: &Context,
+        connector_id: i64,
+        supported_cards: Vec<AuthorizationType>,
+    ) -> ::everestrs::Result<()> {
+        let mut map_guard = self.card_type_to_connector.lock().unwrap();
+
+        for (key, val) in map_guard.iter_mut() {
+            match supported_cards.iter().find(|card| *card == key) {
+                Some(_) => {
+                    // Card is allowed -> add it to the connector
+                    let connector_ids = val.get_or_insert_default();
+                    if let Err(idx) = connector_ids.binary_search(&connector_id) {
+                        connector_ids.insert(idx, connector_id);
+                    }
+                }
+                None => {
+                    // Card is forbidden -> remove the connector from that
+                    let connector_ids = val.get_or_insert_default();
+                    if let Ok(idx) = connector_ids.binary_search(&connector_id) {
+                        connector_ids.remove(idx);
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn allow_all_cards_for_every_connector(&self, _context: &Context) -> ::everestrs::Result<()> {
+        let mut map_guard = self.card_type_to_connector.lock().unwrap();
+        *map_guard = HashMap::from_iter([
+            (AuthorizationType::BankCard, None),
+            (AuthorizationType::RFID, None),
+        ]);
+        Ok(())
+    }
+}
 
 fn main() -> Result<()> {
     let config = get_config();
@@ -448,6 +512,10 @@ fn main() -> Result<()> {
     let pt_module = Arc::new(PaymentTerminalModule {
         tx,
         feig: SyncFeig::new(pt_config),
+        card_type_to_connector: Mutex::new(HashMap::from_iter([
+            (AuthorizationType::BankCard, None),
+            (AuthorizationType::RFID, None),
+        ])),
         pre_authorization_amount: config.pre_authorization_amount as usize,
     });
 
@@ -493,6 +561,10 @@ mod tests {
             PaymentTerminalModule {
                 tx,
                 feig: feig_mock,
+                card_type_to_connector: Mutex::new(HashMap::from_iter([
+                    (AuthorizationType::BankCard, None),
+                    (AuthorizationType::RFID, None),
+                ])),
                 pre_authorization_amount: 11,
             }
         }
@@ -669,7 +741,11 @@ mod tests {
                     code: Some(CurrencyCode::EUR),
                     decimals: None,
                 },
-                id_tag: Some(ProvidedIdToken::new(String::new(), AuthorizationType::OCPP)),
+                id_tag: Some(ProvidedIdToken::new(
+                    String::new(),
+                    AuthorizationType::OCPP,
+                    None,
+                )),
                 status: SessionStatus::Finished,
                 session_id: String::new(),
                 idle_price: None,
@@ -684,7 +760,11 @@ mod tests {
                     code: Some(CurrencyCode::EUR),
                     decimals: None,
                 },
-                id_tag: Some(ProvidedIdToken::new(String::new(), AuthorizationType::RFID)),
+                id_tag: Some(ProvidedIdToken::new(
+                    String::new(),
+                    AuthorizationType::RFID,
+                    None,
+                )),
                 status: SessionStatus::Finished,
                 session_id: String::new(),
                 idle_price: None,
@@ -702,6 +782,7 @@ mod tests {
                 id_tag: Some(ProvidedIdToken::new(
                     String::new(),
                     AuthorizationType::BankCard,
+                    None,
                 )),
                 status: SessionStatus::Running,
                 session_id: String::new(),
@@ -721,172 +802,12 @@ mod tests {
                 index: 0,
             };
             let feig = SyncFeig::default();
-            let (tx, _) = channel();
+            let pt_module: PaymentTerminalModule = feig.into();
 
-            let pt_module = PaymentTerminalModule {
-                tx,
-                feig,
-                pre_authorization_amount: 50,
-            };
             assert!(pt_module
                 .on_session_cost_impl(&context, session_cost)
                 .is_ok());
         }
-    }
-
-    #[test]
-    /// Test validate_token with non-BankCard authorization type
-    fn payment_terminal__validate_token__invalid_authorization_type() {
-        let parameters = [
-            AuthorizationType::OCPP,
-            AuthorizationType::RFID,
-        ];
-
-        for auth_type in parameters {
-            let feig_mock = SyncFeig::default();
-            let pt_module: PaymentTerminalModule = feig_mock.into();
-
-            let provided_token = ProvidedIdToken::new("some_token".to_string(), auth_type);
-            let everest_mock = ModulePublisher::default();
-            let context = Context {
-                name: "test",
-                publisher: &everest_mock,
-                index: 0,
-            };
-
-            let result = pt_module.validate_token(&context, provided_token);
-            assert!(result.is_ok());
-            let validation_result = result.unwrap();
-            assert_eq!(validation_result.authorization_status, AuthorizationStatus::Invalid);
-        }
-    }
-
-    #[test]
-    /// Test validate_token with INVALID_BANK_TOKEN
-    fn payment_terminal__validate_token__invalid_bank_token() {
-        let feig_mock = SyncFeig::default();
-        let pt_module: PaymentTerminalModule = feig_mock.into();
-
-        let provided_token = ProvidedIdToken::new(
-            INVALID_BANK_TOKEN.to_string(),
-            AuthorizationType::BankCard,
-        );
-        let everest_mock = ModulePublisher::default();
-        let context = Context {
-            name: "test",
-            publisher: &everest_mock,
-            index: 0,
-        };
-
-        let result = pt_module.validate_token(&context, provided_token);
-        assert!(result.is_ok());
-        let validation_result = result.unwrap();
-        assert_eq!(validation_result.authorization_status, AuthorizationStatus::Invalid);
-    }
-
-    #[test]
-    /// Test validate_token with successful transaction
-    fn payment_terminal__validate_token__success() {
-        let mut feig_mock = SyncFeig::default();
-        feig_mock
-            .expect_begin_transaction()
-            .times(1)
-            .with(eq("valid_token"), eq(11))
-            .returning(|_, _| Ok(()));
-
-        let pt_module: PaymentTerminalModule = feig_mock.into();
-
-        let provided_token = ProvidedIdToken::new(
-            "valid_token".to_string(),
-            AuthorizationType::BankCard,
-        );
-        let everest_mock = ModulePublisher::default();
-        let context = Context {
-            name: "test",
-            publisher: &everest_mock,
-            index: 0,
-        };
-
-        let result = pt_module.validate_token(&context, provided_token);
-        assert!(result.is_ok());
-        let validation_result = result.unwrap();
-        assert_eq!(validation_result.authorization_status, AuthorizationStatus::Accepted);
-    }
-
-    #[test]
-    /// Test validate_token with transaction failures
-    fn payment_terminal__validate_token__transaction_failures() {
-        let parameters = [
-            (ErrorMessages::CreditNotSufficient, AuthorizationStatus::NoCredit),
-            (ErrorMessages::PaymentMethodNotSupported, AuthorizationStatus::Blocked),
-            (ErrorMessages::AbortViaTimeoutOrAbortKey, AuthorizationStatus::Invalid),
-            (ErrorMessages::ReceiverNotReady, AuthorizationStatus::Timeout),
-            (ErrorMessages::SystemError, AuthorizationStatus::Timeout),
-            (ErrorMessages::ErrorFromDialUp, AuthorizationStatus::Timeout),
-            (ErrorMessages::PinProcessingNotPossible, AuthorizationStatus::PinRequired),
-            (ErrorMessages::NecessaryDeviceNotPresentOrDefective, AuthorizationStatus::PinRequired),
-        ];
-
-        for (error_code, expected_status) in parameters {
-            let mut feig_mock = SyncFeig::default();
-            feig_mock
-                .expect_begin_transaction()
-                .times(1)
-                .with(eq("valid_token"), eq(11))
-                .returning(move |_, _| Err(anyhow::Error::new(error_code)));
-
-            let pt_module: PaymentTerminalModule = feig_mock.into();
-
-            let provided_token = ProvidedIdToken::new(
-                "valid_token".to_string(),
-                AuthorizationType::BankCard,
-            );
-            let everest_mock = ModulePublisher::default();
-            let context = Context {
-                name: "test",
-                publisher: &everest_mock,
-                index: 0,
-            };
-
-            let result = pt_module.validate_token(&context, provided_token);
-            assert!(result.is_ok());
-            let validation_result = result.unwrap();
-            assert_eq!(
-                validation_result.authorization_status,
-                expected_status,
-                "Failed for error code {:?}",
-                error_code
-            );
-        }
-    }
-
-    #[test]
-    /// Test validate_token with unknown error (no error code provided)
-    fn payment_terminal__validate_token__unknown_error() {
-        let mut feig_mock = SyncFeig::default();
-        feig_mock
-            .expect_begin_transaction()
-            .times(1)
-            .with(eq("valid_token"), eq(11))
-            .returning(|_, _| Err(anyhow::anyhow!("Some unknown error")));
-
-        let pt_module: PaymentTerminalModule = feig_mock.into();
-
-        let provided_token = ProvidedIdToken::new(
-            "valid_token".to_string(),
-            AuthorizationType::BankCard,
-        );
-        let everest_mock = ModulePublisher::default();
-        let context = Context {
-            name: "test",
-            publisher: &everest_mock,
-            index: 0,
-        };
-
-        let result = pt_module.validate_token(&context, provided_token);
-        assert!(result.is_ok());
-        let validation_result = result.unwrap();
-        assert_eq!(validation_result.authorization_status, AuthorizationStatus::Invalid);
     }
 
     #[test]
@@ -904,6 +825,7 @@ mod tests {
                     id_tag: Some(ProvidedIdToken::new(
                         "token".to_string(),
                         AuthorizationType::BankCard,
+                        None,
                     )),
                     status: SessionStatus::Finished,
                     session_id: String::new(),
@@ -925,6 +847,7 @@ mod tests {
                     id_tag: Some(ProvidedIdToken::new(
                         "token".to_string(),
                         AuthorizationType::BankCard,
+                        None,
                     )),
                     status: SessionStatus::Finished,
                     session_id: String::new(),
@@ -953,6 +876,7 @@ mod tests {
                     id_tag: Some(ProvidedIdToken::new(
                         "token".to_string(),
                         AuthorizationType::BankCard,
+                        None,
                     )),
                     status: SessionStatus::Finished,
                     session_id: String::new(),
@@ -991,6 +915,7 @@ mod tests {
                     id_tag: Some(ProvidedIdToken::new(
                         "token".to_string(),
                         AuthorizationType::BankCard,
+                        None,
                     )),
                     status: SessionStatus::Finished,
                     session_id: String::new(),
@@ -1030,16 +955,329 @@ mod tests {
                         time: None,
                     })
                 });
-            let (tx, _) = channel();
+            let pt_module: PaymentTerminalModule = feig.into();
 
-            let pt_module = PaymentTerminalModule {
-                tx,
-                feig,
-                pre_authorization_amount: 20,
-            };
             assert!(pt_module
                 .on_session_cost_impl(&context, session_cost)
                 .is_ok());
+        }
+    }
+
+    #[test]
+    /// Test validate_token with non-BankCard authorization type
+    fn payment_terminal__validate_token__invalid_authorization_type() {
+        let parameters = [AuthorizationType::OCPP, AuthorizationType::RFID];
+
+        for auth_type in parameters {
+            let feig_mock = SyncFeig::default();
+            let pt_module: PaymentTerminalModule = feig_mock.into();
+
+            let provided_token = ProvidedIdToken::new("some_token".to_string(), auth_type, None);
+            let everest_mock = ModulePublisher::default();
+            let context = Context {
+                name: "test",
+                publisher: &everest_mock,
+                index: 0,
+            };
+
+            let result = pt_module.validate_token(&context, provided_token);
+            assert!(result.is_ok());
+            let validation_result = result.unwrap();
+            assert_eq!(
+                validation_result.authorization_status,
+                AuthorizationStatus::Invalid
+            );
+        }
+    }
+
+    #[test]
+    /// Test validate_token with INVALID_BANK_TOKEN
+    fn payment_terminal__validate_token__invalid_bank_token() {
+        let feig_mock = SyncFeig::default();
+        let pt_module: PaymentTerminalModule = feig_mock.into();
+
+        let provided_token = ProvidedIdToken::new(
+            INVALID_BANK_TOKEN.to_string(),
+            AuthorizationType::BankCard,
+            None,
+        );
+        let everest_mock = ModulePublisher::default();
+        let context = Context {
+            name: "test",
+            publisher: &everest_mock,
+            index: 0,
+        };
+
+        let result = pt_module.validate_token(&context, provided_token);
+        assert!(result.is_ok());
+        let validation_result = result.unwrap();
+        assert_eq!(
+            validation_result.authorization_status,
+            AuthorizationStatus::Invalid
+        );
+    }
+
+    #[test]
+    /// Test validate_token with successful transaction
+    fn payment_terminal__validate_token__success() {
+        let mut feig_mock = SyncFeig::default();
+        feig_mock
+            .expect_begin_transaction()
+            .times(1)
+            .with(eq("valid_token"), eq(11))
+            .returning(|_, _| Ok(()));
+
+        let pt_module: PaymentTerminalModule = feig_mock.into();
+
+        let provided_token =
+            ProvidedIdToken::new("valid_token".to_string(), AuthorizationType::BankCard, None);
+        let everest_mock = ModulePublisher::default();
+        let context = Context {
+            name: "test",
+            publisher: &everest_mock,
+            index: 0,
+        };
+
+        let result = pt_module.validate_token(&context, provided_token);
+        assert!(result.is_ok());
+        let validation_result = result.unwrap();
+        assert_eq!(
+            validation_result.authorization_status,
+            AuthorizationStatus::Accepted
+        );
+    }
+
+    #[test]
+    /// Test validate_token with transaction failures
+    fn payment_terminal__validate_token__transaction_failures() {
+        let parameters = [
+            (
+                ErrorMessages::CreditNotSufficient,
+                AuthorizationStatus::NoCredit,
+            ),
+            (
+                ErrorMessages::PaymentMethodNotSupported,
+                AuthorizationStatus::Blocked,
+            ),
+            (
+                ErrorMessages::AbortViaTimeoutOrAbortKey,
+                AuthorizationStatus::Invalid,
+            ),
+            (
+                ErrorMessages::ReceiverNotReady,
+                AuthorizationStatus::Timeout,
+            ),
+            (ErrorMessages::SystemError, AuthorizationStatus::Timeout),
+            (ErrorMessages::ErrorFromDialUp, AuthorizationStatus::Timeout),
+            (
+                ErrorMessages::PinProcessingNotPossible,
+                AuthorizationStatus::PinRequired,
+            ),
+            (
+                ErrorMessages::NecessaryDeviceNotPresentOrDefective,
+                AuthorizationStatus::PinRequired,
+            ),
+        ];
+
+        for (error_code, expected_status) in parameters {
+            let mut feig_mock = SyncFeig::default();
+            feig_mock
+                .expect_begin_transaction()
+                .times(1)
+                .with(eq("valid_token"), eq(11))
+                .returning(move |_, _| Err(anyhow::Error::new(error_code)));
+
+            let pt_module: PaymentTerminalModule = feig_mock.into();
+
+            let provided_token =
+                ProvidedIdToken::new("valid_token".to_string(), AuthorizationType::BankCard, None);
+            let everest_mock = ModulePublisher::default();
+            let context = Context {
+                name: "test",
+                publisher: &everest_mock,
+                index: 0,
+            };
+
+            let result = pt_module.validate_token(&context, provided_token);
+            assert!(result.is_ok());
+            let validation_result = result.unwrap();
+            assert_eq!(
+                validation_result.authorization_status, expected_status,
+                "Failed for error code {:?}",
+                error_code
+            );
+        }
+    }
+
+    #[test]
+    /// Test validate_token with unknown error (no error code provided)
+    fn payment_terminal__validate_token__unknown_error() {
+        let mut feig_mock = SyncFeig::default();
+        feig_mock
+            .expect_begin_transaction()
+            .times(1)
+            .with(eq("valid_token"), eq(11))
+            .returning(|_, _| Err(anyhow::anyhow!("Some unknown error")));
+
+        let pt_module: PaymentTerminalModule = feig_mock.into();
+
+        let provided_token =
+            ProvidedIdToken::new("valid_token".to_string(), AuthorizationType::BankCard, None);
+        let everest_mock = ModulePublisher::default();
+        let context = Context {
+            name: "test",
+            publisher: &everest_mock,
+            index: 0,
+        };
+
+        let result = pt_module.validate_token(&context, provided_token);
+        assert!(result.is_ok());
+        let validation_result = result.unwrap();
+        assert_eq!(
+            validation_result.authorization_status,
+            AuthorizationStatus::Invalid
+        );
+    }
+
+    #[test]
+    /// Test enable_card_reading with various scenarios
+    fn payment_terminal__enable_card_reading() {
+        type CardTypeMap = HashMap<AuthorizationType, Option<Vec<i64>>>;
+
+        let parameters: Vec<(CardTypeMap, i64, Vec<AuthorizationType>, CardTypeMap)> = vec![
+            // Init empty map - all card types supported
+            (
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![])),
+                    (AuthorizationType::RFID, Some(vec![])),
+                ]),
+                1,
+                vec![AuthorizationType::BankCard, AuthorizationType::RFID],
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![1])),
+                    (AuthorizationType::RFID, Some(vec![1])),
+                ]),
+            ),
+            // Init empty map - with restrictions.
+            (
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![])),
+                    (AuthorizationType::RFID, Some(vec![])),
+                ]),
+                1,
+                vec![AuthorizationType::RFID],
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![])),
+                    (AuthorizationType::RFID, Some(vec![1])),
+                ]),
+            ),
+            // Extend an existing map
+            (
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![3])),
+                    (AuthorizationType::RFID, Some(vec![1])),
+                ]),
+                2,
+                vec![AuthorizationType::BankCard, AuthorizationType::RFID],
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![2, 3])),
+                    (AuthorizationType::RFID, Some(vec![1, 2])),
+                ]),
+            ),
+            // Extend an existing map
+            (
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![])),
+                    (AuthorizationType::RFID, Some(vec![1])),
+                ]),
+                2,
+                vec![AuthorizationType::BankCard, AuthorizationType::RFID],
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![2])),
+                    (AuthorizationType::RFID, Some(vec![1, 2])),
+                ]),
+            ),
+            // Extend an existing map - idempotent (adding same connector twice)
+            (
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![1])),
+                    (AuthorizationType::RFID, Some(vec![])),
+                ]),
+                1,
+                vec![AuthorizationType::BankCard],
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![1])),
+                    (AuthorizationType::RFID, Some(vec![])),
+                ]),
+            ),
+            // Extend an existing map - maintain sorted order when adding new
+            // connector
+            (
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![1, 3, 5])),
+                    (AuthorizationType::RFID, Some(vec![])),
+                ]),
+                2,
+                vec![AuthorizationType::BankCard],
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![1, 2, 3, 5])),
+                    (AuthorizationType::RFID, Some(vec![])),
+                ]),
+            ),
+            // Removing
+            (
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![1, 2])),
+                    (AuthorizationType::RFID, Some(vec![1, 2])),
+                ]),
+                1,
+                vec![AuthorizationType::BankCard],
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![1, 2])),
+                    (AuthorizationType::RFID, Some(vec![2])),
+                ]),
+            ),
+            // Removing - maintain sorted order when removing a connector
+            (
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![1, 2, 3, 5])),
+                    (AuthorizationType::RFID, Some(vec![1, 2, 4])),
+                ]),
+                2,
+                vec![],
+                HashMap::from_iter([
+                    (AuthorizationType::BankCard, Some(vec![1, 3, 5])),
+                    (AuthorizationType::RFID, Some(vec![1, 4])),
+                ]),
+            ),
+        ];
+
+        for (initial_map, connector_id, supported_cards, expected_map) in parameters {
+            let feig_mock = SyncFeig::default();
+            let (tx, _) = channel();
+            let pt_module = PaymentTerminalModule {
+                tx,
+                feig: feig_mock,
+                card_type_to_connector: Mutex::new(initial_map),
+                pre_authorization_amount: 50,
+            };
+
+            let everest_mock = ModulePublisher::default();
+            let context = Context {
+                name: "test",
+                publisher: &everest_mock,
+                index: 0,
+            };
+
+            let result = pt_module.enable_card_reading(&context, connector_id, supported_cards);
+            assert!(result.is_ok());
+
+            let actual_map = pt_module.card_type_to_connector.lock().unwrap();
+            assert_eq!(
+                *actual_map, expected_map,
+                "Failed for connector_id {}: expected {:?}, got {:?}",
+                connector_id, expected_map, *actual_map
+            );
         }
     }
 }
