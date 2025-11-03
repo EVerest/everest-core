@@ -1,0 +1,17 @@
+description: "This defines a valid interface with cmds and vars"
+cmds:
+  a_cmd:
+    description: A command
+    arguments:
+      value:
+        description: A value using the AnObject from test_type
+        type: object
+        $ref: /test_type#/AnObject
+    result:
+      description: True on success
+      type: boolean
+vars:
+  a_var:
+    description: A variable
+    type: object
+    $ref: /test_type#/AnObject
