@@ -1,0 +1,42 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Schema for Charging Status Indicator",
+    "type": "object",
+    "name": "ChargingStatusIndicator",
+    "properties": {
+        "ChargingStatusIndicatorActive": {
+            "variable_name": "Active",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "boolean"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite",
+                    "value": false
+                }
+            ],
+            "description": "Lighted",
+            "type": "boolean"
+        },
+        "ChargingStatusIndicatorColor": {
+            "variable_name": "Color",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "string"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite",
+                    "value": "FFFF00"
+                }
+            ],
+            "description": "Displayed color",
+            "type": "string"
+        }
+    },
+    "required": [
+    ]
+}

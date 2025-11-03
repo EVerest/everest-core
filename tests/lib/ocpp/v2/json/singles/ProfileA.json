@@ -1,0 +1,31 @@
+{
+    "id": 301,
+    "chargingProfileKind": "Absolute",
+    "chargingProfilePurpose": "TxDefaultProfile",
+    "chargingSchedule": [
+        {
+            "id": 0,
+            "chargingRateUnit": "A",
+            "chargingSchedulePeriod": [
+                {
+                    "limit": 32.0,
+                    "startPeriod": 0
+                },
+                {
+                    "limit": 31.0,
+                    "startPeriod": 6000
+                },
+                {
+                    "limit": 30.0,
+                    "startPeriod": 12000
+                }
+            ],
+            "duration": 3600,
+            "startSchedule": "2024-01-01T12:02:00Z"
+        }
+    ],
+    "stackLevel": 5,
+    "validFrom": "2024-01-01T12:00:00Z",
+    "validTo": "2024-01-01T14:00:00Z",
+    "transactionId": "g1522902-1170-416f-8e43-9e3bce28fab7"
+}
