@@ -1,17 +1,12 @@
-add_executable(main main.cpp)
-
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads)
+
+find_package(Boost COMPONENTS program_options REQUIRED)
+
+add_executable(main main.cpp)
 target_link_libraries(main
     PRIVATE
-        date
-        everest::timer
-        Boost::program_options
         Threads::Threads
+        Boost::program_options
+        everest::timer
 )
-
-# needs c++ 14
-target_compile_features(main PRIVATE cxx_std_14)
-
-install(TARGETS main
-        RUNTIME)

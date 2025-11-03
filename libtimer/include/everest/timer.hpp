@@ -1,15 +1,20 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
 #ifndef EVEREST_TIMER_HPP
 #define EVEREST_TIMER_HPP
 
 #include <boost/asio.hpp>
 #include <chrono>
 #include <condition_variable>
+#include <date/date.h>
+#include <date/tz.h>
 #include <functional>
 #include <mutex>
 #include <thread>
 
 namespace Everest {
-template <typename TimerClock = std::chrono::steady_clock> class Timer {
+// template <typename TimerClock = date::steady_clock> class Timer {
+template <typename TimerClock = date::utc_clock> class Timer {
 private:
     boost::asio::basic_waitable_timer<TimerClock>* timer = nullptr;
     std::function<void()> callback;
@@ -49,6 +54,14 @@ public:
         if (this->timer != nullptr) {
             // stop asio timer
             this->timer->cancel();
+
+            if (this->timer_thread != nullptr) {
+                this->io_context.stop();
+                this->timer_thread->join();
+            }
+
+            delete this->timer;
+            delete this->timer_thread;
         }
     }
 
@@ -113,13 +126,13 @@ public:
                     return;
                 }
 
-                this->timer->expires_from_now(this->interval_nanoseconds);
+                this->timer->expires_after(this->interval_nanoseconds);
                 this->timer->async_wait(this->callback_wrapper);
 
                 this->callback();
             };
 
-            this->timer->expires_from_now(this->interval_nanoseconds);
+            this->timer->expires_after(this->interval_nanoseconds);
             this->timer->async_wait(this->callback_wrapper);
         }
     }
@@ -144,7 +157,7 @@ public:
 
         if (this->timer != nullptr) {
             // use asio timer
-            this->timer->expires_from_now(interval);
+            this->timer->expires_after(interval);
             this->timer->async_wait([this](const boost::system::error_code& e) {
                 if (e) {
                     return;
@@ -164,8 +177,8 @@ public:
     }
 };
 
-using SteadyTimer = Timer<std::chrono::steady_clock>;
-using SystemTimer = Timer<std::chrono::system_clock>;
+using SteadyTimer = Timer<date::utc_clock>;
+using SystemTimer = Timer<date::utc_clock>;
 } // namespace Everest
 
 #endif // EVEREST_TIMER_HPP

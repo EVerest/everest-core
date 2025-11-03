@@ -1,2 +1,2 @@
-*build
-workspace.yaml
+build/
+dist/
