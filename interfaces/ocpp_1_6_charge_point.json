@@ -1,0 +1,38 @@
+{
+    "description": "This interface defines a OCPP 1.6 charge point",
+    "cmds": {
+        "plug_connected": {
+            "description": "Insert plug"
+        },
+        "plug_disconnected": {
+            "description": "Remove plug"
+        },
+        "check_authorization": {
+            "description": "Check if authentication is accepted by our backend ocpp server",
+            "arguments": {
+                "idTag": {
+                    "description": "The idTag",
+                    "type": "string",
+                    "maxLength": 20
+                }
+            },
+            "result": {
+                "description": "Result of authentication check",
+                "type": "string",
+                "enum": ["Accepted", "Blocked", "Expired", "Invalid", "ConcurrentTx"]
+            }
+        },
+        "start_charging": {
+            "description": "EV starts charging"
+        },
+        "suspend_charging": {
+            "description": "EV suspends charging"
+        },
+        "resume_charging": {
+            "description": "EV resumes charging"
+        },
+        "stop_charging": {
+            "description": "EV stops charging"
+        }
+    }
+}
