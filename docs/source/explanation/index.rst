@@ -27,3 +27,4 @@ Below that, you will be presented with a categorized list of all articles.
     :maxdepth: 1
 
     modules/index.rst
+    community-channels
