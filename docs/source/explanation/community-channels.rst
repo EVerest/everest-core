@@ -102,8 +102,11 @@ If you work in the field of EV charging and you are interested in open source
 software / projects, join the SIG calls.
 They are free to access and open to all interested parties.
 
-Join the mailing list:
+Join the mailing list
 `https://lists.lfenergy.org/g/ev-charging-sig <https://lists.lfenergy.org/g/ev-charging-sig>`_
+and check out the zoom meetings via 
+`https://zoom-lfx.platform.linuxfoundation.org/meetings/ev-charging-sig <https://zoom-lfx.platform.linuxfoundation.org/meetings/ev-charging-sig>`_.
 
-Directly access via Zoom:
-`https://zoom-lfx.platform.linuxfoundation.org/meeting/92797425199 <https://zoom-lfx.platform.linuxfoundation.org/meeting/92797425199>`_
+----
+
+Authors: Manuel Ziegler, Andreas Heinrich
