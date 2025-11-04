@@ -71,6 +71,11 @@ channels:
     messages:
       receive_reply_set_variables:
         $ref: '#/components/messages/receive_reply_set_variables'
+  send_request_monitor_variables:
+    address: 'm2e/monitor_variables'
+    messages:
+      send_request_monitor_variables:
+        $ref: '#/components/messages/send_request_monitor_variables'
 
   receive_ocpp_transaction_event:
     address: 'e2m/ocpp_transaction_event'
@@ -177,6 +182,12 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_reply_set_variables'
+  send_request_monitor_variables:
+    title: 'Send request to monitor the requested variables'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_monitor_variables'
+    description: 'Direction: Module to EVerest'
 
   receive_ocpp_transaction_event:
     title: 'Receive is OCPP transaction event'
@@ -368,6 +379,26 @@ components:
       contentType: application/json
       payload:
          $ref: '#/components/schemas/SetVariableResultList'
+    send_request_monitor_variables:
+      title: 'Monitor variables'
+      summary: 'Monitor the variables.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/MonitorVariableRequestList'
+      examples:
+        - summary: ""
+          payload:
+            items:
+            - component_variable:
+                component:
+                  name: string
+                  instance: string
+                  evse:
+                    id: 1
+                    connector_id: 1
+                variable:
+                  name: string
+                  instance: string
 
     receive_ocpp_transaction_event:
       name: receive_ocpp_transaction_event
@@ -671,6 +702,31 @@ components:
         - UnknownComponent
         - UnknownVariable
         - NotSupportedAttributeType
+    MonitorVariableRequest:
+      description: >-
+        Type to monitor a variable value (OCPP2.0.1) or configuration value (OCPP1.6)
+      type: object
+      additionalProperties: true
+      required:
+        - component_variable
+      properties:
+        component_variable:
+          description: >-
+            Identifier for which the value should be monitored
+          type: object
+          $ref: '#/components/schemas/ComponentVariable'
+    MonitorVariableRequestList:
+      description: List of MonitorVariableRequest values
+      type: object
+      additionalProperties: true
+      required:
+        - items
+      properties:
+        items:
+          description: List of MonitorVarialRequest values
+          type: array
+          items:
+            $ref: '#/components/schemas/MonitorVariableRequest'
     OcppTransactionEvent:
       description: >-
         Element providing information on OCPP transactions.

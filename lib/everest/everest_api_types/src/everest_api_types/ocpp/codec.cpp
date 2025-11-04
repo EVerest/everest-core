@@ -116,6 +116,11 @@ std::string serialize(SetVariableResultList const& val) noexcept {
     return result.dump(json_indent);
 }
 
+std::string serialize(MonitorVariableRequestList const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
 std::string serialize(SecurityEvent const& val) noexcept {
     json result = val;
     return result.dump(json_indent);
@@ -247,6 +252,11 @@ std::ostream& operator<<(std::ostream& os, SetVariableResultList const& val) {
 }
 
 std::ostream& operator<<(std::ostream& os, SetVariablesArgs const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, MonitorVariableRequestList const& val) {
     os << serialize(val);
     return os;
 }
@@ -400,6 +410,12 @@ template <> SetVariableResultList deserialize<>(const std::string& val) {
 template <> SetVariablesArgs deserialize<>(const std::string& val) {
     auto data = json::parse(val);
     SetVariablesArgs obj = data;
+    return obj;
+}
+
+template <> MonitorVariableRequestList deserialize<>(const std::string& val) {
+    auto data = json::parse(val);
+    MonitorVariableRequestList obj = data;
     return obj;
 }
 

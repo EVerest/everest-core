@@ -73,6 +73,9 @@ void from_json(const json& j, SetVariableRequestList& k);
 void to_json(json& j, SetVariableResultList const& k) noexcept;
 void from_json(const json& j, SetVariableResultList& k);
 
+void to_json(json& j, MonitorVariableRequestList const& k) noexcept;
+void from_json(const json& j, MonitorVariableRequestList& k);
+
 void to_json(json& j, SetVariablesArgs const& k) noexcept;
 void from_json(const json& j, SetVariablesArgs& k);
 

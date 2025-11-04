@@ -468,6 +468,12 @@ SetVariableResultList_External to_external_api(SetVariableResultList_Internal co
     return result;
 }
 
+MonitorVariableRequestList_Internal to_internal_api(MonitorVariableRequestList_External const& val) {
+    MonitorVariableRequestList_Internal result;
+    result = vecToInternal(val.items);
+    return result;
+}
+
 SecurityEvent_Internal to_internal_api(SecurityEvent_External const& val) {
     SecurityEvent_Internal result;
     result.type = val.type;

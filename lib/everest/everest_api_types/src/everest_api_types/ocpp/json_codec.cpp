@@ -557,6 +557,20 @@ void from_json(const json& j, SetVariablesArgs& k) {
     k.source = j["source"];
 }
 
+void to_json(json& j, MonitorVariableRequestList const& k) noexcept {
+    j["items"] = json::array();
+    for (auto val : k.items) {
+        j["items"].push_back(val);
+    }
+}
+
+void from_json(const json& j, MonitorVariableRequestList& k) {
+    k.items.clear();
+    for (auto val : j.at("items")) {
+        k.items.push_back(val);
+    }
+}
+
 void to_json(json& j, SecurityEvent const& k) noexcept {
     j = json{
         {"type", k.type},

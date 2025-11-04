@@ -115,6 +115,8 @@ struct SetVariableResult {
     std::optional<AttributeEnum> attribute_type;
 };
 
+using MonitorVariableRequest = ComponentVariable;
+
 struct GetVariableRequestList {
     std::vector<GetVariableRequest> items;
 };
@@ -134,6 +136,10 @@ struct SetVariableResultList {
 struct SetVariablesArgs {
     SetVariableRequestList variables;
     std::string source;
+};
+
+struct MonitorVariableRequestList {
+    std::vector<ComponentVariable> items;
 };
 
 struct SecurityEvent {

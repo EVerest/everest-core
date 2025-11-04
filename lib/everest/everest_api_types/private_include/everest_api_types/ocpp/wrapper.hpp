@@ -114,6 +114,10 @@ using SetVariableResult_External = SetVariableResult;
 SetVariableResult_Internal to_internal_api(SetVariableResult_External const& val);
 SetVariableResult_External to_external_api(SetVariableResult_Internal const& val);
 
+// MonitorVariableRequest is a ComponentVariable
+using MonitorVariableRequest_Internal = ::types::ocpp::ComponentVariable;
+using MonitorVariableRequest_External = ComponentVariable;
+
 using GetVariableRequestList_Internal = std::vector<::types::ocpp::GetVariableRequest>;
 using GetVariableRequestList_External = GetVariableRequestList;
 
@@ -137,6 +141,12 @@ using SetVariableResultList_External = SetVariableResultList;
 
 SetVariableResultList_Internal to_internal_api(SetVariableResultList_External const& val);
 SetVariableResultList_External to_external_api(SetVariableResultList_Internal const& val);
+
+using MonitorVariableRequestList_Internal = std::vector<::types::ocpp::ComponentVariable>;
+using MonitorVariableRequestList_External = MonitorVariableRequestList;
+
+MonitorVariableRequestList_Internal to_internal_api(MonitorVariableRequestList_External const& val);
+MonitorVariableRequestList_External to_external_api(MonitorVariableRequestList_Internal const& val);
 
 using SecurityEvent_Internal = ::types::ocpp::SecurityEvent;
 using SecurityEvent_External = SecurityEvent;

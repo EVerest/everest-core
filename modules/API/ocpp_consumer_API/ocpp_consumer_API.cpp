@@ -37,6 +37,7 @@ void ocpp_consumer_API::ready() {
     generate_api_cmd_data_transfer();
     generate_api_cmd_get_variables();
     generate_api_cmd_set_variables();
+    generate_api_cmd_monitor_variables();
     generate_api_var_security_event();
     generate_api_var_is_connected();
     generate_api_var_boot_notification_response();
@@ -111,6 +112,18 @@ void ocpp_consumer_API::generate_api_cmd_set_variables() {
                 mqtt.publish(msg.replyTo, serialize(reply));
                 return true;
             }
+        }
+        return false;
+    });
+}
+
+void ocpp_consumer_API::generate_api_cmd_monitor_variables() {
+    using namespace API_types_ext;
+    subscribe_api_topic("get_variables", [=](std::string const& data) {
+        MonitorVariableRequestList request;
+        if (deserialize(data, request)) {
+            r_ocpp->call_monitor_variables(to_internal_api(request));
+            return true;
         }
         return false;
     });
