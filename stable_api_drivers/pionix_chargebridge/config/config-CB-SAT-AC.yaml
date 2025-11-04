@@ -1,8 +1,8 @@
 charge_bridge:
   name: cb_sat_ac
-  ip: chargebridge-44b7d0c9d285.local
+  ip: chargebridge-44b7d0c98ace.local
   fw_file: ../firmware/charge-bridge-fw_complete.cbfw
-  fw_update_on_start: true
+  fw_update_on_start: false
   mdns_name: ""
 
 heartbeat:
@@ -87,6 +87,8 @@ evse_bsp:
     min_phase_count_export: 3
     supports_changing_phases_during_charging: false
     connector_type: "IEC62196Type2Cable"
+  ovm_enabled: false
+  ovm_module_id: 1
 
 gpio:
   enable: true
