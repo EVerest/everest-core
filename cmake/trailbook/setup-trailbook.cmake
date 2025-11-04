@@ -1,15 +1,15 @@
 # Internal macro to find the sphinx-build executable.
 macro(_find_sphinx_build)
-    find_program(
-        _SPHINX_BUILD_EXECUTABLE
-        NAMES 
-            "${Python3_EXECUTABLE} -m sphinx.cmd.build"
-            "sphinx-build"
-        DOC "Path to the sphinx-build executable"
-        OPTIONAL
-        PATHS
-            $ENV{VIRTUAL_ENV}/bin
+    execute_process(
+        COMMAND
+            ${Python3_EXECUTABLE} -m sphinx.cmd.build --version
+        RESULT_VARIABLE RESULT_SPHINX_VERSION
     )
+    if("${RESULT_SPHINX_VERSION}" STREQUAL "0")
+        set(_SPHINX_BUILD_EXECUTABLE "${Python3_EXECUTABLE} -m sphinx.cmd.build")
+    else()
+        set(_SPHINX_BUILD_EXECUTABLE "_SPHINX_BUILD_EXECUTABLE-NOTFOUND")
+    endif()
 endmacro()
 
 # Internal macro to find sphinx-build, and if not found, try to install it in an active python venv.
