@@ -1,0 +1,12 @@
+description: Interactive bring up helper for OCPP consumer interface
+provides:
+  ocpp:
+    description: OCPP inteface
+    interface: ocpp
+  ocpp_data_transfer:
+    description: OCPP data transfer towards the CSMS
+    interface: ocpp_data_transfer
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - James Chapman

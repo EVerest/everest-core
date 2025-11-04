@@ -198,7 +198,6 @@ active_modules:
       data_transfer:
         - module_id: ocpp
           implementation_id: data_transfer
-
   display_message:
     module: TerminalDisplayMessage
   session_cost:

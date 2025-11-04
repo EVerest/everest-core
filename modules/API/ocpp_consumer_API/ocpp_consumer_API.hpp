@@ -89,11 +89,14 @@ private:
     void generate_api_cmd_data_transfer();
     void generate_api_cmd_get_variables();
     void generate_api_cmd_set_variables();
+    void generate_api_cmd_monitor_variables();
 
     void generate_api_var_security_event();
     void generate_api_var_is_connected();
     void generate_api_var_boot_notification_response();
     void generate_api_var_ocpp_transaction_event();
+    void generate_api_var_event_data();
+    void generate_api_var_charging_schedules();
 
     void generate_api_var_communication_check();
 
