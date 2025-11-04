@@ -88,9 +88,12 @@ bool api_connector::register_events(everest::lib::io::event::fd_event_handler& h
 }
 
 bool api_connector::unregister_events(everest::lib::io::event::fd_event_handler& handler) {
-    auto result = handler.unregister_event_handler(&m_mqtt);
+    auto result = handler.unregister_event_handler(&m_bsp);
+    if (m_ovm_enabled) {
+        result = handler.unregister_event_handler(&m_ovm) && result;
+    }
+    result = handler.unregister_event_handler(&m_mqtt) && result;
     result = handler.unregister_event_handler(&m_mqtt_timer) && result;
-    result = handler.unregister_event_handler(&m_bsp) && result;
     result = handler.unregister_event_handler(&m_sync_timer) && result;
     return result;
 }

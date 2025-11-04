@@ -24,7 +24,7 @@ using namespace everest::lib::API::V1_0::types::generic;
 
 namespace charge_bridge::evse_bsp {
 
-ovm_api::ovm_api(evse_ovm_config const& config, std::string const& cb_identifier, evse_bsp_host_to_cb& host_status) :
+ovm_api::ovm_api([[maybe_unused]] evse_ovm_config const& config, std::string const& cb_identifier, evse_bsp_host_to_cb& host_status) :
     host_status(host_status), m_cb_identifier(cb_identifier) {
 
     last_everest_heartbeat = std::chrono::steady_clock::time_point::max();
@@ -122,7 +122,6 @@ void ovm_api::handle_dc_hv_ov_error(bool high) {
     }
 }
 
-
 void ovm_api::handle_cp_state(CpState state) {
     if (state == CpState_A) {
         send_clear_error(API_OVM::ErrorEnum::MREC5OverVoltage, "");
@@ -134,6 +133,7 @@ void ovm_api::receive_set_limits(std::string const& payload) {
     if (everest::lib::API::deserialize(payload, m_limits)) {
         host_status.ovm_limit_emergency_mV = static_cast<uint32_t>(m_limits.emergency_limit_V * V_to_mV_factor);
         host_status.ovm_limit_error_mV = static_cast<uint32_t>(m_limits.error_limit_V * V_to_mV_factor);
+        tx(host_status);
     } else {
         std::cerr << "ovm_api::receive_set_limits: payload invalid -> " << payload << std::endl;
     }
@@ -142,15 +142,17 @@ void ovm_api::receive_set_limits(std::string const& payload) {
 void ovm_api::receive_start() {
     host_status.ovm_enable = 1;
     host_status.ovm_reset_errors = 0;
+    tx(host_status);
 }
 
 void ovm_api::receive_stop() {
     host_status.ovm_enable = 0;
+    tx(host_status);
 }
 
 void ovm_api::receive_reset_over_voltage_error() {
-    std::cout << "reset_over_voltage_error()" << std::endl;
     host_status.ovm_reset_errors = 1;
+    tx(host_status);
 }
 
 void ovm_api::receive_heartbeat() {
@@ -195,7 +197,7 @@ bool ovm_api::check_everest_heartbeat() {
     if (last_everest_heartbeat == std::chrono::steady_clock::time_point::max()) {
         return false;
     }
-    return std::chrono::steady_clock::now() - last_everest_heartbeat < 2s;
+    return std::chrono::steady_clock::now() - last_everest_heartbeat < 3s;
 }
 
 void ovm_api::handle_everest_connection_state() {
@@ -208,7 +210,6 @@ void ovm_api::handle_everest_connection_state() {
         } else {
             utilities::print_error(m_cb_identifier, "OVM/EVEREST", 1) << "Waiting for EVerest...." << std::endl;
             // TODO is there anything to do???
-            tx(host_status);
         }
     };
 
