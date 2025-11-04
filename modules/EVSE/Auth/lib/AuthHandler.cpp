@@ -22,21 +22,21 @@ std::vector<int> intersect(std::vector<int>& a, std::vector<int>& b) {
 }
 
 namespace conversions {
-std::string token_handling_result_to_string(const TokenHandlingResult& result) {
+std::string token_handling_result_to_string(const TokenHandlingResultEnum& result) {
     switch (result) {
-    case TokenHandlingResult::ALREADY_IN_PROCESS:
+    case TokenHandlingResultEnum::ALREADY_IN_PROCESS:
         return "ALREADY_IN_PROCESS";
-    case TokenHandlingResult::NO_CONNECTOR_AVAILABLE:
+    case TokenHandlingResultEnum::NO_CONNECTOR_AVAILABLE:
         return "NO_CONNECTOR_AVAILABLE";
-    case TokenHandlingResult::REJECTED:
+    case TokenHandlingResultEnum::REJECTED:
         return "REJECTED";
-    case TokenHandlingResult::TIMEOUT:
+    case TokenHandlingResultEnum::TIMEOUT:
         return "TIMEOUT";
-    case TokenHandlingResult::USED_TO_START_TRANSACTION:
+    case TokenHandlingResultEnum::USED_TO_START_TRANSACTION:
         return "USED_TO_START_TRANSACTION";
-    case TokenHandlingResult::USED_TO_STOP_TRANSACTION:
+    case TokenHandlingResultEnum::USED_TO_STOP_TRANSACTION:
         return "USED_TO_STOP_TRANSACTION";
-    case TokenHandlingResult::WITHDRAWN:
+    case TokenHandlingResultEnum::WITHDRAWN:
         return "WITHDRAWN";
     default:
         throw std::runtime_error("No known conversion for the given token handling result");
@@ -78,7 +78,7 @@ void AuthHandler::initialize() {
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
     std::unique_lock<std::mutex> lk(this->event_mutex);
     if (!this->publish_token_validation_status_callback) {
-        return TokenHandlingResult::REJECTED;
+        return TokenHandlingResult{TokenHandlingResultEnum::REJECTED};
     }
 
     TokenHandlingResult result;
@@ -91,42 +91,47 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     if (!this->is_token_already_in_process(provided_token, referenced_evses)) {
         // process token if not already in process
         this->tokens_in_process.insert(provided_token);
-        this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Processing);
+        this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Processing, {});
         result = this->handle_token(provided_token_copy, lk);
     } else {
         // do nothing if token is currently processed
         EVLOG_info << "Received token " << everest::helpers::redact(provided_token.id_token.value)
                    << " repeatedly while still processing it";
-        result = TokenHandlingResult::ALREADY_IN_PROCESS;
+        result = TokenHandlingResultEnum::ALREADY_IN_PROCESS;
     }
 
-    switch (result) {
-    case TokenHandlingResult::ALREADY_IN_PROCESS:
+    switch (result.summary) {
+    case TokenHandlingResultEnum::ALREADY_IN_PROCESS:
         break;
-    case TokenHandlingResult::TIMEOUT: // Timeout means accepted but failed to pick contactor
-        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::TimedOut);
+    case TokenHandlingResultEnum::TIMEOUT: // Timeout means accepted but failed to pick contactor
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::TimedOut,
+                                                       result.validation_results);
         break;
-    case TokenHandlingResult::NO_CONNECTOR_AVAILABLE:
-    case TokenHandlingResult::REJECTED:
-        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Rejected);
+    case TokenHandlingResultEnum::NO_CONNECTOR_AVAILABLE:
+    case TokenHandlingResultEnum::REJECTED:
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Rejected,
+                                                       result.validation_results);
         break;
-    case TokenHandlingResult::USED_TO_START_TRANSACTION:
-        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::UsedToStart);
+    case TokenHandlingResultEnum::USED_TO_START_TRANSACTION:
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::UsedToStart,
+                                                       result.validation_results);
         break;
-    case TokenHandlingResult::USED_TO_STOP_TRANSACTION:
-        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::UsedToStop);
+    case TokenHandlingResultEnum::USED_TO_STOP_TRANSACTION:
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::UsedToStop,
+                                                       result.validation_results);
         break;
-    case TokenHandlingResult::WITHDRAWN:
-        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Withdrawn);
+    case TokenHandlingResultEnum::WITHDRAWN:
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Withdrawn,
+                                                       result.validation_results);
         break;
     }
 
-    if (result != TokenHandlingResult::ALREADY_IN_PROCESS) {
+    if (result.summary != TokenHandlingResultEnum::ALREADY_IN_PROCESS) {
         this->tokens_in_process.erase(provided_token);
     }
 
     EVLOG_info << "Result for token: " << everest::helpers::redact(provided_token.id_token.value) << ": "
-               << conversions::token_handling_result_to_string(result);
+               << conversions::token_handling_result_to_string(result.summary);
     this->processing_finished_cv.notify_all();
     return result;
 }
@@ -148,7 +153,8 @@ void AuthHandler::handle_token_validation_result_update(const ValidationResultUp
         std::vector<int32_t> connectors_allowed{connector_id};
         provided_token.connectors = connectors_allowed;
         this->publish_token_validation_status_callback(provided_token,
-                                                       types::authorization::TokenValidationStatus::Accepted);
+                                                       types::authorization::TokenValidationStatus::Accepted,
+                                                       {validation_result_update.validation_result});
     } else {
         EVLOG_error << "Unknown evse#" << connector_id
                     << " or unknown authorization identifier on the evse for validation result update.";
@@ -175,7 +181,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                     this->evses.at(evse_used_for_transaction)->identifier->parent_id_token.value();
             }
             provided_token.connectors = std::vector<int32_t>{evse_used_for_transaction};
-            return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
+            return TokenHandlingResult{TokenHandlingResultEnum::USED_TO_STOP_TRANSACTION};
         }
     }
 
@@ -189,7 +195,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
     configured, we can immediately respond with NO_CONNECTOR_AVAILABLE */
     if (!this->any_evse_available(referenced_evses) and !this->any_parent_id_present(referenced_evses) and
         !this->master_pass_group_id.has_value()) {
-        return TokenHandlingResult::NO_CONNECTOR_AVAILABLE;
+        return TokenHandlingResult{TokenHandlingResultEnum::NO_CONNECTOR_AVAILABLE};
     }
 
     /* If all evses are reserved and the given identifier doesnt match any reserved identifier and no parent id is
@@ -223,7 +229,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
     }
 
     if (all_evses_reserved_and_tag_does_not_match) {
-        return TokenHandlingResult::NO_CONNECTOR_AVAILABLE;
+        return TokenHandlingResult{TokenHandlingResultEnum::NO_CONNECTOR_AVAILABLE};
     }
 
     // Validate the provided token using the available validators
@@ -275,7 +281,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                     // (see C16 of OCPP2.0.1 spec)
                     provided_token.parent_id_token = validation_result.parent_id_token.value();
                     provided_token.connectors = connectors;
-                    return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
+                    return {TokenHandlingResultEnum::USED_TO_STOP_TRANSACTION, {validation_result}};
                 }
 
                 const auto evse_used_for_transaction =
@@ -283,7 +289,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                 if (evse_used_for_transaction != -1) {
                     provided_token.connectors = std::vector<int32_t>{evse_used_for_transaction};
                     if (!this->evses[evse_used_for_transaction]->transaction_active) {
-                        return TokenHandlingResult::ALREADY_IN_PROCESS;
+                        return {TokenHandlingResultEnum::ALREADY_IN_PROCESS, {validation_result}};
                     } else {
                         StopTransactionRequest req;
                         req.reason = StopTransactionReason::Local;
@@ -291,7 +297,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                         this->stop_transaction_callback(this->evses.at(evse_used_for_transaction)->evse_index, req);
                         EVLOG_info << "Transaction was stopped because parent_id_token was used for transaction";
                         provided_token.parent_id_token = validation_result.parent_id_token.value();
-                        return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
+                        return {TokenHandlingResultEnum::USED_TO_STOP_TRANSACTION, {validation_result}};
                     }
                 }
             }
@@ -300,7 +306,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
 
     // check if any evse is available
     if (!this->any_evse_available(referenced_evses)) {
-        return TokenHandlingResult::NO_CONNECTOR_AVAILABLE;
+        return {TokenHandlingResultEnum::NO_CONNECTOR_AVAILABLE, validation_results};
     }
 
     // We can remove evse_ids from referenced_evses that already have an identifier assigend, since we don't want to
@@ -322,14 +328,14 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                 if (this->equals_master_pass_group_id(validation_result.parent_id_token)) {
                     EVLOG_info << "parent_id_token of validation result is equal to master_pass_group_id. Not allowed "
                                   "to authorize this token for starting transactions!";
-                    return TokenHandlingResult::REJECTED;
+                    return {TokenHandlingResultEnum::REJECTED, {validation_result}};
                 }
 
                 if (validation_result.parent_id_token.has_value()) {
                     provided_token.parent_id_token = validation_result.parent_id_token.value();
                 }
-                this->publish_token_validation_status_callback(provided_token,
-                                                               types::authorization::TokenValidationStatus::Accepted);
+                this->publish_token_validation_status_callback(
+                    provided_token, types::authorization::TokenValidationStatus::Accepted, {validation_result});
                 /* although validator accepts the authorization request, the Auth module still needs to
                     - select the evse for the authorization request
                     - process it against placed reservations
@@ -341,9 +347,9 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
 
                 if (not select_evse_result.evse_id.has_value()) {
                     if (select_evse_result.status == SelectEvseReturnStatus::TimeOut) {
-                        return TokenHandlingResult::TIMEOUT;
+                        return {TokenHandlingResultEnum::TIMEOUT, {validation_result}};
                     } else if (select_evse_result.status == SelectEvseReturnStatus::Interrupted) {
-                        return TokenHandlingResult::WITHDRAWN;
+                        return {TokenHandlingResultEnum::WITHDRAWN, {validation_result}};
                     }
                 }
 
@@ -385,10 +391,12 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                 }
                 this->notify_evse(evse_id, provided_token, validation_result, lk);
             }
-            i++;
+            if (!authorized) {
+                i++;
+            }
         }
         if (authorized) {
-            return TokenHandlingResult::USED_TO_START_TRANSACTION;
+            return {TokenHandlingResultEnum::USED_TO_START_TRANSACTION, {validation_results.at(i)}};
         } else {
             EVLOG_debug << "id_token could not be validated by any validator";
             // in case the validation was not successful, we need to notify the evse and transmit the validation result.
@@ -401,11 +409,11 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                                   this->notify_evse(connector, provided_token, validation_result, lk);
                               });
             }
-            return TokenHandlingResult::REJECTED;
+            return {TokenHandlingResultEnum::REJECTED, validation_results};
         }
     } else {
         EVLOG_warning << "No validation result was received by any validator.";
-        return TokenHandlingResult::REJECTED;
+        return {TokenHandlingResultEnum::REJECTED, validation_results};
     }
 }
 
@@ -620,13 +628,14 @@ void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token
 
         this->evses.at(evse_id)->timeout_timer.stop();
         this->evses.at(evse_id)->timeout_timer.timeout(
-            [this, evse_index, &evse = this->evses.at(evse_id), provided_token]() {
+            [this, evse_index, &evse = this->evses.at(evse_id), provided_token, validation_result]() {
                 evse->timeout_in_progress = true;
                 std::lock_guard<std::mutex> lk(this->event_mutex);
                 EVLOG_debug << "Authorization timeout for evse#" << evse_index;
                 evse->identifier.reset();
                 this->withdraw_authorization_callback(evse_index);
-                this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::TimedOut);
+                this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::TimedOut,
+                                                               {validation_result});
                 evse->timeout_in_progress = false;
                 this->cv.notify_all();
             },
@@ -941,7 +950,8 @@ void AuthHandler::register_reservation_cancelled_callback(
 }
 
 void AuthHandler::register_publish_token_validation_status_callback(
-    const std::function<void(const ProvidedIdToken&, TokenValidationStatus)>& callback) {
+    const std::function<void(const ProvidedIdToken&, TokenValidationStatus, const std::vector<ValidationResult>&)>&
+        callback) {
     this->publish_token_validation_status_callback = callback;
 }
 
