@@ -48,7 +48,7 @@ bool is_data_msg([[maybe_unused]] cb_can_message const& msg) {
 can_bridge::can_bridge(can_bridge_config const& config) :
     m_udp(config.cb_remote, config.cb_port),
     m_can_device(config.can_device),
-    m_last_msg_to_cb(std::chrono::steady_clock::now() - 24h) {
+    m_last_msg_to_cb(std::chrono::steady_clock::time_point()) {
 
     auto& manager = everest::lib::io::netlink::vcan_netlink_manager::Instance();
     auto success = manager.create(config.can_device) && manager.bring_up(config.can_device);
@@ -132,6 +132,15 @@ void can_bridge::send_can_to_udp(cb_can_message const& msg) {
 }
 
 void can_bridge::handle_heartbeat_timer() {
+    if (m_udp.on_error()) {
+        // If the connection is not available, retry soon and invalidate last hearbeat
+        m_heartbeat_timer.set_timeout(250ms);
+        m_last_msg_to_cb = std::chrono::steady_clock::time_point();
+        return;
+    } else {
+        // otherwise go back to regular interval
+        m_heartbeat_timer.set_timeout(10s);
+    }
     auto delta = std::chrono::steady_clock::now() - m_last_msg_to_cb;
     if (delta > 10s) {
         cb_can_message msg = cb_can_message_set_zero;
