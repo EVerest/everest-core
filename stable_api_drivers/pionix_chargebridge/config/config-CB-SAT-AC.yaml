@@ -88,7 +88,7 @@ evse_bsp:
     supports_changing_phases_during_charging: false
     connector_type: "IEC62196Type2Cable"
   ovm_enabled: false
-  ovm_module_id: 1
+  ovm_module_id: cb_ovm
 
 gpio:
   enable: true
