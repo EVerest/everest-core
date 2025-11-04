@@ -524,6 +524,8 @@ void OCPP201::ready() {
 
         bool scheduled = type == ocpp::v2::ResetEnum::OnIdle;
 
+        // small delay before stopping the charge point to make sure all responses are received
+        std::this_thread::sleep_for(std::chrono::seconds(this->config.ResetStopDelay));
         try {
             this->r_system->call_reset(types::system::ResetType::NotSpecified, scheduled);
         } catch (std::out_of_range& e) {
