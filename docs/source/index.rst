@@ -40,7 +40,7 @@ electrification of the mobility sector.
       the development work.
 
    .. grid-item-card:: Quick Start Guides
-      :link: explanation/quick-start-guides
+      :link: explanation/getting-started/index
       :link-type: doc
 
       We provide several entry points for a fast first experience with the
