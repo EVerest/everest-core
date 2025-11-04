@@ -14,6 +14,8 @@
 #include <everest/io/event/fd_event_handler.hpp>
 #include <everest/io/serial/event_pty.hpp>
 #include <everest/io/tun_tap/tap_client.hpp>
+#include <everest/util/async/monitor.hpp>
+
 #include <memory>
 #include <optional>
 
@@ -66,7 +68,7 @@ private:
 
     everest::lib::io::event::fd_event_handler* m_event_handler{nullptr};
     bool m_force_firmware_update{false};
-    std::atomic_bool m_is_connected{false};
+    everest::lib::util::monitor<bool> m_is_connected{false};
     bool m_was_connected{false};
 
     const charge_bridge_config m_config;

@@ -35,8 +35,13 @@ charge_bridge::charge_bridge(charge_bridge_config const& config) : m_config(conf
         bsp = std::make_unique<evse_bridge>(config.evse.value());
     }
     if (config.heartbeat.has_value()) {
-        heartbeat = std::make_unique<heartbeat_service>(config.heartbeat.value(),
-                                                        [this](bool connected) { m_is_connected.store(connected); });
+        heartbeat = std::make_unique<heartbeat_service>(config.heartbeat.value(), [this](bool connected) {
+            {
+                auto handle = m_is_connected.handle();
+                *handle = connected;
+            }
+            m_is_connected.notify_one();
+        });
     }
     if (config.gpio.has_value()) {
         gpio = std::make_unique<gpio_bridge>(config.gpio.value());
@@ -44,6 +49,7 @@ charge_bridge::charge_bridge(charge_bridge_config const& config) : m_config(conf
 }
 
 charge_bridge::~charge_bridge() {
+    m_is_connected.notify_one();
 }
 
 void charge_bridge::manage(everest::lib::io::event::fd_event_handler& handler, std::atomic_bool const& run,
@@ -52,8 +58,8 @@ void charge_bridge::manage(everest::lib::io::event::fd_event_handler& handler, s
     m_event_handler = &handler;
     m_force_firmware_update = force_update;
 
-    auto action = [this]() {
-        if (m_was_connected and not m_is_connected.load()) {
+    auto action = [this](bool is_connected) {
+        if (m_was_connected and not is_connected) {
             m_event_handler->add_action([this]() { unregister_events(*m_event_handler); });
             m_was_connected = false;
         }
@@ -65,10 +71,13 @@ void charge_bridge::manage(everest::lib::io::event::fd_event_handler& handler, s
         }
     };
 
-    std::thread manager([&run, action]() {
+    std::thread manager([&run, action, this]() {
+        auto handle = m_is_connected.handle();
+        bool last_is_connected = *handle;
         while (run.load()) {
-            action();
-            std::this_thread::sleep_for(20s);
+            action(*handle);
+            handle.wait_for([&]{return (*handle not_eq last_is_connected) or not run.load();}, 10s);
+            last_is_connected = * handle;
         }
     });
     manager.detach();
