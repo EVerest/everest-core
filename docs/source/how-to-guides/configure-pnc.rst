@@ -1,8 +1,7 @@
 .. _howto-configure-pnc:
 
-################################
 Configure Plug&Charge in EVerest
-################################
+================================
 
 This is a goal-oriented how-to-guide on how to configure Plug&Charge in EVerest.
 
@@ -22,6 +21,9 @@ It's a good idea to start with a base of a configuration file and talk about the
 Plug&Charge. The base config we use is the "config-sil-ocpp201.yaml", which already contains the configuration
 for OCPP2.x.
 
+Module Configurations
+---------------------
+
 We need to take a closer look at the configuration of the following modules:
 
 * EvseManager
@@ -30,35 +32,34 @@ We need to take a closer look at the configuration of the following modules:
 * EvseSecurity
 
 EvseManager
-===========
+~~~~~~~~~~~
 
 * In case of AC, make sure that `ac_hlc_enabled` is set to `true` in order to allow ISO15118 communication.
 * Make sure `payment_enable_contract` is set to `true`.
 
 EvseV2G
-=======
+~~~~~~~~~~~
 
 * Make sure `tls_security` is set to `allow` or `force`.
 * Make sure `verify_contract_cert_chain` is set to `true`.
 
 Auth
-====
+~~~~~~~~~~~
 
 * Make sure the EvseManager module is listed as a connection of `token_provider`. This is important, because only
 in this case the authorization request including the contract certificate is actually received by the Auth module.
 * Make sure the OCPP module is configured as the single `token_validator`.
 
 EvseSecurity
-============
+~~~~~~~~~~~~
 
 Please refer to :ref:`Documentation of the EvseSecurity module <everest_modules_handwritten_EvseSecurity>` 
 for information on the ISO15118 configuration. It describes how to configure the paths to the required certificates and keys.
 
 .. _how-to-configure-pnc-ocpp-configuration:
 
-*************************************
 OCPP 1.6 and OCPP 2.x configuration
-*************************************
+-----------------------------------
 
 For a general introduction to how to configure OCPP in EVerest, please refer to :ref:`the OCPP1.6 tutorial <tutorial-ocpp16>`
 or :ref:`the OCPP2.x tutorial <tutorial-ocpp2>`.
@@ -105,6 +106,6 @@ These configuration keys can be configured manually or controlled by the CSMS ac
 from the charging station or does not return a certificate after the specified timeouts and retries, it is likely that the values
 of these configuration keys do not match the expectations of the CSMS. Contact your CSMS partner in this case.
 
-----------------------------------------
+----
 
 **Authors**: Piet Gömpel
