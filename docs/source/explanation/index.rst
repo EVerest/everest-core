@@ -29,3 +29,4 @@ Below that, you will be presented with a categorized list of all articles.
     modules/index
     community-channels
     pnc-process
+    high-level-overview
