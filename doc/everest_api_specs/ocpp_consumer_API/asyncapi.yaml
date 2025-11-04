@@ -97,6 +97,11 @@ channels:
     messages:
       receive_boot_notification_response:
         $ref: '#/components/messages/receive_boot_notification_response'
+  receive_event_data:
+    address: 'e2m/event_data'
+    messages:
+      receive_event_data:
+        $ref: '#/components/messages/receive_event_data'
 
 
   receive_heartbeat:
@@ -209,6 +214,11 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_boot_notification_response'
+  receive_event_data:
+    title: 'Receive event data'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_event_data'
 
 
   receive_heartbeat:
@@ -429,6 +439,14 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/BootNotificationResponse'
+    receive_event_data:
+      name: receive_event_data
+      title: 'Receive event data'
+      summary: >-
+        Published for a component variable combination when a variable with a monitor has been changed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/EventData'
 
 
     receive_heartbeat:
@@ -490,6 +508,88 @@ components:
           description: Detailed status information.
           type: object
           $ref: '#/components/schemas/StatusInfoType'
+    EventData:
+      description: Type to report an event notification for a component-variable
+      type: object
+      additionalProperties: true
+      required:
+        - component_variable
+        - event_id
+        - timestamp
+        - trigger
+        - actual_value
+        - event_notification_type
+      properties:
+        component_variable:
+          description: Identifier for which the event occurred
+          type: object
+          $ref: '#/components/schemas/ComponentVariable'
+        event_id:
+          description: Identifies the event
+          type: integer
+        timestamp:
+          description: Timestamp of the moment the report was generated
+          type: string
+          format: date-time
+        trigger:
+          description: Type of the monitor that triggered this event
+          type: string
+          $ref: '#/components/schemas/EventTriggerEnum'
+        actual_value:
+          description: Actual value of the variable
+          type: string
+          maxLength: 2500
+        event_notification_type:
+          description: Type of the event notification
+          type: string
+          $ref: '#/components/schemas/EventNotificationType'
+        cause:
+          description: Refers to the Id of an event that is considered to be the cause for this event
+          type: integer
+        tech_code:
+          description: Technical (error) code as reported by component
+          type: string
+          maxLength: 50
+        tech_info:
+          description: Technical detail information as reported by component
+          type: string
+          maxLength: 500
+        cleared:
+          description: Cleared is set to true to report the clearing of a monitored situation
+          type: boolean
+        transaction_id:
+          description: >-
+            If an event notification is linked to a specific transaction, this field can be used
+            to specify its transactionId
+          type: string
+          maxLength: 36
+        variable_monitoring_id:
+          description: Identifies the VariableMonitoring which triggered the event
+          type: integer
+    EventTriggerEnum:
+      description: >-
+        Indicates the trigger reason of a generic event as part of the type EventData
+        Alerting: Monitored variable has passed an Lower or Upper Threshold
+        Delta: Delta Monitored Variable value has changed by more than specified amount
+        Periodic: Periodic Monitored Variable has been sampled for reporting at the specified interval
+      type: string
+      enum:
+        - Alerting
+        - Delta
+        - Periodic
+    EventNotificationType:
+      description: >-
+        Indicates the event notification type as part of the type EventData
+        HardWiredNotification: The software implemented by the manufacturer triggered a hardwired notification
+        HardWiredMonitor: Triggered by a monitor, which is hardwired by the manufacturer
+        PreconfiguredMonitor: Triggered by a monitor, which is preconfigured by the manufacturer.
+        CustomMonitor: Triggered by a monitor which is set by a message by the Charging Station Operator.
+      type: string
+      enum:
+        - HardWiredNotification
+        - HardWiredMonitor
+        - PreconfiguredMonitor
+        - CustomMonitor
     Component:
       description: >-
         Type for a component with name, optional instance and optional evse

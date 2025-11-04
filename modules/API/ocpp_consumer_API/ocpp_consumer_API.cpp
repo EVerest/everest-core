@@ -42,6 +42,7 @@ void ocpp_consumer_API::ready() {
     generate_api_var_is_connected();
     generate_api_var_boot_notification_response();
     generate_api_var_ocpp_transaction_event();
+    generate_api_var_event_data();
 
     generate_api_var_communication_check();
 
@@ -143,6 +144,10 @@ void ocpp_consumer_API::generate_api_var_boot_notification_response() {
 
 void ocpp_consumer_API::generate_api_var_ocpp_transaction_event() {
     r_ocpp->subscribe_ocpp_transaction_event(forward_api_var("ocpp_transaction_event"));
+}
+
+void ocpp_consumer_API::generate_api_var_event_data() {
+    r_ocpp->subscribe_event_data(forward_api_var("event_data"));
 }
 
 void ocpp_consumer_API::generate_api_var_communication_check() {

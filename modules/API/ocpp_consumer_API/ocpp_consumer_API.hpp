@@ -95,6 +95,7 @@ private:
     void generate_api_var_is_connected();
     void generate_api_var_boot_notification_response();
     void generate_api_var_ocpp_transaction_event();
+    void generate_api_var_event_data();
 
     void generate_api_var_communication_check();
 

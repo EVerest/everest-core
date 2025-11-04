@@ -19,6 +19,12 @@ void from_json(const json& j, GetVariableStatusEnumType& k);
 void to_json(json& j, SetVariableStatusEnumType const& k) noexcept;
 void from_json(const json& j, SetVariableStatusEnumType& k);
 
+void to_json(json& j, EventTriggerEnum const& k) noexcept;
+void from_json(const json& j, EventTriggerEnum& k);
+
+void to_json(json& j, EventNotificationType const& k) noexcept;
+void from_json(const json& j, EventNotificationType& k);
+
 void to_json(json& j, DataTransferStatus const& k) noexcept;
 void from_json(const json& j, DataTransferStatus& k);
 
@@ -90,5 +96,8 @@ void from_json(const json& j, BootNotificationResponse& k);
 
 void to_json(json& j, OcppTransactionEvent const& k) noexcept;
 void from_json(const json& j, OcppTransactionEvent& k);
+
+void to_json(json& j, EventData const& k) noexcept;
+void from_json(const json& j, EventData& k);
 
 } // namespace everest::lib::API::V1_0::types::ocpp

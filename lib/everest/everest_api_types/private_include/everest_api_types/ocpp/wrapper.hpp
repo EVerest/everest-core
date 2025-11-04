@@ -30,6 +30,18 @@ using SetVariableStatusEnumType_External = SetVariableStatusEnumType;
 SetVariableStatusEnumType_Internal to_internal_api(SetVariableStatusEnumType_External const& val);
 SetVariableStatusEnumType_External to_external_api(SetVariableStatusEnumType_Internal const& val);
 
+using EventTriggerEnum_Internal = ::types::ocpp::EventTriggerEnum;
+using EventTriggerEnum_External = EventTriggerEnum;
+
+EventTriggerEnum_Internal to_internal_api(EventTriggerEnum_External const& val);
+EventTriggerEnum_External to_external_api(EventTriggerEnum_Internal const& val);
+
+using EventNotificationType_Internal = ::types::ocpp::EventNotificationType;
+using EventNotificationType_External = EventNotificationType;
+
+EventNotificationType_Internal to_internal_api(EventNotificationType_External const& val);
+EventNotificationType_External to_external_api(EventNotificationType_Internal const& val);
+
 using DataTransferStatus_Internal = ::types::ocpp::DataTransferStatus;
 using DataTransferStatus_External = DataTransferStatus;
 
@@ -171,5 +183,11 @@ using OcppTransactionEvent_External = OcppTransactionEvent;
 
 OcppTransactionEvent_Internal to_internal_api(OcppTransactionEvent_External const& val);
 OcppTransactionEvent_External to_external_api(OcppTransactionEvent_Internal const& val);
+
+using EventData_Internal = ::types::ocpp::EventData;
+using EventData_External = EventData;
+
+EventData_Internal to_internal_api(EventData_External const& val);
+EventData_External to_external_api(EventData_Internal const& val);
 
 } // namespace everest::lib::API::V1_0::types::ocpp

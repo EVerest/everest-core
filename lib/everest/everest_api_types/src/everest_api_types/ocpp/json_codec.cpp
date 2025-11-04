@@ -661,4 +661,105 @@ void from_json(const json& j, OcppTransactionEvent& k) {
     }
 }
 
+// ----------------------------------------------------------------------------
+// Macros to simplify conversions
+
+#define set_json_optional(A)                                                                                           \
+    if (k.A) {                                                                                                         \
+        j[#A] = k.A.value();                                                                                           \
+    }
+
+#define set_obj_optional(A)                                                                                            \
+    if (j.contains(#A)) {                                                                                              \
+        k.A.emplace(j.at(#A));                                                                                         \
+    }
+
+#define set_obj(A) k.A = j.at(#A)
+
+#define set_json_enum(A, B)                                                                                            \
+    case A::B:                                                                                                         \
+        j = #B;                                                                                                        \
+        return
+
+#define set_string_enum(A, B)                                                                                          \
+    if (s == #B) {                                                                                                     \
+        k = A::B;                                                                                                      \
+        return;                                                                                                        \
+    }
+
+// ----------------------------------------------------------------------------
+// conversions using the above macros
+
+void to_json(json& j, EventTriggerEnum const& k) noexcept {
+    switch (k) {
+        set_json_enum(EventTriggerEnum, Alerting);
+        set_json_enum(EventTriggerEnum, Delta);
+        set_json_enum(EventTriggerEnum, Periodic);
+    }
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::ocpp::EventTriggerEnum";
+}
+
+void from_json(const json& j, EventTriggerEnum& k) {
+    std::string s = j;
+    set_string_enum(EventTriggerEnum, Alerting);
+    set_string_enum(EventTriggerEnum, Delta);
+    set_string_enum(EventTriggerEnum, Periodic);
+    throw std::out_of_range(
+        "Provided string " + s +
+        " could not be converted to enum of type everest::lib::API::V1_0::types::ocpp::EventTriggerEnum");
+}
+
+void to_json(json& j, EventNotificationType const& k) noexcept {
+    switch (k) {
+        set_json_enum(EventNotificationType, HardWiredNotification);
+        set_json_enum(EventNotificationType, HardWiredMonitor);
+        set_json_enum(EventNotificationType, PreconfiguredMonitor);
+        set_json_enum(EventNotificationType, CustomMonitor);
+    }
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::ocpp::EventNotificationType";
+}
+
+void from_json(const json& j, EventNotificationType& k) {
+    std::string s = j;
+    set_string_enum(EventNotificationType, HardWiredNotification);
+    set_string_enum(EventNotificationType, HardWiredMonitor);
+    set_string_enum(EventNotificationType, PreconfiguredMonitor);
+    set_string_enum(EventNotificationType, CustomMonitor);
+    throw std::out_of_range(
+        "Provided string " + s +
+        " could not be converted to enum of type everest::lib::API::V1_0::types::ocpp::EventNotificationType");
+}
+
+void to_json(json& j, EventData const& k) noexcept {
+    j = json{
+        {"component_variable", k.component_variable},
+        {"event_id", k.event_id},
+        {"timestamp", k.timestamp},
+        {"trigger", k.trigger},
+        {"actual_value", k.actual_value},
+        {"event_notification_type", k.event_notification_type},
+    };
+    set_json_optional(cause);
+    set_json_optional(tech_code);
+    set_json_optional(tech_info);
+    set_json_optional(cleared);
+    set_json_optional(transaction_id);
+    set_json_optional(variable_monitoring_id);
+}
+
+void from_json(const json& j, EventData& k) {
+    set_obj(component_variable);
+    set_obj(event_id);
+    set_obj(timestamp);
+    set_obj(trigger);
+    set_obj(actual_value);
+    set_obj(event_notification_type);
+    set_obj_optional(cause);
+    set_obj_optional(tech_code);
+    set_obj_optional(tech_info);
+    set_obj_optional(cleared);
+    set_obj_optional(transaction_id);
+    set_obj_optional(variable_monitoring_id);
+}
+
 } // namespace everest::lib::API::V1_0::types::ocpp

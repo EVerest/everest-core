@@ -52,6 +52,19 @@ enum class TransactionEvent {
     Ended,
 };
 
+enum class EventTriggerEnum {
+    Alerting,
+    Delta,
+    Periodic,
+};
+
+enum class EventNotificationType {
+    HardWiredNotification,
+    HardWiredMonitor,
+    PreconfiguredMonitor,
+    CustomMonitor,
+};
+
 struct CustomData {
     std::string vendor_id;
     std::string data;
@@ -166,6 +179,21 @@ struct OcppTransactionEvent {
     std::string session_id;
     std::optional<EVSE> evse;
     std::optional<std::string> transaction_id;
+};
+
+struct EventData {
+    ComponentVariable component_variable;
+    std::int32_t event_id;
+    std::string timestamp;
+    EventTriggerEnum trigger;
+    std::string actual_value;
+    EventNotificationType event_notification_type;
+    std::optional<std::int32_t> cause;
+    std::optional<std::string> tech_code;
+    std::optional<std::string> tech_info;
+    std::optional<bool> cleared;
+    std::optional<std::string> transaction_id;
+    std::optional<std::int32_t> variable_monitoring_id;
 };
 
 } // namespace everest::lib::API::V1_0::types::ocpp

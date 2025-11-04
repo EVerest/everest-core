@@ -12,6 +12,8 @@ namespace everest::lib::API::V1_0::types::ocpp {
 std::string serialize(AttributeEnum val) noexcept;
 std::string serialize(GetVariableStatusEnumType val) noexcept;
 std::string serialize(SetVariableStatusEnumType val) noexcept;
+std::string serialize(EventTriggerEnum const& val) noexcept;
+std::string serialize(EventNotificationType const& val) noexcept;
 std::string serialize(DataTransferStatus val) noexcept;
 std::string serialize(RegistrationStatus val) noexcept;
 std::string serialize(TransactionEvent val) noexcept;
@@ -36,10 +38,13 @@ std::string serialize(SecurityEvent const& val) noexcept;
 std::string serialize(StatusInfoType const& val) noexcept;
 std::string serialize(BootNotificationResponse const& val) noexcept;
 std::string serialize(OcppTransactionEvent const& val) noexcept;
+std::string serialize(EventData const& val) noexcept;
 
 std::ostream& operator<<(std::ostream& os, AttributeEnum const& val);
 std::ostream& operator<<(std::ostream& os, GetVariableStatusEnumType const& val);
 std::ostream& operator<<(std::ostream& os, SetVariableStatusEnumType const& val);
+std::ostream& operator<<(std::ostream& os, EventTriggerEnum const& val);
+std::ostream& operator<<(std::ostream& os, EventNotificationType const& val);
 std::ostream& operator<<(std::ostream& os, DataTransferStatus const& val);
 std::ostream& operator<<(std::ostream& os, RegistrationStatus const& val);
 std::ostream& operator<<(std::ostream& os, TransactionEvent const& val);
@@ -54,8 +59,6 @@ std::ostream& operator<<(std::ostream& os, GetVariableRequest const& val);
 std::ostream& operator<<(std::ostream& os, GetVariableResult const& val);
 std::ostream& operator<<(std::ostream& os, SetVariableRequest const& val);
 std::ostream& operator<<(std::ostream& os, SetVariableResult const& val);
-// MonitorVariableRequest is a ComponentVariable
-// std::ostream& operator<<(std::ostream& os, MonitorVariableRequest const& val);
 std::ostream& operator<<(std::ostream& os, GetVariableRequestList const& val);
 std::ostream& operator<<(std::ostream& os, GetVariableResultList const& val);
 std::ostream& operator<<(std::ostream& os, SetVariableRequestList const& val);
@@ -66,6 +69,7 @@ std::ostream& operator<<(std::ostream& os, SecurityEvent const& val);
 std::ostream& operator<<(std::ostream& os, StatusInfoType const& val);
 std::ostream& operator<<(std::ostream& os, BootNotificationResponse const& val);
 std::ostream& operator<<(std::ostream& os, OcppTransactionEvent const& val);
+std::ostream& operator<<(std::ostream& os, EventData const& val);
 
 template <class T> T deserialize(std::string const& val);
 template <class T> std::optional<T> try_deserialize(std::string const& val) {

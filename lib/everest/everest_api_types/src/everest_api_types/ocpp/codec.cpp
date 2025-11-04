@@ -146,6 +146,11 @@ std::string serialize(OcppTransactionEvent const& val) noexcept {
     return result.dump(json_indent);
 }
 
+std::string serialize(EventData const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
 std::ostream& operator<<(std::ostream& os, AttributeEnum const& val) {
     os << serialize(val);
     return os;
@@ -277,6 +282,11 @@ std::ostream& operator<<(std::ostream& os, BootNotificationResponse const& val) 
 }
 
 std::ostream& operator<<(std::ostream& os, OcppTransactionEvent const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, EventData const& val) {
     os << serialize(val);
     return os;
 }
@@ -440,6 +450,12 @@ template <> BootNotificationResponse deserialize<>(const std::string& val) {
 template <> OcppTransactionEvent deserialize<>(const std::string& val) {
     auto data = json::parse(val);
     OcppTransactionEvent obj = data;
+    return obj;
+}
+
+template <> EventData deserialize<>(const std::string& val) {
+    auto data = json::parse(val);
+    EventData obj = data;
     return obj;
 }
 

@@ -158,6 +158,37 @@ SetVariableStatusEnumType_External to_external_api(SetVariableStatusEnumType_Int
         "Unexpected value for everest::lib::API::V1_0::types::ocpp::SetVariableStatusEnumType_Internal");
 }
 
+EventTriggerEnum_External to_external_api(EventTriggerEnum_Internal const& val) {
+    using SrcT = EventTriggerEnum_Internal;
+    using TarT = EventTriggerEnum_External;
+    switch (val) {
+    case SrcT::Alerting:
+        return TarT::Alerting;
+    case SrcT::Delta:
+        return TarT::Delta;
+    case SrcT::Periodic:
+        return TarT::Periodic;
+    }
+    throw std::out_of_range("Unexpected value for everest::lib::API::V1_0::types::ocpp::EventTriggerEnum_Internal");
+}
+
+EventNotificationType_External to_external_api(EventNotificationType_Internal const& val) {
+    using SrcT = EventNotificationType_Internal;
+    using TarT = EventNotificationType_External;
+    switch (val) {
+    case SrcT::HardWiredNotification:
+        return TarT::HardWiredNotification;
+    case SrcT::HardWiredMonitor:
+        return TarT::HardWiredMonitor;
+    case SrcT::PreconfiguredMonitor:
+        return TarT::PreconfiguredMonitor;
+    case SrcT::CustomMonitor:
+        return TarT::CustomMonitor;
+    }
+    throw std::out_of_range(
+        "Unexpected value for everest::lib::API::V1_0::types::ocpp::EventNotificationType_Internal");
+}
+
 DataTransferStatus_Internal to_internal_api(DataTransferStatus_External const& val) {
     using SrcT = DataTransferStatus_External;
     using TarT = DataTransferStatus_Internal;
@@ -539,6 +570,23 @@ OcppTransactionEvent_External to_external_api(OcppTransactionEvent_Internal cons
     result.session_id = val.session_id;
     result.evse = optToExternal(val.evse);
     result.transaction_id = val.transaction_id;
+    return result;
+}
+
+EventData_External to_external_api(EventData_Internal const& val) {
+    EventData_External result;
+    result.component_variable = to_external_api(val.component_variable);
+    result.event_id = val.event_id;
+    result.timestamp = val.timestamp;
+    result.trigger = to_external_api(val.trigger);
+    result.actual_value = val.actual_value;
+    result.event_notification_type = to_external_api(val.event_notification_type);
+    result.cause = val.cause;
+    result.tech_code = val.tech_code;
+    result.tech_info = val.tech_info;
+    result.cleared = val.cleared;
+    result.transaction_id = val.transaction_id;
+    result.variable_monitoring_id = val.variable_monitoring_id;
     return result;
 }
 
