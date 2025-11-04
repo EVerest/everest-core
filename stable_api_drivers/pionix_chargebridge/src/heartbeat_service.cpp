@@ -84,6 +84,11 @@ void heartbeat_service::handle_udp_rx(everest::lib::io::udp::udp_payload const& 
         m_last_heartbeat_reply = std::chrono::steady_clock::now();
 
         // TODO: do something with this data;
+        /*printf(
+            "CP: %.2f/%.2f PP: %i MCU_temp %i degC\nVoltages: 12V: %.2f, -12V: %.2f, ref %.3f, 3.3V: %.3f, core:
+           %.3f\n", data.data.cp_hi_mV / 1000., data.data.cp_lo_mV / 1000., (int)data.data.pp_mOhm / 1000,
+            data.data.temperature_mcu_C, data.data.vdd_12V/1000., data.data.vdd_N12V/1000., data.data.vdd_refint/1000.,
+           data.data.vdd_3v3/1000., data.data.vdd_core/1000.);*/
     } else {
         std::cout << "INVALID DATA SIZE in UDP RX of HEARTBEAT: " << payload.size() << " vs " << sizeof(data)
                   << std::endl;
