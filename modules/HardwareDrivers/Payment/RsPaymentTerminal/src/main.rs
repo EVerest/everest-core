@@ -221,6 +221,7 @@ impl PaymentTerminalModule {
             loop {
                 if let Err(inner) = self.feig.configure() {
                     log::warn!("Failed to configure: {inner:?}");
+                    let inner: PTError = inner.into();
                     publishers.payment_terminal.raise_error(inner.into())
                 } else {
                     // TODO: use the clear all interface when it is implemented in the framework

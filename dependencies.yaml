@@ -4,7 +4,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.23.1
+  git_tag: v0.24.0
   options: [
     "BUILD_TESTING OFF",
     "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
@@ -25,14 +25,14 @@ pugixml:
 # Auth module
 libtimer:
   git: https://github.com/EVerest/libtimer.git
-  git_tag: v0.1.2
+  git_tag: v0.1.3
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBTIMER"
   options: ["BUILD_EXAMPLES OFF"]
 
 # Slac module
 libslac:
   git: https://github.com/EVerest/libslac.git
-  git_tag: v0.3.0
+  git_tag: v0.3.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBSLAC"
 libfsm:
   git: https://github.com/EVerest/libfsm.git
@@ -47,7 +47,7 @@ libcbv2g:
 # libiso15118
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: fb8f61b4e68c39890025cb64fdcd2ee23a68c217
+  git_tag: v0.9.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
@@ -73,13 +73,13 @@ libcurl:
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.9.9
+  git_tag: v0.10.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: v0.30.2
+  git_tag: v0.30.3
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -89,7 +89,7 @@ Josev:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.6.2
+  git_tag: v0.7.2
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git
