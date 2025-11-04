@@ -6,7 +6,7 @@ macro(_find_sphinx_build)
         RESULT_VARIABLE RESULT_SPHINX_VERSION
     )
     if("${RESULT_SPHINX_VERSION}" STREQUAL "0")
-        set(_SPHINX_BUILD_EXECUTABLE "${Python3_EXECUTABLE} -m sphinx.cmd.build")
+        set(_SPHINX_BUILD_EXECUTABLE "${Python3_EXECUTABLE}" "-m" "sphinx.cmd.build")
     else()
         set(_SPHINX_BUILD_EXECUTABLE "_SPHINX_BUILD_EXECUTABLE-NOTFOUND")
     endif()
