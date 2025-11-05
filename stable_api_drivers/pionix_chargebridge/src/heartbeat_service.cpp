@@ -14,7 +14,7 @@
 namespace charge_bridge {
 using namespace std::chrono_literals;
 
-heartbeat_service::heartbeat_service(heartbeat_config const& config) : m_udp(config.cb_remote, config.cb_port) {
+heartbeat_service::heartbeat_service(heartbeat_config const& config) : m_udp(config.cb_remote, config.cb_port, 1000) {
     m_identifier = config.cb + "/" + config.item;
     std::memcpy(&m_config_message.data, &config.cb_config, sizeof(CbConfig));
     m_config_message.type = CbStructType::CST_HostToCb_Heartbeat;

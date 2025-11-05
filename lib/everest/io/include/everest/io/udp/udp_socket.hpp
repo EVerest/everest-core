@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <everest/io/event/unique_fd.hpp>
 #include <everest/io/udp/udp_payload.hpp>
+#include <functional>
 #include <optional>
 #include <string>
 
@@ -115,7 +116,6 @@ protected:
      */
     std::optional<udp_info> rx_impl(void* buffer, size_t buffer_size, ssize_t& payload_size);
 
-private:
     event::unique_fd m_owned_udp_fd;
 };
 /**
@@ -148,6 +148,22 @@ public:
     bool open(std::string const& remote, uint16_t port);
 
     /**
+     * @brief Prepare the setup a UDP socket.
+     * @details Implementation for \p ClientPolicy
+     * @param[in] remote The host to connect to
+     * @param[in] port The port on host
+     * @param[in] timeout_ms Timeout for connecting to the remote
+     * @return True on success, false otherwise.
+     */
+    bool setup(std::string const& remote, uint16_t port, int timeout_ms);
+
+    /**
+     * @brief Long running part of the UDP connection process
+     * @details Implementation for \p ClientPolicy optional async capabilities
+     */
+    void connect(std::function<void(bool, int)> const& setup_cb);
+
+    /**
      * @brief Write a \ref udp_payload to the socket
      * @details Implementation for \p ClientPolicy
      * @param[in] payload Payload
@@ -164,6 +180,10 @@ public:
     bool rx(udp_payload& payload);
 
 private:
+    std::string m_remote;
+    uint16_t m_port{0};
+    int m_timeout_ms{0};
+
     std::array<uint8_t, udp_payload::max_size> rx_buffer;
 };
 

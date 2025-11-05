@@ -9,7 +9,7 @@
 namespace charge_bridge {
 
 plc_bridge::plc_bridge(plc_bridge_config const& config) :
-    m_tap(config.plc_tap, config.plc_ip, config.plc_netmaks, config.plc_mtu), m_udp(config.cb_remote, config.cb_port) {
+    m_tap(config.plc_tap, config.plc_ip, config.plc_netmaks, config.plc_mtu), m_udp(config.cb_remote, config.cb_port, 1000) {
     using namespace std::chrono_literals;
     m_timer.set_timeout(5s);
 

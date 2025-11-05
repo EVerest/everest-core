@@ -20,7 +20,7 @@ namespace charge_bridge {
 using namespace std::chrono_literals;
 
 gpio_bridge::gpio_bridge(gpio_config const& config) :
-    m_udp(config.cb_remote, config.cb_port),
+    m_udp(config.cb_remote, config.cb_port, 1000),
     m_mqtt(config.mqtt_remote, config.mqtt_port, config.mqtt_ping_interval_ms)
 
 {

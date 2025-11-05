@@ -46,7 +46,7 @@ bool is_data_msg([[maybe_unused]] cb_can_message const& msg) {
 } // namespace
 
 can_bridge::can_bridge(can_bridge_config const& config) :
-    m_udp(config.cb_remote, config.cb_port),
+    m_udp(config.cb_remote, config.cb_port, 1000),
     m_can_device(config.can_device),
     m_last_msg_to_cb(std::chrono::steady_clock::time_point()) {
 
