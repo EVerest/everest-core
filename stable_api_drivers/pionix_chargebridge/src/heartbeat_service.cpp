@@ -18,7 +18,8 @@ heartbeat_service::heartbeat_service(heartbeat_config const& config) : m_udp(con
     m_identifier = config.cb + "/" + config.item;
     std::memcpy(&m_config_message.data, &config.cb_config, sizeof(CbConfig));
     m_config_message.type = CbStructType::CST_HostToCb_Heartbeat;
-    m_heartbeat_timer.set_timeout(std::chrono::seconds(config.interval_s));
+    m_heartbeat_interval = std::chrono::milliseconds(config.interval_s * 1000);
+    m_heartbeat_timer.set_timeout(m_heartbeat_interval / 2);
     m_last_heartbeat_reply = std::chrono::steady_clock::time_point();
 
     m_udp.set_rx_handler([this](auto const& data, auto&) { handle_udp_rx(data); });
@@ -64,7 +65,7 @@ void heartbeat_service::handle_heartbeat_timer() {
         utilities::struct_to_vector(m_config_message, payload.buffer);
         m_udp.tx(payload);
     }
-    auto timeout = std::chrono::steady_clock::now() - m_last_heartbeat_reply > 2s;
+    auto timeout = std::chrono::steady_clock::now() - m_last_heartbeat_reply > m_heartbeat_interval;
     if (timeout and m_cb_connected) {
         utilities::print_error(m_identifier, "HEARTBEAT/UDP", 1) << "ChargeBridge connection lost" << std::endl;
         m_cb_connected = false;

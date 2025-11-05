@@ -3,6 +3,7 @@
 #pragma once
 
 #include "protocol/cb_management.h"
+#include <chrono>
 #include <everest/io/can/can_payload.hpp>
 #include <everest/io/event/fd_event_register_interface.hpp>
 #include <everest/io/event/timer_fd.hpp>
@@ -42,6 +43,7 @@ private:
     std::chrono::steady_clock::time_point m_last_heartbeat_reply;
     bool m_cb_connected{false};
     bool m_inital_cb_commcheck{true};
+    std::chrono::milliseconds m_heartbeat_interval;
 };
 
 } // namespace charge_bridge
