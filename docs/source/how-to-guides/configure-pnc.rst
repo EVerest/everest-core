@@ -47,7 +47,7 @@ Auth
 ~~~~~~~~~~~
 
 * Make sure the EvseManager module is listed as a connection of `token_provider`. This is important, because only
-in this case the authorization request including the contract certificate is actually received by the Auth module.
+  in this case the authorization request including the contract certificate is actually received by the Auth module.
 * Make sure the OCPP module is configured as the single `token_validator`.
 
 EvseSecurity
