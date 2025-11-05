@@ -196,4 +196,63 @@ struct EventData {
     std::optional<std::int32_t> variable_monitoring_id;
 };
 
+struct V2XFreqWattPointType {
+    double frequency;
+    double power;
+};
+
+struct V2XSignalWattPointCurve {
+    std::int32_t signal;
+    double power;
+};
+
+enum class OperationMode {
+    Idle,
+    ChargingOnly,
+    CentralSetpoint,
+    ExternalSetpoint,
+    ExternalLimits,
+    CentralFrequency,
+    LocalFrequency,
+    LocalLoadBalancing,
+};
+
+struct ChargingSchedulePeriod {
+    std::int32_t start_period;
+    double limit;
+    std::optional<double> limit_L2;
+    std::optional<double> limit_L3;
+    std::optional<std::int32_t> number_phases;
+    std::optional<std::int32_t> stack_level;
+    std::optional<std::int32_t> phase_to_use;
+    std::optional<double> discharge_limit;
+    std::optional<double> discharge_limit_L2;
+    std::optional<double> discharge_limit_L3;
+    std::optional<double> setpoint;
+    std::optional<double> setpoint_L2;
+    std::optional<double> setpoint_L3;
+    std::optional<double> setpoint_reactive;
+    std::optional<double> setpoint_reactive_L2;
+    std::optional<double> setpoint_reactive_L3;
+    std::optional<bool> preconditioning_request;
+    std::optional<bool> evse_sleep;
+    std::optional<double> v2x_baseline;
+    std::optional<OperationMode> operation_mode;
+    std::optional<std::vector<V2XFreqWattPointType>> v2x_freq_watt_curve;
+    std::optional<std::vector<V2XSignalWattPointCurve>> v2x_signal_watt_curve;
+};
+
+struct ChargingSchedule {
+    std::int32_t evse;
+    std::string charging_rate_unit;
+    std::vector<ChargingSchedulePeriod> charging_schedule_period;
+    std::optional<std::int32_t> duration;
+    std::optional<std::string> start_schedule;
+    std::optional<double> min_charging_rate;
+};
+
+struct ChargingSchedules {
+    std::vector<ChargingSchedule> schedules;
+};
+
 } // namespace everest::lib::API::V1_0::types::ocpp
