@@ -1,5 +1,6 @@
 add_executable(everest_util_tests
   async/monitor_tests.cpp
+  async/thread_pool_tests.cpp
   async/wrapper_tests.cpp
   enum/EnumFlagsTest.cpp
   enum/EnumFlagsTest_B.cpp
