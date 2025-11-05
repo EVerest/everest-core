@@ -1507,8 +1507,8 @@ TEST_F(AuthTest, test_empty_intersection) {
         result_1.evse_ids.emplace(evse_ids);
 
         ValidationResult result_2;
-        result_1.authorization_status = AuthorizationStatus::Accepted;
-        result_1.evse_ids.emplace(evse_ids2);
+        result_2.authorization_status = AuthorizationStatus::Accepted;
+        result_2.evse_ids.emplace(evse_ids2);
 
         validation_results.push_back(result_1);
         validation_results.push_back(result_2);
@@ -1531,7 +1531,8 @@ TEST_F(AuthTest, test_empty_intersection) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted))
+        .Times(2);
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::UsedToStart));
