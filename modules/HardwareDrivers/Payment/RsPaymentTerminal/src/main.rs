@@ -12,12 +12,13 @@
 //!
 //! ## Bank card handling
 //!
-//! In case a bank card is presented, it will pre-authorize the
-//! `pre_authorization_amount` and issue a token on the `auth_token_provider`
-//! interface. The token-id will be taken from the `bank_session_token`
-//! interface. It commits (and releases the surplus from the pre-authorized
-//! amount) once it receives the same a token-id on its `session_cost`
-//! interface.
+//! In case a bank card is presented, the module will also issue a token on the
+//! `auth_token_provider` interface. The token-id must be provided by the
+//! `bank_session_token` interface. In order to block the
+//! `pre_authorization_amount`, the user must call the `auth_token_validator`
+//! interface of the module. The modile commits (and releases the surplus from
+//! the pre-authorized amount) once it receives the same a token-id on its
+//! `session_cost` interface.
 //!
 //! ## Implementation details
 //!
@@ -233,6 +234,15 @@ impl From<AuthorizationStatus> for ValidationResult {
     }
 }
 
+/// Returns the default card type to connector mapping where all card types
+/// are enabled for all connectors.
+fn default_card_type_to_connector() -> HashMap<AuthorizationType, Option<Vec<i64>>> {
+    HashMap::from_iter([
+        (AuthorizationType::BankCard, None),
+        (AuthorizationType::RFID, None),
+    ])
+}
+
 /// Main struct for this module.
 pub struct PaymentTerminalModule {
     /// Sender for the `ModulePublisher` -> to get the publisher from `on_ready`
@@ -255,7 +265,7 @@ impl PaymentTerminalModule {
     ///
     /// Regardless of the card type we don't flag the token as pre-validated to
     /// allow the consumers to add custom validation steps on top. For bank
-    /// cards use the auth_token_validation to pre-authorize money.
+    /// cards use the `auth_token_validator` to pre-authorize money.
     fn read_card(&self, publishers: &ModulePublisher) -> Result<()> {
         let mut token: Option<String> = None;
 
@@ -274,8 +284,17 @@ impl PaymentTerminalModule {
                     publishers.payment_terminal.clear_all_errors();
                 }
 
+                let bank_cards_enabled = {
+                    let mut map_guard = self.card_type_to_connector.lock().unwrap();
+                    map_guard
+                        .entry(AuthorizationType::BankCard)
+                        .or_default()
+                        .as_ref()
+                        .map_or(true, |v| !v.is_empty())
+                };
+
                 // Attempting to get an invoice token
-                if token.is_none() {
+                if token.is_none() && bank_cards_enabled {
                     if let Some(publisher) = publishers.bank_session_token_slots.get(0) {
                         if timeout.elapsed() > Duration::from_secs(0) {
                             token = publisher.get_bank_session_token().map_or(None, |v| v.token);
@@ -318,7 +337,8 @@ impl PaymentTerminalModule {
         let provided_token = match card_info {
             CardInfo::Bank => ProvidedIdToken::new(
                 // If we don't have a valid token, still issue the token but
-                // reject it in the validation.
+                // reject it in the validation - so e.x. display can still
+                // react to cards being read.
                 token.unwrap_or(INVALID_BANK_TOKEN.to_string()),
                 AuthorizationType::BankCard,
                 map_guard
@@ -459,18 +479,18 @@ impl PaymentTerminalServiceSubscriber for PaymentTerminalModule {
     ) -> ::everestrs::Result<()> {
         let mut map_guard = self.card_type_to_connector.lock().unwrap();
 
-        for (key, val) in map_guard.iter_mut() {
-            match supported_cards.iter().find(|card| *card == key) {
+        for (card_type, connector_ids) in map_guard.iter_mut() {
+            match supported_cards.iter().find(|card| *card == card_type) {
                 Some(_) => {
-                    // Card is allowed -> add it to the connector
-                    let connector_ids = val.get_or_insert_default();
+                    // Card is allowed -> Add the connector under the card type
+                    let connector_ids = connector_ids.get_or_insert_default();
                     if let Err(idx) = connector_ids.binary_search(&connector_id) {
                         connector_ids.insert(idx, connector_id);
                     }
                 }
                 None => {
-                    // Card is forbidden -> remove the connector from that
-                    let connector_ids = val.get_or_insert_default();
+                    // Card is forbidden -> remove the connector from the card type
+                    let connector_ids = connector_ids.get_or_insert_default();
                     if let Ok(idx) = connector_ids.binary_search(&connector_id) {
                         connector_ids.remove(idx);
                     }
@@ -482,10 +502,7 @@ impl PaymentTerminalServiceSubscriber for PaymentTerminalModule {
 
     fn allow_all_cards_for_every_connector(&self, _context: &Context) -> ::everestrs::Result<()> {
         let mut map_guard = self.card_type_to_connector.lock().unwrap();
-        *map_guard = HashMap::from_iter([
-            (AuthorizationType::BankCard, None),
-            (AuthorizationType::RFID, None),
-        ]);
+        *map_guard = default_card_type_to_connector();
         Ok(())
     }
 }
@@ -512,10 +529,7 @@ fn main() -> Result<()> {
     let pt_module = Arc::new(PaymentTerminalModule {
         tx,
         feig: SyncFeig::new(pt_config),
-        card_type_to_connector: Mutex::new(HashMap::from_iter([
-            (AuthorizationType::BankCard, None),
-            (AuthorizationType::RFID, None),
-        ])),
+        card_type_to_connector: Mutex::new(default_card_type_to_connector()),
         pre_authorization_amount: config.pre_authorization_amount as usize,
     });
 
@@ -561,10 +575,7 @@ mod tests {
             PaymentTerminalModule {
                 tx,
                 feig: feig_mock,
-                card_type_to_connector: Mutex::new(HashMap::from_iter([
-                    (AuthorizationType::BankCard, None),
-                    (AuthorizationType::RFID, None),
-                ])),
+                card_type_to_connector: Mutex::new(default_card_type_to_connector()),
                 pre_authorization_amount: 11,
             }
         }
@@ -581,7 +592,7 @@ mod tests {
     }
 
     #[test]
-    fn payment_terminal_module__read_card__get_bank_session_token_failed() {
+    fn payment_terminal__read_card__get_bank_session_token_failed() {
         let PARAMETERS = [
             (
                 CardInfo::Bank,
@@ -634,7 +645,7 @@ mod tests {
     }
 
     #[test]
-    fn payment_terminal_module__read_card__no_bank_session_token() {
+    fn payment_terminal__read_card__no_bank_session_token() {
         let PARAMETERS = [
             (
                 CardInfo::Bank,
@@ -679,7 +690,61 @@ mod tests {
     }
 
     #[test]
-    fn payment_terminal_module__read_card__success() {
+    /// Test that bank cards are not processed when bank cards are disabled
+    fn payment_terminal__read_card__bank_cards_disabled() {
+        let mut feig_mock = SyncFeig::default();
+        feig_mock.expect_configure().times(1).return_once(|| Ok(()));
+        feig_mock
+            .expect_read_card()
+            .times(1)
+            .return_once(|| Ok(CardInfo::Bank));
+
+        let mut everest_mock = ModulePublisher::default();
+        everest_mock
+            .bank_session_token_slots
+            .push(BankSessionTokenProviderClientPublisher::default());
+
+        // get_bank_session_token should NOT be called when bank cards are disabled
+        everest_mock.bank_session_token_slots[0]
+            .expect_get_bank_session_token()
+            .times(0);
+
+        everest_mock
+            .token_provider
+            .expect_provided_token()
+            .times(1)
+            .withf(|arg| {
+                // When bank cards are disabled, we should get INVALID_BANK_TOKEN
+                &arg.id_token.value == INVALID_BANK_TOKEN
+                    && arg.authorization_type == AuthorizationType::BankCard
+                    // Connectors should be empty (bank cards disabled)
+                    && arg.connectors == Some(vec![])
+            })
+            .return_once(|_| Ok(()));
+
+        everest_mock
+            .payment_terminal
+            .expect_clear_all_errors()
+            .times(1)
+            .return_once(|| ());
+
+        let (tx, _) = channel();
+        // Set up module with bank cards disabled (empty connector list)
+        let pt_module = PaymentTerminalModule {
+            tx,
+            feig: feig_mock,
+            card_type_to_connector: Mutex::new(HashMap::from_iter([
+                (AuthorizationType::BankCard, Some(vec![])), // Empty = disabled
+                (AuthorizationType::RFID, None),
+            ])),
+            pre_authorization_amount: 11,
+        };
+
+        assert!(pt_module.read_card(&everest_mock).is_ok());
+    }
+
+    #[test]
+    fn payment_terminal__read_card__success() {
         let PARAMETERS = [
             (
                 CardInfo::Bank,
@@ -757,11 +822,7 @@ mod tests {
                     code: Some(CurrencyCode::EUR),
                     decimals: None,
                 },
-                id_tag: Some(ProvidedIdToken::new(
-                    String::new(),
-                    auth_type,
-                    None,
-                )),
+                id_tag: Some(ProvidedIdToken::new(String::new(), auth_type, None)),
                 status,
                 session_id: String::new(),
                 idle_price: None,
