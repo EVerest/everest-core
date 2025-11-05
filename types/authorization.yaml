@@ -129,26 +129,6 @@ types:
           $ref: /iso15118#/CertificateHashDataInfo
         minItems: 1
         maxItems: 4
-  TokenValidationStatusMessage:
-    description: The token validation status
-    type: object
-    additionalProperties: false
-    required:
-      - token
-      - status
-    properties:
-      token:
-        description: The id tag assigned to this transaction
-        type: object
-        $ref: /authorization#/ProvidedIdToken
-      status:
-        type: string
-        $ref: /authorization#/TokenValidationStatus
-      messages:
-        type: array
-        items:
-          type: object
-          $ref: /text_message#/MessageContent
   ValidationResult:
     description: >-
       Result object containing authorization status enum value and an optional
@@ -202,6 +182,32 @@ types:
           type: string
           $ref: /iso15118#/EnergyTransferMode
         minItems: 1
+  TokenValidationStatusMessage:
+    description: The token validation status
+    type: object
+    additionalProperties: false
+    required:
+      - token
+      - status
+      - token_validation_results
+    properties:
+      token:
+        description: The id tag assigned to this transaction
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+      status:
+        type: string
+        $ref: /authorization#/TokenValidationStatus
+      token_validation_results:
+        type: array
+        items:
+          type: object
+          $ref: /authorization#/ValidationResult
+      messages:
+        type: array
+        items:
+          type: object
+          $ref: /text_message#/MessageContent  
   SelectionAlgorithm:
     description: >-
       The selection algorithm defines the logic to select one connector

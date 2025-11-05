@@ -97,12 +97,6 @@ struct ProvidedIdToken {
     std::optional<std::vector<iso15118_charger::CertificateHashDataInfo>> iso15118CertificateHashData;
 };
 
-struct TokenValidationStatusMessage {
-    ProvidedIdToken token;
-    TokenValidationStatus status;
-    std::optional<std::vector<text_message::MessageContent>> messages;
-};
-
 struct ValidationResult {
     AuthorizationStatus authorization_status;
     std::optional<CertificateStatus> certificate_status;
@@ -112,6 +106,13 @@ struct ValidationResult {
     std::optional<std::vector<int32_t>> evse_ids;
     std::optional<int32_t> reservation_id;
     std::optional<std::vector<iso15118_charger::EnergyTransferMode>> allowed_energy_transfer_modes;
+};
+
+struct TokenValidationStatusMessage {
+    ProvidedIdToken token;
+    TokenValidationStatus status;
+    std::vector<ValidationResult> token_validation_results;
+    std::optional<std::vector<text_message::MessageContent>> messages;
 };
 
 struct ValidationResultUpdate {

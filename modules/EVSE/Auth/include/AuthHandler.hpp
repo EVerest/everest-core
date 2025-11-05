@@ -10,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <set>
+#include <vector>
 
 #include <utils/types.hpp>
 
@@ -40,7 +41,7 @@ inline bool operator<(const ProvidedIdToken& lhs, const ProvidedIdToken& rhs) {
 
 namespace module {
 
-enum class TokenHandlingResult {
+enum class TokenHandlingResultEnum {
     ALREADY_IN_PROCESS,
     REJECTED,
     USED_TO_START_TRANSACTION,
@@ -50,8 +51,30 @@ enum class TokenHandlingResult {
     WITHDRAWN
 };
 
+struct TokenHandlingResult {
+    /// The summary of the token handling (did it work and was it used).
+    TokenHandlingResultEnum summary;
+
+    /// The validation result from every token_validator involved. The order
+    /// is the order of the token_validators.
+    std::vector<ValidationResult> validation_results;
+
+    TokenHandlingResult() : summary{TokenHandlingResultEnum::REJECTED} {
+    }
+    explicit TokenHandlingResult(const TokenHandlingResultEnum& _summary) : summary{_summary} {
+    }
+    TokenHandlingResult(const TokenHandlingResultEnum& _summary,
+                        const std::vector<ValidationResult>& _validation_results) :
+        summary{_summary}, validation_results{_validation_results} {
+    }
+    TokenHandlingResult& operator=(const TokenHandlingResultEnum& _summary) {
+        summary = _summary;
+        return *this;
+    }
+};
+
 namespace conversions {
-std::string token_handling_result_to_string(const TokenHandlingResult& result);
+std::string token_handling_result_to_string(const TokenHandlingResultEnum& result);
 } // namespace conversions
 
 /**
@@ -236,7 +259,8 @@ public:
      * @param callback
      */
     void register_publish_token_validation_status_callback(
-        const std::function<void(const ProvidedIdToken&, TokenValidationStatus)>& callback);
+        const std::function<void(const ProvidedIdToken&, TokenValidationStatus, const std::vector<ValidationResult>&)>&
+            callback);
 
     WithdrawAuthorizationResult handle_withdraw_authorization(const WithdrawAuthorizationRequest& request);
 
@@ -281,7 +305,8 @@ private:
     std::function<void(const std::optional<int>& evse_index, const int32_t reservation_id,
                        const types::reservation::ReservationEndReason reason, const bool send_reservation_update)>
         reservation_cancelled_callback;
-    std::function<void(const ProvidedIdToken& token, TokenValidationStatus status)>
+    std::function<void(const ProvidedIdToken& token, TokenValidationStatus status,
+                       const std::vector<ValidationResult>&)>
         publish_token_validation_status_callback;
 
     std::vector<int> get_referenced_evses(const ProvidedIdToken& provided_token);
