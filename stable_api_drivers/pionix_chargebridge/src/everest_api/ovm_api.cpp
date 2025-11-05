@@ -27,7 +27,7 @@ namespace charge_bridge::evse_bsp {
 ovm_api::ovm_api([[maybe_unused]] evse_ovm_config const& config, std::string const& cb_identifier, evse_bsp_host_to_cb& host_status) :
     host_status(host_status), m_cb_identifier(cb_identifier) {
 
-    last_everest_heartbeat = std::chrono::steady_clock::time_point::max();
+    last_everest_heartbeat = std::chrono::steady_clock::time_point();
 }
 
 void ovm_api::sync(bool cb_connected) {
@@ -194,9 +194,6 @@ void ovm_api::send_mqtt(std::string const& topic, std::string const& message) {
 }
 
 bool ovm_api::check_everest_heartbeat() {
-    if (last_everest_heartbeat == std::chrono::steady_clock::time_point::max()) {
-        return false;
-    }
     return std::chrono::steady_clock::now() - last_everest_heartbeat < 3s;
 }
 

@@ -28,7 +28,7 @@ evse_bsp_api::evse_bsp_api(evse_bsp_config const& config, std::string const& cb_
                            evse_bsp_host_to_cb& host_status) :
     host_status(host_status), m_capabilities(config.capabilities), m_cb_identifier(cb_identifier) {
 
-    last_everest_heartbeat = std::chrono::steady_clock::time_point::max();
+    last_everest_heartbeat = std::chrono::steady_clock::time_point();
 
     m_capabilities_timer.set_timeout(10s);
 
@@ -488,10 +488,7 @@ void evse_bsp_api::send_mqtt(std::string const& topic, std::string const& messag
 }
 
 bool evse_bsp_api::check_everest_heartbeat() {
-    if (last_everest_heartbeat == std::chrono::steady_clock::time_point::max()) {
-        return false;
-    }
-    return std::chrono::steady_clock::now() - last_everest_heartbeat < 2s;
+    return std::chrono::steady_clock::now() - last_everest_heartbeat < 3s;
 }
 
 void evse_bsp_api::handle_everest_connection_state() {
