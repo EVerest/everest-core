@@ -115,7 +115,7 @@ void MatchingState::handle_slac_message(slac::messages::HomeplugMessage& msg) {
         handle_cm_validate_req(msg.get_payload<slac::messages::cm_validate_req>());
         break;
     default:
-        ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
+        ctx.log_warn("Received non-expected SLAC message of type " + format_mmtype(mmtype));
     }
 }
 
@@ -134,7 +134,7 @@ static bool validate_cm_slac_parm_req(const slac::messages::cm_slac_parm_req& ms
 void MatchingState::handle_cm_slac_parm_req(const slac::messages::cm_slac_parm_req& msg) {
 
     if (not validate_cm_slac_parm_req(msg)) {
-        ctx.log_info("Invalid CM_SLAC_PARM.REQ received, ignoring");
+        ctx.log_warn("Invalid CM_SLAC_PARM.REQ received, ignoring");
         return;
     }
 
@@ -186,13 +186,13 @@ static bool validate_cm_start_atten_char_ind(const slac::messages::cm_start_atte
 void MatchingState::handle_cm_start_atten_char_ind(const slac::messages::cm_start_atten_char_ind& msg) {
 
     if (not validate_cm_start_atten_char_ind(msg)) {
-        ctx.log_info("Invalid CM_START_ATTEN_CHAR_IND received, ignoring");
+        ctx.log_warn("Invalid CM_START_ATTEN_CHAR_IND received, ignoring");
         return;
     }
 
     auto session = find_session(sessions, tmp_ev_mac, msg.run_id);
     if (!session) {
-        ctx.log_info("No session found for CM_START_ATTEN_CHAR_IND");
+        ctx.log_warn("No session found for CM_START_ATTEN_CHAR_IND");
         return;
     }
 
@@ -223,13 +223,13 @@ static bool validate_cm_mnbc_sound_ind(const slac::messages::cm_mnbc_sound_ind& 
 void MatchingState::handle_cm_mnbc_sound_ind(const slac::messages::cm_mnbc_sound_ind& msg) {
 
     if (not validate_cm_mnbc_sound_ind(msg)) {
-        ctx.log_info("Invalid CM_MNBC_SOUND_IND received, ignoring");
+        ctx.log_warn("Invalid CM_MNBC_SOUND_IND received, ignoring");
         return;
     }
 
     auto session = find_session(sessions, tmp_ev_mac, msg.run_id);
     if (!session) {
-        ctx.log_info("No session found for CM_MNBC_SOUND_IND");
+        ctx.log_warn("No session found for CM_MNBC_SOUND_IND");
         return;
     }
 
@@ -255,7 +255,7 @@ void MatchingState::handle_cm_atten_profile_ind(const slac::messages::cm_atten_p
     }
 
     if (!session) {
-        ctx.log_info("No session found for CM_ATTEN_PROFILE_IND");
+        ctx.log_warn("No session found for CM_ATTEN_PROFILE_IND");
         return;
     }
 
@@ -305,13 +305,13 @@ static bool validate_cm_atten_char_rsp(const slac::messages::cm_atten_char_rsp& 
 void MatchingState::handle_cm_atten_char_rsp(const slac::messages::cm_atten_char_rsp& msg) {
 
     if (not validate_cm_atten_char_rsp(msg)) {
-        ctx.log_info("Invalid CM_ATTEN_CHAR_RSP received, ignoring");
+        ctx.log_warn("Invalid CM_ATTEN_CHAR_RSP received, ignoring");
         return;
     }
 
     auto session = find_session(sessions, tmp_ev_mac, msg.run_id);
     if (!session) {
-        ctx.log_info("No session found for CM_ATTEN_CHAR_RSP");
+        ctx.log_warn("No session found for CM_ATTEN_CHAR_RSP");
         return;
     }
 
@@ -329,7 +329,7 @@ void MatchingState::handle_cm_atten_char_rsp(const slac::messages::cm_atten_char
 
 void MatchingState::handle_cm_validate_req(const slac::messages::cm_validate_req& msg) {
     // NOTE: CM_VALIDATE.REQ does not specify its session
-    ctx.log_info("Received CM_VALIDATE.REQ / not implemented - will return failure code");
+    ctx.log_warn("Received CM_VALIDATE.REQ / not implemented - will return failure code");
 
     slac::messages::cm_validate_cnf validate_cnf;
     validate_cnf.signal_type = slac::defs::CM_VALIDATE_REQ_SIGNAL_TYPE;
@@ -357,13 +357,13 @@ static bool validate_cm_slac_match_req(const slac::messages::cm_slac_match_req& 
 void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match_req& msg) {
 
     if (not validate_cm_slac_match_req(msg)) {
-        ctx.log_info("Invalid CM_SLAC_MATCH_REQ received, ignoring");
+        ctx.log_warn("Invalid CM_SLAC_MATCH_REQ received, ignoring");
         return;
     }
 
     auto session = find_session(sessions, tmp_ev_mac, msg.run_id);
     if (!session) {
-        ctx.log_info("No session found for CM_SLAC_MATCH_REQ");
+        ctx.log_warn("No session found for CM_SLAC_MATCH_REQ");
         return;
     }
 

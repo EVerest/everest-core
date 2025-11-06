@@ -72,7 +72,7 @@ FSMSimpleState::CallbackReturnType MatchingState::callback() {
 
     if (!seen_slac_parm_req) {
         if (now_tp >= timeout_slac_parm_req) {
-            ctx.log_info("CM_SLAC_PARM_REQ timed out -> FAILED");
+            ctx.log_error("CM_SLAC_PARM_REQ timed out -> FAILED");
             return Event::FAILED;
         }
 
@@ -154,7 +154,7 @@ FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType&
     } else if (ev == Event::RETRY_MATCHING) {
         num_retries++;
         if (num_retries == slac::defs::C_EV_MATCH_RETRY) {
-            ctx.log_info("Reached retry limit for matching");
+            ctx.log_error("Reached retry limit for matching");
             return sa.create_simple<FailedState>(ctx);
         }
 
@@ -165,7 +165,7 @@ FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType&
     } else if (ev == Event::FAILED) {
         failed_count++;
         if (ctx.slac_config.reset_instead_of_fail and failed_count < 2) {
-            ctx.log_info("Resetting MatchingState. Waiting for the next CM_SLAC_PARAM.REQ message.");
+            ctx.log_error("Resetting MatchingState. Waiting for the next CM_SLAC_PARAM.REQ message.");
 
             // Resetting all relevant MatchingState members
             sessions.clear();
