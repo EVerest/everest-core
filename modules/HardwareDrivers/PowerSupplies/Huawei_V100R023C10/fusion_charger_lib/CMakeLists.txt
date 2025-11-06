@@ -1,5 +1,0 @@
-add_subdirectory(fusion-charger-dispenser-library)
-add_subdirectory(goose-lib)
-add_subdirectory(huawei-fusioncharge-driver)
-add_subdirectory(modbus-server)
-add_subdirectory(log)
