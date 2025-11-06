@@ -1,0 +1,173 @@
+active_modules:
+  ####### API modules start #######
+  evse_board_support_api:
+    module: evse_board_support_API
+    config_module:
+      cfg_communication_check_to_s: 600
+      cfg_request_reply_to_s: 5
+  powermeter_api:
+    module: powermeter_API
+    config_module:
+      cfg_communication_check_to_s: 60
+      cfg_heartbeat_interval_ms: 10000
+      cfg_request_reply_to_s: 5
+  auth_token_provider_api:
+    config_module:
+      cfg_communication_check_to_s: 3
+      cfg_heartbeat_interval_ms: 400
+    module: auth_token_provider_API
+  system_api:
+    module: system_API
+    config_module:
+      cfg_communication_check_to_s: 600
+      cfg_request_reply_to_s: 5
+  evse_manager_consumer_api:
+    config_module:
+      cfg_heartbeat_interval_ms: 400
+    module: evse_manager_consumer_API
+    connections:
+      evse_manager:
+        - module_id: evse_manager
+          implementation_id: evse
+  auth_consumer_api:
+    module: auth_consumer_API
+    config_module:
+      cfg_communication_check_to_s: 60
+      cfg_heartbeat_interval_ms: 40000
+    connections:
+      auth:
+        - implementation_id: main
+          module_id: auth
+  ocpp_consumer_api:
+    config_module:
+      cfg_communication_check_to_s: 600
+      cfg_heartbeat_interval_ms: 40000
+    connections:
+      ocpp:
+        - module_id: ocpp
+          implementation_id: ocpp_generic
+      data_transfer:
+        - module_id: ocpp
+          implementation_id: data_transfer
+    module: ocpp_consumer_API
+  ####### API modules start #######
+  
+
+  ####### Core modules start #######
+  evse_manager:
+    module: EvseManager
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      ac_enforce_hlc: false
+      ac_hlc_enabled: false
+      ac_hlc_use_5percent: false
+      ac_nominal_voltage: 230
+      ac_with_soc: false
+      charge_mode: AC
+      dbg_hlc_auth_after_tstep: false
+      ev_receipt_required: false
+      evse_id: DE*EV*E123456*1
+      payment_enable_contract: false
+      payment_enable_eim: true
+      session_logging: true
+      session_logging_path: /tmp/logs
+      session_logging_xml: false
+      connector_id: 1
+      external_ready_to_start_charging: true
+    connections:
+      bsp:
+      - implementation_id: main
+        module_id: evse_board_support_api
+      powermeter_grid_side:
+      - implementation_id: main
+        module_id: powermeter_api
+      store:
+      - implementation_id: main
+        module_id: persistent_store
+  auth:
+    module: Auth
+    config_module:
+      connection_timeout: 60
+      selection_algorithm: PlugEvents
+    connections:
+      token_provider:
+      - module_id: auth_token_provider_api
+        implementation_id: main
+      token_validator:
+      - module_id: ocpp
+        implementation_id: auth_validator
+      evse_manager:
+      - module_id: evse_manager
+        implementation_id: evse
+  ocpp:
+    module: OCPP201
+    connections:
+      evse_manager:
+        - module_id: evse_manager
+          implementation_id: evse
+      auth:
+        - module_id: auth
+          implementation_id: main
+      system:
+        - module_id: system_api
+          implementation_id: main
+      security:
+        - module_id: evse_security
+          implementation_id: main
+      evse_energy_sink:
+        - module_id: grid_connection_point
+          implementation_id: external_limits
+        - module_id: evse_manager_sink
+          implementation_id: external_limits
+      reservation:
+        - module_id: auth
+          implementation_id: reservation
+    # Allows OCPP to read all config parameters of modules, but write only to auth module
+    access:
+      config:
+        allow_global_read: true
+        allow_global_write: false
+        allow_set_read_only: false
+        modules:
+          auth:
+            allow_read: true
+            allow_write: true
+            allow_set_read_only: true
+  evse_security:
+    module: EvseSecurity
+  energy_manager:
+    module: EnergyManager
+    connections:
+      energy_trunk:
+      - implementation_id: energy_grid
+        module_id: grid_connection_point
+  evse_manager_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager
+          implementation_id: energy_grid
+  grid_connection_point:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 0
+    config_module:
+      fuse_limit_A: 32
+      phase_count: 3
+    connections:
+      energy_consumer:
+      - implementation_id: energy_grid
+        module_id: evse_manager
+  persistent_store:
+    module: PersistentStore
+    connections: {}
+  ####### Core modules end #######
