@@ -385,12 +385,12 @@ void OCPP201::init() {
             // handled by specific evse_manager error handler
             return;
         }
-        const auto event_data = get_event_data(error, false, this->event_id_counter++);
         if (this->started) {
+            const auto event_data = get_event_data(error, false, this->event_id_counter++);
             this->charge_point->on_event({event_data});
         } else {
             std::scoped_lock lock(this->session_event_mutex);
-            this->event_queue[event_data.component.evse.value_or(ocpp::v2::EVSE{0}).id].push(event_data);
+            this->event_queue[get_component_from_error(error).evse.value_or(ocpp::v2::EVSE{0}).id].push(error);
         }
     };
 
@@ -399,12 +399,12 @@ void OCPP201::init() {
             // handled by specific evse_manager error handler
             return;
         }
-        const auto event_data = get_event_data(error, true, this->event_id_counter++);
         if (this->started) {
+            const auto event_data = get_event_data(error, true, this->event_id_counter++);
             this->charge_point->on_event({event_data});
         } else {
             std::scoped_lock lock(this->session_event_mutex);
-            this->event_queue[event_data.component.evse.value_or(ocpp::v2::EVSE{0}).id].push(event_data);
+            this->event_queue[get_component_from_error(error).evse.value_or(ocpp::v2::EVSE{0}).id].push(error);
         }
     };
 
@@ -1045,11 +1045,21 @@ void OCPP201::ready() {
                 const auto session_event = std::get<types::evse_manager::SessionEvent>(queued_event);
                 EVLOG_info << "Processing queued event for evse_id: " << evse_id << ", event: " << session_event.event;
                 this->process_session_event(evse_id, session_event);
-            } else if (std::holds_alternative<ocpp::v2::EventData>(queued_event)) {
-                const auto event_data = std::get<ocpp::v2::EventData>(queued_event);
-                EVLOG_info << "Processing queued error event for evse_id: " << evse_id
-                           << ", event id: " << event_data.eventId;
+            } else if (std::holds_alternative<Everest::error::Error>(queued_event)) {
+                const auto& error = std::get<Everest::error::Error>(queued_event);
+                EVLOG_info << "Processing queued error event for evse_id: " << evse_id << ": " << error.type;
+                bool is_active = error.state == Everest::error::State::Active;
+                const auto event_data = get_event_data(error, !is_active, this->event_id_counter++);
                 this->charge_point->on_event({event_data});
+
+                // We do only report inoperative errors as faults
+                if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+                    if (is_active) {
+                        this->charge_point->on_faulted(evse_id, get_connector_id_from_error(error));
+                    } else {
+                        this->charge_point->on_fault_cleared(evse_id, get_connector_id_from_error(error));
+                    }
+                }
             } else if (std::holds_alternative<ocpp::v2::MeterValue>(queued_event)) {
                 const auto meter_value = std::get<ocpp::v2::MeterValue>(queued_event);
                 EVLOG_info << "Processing queued meter value for evse_id: " << evse_id;
@@ -1152,25 +1162,25 @@ void OCPP201::init_evse_subscriptions() {
         });
 
         auto fault_handler = [this, evse_id](const Everest::error::Error& error) {
-            const auto event_data = get_event_data(error, true, this->event_id_counter++);
             if (this->started) {
+                const auto event_data = get_event_data(error, false, this->event_id_counter++);
                 this->charge_point->on_event({event_data});
+                this->charge_point->on_faulted(evse_id, get_connector_id_from_error(error));
             } else {
                 std::scoped_lock lock(this->session_event_mutex);
-                this->event_queue[event_data.component.evse.value_or(ocpp::v2::EVSE{1}).id].push(event_data);
+                this->event_queue[get_component_from_error(error).evse.value_or(ocpp::v2::EVSE{1}).id].push(error);
             }
-            this->charge_point->on_faulted(evse_id, get_connector_id_from_error(error));
         };
 
         auto fault_cleared_handler = [this, evse_id](const Everest::error::Error& error) {
-            const auto event_data = get_event_data(error, true, this->event_id_counter++);
             if (this->started) {
+                const auto event_data = get_event_data(error, true, this->event_id_counter++);
                 this->charge_point->on_event({event_data});
+                this->charge_point->on_fault_cleared(evse_id, get_connector_id_from_error(error));
             } else {
                 std::scoped_lock lock(this->session_event_mutex);
-                this->event_queue[event_data.component.evse.value_or(ocpp::v2::EVSE{1}).id].push(event_data);
+                this->event_queue[get_component_from_error(error).evse.value_or(ocpp::v2::EVSE{1}).id].push(error);
             }
-            this->charge_point->on_fault_cleared(evse_id, get_connector_id_from_error(error));
         };
 
         // A permanent fault from the evse requirement indicates that the evse should move to faulted state
