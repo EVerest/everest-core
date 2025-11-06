@@ -41,6 +41,37 @@ const auto EVSE_COMPONENT_NAME = "EVSE";
 const auto CONNECTOR_COMPONENT_NAME = "Connector";
 const auto PROBLEM_VARIABLE_NAME = "Problem";
 
+/// \brief Returns simplified mapping from error origin to OCPP component based on evse and connector ids
+ocpp::v2::Component get_component_from_error(const Everest::error::Error& error) {
+    ocpp::v2::Component component;
+
+    if (!error.origin.mapping.has_value()) {
+        // component is ChargingStation
+        component.name = CHARGING_STATION_COMPONENT_NAME;
+        return component;
+    }
+
+    const auto& mapping = error.origin.mapping.value();
+    const auto evse_id = mapping.evse;
+
+    if (!mapping.connector.has_value()) {
+        // component is EVSE
+        ocpp::v2::EVSE evse;
+        evse.id = evse_id;
+        component.name = EVSE_COMPONENT_NAME;
+        component.evse = evse;
+        return component;
+    }
+
+    // component is Connector
+    ocpp::v2::EVSE evse;
+    evse.id = evse_id;
+    evse.connectorId = mapping.connector.value();
+    component.name = EVSE_COMPONENT_NAME;
+    component.evse = evse;
+    return component;
+}
+
 /// \brief Derives the EventData from the given \p error, \p cleared and \p event_id parameters
 ocpp::v2::EventData get_event_data(const Everest::error::Error& error, const bool cleared, const int32_t event_id) {
     ocpp::v2::EventData event_data;
@@ -63,29 +94,7 @@ ocpp::v2::EventData get_event_data(const Everest::error::Error& error, const boo
     event_data.variableMonitoringId = std::nullopt; // We dont need to set this for HardwiredNotification
     event_data.eventNotificationType = ocpp::v2::EventNotificationEnum::HardWiredNotification;
 
-    // TODO: choose proper component
-    const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
-    if (evse_id == 0) {
-        // component is ChargingStation
-        event_data.component = {CHARGING_STATION_COMPONENT_NAME}; // TODO: use origin of error for mapping to component?
-    } else if (not error.origin.mapping.value().connector.has_value()) {
-        // component is EVSE
-        ocpp::v2::EVSE evse;
-        evse.id = evse_id;
-        ocpp::v2::Component component;
-        component.name = EVSE_COMPONENT_NAME;
-        component.evse = evse;
-        event_data.component = component;
-    } else {
-        // component is Connector
-        ocpp::v2::EVSE evse;
-        evse.id = evse_id;
-        evse.connectorId = error.origin.mapping.value().connector.value();
-        ocpp::v2::Component component;
-        component.name = EVSE_COMPONENT_NAME;
-        component.evse = evse;
-        event_data.component = component;
-    }
+    event_data.component = get_component_from_error(error);
     event_data.variable = {PROBLEM_VARIABLE_NAME}; // TODO: use type of error for mapping to variable?
     return event_data;
 }
