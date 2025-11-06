@@ -13,8 +13,8 @@ namespace everest::lib::API::V1_0::types::ocpp {
 
 namespace {
 template <class SrcT, class ConvT>
-auto srcToTarOpt(std::optional<SrcT> const& src,
-                 ConvT const& converter) -> std::optional<decltype(converter(src.value()))> {
+auto srcToTarOpt(std::optional<SrcT> const& src, ConvT const& converter)
+    -> std::optional<decltype(converter(src.value()))> {
     if (src) {
         return std::make_optional(converter(src.value()));
     }
@@ -159,6 +159,17 @@ EventTriggerEnum_External to_external_api(EventTriggerEnum_Internal const& val) 
     throw std::out_of_range("Unexpected value for everest::lib::API::V1_0::types::ocpp::EventTriggerEnum_Internal");
 }
 
+EventTriggerEnum_Internal to_internal_api(EventTriggerEnum_External const& val) {
+    using SrcT = EventTriggerEnum_External;
+    using TarT = EventTriggerEnum_Internal;
+    switch (val) {
+        enum_case(Alerting);
+        enum_case(Delta);
+        enum_case(Periodic);
+    }
+    throw std::out_of_range("Unexpected value for everest::lib::API::V1_0::types::ocpp::EventTriggerEnum_External");
+}
+
 EventNotificationType_External to_external_api(EventNotificationType_Internal const& val) {
     using SrcT = EventNotificationType_Internal;
     using TarT = EventNotificationType_External;
@@ -170,6 +181,19 @@ EventNotificationType_External to_external_api(EventNotificationType_Internal co
     }
     throw std::out_of_range(
         "Unexpected value for everest::lib::API::V1_0::types::ocpp::EventNotificationType_Internal");
+}
+
+EventNotificationType_Internal to_internal_api(EventNotificationType_External const& val) {
+    using SrcT = EventNotificationType_External;
+    using TarT = EventNotificationType_Internal;
+    switch (val) {
+        enum_case(HardWiredNotification);
+        enum_case(HardWiredMonitor);
+        enum_case(PreconfiguredMonitor);
+        enum_case(CustomMonitor);
+    }
+    throw std::out_of_range(
+        "Unexpected value for everest::lib::API::V1_0::types::ocpp::EventNotificationType_External");
 }
 
 DataTransferStatus_Internal to_internal_api(DataTransferStatus_External const& val) {
@@ -466,6 +490,12 @@ MonitorVariableRequestList_Internal to_internal_api(MonitorVariableRequestList_E
     return result;
 }
 
+MonitorVariableRequestList_External to_external_api(MonitorVariableRequestList_Internal const& val) {
+    MonitorVariableRequestList_External result;
+    result.items = vecToExternal(val);
+    return result;
+}
+
 SecurityEvent_Internal to_internal_api(SecurityEvent_External const& val) {
     SecurityEvent_Internal result;
     result.type = val.type;
@@ -534,6 +564,23 @@ OcppTransactionEvent_External to_external_api(OcppTransactionEvent_Internal cons
     return result;
 }
 
+EventData_Internal to_internal_api(EventData_External const& val) {
+    EventData_Internal result;
+    result.component_variable = to_internal_api(val.component_variable);
+    result.event_id = val.event_id;
+    result.timestamp = val.timestamp;
+    result.trigger = to_internal_api(val.trigger);
+    result.actual_value = val.actual_value;
+    result.event_notification_type = to_internal_api(val.event_notification_type);
+    result.cause = val.cause;
+    result.tech_code = val.tech_code;
+    result.tech_info = val.tech_info;
+    result.cleared = val.cleared;
+    result.transaction_id = val.transaction_id;
+    result.variable_monitoring_id = val.variable_monitoring_id;
+    return result;
+}
+
 EventData_External to_external_api(EventData_Internal const& val) {
     EventData_External result;
     result.component_variable = to_external_api(val.component_variable);
@@ -551,9 +598,23 @@ EventData_External to_external_api(EventData_Internal const& val) {
     return result;
 }
 
+V2XFreqWattPointType_Internal to_internal_api(V2XFreqWattPointType_External const& val) {
+    V2XFreqWattPointType_Internal result;
+    result.frequency = val.frequency;
+    result.power = val.power;
+    return result;
+}
+
 V2XFreqWattPointType_External to_external_api(V2XFreqWattPointType_Internal const& val) {
     V2XFreqWattPointType_External result;
     result.frequency = val.frequency;
+    result.power = val.power;
+    return result;
+}
+
+V2XSignalWattPointCurve_Internal to_internal_api(V2XSignalWattPointCurve_External const& val) {
+    V2XSignalWattPointCurve_Internal result;
+    result.signal = val.signal;
     result.power = val.power;
     return result;
 }
@@ -563,6 +624,22 @@ V2XSignalWattPointCurve_External to_external_api(V2XSignalWattPointCurve_Interna
     result.signal = val.signal;
     result.power = val.power;
     return result;
+}
+
+OperationMode_Internal to_internal_api(OperationMode_External const& val) {
+    using SrcT = OperationMode_External;
+    using TarT = OperationMode_Internal;
+    switch (val) {
+        enum_case(Idle);
+        enum_case(ChargingOnly);
+        enum_case(CentralSetpoint);
+        enum_case(ExternalSetpoint);
+        enum_case(ExternalLimits);
+        enum_case(CentralFrequency);
+        enum_case(LocalFrequency);
+        enum_case(LocalLoadBalancing);
+    }
+    throw std::out_of_range("Unexpected value for everest::lib::API::V1_0::types::ocpp::OperationMode_External");
 }
 
 OperationMode_External to_external_api(OperationMode_Internal const& val) {
@@ -579,6 +656,39 @@ OperationMode_External to_external_api(OperationMode_Internal const& val) {
         enum_case(LocalLoadBalancing);
     }
     throw std::out_of_range("Unexpected value for everest::lib::API::V1_0::types::ocpp::Operation_mode");
+}
+
+ChargingSchedulePeriod_Internal to_internal_api(ChargingSchedulePeriod_External const& val) {
+    ChargingSchedulePeriod_Internal result;
+    result.start_period = val.start_period;
+    result.limit = val.limit;
+    result.limit_L2 = val.limit_L2;
+    result.limit_L3 = val.limit_L3;
+    result.number_phases = val.number_phases;
+    result.stack_level = val.stack_level;
+    result.phase_to_use = val.phase_to_use;
+    result.discharge_limit = val.discharge_limit;
+    result.discharge_limit_L2 = val.discharge_limit_L2;
+    result.discharge_limit_L3 = val.discharge_limit_L3;
+    result.setpoint = val.setpoint;
+    result.setpoint_L2 = val.setpoint_L2;
+    result.setpoint_L3 = val.setpoint_L3;
+    result.setpoint_reactive = val.setpoint_reactive;
+    result.setpoint_reactive_L2 = val.setpoint_reactive_L2;
+    result.setpoint_reactive_L3 = val.setpoint_reactive_L3;
+    if (val.preconditioning_request) {
+        result.preconditioning_request = 1.0;  // TODO(CB): What time interval to set here?
+    }
+    result.evse_sleep = val.evse_sleep;
+    result.v2x_baseline = val.v2x_baseline;
+    result.operation_mode = optToInternal(val.operation_mode);
+    if (val.v2x_freq_watt_curve) {
+        result.v2x_freq_watt_curve = vecToInternal(val.v2x_freq_watt_curve.value());
+    }
+    if (val.v2x_signal_watt_curve) {
+        result.v2x_signal_watt_curve = vecToInternal(val.v2x_signal_watt_curve.value());
+    }
+    return result;
 }
 
 ChargingSchedulePeriod_External to_external_api(ChargingSchedulePeriod_Internal const& val) {
@@ -605,8 +715,23 @@ ChargingSchedulePeriod_External to_external_api(ChargingSchedulePeriod_Internal 
     result.evse_sleep = val.evse_sleep;
     result.v2x_baseline = val.v2x_baseline;
     result.operation_mode = optToExternal(val.operation_mode);
-    result.v2x_freq_watt_curve = vecToExternal(val.v2x_freq_watt_curve);
-    result.v2x_signal_watt_curve = vecToExternal(val.v2x_signal_watt_curve);
+    if (val.v2x_freq_watt_curve) {
+        result.v2x_freq_watt_curve = vecToExternal(val.v2x_freq_watt_curve.value());
+    }
+    if (val.v2x_signal_watt_curve) {
+        result.v2x_signal_watt_curve = vecToExternal(val.v2x_signal_watt_curve.value());
+    }
+    return result;
+}
+
+ChargingSchedule_Internal to_internal_api(ChargingSchedule_External const& val) {
+    ChargingSchedule_Internal result;
+    result.evse = val.evse;
+    result.charging_rate_unit = val.charging_rate_unit;
+    result.charging_schedule_period = vecToInternal(val.charging_schedule_period);
+    result.duration = val.duration;
+    result.start_schedule = val.start_schedule;
+    result.min_charging_rate = val.min_charging_rate;
     return result;
 }
 
@@ -618,6 +743,12 @@ ChargingSchedule_External to_external_api(ChargingSchedule_Internal const& val) 
     result.duration = val.duration;
     result.start_schedule = val.start_schedule;
     result.min_charging_rate = val.min_charging_rate;
+    return result;
+}
+
+ChargingSchedules_Internal to_internal_api(ChargingSchedules_External const& val) {
+    ChargingSchedules_Internal result;
+    result.schedules = vecToInternal(val.schedules);
     return result;
 }
 
