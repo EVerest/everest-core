@@ -10,10 +10,27 @@
 
 namespace slac::fsm::evse {
 
-void session_log(Context& ctx, MatchingSession& session, const std::string& text) {
+void session_log(Context& ctx, MatchingSession& session, const LogLevel level, const std::string& text) {
     const auto run_id = format_run_id(session.run_id);
     const auto mac = format_mac_addr(session.ev_mac);
-    ctx.log_info("Session (run_id=" + run_id + ", ev_mac=" + mac + "): " + text);
+    std::stringstream ss;
+
+    ss << "Session (run_id=" << run_id << ", ev_mac=" << mac << "): " << text;
+
+    switch (level) {
+    case LogLevel::DEBUG:
+        ctx.log_debug(ss.str());
+        break;
+    case LogLevel::INFO:
+        ctx.log_info(ss.str());
+        break;
+    case LogLevel::WARN:
+        ctx.log_warn(ss.str());
+        break;
+    case LogLevel::ERROR:
+        ctx.log_error(ss.str());
+        break;
+    }
 }
 
 //
@@ -151,7 +168,7 @@ void MatchingState::handle_cm_slac_parm_req(const slac::messages::cm_slac_parm_r
         session = &sessions.back();
     }
 
-    session_log(ctx, *session, "initialized, waiting for CM_START_ATTEN_CHAR_IND");
+    session_log(ctx, *session, LogLevel::INFO, "initialized, waiting for CM_START_ATTEN_CHAR_IND");
 
     // timeout until we need to get cm_start_atten_char_ind
     session->set_next_timeout(slac::defs::TT_MATCH_SEQUENCE_MS);
@@ -198,12 +215,13 @@ void MatchingState::handle_cm_start_atten_char_ind(const slac::messages::cm_star
 
     if (session->state != MatchingSubState::WAIT_FOR_START_ATTEN_CHAR) {
         if (session->state != MatchingSubState::SOUNDING)
-            session_log(ctx, *session, "needs to be in state WAIT_FOR_START_ATTEN_CHAR for CM_START_ATTEN_CHAR_IND");
+            session_log(ctx, *session, LogLevel::WARN,
+                        "needs to be in state WAIT_FOR_START_ATTEN_CHAR for CM_START_ATTEN_CHAR_IND");
         return;
     }
 
     // go to sounding
-    session_log(ctx, *session, "received CM_START_ATTEN_CHAR_IND, going to substate SOUNDING");
+    session_log(ctx, *session, LogLevel::INFO, "received CM_START_ATTEN_CHAR_IND, going to substate SOUNDING");
     session->state = MatchingSubState::SOUNDING;
     session->set_next_timeout(slac::defs::TT_EVSE_MATCH_MNBC_MS);
 }
@@ -234,11 +252,11 @@ void MatchingState::handle_cm_mnbc_sound_ind(const slac::messages::cm_mnbc_sound
     }
 
     if (session->state != MatchingSubState::SOUNDING) {
-        session_log(ctx, *session, "needs to be in state SOUNDING for CM_MNBC_SOUND_IND");
+        session_log(ctx, *session, LogLevel::WARN, "needs to be in state SOUNDING for CM_MNBC_SOUND_IND");
         return;
     }
 
-    session_log(ctx, *session, "received CM_MNBC_SOUND_IND");
+    session_log(ctx, *session, LogLevel::INFO, "received CM_MNBC_SOUND_IND");
 
     session->received_mnbc_sound = true;
 }
@@ -260,16 +278,16 @@ void MatchingState::handle_cm_atten_profile_ind(const slac::messages::cm_atten_p
     }
 
     if (session->state != MatchingSubState::SOUNDING) {
-        session_log(ctx, *session, "needs to be in state SOUNDING for CM_ATTEN_PROFILE_IND");
+        session_log(ctx, *session, LogLevel::WARN, "needs to be in state SOUNDING for CM_ATTEN_PROFILE_IND");
         return;
     }
 
     if (msg.num_groups != slac::defs::AAG_LIST_LEN) {
-        session_log(ctx, *session, "mismatch in number of AAG groups");
+        session_log(ctx, *session, LogLevel::WARN, "mismatch in number of AAG groups");
         return;
     }
 
-    session_log(ctx, *session, "received CM_ATTEN_PROFILE_IND");
+    session_log(ctx, *session, LogLevel::INFO, "received CM_ATTEN_PROFILE_IND");
 
     for (int i = 0; i < slac::defs::AAG_LIST_LEN; ++i) {
         session->captured_aags[i] += msg.aag[i];
@@ -282,7 +300,7 @@ void MatchingState::handle_cm_atten_profile_ind(const slac::messages::cm_atten_p
     }
 
     // fall-through: all sounds captured
-    session_log(ctx, *session, "received all sounds, going to substate FINALIZE_SOUNDING");
+    session_log(ctx, *session, LogLevel::INFO, "received all sounds, going to substate FINALIZE_SOUNDING");
     session->state = MatchingSubState::FINALIZE_SOUNDING;
     session->set_next_timeout(FINALIZE_SOUNDING_DELAY_MS);
 }
@@ -316,11 +334,12 @@ void MatchingState::handle_cm_atten_char_rsp(const slac::messages::cm_atten_char
     }
 
     if (session->state != MatchingSubState::WAIT_FOR_ATTEN_CHAR_RSP) {
-        session_log(ctx, *session, "needs to be in state WAIT_FOR_ATTEN_CHAR_RSP for CM_ATTEN_CHAR_RSP");
+        session_log(ctx, *session, LogLevel::WARN,
+                    "needs to be in state WAIT_FOR_ATTEN_CHAR_RSP for CM_ATTEN_CHAR_RSP");
         return;
     }
 
-    session_log(ctx, *session, "received CM_ATTEN_CHAR_RSP, going to substate WAIT_FOR_SLAC_MATCH");
+    session_log(ctx, *session, LogLevel::INFO, "received CM_ATTEN_CHAR_RSP, going to substate WAIT_FOR_SLAC_MATCH");
     session->state = MatchingSubState::WAIT_FOR_SLAC_MATCH;
 
     // FIXME (aw): referring to the standard, it is not clear here, if we should offset from TT_EVSE_MATCH_MNBC
@@ -368,11 +387,12 @@ void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match
     }
 
     if (session->state != MatchingSubState::WAIT_FOR_SLAC_MATCH) {
-        session_log(ctx, *session, "needs to be in state WAIT_FOR_SLAC_MATCH for CM_SLAC_MATCH_REQ");
+        session_log(ctx, *session, LogLevel::WARN, "needs to be in state WAIT_FOR_SLAC_MATCH for CM_SLAC_MATCH_REQ");
         return;
     }
 
-    session_log(ctx, *session, "Received CM_SLAC_MATCH_REQ, sending CM_SLAC_MATCH_CNF -> session complete");
+    session_log(ctx, *session, LogLevel::INFO,
+                "Received CM_SLAC_MATCH_REQ, sending CM_SLAC_MATCH_CNF -> session complete");
 
     static constexpr uint8_t wrong_session_nmk[16] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
                                                       0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10};
@@ -397,7 +417,7 @@ void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match
 }
 
 void MatchingState::finalize_sounding(MatchingSession& session) {
-    session_log(ctx, session, "Finalize sounding, sending CM_ATTEN_CHAR_IND");
+    session_log(ctx, session, LogLevel::INFO, "Finalize sounding, sending CM_ATTEN_CHAR_IND");
     session.state = MatchingSubState::WAIT_FOR_ATTEN_CHAR_RSP;
 
     auto atten_char = create_cm_atten_char_ind(session, ctx.slac_config.sounding_atten_adjustment);
