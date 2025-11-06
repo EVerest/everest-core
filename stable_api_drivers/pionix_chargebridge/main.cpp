@@ -2,12 +2,16 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "charge_bridge/charge_bridge.hpp"
 #include "charge_bridge/utilities/string.hpp"
+#include <algorithm>
 #include <atomic>
 #include <charge_bridge/utilities/parse_config.hpp>
+#include <chrono>
 #include <csignal>
 #include <cstring>
 #include <everest/io/event/fd_event_handler.hpp>
+#include <everest/io/event/timer_fd.hpp>
 #include <iostream>
+#include <numeric>
 
 using namespace everest::lib::io::event;
 using namespace everest::lib::API::V1_0::types;
@@ -106,7 +110,45 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    ev_handler.run(g_run_application);
+    timer_fd block_timer;
+    block_timer.set_timeout_ms(100);
+    auto last_ping = std::chrono::steady_clock::now();
+    auto last_eval = std::chrono::steady_clock::now();
+
+    std::vector<int> deltas;
+
+    ev_handler.register_event_handler(&block_timer, [&](auto const&) {
+        // auto now = std::chrono::steady_clock::now();
+        // auto d = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping);
+        // deltas.push_back(d.count());
+        // last_ping = now;
+    });
+
+    //    ev_handler.run(g_run_application);
+    while (g_run_application.load()) {
+        ev_handler.poll();
+        ev_handler.run_actions();
+        if (std::chrono::steady_clock::now() - last_eval > std::chrono::seconds(5)) {
+            auto count = deltas.size();
+            auto avg = std::accumulate(deltas.begin(), deltas.end(), 0) / count;
+            auto max = *std::max_element(deltas.begin(), deltas.end());
+            auto min = *std::min_element(deltas.begin(), deltas.end());
+
+            std::cout << "STATS: count -> " << count << "#\t"
+                      << "       avg   -> " << avg << "ms\t"
+                      << "       max   -> " << max << "ms\t"
+                      << "       min   -> " << min << "ms"
+                      << std::endl;
+            deltas.clear();
+            last_eval = std::chrono::steady_clock::now();
+        }
+        else{
+            auto now = std::chrono::steady_clock::now();
+            auto d = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping);
+            deltas.push_back(d.count());
+            last_ping = now;
+        }
+    }
 
     return 0;
 }
