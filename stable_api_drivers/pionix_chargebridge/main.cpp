@@ -111,17 +111,19 @@ int main(int argc, char* argv[]) {
     }
 
     timer_fd block_timer;
-    block_timer.set_timeout_ms(100);
+    block_timer.set_timeout_ms(1);
     auto last_ping = std::chrono::steady_clock::now();
     auto last_eval = std::chrono::steady_clock::now();
 
     std::vector<int> deltas;
+    bool this_was_a_ping = false;
 
     ev_handler.register_event_handler(&block_timer, [&](auto const&) {
         // auto now = std::chrono::steady_clock::now();
         // auto d = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping);
         // deltas.push_back(d.count());
         // last_ping = now;
+        this_was_a_ping = true;
     });
 
     //    ev_handler.run(g_run_application);
@@ -133,19 +135,24 @@ int main(int argc, char* argv[]) {
             auto avg = std::accumulate(deltas.begin(), deltas.end(), 0) / count;
             auto max = *std::max_element(deltas.begin(), deltas.end());
             auto min = *std::min_element(deltas.begin(), deltas.end());
-
+            // clang-format off
             std::cout << "STATS: count -> " << count << "#\t"
                       << "       avg   -> " << avg << "ms\t"
                       << "       max   -> " << max << "ms\t"
                       << "       min   -> " << min << "ms"
                       << std::endl;
+            // clang-format on
+
             deltas.clear();
             last_eval = std::chrono::steady_clock::now();
-        }
-        else{
+        } else {
             auto now = std::chrono::steady_clock::now();
-            auto d = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping);
-            deltas.push_back(d.count());
+            if (this_was_a_ping) {
+                this_was_a_ping = false;
+            } else {
+                auto d = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping);
+                deltas.push_back(d.count());
+            }
             last_ping = now;
         }
     }
