@@ -22,9 +22,6 @@ modules can interact with each other.
 
 To understand the tool side, we will look at the mechanisms of the Admin Panel.
 
-Additionally, there will be a section which explains module features in more
-detail soon.
-
 ******************************************
 Module connections for dedicated use cases
 ******************************************
@@ -37,7 +34,7 @@ authentication or protocol implementations - everything is delivered (or can
 be implemented by you) via an EVerest module.
 
 All those modules required for a dedicated system environment will have to be
-connected so that they an communicate with each other. Such a configuration
+connected so that they can communicate with each other. Such a configuration
 could look like this:
 
 .. image:: images/module-config-overview.png
@@ -255,7 +252,7 @@ implementations allow the EvseManager to get and provide information
 to other devices using these protocols.
 
 The connection to the left is needed for the EvseManager to get power from
-somewhere. In the example above, the **grid connection** module will deliver
+somewhere. In the above example, the **grid connection** module communicates the available
 energy. This is the part where in more complex scenarios an energy management
 logic can be set up or loadbalancing between more than one EvseManagers will
 take place.
@@ -330,18 +327,13 @@ In this case, as long as no other energy management logic is provided (e.g.
 via OCPP or other energy management implementations), there will be automatic
 power sharing between the two EvseManagers.
 
-More sophisticated energy management which is done for more than only one
-physical charging device will be possible soon as we are implementing a
-solution for remote communication between multiple EVerest instances.
-
 DC charging
 ===========
 
-A short hint for realizing DC charging:
+DC charging typically requires isolation and over-voltage monitoring, a DC power supply and SLAC. Use this picture as a short hint for realizing DC charging:
 
 .. image:: images/7-admin-panel-dc-with-imd-and-dc-power.png
 
-A more detailed use case will follow.
 
 .. _explaination_3_tier_mappings:
 
@@ -438,23 +430,6 @@ Mapping information is also available in error reporting via
 
     subscribe_global_all_errors(error_handler, error_cleared_handler);
 
-******************************
-Module functionality in detail
-******************************
-
-`TODO: This section is yet to be created. Existing module documentation listed
-here are eventually to be updated.`
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-
-    /_included/modules_doc/*
-    /_included/modules_doc/*/index.rst
-
-Addtionally, you can have a look at the documentation regarding interfaces
-for a bank transaction process here:
-:ref:`TODO Bank Transaction Handling <bank_transaction_main>`
 
 ----------------------------------
 
