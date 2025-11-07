@@ -7,8 +7,15 @@
 
 namespace slac::fsm::evse {
 
-void session_log(Context& ctx, MatchingSession& session, const std::string& text);
+enum class LogLevel {
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR
+};
 
-}
+void session_log(Context& ctx, MatchingSession& session, const LogLevel level, const std::string& text);
+
+} // namespace slac::fsm::evse
 
 #endif // EVSE_SLAC_STATES_MATCHING_HANDLE_SLAC_HPP

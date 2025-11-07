@@ -72,7 +72,7 @@ FSMSimpleState::CallbackReturnType MatchingState::callback() {
 
     if (!seen_slac_parm_req) {
         if (now_tp >= timeout_slac_parm_req) {
-            ctx.log_info("CM_SLAC_PARM_REQ timed out -> FAILED");
+            ctx.log_error("CM_SLAC_PARM_REQ timed out -> FAILED");
             return Event::FAILED;
         }
 
@@ -102,10 +102,10 @@ FSMSimpleState::CallbackReturnType MatchingState::callback() {
             session.ack_timeout();
 
             if (session.state == MatchingSubState::WAIT_FOR_START_ATTEN_CHAR) {
-                session_log(ctx, session, "Waiting for CM_START_ATTEN_CHAR_IND timed out -> failed");
+                session_log(ctx, session, LogLevel::ERROR, "Waiting for CM_START_ATTEN_CHAR_IND timed out -> failed");
                 session.state = MatchingSubState::FAILED;
             } else if (session.state == MatchingSubState::SOUNDING) {
-                session_log(ctx, session,
+                session_log(ctx, session, LogLevel::WARN,
                             "Sounding not yet complete but timed out, going to sub-state FINALIZE_SOUNDING");
                 session.state = MatchingSubState::FINALIZE_SOUNDING;
                 session.set_next_timeout(FINALIZE_SOUNDING_DELAY_MS);
@@ -115,14 +115,15 @@ FSMSimpleState::CallbackReturnType MatchingState::callback() {
             } else if (session.state == MatchingSubState::WAIT_FOR_ATTEN_CHAR_RSP) {
                 session.num_retries++;
                 if (session.num_retries <= slac::defs::C_EV_MATCH_RETRY) {
-                    session_log(ctx, session, "Waiting for CM_ATTEN_CHAR_RSP timed out -> retry matching");
+                    session_log(ctx, session, LogLevel::WARN,
+                                "Waiting for CM_ATTEN_CHAR_RSP timed out -> retry matching");
                     finalize_sounding(session);
                 } else {
-                    session_log(ctx, session, "Waiting for CM_ATTEN_CHAR_RSP timed out -> failed");
+                    session_log(ctx, session, LogLevel::ERROR, "Waiting for CM_ATTEN_CHAR_RSP timed out -> failed");
                     session.state = MatchingSubState::FAILED;
                 }
             } else if (session.state == MatchingSubState::WAIT_FOR_SLAC_MATCH) {
-                session_log(ctx, session, "Wating for CM_SLAC_MATCH_REQ timed out -> failed");
+                session_log(ctx, session, LogLevel::ERROR, "Wating for CM_SLAC_MATCH_REQ timed out -> failed");
                 session.state = MatchingSubState::FAILED;
             }
         }
@@ -154,7 +155,7 @@ FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType&
     } else if (ev == Event::RETRY_MATCHING) {
         num_retries++;
         if (num_retries == slac::defs::C_EV_MATCH_RETRY) {
-            ctx.log_info("Reached retry limit for matching");
+            ctx.log_error("Reached retry limit for matching");
             return sa.create_simple<FailedState>(ctx);
         }
 
@@ -165,7 +166,7 @@ FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType&
     } else if (ev == Event::FAILED) {
         failed_count++;
         if (ctx.slac_config.reset_instead_of_fail and failed_count < 2) {
-            ctx.log_info("Resetting MatchingState. Waiting for the next CM_SLAC_PARAM.REQ message.");
+            ctx.log_error("Resetting MatchingState. Waiting for the next CM_SLAC_PARAM.REQ message.");
 
             // Resetting all relevant MatchingState members
             sessions.clear();
