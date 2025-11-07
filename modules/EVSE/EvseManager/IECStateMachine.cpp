@@ -433,27 +433,34 @@ void IECStateMachine::call_allow_power_on_bsp(bool value) {
     r_bsp->call_allow_power_on({value, power_on_reason});
 }
 
-// High level state machine requests reading PP ampacity value.
-// We forward this request to the BSP driver. The high level state machine will never call this if it is not used
-// (e.g. in DC or AC tethered charging)
-double IECStateMachine::read_pp_ampacity() {
-    auto a = r_bsp->call_ac_read_pp_ampacity();
-    switch (a.ampacity) {
+void IECStateMachine::set_pp_ampacity(types::board_support_common::ProximityPilot pp) {
+    switch (pp.ampacity) {
     case types::board_support_common::Ampacity::A_13:
-        return 13.;
+        pp_ampacity = 13.;
+        break;
     case types::board_support_common::Ampacity::A_20:
-        return 20.;
+        pp_ampacity = 20.;
+        break;
     case types::board_support_common::Ampacity::A_32:
-        return 32.;
+        pp_ampacity = 32.;
+        break;
     case types::board_support_common::Ampacity::A_63_3ph_70_1ph:
         if (three_phases) {
-            return 63.;
+            pp_ampacity = 63.;
         } else {
-            return 70.;
+            pp_ampacity = 70.;
         }
+        break;
     default:
-        return 0.;
+        pp_ampacity = 0.;
     }
+}
+
+// High level state machine requests reading PP ampacity value.
+// The high level state machine will never call this if it is not used
+// (e.g. in DC or AC tethered charging)
+double IECStateMachine::read_pp_ampacity() {
+    return pp_ampacity;
 }
 
 // Forward special replug request. Only for testing setups.

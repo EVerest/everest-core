@@ -177,12 +177,6 @@ void evse_board_supportImpl::handle_allow_power_on(types::evse_board_support::Po
     mod->serial.allowPowerOn(value.allow_power_on);
 }
 
-types::board_support_common::ProximityPilot evse_board_supportImpl::handle_ac_read_pp_ampacity() {
-    // FIXME: read PP ampacity from AD-ACEVSE22KWZ-KIT, report back maximum current the hardware can handle for now
-    std::lock_guard<std::mutex> lock(capsMutex);
-    return last_pp;
-}
-
 void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
     // your code for cmd ac_set_overcurrent_limit_A goes here
 }

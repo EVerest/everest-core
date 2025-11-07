@@ -963,6 +963,8 @@ void EvseManager::ready() {
     });
 
     r_bsp->subscribe_ac_nr_of_phases_available([this](int n) { signalNrOfPhasesAvailable(n); });
+    r_bsp->subscribe_ac_pp_ampacity(
+        [this](types::board_support_common::ProximityPilot pp) { bsp->set_pp_ampacity(pp); });
 
     if (r_powermeter_billing().size() > 0) {
         r_powermeter_billing()[0]->subscribe_powermeter([this](types::powermeter::Powermeter p) {
