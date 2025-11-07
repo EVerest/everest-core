@@ -4,9 +4,13 @@
 High-Level Overview of EVerest
 ##############################
 
-EVerest an open source software stack for electric vehicle charging stations. It provides all necessary
-functionalities to run a charging station, from low-level hardware interaction to high-level protocols
-like OCPP and ISO15118.
+EVerest is the open source firmware stack for EV charging stations. By digitally abstracting
+the complexity of multiple standards and use cases, EVerest runs on any device, from unmanaged
+AC home chargers to complex multi-EVSE satellite public DC charging stations with battery and
+solar support. EVerest supports all the standards and protocols needed for standards-compliant,
+interoperable and secure charging. In other words, EVerest does the hard work of translating
+standards into working code to ensure that every car works with every charger with every
+charging app and network.
 
 Key features of EVerest
 ========================
@@ -50,7 +54,6 @@ This allows module to subscribe to variables published by other modules and to c
 
 A more detailed explanation of the EVerest architecture and module concept can be found in the
 explaination about :doc:`EVerest modules in detail </explanation/detail-module-concept>`.
-
 
 Hardware Requirements
 =============================
