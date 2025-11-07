@@ -372,7 +372,8 @@ void MatchingState::handle_cm_validate_req(const slac::messages::cm_validate_req
     ctx.send_slac_message(tmp_ev_mac, validate_cnf);
 }
 
-static bool validate_cm_slac_match_req(const slac::messages::cm_slac_match_req& msg, const MatchingSession& session) {
+static bool validate_cm_slac_match_req(const slac::messages::cm_slac_match_req& msg, const MatchingSession& session,
+                                       const Context& ctx) {
 
     if (msg.application_type not_eq slac::defs::COMMON_APPLICATION_TYPE) {
         return false;
@@ -400,11 +401,7 @@ static bool validate_cm_slac_match_req(const slac::messages::cm_slac_match_req& 
         return false;
     }
     // EVSE MAC TC_SECC_CMN_VTB_CmSlacMatch_019/020
-    // FIXME: do we know our own EVSE MAC address?
-    // HACK: check only for != 0x00 here
-    uint8_t evse_mac_fail_ref[ETH_ALEN];
-    memset(evse_mac_fail_ref, 0, sizeof(evse_mac_fail_ref)); // incorrect MAC addr for test
-    if (!memcmp(evse_mac_fail_ref, msg.evse_mac, ETH_ALEN)) {
+    if (memcmp(ctx.evse_mac, msg.evse_mac, ETH_ALEN)) {
         return false;
     }
     // RunID TC_SECC_CMN_VTB_CmSlacMatch_021/022
@@ -422,7 +419,7 @@ void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match
         return;
     }
 
-    if (not validate_cm_slac_match_req(msg, *session)) {
+    if (not validate_cm_slac_match_req(msg, *session, ctx)) {
         session_log(ctx, *session, LogLevel::WARN, "Invalid CM_SLAC_MATCH_REQ received, ignoring");
         return;
     }
