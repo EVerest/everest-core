@@ -73,6 +73,7 @@ For a more realistic scenario, the module has two extra files `utils.cpp` and
 `utils.hpp`.
 
 .. code-block:: bash
+
     modules/
     └── Example
         ├── BUILD.bazel
@@ -89,6 +90,7 @@ For a more realistic scenario, the module has two extra files `utils.cpp` and
 The `manifest.yaml` file for the module looks like this:
 
 .. code-block:: yaml
+
     description: Simple example module written in C++
     provides:
     example:
@@ -110,6 +112,7 @@ module directory, next to the `manifest.yaml` file.
 In the `BUILD.bazel`, use predefined macros to define the module:
 
 .. code-block:: python
+    
     load("//modules:module.bzl", "cc_everest_module")
 
     cc_everest_module(
@@ -154,6 +157,7 @@ the module directory.
 Generic `rust_binary` and `rust_test` are used at the moment.
 
 .. code-block:: python
+
     load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
     load("@everest_core_crate_index//:defs.bzl", "all_crate_deps")
     load("@rules_rust//cargo:defs.bzl", "cargo_build_script")

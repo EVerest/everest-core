@@ -260,76 +260,108 @@ the module could be set up.
 Here is a quick list of things you should remember when adding OCPP to your
 EVerest configuration file:
 
-1. Load the OCPP module by including it in the the configuration file.
+1. **Load the OCPP module** by including it in the configuration file.
 
-2. Make sure to add and connect the module requirements:
-  - evse_manager (interface: energy_manager, 1 to 128 connections):
-    OCPP requires this connection in order to integrate with the charge control
-    logic of EVerest.
-    One connection represents one EVSE.
-    In order to manage multiple EVSEs via one OCPP connection, multiple
-    connections need to be configured in the EVerest config file.
-    Module implementation typically used to fullfill this requirement:
-    EvseManager, implementation_id: evse
-  - evse_energy_sink (interface: external_energy_limits, 0 to 128):
-    OCPP optionally requires this connection to communicate smart charging
-    limits received from the CSMS within EVerest.
-    Typically EnergyNode modules are used to fullfill this requirement.
-    Configure one EnergyNode module per EVSE and one extra for *evse id* zero.
-    The EnergyNode for *evse id* zero represents the energy sink for the
-    complete charging station.
-    Module typically used to fullfill this requirement:
-    :doc:`EnergyNode <reference/modules/EnergyNode>`
-    More information about the energy management setup can be found in the
-    :doc:`EnergyManager module documentation </explanation/modules/EnergyManager/index>`.
-  - auth (interface: auth, 1): This connection is used to set the standardized
-    ``ConnectionTimeout`` configuration key if configured and/or changed by the
-    CSMS.
-    Module typically used to fullfill this requirement:
-    :doc:`Auth module </reference/modules/Auth>`, implementation_id: main
-  - reservation (interface: reservation, 1):
-    This connection is used to apply reservation requests from the CSMS.
-    Module typically used to fullfill this requirement:
-    :doc:`Auth module </reference/modules/Auth>`, implementation_id: reservation
-  - system (interface: system, 1):
-    This connection is used to execute and control system-wide operations that
-    can be triggered by the CSMS, like log uploads, firmware updates, and
-    resets.
-    The :doc:`Linux_Systemd_Rauc module </reference/modules/Linux_Systemd_Rauc>` (implementation_id: main)
-    can be used to fullfill this requirement.
-    For simulation purposes, the :doc:`System module </reference/modules/System>` (implementation_id: main)
-    can be used. Note that the latter is not meant to be used in production systems!
-  - security (interface: evse_security, 1):
-    This connection is used to execute security-related operations and to
-    manage certificates and private keys.
-    Module typically used to fullfill this requirement:
-    :doc:`EvseSecurity module </reference/modules/EvseSecurity>`, implementation_id: main
-  - data_transfer (interface: ocpp_data_transfer, 0 to 1):
-    This connection  is used to handle **DataTransfer.req** messages from the
-    CSMS.
-    A module implementing this interface can contain custom logic to handle the
-    requests from the CSMS.
-    A custom implementation for this interface is required to add custom
-    handling.
-  - display_message (interface: display_message, 0 to 1):
-    This connection is used to allow the CSMS to display pricing or other
-    information on the display of the charging station.
-    In order to fulfill the requirements of the California Pricing whitepaper,
-    it is required to connect a module implementing this interface.
-    EVerest currently does not provide a display module that implements this
-    interface.
+2. **Add and connect the required modules:**
 
-3. Make sure to configure the OCPP module as part of the token_provider
-  (implementation_id: auth_provider) and token_validator
-  (implementation_id: auth_validator) connections of the Auth module (if you
-  use it). Please see the documentation of the auth module for more information.
+   - **evse_manager** (interface: ``energy_manager``, 1 to 128 connections):
 
-4. In case you want to use the Plug&Charge feature, you must also add the
-  EvseManager (implementation_id: token_provider) module to the connections of
-  the Auth module. See :doc:`<how-to-guides/configure-pnc>` for more information
-  about how to set up Plug&Charge in EVerest.
+     OCPP requires this connection to integrate with the charge control logic of EVerest.
+     One connection represents one EVSE.
+     To manage multiple EVSEs via one OCPP connection, multiple connections must be configured
+     in the EVerest configuration file.
 
-You can also use the existing config examples as a guide.
+     *Module implementation typically used to fulfill this requirement:*  
+     ``EvseManager``, ``implementation_id: evse``
 
-------------------------------------------
-Authors: Piet Gömpel
+   - **evse_energy_sink** (interface: ``external_energy_limits``, 0 to 128):
+
+     OCPP optionally requires this connection to communicate smart charging limits received
+     from the CSMS within EVerest.
+
+     Typically, ``EnergyNode`` modules are used to fulfill this requirement.
+     Configure one ``EnergyNode`` module per EVSE and one extra for *evse id* zero.
+     The ``EnergyNode`` for *evse id* zero represents the energy sink for the
+     complete charging station.
+
+     *Module typically used to fulfill this requirement:*  
+     :doc:`EnergyNode <reference/modules/EnergyNode>`
+
+     More information about the energy management setup can be found in the
+     :doc:`EnergyManager module documentation </explanation/modules/EnergyManager/index>`.
+
+   - **auth** (interface: ``auth``, 1):
+
+     This connection is used to set the standardized ``ConnectionTimeout`` configuration key
+     if configured and/or changed by the CSMS.
+
+     *Module typically used to fulfill this requirement:*  
+     :doc:`Auth module </reference/modules/Auth>`, ``implementation_id: main``
+
+   - **reservation** (interface: ``reservation``, 1):
+
+     This connection is used to apply reservation requests from the CSMS.
+
+     *Module typically used to fulfill this requirement:*  
+     :doc:`Auth module </reference/modules/Auth>`, ``implementation_id: reservation``
+
+   - **system** (interface: ``system``, 1):
+
+     This connection is used to execute and control system-wide operations that
+     can be triggered by the CSMS, like log uploads, firmware updates, and resets.
+
+     *Modules fulfilling this requirement:*
+
+     - :doc:`Linux_Systemd_Rauc module </reference/modules/Linux_Systemd_Rauc>` (``implementation_id: main``)
+     - For simulation purposes: :doc:`System module </reference/modules/System>` (``implementation_id: main``)
+
+     .. note::
+        The System module is **not meant to be used in production systems**.
+
+   - **security** (interface: ``evse_security``, 1):
+
+     This connection is used to execute security-related operations and to manage
+     certificates and private keys.
+
+     *Module typically used to fulfill this requirement:*  
+     :doc:`EvseSecurity module </reference/modules/EvseSecurity>`, ``implementation_id: main``
+
+   - **data_transfer** (interface: ``ocpp_data_transfer``, 0 to 1):
+
+     This connection is used to handle **DataTransfer.req** messages from the CSMS.
+     A module implementing this interface can contain custom logic to handle such requests.
+     A custom implementation is required to add custom handling.
+
+   - **display_message** (interface: ``display_message``, 0 to 1):
+
+     This connection is used to allow the CSMS to display pricing or other information
+     on the display of the charging station.
+
+     To fulfill the requirements of the California Pricing whitepaper, it is required
+     to connect a module implementing this interface.
+
+     .. note::
+        EVerest currently does **not** provide a display module that implements this interface.
+
+3. **Configure OCPP with the Auth module:**
+
+   Make sure to configure the OCPP module as part of the ``token_provider``
+   (``implementation_id: auth_provider``) and ``token_validator``
+   (``implementation_id: auth_validator``) connections of the Auth module (if you use it).
+
+   Please see the documentation of the :doc:`Auth module </reference/modules/Auth>` for more information.
+
+4. **Enable Plug & Charge (optional):**
+
+   If you want to use the Plug&Charge feature, you must also add the
+   ``EvseManager`` (``implementation_id: token_provider``) module to the connections
+   of the Auth module.
+
+   See :doc:`Configure Plug&Charge in EVerest </how-to-guides/configure-pnc>` for more
+   information about how to set this up.
+
+You can also use the existing configuration examples as a guide.
+
+----
+
+**Authors:** Piet Gömpel
