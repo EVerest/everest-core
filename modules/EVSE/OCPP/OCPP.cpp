@@ -928,7 +928,7 @@ void OCPP::ready() {
 
     this->charge_point->register_transaction_stopped_callback(
         [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id) {
-            EVLOG_info << "Transaction stopped at connector: " << connector << "session_id: " << session_id;
+            EVLOG_info << "Transaction stopped at connector: " << connector << ", session_id: " << session_id;
             types::ocpp::OcppTransactionEvent tevent;
             tevent.transaction_event = types::ocpp::TransactionEvent::Ended;
             tevent.evse = {connector, 1};
