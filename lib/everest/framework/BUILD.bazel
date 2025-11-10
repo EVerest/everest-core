@@ -1,0 +1,122 @@
+py_binary(
+    name = "collect_migration_files",
+    srcs = [
+        ".ci/build-kit/scripts/collect_migration_files.py"
+    ],
+    main = ".ci/build-kit/scripts/collect_migration_files.py",
+    imports = ["."],
+)
+
+genrule(
+    name = "compile_time_settings",
+    srcs = ["//schemas/migrations"],
+    outs = ["include/everest/compile_time_settings.hpp"],
+    tools = [":collect_migration_files"],
+    cmd = """
+    echo "#define EVEREST_INSTALL_PREFIX \\"/usr\\"" > $@
+    echo "#define EVEREST_INSTALL_LIBDIR \\"/lib\\"" >> $@
+    echo "#define EVEREST_NAMESPACE (\\"everest\\")" >> $@
+    $(location :collect_migration_files) --migration-files $(locations //schemas/migrations) --output $@
+  """,
+)
+
+genrule(
+    name = "version_information",
+    outs = ["include/generated/version_information.hpp"],
+    cmd = """
+    echo "#pragma once" > $@
+    echo "#define PROJECT_NAME \\"everest-framework\\"" >> $@
+    echo "#define PROJECT_DESCRIPTION \\"\\"" >> $@
+    echo "#define PROJECT_VERSION \\"\\"" >> $@
+    echo "#define GIT_VERSION \\"\\"" >> $@
+  """,
+)
+
+cc_library(
+    name = "framework",
+    srcs = glob(["lib/**/*.cpp"]),
+    hdrs = glob(["include/**/*.hpp"]) + [":compile_time_settings", ":version_information"],
+    cxxopts = ["-std=c++17"],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@boost.program_options",
+        "@boost.uuid",
+        "@com_github_HowardHinnant_date//:date",
+        "@com_github_LiamBindle_mqtt-c//:libmqtt",
+        "@rapidyaml//:rapidyaml",
+        "@com_github_everest_liblog//:liblog",
+        "@com_github_everest_everest-sqlite//:everest-sqlite",
+        "@com_github_fmtlib_fmt//:fmt",
+        "@com_github_nlohmann_json//:json",
+        "@com_github_pboettch_json-schema-validator//:json-schema-validator",
+    ],
+    # See https://github.com/HowardHinnant/date/issues/324
+    local_defines = [
+        "BUILD_TZ_LIB=ON",
+        "USE_SYSTEM_TZ_DB=ON",
+        "USE_OS_TZDB=1",
+        "USE_AUTOLOAD=0",
+        "HAS_REMOTE_API=0",
+    ],
+)
+
+cc_library(
+    name = "controller-ipc",
+    srcs = ["src/controller/ipc.cpp"],
+    hdrs = ["src/controller/ipc.hpp"],
+    cxxopts = ["-std=c++17"],
+    strip_include_prefix = "src",
+    deps = [
+        "@com_github_nlohmann_json//:json",
+    ],
+)
+
+cc_binary(
+    name = "controller",
+    srcs = glob(
+        [
+            "src/controller/*.cpp",
+            "src/controller/*.hpp",
+        ],
+        exclude = [
+            "src/controller/ipc.cpp",
+            "src/controller/ipc.hpp",
+        ],
+    ),
+    cxxopts = ["-std=c++17"],
+    deps = [
+        "@rapidyaml//:rapidyaml",
+        "@com_github_everest_liblog//:liblog",
+        "@com_github_fmtlib_fmt//:fmt",
+        "@com_github_warmcatt_libwebsockets//:libwebsockets",
+        "@everest-framework//:controller-ipc",
+        "@everest-framework//:framework",
+        "@libcap",
+    ],
+)
+
+cc_binary(
+    name = "manager",
+    cxxopts = ["-std=c++17"],
+    srcs = glob(
+        [
+            "src/*.cpp",
+            "src/*.hpp",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        "@boost.program_options",
+        "@com_github_everest_liblog//:liblog",
+        "@com_github_fmtlib_fmt//:fmt",
+        "@com_github_pboettch_json-schema-validator//:json-schema-validator",
+        "@everest-framework//:controller-ipc",
+        "@everest-framework//:framework",
+        "@libcap",
+    ],
+)
+
+exports_files([
+   "dependencies.yaml",
+])

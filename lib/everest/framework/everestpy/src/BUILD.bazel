@@ -1,0 +1,21 @@
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+
+pybind_extension(
+	name = "everestpy",
+	srcs = glob(["everest/**/*.cpp", "everest/**/*.hpp"]),
+	deps = ["//:framework", "@pybind11_json//:pybind11_json"],
+	includes = ["everest"],
+	visibility = [
+        "//visibility:public",
+    ],
+)
+
+py_library(
+    name = "framework",
+    data = [":everestpy.so"],
+    srcs = glob(["everest/framework/**/*.py",]),
+    visibility = [
+        "//visibility:public",
+    ],
+    imports = ["."],
+)

@@ -1,0 +1,14 @@
+# Test config for regression tests for the framework.
+active_modules:
+  example_0:
+    module: RsOnReadyRaceCondition
+    connections:
+      other:
+        - module_id: example_1
+          implementation_id: example
+  example_1:
+    module: RsOnReadyRaceCondition
+    connections:
+      other:
+        - module_id: example_0
+          implementation_id: example
