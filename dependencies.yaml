@@ -2,14 +2,6 @@
 # For the sake of unambiguity the `git_tag` field is treated as a hash
 # only if it is 40 characters long hexadecimal string.
 ---
-everest-framework:
-  git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.24.0
-  options: [
-    "BUILD_TESTING OFF",
-    "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
-    "everest-framework_USE_PYTHON_VENV_PATH ${PROJECT_NAME}_USE_PYTHON_VENV_PATH",
-  ]
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.3
