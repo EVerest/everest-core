@@ -6,6 +6,14 @@ provides:
 requires:
   bsp:
     interface: evse_board_support
+  lock_motor:
+    interface: connector_lock
+    min_connections: 0
+    max_connections: 1
+  ac_rcd:
+    interface: ac_rcd
+    min_connections: 0
+    max_connections: 1
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
