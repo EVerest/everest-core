@@ -127,6 +127,7 @@ if(NOT DISABLE_EDM)
     evc_setup_edm()
 
     set(everest-framework_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/everest/framework)
+    set(everest-framework_BINARY_DIR ${CMAKE_BINARY_DIR}/lib/everest/framework)
 
     # FIXME (aw): we need to set this by hand due to edm
     set(EVEREST_SCHEMA_DIR ${everest-framework_SOURCE_DIR}/schemas)
