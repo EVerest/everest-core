@@ -47,7 +47,7 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     }
     shared_context.authorized = false;
 
-    internal_context.update_pwm_last_dc = 0.;
+    internal_context.update_pwm_last_duty_cycle = 0.;
 
     shared_context.current_state = EvseState::Idle;
     internal_context.last_state = EvseState::Disabled;
@@ -987,43 +987,43 @@ void Charger::process_cp_events_independent(CPEvent cp_event) {
 }
 
 void Charger::update_pwm_max_every_5seconds_ampere(float ampere) {
-    float dc = ampere_to_duty_cycle(ampere);
-    if (dc not_eq internal_context.update_pwm_last_dc) {
+    float duty_cycle = ampere_to_duty_cycle(ampere);
+    if (duty_cycle not_eq internal_context.update_pwm_last_duty_cycle) {
         auto now = std::chrono::steady_clock::now();
         auto time_since_last_update =
             std::chrono::duration_cast<std::chrono::milliseconds>(now - internal_context.last_pwm_update).count();
         if (time_since_last_update >= IEC_PWM_MAX_UPDATE_INTERVAL) {
-            update_pwm_now(dc);
+            update_pwm_now(duty_cycle);
             internal_context.pwm_set_last_ampere = ampere;
         }
     }
 }
 
-void Charger::update_pwm_now(float dc) {
+void Charger::update_pwm_now(float duty_cycle) {
     auto start = std::chrono::steady_clock::now();
-    internal_context.update_pwm_last_dc = dc;
+    internal_context.update_pwm_last_duty_cycle = duty_cycle;
     shared_context.pwm_running = true;
 
     session_log.evse(
         false,
         fmt::format(
-            "Set PWM On ({:.1f}%) took {} ms", dc * 100.,
+            "Set PWM On ({:.1f}%) took {} ms", duty_cycle * 100.,
             (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start)).count()));
     internal_context.last_pwm_update = std::chrono::steady_clock::now();
     internal_context.pwm_F_active = false;
-    bsp->set_pwm(dc);
+    bsp->set_pwm(duty_cycle);
 }
 
-void Charger::update_pwm_now_if_changed(float dc) {
-    if (internal_context.update_pwm_last_dc not_eq dc) {
-        update_pwm_now(dc);
+void Charger::update_pwm_now_if_changed(float duty_cycle) {
+    if (internal_context.update_pwm_last_duty_cycle not_eq duty_cycle) {
+        update_pwm_now(duty_cycle);
     }
 }
 
 void Charger::update_pwm_now_if_changed_ampere(float ampere) {
-    float dc = ampere_to_duty_cycle(ampere);
-    if (internal_context.update_pwm_last_dc not_eq dc) {
-        update_pwm_now(dc);
+    float duty_cycle = ampere_to_duty_cycle(ampere);
+    if (internal_context.update_pwm_last_duty_cycle not_eq duty_cycle) {
+        update_pwm_now(duty_cycle);
         internal_context.pwm_set_last_ampere = ampere;
     }
 }
@@ -1031,7 +1031,7 @@ void Charger::update_pwm_now_if_changed_ampere(float ampere) {
 void Charger::pwm_off() {
     session_log.evse(false, "Set PWM Off");
     shared_context.pwm_running = false;
-    internal_context.update_pwm_last_dc = 1.;
+    internal_context.update_pwm_last_duty_cycle = 1.;
     internal_context.pwm_set_last_ampere = 0.;
     internal_context.pwm_F_active = false;
     bsp->set_pwm_off();
@@ -1040,7 +1040,7 @@ void Charger::pwm_off() {
 void Charger::pwm_F() {
     session_log.evse(false, "Set PWM F");
     shared_context.pwm_running = false;
-    internal_context.update_pwm_last_dc = 0.;
+    internal_context.update_pwm_last_duty_cycle = 0.;
     internal_context.pwm_set_last_ampere = 0.;
     internal_context.pwm_F_active = true;
     bsp->set_pwm_F();
@@ -1052,28 +1052,28 @@ void Charger::run() {
 }
 
 float Charger::ampere_to_duty_cycle(float ampere) {
-    float dc = 0;
+    float duty_cycle = 0;
 
     // calculate max current
     if (ampere < 5.9) {
         // Invalid argument, switch to error
-        dc = 1.0;
+        duty_cycle = 1.0;
     } else if (ampere <= 6.1) {
-        dc = 0.1;
+        duty_cycle = 0.1;
     } else if (ampere < 52.5) {
         if (ampere > 51.)
             ampere = 51; // Weird gap in norm: 51A .. 52.5A has no defined PWM.
-        dc = ampere / 0.6 / 100.;
+        duty_cycle = ampere / 0.6 / 100.;
     } else if (ampere <= 80) {
-        dc = ((ampere / 2.5) + 64) / 100.;
+        duty_cycle = ((ampere / 2.5) + 64) / 100.;
     } else if (ampere <= 80.1) {
-        dc = 0.97;
+        duty_cycle = 0.97;
     } else {
         // Invalid argument, switch to error
-        dc = 1.0;
+        duty_cycle = 1.0;
     }
 
-    return dc;
+    return duty_cycle;
 }
 
 bool Charger::set_max_current(float c, std::chrono::time_point<std::chrono::steady_clock> validUntil) {

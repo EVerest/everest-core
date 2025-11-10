@@ -246,10 +246,10 @@ private:
 
     void clear_errors_on_unplug();
 
-    void update_pwm_now(float dc);
-    void update_pwm_now_if_changed(float dc);
-    void update_pwm_now_if_changed_ampere(float dc);
-    void update_pwm_max_every_5seconds_ampere(float dc);
+    void update_pwm_now(float duty_cycle);
+    void update_pwm_now_if_changed(float duty_cycle);
+    void update_pwm_now_if_changed_ampere(float duty_cycle);
+    void update_pwm_max_every_5seconds_ampere(float duty_cycle);
     void pwm_off();
     void pwm_F();
 
@@ -363,7 +363,7 @@ private:
         int hlc_ev_pause_bcb_count{0};
         std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb;
         std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb_sequence;
-        float update_pwm_last_dc;
+        float update_pwm_last_duty_cycle;
         std::chrono::time_point<std::chrono::steady_clock> last_pwm_update;
 
         EvseState t_step_EF_return_state;
