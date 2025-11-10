@@ -74,6 +74,7 @@ public:
     // Allow power on from Charger state machine
     void allow_power_on(bool value, types::evse_board_support::Reason reason);
 
+    void set_pp_ampacity(types::board_support_common::ProximityPilot pp);
     double read_pp_ampacity();
     void evse_replug(int ms);
     void switch_three_phases_while_charging(bool n);
@@ -119,6 +120,7 @@ private:
     bool has_ventilation{false};
     bool power_on_allowed{false};
     bool last_power_on_allowed{false};
+    std::atomic<double> pp_ampacity{0.0};
     std::atomic<double> last_amps{-1};
     std::atomic_bool three_phases{true};
 
