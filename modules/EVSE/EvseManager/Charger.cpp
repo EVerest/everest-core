@@ -301,6 +301,13 @@ void Charger::run_state_machine() {
                 // Create a copy of the atomic struct
                 types::iso15118::DcEvseMaximumLimits evse_limit = shared_context.current_evse_max_limits;
                 if (not(evse_limit.evse_maximum_current_limit > 0 and evse_limit.evse_maximum_power_limit > 0)) {
+
+                    // Wait some time here in this state to see if we get energy from the EnergyManager...
+                    if (time_in_current_state < WAIT_FOR_ENERGY_IN_AUTHLOOP_TIMEOUT_MS) {
+                        break;
+                    }
+
+                    // If still no energy is available after the timeout, assume we will not get any for this session.
                     if (not internal_context.no_energy_warning_printed) {
                         EVLOG_warning << "No energy available, still retrying... Some EVs dont like 0W and/or 0A in "
                                          "ChargingParameterDiscoveryRes message";
