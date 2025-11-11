@@ -926,6 +926,8 @@ void EvseManager::ready() {
                 if (unmatched_on_unplug) {
                     r_slac[0]->call_reset(false);
                 }
+                hlc_waiting_for_auth_pnc = false;
+                hlc_waiting_for_auth_eim = false;
             }
         }
 
