@@ -249,8 +249,8 @@ Observe that the default implementation of the handler of the
 ..  code-block:: cpp
 
     std::string interface_tutorial_moduleImpl::handle_command_tutorial(std::string& payload) {
-    // your code for cmd command_tutorial goes here
-    return "everest";
+        // your code for cmd command_tutorial goes here
+        return "everest";
     }
 
 
