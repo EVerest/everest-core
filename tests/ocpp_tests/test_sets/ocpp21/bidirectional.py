@@ -399,6 +399,7 @@ async def test_rejected_q01(
 
 
 @pytest.mark.asyncio
+@pytest.mark.xdist_group(name="ISO15118")
 @pytest.mark.ocpp_version("ocpp2.1")
 @pytest.mark.everest_core_config("everest-config-ocpp201-sil-dc-d20-eim.yaml")
 @pytest.mark.ocpp_config_adaptions(
