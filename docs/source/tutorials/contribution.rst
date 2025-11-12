@@ -44,7 +44,9 @@ One important rule though:
 For every idea / feature, we will have to create a GitHub issue first as the
 core developers and the EVerest community could have some additional opinions
 or even suggestions for the implementation of your idea.
-Let them get the chance to express their views on a dedicated issue page.
+Let them get the chance to express their views on a dedicated GitHub issue
+page.
+
 
 Step 1.1: Create a new issue
 ----------------------------
@@ -61,6 +63,11 @@ Also use the search function of GitHub.
 Eventually somebody else already had the same idea and there already was some
 discussion about it.
 
+.. note:: Also check Zulip
+    As most of the discussion about the technical specifics of EVerest is
+    happening on the Zulip platform, it is a great idea to also check there
+    for information and thought exchange all around your implementation idea.
+
 If there is no existing issue, create a new one.
 Choose "New issue" on the issues page, which will show a dialog with some
 options.
@@ -71,4 +78,25 @@ The more information you can give about your feature idea and the possible
 solution, the better for core developers to understand and give input to your
 contribution.
 
+For this tutorial you could create an issue like this:
+
+.. image:: img/tutorial-contributing-create-issue-1.png
+    :width: 240px
+    :alt: New issue for implementing Local Cost Calculation in OCPP 2.1
+
+.. image:: img/tutorial-contributing-create-issue-2.png
+    :width: 240px
+    :alt: Description of the issue and a non-detailed suggestion for solving the issue
+
+
 Step 1.2: Let the discussion happen
+-----------------------------------
+
+With an existing GitHub issue, we have a place where discussion about the
+implementation can take place.
+
+After you have created your issue, some core developer might give their opinion
+or other contributors could add valuable information.
+
+Additionally, you can bring your topic into an EVerest working group that fits
+your topic.
