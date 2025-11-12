@@ -48,7 +48,7 @@ chargers during testivals.
 To start a remote live capture session in Wireshark, click on the small
 gear symbol next to:
 
-.. image:: images/sshdumpsetupsymbol.png
+.. figure:: images/sshdumpsetupsymbol.png
    :alt: SSH remote capture: sshdump
    :width: 600px
 
