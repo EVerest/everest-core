@@ -73,7 +73,7 @@ int WebSocketServer::callback_ws(struct lws* wsi, enum lws_callback_reasons reas
     case LWS_CALLBACK_RECEIVE: {
         for (auto it = server->m_clients.begin(); it != server->m_clients.end(); ++it) {
             if (it->second == wsi) {
-                unsigned char* data = (unsigned char*)in;
+                auto* data = static_cast<unsigned char*>(in);
                 std::vector<uint8_t> received_data(data, data + len);
                 lock.unlock();                                       // Unlock before calling the callback
                 server->on_data_available(it->first, received_data); // Call the on_data_available callback
