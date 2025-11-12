@@ -83,7 +83,7 @@ std::queue<SimulationCommand> SimulationCommand::compile_commands(CommandsWithAr
     auto compiled_commands = std::queue<SimulationCommand>{};
 
     for (auto& [command, arguments] : commands_with_arguments) {
-        compiled_commands.emplace(&command_registry.get_registered_command(command), arguments);
+        compiled_commands.emplace(&command_registry.get_registered_command(command, arguments.size()), arguments);
     }
 
     return compiled_commands;

@@ -29,7 +29,7 @@ The module listens to the following MQTT topics:
     | Used to execute a charging session based on the semicolon separated provided command string.
     ::
 
-        "sleep 1;iso_wait_slac_matched;iso_start_v2g_session DC 86400 0;iso_wait_pwr_ready;sleep 36000"
+        "sleep 1;iso_wait_slac_matched;iso_start_v2g_session DC;iso_wait_pwr_ready;sleep 36000"
 
     | (For all available commands see: `Simulator Commands`_)
 
