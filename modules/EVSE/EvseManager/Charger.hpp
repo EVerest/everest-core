@@ -430,6 +430,7 @@ private:
     // This is not required by IEC61851-1, but it is allowed by the IEC. It helps some older EVs to start charging
     // after the wake-up sequence.
     static constexpr int STAY_IN_X1_AFTER_TSTEP_EF_MS = 750;
+    static constexpr int WAIT_FOR_ENERGY_IN_AUTHLOOP_TIMEOUT_MS = 5000;
 
     types::evse_manager::EnableDisableSource active_enable_disable_source{
         types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Unassigned, 10000};
