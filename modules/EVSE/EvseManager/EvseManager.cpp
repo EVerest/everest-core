@@ -1089,27 +1089,39 @@ void EvseManager::ready() {
             p_evse->publish_ev_info(ev_info);
         }
 
+        if (not hlc_enabled) {
+            return;
+        }
+
+        if (s != types::evse_manager::SessionEventEnum::Authorized and
+            s != types::evse_manager::SessionEventEnum::SessionFinished) {
+            return;
+        }
+
         std::vector<types::iso15118::PaymentOption> payment_options;
         // if pnc is disabled, disable contract installation and central contract validation
         bool _contract_certificate_installation_enabled =
             pnc_enabled ? contract_certificate_installation_enabled.load() : false;
         bool _central_contract_validation_allowed = pnc_enabled ? central_contract_validation_allowed.load() : false;
 
-        if (hlc_enabled and s == types::evse_manager::SessionEventEnum::SessionFinished) {
-            if (config.payment_enable_eim) {
-                payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
-            }
-            if (pnc_enabled) {
-                payment_options.push_back(types::iso15118::PaymentOption::Contract);
-            }
-            if (config.payment_enable_eim == false and pnc_enabled == false) {
-                EVLOG_warning
-                    << "Both payment options are disabled! ExternalPayment is nevertheless enabled in this case.";
-                payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
-            }
-            r_hlc[0]->call_session_setup(payment_options, _contract_certificate_installation_enabled,
-                                         _central_contract_validation_allowed);
+        if (config.payment_enable_eim) {
+            payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
         }
+        if (pnc_enabled and s == types::evse_manager::SessionEventEnum::SessionFinished) {
+            // PnC is enabled and this is a SessionFinished event -> enable Contract payment option
+            payment_options.push_back(types::iso15118::PaymentOption::Contract);
+        } else {
+            // We dont add contract if this is an Authorized event, as in this case the ISO15118 stack
+            // should not offer the contract option and certifiate installation service.
+            _contract_certificate_installation_enabled = false;
+        }
+
+        if (config.payment_enable_eim == false and pnc_enabled == false) {
+            EVLOG_warning << "Both payment options are disabled! ExternalPayment is nevertheless enabled in this case.";
+            payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
+        }
+        r_hlc[0]->call_session_setup(payment_options, _contract_certificate_installation_enabled,
+                                     _central_contract_validation_allowed);
     });
 
     charger->signal_session_started_event.connect(
@@ -1119,6 +1131,10 @@ void EvseManager::ready() {
             ev_info = types::evse_manager::EVInfo();
             p_evse->publish_ev_info(ev_info);
 
+            if (not hlc_enabled) {
+                return;
+            }
+
             std::vector<types::iso15118::PaymentOption> payment_options;
             // if pnc is disabled, disable contract installation and central contract validation
             bool _contract_certificate_installation_enabled =
@@ -1126,24 +1142,22 @@ void EvseManager::ready() {
             bool _central_contract_validation_allowed =
                 pnc_enabled ? central_contract_validation_allowed.load() : false;
 
-            if (hlc_enabled) {
-                if (start_reason == types::evse_manager::StartSessionReason::Authorized) {
-                    // Session is already authorized, only use ExternalPayment in PaymentOptions
+            if (start_reason == types::evse_manager::StartSessionReason::Authorized) {
+                // Session is already authorized, only use ExternalPayment in PaymentOptions
+                payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
+                _contract_certificate_installation_enabled = false;
+                _central_contract_validation_allowed = false;
+            } else {
+                // Set payment options according to configuration
+                if (config.payment_enable_eim) {
                     payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
-                    _contract_certificate_installation_enabled = false;
-                    _central_contract_validation_allowed = false;
-                } else {
-                    // Set payment options according to configuration
-                    if (config.payment_enable_eim) {
-                        payment_options.push_back(types::iso15118::PaymentOption::ExternalPayment);
-                    }
-                    if (pnc_enabled) {
-                        payment_options.push_back(types::iso15118::PaymentOption::Contract);
-                    }
                 }
-                r_hlc[0]->call_session_setup(payment_options, _contract_certificate_installation_enabled,
-                                             _central_contract_validation_allowed);
+                if (pnc_enabled) {
+                    payment_options.push_back(types::iso15118::PaymentOption::Contract);
+                }
             }
+            r_hlc[0]->call_session_setup(payment_options, _contract_certificate_installation_enabled,
+                                         _central_contract_validation_allowed);
         });
 
     invoke_ready(*p_evse);
