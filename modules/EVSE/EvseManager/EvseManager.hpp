@@ -190,6 +190,7 @@ public:
                                   float max_current_export);
     bool update_max_watt_limit(types::energy::ExternalLimits& limits, float max_watt_export,
                                std::optional<float> max_watt_import);
+    void update_to_zero_discharge_limit(types::energy::ExternalLimits& limits);
     bool update_local_energy_limit(types::energy::ExternalLimits l);
     types::energy::ExternalLimits get_local_energy_limits();
 
