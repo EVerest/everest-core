@@ -628,8 +628,10 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                             mod->is_actually_exporting_to_grid = true;
                         } else {
                             EVLOG_error << "Bidirectional export back to grid requested, but not supported.";
-                            // evse_max_limits.evse_maximum_power_limit = 0.;
-                            // evse_max_limits.evse_maximum_current_limit = 0.;
+                            evse_max_limits.evse_maximum_power_limit = 0.;
+                            evse_max_limits.evse_maximum_current_limit = 0.;
+                            evse_max_limits.evse_maximum_discharge_power_limit = 0.;
+                            evse_max_limits.evse_maximum_discharge_current_limit = 0.;
                         }
                     }
 

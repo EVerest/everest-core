@@ -1457,6 +1457,15 @@ bool EvseManager::update_max_watt_limit(types::energy::ExternalLimits& limits, f
     return true;
 }
 
+void EvseManager::update_to_zero_discharge_limit(types::energy::ExternalLimits& limits) {
+    types::energy::ScheduleReqEntry e;
+    e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+
+    e.limits_to_leaves.ac_max_current_A = {0., info.id + " set_zero_discharge_limit"};
+    e.limits_to_leaves.total_power_W = {0., info.id + " set_zero_discharge_limit"};
+    limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
+}
+
 // Helper function to set a current limit in an ExternalLimits type
 bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits, float max_current_import,
                                            float max_current_export) {
@@ -2181,6 +2190,12 @@ types::energy::ExternalLimits EvseManager::get_local_energy_limits() {
     } else {
         // apply external limits if they are lower
         active_local_limits = external_local_energy_limits;
+    }
+
+    // Bidi: set local limits to 0A/0W for exporting to grid, except if bidi is actually active at the moment
+    if (not(config.hack_allow_bpt_with_iso2 or sae_bidi_active or session_is_iso_d20_dc_bpt() or
+            session_is_iso_d20_ac_bpt())) {
+        update_to_zero_discharge_limit(active_local_limits);
     }
 
     return active_local_limits;
