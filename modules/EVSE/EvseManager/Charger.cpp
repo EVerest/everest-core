@@ -1501,6 +1501,8 @@ bool Charger::deauthorize_internal() {
                 if (config_context.raise_mrec9) {
                     error_handling->raise_authorization_timeout_error("No authorization was provided within timeout.");
                 }
+                // this will inform HLC about the timeout to escape the Authorize loop and stop the session
+                signal_hlc_plug_in_timeout();
                 return false;
             }
             shared_context.authorized = false;

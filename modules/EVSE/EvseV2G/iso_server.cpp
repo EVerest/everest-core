@@ -1186,7 +1186,8 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
             conn->ctx->session.auth_start_timeout = getmonotonictime();
             res->ResponseCode = iso2_responseCodeType_FAILED;
         }
-    } else if (conn->ctx->session.authorization_rejected == true) {
+    } else if (conn->ctx->session.authorization_rejected == true and
+               (conn->ctx->session.iso_selected_payment_option == iso2_paymentOptionType_Contract)) {
         if (conn->ctx->session.certificate_status == types::authorization::CertificateStatus::CertificateRevoked) {
             res->ResponseCode = iso2_responseCodeType_FAILED_CertificateRevoked;
         } else {

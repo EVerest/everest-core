@@ -366,6 +366,8 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
             mod->reserve(validation_result.reservation_id.value(), false);
         }
     } else if (pnc) {
+        // we only send authorization responses to the HLC for PnC rejections. In case of EIM we could
+        // still receive a successfull authorization later and therefore we don't inform the HLC
         this->mod->r_hlc[0]->call_authorization_response(
             validation_result.authorization_status,
             validation_result.certificate_status.value_or(types::authorization::CertificateStatus::Accepted));
