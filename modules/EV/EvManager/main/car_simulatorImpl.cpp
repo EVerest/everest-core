@@ -181,6 +181,15 @@ void car_simulatorImpl::register_all_commands() {
     command_registry->register_command("wait_for_real_plugin", 0, [this](const CmdArguments& arguments) {
         return this->car_simulation->wait_for_real_plugin(arguments);
     });
+    command_registry->register_command("plugin", 0, [this](const CmdArguments& /*arguments*/) {
+        if (not mod->config.plugin_commands.empty()) {
+            auto value_copy = mod->config.plugin_commands;
+            handle_execute_charging_session(value_copy);
+            return true;
+        }
+        EVLOG_error << "plugin command called but \"plugin_commands\" config key not set";
+        return false;
+    });
 
     if (!mod->r_slac.empty()) {
         command_registry->register_command("iso_wait_slac_matched", 0, [this](const CmdArguments& arguments) {
