@@ -168,6 +168,8 @@ private:
                                      const types::evse_manager::SessionEvent& session_event);
     void process_transaction_finished(const int32_t evse_id, const int32_t connector_id,
                                       const types::evse_manager::SessionEvent& session_event);
+    void process_session_resumed(const int32_t evse_id, const int32_t connector_id,
+                                 const types::evse_manager::SessionEvent& session_event);
     void process_charging_started(const int32_t evse_id, const int32_t connector_id,
                                   const types::evse_manager::SessionEvent& session_event);
     void process_charging_resumed(const int32_t evse_id, const int32_t connector_id,
