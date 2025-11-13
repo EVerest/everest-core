@@ -365,9 +365,7 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
             // As this is not a new reservation but an existing one, we don't signal a reservation event for this.
             mod->reserve(validation_result.reservation_id.value(), false);
         }
-    }
-
-    if (pnc) {
+    } else if (pnc) {
         this->mod->r_hlc[0]->call_authorization_response(
             validation_result.authorization_status,
             validation_result.certificate_status.value_or(types::authorization::CertificateStatus::Accepted));
