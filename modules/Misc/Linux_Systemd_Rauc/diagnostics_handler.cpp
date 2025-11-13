@@ -62,7 +62,6 @@ DiagnosticsHandler::log_result_t DiagnosticsHandler::collect_logs(int fd, const 
         args.emplace_back("--until");
         args.push_back(to.value());
     }
-    args.push_back(nullptr);
 
     const auto res = everest::lib::system::safe_system(fd, cmd, &args);
     if (res.status != everest::lib::system::CommandExecutionStatus::CMD_SUCCESS || res.code != 0) {
