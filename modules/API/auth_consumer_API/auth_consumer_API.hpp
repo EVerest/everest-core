@@ -73,8 +73,6 @@ private:
     using ParseAndPublishFtor = std::function<bool(std::string const&)>;
     void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
 
-    void generate_api_cmd_set_connection_timeout();
-    void generate_api_cmd_set_master_pass_group_id();
     void generate_api_cmd_withdraw_authorization();
 
     void generate_api_var_token_validation_status();
