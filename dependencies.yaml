@@ -124,3 +124,11 @@ catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.9.0
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
+mosquitto:
+  git: https://github.com/eclipse-mosquitto/mosquitto
+  git_tag: v2.0.21
+  options:
+  - DOCUMENTATION OFF
+  - WITH_BROKER OFF
+  - WITH_APPS OFF
+  - WITH_PLUGINS OFF

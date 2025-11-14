@@ -168,7 +168,7 @@ private:
         return m_global_future.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
     }
 
-    template <typename F, typename R> void enqueue_task(F f, std::shared_ptr<std::promise<R>> prom) const {
+    template <typename F, typename R> void enqueue_task(F&& f, std::shared_ptr<std::promise<R>> prom) const {
         auto global_promise_ptr = m_global_promise;
 
         // --- SYNCHRONOUS FAILURE CHECK (Gatekeeper, executed on calling thread) ---
@@ -181,7 +181,7 @@ private:
             return;
         }
 
-        m_queue.push([=, this] {
+        m_queue.push([f = std::forward<F>(f), prom, global_promise_ptr, this] {
             // --- ASYNCHRONOUS FAILURE CHECK (Mandatory Final Gatekeeper) ---
             if (is_global_failure_signaled()) {
                 try {
@@ -197,6 +197,25 @@ private:
             } catch (...) {
                 prom->set_exception(std::current_exception());
 
+                ExceptionPolicy::handle_user_exception(global_promise_ptr, std::current_exception());
+            }
+        });
+    }
+
+    // --- ENQUEUE FOR FIRE-AND-FORGET TASKS FOR (No Promise, No Wait) ---
+    template <typename F> void enqueue_task(F&& f) const {
+        if (is_global_failure_signaled()) {
+            return;
+        }
+
+        auto global_promise_ptr = m_global_promise;
+        m_queue.push([f = std::forward<F>(f), global_promise_ptr, this] {
+            if (is_global_failure_signaled()) {
+                return;
+            }
+            try {
+                f(m_resource);
+            } catch (...) {
                 ExceptionPolicy::handle_user_exception(global_promise_ptr, std::current_exception());
             }
         });
@@ -223,19 +242,19 @@ public:
         auto prom = std::make_shared<std::promise<ReturnT>>();
         auto fut = prom->get_future();
 
-        enqueue_task(f, prom);
+        enqueue_task(std::forward<F>(f), prom);
 
         return fut;
     }
 
     /**
      * @brief Submits a function object to the worker thread without returning a future (fire-and-forget).
-     * @details This is equivalent to calling operator() and discarding the returned future. Exceptions
-     * are swallowed locally (in the future object) unless the policy dictates a global shutdown.
+     * @details This uses an optimized path that avoids creating a std::promise, relying only on the
+     * ExceptionPolicy for failure handling.
      * @tparam F Function object callable with T&.
      */
     template <typename F> void run(F f) const {
-        (void)this->operator()(f);
+        enqueue_task<F>(std::forward<F>(f));
     }
 };
 

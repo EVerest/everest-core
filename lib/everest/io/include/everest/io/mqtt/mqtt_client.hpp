@@ -4,76 +4,61 @@
 /** \file */
 
 #pragma once
+#include <chrono>
 #include <cstdint>
-#include <everest/io/event/fd_event_client.hpp>
 #include <everest/io/event/fd_event_handler.hpp>
+#include <everest/io/event/fd_event_sync_interface.hpp>
 #include <everest/io/event/timer_fd.hpp>
-#include <everest/io/mqtt/mqtt_handler.hpp>
+#include <everest/io/mqtt/mosquitto_cpp.hpp>
 
 namespace everest::lib::io::mqtt {
 
-/**
- * @var mqtt_client_base
- * @brief Base type for a client for MQTT implemented in terms of \ref event::fd_event_client
- * and \ref mqtt::mqtt_handler
- */
-using mqtt_client_base = event::fd_event_client<mqtt_handler>::type;
-
-/**
- * mqtt_client extends \ref mqtt_client_base for special handling needed for MQTT like
- * subscribe and unsubscribe as well as the special syncing mechanism need for
- * <a href="https://github.com/LiamBindle/MQTT-C?tab=readme-ov-file">MQTT-C</a>.
- */
-class mqtt_client : public mqtt_client_base {
+class mqtt_client : public mosquitto_cpp, public event::fd_event_sync_interface {
 public:
-    /**
-     * @brief Create an mqtt_client and connect it to broker
-     * @param[in] server The address of the broker
-     * @param[in] port The port of the broker
-     * @param[in] ping_interval_ms The interval for ping messages to keep the
-     * connection alive.
-     */
-    mqtt_client(std::string const& server, std::uint16_t port, std::uint32_t ping_interval_ms = 1000);
+    using event_list = event::fd_event_handler::event_list;
+    using cb_error = std::function<void(int, std::string const)>;
 
-    /**
-     * @brief Subscribe to a topic
-     * @param[in] topic The topic to subscribe to
-     * @return True on success, false otherwise
-     */
-    bool subscribe(std::string const& topic);
+    mqtt_client(std::uint32_t reconnect_to_ms, std::string client_id = "");
+    ~mqtt_client();
 
-    /**
-     * @brief Unsubscribe from a topic
-     * @param[in] topic The topic to unsubscribe from
-     * @return True on success, false otherwise
-     */
-    bool unsubscribe(std::string const& topic);
-
-    /**
-     * @brief Register a callback for message handling
-     * @details The default \ref mqtt_client_base::set_rx_handler is called on any readable information
-     * on the socket. This method is only called for actual messages.
-     * @param[in] handler The message handler to be registered.
-     */
-    void set_message_handler(cb_rx const& handler);
-
-    /**
-     * @brief Special sync function
-     * @details Overrides inherited sync member
-     * @return Result of the operation
-     */
-    event::sync_status sync() override;
-
-    /**
-     * @brief Get file descriptor of internal event handler
-     * @details Hides inherited get_poll_fd member
-     * @return The file descriptor to be used for event handling
-     */
+    everest::lib::io::event::sync_status sync() override;
     int get_poll_fd() override;
 
+    void set_error_handler(cb_error const& handler);
+
+protected:
+    ErrorCode set_will_impl(std::string_view const& topic, std::string_view const& payload, QoS qos, bool retain,
+                            PropertiesBase&& props) override;
+
+    ErrorCode publish_impl(int* mid, std::string_view const& topic, std::string_view const& payload, QoS qos,
+                           bool retain, PropertiesBase const& props) override;
+
+    ErrorCode subscribe_impl(std::string_view const& topic, QoS qos, int options, PropertiesBase const& props,
+                             subscribe_callback cb) override;
+
+    ErrorCode unsubscribe_impl(std::string_view const& topic, PropertiesBase const& props) override;
+    ErrorCode connect_impl(std::string_view const& host, std::uint16_t port, std::uint16_t keepalive_seconds) override;
+
+    void set_callback_connect_impl(connect_callback cb) override;
+    void set_callback_disconnect_impl(disconnect_callback cb) override;
+    void set_callback_publish_impl(publish_callback cb) override;
+
 private:
+    void handle_socket(event_list const& events);
+    void handle_reconnect_timer();
+    ErrorCode handle_error(ErrorCode error);
+
+    void listen_to_reconnect_timer(bool enable);
+    void listen_to_write_events(bool enable);
+    void listen_to_write_events_if_wanted();
+
     event::fd_event_handler m_handler;
-    event::timer_fd m_timer;
+    event::timer_fd m_reconnect_timer;
+
+    cb_error m_error_handler;
+    ErrorCode m_last_error{ErrorCode::Unknown};
+    int m_last_socket{-1};
+    bool m_connected{false};
 };
 
 } // namespace everest::lib::io::mqtt
