@@ -4,6 +4,7 @@
 #include "ISO15118_chargerImpl.hpp"
 #include "log.hpp"
 #include "v2g_ctx.hpp"
+#include <string.h>
 #include <string_view>
 
 const std::string CERTS_SUB_DIR = "certs"; // relativ path of the certs
@@ -68,8 +69,9 @@ void ISO15118_chargerImpl::init() {
 
         this->mod->r_iso15118_vas.at(i)->subscribe_offered_vas(
             [&supported_vas_services](const types::iso15118_vas::OfferedServices& offered_services) {
-                for (auto service_id : offered_services.service_ids) {
-                    const auto id = static_cast<uint16_t>(service_id);
+                for (auto service : offered_services.services) {
+
+                    const auto id = static_cast<uint16_t>(service.service_id);
                     if (id == V2G_SERVICE_ID_CHARGING) {
                         continue;
                     }
@@ -77,8 +79,26 @@ void ISO15118_chargerImpl::init() {
 
                     iso2_ServiceType vas_service{};
                     init_iso2_ServiceType(&vas_service);
-                    vas_service.FreeService = true;
                     vas_service.ServiceID = id;
+                    if (service.service_name.has_value()) {
+                        // note: we don't care about trailing NUL byte since we don't use the field with raw string
+                        // functions later
+                        strncpy(vas_service.ServiceName.characters, service.service_name.value().c_str(),
+                                sizeof(vas_service.ServiceName.characters));
+                        vas_service.ServiceName.charactersLen =
+                            std::min(sizeof(vas_service.ServiceName.characters), service.service_name.value().length());
+                        vas_service.ServiceName_isUsed = 1;
+                    }
+                    if (service.service_scope.has_value()) {
+                        // note: we don't care about trailing NUL byte since we don't use the field with raw string
+                        // functions later
+                        strncpy(vas_service.ServiceScope.characters, service.service_scope.value().c_str(),
+                                sizeof(vas_service.ServiceScope.characters));
+                        vas_service.ServiceScope.charactersLen = std::min(sizeof(vas_service.ServiceScope.characters),
+                                                                          service.service_scope.value().length());
+                        vas_service.ServiceScope_isUsed = 1;
+                    }
+                    vas_service.FreeService = service.free_service.value_or(true);
 
                     if (id == V2G_SERVICE_ID_CERTIFICATE) {
                         vas_service.ServiceCategory = iso2_serviceCategoryType_ContractCertificate;
