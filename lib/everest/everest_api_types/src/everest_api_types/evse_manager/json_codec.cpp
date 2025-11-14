@@ -1213,4 +1213,128 @@ void from_json(json const& j, PlugAndChargeConfiguration& k) {
     }
 }
 
+void to_json(json& j, EvseStateEnum const& k) noexcept {
+    switch (k) {
+    case EvseStateEnum::Unknown:
+        j = "Unknown";
+        return;
+    case EvseStateEnum::Unplugged:
+        j = "Unplugged";
+        return;
+    case EvseStateEnum::Disabled:
+        j = "Disabled";
+        return;
+    case EvseStateEnum::Preparing:
+        j = "Preparing";
+        return;
+    case EvseStateEnum::AuthRequired:
+        j = "AuthRequired";
+        return;
+    case EvseStateEnum::WaitingForEnergy:
+        j = "WaitingForEnergy";
+        return;
+    case EvseStateEnum::ChargingPausedEV:
+        j = "ChargingPausedEV";
+        return;
+    case EvseStateEnum::ChargingPausedEVSE:
+        j = "ChargingPausedEVSE";
+        return;
+    case EvseStateEnum::Charging:
+        j = "Charging";
+        return;
+    case EvseStateEnum::AuthTimeout:
+        j = "AuthTimeout";
+        return;
+    case EvseStateEnum::Finished:
+        j = "Finished";
+        return;
+    case EvseStateEnum::FinishedEVSE:
+        j = "FinishedEVSE";
+        return;
+    case EvseStateEnum::FinishedEV:
+        j = "FinishedEV";
+        return;
+    }
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::evse_manger::EvseStateEnum";
+}
+
+void from_json(json const& j, EvseStateEnum& k) {
+    std::string s = j;
+    if (s == "Unknown") {
+        k = EvseStateEnum::Unknown;
+        return;
+    }
+    if (s == "Unplugged") {
+        k = EvseStateEnum::Unplugged;
+        return;
+    }
+    if (s == "Disabled") {
+        k = EvseStateEnum::Disabled;
+        return;
+    }
+    if (s == "Preparing") {
+        k = EvseStateEnum::Preparing;
+        return;
+    }
+    if (s == "AuthRequired") {
+        k = EvseStateEnum::AuthRequired;
+        return;
+    }
+    if (s == "WaitingForEnergy") {
+        k = EvseStateEnum::WaitingForEnergy;
+        return;
+    }
+    if (s == "ChargingPausedEV") {
+        k = EvseStateEnum::ChargingPausedEV;
+        return;
+    }
+    if (s == "ChargingPausedEVSE") {
+        k = EvseStateEnum::ChargingPausedEVSE;
+        return;
+    }
+    if (s == "Charging") {
+        k = EvseStateEnum::Charging;
+        return;
+    }
+    if (s == "AuthTimeout") {
+        k = EvseStateEnum::AuthTimeout;
+        return;
+    }
+    if (s == "Finished") {
+        k = EvseStateEnum::Finished;
+        return;
+    }
+    if (s == "FinishedEVSE") {
+        k = EvseStateEnum::FinishedEVSE;
+        return;
+    }
+    if (s == "FinishedEV") {
+        k = EvseStateEnum::FinishedEV;
+        return;
+    }
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type API_V1_0_TYPES_EVSE_MANAGER_EvseStateEnum");
+}
+
+void to_json(json& j, SessionInfo const& k) noexcept {
+    j = json{
+        {"state", k.state},
+        {"charged_energy_wh", k.charged_energy_wh},
+        {"discharged_energy_wh", k.discharged_energy_wh},
+        {"duration_s", k.duration_s},
+        {"latest_total_w", k.latest_total_w},
+        {"selected_protocol", k.selected_protocol},
+        {"timestamp", k.timestamp},
+    };
+}
+
+void from_json(json const& j, SessionInfo& k) {
+    k.state = j.at("state");
+    k.charged_energy_wh = j.at("charged_energy_wh");
+    k.discharged_energy_wh = j.at("discharged_energy_wh");
+    k.duration_s = j.at("duration_s");
+    k.latest_total_w = j.at("latest_total_w");
+    k.selected_protocol = j.at("selected_protocol");
+    k.timestamp = j.at("timestamp");
+}
 } // namespace everest::lib::API::V1_0::types::evse_manager

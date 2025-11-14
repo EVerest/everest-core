@@ -80,6 +80,7 @@ void evse_manager_consumer_API::ready() {
     generate_api_cmd_random_delay_set_duration_s();
 
     generate_api_var_session_event();
+    generate_api_var_session_info();
     generate_api_var_limits();
     generate_api_var_ev_info();
     generate_api_var_car_manufacturer();
@@ -130,6 +131,19 @@ auto evse_manager_consumer_API::forward_api_var(std::string const& var) {
             EVLOG_warning << "Invalid data: Cannot convert internal to external or serialize it.\n" << topic;
         }
     };
+}
+
+void evse_manager_consumer_API::publish_session_info() {
+    auto topic = topics.everest_to_extern("session_info");
+    try {
+        auto&& external = session_info->to_external_api();
+        auto&& payload = serialize(external);
+        mqtt.publish(topic, payload);
+    } catch (const std::exception& e) {
+        EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what();
+    } catch (...) {
+        EVLOG_warning << "Invalid data: Cannot convert internal to external or serialize it.\n" << topic;
+    }
 }
 
 void evse_manager_consumer_API::generate_api_cmd_get_evse() {
@@ -440,4 +454,61 @@ void evse_manager_consumer_API::subscribe_api_topic(std::string const& var,
         }
     });
 }
+
+void evse_manager_consumer_API::generate_api_var_session_info() {
+    this->session_info = std::make_unique<SessionInfo>();
+
+    this->r_evse_manager->subscribe_session_event([this](types::evse_manager::SessionEvent const& session_event) {
+        session_info->update_state(session_event);
+
+        if (session_event.event == types::evse_manager::SessionEventEnum::TransactionStarted) {
+            if (session_event.transaction_started.has_value()) {
+                auto transaction_started = session_event.transaction_started.value();
+                auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
+                session_info->set_start_energy_import_wh(energy_Wh_import);
+
+                if (transaction_started.meter_value.energy_Wh_export.has_value()) {
+                    auto energy_Wh_export = transaction_started.meter_value.energy_Wh_export.value().total;
+                    session_info->set_start_energy_export_wh(energy_Wh_export);
+                } else {
+                    session_info->start_energy_export_wh_was_set = false;
+                }
+            }
+        } else if (session_event.event == types::evse_manager::SessionEventEnum::TransactionFinished) {
+            if (session_event.transaction_finished.has_value()) {
+                auto transaction_finished = session_event.transaction_finished.value();
+                auto energy_Wh_import = transaction_finished.meter_value.energy_Wh_import.total;
+                session_info->set_end_energy_import_wh(energy_Wh_import);
+
+                if (transaction_finished.meter_value.energy_Wh_export.has_value()) {
+                    auto energy_Wh_export = transaction_finished.meter_value.energy_Wh_export.value().total;
+                    session_info->set_end_energy_export_wh(energy_Wh_export);
+                } else {
+                    session_info->end_energy_export_wh_was_set = false;
+                }
+            }
+        }
+        publish_session_info();
+    });
+
+    this->r_evse_manager->subscribe_powermeter([this](types::powermeter::Powermeter const& powermeter) {
+        session_info->set_latest_energy_import_wh(powermeter.energy_Wh_import.total);
+        if (powermeter.energy_Wh_export.has_value()) {
+            session_info->set_latest_energy_export_wh(powermeter.energy_Wh_export.value().total);
+        }
+        if (powermeter.power_W.has_value()) {
+            session_info->set_latest_total_w(powermeter.power_W.value().total);
+        }
+
+        if (session_info->is_session_running()) {
+            publish_session_info();
+        }
+    });
+
+    this->r_evse_manager->subscribe_selected_protocol([this](std::string const& protocol) {
+        session_info->set_selected_protocol(protocol);
+        publish_session_info();
+    });
+}
+
 } // namespace module
