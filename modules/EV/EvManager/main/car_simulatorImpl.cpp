@@ -183,12 +183,11 @@ void car_simulatorImpl::register_all_commands() {
     });
     command_registry->register_command("plugin", 0, [this](const CmdArguments& /*arguments*/) {
         if (not mod->config.plugin_commands.empty()) {
-            auto value_copy = mod->config.plugin_commands;
-            handle_execute_charging_session(value_copy);
-            return true;
+            car_simulation->update_modify_charging_session_cmds(mod->config.plugin_commands);
+            return false;
         }
         EVLOG_error << "plugin command called but \"plugin_commands\" config key not set";
-        return false;
+        return true;
     });
 
     if (!mod->r_slac.empty()) {
