@@ -3,7 +3,9 @@
 // Copyright (C) 2022-2023 Contributors to EVerest
 #include "ISO15118_chargerImpl.hpp"
 #include "log.hpp"
+#include "tools.hpp"
 #include "v2g_ctx.hpp"
+#include <string.h>
 #include <string_view>
 
 const std::string CERTS_SUB_DIR = "certs"; // relativ path of the certs
@@ -68,8 +70,9 @@ void ISO15118_chargerImpl::init() {
 
         this->mod->r_iso15118_vas.at(i)->subscribe_offered_vas(
             [&supported_vas_services](const types::iso15118_vas::OfferedServices& offered_services) {
-                for (auto service_id : offered_services.service_ids) {
-                    const auto id = static_cast<uint16_t>(service_id);
+                for (auto service : offered_services.services) {
+
+                    const auto id = static_cast<uint16_t>(service.service_id);
                     if (id == V2G_SERVICE_ID_CHARGING) {
                         continue;
                     }
@@ -77,16 +80,25 @@ void ISO15118_chargerImpl::init() {
 
                     iso2_ServiceType vas_service{};
                     init_iso2_ServiceType(&vas_service);
-                    vas_service.FreeService = true;
                     vas_service.ServiceID = id;
+                    if (service.service_name.has_value()) {
+                        strncpy_to_v2g(vas_service.ServiceName.characters, sizeof(vas_service.ServiceName.characters),
+                                       &vas_service.ServiceName.charactersLen, service.service_name.value());
+                        vas_service.ServiceName_isUsed = 1;
+                    }
+                    if (service.service_scope.has_value()) {
+                        strncpy_to_v2g(vas_service.ServiceScope.characters, sizeof(vas_service.ServiceScope.characters),
+                                       &vas_service.ServiceScope.charactersLen, service.service_scope.value());
+                        vas_service.ServiceScope_isUsed = 1;
+                    }
+                    vas_service.FreeService = service.free_service.value_or(true);
 
                     if (id == V2G_SERVICE_ID_CERTIFICATE) {
                         vas_service.ServiceCategory = iso2_serviceCategoryType_ContractCertificate;
                     } else if (id == V2G_SERVICE_ID_INTERNET) {
                         vas_service.ServiceCategory = iso2_serviceCategoryType_Internet;
-                        const char vas_service_name[] = {"InternetAccess"};
-                        memcpy(vas_service.ServiceName.characters, vas_service_name, sizeof(vas_service_name));
-                        vas_service.ServiceName.charactersLen = sizeof(vas_service_name);
+                        strncpy_to_v2g(vas_service.ServiceName.characters, sizeof(vas_service.ServiceName.characters),
+                                       &vas_service.ServiceName.charactersLen, "InternetAccess");
                         vas_service.ServiceName_isUsed = true;
                     } else {
                         vas_service.ServiceCategory = iso2_serviceCategoryType_OtherCustom;
@@ -127,15 +139,13 @@ void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
 
         if (sae_j2847_mode == BidiMode::V2H) {
             sae_service.ServiceID = 28472;
-            const std::string_view service_name = "SAE J2847/2 V2H";
-            memcpy(sae_service.ServiceName.characters, service_name.data(), service_name.length());
-            sae_service.ServiceName.charactersLen = service_name.length();
+            strncpy_to_v2g(sae_service.ServiceName.characters, sizeof(sae_service.ServiceName.characters),
+                           &sae_service.ServiceName.charactersLen, "SAE J2847/2 V2H");
             sae_service.ServiceName_isUsed = true;
         } else {
             sae_service.ServiceID = 28473;
-            const std::string_view service_name = "SAE J2847/2 V2G";
-            memcpy(sae_service.ServiceName.characters, service_name.data(), service_name.length());
-            sae_service.ServiceName.charactersLen = service_name.length();
+            strncpy_to_v2g(sae_service.ServiceName.characters, sizeof(sae_service.ServiceName.characters),
+                           &sae_service.ServiceName.charactersLen, "SAE J2847/2 V2G");
             sae_service.ServiceName_isUsed = true;
         }
 
@@ -206,17 +216,14 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
 
         init_iso2_ServiceType(&cert_service);
 
-        const std::string service_name = "Certificate";
         const int16_t cert_parameter_set_id[] = {1}; // parameter-set-ID 1: "Installation" service. TODO: Support of the
                                                      // "Update" service (parameter-set-ID 2)
 
         cert_service.FreeService = 1; // true
         cert_service.ServiceID = 2;   // as defined in ISO 15118-2
         cert_service.ServiceCategory = iso2_serviceCategoryType_ContractCertificate;
-        memcpy(cert_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
-               service_name.length());
-
-        cert_service.ServiceName.charactersLen = service_name.length();
+        strncpy_to_v2g(cert_service.ServiceName.characters, sizeof(cert_service.ServiceName.characters),
+                       &cert_service.ServiceName.charactersLen, "Certificate");
         cert_service.ServiceName_isUsed = true;
 
         add_service_to_service_list(v2g_ctx, cert_service, cert_parameter_set_id,

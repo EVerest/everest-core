@@ -73,15 +73,38 @@ types:
       parameter_set_id:
         description: Parameter Set ID
         type: integer
-  OfferedServices:
-    description: List of offered VAS Service IDs
+  OfferedService:
+    description: Offered VAS Service
     type: object
     required:
-      - service_ids
+      - service_id
+    additionalProperties: false
     properties:
-      service_ids:
-        description: List of offered VAS Service IDs
+      service_id:
+        description: Service ID
+        type: integer
+      service_name:
+        description: Service Name
+        type: string
+        minLength: 1
+        maxLength: 32
+      service_scope:
+        description: Service Scope
+        type: string
+        minLength: 1
+        maxLength: 64
+      free_service:
+        description: Indicates whether the service is free of charge
+        type: boolean
+  OfferedServices:
+    description: List of offered VAS Services
+    type: object
+    required:
+      - services
+    properties:
+      services:
+        description: List of offered VAS Services
         type: array
         items:
-          type: integer
-          description: Service ID
+          type: object
+          $ref: /iso15118_vas#/OfferedService
