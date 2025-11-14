@@ -191,7 +191,7 @@ components:
       summary: 'Current mode of DC power supply.'
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ModeRequest'
+        $ref: '#/components/schemas/Mode'
       examples:   # Define examples here
         - summary: "Example 1 of sending voltage and current."
           payload:
