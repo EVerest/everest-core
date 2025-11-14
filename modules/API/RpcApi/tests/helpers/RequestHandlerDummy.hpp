@@ -11,7 +11,7 @@
 class RequestHandlerDummy : public request_interface::RequestHandlerInterface {
 public:
     RequestHandlerDummy() = delete;
-    RequestHandlerDummy(data::DataStoreCharger& data_store);
+    explicit RequestHandlerDummy(data::DataStoreCharger& data_store);
     ~RequestHandlerDummy() override = default;
 
     types::json_rpc_api::ErrorResObj set_charging_allowed(const int32_t evse_index, bool charging_allowed) override;
