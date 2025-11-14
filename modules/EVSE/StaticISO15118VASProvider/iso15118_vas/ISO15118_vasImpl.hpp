@@ -50,7 +50,8 @@ private:
     virtual void ready() override;
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
-    std::map<uint16_t, std::vector<types::iso15118_vas::ParameterSet>> value_added_services;
+    std::vector<std::pair<types::iso15118_vas::OfferedService, std::vector<types::iso15118_vas::ParameterSet>>>
+        value_added_services;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
