@@ -66,13 +66,13 @@ channels:
 operations:
   send_set_external_derating:
     title: Send set external derating
-    action: receive
+    action: send
     channel:
       $ref: '#/channels/send_set_external_derating'
 
   receive_plug_temperature_C:
     title: Receive the plug temperature
-    action: send
+    action: receive
     channel:
       $ref : '#/channels/receive_plug_temperature_C'
 
