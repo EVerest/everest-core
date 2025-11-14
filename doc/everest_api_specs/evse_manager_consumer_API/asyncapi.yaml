@@ -144,6 +144,11 @@ channels:
     messages:
       receive_car_manufacturer:
         $ref: '#/components/messages/receive_car_manufacturer'
+  receive_session_info:
+    address: 'e2m/session_info'
+    messages:
+      receive_session_info:
+        $ref: '#/components/messages/receive_session_info'
   # telemetry not implemented
   receive_powermeter:
     address: 'e2m/powermeter'
@@ -444,6 +449,11 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_car_manufacturer'
+  receive_session_info:
+    title: 'Receive session information'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_session_info'
   # telemetry not implemented
   receive_powermeter:
     title: 'Receive powermeter measured dataset'
@@ -882,6 +892,25 @@ components:
       contentType: application/json
       payload:
          $ref: '#/components/schemas/CarManufacturer'
+    receive_session_info:
+      name: receive_session_info
+      title: 'Receive session and transaction information'
+      summary: >-
+        Information about the current session and transaction.
+        During a session, data is published with a frequency of
+        ~1Hz. If no session is active, data is published on change.
+        
+        A session starts when the first user interaction occurs, 
+        e.g. plug in of an EV or authorization was provided. A 
+        session ends when the EV is unplugged or the authorization
+        has timed out.
+        
+        A transaction starts if an EV is plugged in and the user is 
+        authorized. A transaction ends when the EV is unplugged or 
+        the user is not authorized anymore.
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/SessionInfo'
     # telemetry not implemented
     receive_powermeter:
       name: receive_powermeter
@@ -1100,6 +1129,102 @@ components:
         - VolkswagenGroup
         - Tesla
         - Unknown
+    EvseStateEnum:
+        description: |
+          State of the EVSE: 
+          - Unknown: Initial state when state is not known
+          - Unplugged: No EV is connected
+          - Disabled: EVSE is disabled on not available for energy transfer
+          - Preparing: First user interaction occured, e.g. plug in of EV or authorization has been received
+          - AuthRequired: EV is plugged in and EVSE is waiting for authorization
+          - WaitingForEnergy: EVSE is waiting for energy. Occurs at the start of the session or when no energy is available
+          - ChargingPausedEV: Session is paused by EV
+          - ChargingPausedEVSE: Session is paused by EVSE
+          - Charging: EV is charging
+          - AuthTimeout: EV has been plugged in but no authorization has been provided. A replug is required.
+          - Finished: Transaction is finished
+          - FinishedEVSE: Stop of transaction was initiated by EVSE e.g. by user request
+          - FinishedEV: Stopping of transaction was initiated by EV
+        type: string
+        enum:
+          - Unknown
+          - Unplugged
+          - Disabled
+          - Preparing
+          - Reserved
+          - AuthRequired
+          - WaitingForEnergy
+          - ChargingPausedEV
+          - ChargingPausedEVSE
+          - Charging
+          - AuthTimeout
+          - Finished
+          - FinishedEVSE
+          - FinishedEV
+    SessionInfo:
+      description: >-
+        Context for Session information
+      type: object
+      additionalProperties: false
+      required:
+        - state
+        - charged_energy_wh
+        - discharged_energy_wh
+        - latest_total_w
+        - session_duration_s
+        - timestamp
+      properties:
+        state:
+          description: Current session state
+          type: string
+          $ref: '#/components/schemas/EvseStateEnum'
+        charged_energy_wh:
+          description: Total charged energy in this session in Wh
+          type: integer
+          minimum: 0
+        discharged_energy_wh:
+          description: Total discharged energy in this session in Wh
+          type: integer
+          minimum: 0
+        latest_total_w:
+          description: Last power measurement in watts
+          type: integer
+        session_duration_s:
+          description: Total duration of the session in seconds
+          type: integer
+          minimum: 0
+        timestamp:
+          description: Timestamp of capturing session info
+          type: string
+          format: date-time
+        selected_protocol:
+          description: Selected protocol for charging. Only present during a session.
+          type: string
+          $ref: '#/components/schemas/SelectedProtocol'
+        transaction_duration_s:
+          description: >-
+            Total duration of the transaction in seconds. Only present and updated 
+            when a transaction is active.
+          type: integer
+          minimum: 0
+        session_start_time:
+          description: Timestamp of session start. Updated at each new session.
+          type: string
+          format: date-time
+        transaction_start_time:
+          description: >-
+            Timestamp of transaction start. Updated at each new transaction.
+          type: string
+          format: date-time
+        session_end_time:
+          description: Timestamp of session end. Updated at each session end.
+          type: string
+          format: date-time
+        transaction_end_time:
+          description: >-
+            Timestamp of transaction end. Updated at each transaction end.
+          type: string
+          format: date-time
     CertificateActionEnum:
       description: Specifies the type of a certificate request
       type: string
