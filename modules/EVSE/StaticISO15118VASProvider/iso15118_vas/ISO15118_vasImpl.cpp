@@ -109,16 +109,31 @@ void ISO15118_vasImpl::init() {
     auto raw_services = yaml["services"];
 
     for (const auto& service : raw_services) {
-        auto service_id = service["id"].get<uint16_t>();
+        types::iso15118_vas::OfferedService offered_service;
 
-        // check for duplicate service IDs
-        if (value_added_services.find(service_id) != value_added_services.end()) {
-            EVLOG_AND_THROW(
-                Everest::EverestConfigError("Service ID " + std::to_string(service_id) + " already exists"));
+        offered_service.service_id = service["id"].get<uint16_t>();
+        if (service.contains("name")) {
+            offered_service.service_name = service["name"].get<std::string>();
+        }
+        if (service.contains("scope")) {
+            offered_service.service_scope = service["scope"].get<std::string>();
+        }
+        if (service.contains("free_service")) {
+            offered_service.free_service = service["free_service"].get<bool>();
         }
 
-        EVLOG_debug << "Service ID: " << service_id;
-        value_added_services[service_id] = parameter_sets_from_json(service["parameter_sets"]);
+        // check for duplicate service IDs
+        for (const auto& item : value_added_services) {
+            if (item.first.service_id == offered_service.service_id) {
+                EVLOG_AND_THROW(Everest::EverestConfigError("Service ID " + std::to_string(offered_service.service_id) +
+                                                            " already exists"));
+            }
+        }
+
+        EVLOG_debug << offered_service;
+
+        value_added_services.push_back(
+            std::make_pair(offered_service, parameter_sets_from_json(service["parameter_sets"])));
     }
 
     EVLOG_info << "Loaded VAS configuration with " << value_added_services.size() << " services";
@@ -127,16 +142,21 @@ void ISO15118_vasImpl::init() {
 void ISO15118_vasImpl::ready() {
     types::iso15118_vas::OfferedServices offered_services;
 
-    offered_services.service_ids.reserve(value_added_services.size());
-    for (const auto& [service_id, parameter_sets] : value_added_services) {
-        offered_services.service_ids.push_back(service_id);
+    offered_services.services.reserve(value_added_services.size());
+    for (const auto& item : value_added_services) {
+        offered_services.services.push_back(item.first);
     }
 
     publish_offered_vas(offered_services);
 }
 
 std::vector<types::iso15118_vas::ParameterSet> ISO15118_vasImpl::handle_get_service_parameters(int& service_id) {
-    return value_added_services.at(service_id);
+    for (const auto& item : value_added_services) {
+        if (item.first.service_id == service_id) {
+            return item.second;
+        }
+    }
+    return {};
 }
 
 void ISO15118_vasImpl::handle_selected_services(std::vector<types::iso15118_vas::SelectedService>& selected_services) {
