@@ -430,8 +430,7 @@ void evse_bsp_api::receive_heartbeat(std::string const& pl) {
                 << "EVerest heartbeat lost: " << m_last_hb_id << "<->" << id << std::endl;
         }
         m_last_hb_id = id;
-    }
-    else{
+    } else {
         utilities::print_error(m_cb_identifier, "EVSE/EVEREST", -1)
             << "EVerest invalid heartbeat message: " << pl << std::endl;
     }

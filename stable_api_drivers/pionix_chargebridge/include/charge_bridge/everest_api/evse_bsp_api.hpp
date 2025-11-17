@@ -24,12 +24,11 @@ struct evse_bsp_config {
     API_BSP::HardwareCapabilities capabilities;
 };
 
-
-
 class evse_bsp_api : public everest::lib::io::event::fd_event_register_interface {
     using tx_ftor = std::function<void(evse_bsp_host_to_cb const&)>;
     using rx_ftor = std::function<void(evse_bsp_cb_to_host const&)>;
     using mqtt_ftor = std::function<void(std::string const&, std::string const&)>;
+
 public:
     evse_bsp_api(evse_bsp_config const& config, std::string const& cb_identifier, evse_bsp_host_to_cb& host_status);
     void set_cb_tx(tx_ftor const& handler);
@@ -43,6 +42,7 @@ public:
     void raise_comm_fault();
     void clear_comm_fault();
     void sync(bool cb_connected);
+
 private:
     void tx(evse_bsp_host_to_cb const& msg);
 

@@ -2,11 +2,11 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include <charge_bridge/utilities/filesystem.hpp>
 
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <limits>
 #include <random>
-#include <cstring>
 
 namespace charge_bridge::filesystem_utils {
 
@@ -98,7 +98,6 @@ bool read_crypt_signed_header(const fs::path& path, CryptSignedHeader& hdr, std:
         f.read(reinterpret_cast<char*>(dst), static_cast<std::streamsize>(n));
         return f.good() || (f.eof() && static_cast<std::size_t>(f.gcount()) == n);
     };
-
 
     char firmware_version_str[32];
     std::memset(firmware_version_str, 0, sizeof(firmware_version_str)); // all zeros

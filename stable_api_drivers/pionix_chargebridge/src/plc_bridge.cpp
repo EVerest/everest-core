@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
-#include <everest/io/event/fd_event_handler.hpp>
-#include <everest/io/udp/udp_payload.hpp>
 #include <charge_bridge/plc_bridge.hpp>
 #include <charge_bridge/utilities/logging.hpp>
+#include <everest/io/event/fd_event_handler.hpp>
+#include <everest/io/udp/udp_payload.hpp>
 #include <iostream>
 
 namespace charge_bridge {
 
 plc_bridge::plc_bridge(plc_bridge_config const& config) :
-    m_tap(config.plc_tap, config.plc_ip, config.plc_netmaks, config.plc_mtu), m_udp(config.cb_remote, config.cb_port, 1000) {
+    m_tap(config.plc_tap, config.plc_ip, config.plc_netmaks, config.plc_mtu),
+    m_udp(config.cb_remote, config.cb_port, 1000) {
     using namespace std::chrono_literals;
     m_timer.set_timeout(5s);
 

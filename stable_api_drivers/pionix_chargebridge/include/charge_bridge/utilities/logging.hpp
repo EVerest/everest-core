@@ -3,9 +3,8 @@
 #pragma once
 #include <iostream>
 
-
 namespace charge_bridge::utilities {
 
-    std::ostream& print_error(std::string const& device, std::string const& unit, int status);
+std::ostream& print_error(std::string const& device, std::string const& unit, int status);
 
 }

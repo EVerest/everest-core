@@ -76,7 +76,7 @@ private:
     std::string m_cb_identifier;
     std::chrono::steady_clock::time_point last_everest_heartbeat;
 
-    API_OVM::OverVoltageLimits m_limits{0,0};
+    API_OVM::OverVoltageLimits m_limits{0, 0};
     mqtt_ftor m_mqtt_tx;
     size_t m_last_hb_id{0};
 };

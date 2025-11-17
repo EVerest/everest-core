@@ -130,8 +130,8 @@ static bool base64_encode(const unsigned char* bytes_str, int bytes_size, std::s
     }
     full_len += base64_out_length;
 
-    EVP_EncodeFinal(base64_encode_context_ptr.get(), reinterpret_cast<unsigned char*>(base64_out.data()) + base64_out_length,
-                    &base64_out_length);
+    EVP_EncodeFinal(base64_encode_context_ptr.get(),
+                    reinterpret_cast<unsigned char*>(base64_out.data()) + base64_out_length, &base64_out_length);
     full_len += base64_out_length;
 
     out_encoded.assign(base64_out.data(), full_len);

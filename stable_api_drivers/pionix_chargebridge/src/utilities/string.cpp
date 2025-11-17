@@ -14,10 +14,7 @@ std::string string_after_pattern(std::string_view const& str, std::string_view c
     return "";
 }
 
-std::string& replace_all_in_place(
-    std::string& source,
-    std::string const& placeholder,
-    std::string const& substitute) {
+std::string& replace_all_in_place(std::string& source, std::string const& placeholder, std::string const& substitute) {
 
     if (placeholder.empty()) {
         return source;
@@ -32,7 +29,6 @@ std::string& replace_all_in_place(
 
     return source;
 }
-
 
 std::string replace_all(std::string const& source, std::string const& placeholder, std::string const& substitute) {
     std::string result = source;

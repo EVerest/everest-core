@@ -44,7 +44,8 @@ private:
     bool upload_finish(const fs::path& file_path, uint32_t total_bytes,
                        const charge_bridge::filesystem_utils::CryptSignedHeader& hdr);
 
-    everest::lib::io::udp::udp_payload make_fw_chunk(uint16_t sector, uint8_t last_chunk, std::vector<uint8_t> const& data);
+    everest::lib::io::udp::udp_payload make_fw_chunk(uint16_t sector, uint8_t last_chunk,
+                                                     std::vector<uint8_t> const& data);
 
     utilities::sync_udp_client m_udp;
     fw_update_config m_config;

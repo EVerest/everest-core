@@ -126,7 +126,6 @@ int main(int argc, char* argv[]) {
     //     this_was_a_ping = true;
     // });
 
-
     //    ev_handler.run(g_run_application);
     while (g_run_application.load()) {
         ev_handler.poll();

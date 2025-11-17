@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
-#include <everest/io/mqtt/mqtt_client.hpp>
 #include <charge_bridge/gpio_bridge.hpp>
 #include <charge_bridge/utilities/logging.hpp>
 #include <charge_bridge/utilities/platform_utils.hpp>
@@ -10,6 +9,7 @@
 #include <cstdint>
 #include <cstring>
 #include <everest/io/event/fd_event_handler.hpp>
+#include <everest/io/mqtt/mqtt_client.hpp>
 #include <iostream>
 #include <limits>
 #include <memory>

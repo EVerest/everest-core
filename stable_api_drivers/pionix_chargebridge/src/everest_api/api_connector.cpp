@@ -40,7 +40,6 @@ api_connector::api_connector(everest_api_config const& config, std::string const
 
     m_mqtt.connect(config.mqtt_remote, config.mqtt_port, config.mqtt_ping_interval_ms);
 
-
     m_sync_timer.set_timeout(1s);
 
     std::memset(&m_host_status, 0, sizeof(m_host_status));

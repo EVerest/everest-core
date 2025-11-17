@@ -5,14 +5,15 @@
 #include <string>
 
 namespace charge_bridge::utilities {
-    class symlink{
-    public:
-        symlink(std::string const& src, std::string const& tar);
-        symlink();
-        bool set_link(std::string const& src, std::string const& tar);
-        bool del_link();
-        ~symlink();
-    private:
-        std::string m_tar;
-    };
-}
+class symlink {
+public:
+    symlink(std::string const& src, std::string const& tar);
+    symlink();
+    bool set_link(std::string const& src, std::string const& tar);
+    bool del_link();
+    ~symlink();
+
+private:
+    std::string m_tar;
+};
+} // namespace charge_bridge::utilities

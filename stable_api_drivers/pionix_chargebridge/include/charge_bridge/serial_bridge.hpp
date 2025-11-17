@@ -2,11 +2,11 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#include <charge_bridge/utilities/symlink.hpp>
 #include <everest/io/event/fd_event_register_interface.hpp>
 #include <everest/io/event/timer_fd.hpp>
 #include <everest/io/serial/event_pty.hpp>
 #include <everest/io/tcp/tcp_client.hpp>
-#include <charge_bridge/utilities/symlink.hpp>
 
 namespace charge_bridge {
 
@@ -34,7 +34,7 @@ private:
     everest::lib::io::tcp::tcp_client m_tcp;
     utilities::symlink m_symlink;
     int m_tcp_last_error_id = -1;
-//    everest::lib::io::event::timer_fd m_timer;
+    //    everest::lib::io::event::timer_fd m_timer;
 };
 
 } // namespace charge_bridge

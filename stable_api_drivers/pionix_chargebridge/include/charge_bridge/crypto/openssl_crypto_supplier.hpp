@@ -2,8 +2,8 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #pragma once
 
-#include <vector>
 #include <charge_bridge/utilities/filesystem.hpp>
+#include <vector>
 
 namespace charge_bridge::crypto {
 
