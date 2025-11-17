@@ -129,7 +129,39 @@ event::unique_fd open_udp_client_socket(const std::string& host, std::uint16_t p
     throw std::runtime_error(std::string("Could not open a socket for ") + host + ":" + std::to_string(port));
 }
 
-// open the first possible socket or throw
+event::unique_fd open_tcp_socket_with_timeout(const std::string& host, std::uint16_t port, unsigned int timeout_ms) {
+    struct addrinfo hints {};
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    addrinfo* servinfo;
+
+    const auto err = getaddrinfo(host.c_str(), std::to_string(port).c_str(), &hints, &servinfo);
+    if (err) {
+        throw std::runtime_error("Failed to resolve endpoint (getaddrinfo): " + std::string(gai_strerror(err)));
+    };
+
+    handle_disposer<addrinfo, freeaddrinfo> addrinfo_disposer(servinfo);
+
+    // open the first possible socket
+    for (auto* p = servinfo; p != NULL; p = p->ai_next) {
+        const auto socket_fd = ::socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+
+        if (socket_fd == -1)
+            continue;
+
+        if (-1 == connect_with_timeout(socket_fd, p->ai_addr, p->ai_addrlen, timeout_ms)) {
+            //        if (-1 == ::connect(socket_fd, p->ai_addr, p->ai_addrlen)) {
+            close(socket_fd);
+            continue;
+        }
+
+        return event::unique_fd{socket_fd};
+    }
+
+    throw std::runtime_error(std::string("Could not open a socket for ") + host + ":" + std::to_string(port));
+}
+
 event::unique_fd open_tcp_socket(const std::string& host, std::uint16_t port) {
     struct addrinfo hints {};
     hints.ai_family = AF_UNSPEC;
@@ -151,8 +183,7 @@ event::unique_fd open_tcp_socket(const std::string& host, std::uint16_t port) {
         if (socket_fd == -1)
             continue;
 
-        if (-1 == connect_with_timeout(socket_fd, p->ai_addr, p->ai_addrlen, 1000)) {
-            //        if (-1 == ::connect(socket_fd, p->ai_addr, p->ai_addrlen)) {
+        if (-1 == connect(socket_fd, p->ai_addr, p->ai_addrlen)) {
             close(socket_fd);
             continue;
         }

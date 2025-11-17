@@ -207,19 +207,18 @@ TEST_F(AsyncWrapperTest, DestructorShutdownPolicies) {
     {
         async_wrapper_guarded_fast<Counter> wrapper(0);
 
-        // Push a task that hangs. FastQuitPolicy should try to abort before it runs.
+        // Push a task that runs briefly. If the task starts, the destructor must wait.
+        // We rely on the race condition being won by the destructor for EXPECT_EQ(0) to pass.
         wrapper.run([&fast_result](Counter& c) {
-            std::this_thread::sleep_for(std::chrono::seconds(5));
-            fast_result = 2; // Should not reach here if quitting fast
+            std::this_thread::sleep_for(std::chrono::microseconds(100)); // Very fast sleep
+            fast_result = 2; // Should not reach here if the task is aborted while queued
         });
 
-        // Destructor runs here (FastQuitPolicy::shutdown), should join almost immediately.
-        // It's non-deterministic if the task starts, but the join should not block for 1s.
+        // Destructor runs here (FastQuitPolicy::shutdown), should join quickly.
     }
-    // Note: Due to lack of deterministic queue clearing in this minimal implementation,
-    // we only check that the finalization flag wasn't active.
-    // A true test would use timing, which is unreliable in unit tests.
-    EXPECT_EQ(fast_result, 0); // Task should likely not have finished executing
+    // If fast_result == 0, the task was aborted while queued.
+    // If fast_result == 2, the task started and the destructor waited for it to finish.
+    EXPECT_EQ(fast_result, 0);
 }
 
 // Test 6: Verify Worker's internal catch block works correctly
@@ -255,4 +254,35 @@ TEST_F(AsyncWrapperTest, InfrastructureFailure_WorkerSetsSignalAndShutsDown) {
     EXPECT_TRUE(active_runtime_error);
 
     EXPECT_EQ(message, "Async worker infrastructure failure.");
+}
+
+// Test 7: Run method must not block the main thread (optimized fire-and-forget)
+TEST_F(AsyncWrapperTest, RunMethodDoesNotBlock) {
+    // We use the WaitToFinish policy so we know the task will complete before the test ends.
+    async_wrapper_wait<Counter> wrapper(0);
+    const int SLOW_TASK_MS = 50;
+
+    auto slow_task = [SLOW_TASK_MS](Counter& c) {
+        // Task takes significant time to execute
+        std::this_thread::sleep_for(std::chrono::milliseconds(SLOW_TASK_MS));
+        c.add(1);
+    };
+
+    auto start_time = std::chrono::steady_clock::now();
+
+    // Submit the slow task using the optimized run() method
+    wrapper.run(slow_task);
+
+    auto end_time = std::chrono::steady_clock::now();
+
+    // The main thread should not have blocked for the duration of the task.
+    // The elapsed time should be much less than the task execution time (10ms tolerance).
+    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+
+    // 1. Assertion on timing: Proves non-blocking submission
+    EXPECT_LT(elapsed_ms, 10);
+
+    // 2. Assert task eventually ran (rely on WaitToFinishPolicy destructor)
+    auto fut_check = wrapper([](Counter& c) { return c.get(); });
+    EXPECT_EQ(fut_check.get(), 1);
 }

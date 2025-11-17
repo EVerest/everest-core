@@ -27,7 +27,7 @@ constexpr auto CAN_RECOVERY_TIMER_INTERVAL = 1000ms;
 constexpr auto CAN_POLL_STATUS_TIMER_INTERVAL = 1000ms;
 } // namespace
 
-CanBus::CanBus() : exit_rx_thread{false}, can_bus(nullptr) {
+CanBus::CanBus() : rx_thread_online{true}, can_bus(nullptr) {
 }
 
 CanBus::~CanBus() {
@@ -75,7 +75,7 @@ bool CanBus::close_device() {
     EVLOG_info << "Closing CAN device";
 
     // Stop the RX thread first
-    exit_rx_thread = true;
+    rx_thread_online = false;
     if (rx_thread_handle.joinable()) {
         rx_thread_handle.join();
     }
@@ -97,9 +97,7 @@ bool CanBus::close_device() {
 
 void CanBus::rx_thread() {
     EVLOG_info << "Starting CAN RX thread" << std::endl;
-    while (!exit_rx_thread) {
-        ev_handler.poll();
-    }
+    ev_handler.run(rx_thread_online);
 }
 
 static std::string bytes_to_hex(const std::vector<uint8_t>& bytes) {

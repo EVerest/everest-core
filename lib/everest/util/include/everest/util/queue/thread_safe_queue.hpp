@@ -70,22 +70,45 @@ public:
 
     /**
      * @brief Get an element from the queue
-     * @details Only returns, when data is available
+     * @details Only returns, when data is available. Implicitly throws on stop().
      * @return An element from the queue.
      */
     value_type pop() {
         return pop_impl(-1).value();
     }
 
+    /**
+     * @brief Get an element from the queue
+     * @details Only returns, when data is available, or the queue is stopped.
+     * @return An element from the queue. Empty optional if stopped.
+     */
+    std::optional<value_type> wait_and_pop() {
+        return pop_impl(-1);
+    }
+
+    /**
+     * @brief Signals that no more items will be pushed and unblocks all waiting consumers.
+     */
+    void stop() {
+        std::unique_lock lock(m_mtx);
+        m_stop = true;
+        lock.unlock();
+        m_cv.notify_all();
+    }
+
 private:
     std::optional<value_type> pop_impl(int timeout_ms) {
         std::unique_lock lock(m_mtx);
-        auto wait_predicate = [this]() { return not m_queue.empty(); };
+        auto wait_predicate = [this]() { return not m_queue.empty() or m_stop; };
 
         if (timeout_ms < 0) {
             m_cv.wait(lock, wait_predicate);
         } else if (timeout_ms > 0) {
             (void)m_cv.wait_for(lock, std::chrono::milliseconds(timeout_ms), wait_predicate);
+        }
+
+        if (m_queue.empty() && m_stop) {
+            return std::nullopt;
         }
 
         return m_queue.pop();
@@ -94,6 +117,7 @@ private:
     simple_queue<T> m_queue;
     std::mutex m_mtx;
     std::condition_variable m_cv;
+    bool m_stop{false};
 };
 
 } // namespace everest::lib::util

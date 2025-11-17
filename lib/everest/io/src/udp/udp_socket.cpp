@@ -24,7 +24,7 @@ bool udp_socket_base::open_as_client(std::string const& remote, uint16_t port) {
         auto socket = socket::open_udp_client_socket(remote, port);
         socket::set_non_blocking(socket);
         m_owned_udp_fd = std::move(socket);
-        return socket::get_pending_error(socket) == 0;
+        return socket::get_pending_error(m_owned_udp_fd) == 0;
     } catch (...) {
     }
     return false;
@@ -34,7 +34,7 @@ bool udp_socket_base::open_as_server(uint16_t port) {
     auto socket = socket::open_udp_server_socket(port);
     socket::set_non_blocking(socket);
     m_owned_udp_fd = std::move(socket);
-    return socket::get_pending_error(socket) == 0;
+    return socket::get_pending_error(m_owned_udp_fd) == 0;
 }
 
 bool udp_socket_base::is_open() {
@@ -86,6 +86,28 @@ std::optional<udp_info> udp_socket_base::rx_impl(void* buffer, size_t buffer_siz
         }
     }
     return std::nullopt;
+}
+
+/////////////////////////////////////////////////
+
+bool udp_client_socket::setup(std::string const& remote, uint16_t port, int timeout_ms) {
+    m_remote = remote;
+    m_port = port;
+    m_timeout_ms = timeout_ms;
+    m_owned_udp_fd.close();
+    return true;
+}
+
+void udp_client_socket::connect(std::function<void(bool, int)> const& setup_cb) {
+    try {
+        auto socket = socket::open_udp_client_socket(m_remote, m_port);
+        socket::set_non_blocking(socket);
+        setup_cb(true, socket);
+        m_owned_udp_fd = std::move(socket);
+    } catch (...) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(m_timeout_ms));
+        setup_cb(false, -1);
+    }
 }
 
 bool udp_client_socket::open(std::string const& remote, uint16_t port) {

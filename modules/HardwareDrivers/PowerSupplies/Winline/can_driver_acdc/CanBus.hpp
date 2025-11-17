@@ -35,7 +35,7 @@ private:
     event::fd_event_handler ev_handler;
     event::timer_fd recovery_timer;
     event::timer_fd poll_status_timer;
-    std::atomic_bool exit_rx_thread;
+    std::atomic_bool rx_thread_online;
     std::thread rx_thread_handle;
     std::condition_variable rx_thread_cv;
     void rx_thread();
