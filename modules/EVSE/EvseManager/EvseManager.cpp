@@ -905,11 +905,13 @@ void EvseManager::ready() {
 
             std::vector<int> referenced_connectors = {this->config.connector_id};
             _token.connectors.emplace(referenced_connectors);
-            p_token_provider->publish_provided_token(_token);
+
             if (charger->get_authorized_pnc()) {
                 hlc_waiting_for_auth_eim = false;
                 hlc_waiting_for_auth_pnc = false;
             } else {
+                // only publish token if we are not authorized yet. This enables pause/resume with PnC.
+                p_token_provider->publish_provided_token(_token);
                 hlc_waiting_for_auth_eim = false;
                 hlc_waiting_for_auth_pnc = true;
             }
