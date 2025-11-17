@@ -17,7 +17,7 @@ on:
 jobs:
   ci:
     name: Build, Lint and Test
-    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@v1.5.2
+    uses: lukas-mertens/everest-ci/.github/workflows/continuous_integration.yml@main
     permissions:
       contents: read
       actions: read
