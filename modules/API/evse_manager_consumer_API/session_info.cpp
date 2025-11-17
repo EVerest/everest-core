@@ -6,120 +6,40 @@
 
 namespace module {
 
-SessionInfo::SessionInfo() :
+SessionInfo::SessionInfo(PublishCallback cb) :
+    publish_cb(std::move(cb)),
     start_energy_import_wh(0),
     end_energy_import_wh(0),
     start_energy_export_wh(0),
     end_energy_export_wh(0),
     latest_total_w(0),
     state(State::Unknown) {
-    this->start_time_point = date::utc_clock::now();
-    this->end_time_point = this->start_time_point;
+    this->session_start_time_point = date::utc_clock::now();
+    this->session_end_time_point = this->session_start_time_point;
+    this->transaction_start_time_point = this->session_start_time_point;
+    this->transaction_end_time_point = this->session_start_time_point;
 }
 
 everest::lib::API::V1_0::types::evse_manager::SessionInfo SessionInfo::to_external_api() {
-    std::lock_guard<std::mutex> lock(this->session_info_mutex);
     everest::lib::API::V1_0::types::evse_manager::SessionInfo result;
-
-    auto charged_energy_wh = this->end_energy_import_wh - this->start_energy_import_wh;
-    int32_t discharged_energy_wh{0};
-    if ((this->start_energy_export_wh_was_set == true) && (this->end_energy_export_wh_was_set == true)) {
-        discharged_energy_wh = this->end_energy_export_wh - this->start_energy_export_wh;
-    }
-
-    auto duration_s = std::chrono::duration_cast<std::chrono::seconds>(this->end_time_point - this->start_time_point);
 
     result.state = to_external_api(state);
     result.charged_energy_wh = charged_energy_wh;
     result.discharged_energy_wh = discharged_energy_wh;
     result.latest_total_w = static_cast<int32_t>(this->latest_total_w);
-    result.duration_s = duration_s.count();
+    result.session_duration_s = session_duration_s.count();
+    result.transaction_duration_s = transaction_duration_s.count();
     result.selected_protocol = this->selected_protocol;
     result.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
     return result;
 }
 
-void SessionInfo::reset() {
-    this->state = State::Unknown;
-    this->start_energy_import_wh = 0;
-    this->end_energy_import_wh = 0;
-    this->start_energy_export_wh = 0;
-    this->end_energy_export_wh = 0;
-    this->start_time_point = date::utc_clock::now();
-    this->end_time_point = this->start_time_point;
-    this->latest_total_w = 0;
-    this->selected_protocol = "";
-}
-
-void SessionInfo::set_start_energy_import_wh(int32_t start_energy_import_wh) {
-    std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    this->start_energy_import_wh = start_energy_import_wh;
-    this->end_energy_import_wh = start_energy_import_wh;
-    this->start_time_point = date::utc_clock::now();
-    this->end_time_point = this->start_time_point;
-}
-
-void SessionInfo::set_end_energy_import_wh(int32_t end_energy_import_wh) {
-    std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    this->end_energy_import_wh = end_energy_import_wh;
-    this->end_time_point = date::utc_clock::now();
-}
-
-void SessionInfo::set_latest_energy_import_wh(int32_t latest_energy_wh) {
-    std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    if (this->is_state_charging(this->state)) {
-        this->end_time_point = date::utc_clock::now();
-        this->end_energy_import_wh = latest_energy_wh;
-    }
-}
-
-void SessionInfo::set_start_energy_export_wh(int32_t start_energy_export_wh) {
-    std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    this->start_energy_export_wh = start_energy_export_wh;
-    this->end_energy_export_wh = start_energy_export_wh;
-    this->start_energy_export_wh_was_set = true;
-}
-
-void SessionInfo::set_end_energy_export_wh(int32_t end_energy_export_wh) {
-    std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    this->end_energy_export_wh = end_energy_export_wh;
-    this->end_energy_export_wh_was_set = true;
-}
-
-void SessionInfo::set_latest_energy_export_wh(int32_t latest_export_energy_wh) {
-    std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    if (this->is_state_charging(this->state)) {
-        this->end_energy_export_wh = latest_export_energy_wh;
-        this->end_energy_export_wh_was_set = true;
-    }
-}
-
-void SessionInfo::set_latest_total_w(double latest_total_w) {
-    std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    this->latest_total_w = latest_total_w;
-}
-
-void SessionInfo::set_selected_protocol(const std::string& protocol) {
-    std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    if (this->is_state_charging(this->state)) {
-        this->selected_protocol = protocol;
-    }
-}
-
-bool SessionInfo::is_session_running() {
-    std::lock_guard<std::mutex> lock(this->session_info_mutex);
-    return this->state != State::Unplugged && this->state != State::Disabled && this->state != State::Finished &&
-           this->state != State::FinishedEVSE && this->state != State::FinishedEV and this->state != State::AuthTimeout;
-}
-
-void SessionInfo::update_state(const types::evse_manager::SessionEvent event) {
-    std::lock_guard<std::mutex> lock(this->session_info_mutex);
+void SessionInfo::update_state(const types::evse_manager::SessionEvent& session_event) {
     using Event = types::evse_manager::SessionEventEnum;
-
     // using switch since some code analysis tools can detect missing cases
     // (when new events are added)
-    switch (event.event) {
+    switch (session_event.event) {
     case Event::Enabled:
         this->state = State::Unplugged;
         break;
@@ -130,12 +50,14 @@ void SessionInfo::update_state(const types::evse_manager::SessionEvent event) {
         this->state = State::AuthRequired;
         break;
     case Event::SessionStarted:
-        this->reset();
+        this->handle_session_started(session_event);
         this->state = State::Preparing;
         break;
     case Event::PrepareCharging:
-    case Event::TransactionStarted:
         this->state = State::Preparing;
+        break;
+    case Event::TransactionStarted:
+        this->handle_transaction_started(session_event);
         break;
     case Event::ChargingResumed:
     case Event::ChargingStarted:
@@ -157,11 +79,7 @@ void SessionInfo::update_state(const types::evse_manager::SessionEvent event) {
         this->state = State::FinishedEV;
         break;
     case Event::TransactionFinished: {
-        if (event.transaction_finished->reason == types::evse_manager::StopTransactionReason::Local) {
-            this->state = State::FinishedEVSE;
-        } else {
-            this->state = State::Finished;
-        }
+        this->handle_transaction_finished(session_event);
         break;
     }
     case Event::PluginTimeout:
@@ -177,14 +95,123 @@ void SessionInfo::update_state(const types::evse_manager::SessionEvent event) {
     default:
         break;
     }
+    publish_cb(this->to_external_api());
 }
 
-bool SessionInfo::is_state_charging(const SessionInfo::State current_state) {
-    if (current_state == State::Charging || current_state == State::ChargingPausedEV ||
-        current_state == State::ChargingPausedEVSE) {
-        return true;
+void SessionInfo::update_powermeter(const types::powermeter::Powermeter& powermeter) {
+    this->set_latest_energy_import_wh(powermeter.energy_Wh_import.total);
+    if (powermeter.energy_Wh_export.has_value()) {
+        this->set_latest_energy_export_wh(powermeter.energy_Wh_export.value().total);
     }
-    return false;
+
+    if (powermeter.power_W.has_value()) {
+        this->latest_total_w = powermeter.power_W.value().total;
+    }
+
+    if (this->is_session_running()) {
+        publish_cb(this->to_external_api());
+    }
+}
+
+void SessionInfo::update_selected_protocol(const std::string& protocol) {
+    this->selected_protocol = protocol;
+    if (this->is_session_running()) {
+        publish_cb(this->to_external_api());
+    }
+}
+
+void SessionInfo::handle_session_started(const types::evse_manager::SessionEvent& session_event) {
+    this->state = State::Unknown;
+    this->session_start_time_point = Everest::Date::from_rfc3339(session_event.timestamp);
+    this->session_end_time_point = this->session_start_time_point;
+    this->start_energy_import_wh = this->end_energy_import_wh;
+    this->start_energy_export_wh = this->end_energy_export_wh;
+    this->charged_energy_wh = 0;
+    this->discharged_energy_wh = 0;
+    this->session_duration_s = std::chrono::seconds(0);
+    this->transaction_duration_s = std::chrono::seconds(0);
+    this->latest_total_w = 0;
+    this->selected_protocol = "";
+}
+
+void SessionInfo::handle_transaction_started(const types::evse_manager::SessionEvent& session_event) {
+    this->state = State::Preparing;
+    this->transaction_running = true;
+
+    if (!session_event.transaction_started.has_value()) {
+        return;
+    }
+
+    auto transaction_started = session_event.transaction_started.value();
+    this->transaction_start_time_point = Everest::Date::from_rfc3339(transaction_started.meter_value.timestamp);
+    this->transaction_end_time_point = this->transaction_start_time_point;
+    this->start_energy_import_wh = transaction_started.meter_value.energy_Wh_import.total;
+
+    this->end_energy_import_wh = this->start_energy_import_wh;
+    this->transaction_end_time_point = this->transaction_start_time_point;
+
+    if (transaction_started.meter_value.energy_Wh_export.has_value()) {
+        auto energy_Wh_export = transaction_started.meter_value.energy_Wh_export.value().total;
+        this->start_energy_export_wh = energy_Wh_export;
+        this->end_energy_export_wh = energy_Wh_export;
+        this->start_energy_export_wh_was_set = true;
+    } else {
+        this->start_energy_export_wh_was_set = false;
+    }
+}
+
+void SessionInfo::handle_transaction_finished(const types::evse_manager::SessionEvent& session_event) {
+    this->state = State::Finished;
+
+    if (!session_event.transaction_finished.has_value()) {
+        return;
+    }
+
+    auto transaction_finished = session_event.transaction_finished.value();
+
+    if (transaction_finished.reason == types::evse_manager::StopTransactionReason::Local) {
+        this->state = State::FinishedEVSE;
+    }
+
+    auto energy_Wh_import = transaction_finished.meter_value.energy_Wh_import.total;
+    this->end_energy_import_wh = energy_Wh_import;
+    this->transaction_end_time_point = Everest::Date::from_rfc3339(transaction_finished.meter_value.timestamp);
+    this->transaction_running = false;
+
+    if (transaction_finished.meter_value.energy_Wh_export.has_value()) {
+        auto energy_Wh_export = transaction_finished.meter_value.energy_Wh_export.value().total;
+        this->end_energy_export_wh = energy_Wh_export;
+        this->end_energy_export_wh_was_set = true;
+    } else {
+        this->end_energy_export_wh_was_set = false;
+    }
+}
+
+void SessionInfo::set_latest_energy_import_wh(int32_t latest_energy_wh_import) {
+    this->charged_energy_wh = this->end_energy_import_wh - this->start_energy_import_wh;
+    if (this->start_energy_export_wh_was_set && this->end_energy_export_wh_was_set) {
+        this->discharged_energy_wh = this->end_energy_export_wh - this->start_energy_export_wh;
+    }
+
+    this->session_duration_s =
+        std::chrono::duration_cast<std::chrono::seconds>(this->session_end_time_point - this->session_start_time_point);
+    this->session_end_time_point = date::utc_clock::now();
+
+    if (transaction_running) {
+        this->transaction_duration_s = std::chrono::duration_cast<std::chrono::seconds>(
+            this->transaction_end_time_point - this->transaction_start_time_point);
+        this->transaction_end_time_point = this->session_end_time_point;
+        this->end_energy_import_wh = latest_energy_wh_import;
+    }
+}
+
+void SessionInfo::set_latest_energy_export_wh(int32_t latest_export_energy_wh) {
+    this->end_energy_export_wh = latest_export_energy_wh;
+    this->end_energy_export_wh_was_set = true;
+}
+
+bool SessionInfo::is_session_running() {
+    return this->state != State::Unplugged && this->state != State::Disabled and this->state != State::Unknown;
 }
 
 everest::lib::API::V1_0::types::evse_manager::EvseStateEnum SessionInfo::to_external_api(State state) {

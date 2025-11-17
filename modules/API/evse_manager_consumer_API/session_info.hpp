@@ -13,41 +13,42 @@
 #include <generated/types/evse_manager.hpp>
 namespace module {
 
-/// \brief Session information for EVSE sessions
+/// \brief Session and transaction information for EVSE
 class SessionInfo {
 public:
-    SessionInfo();
+    using PublishCallback = std::function<void(everest::lib::API::V1_0::types::evse_manager::SessionInfo)>;
+    explicit SessionInfo(PublishCallback publish_cb);
 
     /// \brief Converts the internal session info to the external API representation
     everest::lib::API::V1_0::types::evse_manager::SessionInfo to_external_api();
+
+    void update_state(const types::evse_manager::SessionEvent& session_event);
+    void update_powermeter(const types::powermeter::Powermeter& powermeter);
+    void update_selected_protocol(const std::string& protocol);
+
+private:
+    PublishCallback publish_cb;
 
     bool start_energy_export_wh_was_set{
         false}; ///< Indicate if start export energy value (optional) has been received or not
     bool end_energy_export_wh_was_set{
         false}; ///< Indicate if end export energy value (optional) has been received or not
-
-    void update_state(const types::evse_manager::SessionEvent event);
-    void set_start_energy_import_wh(int32_t start_energy_import_wh);
-    void set_end_energy_import_wh(int32_t end_energy_import_wh);
-    void set_latest_energy_import_wh(int32_t latest_energy_wh);
-    void set_start_energy_export_wh(int32_t start_energy_export_wh);
-    void set_end_energy_export_wh(int32_t end_energy_export_wh);
-    void set_latest_energy_export_wh(int32_t latest_export_energy_wh);
-    void set_latest_total_w(double latest_total_w);
-    void set_selected_protocol(const std::string& protocol);
-    bool is_session_running();
-
-private:
-    std::mutex session_info_mutex;
+    bool transaction_running{false};
 
     int32_t start_energy_import_wh; ///< Energy reading (import) at the beginning of this charging session in Wh
     int32_t end_energy_import_wh;   ///< Energy reading (import) at the end of this charging session in Wh
     int32_t start_energy_export_wh; ///< Energy reading (export) at the beginning of this charging session in Wh
     int32_t end_energy_export_wh;   ///< Energy reading (export) at the end of this charging session in Wh
-    std::chrono::time_point<date::utc_clock> start_time_point; ///< Start of the charging session
-    std::chrono::time_point<date::utc_clock> end_time_point;   ///< End of the charging session
-    double latest_total_w;                                     ///< Latest total power reading in W
-    std::string selected_protocol;                             /// < Selected charging protocol of the session
+    std::chrono::time_point<date::utc_clock> session_start_time_point;     ///< Start of the charging session
+    std::chrono::time_point<date::utc_clock> session_end_time_point;       ///< End of the charging session
+    std::chrono::time_point<date::utc_clock> transaction_start_time_point; ///< Start of the transaction
+    std::chrono::time_point<date::utc_clock> transaction_end_time_point;   ///< End of the transaction
+    int32_t charged_energy_wh;                   ///< Total charged energy during the session in Wh
+    int32_t discharged_energy_wh;                ///< Total discharged energy during the session in Wh
+    std::chrono::seconds session_duration_s;     ///< Duration of the session in seconds
+    std::chrono::seconds transaction_duration_s; ///< Duration of the transaction in seconds
+    double latest_total_w;                       ///< Latest total power reading in W
+    std::string selected_protocol;               /// < Selected charging protocol of the session
 
     enum class State {
         Unknown,
@@ -65,8 +66,12 @@ private:
         FinishedEV
     } state;
 
-    void reset();
-    bool is_state_charging(const State current_state);
+    void handle_session_started(const types::evse_manager::SessionEvent& session_event);
+    void handle_transaction_started(const types::evse_manager::SessionEvent& session_event);
+    void handle_transaction_finished(const types::evse_manager::SessionEvent& session_event);
+    void set_latest_energy_import_wh(int32_t latest_energy_wh_import);
+    void set_latest_energy_export_wh(int32_t latest_export_energy_wh);
+    bool is_session_running();
     everest::lib::API::V1_0::types::evse_manager::EvseStateEnum to_external_api(State state);
 };
 

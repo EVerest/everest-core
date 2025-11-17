@@ -1321,7 +1321,8 @@ void to_json(json& j, SessionInfo const& k) noexcept {
         {"state", k.state},
         {"charged_energy_wh", k.charged_energy_wh},
         {"discharged_energy_wh", k.discharged_energy_wh},
-        {"duration_s", k.duration_s},
+        {"session_duration_s", k.session_duration_s},
+        {"transaction_duration_s", k.transaction_duration_s},
         {"latest_total_w", k.latest_total_w},
         {"selected_protocol", k.selected_protocol},
         {"timestamp", k.timestamp},
@@ -1332,7 +1333,8 @@ void from_json(json const& j, SessionInfo& k) {
     k.state = j.at("state");
     k.charged_energy_wh = j.at("charged_energy_wh");
     k.discharged_energy_wh = j.at("discharged_energy_wh");
-    k.duration_s = j.at("duration_s");
+    k.session_duration_s = j.at("session_duration_s");
+    k.transaction_duration_s = j.at("transaction_duration_s");
     k.latest_total_w = j.at("latest_total_w");
     k.selected_protocol = j.at("selected_protocol");
     k.timestamp = j.at("timestamp");

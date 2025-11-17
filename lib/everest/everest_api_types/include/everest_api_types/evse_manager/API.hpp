@@ -279,7 +279,8 @@ struct SessionInfo {
     int32_t charged_energy_wh;
     int32_t discharged_energy_wh;
     int32_t latest_total_w;
-    int64_t duration_s;
+    int64_t session_duration_s;
+    int64_t transaction_duration_s;
     std::string selected_protocol;
     std::string timestamp;
 };

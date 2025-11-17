@@ -894,12 +894,20 @@ components:
          $ref: '#/components/schemas/CarManufacturer'
     receive_session_info:
       name: receive_session_info
-      title: 'Receive session information'
+      title: 'Receive session and transaction information'
       summary: >-
-        Information about the current session. During a session, data is published with
-        a frequency of ~1Hz. If no session is active, data is published on change.
-        A session starts when the first user interaction occurs, e.g. plug in of an EV or
-        authorization was provided. A session ends when the EV is unplugged.
+        Information about the current session and transaction.
+        During a session, data is published with a frequency of
+        ~1Hz. If no session is active, data is published on change.
+        
+        A session starts when the first user interaction occurs, 
+        e.g. plug in of an EV or authorization was provided. A 
+        session ends when the EV is unplugged or the authorization
+        has timed out.
+        
+        A transaction starts if an EV is plugged in and the user is 
+        authorized. A transaction ends when the EV is unplugged or 
+        the user is not authorized anymore.
       contentType: application/json
       payload:
          $ref: '#/components/schemas/SessionInfo'
@@ -1163,7 +1171,8 @@ components:
         - charged_energy_wh
         - discharged_energy_wh
         - latest_total_w
-        - duration_s
+        - session_duration_s
+        - transaction_duration_s
         - selected_protocol
         - datetime
       properties:

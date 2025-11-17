@@ -29,6 +29,7 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <everest/util/async/monitor.hpp>
 #include <everest_api_types/utilities/CommCheckHandler.hpp>
 #include <everest_api_types/utilities/Topics.hpp>
 
@@ -103,7 +104,6 @@ private:
     void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
 
     auto forward_api_var(std::string const& var);
-    void publish_session_info();
 
     void generate_api_cmd_get_evse();
     void generate_api_cmd_enable_disable();
@@ -152,8 +152,7 @@ private:
     ev_API::Topics topics;
     ev_API::CommCheckHandler<generic_errorImplBase> comm_check;
     size_t hb_id{0};
-
-    std::unique_ptr<SessionInfo> session_info;
+    everest::lib::util::monitor<std::unique_ptr<SessionInfo>> session_info;
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
