@@ -80,6 +80,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    size_t hb_id{0};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

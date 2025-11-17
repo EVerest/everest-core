@@ -104,7 +104,7 @@ void isolation_monitor_API::generate_api_var_clear_error() {
 void isolation_monitor_API::setup_heartbeat_generator() {
     auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
-        mqtt.publish(topic, "{}");
+        mqtt.publish(topic, API_generic::serialize(hb_id++));
         return true;
     };
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);

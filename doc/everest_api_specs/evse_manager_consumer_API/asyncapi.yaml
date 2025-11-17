@@ -1046,6 +1046,12 @@ components:
       title: 'Receive heartbeat'
       summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartBeatId'
+      examples:
+        - summary: "Heartbeat"
+          payload: 42
+
     send_communication_check:
       name: send_communication_check
       title: 'Send communication check'
@@ -1758,3 +1764,6 @@ components:
     CommunicationCheck:
       type: boolean
       description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
+    HeartBeatId:
+      type: integer
+      description: "64bit unsigned integer. The id of every heartbeat increases by 1 and overflows when the maximum representable value is reached"
