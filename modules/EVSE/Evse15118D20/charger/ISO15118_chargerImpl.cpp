@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 #include "ISO15118_chargerImpl.hpp"
+#include <mutex>
 
 #include "session_logger.hpp"
 #include "utils.hpp"
@@ -143,15 +144,11 @@ void ISO15118_chargerImpl::init() {
 
         this->mod->r_iso15118_vas[i]->subscribe_offered_vas(
             [this, i](const types::iso15118_vas::OfferedServices& offered_services) {
-                std::vector<uint16_t> service_ids;
+                // remember all offered services
+                supported_vas_services_per_provider[i] = offered_services;
 
-                service_ids.reserve(offered_services.service_ids.size());
-                for (const auto& item : offered_services.service_ids) {
-                    service_ids.push_back(item);
-                }
-
-                EVLOG_verbose << "Updated Supported VAS services for provider #" << i;
-                supported_vas_services_per_provider[i] = service_ids;
+                EVLOG_verbose << "Updated Supported VAS services for provider #" << i << " ("
+                              << offered_services.services.size() << " services)";
 
                 // report to controller if it exists, also check for duplicate service ids
                 update_supported_vas_services();
@@ -235,19 +232,23 @@ void ISO15118_chargerImpl::ready() {
 }
 
 void ISO15118_chargerImpl::update_supported_vas_services() {
+    std::scoped_lock lock(vas_mutex);
     iso15118::d20::SupportedVASs supported_vas_services;
+    vas_service_id_to_provider_map.clear();
 
-    for (const auto& provider_services : supported_vas_services_per_provider) {
-        for (const auto& service_id : provider_services) {
+    for (size_t idx = 0; idx < supported_vas_services_per_provider.size(); ++idx) {
+        for (auto& service : supported_vas_services_per_provider.at(idx).services) {
             // Check for duplicate service IDs across all providers
-            if (std::find(supported_vas_services.begin(), supported_vas_services.end(), service_id) !=
-                supported_vas_services.end()) {
-                EVLOG_error << "Duplicate VAS service ID found: " << std::to_string(service_id)
+            if (vas_service_id_to_provider_map.find(service.service_id) != vas_service_id_to_provider_map.end()) {
+                EVLOG_error << "Duplicate VAS service ID found: " << std::to_string(service.service_id)
                             << ". Skipping this service.";
                 continue;
             }
 
-            supported_vas_services.push_back(service_id);
+            supported_vas_services.push_back(service.service_id);
+
+            vas_service_id_to_provider_map.emplace(static_cast<uint16_t>(service.service_id),
+                                                   std::make_pair(idx, std::ref(service)));
         }
     }
 
@@ -258,12 +259,12 @@ void ISO15118_chargerImpl::update_supported_vas_services() {
     }
 }
 
-std::optional<size_t> ISO15118_chargerImpl::get_vas_provider_index(uint16_t service_id) const {
-    for (size_t i = 0; i < supported_vas_services_per_provider.size(); i++) {
-        const auto& provider_services = supported_vas_services_per_provider[i];
-        if (std::find(provider_services.begin(), provider_services.end(), service_id) != provider_services.end()) {
-            return i;
-        }
+std::optional<size_t> ISO15118_chargerImpl::get_vas_provider_index(uint16_t service_id) {
+    std::scoped_lock lock(vas_mutex);
+
+    // in our map, the index is the first member of the pair (if found)
+    if (auto s = vas_service_id_to_provider_map.find(service_id); s != vas_service_id_to_provider_map.end()) {
+        return s->second.first;
     }
 
     return std::nullopt; // Service ID not found in any provider's list
