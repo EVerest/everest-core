@@ -5,11 +5,14 @@
 #include <everest_api_types/energy/API.hpp>
 #include <everest_api_types/energy/codec.hpp>
 #include <everest_api_types/energy/wrapper.hpp>
+#include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/utilities/codec.hpp>
 
 namespace module {
 namespace API_types = everest::lib::API::V1_0::types;
 namespace API_types_ext = API_types::energy;
+namespace API_generic = API_types::generic;
+
 using ev_API::deserialize;
 
 void external_energy_limits_consumer_API::init() {
@@ -75,7 +78,7 @@ void external_energy_limits_consumer_API::generate_api_var_communication_check()
 void external_energy_limits_consumer_API::setup_heartbeat_generator() {
     auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
-        mqtt.publish(topic, "{}");
+        mqtt.publish(topic, API_generic::serialize(hb_id++));
         return true;
     };
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);

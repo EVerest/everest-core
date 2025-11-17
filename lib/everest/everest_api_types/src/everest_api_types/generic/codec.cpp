@@ -23,6 +23,11 @@ std::string serialize(int val) noexcept {
     return result.dump(json_indent);
 }
 
+std::string serialize(size_t val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
 std::string serialize(double val) noexcept {
     json result = val;
     return result.dump(json_indent);
@@ -77,6 +82,12 @@ template <> bool deserialize(std::string const& s) {
 template <> int deserialize(std::string const& s) {
     auto data = json::parse(s);
     int result = data;
+    return result;
+}
+
+template <> size_t deserialize(std::string const& s) {
+    auto data = json::parse(s);
+    size_t result = data;
     return result;
 }
 
