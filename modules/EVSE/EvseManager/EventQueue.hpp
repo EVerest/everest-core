@@ -3,6 +3,7 @@
 #ifndef EVENTQUEUE_HPP
 #define EVENTQUEUE_HPP
 
+#include <chrono>
 #include <condition_variable>
 #include <cstdint>
 #include <mutex>
@@ -41,6 +42,16 @@ public:
         events_t active;
         pending.swap(active);
         ul.unlock();
+        return active;
+    }
+
+    template <class Rep, class Period> events_t wait_for(const std::chrono::duration<Rep, Period>& rel_time) {
+        std::unique_lock<std::mutex> ul(mux);
+        if (!cv.wait_for(ul, rel_time, [this]() { return !pending.empty(); })) {
+            return {};
+        }
+        events_t active;
+        pending.swap(active);
         return active;
     }
 };

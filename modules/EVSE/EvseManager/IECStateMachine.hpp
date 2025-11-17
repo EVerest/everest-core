@@ -126,14 +126,13 @@ private:
 
     bool car_plugged_in{false};
 
-    RawCPState cp_state{RawCPState::Disabled}, last_cp_state{RawCPState::Disabled};
+    RawCPState last_cp_state{RawCPState::Disabled};
     AsyncTimeout timeout_state_c1;
     AsyncTimeout timeout_unlock_state_F;
 
     Everest::timed_mutex_traceable state_machine_mutex;
-    void feed_state_machine();
-    void feed_state_machine_no_thread();
-    std::queue<CPEvent> state_machine();
+    void feed_state_machine(RawCPState cp_state);
+    std::queue<CPEvent> state_machine(RawCPState cp_state);
 
     types::evse_board_support::Reason power_on_reason{types::evse_board_support::Reason::PowerOff};
     void call_allow_power_on_bsp(bool value);

@@ -935,7 +935,7 @@ void EvseManager::ready() {
             r_over_voltage_monitor[0]->call_reset_over_voltage_error();
         }
 
-        charger->process_event(event);
+        charger->bsp_event_queue.push(event);
 
         // Forward some events to HLC
         if (hlc_enabled) {
