@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "isolation_monitorImpl.hpp"
+#include <chrono>
 #include <fmt/core.h>
 #include <thread>
 #include <utils/date.hpp>
@@ -18,23 +19,45 @@ void isolation_monitorImpl::configure_device() {
     do {
         successful = true;
         successful &= send_to_imd(3000, (config.voltage_to_earth_monitoring_alarm_enable ? 1 : 0));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3005, config.r1_prealarm_kohm);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3007, config.r2_alarm_kohm);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3008, (config.undervoltage_alarm_enable ? 1 : 0));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3009, config.undervoltage_alarm_threshold_V);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3010, (config.overvoltage_alarm_enable ? 1 : 0));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3011, config.overvoltage_alarm_threshold_V);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3012, (config.alarm_memory_enable ? 1 : 0));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3013, (config.relais_r1_mode ? 1 : 0));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3014, (config.relais_r2_mode ? 1 : 0));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3018, (config.delay_startup_device ? 1 : 0));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3019, config.delay_t_on_k1_k2);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3020, config.delay_t_off_k1_k2);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3023, (config.chademo_mode ? 1 : 0));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3024, (config.selftest_enable_gridconnection ? 1 : 0));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3025, (config.selftest_enable_at_start ? 1 : 0));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        successful &= send_to_imd(3027, config.relay_k1_alarm_assignment);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        successful &= send_to_imd(3028, config.relay_k2_alarm_assignment);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
         // start up
         successful &= send_to_imd(3026, 1);
+        // Give device time to process startup command
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         if (successful) {
             EVLOG_info << "IMD Device: " << read_device_name() << " (" << read_firmware_version() << ")";
@@ -43,11 +66,13 @@ void isolation_monitorImpl::configure_device() {
             if (faster_cable_check_supported) {
                 EVLOG_info << "Supports faster cable check method";
                 enable_faster_cable_check_mode();
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
             } else {
                 EVLOG_info
                     << "Does not support faster cable check method, falling back to long self test. This may create "
                        "timeouts with certain cars in CableCheck. Consider upgrading to at least firmware 5.00";
                 disable_faster_cable_check_mode();
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
             }
         } else {
             // allow the system to recover and don't hog the MODBUS
@@ -58,6 +83,10 @@ void isolation_monitorImpl::configure_device() {
 
 void isolation_monitorImpl::start_self_test() {
     if (last_test != TestType::ExternalTest) {
+        // Wait a bit to ensure device is ready (not processing previous read operations)
+        // This prevents conflicts with the regular reading loop
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
         if (mod->r_serial_comm_hub->call_modbus_write_multiple_registers(
                 config.imd_device_id, static_cast<int>(8005),
                 (types::serial_comm_hub_requests::VectorUint16){{0x5445}}) !=
@@ -66,6 +95,8 @@ void isolation_monitorImpl::start_self_test() {
             self_test_started = false;
             return;
         }
+        // Give device time to process the self-test command
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
     self_test_started = true;
     self_test_timeout = 30;
@@ -169,7 +200,10 @@ void isolation_monitorImpl::read_imd_values() {
     last_test = rf.test;
     last_alarm = rf.alarm;
 
-    // Read Voltage
+    // Small delay between reads to avoid overwhelming the device
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    // Read Voltage U_N (always needed)
     auto voltage = read_register(ImdRegisters::VOLTAGE_U_N_V);
     EVLOG_debug << "Voltage: " << to_string(voltage);
 
@@ -178,13 +212,32 @@ void isolation_monitorImpl::read_imd_values() {
     // Read Voltage to Earth L1E and L2E only if the device is not in self test mode and only it
     // we are in a measuring cycle. We have seen that Bender sometimes is overwhelmed
     if ((last_test == TestType::NoTest) and (enable_publishing or config.always_publish_measurements)) {
-        // Read Voltage to Earth L1E
-        voltage_to_earth_l1e = read_register(ImdRegisters::VOLTAGE_U_L1E_V);
-        EVLOG_debug << "Voltage to Earth L1E: " << to_string(voltage_to_earth_l1e);
+        // VOLTAGE_U_L1E_V (1016) and VOLTAGE_U_L2E_V (1020) are consecutive (4 registers apart)
+        // Read 8 registers starting from 1016 to get both measurements in a single operation
+        types::serial_comm_hub_requests::Result register_response =
+            mod->r_serial_comm_hub->call_modbus_read_holding_registers(
+                config.imd_device_id, static_cast<int>(ImdRegisters::VOLTAGE_U_L1E_V), 8);
 
-        // Read Voltage to Earth L2E
-        voltage_to_earth_l2e = read_register(ImdRegisters::VOLTAGE_U_L2E_V);
-        EVLOG_debug << "Voltage to Earth L2E: " << to_string(voltage_to_earth_l2e);
+        if (register_response.status_code == types::serial_comm_hub_requests::StatusCodeEnum::Success and
+            register_response.value.has_value() and register_response.value.value().size() == 8) {
+            const auto& reg_value_int = register_response.value.value();
+            // Convert std::vector<int> to std::vector<uint16_t>
+            std::vector<uint16_t> reg_value(reg_value_int.begin(), reg_value_int.end());
+
+            // Parse voltage U_L1E from registers 0-3
+            voltage_to_earth_l1e = parse_register_data(reg_value, 0);
+            EVLOG_debug << "Voltage to Earth L1E: " << to_string(voltage_to_earth_l1e);
+
+            // Parse voltage U_L2E from registers 4-7
+            voltage_to_earth_l2e = parse_register_data(reg_value, 4);
+            EVLOG_debug << "Voltage to Earth L2E: " << to_string(voltage_to_earth_l2e);
+        } else {
+            // Fallback to individual reads
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            voltage_to_earth_l1e = read_register(ImdRegisters::VOLTAGE_U_L1E_V);
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            voltage_to_earth_l2e = read_register(ImdRegisters::VOLTAGE_U_L2E_V);
+        }
     }
 
     if (last_alarm == AlarmType::DeviceError) {
@@ -299,17 +352,30 @@ isolation_monitorImpl::MeasurementValue isolation_monitorImpl::read_register(con
         return m;
     }
 
-    const auto& reg_value = register_response.value.value();
+    // Convert std::vector<int> to std::vector<uint16_t>
+    const auto& reg_value_int = register_response.value.value();
+    std::vector<uint16_t> reg_value(reg_value_int.begin(), reg_value_int.end());
+    return parse_register_data(reg_value, 0);
+}
 
-    m.alarm = to_alarm_type(reg_value.at(2) >> 8);
-    m.test = to_test_type(reg_value.at(2) >> 8);
-    m.unit = to_unit_type(reg_value.at(2) & 0xFF);
-    m.valid = to_valid_type(reg_value.at(2) & 0xFF);
-    m.description = to_channel_description(reg_value.at(3));
+isolation_monitorImpl::MeasurementValue
+isolation_monitorImpl::parse_register_data(const std::vector<uint16_t>& reg_value, size_t offset) {
+    MeasurementValue m;
+
+    if (reg_value.size() < offset + 4) {
+        m.alarm = AlarmType::DeviceError;
+        return m;
+    }
+
+    m.alarm = to_alarm_type(reg_value.at(offset + 2) >> 8);
+    m.test = to_test_type(reg_value.at(offset + 2) >> 8);
+    m.unit = to_unit_type(reg_value.at(offset + 2) & 0xFF);
+    m.valid = to_valid_type(reg_value.at(offset + 2) & 0xFF);
+    m.description = to_channel_description(reg_value.at(offset + 3));
 
     uint32_t value{0};
-    value += reg_value.at(0) << 16;
-    value += reg_value.at(1);
+    value += reg_value.at(offset + 0) << 16;
+    value += reg_value.at(offset + 1);
     auto val = *reinterpret_cast<float*>(&value);
     m.value = val;
     return m;

@@ -88,8 +88,8 @@ public:
     void raise_powermeter_transaction_start_failed_error(const std::string& description);
     void clear_powermeter_transaction_start_failed_error();
 
-    void raise_isolation_resistance_fault(const std::string& description);
-    void clear_isolation_resistance_fault();
+    void raise_isolation_resistance_fault(const std::string& description, const std::string& sub_type);
+    void clear_isolation_resistance_fault(const std::string& sub_type);
 
     void raise_cable_check_fault(const std::string& description);
     void clear_cable_check_fault();

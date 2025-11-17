@@ -40,6 +40,8 @@ struct Conf {
     bool selftest_enable_at_start;
     bool always_publish_measurements;
     bool voltage_to_earth_monitoring_alarm_enable;
+    int relay_k1_alarm_assignment;
+    int relay_k2_alarm_assignment;
 };
 
 class isolation_monitorImpl : public isolation_monitorImplBase {
@@ -377,6 +379,7 @@ private:
     };
 
     MeasurementValue read_register(const ImdRegisters start_register);
+    MeasurementValue parse_register_data(const std::vector<uint16_t>& reg_value, size_t offset);
 
     std::string to_string(MeasurementValue m) {
         return fmt::format(" {} [{}] [{}] [{}] [{}] [{}]", m.value, to_string(m.unit), to_string(m.valid),
