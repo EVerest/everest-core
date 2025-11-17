@@ -31,3 +31,4 @@ Below that, you will be presented with a categorized list of all articles.
     pnc-process
     dev-tools/edm
     dev-tools/ev-cli
+    hardware-architecture
