@@ -25,7 +25,6 @@ void external_energy_limits_consumer_API::ready() {
     invoke_ready(*p_main);
 
     generate_api_cmd_set_external_limits();
-    generate_api_var_enforced_limits();
 
     generate_api_var_communication_check();
 
@@ -47,10 +46,6 @@ auto external_energy_limits_consumer_API::forward_api_var(std::string const& var
             EVLOG_warning << "Invalid data: Cannot convert internal to external or serialize it.\n" << topic;
         }
     };
-}
-
-void external_energy_limits_consumer_API::generate_api_var_enforced_limits() {
-    r_energy_node->subscribe_enforced_limits(forward_api_var("enforced_limits"));
 }
 
 void external_energy_limits_consumer_API::generate_api_cmd_set_external_limits() {

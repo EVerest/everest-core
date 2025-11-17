@@ -8,8 +8,4 @@ cmds:
         description: External limits object
         type: object
         $ref: /energy#/ExternalLimits
-vars:
-  enforced_limits:
-    description: Enforced limits for this node (coming from the EnergyManager)
-    type: object
-    $ref: /energy#/EnforcedLimits
+
