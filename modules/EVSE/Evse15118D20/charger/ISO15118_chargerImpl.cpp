@@ -1111,6 +1111,13 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
         this->mod->p_extensions->publish_ev_info(info);
     };
 
+    callbacks.ev_termination = [this](const iso15118::d20::EVTermination& ev_termination) {
+        types::iso15118::EvTermination termination_ctx;
+        termination_ctx.ev_termination_code = ev_termination.ev_termination_code;
+        termination_ctx.ev_termination_explanation = ev_termination.ev_termination_explanation;
+        this->mod->p_charger->publish_ev_termination(termination_ctx);
+    };
+
     return callbacks;
 }
 
