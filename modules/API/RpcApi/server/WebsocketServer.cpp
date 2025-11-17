@@ -118,6 +118,11 @@ WebSocketServer::WebSocketServer(bool ssl_enabled, int port, const std::string& 
     m_info.options = LWS_SERVER_OPTION_FAIL_UPON_UNABLE_TO_BIND;
     m_info.options |= (m_ssl_enabled ? LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT : 0);
     m_info.user = this; // To access WebSocketServer instance in callback
+
+    const std::string compiled_lws_version{LWS_LIBRARY_VERSION};
+    const char* linked_version_cstr = lws_get_library_version();
+    const std::string linked_lws_version = linked_version_cstr ? linked_version_cstr : "unknown";
+    EVLOG_info << "libwebsockets version (compiled/runtime): " << compiled_lws_version << " / " << linked_lws_version;
 }
 
 WebSocketServer::~WebSocketServer() {
