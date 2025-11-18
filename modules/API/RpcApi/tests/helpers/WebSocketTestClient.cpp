@@ -65,7 +65,8 @@ int WebSocketTestClient::callback(struct lws* wsi, enum lws_callback_reasons rea
     case LWS_CALLBACK_CLIENT_CLOSED:
     case LWS_CALLBACK_CLOSED_CLIENT_HTTP: {
         client->m_connected = false;
-        EVLOG_info << "Client closed connection: " << (in ? static_cast<const char*>(in) : "(null)") << " reason: " << reason;
+        EVLOG_info << "Client closed connection: " << (in ? static_cast<const char*>(in) : "(null)")
+                   << " reason: " << reason;
         break;
     }
     case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
