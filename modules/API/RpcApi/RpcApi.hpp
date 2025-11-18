@@ -15,7 +15,6 @@
 
 // headers for required interface implementations
 #include <generated/interfaces/charger_information/Interface.hpp>
-#include <generated/interfaces/energy/Interface.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/external_energy_limits/Interface.hpp>
 
@@ -46,20 +45,17 @@ public:
     RpcApi(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
            std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
            std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink,
-           std::vector<std::unique_ptr<energyIntf>> r_energy_listener,
            std::vector<std::unique_ptr<charger_informationIntf>> r_charger_information, Conf& config) :
         ModuleBase(info),
         p_main(std::move(p_main)),
         r_evse_manager(std::move(r_evse_manager)),
         r_evse_energy_sink(std::move(r_evse_energy_sink)),
-        r_energy_listener(std::move(r_energy_listener)),
         r_charger_information(std::move(r_charger_information)),
         config(config){};
 
     const std::unique_ptr<emptyImplBase> p_main;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;
-    const std::vector<std::unique_ptr<energyIntf>> r_energy_listener;
     const std::vector<std::unique_ptr<charger_informationIntf>> r_charger_information;
     const Conf& config;
 
