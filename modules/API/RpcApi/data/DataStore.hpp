@@ -103,8 +103,8 @@ public:
     void set_dc_charge_status(const std::optional<RPCDataTypes::DCChargeStatusObj>& dc_charge_status);
     // set the display parameters
     void set_display_parameters(const std::optional<RPCDataTypes::DisplayParametersObj>& display_parameters);
-    // set the AC phase count in the AC charge parameters
-    void set_ac_charge_param_evse_phase_count(int32_t phase_count);
+    // set the AC max phase count in the AC charge parameters
+    void set_ac_charge_param_evse_max_phase_count(int32_t phase_count);
     // set the AC current limit and notify any waiting request threads
     void set_ac_charge_param_evse_max_current(float current_limit);
     // wait until the current limit is applied or timeout occurs

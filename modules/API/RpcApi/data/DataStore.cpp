@@ -161,7 +161,7 @@ bool EVSEStatusStore::wait_until_current_limit_applied(float requested_limit, st
     return is_current_limit_applied;
 }
 
-void EVSEStatusStore::set_ac_charge_param_evse_phase_count(int32_t phase_count) {
+void EVSEStatusStore::set_ac_charge_param_evse_max_phase_count(int32_t phase_count) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     auto& ac_charge_param = this->dataobj.ac_charge_param;
 
