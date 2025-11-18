@@ -293,6 +293,10 @@ async def test_cleanup_transaction_events_after_max_attempts_exhausted(
         validate_status_notification_201,
     )
 
+    # return a CALLERROR for the transaction event
+    central_system.mock.on_transaction_event.side_effect = [
+        NotImplementedError()]
+
     # swipe id tag to authorize
     test_controller.swipe(id_token.id_token)
 
@@ -307,10 +311,6 @@ async def test_cleanup_transaction_events_after_max_attempts_exhausted(
         {"eventType": "Started", "offline": False},
     )
     test_utility.validation_mode = ValidationMode.STRICT
-
-    # return a CALLERROR for the transaction event
-    central_system.mock.on_transaction_event.side_effect = [
-        NotImplementedError()]
 
     assert await wait_for_and_validate(
         test_utility,
