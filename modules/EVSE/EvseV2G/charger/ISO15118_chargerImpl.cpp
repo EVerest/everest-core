@@ -84,6 +84,10 @@ void ISO15118_chargerImpl::init() {
                         vas_service.ServiceCategory = iso2_serviceCategoryType_ContractCertificate;
                     } else if (id == V2G_SERVICE_ID_INTERNET) {
                         vas_service.ServiceCategory = iso2_serviceCategoryType_Internet;
+                        const char vas_service_name[] = {"InternetAccess"};
+                        memcpy(vas_service.ServiceName.characters, vas_service_name, sizeof(vas_service_name));
+                        vas_service.ServiceName.charactersLen = sizeof(vas_service_name);
+                        vas_service.ServiceName_isUsed = true;
                     } else {
                         vas_service.ServiceCategory = iso2_serviceCategoryType_OtherCustom;
                     }
