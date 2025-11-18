@@ -708,9 +708,10 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
 
                     iso2_ServiceParameterListType vas_parameter_list{};
                     init_iso2_ServiceParameterListType(&vas_parameter_list);
-                    vas_parameter_list.ParameterSet.arrayLen = vas_parameters.size() <= 5 ? vas_parameters.size() : 5;
+                    size_t maxParameterSetArrayLen = ARRAY_SIZE(vas_parameter_list.ParameterSet.array);
+                    vas_parameter_list.ParameterSet.arrayLen = std::min(maxParameterSetArrayLen, vas_parameters.size());
 
-                    for (size_t j = 0; j < vas_parameters.size() and j <= 5; j++) {
+                    for (size_t j = 0; j < vas_parameters.size() and j < maxParameterSetArrayLen; j++) {
                         const auto& vas_parameter = vas_parameters.at(j);
 
                         vas_parameter_list.ParameterSet.array[j].ParameterSetID =
@@ -718,6 +719,9 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
 
                         size_t t{0};
                         for (const auto& parameter : vas_parameter.parameters) {
+                            // quit loop when the maximum count of elements our encoder can handle is reached
+                            if (t == ARRAY_SIZE(vas_parameter_list.ParameterSet.array[j].Parameter.array))
+                                break;
                             auto& out_parameter = vas_parameter_list.ParameterSet.array[j].Parameter.array[t++];
 
                             init_iso2_ParameterType(&out_parameter);
@@ -731,10 +735,10 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
                                 out_parameter.intValue = parameter.value.int_value.value();
                                 out_parameter.intValue_isUsed = true;
                             } else if (parameter.value.finite_string.has_value()) {
-                                // TODO(SL): Check if string is too big to copy char array
                                 const auto& temp = parameter.value.finite_string.value();
                                 if (temp.length() > sizeof(out_parameter.stringValue.characters)) {
-                                    dlog(DLOG_LEVEL_WARNING, "Parameter String is too long to copy into char array");
+                                    dlog(DLOG_LEVEL_WARNING,
+                                         "Parameter String is too long to copy into char array -> truncated");
                                 }
                                 strncpy(out_parameter.stringValue.characters, temp.c_str(),
                                         sizeof(out_parameter.stringValue.characters));
@@ -759,7 +763,7 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
                             }
                         }
 
-                        vas_parameter_list.ParameterSet.array[j].Parameter.arrayLen = vas_parameter.parameters.size();
+                        vas_parameter_list.ParameterSet.array[j].Parameter.arrayLen = t;
                     }
 
                     res->ServiceParameterList.ParameterSet = vas_parameter_list.ParameterSet;
