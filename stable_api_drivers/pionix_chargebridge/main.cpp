@@ -105,60 +105,9 @@ int main(int argc, char* argv[]) {
 
             auto force_update = mode_of_operation == mode::update;
             cb->manage(ev_handler, g_run_application, force_update);
-
-            //            ev_handler.register_event_handler(cb.get());
         }
     }
 
-    timer_fd block_timer;
-    auto last_ping = std::chrono::steady_clock::now();
-    auto last_eval = std::chrono::steady_clock::now();
-
-    std::vector<int> deltas;
-    bool this_was_a_ping = false;
-
-    // block_timer.set_timeout_ms(1);
-    // ev_handler.register_event_handler(&block_timer, [&](auto const&) {
-    //     // auto now = std::chrono::steady_clock::now();
-    //     // auto d = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping);
-    //     // deltas.push_back(d.count());
-    //     // last_ping = now;
-    //     this_was_a_ping = true;
-    // });
-
-    //    ev_handler.run(g_run_application);
-    while (g_run_application.load()) {
-        ev_handler.poll();
-        ev_handler.run_actions();
-        if (false && std::chrono::steady_clock::now() - last_eval > std::chrono::seconds(5)) {
-            auto count = deltas.size();
-            if (count > 0) {
-
-                auto avg = std::accumulate(deltas.begin(), deltas.end(), 0) / count;
-                auto max = *std::max_element(deltas.begin(), deltas.end());
-                auto min = *std::min_element(deltas.begin(), deltas.end());
-                // clang-format off
-                std::cout << "STATS: count -> " << count << "#\t"
-                      << "       avg   -> " << avg << "ms\t"
-                      << "       max   -> " << max << "ms\t"
-                      << "       min   -> " << min << "ms"
-                      << std::endl;
-                // clang-format on
-
-                deltas.clear();
-            }
-            last_eval = std::chrono::steady_clock::now();
-        } else {
-            auto now = std::chrono::steady_clock::now();
-            if (this_was_a_ping) {
-                this_was_a_ping = false;
-            } else {
-                auto d = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_ping);
-                deltas.push_back(d.count());
-            }
-            last_ping = now;
-        }
-    }
-
+    ev_handler.run(g_run_application);
     return 0;
 }
