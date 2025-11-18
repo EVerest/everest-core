@@ -1,7 +1,7 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@rules_rust//cargo:defs.bzl", "cargo_build_script")
-load("//bazel:everest_env.bzl", "everest_test")
-load("//bazel:modules_def.bzl", "rs_everest_module")
+load("@everest-framework//bazel:everest_env.bzl", "everest_test")
+load("@everest-framework//bazel:modules_def.bzl", "rs_everest_module")
 
 cargo_build_script(
     name = "build_script",
