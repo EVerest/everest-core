@@ -9,6 +9,7 @@ use generated::{
 };
 use std::sync::Arc;
 use std::{thread, time};
+use everestrs::serde_json;
 
 pub struct OneClass {}
 

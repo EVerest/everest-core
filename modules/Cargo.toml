@@ -8,5 +8,5 @@ members = [
 ]
 
 [workspace.dependencies]
-everestrs = { path = "../lib/everest/framework" }
-everestrs-build = { path = "../lib/everest/framework" }
+everestrs = { path = "framework/everestrs/everestrs" }
+everestrs-build = { path = "framework/everestrs/everestrs-build" }
