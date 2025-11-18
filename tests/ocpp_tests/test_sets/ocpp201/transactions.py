@@ -613,3 +613,86 @@ async def test_id_token_info_updated_in_tx_event(
 
     # stop charging session
     test_controller.plug_out()
+
+@pytest.mark.asyncio
+@pytest.mark.ocpp_version("ocpp2.0.1")
+@pytest.mark.everest_core_config('everest-config-ocpp201-ps.yaml')
+@pytest.mark.use_temporary_persistent_store
+@pytest.mark.ocpp_config_adaptions(
+        GenericOCPP2XConfigAdjustment(
+            [
+                (
+                    OCPP2XConfigVariableIdentifier(
+                        "InternalCtrlr",
+                        "ResumeTransactionsOnBoot",
+                        "Actual",
+                    ),
+                    "true",
+                ),
+            ]
+        )
+    )
+async def test_stop_pending_transactions(
+    central_system_v201: CentralSystem,
+    test_controller: TestController,
+    test_utility: TestUtility,
+):
+    logging.info("######### test_stop_pending_transactions #########")
+
+    # prepare data for the test
+    evse_id = 1
+    connector_id = 1
+    remote_start_id = 1
+    id_token = IdTokenType(id_token="DEADBEEF", type=IdTokenTypeEnum.iso14443)
+
+    test_controller.start()
+    charge_point_v201 = await central_system_v201.wait_for_chargepoint(
+        wait_for_bootnotification=True
+    )
+
+
+    await charge_point_v201.request_start_transaction_req(
+        id_token=id_token, remote_start_id=remote_start_id, evse_id=evse_id
+    )
+
+    test_controller.plug_in()
+
+    assert await wait_for_and_validate(
+        test_utility, charge_point_v201, "TransactionEvent", {
+            "eventType": "Started"}
+    )
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "TransactionEvent",
+        {"eventType": "Updated"},
+    )
+
+    # charge for some time...
+    logging.debug("Charging for a while...")
+    await asyncio.sleep(2)
+
+    test_controller.stop()
+
+    await asyncio.sleep(2)
+
+    test_controller.start()
+
+    charge_point_v201 = await central_system_v201.wait_for_chargepoint(
+        wait_for_bootnotification=False
+    )
+
+    await asyncio.sleep(2)
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "TransactionEvent",
+        {
+            "eventType": "Ended",
+            "transactionInfo": {
+                "stoppedReason": "PowerLoss"
+            }
+        },
+    )

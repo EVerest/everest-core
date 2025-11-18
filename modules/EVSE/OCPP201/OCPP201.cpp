@@ -1270,6 +1270,9 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
         this->process_transaction_finished(evse_id, connector_id, session_event);
         break;
     }
+    case types::evse_manager::SessionEventEnum::SessionResumed:
+        this->process_session_resumed(evse_id, connector_id, session_event);
+        break;
     case types::evse_manager::SessionEventEnum::ChargingStarted: {
         this->process_charging_started(evse_id, connector_id, session_event);
         break;
@@ -1321,7 +1324,6 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
     case types::evse_manager::SessionEventEnum::ReplugFinished:
     case types::evse_manager::SessionEventEnum::PluginTimeout:
     case types::evse_manager::SessionEventEnum::SwitchingPhases:
-    case types::evse_manager::SessionEventEnum::SessionResumed:
         break;
     }
 
@@ -1508,7 +1510,7 @@ void OCPP201::process_transaction_started(const int32_t evse_id, const int32_t c
 void OCPP201::process_transaction_finished(const int32_t evse_id, const int32_t connector_id,
                                            const types::evse_manager::SessionEvent& session_event) {
     if (!session_event.transaction_finished.has_value()) {
-        throw std::runtime_error("SessionEvent TransactionFinished does not contain session_started context");
+        throw std::runtime_error("SessionEvent TransactionFinished does not contain transaction_finished context");
     }
     const auto transaction_finished = session_event.transaction_finished.value();
     auto tx_event = TxEvent::NONE;
@@ -1565,6 +1567,24 @@ void OCPP201::process_transaction_finished(const int32_t evse_id, const int32_t 
         const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::DEAUTHORIZED);
         this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
     }
+}
+
+void OCPP201::process_session_resumed(const int32_t evse_id, const int32_t connector_id,
+                                      const types::evse_manager::SessionEvent& session_event) {
+    // resume transaction with data we get from the session event
+    // currently, the SessionResumed event only occurs after a power outage followed by
+    // a TransactionFinished event. We have to add the transaction data again to be able to
+    // properly process the transaction finished event.
+    // Currently, sending a TransactionEvent(Ended) after a power loss is only supported if
+    // the configuration variable InternalCtrlr::ResumeTransactionsOnBoot is set to true.
+    // If this is not the case, libocpp will not be able to process a TransactionFinished event
+    // after a power loss, because it does internally not restore transaction data on boot.
+    const auto timestamp = ocpp_conversions::to_ocpp_datetime_or_now(session_event.timestamp);
+    auto transaction_data =
+        std::make_shared<TransactionData>(connector_id, session_event.uuid, timestamp,
+                                          ocpp::v2::TriggerReasonEnum::TxResumed, ocpp::v2::ChargingStateEnum::Idle);
+    transaction_data->started = true;
+    this->transaction_handler->add_transaction_data(evse_id, transaction_data);
 }
 
 void OCPP201::process_charging_started(const int32_t evse_id, const int32_t connector_id,
