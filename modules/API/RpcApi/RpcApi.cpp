@@ -24,33 +24,6 @@ void RpcApi::init() {
     // Check if all evse_energy_sink(s) have a mapping to an EVSE
     check_evse_mapping();
 
-    // Subscribe to all EVSE energy interfaces
-    for (std::size_t idx = 0; idx < r_energy_listener.size(); idx++) {
-        const auto& evse_energy = r_energy_listener.at(idx);
-        if (evse_energy->get_mapping().has_value()) {
-            // Write EVSE index and connector id to the datastore
-            const auto evse_index = evse_energy->get_mapping().value().evse;
-            auto evse_store = this->data.get_evse_store(evse_index);
-            if (evse_store == nullptr) {
-                EVLOG_error << "EVSE index " << evse_index
-                            << " not found in data store, cannot subscribe to energy interface";
-                continue;
-            }
-            this->subscribe_evse_energy(evse_energy, *evse_store);
-        } else {
-            std::size_t evse_index = idx;
-            EVLOG_warning << "Energy interface with module_id \"" << evse_energy->module_id
-                          << "\" does not have an EVSE mapping, guessing the EVSE index: " << idx;
-            if (this->data.evses.size() < r_energy_listener.size()) {
-                EVLOG_warning << "Number of EVSEs " << this->data.evses.size()
-                              << " does not match with number of energy interfaces " << r_energy_listener.size()
-                              << ", using first EVSE index 0";
-                evse_index = 0;
-            }
-            this->subscribe_evse_energy(evse_energy, *this->data.evses.at(evse_index));
-        }
-    }
-
     // Create the request handler
     m_request_handler = std::make_unique<RpcApiRequestHandler>(data, r_evse_manager, r_evse_energy_sink);
 
@@ -189,6 +162,8 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
         [this, &evse_data](const types::evse_board_support::HardwareCapabilities& hwcaps) {
             // there is only one connector supported currently
             this->hwcaps_var_to_datastore(hwcaps, evse_data.hardwarecapabilities);
+            // also update evse_max_phase_count
+            evse_data.evsestatus.set_ac_charge_param_evse_max_phase_count(hwcaps.max_phase_count_import);
         });
     evse_manager->subscribe_evse_id([this, &evse_data](const std::string& evse_id) {
         // set the EVSE id in the data store
@@ -207,8 +182,10 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     evse_manager->subscribe_limits([this, &evse_data](const types::evse_manager::Limits& limits) {
         // set the external limits in the data store
         if (evse_data.evseinfo.get_is_ac_transfer_mode()) {
-            evse_data.evsestatus.set_ac_charge_param_evse_max_phase_count(limits.nr_of_phases_available);
             evse_data.evsestatus.set_ac_charge_param_evse_max_current(limits.max_current);
+            RPCDataTypes::ACChargeStatusObj ac_charge_status;
+            ac_charge_status.evse_active_phase_count = limits.nr_of_phases_available;
+            evse_data.evsestatus.set_ac_charge_status(ac_charge_status);
         } else {
             evse_data.evsestatus.set_ac_charge_param(std::nullopt);
         }
@@ -224,21 +201,6 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
             evse_data.evseinfo.set_supported_energy_transfer_modes(rpc_supported_energy_transfer_modes);
             evse_data.evseinfo.set_is_ac_transfer_mode(is_ac_transfer_mode);
         });
-}
-
-void RpcApi::subscribe_evse_energy(const std::unique_ptr<energyIntf>& evse_energy, data::DataStoreEvse& evse_data) {
-    evse_energy->subscribe_energy_flow_request([this, &evse_data](const types::energy::EnergyFlowRequest& request) {
-        if (evse_data.evseinfo.get_is_ac_transfer_mode() &&
-            request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.has_value() &&
-            request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.value() != 0) {
-            RPCDataTypes::ACChargeStatusObj ac_charge_status;
-            ac_charge_status.evse_active_phase_count =
-                request.schedule_import.at(0).limits_to_root.ac_number_of_active_phases.value();
-            evse_data.evsestatus.set_ac_charge_status(ac_charge_status);
-        } else {
-            evse_data.evsestatus.set_ac_charge_status(std::nullopt);
-        }
-    });
 }
 
 void RpcApi::subscribe_global_errors() {
