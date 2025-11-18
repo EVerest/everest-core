@@ -1,12 +1,11 @@
 .. _exp_linux_yocto_building_yocto:
 
 ##############################
-Building a Yocto for your custom hardware
+Building Yocto for your custom hardware
 ##############################
 
-When creating your custom Yocto for your target hardware, the best is to
-start with the Yocto supplied by the SoM/Board/CPU manufacturer instead
-of using the one for the BelayBox.
+A good starting point is to use a yocto distribution supplied by the SoM/Board/CPU manufacturer.
+This ensures you have a working Linux distribution before starting to add EVerest.
 
 Many SoM manufacturers provide quite well-maintained Yocto
 distributions, e.g. PHYTEC provides an *ampliPHY* distribution for all
@@ -31,12 +30,10 @@ files, EVerest config files, recipes for your own software etc. Look at
 https://docs.yoctoproject.org/dev/dev-manual/layers.html
 https://github.com/EVerest/meta-everest
 
-Then - in case you have not done it yet -, create a custom image file
+Then - in case you have not done it yet - create a custom image file
 for your board that installs EVerest as well as all other tools you may
 want to have on your base system. This image can be based e.g. on
-*core-image-minimal*. Here is an example:
-
-TODO: verify yocto build for belaybox!
+*core-image-minimal*. Here is an an example from the BelayBox:
 
 .. code-block:: bitbake
 

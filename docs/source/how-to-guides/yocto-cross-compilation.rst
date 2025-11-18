@@ -15,9 +15,10 @@ refer to the :doc:`Linux / Yocto explanations </explanation/linux-yocto/index>`.
 Building a Yocto SDK
 =====================
 
-This route will be available if you have already built your Yocto images
-yourself, and we will assume for now that you already have a working
-Yocto environment to build your Yocto images.
+A Yocto SDK can be built once you have a working image. The SDK uses the information
+from your image to determine what is needed to build a cross compilation tool chain.
+
+The SDK can be built once and the generated file made available to developers.
 
 To build an SDK that can be used for cross-compilation, after sourcing
 your Yocto environment you will just have to run
@@ -39,8 +40,6 @@ currently running on the target you want to cross-compile for.
 You can either `build one yourself <exp_cross_compilation_building_an_sdk>` or be supplied
 with one by the organization that is building and maintaining the Yocto
 image you are using.
-
-TODO potentially use other SDK!
 
 .. tip::
 
@@ -101,27 +100,16 @@ cross-compilation and run cmake with your desired additional flags.
 
 .. code-block:: bash
 
-   mkdir build-cross
+   cmake -S. -Bbuild-cross -DCMAKE_INSTALL_PREFIX=/var/everest
    cd build-cross
-   cmake ..
-
-After this completes, you can start the compilation process with
-``make -jN install``, whereas ``N`` equals the amount of concurrent jobs
-you want to run. For this example we will go with a count of 16
-concurrent processes:
-
-.. code-block:: bash
-
-   make -j16 install
+   make -j16
+   DESTDIR=dist make install
+   rsync -av dist/ root@192.168.3.11:/var/everest
 
 This will cross-compile and “install” EVerest into
-``everest-core/build-cross/dist/``. You can now ``rsync`` the cross-compiled
+``everest-core/build-cross/dist/`` and ``rsync`` the cross-compiled
 EVerest to your target (the next command assumes that your target is
 accessible at 192.168.3.11):
-
-.. code-block:: bash
-
-   rsync -av dist/ root@192.168.3.11:/var/everest
 
 You can now SSH into your target and stop the normally running
 ``everest`` process:
@@ -136,6 +124,11 @@ After that, you can start your cross-compiled EVerest via:
 
    LD_LIBRARY_PATH=/var/everest/lib:$LD_LIBRARY_PATH /var/everest/bin/manager --prefix /var/everest/ --config /path/to/your/config
 
-------------------------------------------
+----
 
-Authors: Cornelius Claussen
+.. note::
+
+   With ``--prefix`` you specify the path of the EVerest installation. Some modules
+   may use this path to find their resources (e.g. certificates, config files, etc.).
+
+Authors: Cornelius Claussen, James Chapman

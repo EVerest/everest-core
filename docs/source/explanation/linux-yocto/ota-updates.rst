@@ -6,8 +6,7 @@ Over-the-air-updates (OTA)
 
 One of the most important (and often underestimated) features of a
 charging station is the ability to remotely update the software when the
-charger is installed at the customer. Updates are needed to deploy for
-example:
+charger is installed. Updates can provide:
 
 -  General bug fixes
 -  Fixing compatibility issues with new EVs (or old EVs with new
@@ -17,12 +16,10 @@ example:
 -  Security issues
 -  New features
 
-Updates are often referred to as Over-the-air-updates (OTA) when
-delivered through a network. But in some use cases also local update
-mechanisms should be considered.
+Updates may be delivered remotely over a network, called Over-the-Air (OTA),
+or may be provided locally where supported by the charging station.
 
-There are many ways to implement an update mechanism. EVerest supports
-*RAUC* as an update tool, which has the following advantages:
+EVerest supports *RAUC* as an update tool, which has the following advantages:
 
 -  Open source project with a large community:
    https://rauc.io
@@ -51,13 +48,13 @@ There are some considerations to make when choosing an update system:
 |                                   | Requires careful tracking of      |
 |                                   | compatibility between components. |
 +-----------------------------------+-----------------------------------+
-| KISS: Keep it simple and stupid.  | Often quite complex               |
-| Writing full images to A/B slots  | implementations. That can         |
-| is very simple. Combined with an  | introduce a lot of room for bugs  |
-| atomic switch between the boot    | which brick devices during failed |
-| slots, there is no critical time  | updates, power losses during      |
-| where e.g. a power loss could     | updates or upgrading to           |
-| brick a device.                   | incompatible updater software     |
+| Writing full images to A/B slots  | Often quite complex               |
+| is straightforward. Combined with | implementations. That can         |
+| an atomic switch between the      | introduce a lot of room for bugs  |
+| boot slots, there is no critical  | which brick devices during failed |
+| time where e.g. a power loss      | updates, power losses during      |
+| could brick a device.             | updates or upgrading to           |
+|                                   | incompatible updater software     |
 |                                   | versions.                         |
 +-----------------------------------+-----------------------------------+
 | Simple versioning: a single       | Complex versioning: Always a      |
@@ -80,13 +77,22 @@ There are some considerations to make when choosing an update system:
 | partial download.                 |                                   |
 +-----------------------------------+-----------------------------------+
 
-We chose RAUC as the most suitable update system for EVerest, mainly
-due to its robust, brick-free mechanisms and its inherent security
-features.
 
-The larger download size is mitigated by using the HTTP streaming
-feature, which only downloads the blocks that have changed instead of
-the full image via HTTP range requests.
+An update process should consider the bootloader, loading the Linux kernel, and 
+the root file system. A root file system can be a standard Linux partition (ext4).
+Other solutions are available including: squashfs, file system snapshots, and
+bundle based solutions (NixOS, Snap). The root file system is usually read-only
+and an overlay file system is used to support charger specific updates.
+
+An OTA solution needs to consider how configuration information is maintained 
+across root file system updates.
+
+EVerest has chosen RAUC as the most suitable update system, mainly due to its
+robust, brick-free mechanisms and its inherent security features.
+
+RAUC can support adaptive updates that use HTTP streaming to only download 
+blocks that have changed between releases. This can reduce the overheads of using
+full images.
 
 Security is provided on a block-based level, so there is no need to
 first download the complete image and validate signature etc. It is done
@@ -99,9 +105,7 @@ slot partition.
 RAUC implementation in EVerest
 ------------------------------
 
-EVerest implements everything down to the actual RAUC process in Linux: 
-the interface is the D-Bus interface of RAUC. The implementation for
-this is provided as part of the 
+EVerest interacts with RAUC via its D-Bus interface. This is provided by the
 `Linux Systemd Rauc module </reference/modules/Linux_Systemd_Rauc>`_.
 
 In EVerest the update process is fully integrated with OCPP.
@@ -130,16 +134,19 @@ Refer to RAUC's integration documentation for more information:
 
 https://rauc.readthedocs.io/en/latest/integration.html
 
-One important aspect is how the switching between slots A and B is done.
-This should ideally be done in an atomic way, otherwise, there is a
-short moment in time where a power outage may lead to inconsistent state
-for the boot configuration.
+RAUC has support for atomic switching between slots and uses features from
+the bootloader. It is important to understand this interaction since the
+bootloader may be able to automatically rollback if an update is not successful.
+
+Some processors also support secure and encrypted boot options which can ensure
+that only valid images are loaded. They may also provide mechanisms to support
+dual boot loaders.
 
 .. tip::
 
-   Use *eMMC* as a storage device, as these provide a register that can be
-   used to switch between the eMMC (hardware) boot partitions to select the
-   A/B bootloader in an atomic way.
+   Look at the documentation for your processor and chosen bootloader to
+   understand what options are provided for slot switching and automatic boot
+   failure recovery.
 
 Test your integration locally first using RAUC on the command line:
 
@@ -152,7 +159,7 @@ slot. Once that is done, issue a reboot and verify it cleanly boots into
 the new slot.
 
 Once booted successfully into the new slot, you need to mark the slot as
-“good”, otherwise it will fall back to the previous one on the next
+“good”, otherwise it may fall back to the previous one on the next
 boot.
 
 Some implementations do this in a *systemd* service that runs at the end
@@ -163,14 +170,14 @@ automatically etc.
 
 To mark it "good", manually use:
 
-::
+.. code-block:: bash
 
    rauc status mark-good
 
 You also may want to check RAUC's status before and after the update to
 verify it is configured correctly. It shows an output like this:
 
-::
+.. code-block:: bash
 
    root@mysystem:~# rauc status
    === System Info ===
@@ -198,7 +205,7 @@ verify it is configured correctly. It shows an output like this:
 Also try to use *mark-bad* and test if it falls back to the previous one
 on the next boot.
 
-EVerest will trigger RAUC via D-Bus, so make sure it is running as a
+EVerest interacts with RAUC via D-Bus, so make sure it is running as a
 D-Bus service. The D-Bus interface is also the boundary between
 EVerest and the underlying Linux system here.
 

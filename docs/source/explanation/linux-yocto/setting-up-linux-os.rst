@@ -7,7 +7,7 @@ Setting up the Linux operating system
 In principle, you can use any Linux-based operating system as long as it
 comes with the required dependencies to run EVerest.
 
-We strongly recommend to use Yocto as it has some advantages over other
+We strongly recommend using Yocto as it has some advantages over other
 distributions:
 
 -  It can be set up to do reproducible builds with versioning.
@@ -44,9 +44,17 @@ journey. Do not consider this complete!
 Setup a Yocto build environment
 -------------------------------
 
-You will need a quite decent computer with a lot of RAM and disk space
-and many cores. A high-end desktop workstation or build server is
-recommended. For the beginning, a high-performance laptop may also work.
+Yocto has comprehensive caching capabilities that mean build times are substantially
+reduced for successive builds. However an initial build will take hours since initial
+versions need to be fetched and built so that caches are populated. There is support
+for sharing downloads and caches that can reduce build times and are worth
+considering where you have a co-located team.
+
+A good build machine will have lots of RAM, SSD storage and multi-core processor as
+well as a fast Internet connection.
+
+It is possible to use a high-performance laptop especially for incremental builds
+once the initial build is complete.
 
 .. warning::
 
@@ -78,10 +86,6 @@ from now. As an example, the Python version in ten years from now may
 not run the old bitbake correctly anymore. Also, the Yocto recipes
 contain only download URLs and version tags, but not the source packages
 itself.
-
-So, whenever you make a release, archive the “downloads” cache folder as
-well so that in ten years you still have all the sources - even if the
-URLs in the recipes are not valid anymore.
 
 Let's start with an example and set up the Yocto build environment that
 we use for EVerest on the BelayBox hardware.
