@@ -87,7 +87,6 @@ private:
     void check_evse_session_event(data::DataStoreEvse& evse_data,
                                   const types::evse_manager::SessionEvent& session_event);
     void subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evse_manager, data::DataStoreEvse& evse_data);
-    void subscribe_evse_energy(const std::unique_ptr<energyIntf>& evse_energy, data::DataStoreEvse& evse_data);
     void subscribe_global_errors();
     void meterdata_var_to_datastore(const types::powermeter::Powermeter& powermeter, data::MeterDataStore& meter_data);
     void hwcaps_var_to_datastore(const types::evse_board_support::HardwareCapabilities& hwcaps,
