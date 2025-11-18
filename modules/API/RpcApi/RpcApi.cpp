@@ -207,7 +207,7 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     evse_manager->subscribe_limits([this, &evse_data](const types::evse_manager::Limits& limits) {
         // set the external limits in the data store
         if (evse_data.evseinfo.get_is_ac_transfer_mode()) {
-            evse_data.evsestatus.set_ac_charge_param_evse_phase_count(limits.nr_of_phases_available);
+            evse_data.evsestatus.set_ac_charge_param_evse_max_phase_count(limits.nr_of_phases_available);
             evse_data.evsestatus.set_ac_charge_param_evse_max_current(limits.max_current);
         } else {
             evse_data.evsestatus.set_ac_charge_param(std::nullopt);
