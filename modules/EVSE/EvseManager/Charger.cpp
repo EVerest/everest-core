@@ -487,6 +487,9 @@ void Charger::run_state_machine() {
                 session_log.evse(false, "Exit T_step_EF");
                 if (internal_context.t_step_EF_return_pwm == 0.) {
                     pwm_off();
+                } else if (hlc_use_5percent_current_session) {
+                    update_pwm_now(PWM_5_PERCENT);
+                    internal_context.pwm_set_last_ampere = internal_context.t_step_EF_return_ampere;
                 } else {
                     update_pwm_now(internal_context.t_step_EF_return_pwm);
                     internal_context.pwm_set_last_ampere = internal_context.t_step_EF_return_ampere;
