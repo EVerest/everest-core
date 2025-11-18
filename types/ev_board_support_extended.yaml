@@ -1,0 +1,78 @@
+description: EV extended HiL simulator types
+types:
+  KeepAliveData:
+    description: >-
+      Keep alive ping packet data
+    type: object
+    additionalProperties: false
+    required:
+      - timestamp
+      - hw_revision_major
+      - hw_revision_minor
+      - sw_version
+    properties:
+      timestamp:
+        type: integer
+        default: -1
+      hw_revision_major:
+        type: string
+        enum:
+          - 'Rev_A'
+          - 'UNKNOWN'
+      hw_revision_minor:
+        type: integer
+        default: -1
+      sw_version:
+        type: string
+        default: 'UNKNOWN'
+  ACVoltageData:
+    description: Phase voltages
+    type: object
+    additionalProperties: false
+    required:
+      - Ua
+      - Ub
+      - Uc
+    properties:
+      Ua:
+        type: number
+        default: 0
+      Ub:
+        type: number
+        default: 0
+      Uc:
+        type: number
+        default: 0
+  NumberStatistics:
+    description: Statistic values
+    type: object
+    additionalProperties: false
+    required:
+      - min
+      - max
+      - average
+    properties:
+      min:
+        type: number
+        default: 0
+      max:
+        type: number
+        default: 0
+      average:
+        type: number
+        default: 0
+  ACPhaseStatistics:
+    description: Voltage statistics of all phases
+    type: object
+    additionalProperties: false
+    required:
+      - Ua
+      - Ub
+      - Uc
+    properties:
+      Ua:
+        $ref: /ev_board_support_extended#/NumberStatistics
+      Ub:
+        $ref: /ev_board_support_extended#/NumberStatistics
+      Uc:
+        $ref: /ev_board_support_extended#/NumberStatistics

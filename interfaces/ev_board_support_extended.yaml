@@ -1,0 +1,42 @@
+description: This defines the board support package for an extended feature EV side testing rig.
+cmds:
+  set_status_led:
+    description: Writes given binary state to status LED
+    arguments:
+      state:
+        description: State which the status LED should take on.
+        type: boolean
+    result:
+      description: Returns actual value of status LED.
+      type: boolean
+  reset:
+    description: Resets the MCU
+    arguments:
+      soft_reset:
+        description: Perform a soft reset? If false, use hard reset.
+        type: boolean
+  get_ac_data_instant:
+    description: Request instant AC data 
+  get_ac_statistics:
+    description: Request AC phase statistic data
+  get_dc_data_instant:
+    description: Request DC bus voltage
+vars:
+  keep_alive_event:
+    description: >-
+      Keep alive data
+    type: object
+    $ref: /ev_board_support_extended#/KeepAliveData
+  ac_voltage_event:
+    description: AC phase voltage data
+    type: object
+    $ref: /ev_board_support_extended#/ACVoltageData
+  ac_statistics_event:
+    description: AC phase voltage statistics
+    type: object
+    $ref: /ev_board_support_extended#/ACPhaseStatistics
+  dc_voltage_event:
+    description: DC bus voltage data
+    type: number
+errors:
+  - reference: /errors/generic

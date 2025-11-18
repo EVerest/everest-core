@@ -1,0 +1,36 @@
+description: Driver module for mMWcar as EV side HIL/measurement device
+config:
+  invert_status_led_polarity:
+    description: Can be used to invert LED polarity depending on HW setup.
+    type: boolean
+    default: false
+  serial_port:
+    description: Serial port the hardware is connected to
+    type: string
+    default: /dev/ttyUSB0
+  baud_rate:
+    description: Serial baud rate to use when communicating with the hardware
+    type: integer
+    minimum: 9600
+    maximum: 230400
+    default: 115200
+  reset_gpio_chip:
+    description: >-
+      Reset GPIO chip to use to HW reset mMWcar. If set to empty string, it is disabled.
+    type: string
+    default: 'gpiochip0'
+  reset_gpio_line:
+    description: GPIO line to use to reset mMWcar
+    type: integer
+    default: 27
+provides:
+  board_support_extended:
+    interface: ev_board_support_extended
+    description: Provides board support for low level CP/PP measurement and dynamic loading, introduces faults at will, measures AC and DC voltages
+  simple_board_support:
+    interface: ev_board_support
+    description: Simplified EV board support like in YetiEV
+metadata:
+  license: https://pionix.com/pionix-license-terms
+  authors:
+    - Jonas Rockstroh, PIONIX GmbH
