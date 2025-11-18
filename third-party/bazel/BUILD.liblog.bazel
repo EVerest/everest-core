@@ -1,0 +1,15 @@
+cc_library(
+    name = "liblog",
+    srcs = glob(["lib/*.cpp"]),
+    hdrs = glob(["include/**/*.hpp"]),
+    deps = [
+        "@boost.utility",
+        "@boost.exception",
+        "@boost.log",
+    ],
+    visibility = [
+        "//visibility:public",
+    ],
+    strip_include_prefix = "include",
+    cxxopts = ["-std=c++17"]
+)
