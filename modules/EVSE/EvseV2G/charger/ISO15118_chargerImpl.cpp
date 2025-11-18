@@ -246,17 +246,14 @@ void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     types::authorization::CertificateStatus& certificate_status) {
 
-    if (v2g_ctx->session.iso_selected_payment_option == iso2_paymentOptionType_ExternalPayment) {
-        if (authorization_status == types::authorization::AuthorizationStatus::Accepted) {
-            v2g_ctx->evse_v2g_data.evse_processing[PHASE_AUTH] = (uint8_t)iso2_EVSEProcessingType_Finished;
-        }
-    } else if (v2g_ctx->session.iso_selected_payment_option == iso2_paymentOptionType_Contract) {
-        v2g_ctx->session.certificate_status = certificate_status;
-        v2g_ctx->evse_v2g_data.evse_processing[PHASE_AUTH] = static_cast<uint8_t>(iso2_EVSEProcessingType_Finished);
+    v2g_ctx->evse_v2g_data.evse_processing[PHASE_AUTH] = static_cast<uint8_t>(iso2_EVSEProcessingType_Finished);
 
-        if (authorization_status != types::authorization::AuthorizationStatus::Accepted) {
-            v2g_ctx->session.authorization_rejected = true;
-        }
+    if (authorization_status != types::authorization::AuthorizationStatus::Accepted) {
+        v2g_ctx->session.authorization_rejected = true;
+    }
+
+    if (v2g_ctx->session.iso_selected_payment_option == iso2_paymentOptionType_Contract) {
+        v2g_ctx->session.certificate_status = certificate_status;
     }
 }
 

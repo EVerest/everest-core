@@ -287,6 +287,10 @@ void EvseManager::ready() {
         // Ask HLC to stop charging session
         charger->signal_hlc_stop_charging.connect([this] { r_hlc[0]->call_stop_charging(true); });
         charger->signal_hlc_pause_charging.connect([this] { r_hlc[0]->call_pause_charging(true); });
+        charger->signal_hlc_plug_in_timeout.connect([this] {
+            r_hlc[0]->call_authorization_response(types::authorization::AuthorizationStatus::Unknown,
+                                                  types::authorization::CertificateStatus::NoCertificateAvailable);
+        });
 
         // Charger needs to inform ISO stack about emergency stop
         charger->signal_hlc_error.connect([this](types::iso15118::EvseError error) {
