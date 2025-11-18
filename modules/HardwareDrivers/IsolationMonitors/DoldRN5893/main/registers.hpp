@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+// Copyright Frickly Systems GmbH
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #pragma once
