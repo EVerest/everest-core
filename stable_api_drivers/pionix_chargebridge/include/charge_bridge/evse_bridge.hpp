@@ -26,6 +26,8 @@ public:
     bool unregister_events(everest::lib::io::event::fd_event_handler& handler) override;
 
 private:
+    void handle_timer_event();
+
     evse_bsp::api_connector m_api;
     everest::lib::io::udp::udp_client m_udp;
     everest::lib::io::event::timer_fd m_timer;

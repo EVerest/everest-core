@@ -34,26 +34,26 @@ evse_bridge::evse_bridge(evse_bridge_config const& config) :
     });
 }
 
+void evse_bridge::handle_timer_event() {
+    if (m_udp_on_error) {
+        m_udp.reset();
+    }
+}
+
 bool evse_bridge::register_events(everest::lib::io::event::fd_event_handler& handler) {
-    // clang-format off
-    return
-        handler.register_event_handler(&m_api) &&
-        handler.register_event_handler(&m_udp) &&
-        handler.register_event_handler(&m_timer, [this](auto&) {
-            if (m_udp_on_error) {
-                m_udp.reset();
-            }
-        });
-    // clang-format on
+    auto result = true;
+    result = handler.register_event_handler(&m_api) && result;
+    result = handler.register_event_handler(&m_udp) && result;
+    result = handler.register_event_handler(&m_timer, [this](auto&) { handle_timer_event(); }) && result;
+    return result;
 }
 
 bool evse_bridge::unregister_events(everest::lib::io::event::fd_event_handler& handler) {
-    // clang-format off
-    return
-        handler.unregister_event_handler(&m_api) &&
-        handler.unregister_event_handler(&m_udp) &&
-        handler.unregister_event_handler(&m_timer);
-    // clang-format on
+    auto result = true;
+    result = handler.unregister_event_handler(&m_api) && result;
+    result = handler.unregister_event_handler(&m_udp) && result;
+    result = handler.unregister_event_handler(&m_timer) && result;
+    return result;
 }
 
 } // namespace charge_bridge

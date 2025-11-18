@@ -29,6 +29,8 @@ public:
     bool unregister_events(everest::lib::io::event::fd_event_handler& handler) override;
 
 private:
+    void handle_timer_event();
+
     everest::lib::io::tun_tap::tap_client m_tap;
     everest::lib::io::udp::udp_client m_udp;
     everest::lib::io::event::timer_fd m_timer;

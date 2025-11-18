@@ -55,20 +55,17 @@ std::string serial_bridge::get_slave_path() {
 }
 
 bool serial_bridge::register_events(everest::lib::io::event::fd_event_handler& handler) {
-    // clang-format off
     auto result = true;
-    result = result && handler.register_event_handler(&m_pty);
-    result = result && handler.register_event_handler(&m_tcp);
+    result = handler.register_event_handler(&m_pty) && result;
+    result = handler.register_event_handler(&m_tcp) && result;
     return result;
-    // clang-format on
 }
 
 bool serial_bridge::unregister_events(everest::lib::io::event::fd_event_handler& handler) {
-    // clang-format off
-    return
-        handler.unregister_event_handler(&m_pty) &&
-        handler.unregister_event_handler(&m_tcp);
-    // clang-format on
+    auto result = true;
+    result = handler.unregister_event_handler(&m_pty) && result;
+    result = handler.unregister_event_handler(&m_tcp) && result;
+    return result;
 }
 
 } // namespace charge_bridge
