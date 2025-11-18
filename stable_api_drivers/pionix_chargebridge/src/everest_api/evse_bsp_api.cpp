@@ -427,7 +427,7 @@ void evse_bsp_api::receive_heartbeat(std::string const& pl) {
         auto delta = id - m_last_hb_id;
         if (delta > 1) {
             utilities::print_error(m_cb_identifier, "EVSE/EVEREST", -1)
-                << "EVerest heartbeat lost: " << m_last_hb_id << "<->" << id << std::endl;
+                << "EVerest heartbeat missmatch: " << m_last_hb_id << "<->" << id << std::endl;
         }
         m_last_hb_id = id;
     } else {

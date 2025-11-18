@@ -33,7 +33,7 @@ api_connector::api_connector(everest_api_config const& config, std::string const
 
     m_mqtt.set_error_handler([this](int code, std::string const& msg) {
         auto is_error = code == 0 ? 0 : 1;
-        utilities::print_error(m_cb_identifier, "MQTT/EVSE", is_error) << msg << std::endl;
+        utilities::print_error(m_cb_identifier, "EVSE/MQTT", is_error) << msg << std::endl;
     });
 
     m_mqtt.set_callback_connect([this, config](auto&, auto, auto, auto const&) { handle_mqtt_connect(); });
