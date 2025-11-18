@@ -728,8 +728,10 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
 
                             init_iso2_ParameterType(&out_parameter);
 
-                            parameter.name.copy(out_parameter.Name.characters, parameter.name.length());
-                            out_parameter.Name.charactersLen = parameter.name.length();
+                            strncpy(out_parameter.Name.characters, parameter.name.c_str(),
+                                    sizeof(out_parameter.Name.characters));
+                            out_parameter.Name.charactersLen =
+                                std::min(sizeof(out_parameter.Name.characters), parameter.name.length());
 
                             if (parameter.value.int_value.has_value()) {
                                 out_parameter.intValue = parameter.value.int_value.value();
@@ -737,11 +739,13 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
                             } else if (parameter.value.finite_string.has_value()) {
                                 // TODO(SL): Check if string is too big to copy char array
                                 const auto& temp = parameter.value.finite_string.value();
-                                if (temp.length() > sizeof(out_parameter)) {
-                                    dlog(DLOG_LEVEL_WARNING, "Paramater String is too long to copy into char array");
+                                if (temp.length() > sizeof(out_parameter.stringValue.characters)) {
+                                    dlog(DLOG_LEVEL_WARNING, "Parameter String is too long to copy into char array");
                                 }
-                                temp.copy(out_parameter.stringValue.characters, temp.length());
-                                out_parameter.stringValue.charactersLen = temp.length();
+                                strncpy(out_parameter.stringValue.characters, temp.c_str(),
+                                        sizeof(out_parameter.stringValue.characters));
+                                out_parameter.stringValue.charactersLen =
+                                    std::min(sizeof(out_parameter.stringValue.characters), temp.length());
                                 out_parameter.stringValue_isUsed = true;
                             } else if (parameter.value.bool_value.has_value()) {
                                 out_parameter.boolValue = static_cast<int>(parameter.value.bool_value.value());
