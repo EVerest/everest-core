@@ -19,6 +19,10 @@
 #define MAX_FILE_NAME_LENGTH 100
 #define MAX_PKI_CA_LENGTH    4 /* leaf up to root certificate */
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#endif
+
 #ifndef ROUND_UP
 #define ROUND_UP(N, S) ((((N) + (S)-1) / (S)) * (S))
 #endif
