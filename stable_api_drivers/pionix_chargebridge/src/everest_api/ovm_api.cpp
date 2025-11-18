@@ -199,9 +199,6 @@ void ovm_api::send_communication_check() {
 
 void ovm_api::send_mqtt(std::string const& topic, std::string const& message) {
     if (m_mqtt_tx) {
-        // everest::lib::io::mqtt::Dataset payload;
-        // payload.topic = topic;
-        // payload.message = message;
         m_mqtt_tx(topic, message);
     }
 }
