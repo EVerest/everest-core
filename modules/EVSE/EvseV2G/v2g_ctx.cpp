@@ -148,8 +148,10 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     if (ctx->hlc_pause_active != true) {
         ctx->evse_v2g_data.charge_service.ServiceCategory = iso2_serviceCategoryType_EVCharging;
         ctx->evse_v2g_data.charge_service.ServiceID = (uint16_t)1;
-        memcpy(ctx->evse_v2g_data.charge_service.ServiceName.characters, init_service_name, sizeof(init_service_name));
-        ctx->evse_v2g_data.charge_service.ServiceName.charactersLen = sizeof(init_service_name);
+        strncpy(ctx->evse_v2g_data.charge_service.ServiceName.characters, init_service_name,
+                sizeof(ctx->evse_v2g_data.charge_service.ServiceName.characters));
+        ctx->evse_v2g_data.charge_service.ServiceName.charactersLen =
+            std::min(sizeof(ctx->evse_v2g_data.charge_service.ServiceName.characters), strlen(init_service_name));
         ctx->evse_v2g_data.charge_service.ServiceName_isUsed = 0;
         // ctx->evse_v2g_data.chargeService.ServiceScope.characters
         // ctx->evse_v2g_data.chargeService.ServiceScope.charactersLen
