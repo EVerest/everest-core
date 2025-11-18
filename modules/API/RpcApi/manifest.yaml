@@ -43,10 +43,6 @@ requires:
     interface: external_energy_limits
     min_connections: 0
     max_connections: 128
-  energy_listener:
-    interface: energy
-    min_connections: 1
-    max_connections: 128
   charger_information:
     interface: charger_information
     min_connections: 0
