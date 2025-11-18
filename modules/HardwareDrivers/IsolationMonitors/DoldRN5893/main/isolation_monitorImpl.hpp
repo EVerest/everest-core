@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+// Copyright Frickly Systems GmbH
 // Copyright Pionix GmbH and Contributors to EVerest
 #ifndef MAIN_ISOLATION_MONITOR_IMPL_HPP
 #define MAIN_ISOLATION_MONITOR_IMPL_HPP
@@ -149,7 +150,7 @@ private:
     enum class ControlWord1Action {
         None,
         StartSelfTest,
-        ResetDevice,
+        ResetFaults,
     };
 
     /**

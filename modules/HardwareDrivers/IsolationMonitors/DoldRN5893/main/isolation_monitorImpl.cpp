@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+// Copyright Frickly Systems GmbH
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "isolation_monitorImpl.hpp"
@@ -62,8 +63,8 @@ void isolation_monitorImpl::ready() {
         if (device_fault == DeviceFault_30001::CommunicationFault_Modbus) {
             EVLOG_info << "Device modbus timeout detected, trying to reset device and reconfigure";
 
-            if (not update_control_word1(ControlWord1Action::ResetDevice)) {
-                EVLOG_error << "Failed to reset device";
+            if (not update_control_word1(ControlWord1Action::ResetFaults)) {
+                EVLOG_error << "Failed to reset device faults";
                 continue;
             }
 
@@ -192,8 +193,7 @@ void isolation_monitorImpl::handle_start_self_test(double& test_voltage_V) {
         return;
     }
 
-    self_test_deadline =
-        std::chrono::steady_clock::now() + std::chrono::seconds(static_cast<int>(mod->config.self_test_timeout_s));
+    self_test_deadline = std::chrono::steady_clock::now() + std::chrono::seconds(mod->config.self_test_timeout_s);
 
     self_test_triggered = true;
     // device might take some time to actually start the self test; this is set in the main
@@ -204,7 +204,7 @@ void isolation_monitorImpl::handle_start_self_test(double& test_voltage_V) {
 bool isolation_monitorImpl::configure_device() {
     // disable timeout if not enabled. Note that is enabled in the write_timeout_registers function after Timeout is
     // written
-    if (not mod->config.enable_device_timeout) {
+    if (not mod->config.timeout_release) {
         // Timeout release register. Write 0 to disable timeout
         const auto success = write_holding_register(1, 0);
         if (not success) {
@@ -228,33 +228,33 @@ bool isolation_monitorImpl::configure_device() {
         new_settings.push_back(static_cast<uint16_t>(value));
     }
 
-    uint16_t connection_monitoring = 0; // see datasheet
-    if (mod->config.connection_monitoring == "ON") {
-        connection_monitoring = 1;
-    } else if (mod->config.connection_monitoring == "OFF") {
-        connection_monitoring = 2;
-    } else if (mod->config.connection_monitoring == "ONLY_DURING_SELF_TEST") {
-        connection_monitoring = 4;
+    uint16_t broken_wire_detect = 0; // see datasheet
+    if (mod->config.broken_wire_detect == "ON") {
+        broken_wire_detect = 1;
+    } else if (mod->config.broken_wire_detect == "OFF") {
+        broken_wire_detect = 2;
+    } else if (mod->config.broken_wire_detect == "ONLY_DURING_SELF_TEST") {
+        broken_wire_detect = 4;
     } else {
-        EVLOG_error << "Invalid connection monitoring configuration: " << mod->config.connection_monitoring;
+        EVLOG_error << "Invalid connection monitoring configuration: " << mod->config.broken_wire_detect;
         return false;
     }
 
-    new_settings[0] = connection_monitoring; // 2000
+    new_settings[0] = broken_wire_detect; // 2000
 
-    new_settings[1] = mod->config.alarm_persistence ? 1 : 0; // 2001
+    new_settings[1] = mod->config.storing_insulation_fault ? 1 : 0; // 2001
 
-    uint16_t indicator_relay_switching_mode = 0; // see datasheet
-    if (mod->config.indicator_relay_switching_mode == "DE_ENERGIZED_ON_TRIP") {
-        indicator_relay_switching_mode = 0;
-    } else if (mod->config.indicator_relay_switching_mode == "ENERGIZED_ON_TRIP") {
-        indicator_relay_switching_mode = 1;
+    uint16_t switching_mode_indicator_relay = 0; // see datasheet
+    if (mod->config.switching_mode_indicator_relay == "DE_ENERGIZED_ON_TRIP") {
+        switching_mode_indicator_relay = 0;
+    } else if (mod->config.switching_mode_indicator_relay == "ENERGIZED_ON_TRIP") {
+        switching_mode_indicator_relay = 1;
     } else {
         EVLOG_error << "Invalid indicator relay switching mode configuration: "
-                    << mod->config.indicator_relay_switching_mode;
+                    << mod->config.switching_mode_indicator_relay;
         return false;
     }
-    new_settings[2] = indicator_relay_switching_mode; // 2002
+    new_settings[2] = switching_mode_indicator_relay; // 2002
 
     uint16_t power_supply_type = 0; // see datasheet
     if (mod->config.power_supply_type == "AC") {
@@ -269,8 +269,8 @@ bool isolation_monitorImpl::configure_device() {
     }
     new_settings[3] = power_supply_type; // 2003
 
-    new_settings[5] = static_cast<uint16_t>(mod->config.alarm_threshold_kohm);     // 2005
-    new_settings[6] = static_cast<uint16_t>(mod->config.pre_alarm_threshold_kohm); // 2006
+    new_settings[5] = mod->config.response_value_alarm_kohm;     // 2005
+    new_settings[6] = mod->config.response_value_pre_alarm_kohm; // 2006
 
     uint16_t coupling_device = 1; // see datasheet; 1 = Off
     if (mod->config.coupling_device == "RP5898") {
@@ -325,6 +325,11 @@ bool isolation_monitorImpl::configure_device() {
         }
     } else {
         EVLOG_debug << "Device configuration is already up to date, no need to write";
+    }
+
+    if (not update_control_word1(ControlWord1Action::ResetFaults)) {
+        EVLOG_error << "Failed to reset device faults after configuration";
+        return false;
     }
 
     if (not update_control_word1()) {
@@ -394,8 +399,8 @@ void isolation_monitorImpl::raise_communication_fault() {
 }
 
 bool isolation_monitorImpl::update_control_word1(ControlWord1Action action) {
-    if (action == ControlWord1Action::ResetDevice) {
-        return write_holding_register(0, 1U << 1); // Bit 1: device reset
+    if (action == ControlWord1Action::ResetFaults) {
+        return write_holding_register(0, 1U << 0); // Bit 0: reset
     }
 
     if (action == ControlWord1Action::StartSelfTest) {
@@ -455,12 +460,12 @@ std::optional<std::tuple<DeviceFault_30001, DeviceState_30002>> isolation_monito
 }
 
 bool isolation_monitorImpl::write_timeout_registers() {
-    if (not mod->config.enable_device_timeout) {
+    if (not mod->config.timeout_release) {
         return true;
     }
 
     // write timeout register
-    if (not write_holding_register(2, mod->config.device_timeout_s * 1000)) {
+    if (not write_holding_register(2, mod->config.timeout_s * 1000)) {
         EVLOG_error << "Failed to write Timeout register";
         return false;
     }

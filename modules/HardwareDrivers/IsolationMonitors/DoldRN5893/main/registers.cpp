@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+// Copyright Frickly Systems GmbH
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "registers.hpp"
@@ -51,7 +52,6 @@ std::string_view to_string(DeviceState_30002 state) noexcept {
 
 uint32_t insulation_resistance_to_ohm(uint16_t insulation_resistance_100ohm) noexcept {
     if (insulation_resistance_100ohm == 0xFFFF) {
-        // todo: determine best value to return here
         return 2000001; // > 2MOhm
     }
     return static_cast<std::uint32_t>(insulation_resistance_100ohm) * 100;
