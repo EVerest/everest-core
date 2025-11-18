@@ -13,3 +13,4 @@ Have a look at this categorized list of all EVerest tutorials:
     plug-and-charge
     ocpp2
     ocpp16
+    develop-new-module
