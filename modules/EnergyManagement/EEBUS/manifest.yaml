@@ -1,0 +1,71 @@
+description: EEBUS module
+config:
+  manage_eebus_grpc_api_binary:
+    description: Whether the module should manage the eebus grpc api binary
+    type: boolean
+    default: true
+  eebus_service_port:
+    description: Port for the control service, this will be sent in the SetConfig call.
+    type: integer
+    default: 4715
+  grpc_port:
+    description: Port for grpc control service connection. This is the port on which we will create our control service channel and start the grpc binary with.
+    type: integer
+    default: 50051
+  eebus_ems_ski:
+    description: EEBUS EMS SKI
+    type: string
+    required: true
+  certificate_path:
+    description: Path to the certificate file used by eebus go client. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    required: false
+    default: eebus/evse_cert
+  private_key_path:
+    description: Path to the private key file used by eebus go client. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    type: string
+    required: false
+    default: eebus/evse_key
+  eebus_grpc_api_binary_path:
+    description: Path to the eebus grpc api binary. If relative will be prefixed with everest prefix + libexec. Otherwise absolute file path is used.
+    type: string
+    required: false
+    default: eebus_grpc_api
+  vendor_code:
+    description: Vendor code for the configuration of the control service
+    type: string
+    required: true
+  device_brand:
+    description: Device brand for the configuration of the control service
+    type: string
+    required: true
+  device_model:
+    description: Device model for the configuration of the control service
+    type: string
+    required: true
+  serial_number:
+    description: Serial number for the configuration of the control service
+    type: string
+    required: true
+  failsafe_control_limit:
+    description: Failsafe control limit for LPC use case. This will also be used for the default consumption limit, unit is Watts
+    type: integer
+    default: 4200
+  max_nominal_power:
+    description: Maximum nominal power of the charging station. This is the max power the CS can consume.
+    type: integer
+    default: 32000
+provides:
+  main:
+    description: main
+    interface: empty
+requires:
+  eebus_energy_sink:
+    interface: external_energy_limits
+    min_connections: 1
+    max_connections: 1
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Andreas Heinrich
+    - Martin Litre
