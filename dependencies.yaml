@@ -3,7 +3,7 @@
 # only if it is 40 characters long hexadecimal string.
 ---
 everest-framework:
-  git: git@github.com:PionixPro/everest-framework.git
+  git: git@github.com:EVerest/everest-framework.git
   git_tag: 5be1379a2f81c6be976ef44f26af118cbfd6e0d4
   options: [
     "BUILD_TESTING OFF",
@@ -12,7 +12,7 @@ everest-framework:
   ]
 sigslot:
   git: https://github.com/palacaze/sigslot
-  git_tag: v1.2.0
+  git_tag: v1.2.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SIGSLOT"
   options:
     - "SIGSLOT_COMPILE_EXAMPLES OFF"
@@ -46,7 +46,7 @@ libcbv2g:
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
 # libiso15118
 libiso15118:
-  git: git@github.com:PionixPro/libiso15118.git
+  git: git@github.com:EVerest/libiso15118.git
   git_tag: v0.3.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
@@ -60,26 +60,24 @@ libcurl:
 # This has to appear before libocpp in this file since it is also a direct dependency
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
-  git: git@github.com:PionixPro/libevse-security.git
-  # in branch basecamp/release/1.0
-  git_tag: edf2e4307de58476dededeee058413c545ed2253 # FIXME
+  git: git@github.com:EVerest/libevse-security.git
+  git_tag: edf2e4307de58476dededeee058413c545ed2253
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
 libocpp:
-  git: git@github.com:PionixPro/libocpp.git
-  # in branch basecamp/release/1.0
-  git_tag: 4d6e55b5de631184f389534a4c79e48a3dd9894d
+  git: git@github.com:EVerest/libocpp.git
+  git_tag: b2c8fc996b3d92d905ff524847e3e74e162e4623
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 2025.9.0
+  git_tag: 2024.2.1
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # mbedtls
 ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
-  git_tag: 8b3f26a5ac38d4fdccbc5c5366229f3e01dafcc0
+  git_tag: a941d28381e98384552cc3fa6890de4f1e57c721
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_MBEDTLS"
   options:
     - ENABLE_PROGRAMS OFF
