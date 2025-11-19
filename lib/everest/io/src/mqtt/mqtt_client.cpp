@@ -6,7 +6,6 @@
 #include "everest/io/event/fd_event_handler.hpp"
 #include "everest/io/event/fd_event_sync_interface.hpp"
 #include "everest/io/mqtt/mosquitto_cpp.hpp"
-#include <bits/chrono.h>
 #include <chrono>
 #include <cstring>
 #include <everest/io/mqtt/mqtt_client.hpp>
