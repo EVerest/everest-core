@@ -145,12 +145,7 @@ components:
         - VendorWarning
     Error:
       description: >-
-        Errors for the power_supply_DC interface.
-        Except for VendorWarning, all error codes will stop the charging session.
-        During all errors, follow the commands for setMode and setVoltageCurrent from EvseManager.
-        If they cannot be sent to the hardware, cache the last values received.
-        Once the PSU is back on-line (e.g. after a CommunicationFault), set the last mode and voltage/current
-        values and only after that clear the error.
+        Error object with type, subtype and message.
       type: object
       additionalProperties: true
       required:
