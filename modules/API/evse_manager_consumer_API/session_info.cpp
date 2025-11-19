@@ -2,12 +2,12 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "session_info.hpp"
+#include <everest/logging.hpp>
 #include <utils/date.hpp>
-
 namespace module {
 
-SessionInfo::SessionInfo(PublishCallback cb) :
-    publish_cb(std::move(cb)),
+SessionInfo::SessionInfo() :
+    publish_cb([](auto) {}),
     start_energy_import_wh(0),
     end_energy_import_wh(0),
     start_energy_export_wh(0),
@@ -18,6 +18,10 @@ SessionInfo::SessionInfo(PublishCallback cb) :
     this->session_end_time_point = this->session_start_time_point;
     this->transaction_start_time_point = this->session_start_time_point;
     this->transaction_end_time_point = this->session_start_time_point;
+}
+
+void SessionInfo::set_publish_callback(PublishCallback cb) {
+    this->publish_cb = cb;
 }
 
 everest::lib::API::V1_0::types::evse_manager::SessionInfo SessionInfo::to_external_api() {
@@ -37,86 +41,97 @@ everest::lib::API::V1_0::types::evse_manager::SessionInfo SessionInfo::to_extern
 
 void SessionInfo::update_state(const types::evse_manager::SessionEvent& session_event) {
     using Event = types::evse_manager::SessionEventEnum;
-    // using switch since some code analysis tools can detect missing cases
-    // (when new events are added)
-    switch (session_event.event) {
-    case Event::Enabled:
-        this->state = State::Unplugged;
-        break;
-    case Event::Disabled:
-        this->state = State::Disabled;
-        break;
-    case Event::AuthRequired:
-        this->state = State::AuthRequired;
-        break;
-    case Event::SessionStarted:
-        this->handle_session_started(session_event);
-        this->state = State::Preparing;
-        break;
-    case Event::PrepareCharging:
-        this->state = State::Preparing;
-        break;
-    case Event::TransactionStarted:
-        this->handle_transaction_started(session_event);
-        break;
-    case Event::ChargingResumed:
-    case Event::ChargingStarted:
-        this->state = State::Charging;
-        break;
-    case Event::ChargingPausedEV:
-        this->state = State::ChargingPausedEV;
-        break;
-    case Event::ChargingPausedEVSE:
-        this->state = State::ChargingPausedEVSE;
-        break;
-    case Event::WaitingForEnergy:
-        this->state = State::WaitingForEnergy;
-        break;
-    case Event::ChargingFinished:
-        this->state = State::Finished;
-        break;
-    case Event::StoppingCharging:
-        this->state = State::FinishedEV;
-        break;
-    case Event::TransactionFinished: {
-        this->handle_transaction_finished(session_event);
-        break;
+
+    try {
+        switch (session_event.event) {
+        case Event::Enabled:
+            this->state = State::Unplugged;
+            break;
+        case Event::Disabled:
+            this->state = State::Disabled;
+            break;
+        case Event::AuthRequired:
+            this->state = State::AuthRequired;
+            break;
+        case Event::SessionStarted:
+            this->handle_session_started(session_event);
+            this->state = State::Preparing;
+            break;
+        case Event::PrepareCharging:
+            this->state = State::Preparing;
+            break;
+        case Event::TransactionStarted:
+            this->handle_transaction_started(session_event);
+            break;
+        case Event::ChargingResumed:
+        case Event::ChargingStarted:
+            this->state = State::Charging;
+            break;
+        case Event::ChargingPausedEV:
+            this->state = State::ChargingPausedEV;
+            break;
+        case Event::ChargingPausedEVSE:
+            this->state = State::ChargingPausedEVSE;
+            break;
+        case Event::WaitingForEnergy:
+            this->state = State::WaitingForEnergy;
+            break;
+        case Event::ChargingFinished:
+            this->state = State::Finished;
+            break;
+        case Event::StoppingCharging:
+            this->state = State::FinishedEV;
+            break;
+        case Event::TransactionFinished: {
+            this->handle_transaction_finished(session_event);
+            break;
+        }
+        case Event::PluginTimeout:
+            this->state = State::AuthTimeout;
+            break;
+        case Event::SessionFinished:
+            this->state = State::Unplugged;
+            break;
+        case Event::ReservationStart:
+        case Event::ReservationEnd:
+        case Event::ReplugStarted:
+        case Event::ReplugFinished:
+        default:
+            break;
+        }
+        publish_cb(this->to_external_api());
+    } catch (const std::exception& e) {
+        EVLOG_warning << "Session event handling failed with -> " << e.what();
     }
-    case Event::PluginTimeout:
-        this->state = State::AuthTimeout;
-        break;
-    case Event::SessionFinished:
-        this->state = State::Unplugged;
-        break;
-    case Event::ReservationStart:
-    case Event::ReservationEnd:
-    case Event::ReplugStarted:
-    case Event::ReplugFinished:
-    default:
-        break;
-    }
-    publish_cb(this->to_external_api());
 }
 
 void SessionInfo::update_powermeter(const types::powermeter::Powermeter& powermeter) {
-    this->set_latest_energy_import_wh(powermeter.energy_Wh_import.total);
-    if (powermeter.energy_Wh_export.has_value()) {
-        this->set_latest_energy_export_wh(powermeter.energy_Wh_export.value().total);
-    }
+    try {
+        this->set_latest_energy_import_wh(powermeter.energy_Wh_import.total);
+        if (powermeter.energy_Wh_export.has_value()) {
+            this->set_latest_energy_export_wh(powermeter.energy_Wh_export.value().total);
+        }
 
-    if (powermeter.power_W.has_value()) {
-        this->latest_total_w = powermeter.power_W.value().total;
-    }
+        if (powermeter.power_W.has_value()) {
+            this->latest_total_w = powermeter.power_W.value().total;
+        }
 
-    if (this->is_session_running()) {
-        publish_cb(this->to_external_api());
+        if (this->is_session_running()) {
+            publish_cb(this->to_external_api());
+        }
+    } catch (const std::exception& e) {
+        EVLOG_warning << "Powermeter update handling failed with -> " << e.what();
     }
 }
 
 void SessionInfo::update_selected_protocol(const std::string& protocol) {
-    this->selected_protocol = protocol;
-    if (this->is_session_running()) {
-        publish_cb(this->to_external_api());
+    try {
+        this->selected_protocol = protocol;
+        if (this->is_session_running()) {
+            publish_cb(this->to_external_api());
+        }
+    } catch (const std::exception& e) {
+        EVLOG_warning << "Selected protocol update handling failed with -> " << e.what();
     }
 }
 

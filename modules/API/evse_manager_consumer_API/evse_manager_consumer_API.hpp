@@ -152,7 +152,7 @@ private:
     ev_API::Topics topics;
     ev_API::CommCheckHandler<generic_errorImplBase> comm_check;
     size_t hb_id{0};
-    everest::lib::util::monitor<std::unique_ptr<SessionInfo>> session_info;
+    everest::lib::util::monitor<SessionInfo> session_info;
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

@@ -443,7 +443,7 @@ void evse_manager_consumer_API::subscribe_api_topic(std::string const& var,
 }
 
 void evse_manager_consumer_API::generate_api_var_session_info() {
-    this->session_info = everest::lib::util::monitor(std::make_unique<SessionInfo>(
+    this->session_info.handle()->set_publish_callback(
         [this](const everest::lib::API::V1_0::types::evse_manager::SessionInfo& external) {
             auto topic = topics.everest_to_extern("session_info");
             try {
@@ -454,30 +454,18 @@ void evse_manager_consumer_API::generate_api_var_session_info() {
             } catch (...) {
                 EVLOG_warning << "Invalid data: Cannot convert internal to external or serialize it.\n" << topic;
             }
-        }));
+        });
 
     this->r_evse_manager->subscribe_session_event([this](types::evse_manager::SessionEvent const& session_event) {
-        try {
-            session_info.handle()->update_state(session_event);
-        } catch (const std::exception& e) {
-            EVLOG_warning << "Session event handling failed with -> " << e.what();
-        }
+        session_info.handle()->update_state(session_event);
     });
 
     this->r_evse_manager->subscribe_powermeter([this](types::powermeter::Powermeter const& powermeter) {
-        try {
-            session_info.handle()->update_powermeter(powermeter);
-        } catch (const std::exception& e) {
-            EVLOG_warning << "Powermeter handling failed with -> " << e.what();
-        }
+        session_info.handle()->update_powermeter(powermeter);
     });
-    this->r_evse_manager->subscribe_selected_protocol([this](std::string const& protocol) {
-        try {
-            session_info.handle()->update_selected_protocol(protocol);
-        } catch (const std::exception& e) {
-            EVLOG_warning << "Selected protocol handling failed with -> " << e.what();
-        }
-    });
+
+    this->r_evse_manager->subscribe_selected_protocol(
+        [this](std::string const& protocol) { session_info.handle()->update_selected_protocol(protocol); });
 }
 
 } // namespace module

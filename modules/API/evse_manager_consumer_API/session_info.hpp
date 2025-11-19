@@ -17,7 +17,9 @@ namespace module {
 class SessionInfo {
 public:
     using PublishCallback = std::function<void(everest::lib::API::V1_0::types::evse_manager::SessionInfo)>;
-    explicit SessionInfo(PublishCallback publish_cb);
+    SessionInfo();
+
+    void set_publish_callback(PublishCallback cb);
 
     /// \brief Converts the internal session info to the external API representation
     everest::lib::API::V1_0::types::evse_manager::SessionInfo to_external_api();
