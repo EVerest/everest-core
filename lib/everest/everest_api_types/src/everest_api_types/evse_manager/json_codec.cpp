@@ -1322,11 +1322,28 @@ void to_json(json& j, SessionInfo const& k) noexcept {
         {"charged_energy_wh", k.charged_energy_wh},
         {"discharged_energy_wh", k.discharged_energy_wh},
         {"session_duration_s", k.session_duration_s},
-        {"transaction_duration_s", k.transaction_duration_s},
         {"latest_total_w", k.latest_total_w},
-        {"selected_protocol", k.selected_protocol},
         {"timestamp", k.timestamp},
     };
+
+    if (k.selected_protocol.has_value()) {
+        j["selected_protocol"] = k.selected_protocol.value();
+    }
+    if (k.transaction_duration_s.has_value()) {
+        j["transaction_duration_s"] = k.transaction_duration_s.value();
+    }
+    if (k.session_start_time.has_value()) {
+        j["session_start_time"] = k.session_start_time.value();
+    }
+    if (k.session_end_time.has_value()) {
+        j["session_end_time"] = k.session_end_time.value();
+    }
+    if (k.transaction_start_time.has_value()) {
+        j["transaction_start_time"] = k.transaction_start_time.value();
+    }
+    if (k.transaction_end_time.has_value()) {
+        j["transaction_end_time"] = k.transaction_end_time.value();
+    }
 }
 
 void from_json(json const& j, SessionInfo& k) {
@@ -1334,9 +1351,26 @@ void from_json(json const& j, SessionInfo& k) {
     k.charged_energy_wh = j.at("charged_energy_wh");
     k.discharged_energy_wh = j.at("discharged_energy_wh");
     k.session_duration_s = j.at("session_duration_s");
-    k.transaction_duration_s = j.at("transaction_duration_s");
     k.latest_total_w = j.at("latest_total_w");
-    k.selected_protocol = j.at("selected_protocol");
     k.timestamp = j.at("timestamp");
+
+    if (j.contains("selected_protocol")) {
+        k.selected_protocol = j.at("selected_protocol");
+    }
+    if (j.contains("transaction_duration_s")) {
+        k.transaction_duration_s = j.at("transaction_duration_s");
+    }
+    if (j.contains("session_start_time")) {
+        k.session_start_time = j.at("session_start_time");
+    }
+    if (j.contains("session_end_time")) {
+        k.session_end_time = j.at("session_end_time");
+    }
+    if (j.contains("transaction_start_time")) {
+        k.transaction_start_time = j.at("transaction_start_time");
+    }
+    if (j.contains("transaction_end_time")) {
+        k.transaction_end_time = j.at("transaction_end_time");
+    }
 }
 } // namespace everest::lib::API::V1_0::types::evse_manager

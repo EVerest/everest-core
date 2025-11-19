@@ -1172,9 +1172,7 @@ components:
         - discharged_energy_wh
         - latest_total_w
         - session_duration_s
-        - transaction_duration_s
-        - selected_protocol
-        - datetime
+        - timestamp
       properties:
         state:
           description: Current session state
@@ -1191,16 +1189,40 @@ components:
         latest_total_w:
           description: Last power measurement in watts
           type: integer
-        duration_s:
-          description: Total charging duration in seconds
+        session_duration_s:
+          description: Total duration of the session in seconds
           type: integer
           minimum: 0
-        selected_protocol:
-          description: Selected protocol for charging
-          type: string
-          $ref: '#/components/schemas/SelectedProtocol'
         timestamp:
           description: Timestamp of capturing session info
+          type: string
+          format: date-time
+        selected_protocol:
+          description: Selected protocol for charging. Only present during a session.
+          type: string
+          $ref: '#/components/schemas/SelectedProtocol'
+        transaction_duration_s:
+          description: >-
+            Total duration of the transaction in seconds. Only present and updated 
+            when a transaction is active.
+          type: integer
+          minimum: 0
+        session_start_time:
+          description: Timestamp of session start. Updated at each new session.
+          type: string
+          format: date-time
+        transaction_start_time:
+          description: >-
+            Timestamp of transaction start. Updated at each new transaction.
+          type: string
+          format: date-time
+        session_end_time:
+          description: Timestamp of session end. Updated at each session end.
+          type: string
+          format: date-time
+        transaction_end_time:
+          description: >-
+            Timestamp of transaction end. Updated at each transaction end.
           type: string
           format: date-time
     CertificateActionEnum:
