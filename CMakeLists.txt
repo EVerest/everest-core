@@ -134,7 +134,6 @@ if(NOT DISABLE_EDM)
         add_library(SDBusCpp::sdbus-c++ ALIAS sdbus-c++)
     endif()
 else()
-    find_package(everest-framework REQUIRED)
     find_package(everest-ocpp REQUIRED)
     find_package(cbv2g REQUIRED)
     find_package(iso15118 REQUIRED)
@@ -153,6 +152,9 @@ else()
     find_package(ftxui 6 QUIET) # optional, if not available BringUp module will not be built
 
     find_package(sdbus-c++ REQUIRED)
+
+    find_package(fmt REQUIRED)
+    find_package(date REQUIRED)
 endif()
 
 
