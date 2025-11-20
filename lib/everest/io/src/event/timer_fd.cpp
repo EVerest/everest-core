@@ -32,6 +32,10 @@ int timer_fd::read() {
     return ::read(m_fd, &buffer, sizeof(buffer));
 }
 
+bool timer_fd::reset() {
+    return set_timeout_ns(m_to_ns);
+}
+
 bool timer_fd::set_timeout_ms(long long to) {
     return set_timeout_ns(1000 * 1000 * to);
 }
@@ -41,6 +45,7 @@ bool timer_fd::set_timeout_us(long long to) {
 }
 
 bool timer_fd::set_timeout_ns(long long to) {
+    m_to_ns = to;
     struct itimerspec timer;
     auto sec = to / 1000000000;
     auto nano = to % 1000000000;

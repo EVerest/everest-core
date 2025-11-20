@@ -10,6 +10,7 @@
 #include "nlohmann/json.hpp"
 #include "powermeter/API.hpp"
 #include "powermeter/codec.hpp"
+#include "powermeter/json_codec.hpp"
 #include <stdexcept>
 #include <string>
 
@@ -186,14 +187,14 @@ void from_json(json const& j, StopTransactionReason& k) {
 void to_json(json& j, StopTransactionRequest const& k) noexcept {
     j = json{{"reason", k.reason}};
     if (k.id_tag) {
-        j["id_tag"] = serialize(k.id_tag.value());
+        j["id_tag"] = k.id_tag.value();
     }
 }
 
 void from_json(json const& j, StopTransactionRequest& k) {
     k.reason = j.at("reason");
     if (j.contains("id_tag")) {
-        k.id_tag.emplace(auth::deserialize<auth::ProvidedIdToken>(j.at("id_tag")));
+        k.id_tag.emplace(j.at("id_tag"));
     }
 }
 
@@ -633,13 +634,13 @@ void from_json(json const& j, CarManufacturer& k) {
 void to_json(json& j, SessionStarted const& k) noexcept {
     j = json{
         {"reason", k.reason},
-        {"meter_value", serialize(k.meter_value)},
+        {"meter_value", k.meter_value},
     };
     if (k.id_tag) {
-        j["id_tag"] = serialize(k.id_tag.value());
+        j["id_tag"] = k.id_tag.value();
     }
     if (k.signed_meter_value) {
-        j["signed_meter_value"] = serialize(k.signed_meter_value.value());
+        j["signed_meter_value"] = k.signed_meter_value.value();
     }
     if (k.reservation_id) {
         j["reservation_id"] = k.reservation_id.value();
@@ -650,14 +651,13 @@ void to_json(json& j, SessionStarted const& k) noexcept {
 }
 
 void from_json(json const& j, SessionStarted& k) {
-    using namespace powermeter;
     k.reason = j.at("reason");
-    k.meter_value = powermeter::deserialize<PowermeterValues>(j.at("meter_value"));
+    k.meter_value = j.at("meter_value");
     if (j.contains("id_tag")) {
-        k.id_tag.emplace(auth::deserialize<auth::ProvidedIdToken>(j.at("id_tag")));
+        k.id_tag.emplace(j.at("id_tag"));
     }
     if (j.contains("signed_meter_value")) {
-        k.signed_meter_value.emplace(powermeter::deserialize<SignedMeterValue>(j.at("signed_meter_value")));
+        k.signed_meter_value.emplace(j.at("signed_meter_value"));
     }
     if (j.contains("reservation_id")) {
         k.reservation_id.emplace(j.at("reservation_id"));
@@ -669,22 +669,21 @@ void from_json(json const& j, SessionStarted& k) {
 
 void to_json(json& j, SessionFinished const& k) noexcept {
     j = json{
-        {"meter_value", serialize(k.meter_value)},
+        {"meter_value", k.meter_value},
     };
 }
 
 void from_json(json const& j, SessionFinished& k) {
-    using namespace powermeter;
-    k.meter_value = powermeter::deserialize<PowermeterValues>(j.at("meter_value"));
+    k.meter_value = j.at("meter_value");
 }
 
 void to_json(json& j, TransactionStarted const& k) noexcept {
     j = json{
-        {"id_tag", serialize(k.id_tag)},
-        {"meter_value", serialize(k.meter_value)},
+        {"id_tag", k.id_tag},
+        {"meter_value", k.meter_value},
     };
     if (k.signed_meter_value) {
-        j["signed_meter_value"] = serialize(k.signed_meter_value.value());
+        j["signed_meter_value"] = k.signed_meter_value.value();
     }
     if (k.reservation_id) {
         j["reservation_id"] = k.reservation_id.value();
@@ -692,12 +691,10 @@ void to_json(json& j, TransactionStarted const& k) noexcept {
 }
 
 void from_json(json const& j, TransactionStarted& k) {
-    using namespace powermeter;
-    using namespace auth;
-    k.meter_value = powermeter::deserialize<PowermeterValues>(j.at("meter_value"));
-    k.id_tag = auth::deserialize<ProvidedIdToken>(j.at("id_tag"));
+    k.meter_value = j.at("meter_value");
+    k.id_tag = j.at("id_tag");
     if (j.contains("signed_meter_value")) {
-        k.signed_meter_value.emplace(powermeter::deserialize<SignedMeterValue>(j.at("signed_meter_value")));
+        k.signed_meter_value.emplace(j.at("signed_meter_value"));
     }
     if (j.contains("reservation_id")) {
         k.reservation_id.emplace(j.at("reservation_id"));
@@ -706,59 +703,56 @@ void from_json(json const& j, TransactionStarted& k) {
 
 void to_json(json& j, TransactionFinished const& k) noexcept {
     j = json{
-        {"meter_value", serialize(k.meter_value)},
+        {"meter_value", k.meter_value},
     };
     if (k.start_signed_meter_value) {
-        j["start_signed_meter_value"] = serialize(k.start_signed_meter_value.value());
+        j["start_signed_meter_value"] = k.start_signed_meter_value.value();
     }
     if (k.signed_meter_value) {
-        j["signed_meter_value"] = serialize(k.signed_meter_value.value());
+        j["signed_meter_value"] = k.signed_meter_value.value();
     }
     if (k.reason) {
         j["reason"] = k.reason.value();
     }
     if (k.id_tag) {
-        j["id_tag"] = serialize(k.id_tag.value());
+        j["id_tag"] = k.id_tag.value();
     }
 }
 
 void from_json(json const& j, TransactionFinished& k) {
-    using namespace powermeter;
-    k.meter_value = powermeter::deserialize<PowermeterValues>(j.at("meter_value"));
+    k.meter_value = j.at("meter_value");
     if (j.contains("start_signed_meter_value")) {
-        k.start_signed_meter_value.emplace(powermeter::deserialize<SignedMeterValue>(j.at("start_signed_meter_value")));
+        k.start_signed_meter_value.emplace(j.at("start_signed_meter_value"));
     }
     if (j.contains("signed_meter_value")) {
-        k.signed_meter_value.emplace(powermeter::deserialize<SignedMeterValue>(j.at("signed_meter_value")));
+        k.signed_meter_value.emplace(j.at("signed_meter_value"));
     }
     if (j.contains("reason")) {
         k.reason.emplace(j.at("reason"));
     }
     if (j.contains("id_tag")) {
-        k.id_tag.emplace(auth::deserialize<auth::ProvidedIdToken>(j.at("id_tag")));
+        k.id_tag.emplace(j.at("id_tag"));
     }
 }
 
 void to_json(json& j, ChargingStateChangedEvent const& k) noexcept {
     j = json{
-        {"meter_value", serialize(k.meter_value)},
+        {"meter_value", k.meter_value},
     };
 }
 
 void from_json(json const& j, ChargingStateChangedEvent& k) {
-    using namespace powermeter;
-    k.meter_value = powermeter::deserialize<PowermeterValues>(j.at("meter_value"));
+    k.meter_value = j.at("meter_value");
 }
 
 void to_json(json& j, AuthorizationEvent const& k) noexcept {
     j = json{
-        {"meter_value", serialize(k.meter_value)},
+        {"meter_value", k.meter_value},
     };
 }
 
 void from_json(json const& j, AuthorizationEvent& k) {
-    using namespace powermeter;
-    k.meter_value = powermeter::deserialize<PowermeterValues>(j.at("meter_value"));
+    k.meter_value = j.at("meter_value");
 }
 
 void to_json(json& j, ErrorSeverity const& k) noexcept {

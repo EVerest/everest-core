@@ -15,7 +15,7 @@ info:
     - name: EVSE manager
 servers:
   default:
-    pathname: 'everest_api/1.0/evse_manager_consumer/{module_id}'
+    pathname: 'everest_api/1/evse_manager_consumer/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
@@ -917,7 +917,7 @@ components:
       summary: 'Enforced limits for this node (coming from the EnergyManager)'
       contentType: application/json
       payload:
-        $ref: '../external_energy_limits_consumer_API/asyncapi.yaml#/components/schemas/EnforcedLimits'
+        $ref: '#/components/schemas/EnforcedLimits'
     receive_waiting_for_external_ready:
       name: receive_waiting_for_external_ready
       title: 'Receive waiting for external ready status'
@@ -1046,6 +1046,12 @@ components:
       title: 'Receive heartbeat'
       summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
       contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartBeatId'
+      examples:
+        - summary: "Heartbeat"
+          payload: 42
+
     send_communication_check:
       name: send_communication_check
       title: 'Send communication check'
@@ -1254,6 +1260,42 @@ components:
           type: integer
           minimum: 0
           maximum: 10000
+    EnforcedLimits:
+      description: Enforce Limits data type
+      type: object
+      additionalProperties: true
+      required:
+        - uuid
+        - valid_for
+        - schedule
+        - limits_root_side
+      properties:
+        uuid:
+          description: UUID of node that this limit applies to
+          type: string
+        valid_for:
+          description: >-
+            Limits are valid for this number of seconds. If no new
+            update is received after valid_for seconds then power consumption must be stopped.
+          type: integer
+        limits_root_side:
+          description: Enforced limits that must be respected at the root side.
+          type: object
+          $ref: '../external_energy_limits_consumer_API/asyncapi.yaml#/components/schemas/LimitsRes'
+        schedule:
+          description: >-
+            Informative only. Do not use for actual limiting. Energy import/export limits
+            time series. The first entry is special as it will be active already now
+            even if the timestamp is in the future, so it is good practice to set the
+            first entry to current time. The time series can have arbitrary time difference
+            between entries and all timestamps are absolute UTC time.
+          type: array
+          items:
+            description: One entry for the time series. Values are positive for import from grid and negative for export to grid.
+            type: object
+            $ref: '../external_energy_limits_consumer_API/asyncapi.yaml#/components/schemas/ScheduleResEntry'
+
+
     SupportedEnergyTransferModeList:
       description: List of supported energy transfers e.g. AC mono/tri, DC, DC_BPT, etc.
       type: array
@@ -1758,3 +1800,6 @@ components:
     CommunicationCheck:
       type: boolean
       description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
+    HeartBeatId:
+      type: integer
+      description: "64bit unsigned integer. The id of every heartbeat increases by 1 and overflows when the maximum representable value is reached"

@@ -14,12 +14,14 @@ namespace module {
 
 namespace API_types = ev_API::V1_0::types;
 namespace API_types_ext = API_types::auth;
+namespace API_generic = API_types::generic;
+
 using ev_API::deserialize;
 
 void auth_token_provider_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "auth_token_provider");
+    topics.setup(info.id, "auth_token_provider", 1);
 }
 
 void auth_token_provider_API::ready() {
@@ -58,7 +60,7 @@ void auth_token_provider_API::generate_api_var_communication_check() {
 void auth_token_provider_API::setup_heartbeat_generator() {
     auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
-        mqtt.publish(topic, "{}");
+        mqtt.publish(topic, API_generic::serialize(hb_id++));
         return true;
     };
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);

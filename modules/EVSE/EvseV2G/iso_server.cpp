@@ -75,6 +75,13 @@ static v2g_event iso_validate_response_code(iso2_responseCodeType* const v2g_res
         *v2g_response_code = iso2_responseCodeType_FAILED;
     }
 
+    /* [V2G2-460]: check whether the session id matches the expected one of the active session */
+    *v2g_response_code =
+        ((conn->ctx->current_v2g_msg != V2G_SESSION_SETUP_MSG) && (conn->ctx->ev_v2g_data.received_session_id != 0) &&
+         (conn->ctx->evse_v2g_data.session_id != conn->ctx->ev_v2g_data.received_session_id))
+            ? iso2_responseCodeType_FAILED_UnknownSession
+            : *v2g_response_code;
+
     /* [V2G-DC-390]: at this point we must check whether the given request is valid at this step;
      * the idea is that we catch this error in each function below to respond with a valid
      * encoded message; note, that the handler functions below must not access v2g_session in
@@ -84,13 +91,6 @@ static v2g_event iso_validate_response_code(iso2_responseCodeType* const v2g_res
         iso_validate_state(conn->ctx->state, conn->ctx->current_v2g_msg, conn->ctx->is_dc_charger); // [V2G2-538]
 
     *v2g_response_code = (response_code_tmp >= iso2_responseCodeType_FAILED) ? response_code_tmp : *v2g_response_code;
-
-    /* [V2G2-460]: check whether the session id matches the expected one of the active session */
-    *v2g_response_code =
-        ((conn->ctx->current_v2g_msg != V2G_SESSION_SETUP_MSG) && (conn->ctx->ev_v2g_data.received_session_id != 0) &&
-         (conn->ctx->evse_v2g_data.session_id != conn->ctx->ev_v2g_data.received_session_id))
-            ? iso2_responseCodeType_FAILED_UnknownSession
-            : *v2g_response_code;
 
     if ((conn->ctx->terminate_connection_on_failed_response == true) &&
         (*v2g_response_code >= iso2_responseCodeType_FAILED)) {
@@ -1186,7 +1186,8 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
             conn->ctx->session.auth_start_timeout = getmonotonictime();
             res->ResponseCode = iso2_responseCodeType_FAILED;
         }
-    } else if (conn->ctx->session.authorization_rejected == true) {
+    } else if (conn->ctx->session.authorization_rejected == true and
+               (conn->ctx->session.iso_selected_payment_option == iso2_paymentOptionType_Contract)) {
         if (conn->ctx->session.certificate_status == types::authorization::CertificateStatus::CertificateRevoked) {
             res->ResponseCode = iso2_responseCodeType_FAILED_CertificateRevoked;
         } else {
@@ -1238,23 +1239,29 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
     res->EVSEChargeParameter_isUsed = 0;
     res->EVSEProcessing = (iso2_EVSEProcessingType)conn->ctx->evse_v2g_data.evse_processing[PHASE_PARAMETER];
 
+    int64_t pmax{0};
+
+    if (conn->ctx->is_dc_charger == false) {
+        /* Determin max current and nominal voltage */
+        /* Setup default params (before the departure time overrides) */
+        float max_current = conn->ctx->basic_config.evse_ac_current_limit;
+        int64_t voltage = conn->ctx->evse_v2g_data.evse_nominal_voltage.Value *
+                          pow(10, conn->ctx->evse_v2g_data.evse_nominal_voltage.Multiplier); /* nominal voltage */
+        pmax = max_current * voltage *
+               ((req->RequestedEnergyTransferMode == iso2_EnergyTransferModeType_AC_single_phase_core) ? 1 : 3);
+
+        dlog(DLOG_LEVEL_INFO,
+             "before adjusting for departure time, max_current %f, nom_voltage %d, pmax %d, departure_duration %d",
+             max_current, voltage, pmax, req->AC_EVChargeParameter.DepartureTime);
+    }
+
     /* Configure SA-schedules*/
     if (res->EVSEProcessing == iso2_EVSEProcessingType_Finished) {
         /* If processing is finished, configure SASchedule list */
         if (conn->ctx->evse_v2g_data.evse_sa_schedule_list_is_used == false) {
+            int64_t departure_time_duration = req->AC_EVChargeParameter.DepartureTime;
             /* If not configured, configure SA-schedule automatically for AC charging */
             if (conn->ctx->is_dc_charger == false) {
-                /* Determin max current and nominal voltage */
-                float max_current = conn->ctx->basic_config.evse_ac_current_limit;
-                int64_t nom_voltage =
-                    conn->ctx->evse_v2g_data.evse_nominal_voltage.Value *
-                    pow(10, conn->ctx->evse_v2g_data.evse_nominal_voltage.Multiplier); /* nominal voltage */
-
-                /* Calculate pmax based on max current, nominal voltage and phase count (which the car has selected
-                 * above) */
-                int64_t pmax =
-                    max_current * nom_voltage *
-                    ((req->RequestedEnergyTransferMode == iso2_EnergyTransferModeType_AC_single_phase_core) ? 1 : 3);
                 populate_physical_value(&conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                                              .PMaxSchedule.PMaxScheduleEntry.array[0]
                                              .PMax,
@@ -1263,6 +1270,9 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
                 conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                     .PMaxSchedule.PMaxScheduleEntry.array[0]
                     .PMax = conn->ctx->evse_v2g_data.evse_maximum_power_limit;
+            }
+            if (departure_time_duration == 0) {
+                departure_time_duration = SA_SCHEDULE_DURATION; // one day, per spec
             }
             conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                 .PMaxSchedule.PMaxScheduleEntry.array[0]
@@ -1275,7 +1285,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
             conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                 .PMaxSchedule.PMaxScheduleEntry.array[0]
                 .RelativeTimeInterval.duration = conn->ctx->evse_v2g_data.no_energy_pause == NoEnergyPauseStatus::None
-                                                     ? SA_SCHEDULE_DURATION
+                                                     ? departure_time_duration
                                                      : PAUSE_DURATION;
             conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                 .PMaxSchedule.PMaxScheduleEntry.arrayLen = 1;
@@ -1326,13 +1336,8 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
 
         /* Nominal voltage */
         res->AC_EVSEChargeParameter.EVSENominalVoltage = conn->ctx->evse_v2g_data.evse_nominal_voltage;
-        int64_t nom_voltage = conn->ctx->evse_v2g_data.evse_nominal_voltage.Value *
-                              pow(10, conn->ctx->evse_v2g_data.evse_nominal_voltage.Multiplier);
 
         /* Calculate pmax based on max current, nominal voltage and phase count (which the car has selected above) */
-        int64_t pmax = max_current * nom_voltage *
-                       ((iso2_EnergyTransferModeType_AC_single_phase_core == req->RequestedEnergyTransferMode) ? 1 : 3);
-
         /* Check the SASchedule */
         if (res->SAScheduleList_isUsed == (unsigned int)1) {
             for (uint8_t idx = 0; idx < res->SAScheduleList.SAScheduleTuple.arrayLen; idx++) {
@@ -1412,9 +1417,10 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         if ((unsigned int)1 == req->AC_EVChargeParameter_isUsed) {
             res->ResponseCode = iso2_responseCodeType_FAILED_WrongChargeParameter; // [V2G2-477]
         }
-        if (req->DC_EVChargeParameter.EVMaximumCurrentLimit.Value < 0 ||
-            req->DC_EVChargeParameter.EVMaximumPowerLimit.Value < 0 ||
-            req->DC_EVChargeParameter.EVMaximumVoltageLimit.Value < 0) {
+        if (not conn->ctx->evse_v2g_data.sae_bidi_data.enabled_sae_v2h and
+            (req->DC_EVChargeParameter.EVMaximumCurrentLimit.Value < 0 or
+             req->DC_EVChargeParameter.EVMaximumPowerLimit.Value < 0 or
+             req->DC_EVChargeParameter.EVMaximumVoltageLimit.Value < 0)) {
             res->ResponseCode = iso2_responseCodeType_FAILED_WrongChargeParameter; // [V2G2-477]
         }
 

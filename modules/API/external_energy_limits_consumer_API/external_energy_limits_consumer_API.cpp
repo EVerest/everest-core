@@ -5,24 +5,26 @@
 #include <everest_api_types/energy/API.hpp>
 #include <everest_api_types/energy/codec.hpp>
 #include <everest_api_types/energy/wrapper.hpp>
+#include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/utilities/codec.hpp>
 
 namespace module {
 namespace API_types = everest::lib::API::V1_0::types;
 namespace API_types_ext = API_types::energy;
+namespace API_generic = API_types::generic;
+
 using ev_API::deserialize;
 
 void external_energy_limits_consumer_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "external_energy_limits_consumer");
+    topics.setup(info.id, "external_energy_limits_consumer", 1);
 }
 
 void external_energy_limits_consumer_API::ready() {
     invoke_ready(*p_main);
 
     generate_api_cmd_set_external_limits();
-    generate_api_var_enforced_limits();
 
     generate_api_var_communication_check();
 
@@ -44,10 +46,6 @@ auto external_energy_limits_consumer_API::forward_api_var(std::string const& var
             EVLOG_warning << "Invalid data: Cannot convert internal to external or serialize it.\n" << topic;
         }
     };
-}
-
-void external_energy_limits_consumer_API::generate_api_var_enforced_limits() {
-    r_energy_node->subscribe_enforced_limits(forward_api_var("enforced_limits"));
 }
 
 void external_energy_limits_consumer_API::generate_api_cmd_set_external_limits() {
@@ -75,7 +73,7 @@ void external_energy_limits_consumer_API::generate_api_var_communication_check()
 void external_energy_limits_consumer_API::setup_heartbeat_generator() {
     auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
-        mqtt.publish(topic, "{}");
+        mqtt.publish(topic, API_generic::serialize(hb_id++));
         return true;
     };
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);

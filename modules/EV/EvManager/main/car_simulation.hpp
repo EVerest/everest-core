@@ -43,6 +43,10 @@ public:
         return sim_data.modify_charging_session_cmds;
     }
 
+    void update_modify_charging_session_cmds(const std::string& cmds) {
+        sim_data.modify_charging_session_cmds.emplace(cmds);
+    }
+
     void set_state(SimState state) {
         sim_data.state = state;
     }

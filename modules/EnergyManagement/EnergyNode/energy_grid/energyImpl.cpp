@@ -188,14 +188,9 @@ void energyImpl::ready() {
 
 void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
 
-    // is it for me?
-    if (value.uuid == energy_flow_request.uuid) {
-        // as a generic node we cannot do much about limits, we just publish it for e.g. OCPP module.
-        mod->p_external_limits->publish_enforced_limits(value);
-    }
-    // if not, route to children
+    // route to children if it is not for me
     // FIXME: this sends it to all children, we could do a lookup on which branch it actually is
-    else {
+    if (value.uuid != energy_flow_request.uuid) {
         for (auto& entry : mod->r_energy_consumer) {
             entry->call_enforce_limits(value);
         }

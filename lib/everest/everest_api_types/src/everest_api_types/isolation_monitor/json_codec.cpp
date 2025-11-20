@@ -14,12 +14,24 @@ void to_json(json& j, const IsolationMeasurement& k) noexcept {
     if (k.voltage_V) {
         j["voltage_V"] = k.voltage_V.value();
     }
+    if (k.voltage_to_earth_l1e_V) {
+        j["voltage_to_earth_l1e_V"] = k.voltage_to_earth_l1e_V.value();
+    }
+    if (k.voltage_to_earth_l2e_V) {
+        j["voltage_to_earth_l2e_V"] = k.voltage_to_earth_l2e_V.value();
+    }
 }
 
 void from_json(const json& j, IsolationMeasurement& k) {
     k.resistance_F_Ohm = j.at("resistance_F_Ohm");
     if (j.contains("voltage_V")) {
         k.voltage_V.emplace(j.at("voltage_V"));
+    }
+    if (j.contains("voltage_to_earth_l1e_V")) {
+        k.voltage_to_earth_l1e_V.emplace(j.at("voltage_to_earth_l1e_V"));
+    }
+    if (j.contains("voltage_to_earth_l2e_V")) {
+        k.voltage_to_earth_l2e_V.emplace(j.at("voltage_to_earth_l2e_V"));
     }
 }
 

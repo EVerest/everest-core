@@ -84,6 +84,7 @@ private:
 
     ev_API::Topics topics;
     ev_API::CommCheckHandler<generic_errorImplBase> comm_check;
+    size_t hb_id{0};
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

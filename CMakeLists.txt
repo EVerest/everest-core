@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(everest-core
-    VERSION 2025.9.0
+    VERSION 2025.10.0
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
@@ -70,6 +70,7 @@ option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as depe
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(EVEREST_ENABLE_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag" OFF)
 option(EVEREST_ENABLE_GLOBAL_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag globally" OFF)
+option(EVEREST_ENABLE_DEBUG_BUILD "Enable debug build" OFF)
 # list of compile options that are passed to modules if EVEREST_ENABLE_COMPILE_WARNINGS=ON
 # generated code has functions often not used
 set(EVEREST_COMPILE_OPTIONS "-Wall;-Wno-unused-function" CACHE STRING "A list of compile options used for building modules")
@@ -95,21 +96,29 @@ ev_setup_python_executable(
 if(EVEREST_CORE_BUILD_TESTING)
     include(CTest)
 
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    if(EVEREST_ENABLE_DEBUG_BUILD)
+        set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    endif()
 endif()
 
 include(ev-define-dependency)
 
 include("module-dependencies.cmake")
 
+# this policy allows us to continue using the removed FindBoost module for now
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 OLD)
+endif()
+
 find_package(Boost
     COMPONENTS
         filesystem
         program_options
-        system
         thread
     REQUIRED
 )
+
+include(compatibility/boost)
 
 if(NOT DISABLE_EDM)
     # FIXME (aw): this implicit definition for child projects is hacky
@@ -120,7 +129,7 @@ if(NOT DISABLE_EDM)
     # FIXME (aw): we need to set this by hand due to edm
     set(EVEREST_SCHEMA_DIR ${everest-framework_SOURCE_DIR}/schemas)
 
-    if(NOT TARGET SDBusCpp::sdbus-c++)
+    if(EVEREST_DEPENDENCY_ENABLED_SDBUS_CPP AND NOT TARGET SDBusCpp::sdbus-c++)
         add_library(SDBusCpp::sdbus-c++ ALIAS sdbus-c++)
     endif()
 else()

@@ -21,6 +21,8 @@ generate_config_run_script(CONFIG sil-ocpp-custom-extension)
 generate_config_run_script(CONFIG sil-ocpp-pnc)
 generate_config_run_script(CONFIG sil-ocpp201-pnc)
 generate_config_run_script(CONFIG example)
+generate_config_run_script(CONFIG sil-dc-consumer-api)
+
 
 add_subdirectory(bringup)
 

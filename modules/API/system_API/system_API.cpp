@@ -21,7 +21,7 @@ using ev_API::deserialize;
 void system_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "system");
+    topics.setup(info.id, "system", 1);
 }
 
 void system_API::ready() {
@@ -72,7 +72,7 @@ void system_API::generate_api_var_communication_check() {
 void system_API::setup_heartbeat_generator() {
     auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
-        mqtt.publish(topic, "{}");
+        mqtt.publish(topic, API_generic::serialize(hb_id++));
         return true;
     };
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);

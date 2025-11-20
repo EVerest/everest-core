@@ -41,7 +41,7 @@
 
 using EventQueue =
     std::map<int32_t,
-             std::queue<std::variant<types::evse_manager::SessionEvent, ocpp::v2::EventData, ocpp::v2::MeterValue,
+             std::queue<std::variant<types::evse_manager::SessionEvent, Everest::error::Error, ocpp::v2::MeterValue,
                                      types::system::FirmwareUpdateStatus, types::system::LogStatus>>>;
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -60,6 +60,7 @@ struct Conf {
     int RequestCompositeScheduleDurationS;
     std::string RequestCompositeScheduleUnit;
     int DelayOcppStart;
+    int ResetStopDelay;
 };
 
 class OCPP201 : public Everest::ModuleBase {
@@ -167,6 +168,8 @@ private:
                                      const types::evse_manager::SessionEvent& session_event);
     void process_transaction_finished(const int32_t evse_id, const int32_t connector_id,
                                       const types::evse_manager::SessionEvent& session_event);
+    void process_session_resumed(const int32_t evse_id, const int32_t connector_id,
+                                 const types::evse_manager::SessionEvent& session_event);
     void process_charging_started(const int32_t evse_id, const int32_t connector_id,
                                   const types::evse_manager::SessionEvent& session_event);
     void process_charging_resumed(const int32_t evse_id, const int32_t connector_id,

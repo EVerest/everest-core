@@ -123,7 +123,8 @@ void v2g_ctx_init_charging_state(struct v2g_context* const ctx, bool is_connecti
 
 void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     static bool initialize_once = false;
-    const char init_service_name[] = {"EVCharging_Service"};
+    // Conform to table 105 [V2G2-417]
+    const char init_service_name[] = {"AC_DC_Charging"};
 
     if (ctx->hlc_pause_active != true) {
         ctx->evse_v2g_data.session_id =
@@ -327,6 +328,8 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
         goto free_out;
 
     ctx->hlc_pause_active = false;
+
+    ctx->connection_initiated = false;
 
     return ctx;
 

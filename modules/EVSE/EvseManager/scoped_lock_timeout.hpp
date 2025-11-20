@@ -45,6 +45,8 @@ enum class MutexDescription {
     Charger_notify_currentdemand_started,
     Charger_inform_new_evse_max_hlc_limits,
     Charger_get_evse_max_hlc_limits,
+    Charger_inform_new_evse_min_hlc_limits,
+    Charger_get_evse_min_hlc_limits,
     Charger_dlink_pause,
     Charger_dlink_terminate,
     Charger_dlink_error,
@@ -147,6 +149,10 @@ static std::string to_string(MutexDescription d) {
         return "Charger.cpp: inform_new_evse_max_hlc_limits";
     case MutexDescription::Charger_get_evse_max_hlc_limits:
         return "Charger.cpp: get_evse_max_hlc_limits";
+    case MutexDescription::Charger_inform_new_evse_min_hlc_limits:
+        return "Charger.cpp: inform_new_evse_min_hlc_limits";
+    case MutexDescription::Charger_get_evse_min_hlc_limits:
+        return "Charger.cpp: get_evse_min_hlc_limits";
     case MutexDescription::Charger_dlink_pause:
         return "Charger.cpp: dlink_pause";
     case MutexDescription::Charger_dlink_terminate:

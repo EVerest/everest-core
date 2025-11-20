@@ -64,6 +64,19 @@ uint32_t sum_events(std::set<poll_events> const& events) {
 }
 } // namespace
 
+std::set<poll_events> operator|(poll_events lhs, poll_events rhs) {
+    return {lhs, rhs};
+}
+
+std::set<poll_events>& operator|(std::set<poll_events>& lhs, poll_events rhs) {
+    lhs.insert(rhs);
+    return lhs;
+}
+
+bool operator&(std::set<poll_events> const& lhs, poll_events rhs) {
+    return lhs.count(rhs) == 1;
+}
+
 class EventHandlerMap {
 public:
     EventHandlerMap() : m_epoll_fd(epoll_create1(0)) {
@@ -78,24 +91,21 @@ public:
         event.data.fd = fd;
         auto result = epoll_ctl(m_epoll_fd, EPOLL_CTL_ADD, fd, &event) == 0;
         if (result) {
-            m_handlers[fd] = std::move(handler);
-            m_pollfd_params[fd] = event;
-            m_pollfds.push_back(event);
+            m_event_map[fd] = {std::move(handler), event};
+            m_pollfds.resize(m_pollfds.size() + 1);
         }
         return result;
     }
 
     bool remove(int fd) {
-        auto result = false;
-        if (m_pollfd_params.count(fd) > 0 or m_handlers.count(fd) > 0) {
-            m_pollfd_params.erase(fd);
-            m_handlers.erase(fd);
+        auto epoll_result = epoll_ctl(m_epoll_fd, EPOLL_CTL_DEL, fd, nullptr);
+        auto handler_result = m_event_map.count(fd);
+        if (handler_result) {
+            m_event_map.erase(fd);
             m_pollfds.resize(m_pollfds.size() - 1);
-            result = epoll_ctl(m_epoll_fd, EPOLL_CTL_DEL, fd, nullptr) == 0;
         }
-        return result;
+        return epoll_result or handler_result;
     }
-
     bool modify_remove(int fd, fd_event_handler::event_list const& events) {
         auto action = [](uint32_t current, fd_event_handler::event_list const& change) {
             auto raw_change = sum_events(change);
@@ -124,11 +134,11 @@ public:
     }
 
     const auto& get(int fd) const {
-        return m_handlers.at(fd);
+        return std::get<fd_event_handler::event_handler_type>(m_event_map.at(fd));
     }
 
     bool exists(int fd) const {
-        return m_handlers.count(fd);
+        return m_event_map.count(fd);
     }
 
     auto& get_pollfds() {
@@ -140,11 +150,12 @@ public:
     }
 
 private:
+    using event_state = std::tuple<fd_event_handler::event_handler_type, epoll_event>;
     bool modify(int fd, fd_event_handler::event_list const& events,
                 std::function<uint32_t(uint32_t, fd_event_handler::event_list const&)> const& event_action) {
         auto result = false;
-        if (m_pollfd_params.count(fd)) {
-            auto& event = m_pollfd_params.at(fd);
+        if (m_event_map.count(fd)) {
+            auto& event = std::get<epoll_event>(m_event_map.at(fd));
             auto backup = event.events;
             event.events = event_action(backup, events);
             result = epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD, fd, &event) == 0;
@@ -156,8 +167,7 @@ private:
     }
 
     std::vector<epoll_event> m_pollfds;
-    std::map<int, fd_event_handler::event_handler_type> m_handlers;
-    std::map<int, epoll_event> m_pollfd_params;
+    std::map<int, event_state> m_event_map;
     unique_fd m_epoll_fd;
 };
 
@@ -165,16 +175,19 @@ fd_event_handler::~fd_event_handler() = default;
 
 fd_event_handler::fd_event_handler() {
     m_handlers = std::make_unique<EventHandlerMap>();
+    register_event_handler(&m_action_event, [](auto&&) {});
 }
 
 bool fd_event_handler::register_event_handler(int fd, event_handler_type const& handler, event_list const& events) {
     if (fd == -1 or not handler or m_handlers->exists(fd)) {
         return false;
     }
-
     m_handlers->add(fd, handler, events);
-
     return true;
+}
+
+bool fd_event_handler::register_event_handler(int fd, event_handler_type const& handler, poll_events event) {
+    return register_event_handler(fd, handler, event_list{event});
 }
 
 bool fd_event_handler::register_event_handler(event_fd* fd, event_handler_type const& handler) {
@@ -182,12 +195,13 @@ bool fd_event_handler::register_event_handler(event_fd* fd, event_handler_type c
         return false;
     }
     auto raw = fd->get_raw_fd();
-    return register_event_handler(raw,
-                                  [handler, fd](event_list const& e) {
-                                      fd->read();
-                                      handler(e);
-                                  },
-                                  {poll_events::read});
+    return register_event_handler(
+        raw,
+        [handler, fd](event_list const& e) {
+            fd->read();
+            handler(e);
+        },
+        poll_events::read);
 }
 
 bool fd_event_handler::register_event_handler(timer_fd* fd, event_handler_type const& handler) {
@@ -195,12 +209,13 @@ bool fd_event_handler::register_event_handler(timer_fd* fd, event_handler_type c
         return false;
     }
     auto raw = fd->get_raw_fd();
-    return register_event_handler(raw,
-                                  [handler, fd](event_list const& e) {
-                                      fd->read();
-                                      handler(e);
-                                  },
-                                  {poll_events::read});
+    return register_event_handler(
+        raw,
+        [handler, fd](event_list const& e) {
+            fd->read();
+            handler(e);
+        },
+        poll_events::read);
 }
 
 bool fd_event_handler::register_event_handler(fd_event_sync_interface* obj) {
@@ -208,7 +223,8 @@ bool fd_event_handler::register_event_handler(fd_event_sync_interface* obj) {
         return false;
     }
     auto raw = obj->get_poll_fd();
-    return register_event_handler(raw, [obj](event_list const&) { obj->sync(); }, {poll_events::read});
+    return register_event_handler(
+        raw, [obj](event_list const&) { obj->sync(); }, poll_events::read);
 }
 
 bool fd_event_handler::register_event_handler(fd_event_register_interface* obj) {
@@ -216,6 +232,20 @@ bool fd_event_handler::register_event_handler(fd_event_register_interface* obj) 
         return false;
     }
     return obj->register_events(*this);
+}
+
+bool fd_event_handler::register_event_handler(fd_event_handler* obj) {
+    if (not obj or obj == this) {
+        return false;
+    }
+    auto raw = obj->get_poll_fd();
+    return register_event_handler(
+        raw,
+        [obj](event_list const&) {
+            obj->poll();
+            obj->run_actions();
+        },
+        poll_events::read);
 }
 
 bool fd_event_handler::unregister_event_handler(fd_event_register_interface* obj) {
@@ -246,12 +276,11 @@ bool fd_event_handler::unregister_event_handler(event_fd* obj) {
     return remove_event_handler(obj->get_raw_fd());
 }
 
-bool fd_event_handler::register_event_handler(fd_event_handler* obj) {
-    if (not obj or obj == this) {
+bool fd_event_handler::unregister_event_handler(int fd) {
+    if (fd == -1) {
         return false;
     }
-    auto raw = obj->get_poll_fd();
-    return register_event_handler(raw, [obj](event_list const&) { obj->poll(); }, {poll_events::read});
+    return remove_event_handler(fd);
 }
 
 bool fd_event_handler::modify_event_handler(int fd, event_list const& events, event_modification change) {
@@ -270,8 +299,12 @@ bool fd_event_handler::modify_event_handler(int fd, event_list const& events, ev
     }
 }
 
+bool fd_event_handler::modify_event_handler(int fd, poll_events event, event_modification change) {
+    return modify_event_handler(fd, event_list{event}, change);
+}
+
 bool fd_event_handler::remove_event_handler(int fd) {
-    if (not fd) {
+    if (fd == -1) {
         return false;
     }
     return m_handlers->remove(fd);
@@ -297,6 +330,42 @@ bool fd_event_handler::poll_impl(int timeout_ms) {
 
 int fd_event_handler::get_poll_fd() {
     return m_handlers->get_epoll_fd();
+}
+
+void fd_event_handler::add_action(task&& item) {
+    task_pool.push(std::forward<task>(item));
+    m_action_event.notify();
+}
+
+void fd_event_handler::add_action(task const& item) {
+    task_pool.push(std::move(item));
+    m_action_event.notify();
+}
+
+void fd_event_handler::run_actions() {
+    while (true) {
+        auto item = task_pool.try_pop();
+        if (item.has_value()) {
+            try {
+                item.value()();
+            } catch (...) {
+            }
+        } else {
+            break;
+        }
+    }
+}
+
+void fd_event_handler::run_once() {
+    poll();
+    run_actions();
+}
+
+void fd_event_handler::run(std::atomic_bool& online) {
+    while (online.load()) {
+        poll();
+        run_actions();
+    }
 }
 
 } // namespace everest::lib::io::event

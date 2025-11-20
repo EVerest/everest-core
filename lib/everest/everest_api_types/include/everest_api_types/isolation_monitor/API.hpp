@@ -11,6 +11,8 @@ namespace everest::lib::API::V1_0::types::isolation_monitor {
 struct IsolationMeasurement {
     float resistance_F_Ohm;
     std::optional<float> voltage_V;
+    std::optional<float> voltage_to_earth_l1e_V;
+    std::optional<float> voltage_to_earth_l2e_V;
 };
 
 enum class ErrorEnum {

@@ -16,7 +16,7 @@ static auto create_cm_set_key_req(uint8_t const* session_nmk) {
     slac::messages::cm_set_key_req set_key_req;
 
     set_key_req.key_type = slac::defs::CM_SET_KEY_REQ_KEY_TYPE_NMK;
-    set_key_req.my_nonce = 0xAAAAAAAA;
+    set_key_req.my_nonce = 0x00000000;
     set_key_req.your_nonce = 0x00000000;
     set_key_req.pid = slac::defs::CM_SET_KEY_REQ_PID_HLE;
     set_key_req.prn = htole16(slac::defs::CM_SET_KEY_REQ_PRN_UNUSED);
@@ -68,7 +68,7 @@ FSMSimpleState::CallbackReturnType ResetState::callback() {
 
         return cfg.set_key_timeout_ms;
     } else {
-        ctx.log_info("CM_SET_KEY_REQ timeout - failed to setup NMK key");
+        ctx.log_error("CM_SET_KEY_REQ timeout - failed to setup NMK key");
         return {};
     }
 }
@@ -78,7 +78,7 @@ bool ResetState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     if (mmtype != (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_CNF)) {
         // unexpected message
         // FIXME (aw): need to also deal with CM_VALIDATE.REQ. It is optional in the standard.
-        ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
+        ctx.log_warn("Received non-expected SLAC message of type " + format_mmtype(mmtype));
         return false;
     } else {
         ctx.log_info("Received CM_SET_KEY_CNF");
@@ -131,7 +131,7 @@ FSMSimpleState::CallbackReturnType ResetChipState::callback() {
             ctx.log_info("Chip reset not supported on this chip");
         }
     } else {
-        ctx.log_info("Reset timeout, no response received - failed to reset the chip");
+        ctx.log_error("Reset timeout, no response received - failed to reset the chip");
         return {};
     }
     return {};
@@ -141,7 +141,7 @@ bool ResetChipState::handle_slac_message(slac::messages::HomeplugMessage& messag
     const auto mmtype = message.get_mmtype();
     if (mmtype != (slac::defs::qualcomm::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF)) {
         // unexpected message
-        ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
+        ctx.log_warn("Received non-expected SLAC message of type " + format_mmtype(mmtype));
         return false;
     } else {
         ctx.log_info("Received RS_DEV.CNF");
@@ -208,7 +208,7 @@ FSMSimpleState::HandleEventReturnType MatchedState::handle_event(AllocatorType& 
             if (link_ok.value()) {
                 return sa.PASS_ON;
             } else {
-                ctx.log_info("Connection lost in matched state");
+                ctx.log_error("Connection lost in matched state");
                 ctx.signal_error_routine_request();
                 return sa.PASS_ON;
             }
@@ -268,7 +268,7 @@ FSMSimpleState::HandleEventReturnType WaitForLinkState::handle_event(AllocatorTy
             return sa.PASS_ON;
         }
     } else if (ev == Event::RETRY_MATCHING) {
-        ctx.log_info("Link could not be established, resetting...");
+        ctx.log_error("Link could not be established");
         // Notify higher layers to on CP signal
         return sa.create_simple<FailedState>(ctx);
     } else if (ev == Event::RESET) {

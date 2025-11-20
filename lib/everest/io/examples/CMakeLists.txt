@@ -1,28 +1,14 @@
-add_executable(mqtt_client test_mqtt_client.cpp)
+add_executable(mosquitto_client test_mosquitto_client.cpp)
 
-target_link_libraries(mqtt_client
+target_link_libraries(mosquitto_client
     PRIVATE
         everest::io
 )
 
-target_compile_features(mqtt_client PUBLIC cxx_std_17)
-target_compile_options(mqtt_client PRIVATE -fsanitize=address -g)
-target_link_options(mqtt_client PRIVATE -static-libasan -fsanitize=address)
+target_compile_features(mosquitto_client PUBLIC cxx_std_17)
+target_compile_options(mosquitto_client PRIVATE -fsanitize=address -g)
+target_link_options(mosquitto_client PRIVATE -static-libasan -fsanitize=address)
 
-###
-
-add_executable(mqtt_pty_can_bridge test_mqtt_pty_can_bridge.cpp)
-
-target_link_libraries(mqtt_pty_can_bridge
-  PRIVATE
-  everest::io
-)
-
-target_compile_features(mqtt_pty_can_bridge PUBLIC cxx_std_17)
-target_compile_options(mqtt_pty_can_bridge PRIVATE -fsanitize=address -g)
-target_link_options(mqtt_pty_can_bridge PRIVATE -static-libasan -fsanitize=address)
-
-###
 
 add_executable(test_serial test_serial.cpp)
 

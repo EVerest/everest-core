@@ -84,6 +84,10 @@ void ISO15118_chargerImpl::init() {
                         vas_service.ServiceCategory = iso2_serviceCategoryType_ContractCertificate;
                     } else if (id == V2G_SERVICE_ID_INTERNET) {
                         vas_service.ServiceCategory = iso2_serviceCategoryType_Internet;
+                        const char vas_service_name[] = {"InternetAccess"};
+                        memcpy(vas_service.ServiceName.characters, vas_service_name, sizeof(vas_service_name));
+                        vas_service.ServiceName.charactersLen = sizeof(vas_service_name);
+                        vas_service.ServiceName_isUsed = true;
                     } else {
                         vas_service.ServiceCategory = iso2_serviceCategoryType_OtherCustom;
                     }
@@ -217,6 +221,9 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
 
         add_service_to_service_list(v2g_ctx, cert_service, cert_parameter_set_id,
                                     sizeof(cert_parameter_set_id) / sizeof(cert_parameter_set_id[0]));
+    } else {
+        // Make sure Certificate service is not in ServiceList when pnc is not possible
+        remove_service_from_service_list_if_exists(v2g_ctx, V2G_SERVICE_ID_CERTIFICATE);
     }
 
     v2g_ctx->evse_v2g_data.central_contract_validation_allowed = central_contract_validation_allowed;
@@ -243,17 +250,14 @@ void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     types::authorization::CertificateStatus& certificate_status) {
 
-    if (v2g_ctx->session.iso_selected_payment_option == iso2_paymentOptionType_ExternalPayment) {
-        if (authorization_status == types::authorization::AuthorizationStatus::Accepted) {
-            v2g_ctx->evse_v2g_data.evse_processing[PHASE_AUTH] = (uint8_t)iso2_EVSEProcessingType_Finished;
-        }
-    } else if (v2g_ctx->session.iso_selected_payment_option == iso2_paymentOptionType_Contract) {
-        v2g_ctx->session.certificate_status = certificate_status;
-        v2g_ctx->evse_v2g_data.evse_processing[PHASE_AUTH] = static_cast<uint8_t>(iso2_EVSEProcessingType_Finished);
+    v2g_ctx->evse_v2g_data.evse_processing[PHASE_AUTH] = static_cast<uint8_t>(iso2_EVSEProcessingType_Finished);
 
-        if (authorization_status != types::authorization::AuthorizationStatus::Accepted) {
-            v2g_ctx->session.authorization_rejected = true;
-        }
+    if (authorization_status != types::authorization::AuthorizationStatus::Accepted) {
+        v2g_ctx->session.authorization_rejected = true;
+    }
+
+    if (v2g_ctx->session.iso_selected_payment_option == iso2_paymentOptionType_Contract) {
+        v2g_ctx->session.certificate_status = certificate_status;
     }
 }
 
@@ -400,23 +404,43 @@ void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
 }
 
 void ISO15118_chargerImpl::handle_update_ac_parameters(types::iso15118::AcParameters& ac_parameters) {
-    EVLOG_warning << "Ignoring handle_update_ac_parameters call";
+    static bool warning_shown = false;
+    if (not warning_shown) {
+        EVLOG_warning << "Ignoring handle_update_ac_parameters call";
+        warning_shown = true;
+    }
 }
 
 void ISO15118_chargerImpl::handle_update_ac_maximum_limits(types::iso15118::AcEvseMaximumPower& maximum_limits) {
-    EVLOG_warning << "Ignoring handle_update_ac_maximum_limits call";
+    static bool warning_shown = false;
+    if (not warning_shown) {
+        EVLOG_warning << "Ignoring handle_update_ac_maximum_limits call";
+        warning_shown = true;
+    }
 }
 
 void ISO15118_chargerImpl::handle_update_ac_minimum_limits(types::iso15118::AcEvseMinimumPower& minimum_limits) {
-    EVLOG_warning << "Ignoring handle_update_ac_minimum_limits call";
+    static bool warning_shown = false;
+    if (not warning_shown) {
+        EVLOG_warning << "Ignoring handle_update_ac_minimum_limits call";
+        warning_shown = true;
+    }
 }
 
 void ISO15118_chargerImpl::handle_update_ac_target_values(types::iso15118::AcTargetValues& target_values) {
-    EVLOG_warning << "Ignoring handle_update_ac_target_values call";
+    static bool warning_shown = false;
+    if (not warning_shown) {
+        EVLOG_warning << "Ignoring handle_update_ac_target_values call";
+        warning_shown = true;
+    }
 }
 
 void ISO15118_chargerImpl::handle_update_ac_present_power(types::units::Power& present_power) {
-    EVLOG_warning << "Ignoring handle_update_ac_present_power call";
+    static bool warning_shown = false;
+    if (not warning_shown) {
+        EVLOG_warning << "Ignoring handle_update_ac_present_power call";
+        warning_shown = true;
+    }
 }
 
 void ISO15118_chargerImpl::handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) {

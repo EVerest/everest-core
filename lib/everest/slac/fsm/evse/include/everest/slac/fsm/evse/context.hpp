@@ -144,7 +144,10 @@ struct ContextCallbacks {
     std::function<void()> signal_error_routine_request{nullptr};
     std::function<void(const std::string&)> signal_ev_mac_address_parm_req{nullptr};
     std::function<void(const std::string&)> signal_ev_mac_address_match_cnf{nullptr};
-    std::function<void(const std::string&)> log{nullptr};
+    std::function<void(const std::string&)> log_debug{nullptr};
+    std::function<void(const std::string&)> log_info{nullptr};
+    std::function<void(const std::string&)> log_warn{nullptr};
+    std::function<void(const std::string&)> log_error{nullptr};
 };
 
 struct EvseSlacConfig {
@@ -212,7 +215,10 @@ struct Context {
     void signal_state(const std::string& state);
 
     // logging util
+    void log_debug(const std::string& text);
     void log_info(const std::string& text);
+    void log_warn(const std::string& text);
+    void log_error(const std::string& text);
 
     ModemVendor modem_vendor{ModemVendor::Unknown};
 

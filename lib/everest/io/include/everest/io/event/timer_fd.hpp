@@ -50,6 +50,13 @@ public:
     int read();
 
     /**
+     * @brief Resets the timer
+     * @details This starts a new timeout period for an already set running timer.
+     * @return True on success, false otherwise
+     */
+    bool reset();
+
+    /**
      * @name Configuring the notification timeout
      * This set of functions allows to set the time after which the timer file fire
      * @{
@@ -88,6 +95,7 @@ public:
 
 private:
     unique_fd m_fd;
+    long long m_to_ns{0};
 };
 
 } // namespace everest::lib::io::event

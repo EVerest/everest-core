@@ -22,7 +22,7 @@ using ev_API::deserialize;
 void power_supply_DC_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "power_supply_DC");
+    topics.setup(info.id, "power_supply_DC", 1);
 }
 
 void power_supply_DC_API::ready() {
@@ -126,7 +126,7 @@ void power_supply_DC_API::generate_api_var_communication_check() {
 void power_supply_DC_API::setup_heartbeat_generator() {
     auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
-        mqtt.publish(topic, "{}");
+        mqtt.publish(topic, API_generic::serialize(hb_id++));
         return true;
     };
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);

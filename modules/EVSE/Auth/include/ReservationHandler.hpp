@@ -7,6 +7,8 @@
 #include <set>
 #include <vector>
 
+#include <boost/shared_ptr.hpp>
+
 #include <Connector.hpp>
 #include <everest/timer.hpp>
 #include <generated/types/evse_manager.hpp>

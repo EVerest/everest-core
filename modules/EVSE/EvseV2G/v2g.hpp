@@ -362,6 +362,8 @@ struct v2g_context {
     bool hlc_pause_active;
 
     std::vector<std::vector<uint16_t>> supported_vas_services_per_provider;
+
+    bool connection_initiated;
 };
 
 enum mqtt_dlink_action {

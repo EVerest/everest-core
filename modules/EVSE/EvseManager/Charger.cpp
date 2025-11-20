@@ -47,7 +47,7 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     }
     shared_context.authorized = false;
 
-    internal_context.update_pwm_last_dc = 0.;
+    internal_context.update_pwm_last_duty_cycle = 0.;
 
     shared_context.current_state = EvseState::Idle;
     internal_context.last_state = EvseState::Disabled;
@@ -95,12 +95,13 @@ void Charger::main_thread() {
     signal_max_current(get_max_current_internal());
     signal_state(shared_context.current_state);
 
-    while (true) {
-        if (main_thread_handle.shouldExit()) {
-            break;
-        }
+    while (!main_thread_handle.shouldExit()) {
 
-        std::this_thread::sleep_for(MAINLOOP_UPDATE_RATE);
+        const auto events = bsp_event_queue.wait_for(MAINLOOP_UPDATE_RATE);
+
+        for (const auto& event : events) {
+            process_event(event);
+        }
 
         {
             Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_mainloop);
@@ -301,6 +302,13 @@ void Charger::run_state_machine() {
                 // Create a copy of the atomic struct
                 types::iso15118::DcEvseMaximumLimits evse_limit = shared_context.current_evse_max_limits;
                 if (not(evse_limit.evse_maximum_current_limit > 0 and evse_limit.evse_maximum_power_limit > 0)) {
+
+                    // Wait some time here in this state to see if we get energy from the EnergyManager...
+                    if (time_in_current_state < WAIT_FOR_ENERGY_IN_AUTHLOOP_TIMEOUT_MS) {
+                        break;
+                    }
+
+                    // If still no energy is available after the timeout, assume we will not get any for this session.
                     if (not internal_context.no_energy_warning_printed) {
                         EVLOG_warning << "No energy available, still retrying... Some EVs dont like 0W and/or 0A in "
                                          "ChargingParameterDiscoveryRes message";
@@ -479,6 +487,9 @@ void Charger::run_state_machine() {
                 session_log.evse(false, "Exit T_step_EF");
                 if (internal_context.t_step_EF_return_pwm == 0.) {
                     pwm_off();
+                } else if (hlc_use_5percent_current_session) {
+                    update_pwm_now(PWM_5_PERCENT);
+                    internal_context.pwm_set_last_ampere = internal_context.t_step_EF_return_ampere;
                 } else {
                     update_pwm_now(internal_context.t_step_EF_return_pwm);
                     internal_context.pwm_set_last_ampere = internal_context.t_step_EF_return_ampere;
@@ -987,43 +998,43 @@ void Charger::process_cp_events_independent(CPEvent cp_event) {
 }
 
 void Charger::update_pwm_max_every_5seconds_ampere(float ampere) {
-    float dc = ampere_to_duty_cycle(ampere);
-    if (dc not_eq internal_context.update_pwm_last_dc) {
+    float duty_cycle = ampere_to_duty_cycle(ampere);
+    if (duty_cycle not_eq internal_context.update_pwm_last_duty_cycle) {
         auto now = std::chrono::steady_clock::now();
         auto time_since_last_update =
             std::chrono::duration_cast<std::chrono::milliseconds>(now - internal_context.last_pwm_update).count();
         if (time_since_last_update >= IEC_PWM_MAX_UPDATE_INTERVAL) {
-            update_pwm_now(dc);
+            update_pwm_now(duty_cycle);
             internal_context.pwm_set_last_ampere = ampere;
         }
     }
 }
 
-void Charger::update_pwm_now(float dc) {
+void Charger::update_pwm_now(float duty_cycle) {
     auto start = std::chrono::steady_clock::now();
-    internal_context.update_pwm_last_dc = dc;
+    internal_context.update_pwm_last_duty_cycle = duty_cycle;
     shared_context.pwm_running = true;
 
     session_log.evse(
         false,
         fmt::format(
-            "Set PWM On ({:.1f}%) took {} ms", dc * 100.,
+            "Set PWM On ({:.1f}%) took {} ms", duty_cycle * 100.,
             (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start)).count()));
     internal_context.last_pwm_update = std::chrono::steady_clock::now();
     internal_context.pwm_F_active = false;
-    bsp->set_pwm(dc);
+    bsp->set_pwm(duty_cycle);
 }
 
-void Charger::update_pwm_now_if_changed(float dc) {
-    if (internal_context.update_pwm_last_dc not_eq dc) {
-        update_pwm_now(dc);
+void Charger::update_pwm_now_if_changed(float duty_cycle) {
+    if (internal_context.update_pwm_last_duty_cycle not_eq duty_cycle) {
+        update_pwm_now(duty_cycle);
     }
 }
 
 void Charger::update_pwm_now_if_changed_ampere(float ampere) {
-    float dc = ampere_to_duty_cycle(ampere);
-    if (internal_context.update_pwm_last_dc not_eq dc) {
-        update_pwm_now(dc);
+    float duty_cycle = ampere_to_duty_cycle(ampere);
+    if (internal_context.update_pwm_last_duty_cycle not_eq duty_cycle) {
+        update_pwm_now(duty_cycle);
         internal_context.pwm_set_last_ampere = ampere;
     }
 }
@@ -1031,7 +1042,7 @@ void Charger::update_pwm_now_if_changed_ampere(float ampere) {
 void Charger::pwm_off() {
     session_log.evse(false, "Set PWM Off");
     shared_context.pwm_running = false;
-    internal_context.update_pwm_last_dc = 1.;
+    internal_context.update_pwm_last_duty_cycle = 1.;
     internal_context.pwm_set_last_ampere = 0.;
     internal_context.pwm_F_active = false;
     bsp->set_pwm_off();
@@ -1040,7 +1051,7 @@ void Charger::pwm_off() {
 void Charger::pwm_F() {
     session_log.evse(false, "Set PWM F");
     shared_context.pwm_running = false;
-    internal_context.update_pwm_last_dc = 0.;
+    internal_context.update_pwm_last_duty_cycle = 0.;
     internal_context.pwm_set_last_ampere = 0.;
     internal_context.pwm_F_active = true;
     bsp->set_pwm_F();
@@ -1052,28 +1063,28 @@ void Charger::run() {
 }
 
 float Charger::ampere_to_duty_cycle(float ampere) {
-    float dc = 0;
+    float duty_cycle = 0;
 
     // calculate max current
     if (ampere < 5.9) {
         // Invalid argument, switch to error
-        dc = 1.0;
+        duty_cycle = 1.0;
     } else if (ampere <= 6.1) {
-        dc = 0.1;
+        duty_cycle = 0.1;
     } else if (ampere < 52.5) {
         if (ampere > 51.)
             ampere = 51; // Weird gap in norm: 51A .. 52.5A has no defined PWM.
-        dc = ampere / 0.6 / 100.;
+        duty_cycle = ampere / 0.6 / 100.;
     } else if (ampere <= 80) {
-        dc = ((ampere / 2.5) + 64) / 100.;
+        duty_cycle = ((ampere / 2.5) + 64) / 100.;
     } else if (ampere <= 80.1) {
-        dc = 0.97;
+        duty_cycle = 0.97;
     } else {
         // Invalid argument, switch to error
-        dc = 1.0;
+        duty_cycle = 1.0;
     }
 
-    return dc;
+    return duty_cycle;
 }
 
 bool Charger::set_max_current(float c, std::chrono::time_point<std::chrono::steady_clock> validUntil) {
@@ -1493,6 +1504,8 @@ bool Charger::deauthorize_internal() {
                 if (config_context.raise_mrec9) {
                     error_handling->raise_authorization_timeout_error("No authorization was provided within timeout.");
                 }
+                // this will inform HLC about the timeout to escape the Authorize loop and stop the session
+                signal_hlc_plug_in_timeout();
                 return false;
             }
             shared_context.authorized = false;
@@ -1843,6 +1856,17 @@ types::iso15118::DcEvseMaximumLimits Charger::get_evse_max_hlc_limits() {
     return shared_context.current_evse_max_limits;
 }
 
+void Charger::inform_new_evse_min_hlc_limits(const types::iso15118::DcEvseMinimumLimits& limits) {
+    Everest::scoped_lock_timeout lock(state_machine_mutex,
+                                      Everest::MutexDescription::Charger_inform_new_evse_min_hlc_limits);
+    shared_context.current_evse_min_limits = limits;
+}
+
+types::iso15118::DcEvseMinimumLimits Charger::get_evse_min_hlc_limits() {
+    Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_get_evse_min_hlc_limits);
+    return shared_context.current_evse_min_limits;
+}
+
 // HLC stack signalled a pause request for the lower layers.
 void Charger::dlink_pause() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_dlink_pause);
@@ -2052,7 +2076,8 @@ void Charger::clear_errors_on_unplug() {
     error_handling->clear_internal_error();
     error_handling->clear_powermeter_transaction_start_failed_error();
     error_handling->clear_authorization_timeout_error();
-    error_handling->clear_isolation_resistance_fault();
+    error_handling->clear_isolation_resistance_fault("Resistance");
+    error_handling->clear_isolation_resistance_fault("VoltageToEarth");
     error_handling->clear_cable_check_fault();
 }
 

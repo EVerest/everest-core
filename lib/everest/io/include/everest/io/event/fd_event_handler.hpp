@@ -6,8 +6,12 @@
 #pragma once
 
 #include <chrono>
+#include <everest/io/event/event_fd.hpp>
 #include <everest/io/event/fd_event_client.hpp>
 #include <everest/io/event/fd_event_register_interface.hpp>
+#include <everest/util/queue/thread_safe_queue.hpp>
+
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <set>
@@ -25,6 +29,10 @@ enum class poll_events {
     error = 3,
     hungup = 4,
 };
+
+std::set<poll_events> operator|(poll_events lhs, poll_events rhs);
+std::set<poll_events>& operator|(std::set<poll_events>& lhs, poll_events rhs);
+bool operator&(std::set<poll_events> const& lhs, poll_events rhs);
 
 /**
  * @enum event_modification
@@ -63,6 +71,12 @@ public:
     using event_handler_type = std::function<void(event_list const& event)>;
 
     /**
+     * @var task
+     * @brief Prototype of a callback that is added to the tasks queue
+     */
+    using task = std::function<void()>;
+
+    /**
      * @brief fd_event_event is default constructed
      */
     fd_event_handler();
@@ -90,6 +104,19 @@ public:
      * @return True on success, false otherwise
      */
     bool register_event_handler(int fd, event_handler_type const& handler, event_list const& events);
+
+    /**
+     * @brief Register an arbitrary file descriptor for event handling
+     * @details The file descriptor will be monitored for the event. The handler is called the
+     * event in the list occur. The actual list of events will be passed as argument to the handler. It is the
+     * users responsibility to read from the file descriptor as necessary to acknowledge the event handling. Otherwise
+     * the same event will fire again.
+     * @param[in] fd The file descriptor to be monitored
+     * @param[in] handler Callback for the handling of the events on \p fd
+     * @param[in] event The event to me monitored of \p fd
+     * @return True on success, false otherwise
+     */
+    bool register_event_handler(int fd, event_handler_type const& handler, poll_events event);
 
     /**
      * @brief Register an \ref event_fd for event handling
@@ -127,6 +154,15 @@ public:
     bool register_event_handler(fd_event_register_interface* obj);
 
     /**
+     * @brief Register an \ref fd_event_handler for event handling
+     * @details This will call \p poll on the event_handler whenever any of its handles events
+     need attention.
+     * @param[in] obj The fd_event_handler to be registerd for event handling
+     * @return True on success, false otherwise
+     */
+    bool register_event_handler(fd_event_handler* obj);
+
+    /**
      * @brief Unregister client events of \ref fd_event_register_interface from event handling
      * @param[in] obj The object that needs to unregister its events registerd from
      * event handling
@@ -157,13 +193,11 @@ public:
     bool unregister_event_handler(event_fd* obj);
 
     /**
-     * @brief Register an \ref fd_event_handler for event handling
-     * @details This will call \p poll on the event_handler whenever any of its handles events
-     need attention.
-     * @param[in] obj The fd_event_handler to be registerd for event handling
+     * @brief Unregister a file descriptor from event handling
+     * @param[in] fd The filedescriptor to be removed
      * @return True on success, false otherwise
      */
-    bool register_event_handler(fd_event_handler* obj);
+    bool unregister_event_handler(int fd);
 
     /**
      * @brief Modify the handling of an already registered file descriptor
@@ -176,6 +210,18 @@ public:
      * @return Description
      */
     bool modify_event_handler(int fd, event_list const& events, event_modification change);
+
+    /**
+     * @brief Modify the handling of an already registered file descriptor
+     * @details This allows to change the handled events on a file descriptor. The most obvious
+     * usecase is to add modify the handling of writability (EPOLLOUT).
+     * You want to be notified if there is something to write only.
+     * @param[in] fd The file descriptor to perform the modification on
+     * @param[in] event The event, that should be changed
+     * @param[in] change The kind of modification to perform
+     * @return Description
+     */
+    bool modify_event_handler(int fd, poll_events event, event_modification change);
 
     /**
      * @brief Stop monitoring of events on the file descriptor.
@@ -210,6 +256,43 @@ public:
      */
     int get_poll_fd();
 
+    /**
+     * @brief Add a task to the task queue
+     * @details Adds a task to the task queue
+     * @param[in] item The task
+     */
+    void add_action(task&& item);
+
+    /**
+     * @brief Add a task to the task queue
+     * @details Adds a task to the task queue
+     * @param[in] item The task
+     */
+    void add_action(task const& item);
+
+    /**
+     * @brief Run the tasks in the task queue
+     */
+    void run_actions();
+
+    /**
+     * @brief Run the event loop
+     * @details This runs the two step event loop. First step is to call \ref poll, the second step is to call
+     *          \ref run_actions. This loop continues while online is 'true'. Beware, just setting online to 'false'
+     *          Does not stop the queue immediately, it just prevents an other cycle from running. For this reason
+     *          it is advisable to register an event that can manually be notified on a cancellation request.
+     * @param[in] online Description
+     */
+    void run(std::atomic_bool& online);
+
+    /**
+     * @brief Run a single iteration of the event loop
+     * @details This runs a single iteration of the two step event loop.
+     *          First step is to call \ref poll, the second step is to call
+     *          \ref run_actions.
+     */
+    void run_once();
+
 private:
     /// Wait with timeout for any of the registered events to occur
     /**
@@ -218,6 +301,8 @@ private:
      */
     bool poll_impl(int timeout_ms);
     std::unique_ptr<EventHandlerMap> m_handlers{nullptr};
+    util::thread_safe_queue<task> task_pool;
+    event_fd m_action_event;
 };
 
 } // namespace everest::lib::io::event

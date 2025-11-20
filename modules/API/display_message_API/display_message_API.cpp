@@ -19,7 +19,7 @@ void display_message_API::init() {
     invoke_init(*p_main);
     invoke_init(*p_generic_error);
 
-    topics.setTargetApiModuleID(info.id, "display_message");
+    topics.setup(info.id, "display_message", 1);
 }
 
 void display_message_API::ready() {
@@ -46,7 +46,7 @@ void display_message_API::generate_api_var_communication_check() {
 void display_message_API::setup_heartbeat_generator() {
     auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
-        mqtt.publish(topic, "{}");
+        mqtt.publish(topic, API_generic::serialize(hb_id++));
         return true;
     };
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);

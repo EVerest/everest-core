@@ -69,10 +69,6 @@ void evse_board_supportImpl::handle_evse_replug(int& value) {
     mod->mqtt.publish(topic, data);
 }
 
-types::board_support_common::ProximityPilot evse_board_supportImpl::handle_ac_read_pp_ampacity() {
-    return {};
-}
-
 void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
     auto topic = mod->get_topics().everest_to_extern("ac_overcurrent_limit");
     auto data = generic::serialize(value);

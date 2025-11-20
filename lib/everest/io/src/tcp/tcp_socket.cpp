@@ -1,20 +1,45 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+#include <chrono>
 #include <everest/io/socket/socket.hpp>
 #include <everest/io/tcp/tcp_socket.hpp>
-#include <sys/socket.h>
+#include <netdb.h>
+#include <thread>
 
 namespace everest::lib::io::tcp {
 
 bool tcp_socket::open(std::string const& remote, uint16_t port) {
+    m_remote = remote;
+    m_port = port;
+    m_timeout_ms = 1000;
     try {
-        auto socket = socket::open_tcp_socket(remote, port);
+        auto socket = socket::open_tcp_socket_with_timeout(remote, port, m_timeout_ms);
         socket::set_non_blocking(socket);
         m_fd = std::move(socket);
         return socket::get_pending_error(socket) == 0;
     } catch (...) {
     }
     return false;
+}
+
+bool tcp_socket::setup(std::string const& remote, uint16_t port, int timeout_ms) {
+    m_remote = remote;
+    m_port = port;
+    m_timeout_ms = timeout_ms;
+    m_fd.close();
+    return true;
+}
+
+void tcp_socket::connect(std::function<void(bool, int)> const& setup_cb) {
+    try {
+        auto socket = socket::open_tcp_socket_with_timeout(m_remote, m_port, m_timeout_ms);
+        socket::set_non_blocking(socket);
+        setup_cb(true, socket);
+        m_fd = std::move(socket);
+    } catch (...) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(m_timeout_ms));
+        setup_cb(false, -1);
+    }
 }
 
 bool tcp_socket::tx(PayloadT& payload) {
@@ -70,6 +95,10 @@ void tcp_socket::close() {
 }
 
 bool tcp_socket::set_keep_alive(uint32_t count, uint32_t idle_s, uint32_t intval_s) {
+    if (not is_open()) {
+        return false;
+    }
+
     try {
         socket::set_tcp_keepalive(m_fd, count, idle_s, intval_s);
         return true;
@@ -79,6 +108,10 @@ bool tcp_socket::set_keep_alive(uint32_t count, uint32_t idle_s, uint32_t intval
 }
 
 bool tcp_socket::set_user_timeout(uint32_t to_ms) {
+    if (not is_open()) {
+        return false;
+    }
+
     try {
         socket::set_tcp_user_timeout(m_fd, to_ms);
         return true;

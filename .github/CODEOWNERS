@@ -1,5 +1,5 @@
 # default option unless later match takes precedence
-* @pietfried @hikinggrass @corneliusclaussen @SebaLukas @andistorm @mlitre
+* @pietfried @hikinggrass @corneliusclaussen @SebaLukas @andistorm @mlitre @djchhp @james-ctc
 
 # .ci
 /.ci/ @pietfried @hikinggrass @corneliusclaussen @andistorm
@@ -21,9 +21,10 @@
 /lib/everest/conversions/ @hikinggrass @pietfried @corneliusclaussen @mlitre
 /lib/everest/slac/ @a-w50 @corneliusclaussen @SebaLukas
 /lib/everest/tls/ @james-ctc @mlitre @corneliusclaussen @SebaLukas @pietfried
+/lib/everest/everest_api_types/ @hikinggrass @pietfried @corneliusclaussen @djchhp @cburandt @florinmihut
 
 # modules
-/modules/API/ @hikinggrass @pietfried @corneliusclaussen
+/modules/API/ @hikinggrass @pietfried @corneliusclaussen @djchhp @SebaLukas @james-ctc @cburandt @florinmihut
 /modules/EnergyManagement/Energymanager/ @corneliusclaussen @hikinggrass @pietfried
 /modules/EnergyManagement/EnergyNode/ @corneliusclaussen @hikinggrass @pietfried
 /modules/EV/EvManager/ @SebaLukas @pietfried @james-ctc @mlitre
@@ -35,6 +36,7 @@
 /modules/EVSE/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas @pietfried @hikinggrass
 /modules/EVSE/EvseV2G/ @corneliusclaussen @SebaLukas @james-ctc @pietfried @hikinggrass @james-ctc @mlitre
 /modules/EVSE/OCPP/ @hikinggrass @pietfried @mlitre
+/modules/HardwareDrivers/ @pietfried @hikinggrass @corneliusclaussen @florinmihut @cburandt
 /modules/EVSE/OCPP201/ @hikinggrass @pietfried @mlitre
 /modules/Examples/CppExamples/error-framework/ @corneliusclaussen @hikinggrass @pietfried @andistorm
 /modules/Examples/RustExamples/ @SirVer @dorezyuk

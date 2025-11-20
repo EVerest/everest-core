@@ -21,11 +21,12 @@ void to_json(json& j, RequestReply const& k) {
 }
 
 void from_json(json const& j, RequestReply& k) {
-    k.replyTo = j["headers"]["replyTo"];
+    k.replyTo = j.at("headers").at("replyTo");
     if (j.contains("payload")) {
         k.payload = j["payload"].dump();
-    } else
+    } else {
         k.payload = "";
+    }
 }
 
 void to_json(json& j, ErrorEnum const& k) noexcept {

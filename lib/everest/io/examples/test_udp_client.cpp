@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "Connecting to ->  " << remote << ":" << port << std::endl;
-    udp_client client(remote, port);
+    udp_client client(remote, port, 1000);
     client.set_error_handler(make_error_cb(client));
     client.set_rx_handler(make_rx_callback(client));
 

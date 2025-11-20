@@ -97,6 +97,14 @@ void BUEvseBoardSupport::ready() {
         screen.Post(Event::Custom);
     });
 
+    r_bsp->subscribe_ac_pp_ampacity([this, &screen](const types::board_support_common::ProximityPilot pp) {
+        {
+            std::scoped_lock lock(data_mutex);
+            proximity_pilot = types::board_support_common::ampacity_to_string(pp.ampacity);
+        }
+        screen.Post(Event::Custom);
+    });
+
     r_bsp->subscribe_request_stop_transaction([this, &screen](const types::evse_manager::StopTransactionRequest t) {
         {
             std::scoped_lock lock(data_mutex);
@@ -105,6 +113,32 @@ void BUEvseBoardSupport::ready() {
         screen.Post(Event::Custom);
     });
     // telemetry, pp (needs to be requested as well)
+
+    auto error_handler = [this, &screen](const Everest::error::Error& error) {
+        {
+            std::scoped_lock lock(this->data_mutex);
+            this->last_error_raised = fmt::format("Fault raised: {}, {}", error.type, error.sub_type);
+        }
+        screen.Post(Event::Custom);
+    };
+
+    auto error_cleared_handler = [this, &screen](const Everest::error::Error& error) {
+        {
+            std::scoped_lock lock(this->data_mutex);
+            this->last_error_cleared = fmt::format("Fault cleared: {}, {}", error.type, error.sub_type);
+        }
+        screen.Post(Event::Custom);
+    };
+
+    r_bsp->subscribe_all_errors(error_handler, error_cleared_handler);
+
+    if (!r_ac_rcd.empty()) {
+        r_ac_rcd.at(0)->subscribe_all_errors(error_handler, error_cleared_handler);
+    }
+
+    if (!r_lock_motor.empty()) {
+        r_lock_motor.at(0)->subscribe_all_errors(error_handler, error_cleared_handler);
+    }
 
     std::string last_command = "None";
 
@@ -207,15 +241,108 @@ void BUEvseBoardSupport::ready() {
     });
 
     // ---------------------------------------------------------------------------
+    // Enable/Disable
+    // ---------------------------------------------------------------------------
+
+    Component enable_on_button = Button(
+        "Enable",
+        [&] {
+            last_command = "Enable";
+            r_bsp->call_enable(true);
+        },
+        ButtonOption::Animated(Color::Blue, Color::White, Color::BlueLight, Color::White));
+
+    Component enable_off_button = Button(
+        "Disable",
+        [&] {
+            last_command = "Disable";
+            r_bsp->call_enable(false);
+        },
+        ButtonOption::Animated(Color::Red, Color::White, Color::RedLight, Color::White));
+
+    auto enable_component = Container::Vertical({
+        enable_on_button,
+        enable_off_button,
+    });
+
+    auto enable_renderer =
+        Renderer(enable_component, [&] { return window(text("Enable"), enable_component->Render()); });
+
+    // ---------------------------------------------------------------------------
+    // AC switch phases while charging
+    // ---------------------------------------------------------------------------
+
+    Component three_phase_button = Button(
+        "ThreePhases",
+        [&] {
+            last_command = "Switch ThreePhases";
+            r_bsp->call_ac_switch_three_phases_while_charging(true);
+        },
+        ButtonOption::Animated(Color::Blue, Color::White, Color::BlueLight, Color::White));
+
+    Component single_phase_button = Button(
+        "SinglePhase",
+        [&] {
+            last_command = "Switch SinglePhase";
+            r_bsp->call_ac_switch_three_phases_while_charging(false);
+        },
+        ButtonOption::Animated(Color::Red, Color::White, Color::RedLight, Color::White));
+
+    auto phase_switch_component = Container::Vertical({
+        three_phase_button,
+        single_phase_button,
+    });
+
+    auto phase_switch_renderer = Renderer(
+        phase_switch_component, [&] { return window(text("AC Phase Switch"), phase_switch_component->Render()); });
+
+    // ---------------------------------------------------------------------------
+    // AC Overcurrent Limit command
+    // ---------------------------------------------------------------------------
+
+    std::string ac_oc_limit_str = "16.0"; // Default current limit (A)
+
+    Component ac_oc_limit_button = Button(
+        "Set Limit",
+        [&] {
+            if (ac_oc_limit_str.empty())
+                ac_oc_limit_str = "16.0";
+            last_command = "Set AC Overcurrent Limit (" + ac_oc_limit_str + " A)";
+            r_bsp->call_ac_set_overcurrent_limit_A(std::stof(ac_oc_limit_str.c_str()));
+        },
+        ButtonOption::Animated(Color::Blue, Color::White, Color::BlueLight, Color::White));
+
+    InputOption ac_oc_input_opt;
+    ac_oc_input_opt.multiline = false;
+    ac_oc_input_opt.cursor_position = 0;
+    ac_oc_input_opt.on_enter = [&]() {
+        if (ac_oc_limit_str.empty())
+            ac_oc_limit_str = "16.0";
+        last_command = "Set AC Overcurrent Limit (" + ac_oc_limit_str + " A)";
+        r_bsp->call_ac_set_overcurrent_limit_A(std::stof(ac_oc_limit_str.c_str()));
+    };
+    auto ac_oc_input = Input(&ac_oc_limit_str, "16.0", ac_oc_input_opt);
+
+    auto ac_oc_component = Container::Vertical({
+        ac_oc_limit_button,
+        ac_oc_input,
+    });
+
+    auto ac_oc_renderer =
+        Renderer(ac_oc_component, [&] { return window(text("AC Overcurrent Limit"), ac_oc_component->Render()); });
+
+    // ---------------------------------------------------------------------------
     // Vars
     // ---------------------------------------------------------------------------
 
     auto vars_renderer = Renderer([&] {
-        Element last_command_element = text("Last command: " + last_command);
         std::vector<std::vector<std::string>> table_content;
         {
             std::scoped_lock lock(data_mutex);
-            table_content = {{"CP State", cp_state}, {"Relais", relais_feedback}, {"Telemetry", telemetry}};
+            table_content = {{"CP State", cp_state},
+                             {"Relais", relais_feedback},
+                             {"Telemetry", telemetry},
+                             {"Proximity Pilot", proximity_pilot}};
         }
         auto vars = Table(table_content);
 
@@ -225,7 +352,10 @@ void BUEvseBoardSupport::ready() {
         }
         return vbox({
                    hbox({
-                       window(text("Information"), vbox({text("Last command: " + last_command), vars.Render()})),
+                       window(
+                           text("Information"),
+                           vbox({text("Last command: " + last_command), text("Last error raised: " + last_error_raised),
+                                 text("Last error cleared: " + last_error_cleared), vars.Render()})),
                    }),
                }) |
                flex_grow;
@@ -273,18 +403,99 @@ void BUEvseBoardSupport::ready() {
                flex_grow;
     });
 
-    auto main_container = Container::Horizontal({
-        Container::Vertical({pwm_renderer, relais_renderer}),
+    // ---------------------------------------------------------------------------
+    // AC RCD
+    // ---------------------------------------------------------------------------
+
+    auto no_rcd_text = Renderer([] { return text("No AC RCD module connected in config."); });
+    auto rcd_component = Container::Vertical({
+        no_rcd_text,
+    });
+
+    if (!r_ac_rcd.empty()) {
+
+        std::string rcd_current_display = "N/A";
+        std::string rcd_reset_result = "";
+
+        Component rcd_self_test_button = Button(
+            "Self Test",
+            [&] {
+                last_command = "AC RCD Self Test";
+                r_ac_rcd.at(0)->call_self_test();
+            },
+            ButtonOption::Animated(Color::Green, Color::White, Color::GreenLight, Color::White));
+
+        Component rcd_reset_button = Button(
+            "Reset",
+            [&] {
+                last_command = "AC RCD Reset";
+                bool reset_result = r_ac_rcd.at(0)->call_reset();
+                rcd_reset_result = fmt::format("Reset result: {}", reset_result ? "Success" : "Failed");
+            },
+            ButtonOption::Animated(Color::Blue, Color::White, Color::BlueLight, Color::White));
+
+        rcd_component = Container::Vertical({
+            rcd_self_test_button,
+            rcd_reset_button,
+        });
+    }
+
+    // ---------------------------------------------------------------------------
+    // Connector Lock
+    // ---------------------------------------------------------------------------
+
+    auto no_lock_text = Renderer([] { return text("No Connector Lock module connected in config."); });
+    auto lock_component = Container::Vertical({
+        no_lock_text,
+    });
+
+    if (!r_lock_motor.empty()) {
+
+        Component lock_button = Button(
+            "Connector Lock",
+            [&] {
+                last_command = "Connector Lock";
+                r_lock_motor.at(0)->call_lock();
+            },
+            ButtonOption::Animated(Color::Red, Color::White, Color::RedLight, Color::White));
+
+        Component unlock_button = Button(
+            "Connector Unlock",
+            [&] {
+                last_command = "Connector Unlock";
+                r_lock_motor.at(0)->call_unlock();
+            },
+            ButtonOption::Animated(Color::Blue, Color::White, Color::BlueLight, Color::White));
+
+        lock_component = Container::Vertical({
+            lock_button,
+            unlock_button,
+        });
+    }
+
+    // ---------------------------------------------------------------------------
+    // Main layout
+    // ---------------------------------------------------------------------------
+
+    auto command_row =
+        Container::Horizontal({pwm_renderer, relais_renderer, enable_renderer, phase_switch_renderer, ac_oc_renderer});
+
+    auto info_row = Container::Horizontal({
         vars_renderer,
         caps_renderer,
         vars_stop_transaction_renderer,
     });
 
+    // Add RCD and Lock components to the interactive container tree
+    auto main_container = Container::Vertical({info_row, command_row, rcd_component, lock_component});
+
     auto main_renderer = Renderer(main_container, [&] {
-        return vbox({
-            text("EVSE Board Support") | bold | hcenter,
-            main_container->Render(),
-        });
+        return vbox(text("EVSE Board Support") | bold | hcenter, separator(), info_row->Render(), command_row->Render(),
+                    separator(),
+                    hbox(window(text("AC RCD"), vbox(text("RCD Current: " + rcd_current_display + " mA"), separator(),
+                                                     rcd_component->Render(), text(rcd_reset_result))) |
+                             flex,
+                         separator(), window(text("Connector Lock"), lock_component->Render()) | flex));
     });
 
     screen.Loop(main_renderer);

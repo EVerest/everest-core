@@ -714,11 +714,20 @@ void ISO15118_chargerImpl::handle_set_powersupply_capabilities(types::power_supp
         auto& discharge_power = (setup_config.powersupply_limits.discharge_limits.has_value())
                                     ? setup_config.powersupply_limits.discharge_limits.value()
                                     : setup_config.powersupply_limits.discharge_limits.emplace();
-        discharge_power.power.max = dt::from_float(capabilities.max_import_power_W.value_or(0.0));
-        discharge_power.power.min = dt::from_float(capabilities.min_import_current_A.value_or(0.0) *
-                                                   capabilities.min_import_voltage_V.value_or(0.0));
-        discharge_power.current.max = dt::from_float(capabilities.max_import_current_A.value_or(0.0));
-        discharge_power.current.min = dt::from_float(capabilities.min_import_current_A.value_or(0.0));
+
+        if (mod->config.negative_bidirectional_limits) {
+            discharge_power.power.max = dt::from_float(-std::fabs(capabilities.max_import_power_W.value_or(0.0)));
+            discharge_power.power.min = dt::from_float(-std::fabs(capabilities.min_import_current_A.value_or(0.0)) *
+                                                       capabilities.min_import_voltage_V.value_or(0.0));
+            discharge_power.current.max = dt::from_float(-std::fabs(capabilities.max_import_current_A.value_or(0.0)));
+            discharge_power.current.min = dt::from_float(-std::fabs(capabilities.min_import_current_A.value_or(0.0)));
+        } else {
+            discharge_power.power.max = dt::from_float(capabilities.max_import_power_W.value_or(0.0));
+            discharge_power.power.min = dt::from_float(capabilities.min_import_current_A.value_or(0.0) *
+                                                       capabilities.min_import_voltage_V.value_or(0.0));
+            discharge_power.current.max = dt::from_float(capabilities.max_import_current_A.value_or(0.0));
+            discharge_power.current.min = dt::from_float(capabilities.min_import_current_A.value_or(0.0));
+        }
     }
 
     if (controller) {
@@ -878,7 +887,9 @@ void ISO15118_chargerImpl::handle_update_ac_maximum_limits(types::iso15118::AcEv
         auto& discharge_power = (setup_config.ac_limits.discharge_power.has_value())
                                     ? setup_config.ac_limits.discharge_power.value()
                                     : setup_config.ac_limits.discharge_power.emplace();
-        discharge_power.max = dt::from_float(maximum_limits.discharge_power.value().total);
+        discharge_power.max = dt::from_float((mod->config.negative_bidirectional_limits)
+                                                 ? -std::fabs(maximum_limits.discharge_power.value().total)
+                                                 : maximum_limits.discharge_power.value().total);
     }
 
     if (controller) {
@@ -899,7 +910,9 @@ void ISO15118_chargerImpl::handle_update_ac_minimum_limits(types::iso15118::AcEv
         auto& discharge_power = (setup_config.ac_limits.discharge_power.has_value())
                                     ? setup_config.ac_limits.discharge_power.value()
                                     : setup_config.ac_limits.discharge_power.emplace();
-        discharge_power.min = dt::from_float(minimum_limits.discharge_power.value().total);
+        discharge_power.max = dt::from_float((mod->config.negative_bidirectional_limits)
+                                                 ? -std::fabs(minimum_limits.discharge_power.value().total)
+                                                 : minimum_limits.discharge_power.value().total);
     }
 
     if (controller) {
@@ -949,13 +962,18 @@ void ISO15118_chargerImpl::handle_update_dc_maximum_limits(types::iso15118::DcEv
         auto& discharge_limits = (setup_config.dc_limits.discharge_limits.has_value())
                                      ? setup_config.dc_limits.discharge_limits.value()
                                      : setup_config.dc_limits.discharge_limits.emplace();
-
         if (maximum_limits.evse_maximum_discharge_current_limit.has_value()) {
-            discharge_limits.current.max = dt::from_float(*maximum_limits.evse_maximum_discharge_current_limit);
+            discharge_limits.current.max =
+                dt::from_float((mod->config.negative_bidirectional_limits)
+                                   ? -std::fabs(maximum_limits.evse_maximum_discharge_current_limit.value())
+                                   : maximum_limits.evse_maximum_discharge_current_limit.value());
         }
 
         if (maximum_limits.evse_maximum_discharge_power_limit.has_value()) {
-            discharge_limits.power.max = dt::from_float(*maximum_limits.evse_maximum_discharge_power_limit);
+            discharge_limits.power.max =
+                dt::from_float((mod->config.negative_bidirectional_limits)
+                                   ? -std::fabs(maximum_limits.evse_maximum_discharge_power_limit.value())
+                                   : maximum_limits.evse_maximum_discharge_power_limit.value());
         }
     }
 
@@ -978,13 +996,18 @@ void ISO15118_chargerImpl::handle_update_dc_minimum_limits(types::iso15118::DcEv
         auto& discharge_limits = (setup_config.dc_limits.discharge_limits.has_value())
                                      ? setup_config.dc_limits.discharge_limits.value()
                                      : setup_config.dc_limits.discharge_limits.emplace();
-
         if (minimum_limits.evse_minimum_discharge_current_limit.has_value()) {
-            discharge_limits.current.min = dt::from_float(*minimum_limits.evse_minimum_discharge_current_limit);
+            discharge_limits.current.min =
+                dt::from_float((mod->config.negative_bidirectional_limits)
+                                   ? -std::fabs(minimum_limits.evse_minimum_discharge_current_limit.value())
+                                   : minimum_limits.evse_minimum_discharge_current_limit.value());
         }
 
         if (minimum_limits.evse_minimum_discharge_power_limit.has_value()) {
-            discharge_limits.power.min = dt::from_float(*minimum_limits.evse_minimum_discharge_power_limit);
+            discharge_limits.power.min =
+                dt::from_float((mod->config.negative_bidirectional_limits)
+                                   ? -std::fabs(minimum_limits.evse_minimum_discharge_power_limit.value())
+                                   : minimum_limits.evse_minimum_discharge_power_limit.value());
         }
     }
 

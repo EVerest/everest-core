@@ -385,12 +385,12 @@ void OCPP201::init() {
             // handled by specific evse_manager error handler
             return;
         }
-        const auto event_data = get_event_data(error, false, this->event_id_counter++);
         if (this->started) {
+            const auto event_data = get_event_data(error, false, this->event_id_counter++);
             this->charge_point->on_event({event_data});
         } else {
             std::scoped_lock lock(this->session_event_mutex);
-            this->event_queue[event_data.component.evse.value_or(ocpp::v2::EVSE{0}).id].push(event_data);
+            this->event_queue[get_component_from_error(error).evse.value_or(ocpp::v2::EVSE{0}).id].push(error);
         }
     };
 
@@ -399,12 +399,12 @@ void OCPP201::init() {
             // handled by specific evse_manager error handler
             return;
         }
-        const auto event_data = get_event_data(error, true, this->event_id_counter++);
         if (this->started) {
+            const auto event_data = get_event_data(error, true, this->event_id_counter++);
             this->charge_point->on_event({event_data});
         } else {
             std::scoped_lock lock(this->session_event_mutex);
-            this->event_queue[event_data.component.evse.value_or(ocpp::v2::EVSE{0}).id].push(event_data);
+            this->event_queue[get_component_from_error(error).evse.value_or(ocpp::v2::EVSE{0}).id].push(error);
         }
     };
 
@@ -524,6 +524,8 @@ void OCPP201::ready() {
 
         bool scheduled = type == ocpp::v2::ResetEnum::OnIdle;
 
+        // small delay before stopping the charge point to make sure all responses are received
+        std::this_thread::sleep_for(std::chrono::seconds(this->config.ResetStopDelay));
         try {
             this->r_system->call_reset(types::system::ResetType::NotSpecified, scheduled);
         } catch (std::out_of_range& e) {
@@ -1043,11 +1045,21 @@ void OCPP201::ready() {
                 const auto session_event = std::get<types::evse_manager::SessionEvent>(queued_event);
                 EVLOG_info << "Processing queued event for evse_id: " << evse_id << ", event: " << session_event.event;
                 this->process_session_event(evse_id, session_event);
-            } else if (std::holds_alternative<ocpp::v2::EventData>(queued_event)) {
-                const auto event_data = std::get<ocpp::v2::EventData>(queued_event);
-                EVLOG_info << "Processing queued error event for evse_id: " << evse_id
-                           << ", event id: " << event_data.eventId;
+            } else if (std::holds_alternative<Everest::error::Error>(queued_event)) {
+                const auto& error = std::get<Everest::error::Error>(queued_event);
+                EVLOG_info << "Processing queued error event for evse_id: " << evse_id << ": " << error.type;
+                bool is_active = error.state == Everest::error::State::Active;
+                const auto event_data = get_event_data(error, !is_active, this->event_id_counter++);
                 this->charge_point->on_event({event_data});
+
+                // We do only report inoperative errors as faults
+                if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+                    if (is_active) {
+                        this->charge_point->on_faulted(evse_id, get_connector_id_from_error(error));
+                    } else {
+                        this->charge_point->on_fault_cleared(evse_id, get_connector_id_from_error(error));
+                    }
+                }
             } else if (std::holds_alternative<ocpp::v2::MeterValue>(queued_event)) {
                 const auto meter_value = std::get<ocpp::v2::MeterValue>(queued_event);
                 EVLOG_info << "Processing queued meter value for evse_id: " << evse_id;
@@ -1150,25 +1162,25 @@ void OCPP201::init_evse_subscriptions() {
         });
 
         auto fault_handler = [this, evse_id](const Everest::error::Error& error) {
-            const auto event_data = get_event_data(error, true, this->event_id_counter++);
             if (this->started) {
+                const auto event_data = get_event_data(error, false, this->event_id_counter++);
                 this->charge_point->on_event({event_data});
+                this->charge_point->on_faulted(evse_id, get_connector_id_from_error(error));
             } else {
                 std::scoped_lock lock(this->session_event_mutex);
-                this->event_queue[event_data.component.evse.value_or(ocpp::v2::EVSE{1}).id].push(event_data);
+                this->event_queue[get_component_from_error(error).evse.value_or(ocpp::v2::EVSE{1}).id].push(error);
             }
-            this->charge_point->on_faulted(evse_id, get_connector_id_from_error(error));
         };
 
         auto fault_cleared_handler = [this, evse_id](const Everest::error::Error& error) {
-            const auto event_data = get_event_data(error, true, this->event_id_counter++);
             if (this->started) {
+                const auto event_data = get_event_data(error, true, this->event_id_counter++);
                 this->charge_point->on_event({event_data});
+                this->charge_point->on_fault_cleared(evse_id, get_connector_id_from_error(error));
             } else {
                 std::scoped_lock lock(this->session_event_mutex);
-                this->event_queue[event_data.component.evse.value_or(ocpp::v2::EVSE{1}).id].push(event_data);
+                this->event_queue[get_component_from_error(error).evse.value_or(ocpp::v2::EVSE{1}).id].push(error);
             }
-            this->charge_point->on_fault_cleared(evse_id, get_connector_id_from_error(error));
         };
 
         // A permanent fault from the evse requirement indicates that the evse should move to faulted state
@@ -1258,6 +1270,9 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
         this->process_transaction_finished(evse_id, connector_id, session_event);
         break;
     }
+    case types::evse_manager::SessionEventEnum::SessionResumed:
+        this->process_session_resumed(evse_id, connector_id, session_event);
+        break;
     case types::evse_manager::SessionEventEnum::ChargingStarted: {
         this->process_charging_started(evse_id, connector_id, session_event);
         break;
@@ -1309,7 +1324,6 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
     case types::evse_manager::SessionEventEnum::ReplugFinished:
     case types::evse_manager::SessionEventEnum::PluginTimeout:
     case types::evse_manager::SessionEventEnum::SwitchingPhases:
-    case types::evse_manager::SessionEventEnum::SessionResumed:
         break;
     }
 
@@ -1496,7 +1510,7 @@ void OCPP201::process_transaction_started(const int32_t evse_id, const int32_t c
 void OCPP201::process_transaction_finished(const int32_t evse_id, const int32_t connector_id,
                                            const types::evse_manager::SessionEvent& session_event) {
     if (!session_event.transaction_finished.has_value()) {
-        throw std::runtime_error("SessionEvent TransactionFinished does not contain session_started context");
+        throw std::runtime_error("SessionEvent TransactionFinished does not contain transaction_finished context");
     }
     const auto transaction_finished = session_event.transaction_finished.value();
     auto tx_event = TxEvent::NONE;
@@ -1553,6 +1567,24 @@ void OCPP201::process_transaction_finished(const int32_t evse_id, const int32_t 
         const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::DEAUTHORIZED);
         this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
     }
+}
+
+void OCPP201::process_session_resumed(const int32_t evse_id, const int32_t connector_id,
+                                      const types::evse_manager::SessionEvent& session_event) {
+    // resume transaction with data we get from the session event
+    // currently, the SessionResumed event only occurs after a power outage followed by
+    // a TransactionFinished event. We have to add the transaction data again to be able to
+    // properly process the transaction finished event.
+    // Currently, sending a TransactionEvent(Ended) after a power loss is only supported if
+    // the configuration variable InternalCtrlr::ResumeTransactionsOnBoot is set to true.
+    // If this is not the case, libocpp will not be able to process a TransactionFinished event
+    // after a power loss, because it does internally not restore transaction data on boot.
+    const auto timestamp = ocpp_conversions::to_ocpp_datetime_or_now(session_event.timestamp);
+    auto transaction_data =
+        std::make_shared<TransactionData>(connector_id, session_event.uuid, timestamp,
+                                          ocpp::v2::TriggerReasonEnum::TxResumed, ocpp::v2::ChargingStateEnum::Idle);
+    transaction_data->started = true;
+    this->transaction_handler->add_transaction_data(evse_id, transaction_data);
 }
 
 void OCPP201::process_charging_started(const int32_t evse_id, const int32_t connector_id,
