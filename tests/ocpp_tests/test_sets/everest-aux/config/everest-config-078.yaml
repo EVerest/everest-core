@@ -72,11 +72,6 @@ active_modules:
         implementation_id: evse
   token_provider_manual:
     module: DummyTokenProviderManual
-    connections: {}
-    config_implementation:
-      main:
-        token: '123'
-        type: dummy
   energy_manager:
     module: EnergyManager
     connections:

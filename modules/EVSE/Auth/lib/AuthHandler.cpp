@@ -24,8 +24,6 @@ std::vector<int> intersect(std::vector<int>& a, std::vector<int>& b) {
 namespace conversions {
 std::string token_handling_result_to_string(const TokenHandlingResult& result) {
     switch (result) {
-    case TokenHandlingResult::ACCEPTED:
-        return "ACCEPTED";
     case TokenHandlingResult::ALREADY_IN_PROCESS:
         return "ALREADY_IN_PROCESS";
     case TokenHandlingResult::NO_CONNECTOR_AVAILABLE:
@@ -34,6 +32,8 @@ std::string token_handling_result_to_string(const TokenHandlingResult& result) {
         return "REJECTED";
     case TokenHandlingResult::TIMEOUT:
         return "TIMEOUT";
+    case TokenHandlingResult::USED_TO_START_TRANSACTION:
+        return "USED_TO_START_TRANSACTION";
     case TokenHandlingResult::USED_TO_STOP_TRANSACTION:
         return "USED_TO_STOP_TRANSACTION";
     case TokenHandlingResult::WITHDRAWN:
@@ -106,14 +106,15 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     case TokenHandlingResult::TIMEOUT: // Timeout means accepted but failed to pick contactor
         this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::TimedOut);
         break;
-    case TokenHandlingResult::ACCEPTED: // Handled in handle_token internally
-        break;
     case TokenHandlingResult::NO_CONNECTOR_AVAILABLE:
     case TokenHandlingResult::REJECTED:
         this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Rejected);
         break;
+    case TokenHandlingResult::USED_TO_START_TRANSACTION:
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::UsedToStart);
+        break;
     case TokenHandlingResult::USED_TO_STOP_TRANSACTION:
-        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Accepted);
+        this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::UsedToStop);
         break;
     case TokenHandlingResult::WITHDRAWN:
         this->publish_token_validation_status_callback(provided_token_copy, TokenValidationStatus::Withdrawn);
@@ -173,6 +174,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                 provided_token.parent_id_token =
                     this->evses.at(evse_used_for_transaction)->identifier->parent_id_token.value();
             }
+            provided_token.connectors = std::vector<int32_t>{evse_used_for_transaction};
             return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
         }
     }
@@ -259,24 +261,27 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                 if (this->equals_master_pass_group_id(validation_result.parent_id_token)) {
                     EVLOG_info << "Provided parent_id_token is equal to master_pass_group_id. Stopping all active "
                                   "transactions!";
-
+                    std::vector<int32_t> connectors;
                     for (const auto evse_id : referenced_evses) {
                         if (this->evses[evse_id]->transaction_active) {
                             StopTransactionRequest req;
                             req.reason = StopTransactionReason::MasterPass;
                             req.id_tag.emplace(provided_token);
                             this->stop_transaction_callback(this->evses.at(evse_id)->evse_index, req);
+                            connectors.emplace_back(evse_id);
                         }
                     }
                     // TOOD: Add handling in case there is a display which can be used which transaction should stop
                     // (see C16 of OCPP2.0.1 spec)
                     provided_token.parent_id_token = validation_result.parent_id_token.value();
+                    provided_token.connectors = connectors;
                     return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
                 }
 
                 const auto evse_used_for_transaction =
                     this->used_for_transaction(referenced_evses, validation_result.parent_id_token.value().value);
                 if (evse_used_for_transaction != -1) {
+                    provided_token.connectors = std::vector<int32_t>{evse_used_for_transaction};
                     if (!this->evses[evse_used_for_transaction]->transaction_active) {
                         return TokenHandlingResult::ALREADY_IN_PROCESS;
                     } else {
@@ -363,6 +368,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                            (reservation_id == std::nullopt)) {
                     EVLOG_info << "Providing authorization to evse#" << evse_id;
                     authorized = true;
+                    provided_token.connectors = std::vector<int32_t>{evse_id};
                 } else {
                     EVLOG_debug << "Evse is reserved. Checking if token matches...";
 
@@ -370,6 +376,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                         EVLOG_info << "Evse#" << evse_id << " is reserved and token is valid for this reservation";
                         this->reservation_handler.on_reservation_used(reservation_id.value());
                         authorized = true;
+                        provided_token.connectors = std::vector<int32_t>{evse_id};
                         validation_result.reservation_id = reservation_id.value();
                     } else {
                         EVLOG_info << "Evse#" << evse_id << " is reserved but token is not valid for this reservation";
@@ -381,7 +388,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
             i++;
         }
         if (authorized) {
-            return TokenHandlingResult::ACCEPTED;
+            return TokenHandlingResult::USED_TO_START_TRANSACTION;
         } else {
             EVLOG_debug << "id_token could not be validated by any validator";
             // in case the validation was not successful, we need to notify the evse and transmit the validation result.

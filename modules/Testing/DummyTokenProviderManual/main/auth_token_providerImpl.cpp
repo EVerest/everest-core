@@ -10,9 +10,13 @@ namespace main {
 
 void auth_token_providerImpl::init() {
     mod->mqtt.subscribe("everest_api/dummy_token_provider/cmd/provide", [this](const std::string& msg) {
-        types::authorization::ProvidedIdToken token = json::parse(msg);
-        EVLOG_info << "Publishing new dummy token: " << everest::helpers::redact(token);
-        publish_provided_token(token);
+        try {
+            types::authorization::ProvidedIdToken token = json::parse(msg);
+            EVLOG_info << "Publishing new dummy token: " << everest::helpers::redact(token);
+            publish_provided_token(token);
+        } catch (const nlohmann::json::exception& e) {
+            EVLOG_error << "Failed to handle JSON token from MQTT: " << e.what();
+        }
     });
 }
 

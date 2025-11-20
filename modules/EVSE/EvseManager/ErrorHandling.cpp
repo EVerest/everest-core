@@ -308,17 +308,17 @@ void ErrorHandling::clear_powermeter_transaction_start_failed_error() {
     }
 }
 
-void ErrorHandling::raise_isolation_resistance_fault(const std::string& description) {
+void ErrorHandling::raise_isolation_resistance_fault(const std::string& description, const std::string& sub_type) {
     // Error shutdown according to IEC61851-23 Table CC.10 --> Severity::Medium
     Everest::error::Error error_object = p_evse->error_factory->create_error(
-        "evse_manager/MREC22ResistanceFault", "", description, Everest::error::Severity::Medium);
+        "evse_manager/MREC22ResistanceFault", sub_type, description, Everest::error::Severity::Medium);
     p_evse->raise_error(error_object);
     process_error();
 }
 
-void ErrorHandling::clear_isolation_resistance_fault() {
+void ErrorHandling::clear_isolation_resistance_fault(const std::string& sub_type) {
     if (p_evse->error_state_monitor->is_error_active("evse_manager/MREC22ResistanceFault", "")) {
-        p_evse->clear_error("evse_manager/MREC22ResistanceFault", "");
+        p_evse->clear_error("evse_manager/MREC22ResistanceFault", sub_type);
         process_error();
     }
 }

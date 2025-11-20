@@ -168,10 +168,9 @@ public:
     sigslot::signal<> signal_hlc_stop_charging;
     sigslot::signal<> signal_hlc_pause_charging;
     sigslot::signal<types::iso15118::EvseError> signal_hlc_error;
+    sigslot::signal<> signal_hlc_plug_in_timeout;
 
     sigslot::signal<> signal_hlc_no_energy_available;
-
-    void process_event(CPEvent event);
 
     void run();
 
@@ -188,6 +187,9 @@ public:
 
     void inform_new_evse_max_hlc_limits(const types::iso15118::DcEvseMaximumLimits& l);
     types::iso15118::DcEvseMaximumLimits get_evse_max_hlc_limits();
+
+    void inform_new_evse_min_hlc_limits(const types::iso15118::DcEvseMinimumLimits& limits);
+    types::iso15118::DcEvseMinimumLimits get_evse_min_hlc_limits();
 
     void dlink_pause();
     void dlink_error();
@@ -223,6 +225,7 @@ public:
     }
 
     void cleanup_transactions_on_startup();
+    EventQueue<CPEvent> bsp_event_queue;
 
 private:
     utils::Stopwatch stopwatch;
@@ -243,10 +246,10 @@ private:
 
     void clear_errors_on_unplug();
 
-    void update_pwm_now(float dc);
-    void update_pwm_now_if_changed(float dc);
-    void update_pwm_now_if_changed_ampere(float dc);
-    void update_pwm_max_every_5seconds_ampere(float dc);
+    void update_pwm_now(float duty_cycle);
+    void update_pwm_now_if_changed(float duty_cycle);
+    void update_pwm_now_if_changed_ampere(float duty_cycle);
+    void update_pwm_max_every_5seconds_ampere(float duty_cycle);
     void pwm_off();
     void pwm_F();
 
@@ -272,6 +275,8 @@ private:
     bool start_transaction();
     void stop_transaction();
 
+    void process_event(CPEvent event);
+
     // This mutex locks all variables related to the state machine
     Everest::timed_mutex_traceable state_machine_mutex;
 
@@ -285,6 +290,7 @@ private:
         bool hlc_charging_active{false};
         HlcTerminatePause hlc_charging_terminate_pause;
         types::iso15118::DcEvseMaximumLimits current_evse_max_limits;
+        types::iso15118::DcEvseMinimumLimits current_evse_min_limits;
         bool pwm_running{false};
         std::optional<types::authorization::ProvidedIdToken>
             stop_transaction_id_token; // only set in case transaction was stopped locally
@@ -359,7 +365,7 @@ private:
         int hlc_ev_pause_bcb_count{0};
         std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb;
         std::chrono::time_point<std::chrono::steady_clock> hlc_ev_pause_start_of_bcb_sequence;
-        float update_pwm_last_dc;
+        float update_pwm_last_duty_cycle;
         std::chrono::time_point<std::chrono::steady_clock> last_pwm_update;
 
         EvseState t_step_EF_return_state;
@@ -426,6 +432,7 @@ private:
     // This is not required by IEC61851-1, but it is allowed by the IEC. It helps some older EVs to start charging
     // after the wake-up sequence.
     static constexpr int STAY_IN_X1_AFTER_TSTEP_EF_MS = 750;
+    static constexpr int WAIT_FOR_ENERGY_IN_AUTHLOOP_TIMEOUT_MS = 5000;
 
     types::evse_manager::EnableDisableSource active_enable_disable_source{
         types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Unassigned, 10000};

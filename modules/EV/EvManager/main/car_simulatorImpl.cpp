@@ -181,6 +181,14 @@ void car_simulatorImpl::register_all_commands() {
     command_registry->register_command("wait_for_real_plugin", 0, [this](const CmdArguments& arguments) {
         return this->car_simulation->wait_for_real_plugin(arguments);
     });
+    command_registry->register_command("plugin", 0, [this](const CmdArguments& /*arguments*/) {
+        if (not mod->config.plugin_commands.empty()) {
+            car_simulation->update_modify_charging_session_cmds(mod->config.plugin_commands);
+            return false;
+        }
+        EVLOG_error << "plugin command called but \"plugin_commands\" config key not set";
+        return true;
+    });
 
     if (!mod->r_slac.empty()) {
         command_registry->register_command("iso_wait_slac_matched", 0, [this](const CmdArguments& arguments) {
@@ -201,6 +209,15 @@ void car_simulatorImpl::register_all_commands() {
             return this->car_simulation->iso_dc_power_on(arguments);
         });
         command_registry->register_command("iso_start_v2g_session", 1, [this](const CmdArguments& arguments) {
+            EVLOG_debug << "Using default departure time and eamount";
+            CmdArguments args{arguments[0], std::to_string(mod->config.departure_time),
+                              std::to_string(mod->config.e_amount)};
+            return this->car_simulation->iso_start_v2g_session(args, mod->config.three_phases);
+        });
+        command_registry->register_command("iso_start_v2g_session", 3, [this](const CmdArguments& arguments) {
+            // 1. Argument: EnergyMode
+            // 2. Argument: DepartureTime
+            // 3. Argument: EAmount
             return this->car_simulation->iso_start_v2g_session(arguments, mod->config.three_phases);
         });
         command_registry->register_command("iso_stop_charging", 0, [this](const CmdArguments& arguments) {

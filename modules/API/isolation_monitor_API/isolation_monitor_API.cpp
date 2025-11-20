@@ -18,7 +18,7 @@ using ev_API::deserialize;
 void isolation_monitor_API::init() {
     invoke_init(*p_main);
 
-    topics.setTargetApiModuleID(info.id, "isolation_monitor");
+    topics.setup(info.id, "isolation_monitor", 1);
 }
 
 void isolation_monitor_API::ready() {
@@ -104,7 +104,7 @@ void isolation_monitor_API::generate_api_var_clear_error() {
 void isolation_monitor_API::setup_heartbeat_generator() {
     auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
-        mqtt.publish(topic, "{}");
+        mqtt.publish(topic, API_generic::serialize(hb_id++));
         return true;
     };
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);

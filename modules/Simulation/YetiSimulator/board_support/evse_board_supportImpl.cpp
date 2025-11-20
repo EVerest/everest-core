@@ -69,29 +69,6 @@ void evse_board_supportImpl::handle_evse_replug(int& _) {
     EVLOG_error << "Replugging not supported";
 }
 
-types::board_support_common::ProximityPilot evse_board_supportImpl::handle_ac_read_pp_ampacity() {
-    using types::board_support_common::Ampacity;
-    const auto pp_resistor = mod->module_state->simulation_data.pp_resistor;
-
-    if (pp_resistor < 80 or pp_resistor > 2460) {
-        EVLOG_error << "PP resistor value " << pp_resistor << " Ohm seems to be outside the allowed range.";
-        return {Ampacity::None};
-    }
-    if (pp_resistor > 936 && pp_resistor <= 2460) {
-        return {Ampacity::A_13};
-    }
-    if (pp_resistor > 308 && pp_resistor <= 936) {
-        return {Ampacity::A_20};
-    }
-    if (pp_resistor > 140 && pp_resistor <= 308) {
-        return {Ampacity::A_32};
-    }
-    if (pp_resistor > 80 && pp_resistor <= 140) {
-        return {Ampacity::A_63_3ph_70_1ph};
-    }
-    return {Ampacity::None};
-}
-
 void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
 }
 

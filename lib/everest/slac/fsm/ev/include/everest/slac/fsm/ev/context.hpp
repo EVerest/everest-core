@@ -50,7 +50,10 @@ template <typename SlacMessageType> struct MMV {
 struct ContextCallbacks {
     std::function<void(slac::messages::HomeplugMessage&)> send_raw_slac{nullptr};
     std::function<void(const std::string&)> signal_state{nullptr};
-    std::function<void(const std::string&)> log{nullptr};
+    std::function<void(const std::string&)> log_debug{nullptr};
+    std::function<void(const std::string&)> log_info{nullptr};
+    std::function<void(const std::string&)> log_warn{nullptr};
+    std::function<void(const std::string&)> log_error{nullptr};
 };
 
 struct Context {
@@ -77,7 +80,10 @@ struct Context {
     void signal_state(const std::string& state);
 
     // logging util
+    void log_debug(const std::string& text);
     void log_info(const std::string& text);
+    void log_warn(const std::string& text);
+    void log_error(const std::string& text);
 
 private:
     const ContextCallbacks& callbacks;

@@ -196,9 +196,9 @@ public:
      * @return Reference to the current object.
      */
     monitor<T, MTX>& operator=(monitor<T, MTX>&& rhs) {
-        // Lock the source monitor's mutex before moving its data to ensure thread safety
-        std::unique_lock lock(rhs.m_mtx);
-        std::swap(m_obj, rhs.m_obj);
+        if (this != &rhs) {
+            this->swap(rhs);
+        }
         return *this;
     }
 
@@ -247,10 +247,36 @@ public:
         m_cv.notify_all();
     }
 
+    /**
+     * @brief Member swap function for thread-safe and exception-safe exchange of resources.
+     * * Locks both mutexes using RAII and deadlock avoidance (via std::unique_lock constructors)
+     * before swapping the protected resource T.
+     * @param other The monitor to swap resources with.
+     */
+    void swap(monitor<T, MTX>& other) noexcept {
+        std::unique_lock this_lock(m_mtx, std::defer_lock);
+        std::unique_lock other_lock(other.m_mtx, std::defer_lock);
+        std::lock(this_lock, other_lock);
+        std::swap(m_obj, other.m_obj);
+    }
+
 private:
     MTX m_mtx;                    ///< The mutex protecting the resource T.
     T m_obj;                      ///< The protected resource.
     std::condition_variable m_cv; ///< The condition variable for thread coordination.
 };
+
+/**
+ * @brief Non-member swap function for standard ADL (Argument-Dependent Lookup) swap.
+ * * This function delegates the call to the thread-safe member swap function, ensuring
+ * a safe, deadlock-avoiding exchange of resources between two monitor objects.
+ * * @tparam T The type of the resource being protected.
+ * @tparam MTX The mutex type used for locking.
+ * @param lhs The first monitor object.
+ * @param rhs The second monitor object.
+ */
+template <class T, class MTX> void swap(monitor<T, MTX>& lhs, monitor<T, MTX>& rhs) {
+    lhs.swap(rhs);
+}
 
 } // namespace everest::lib::util

@@ -63,12 +63,20 @@ void process_connection_thread(std::shared_ptr<tls::ServerConnection> con, struc
         }
     }
 
+    connection->ctx->connection_initiated = false;
+
     ::connection_teardown(connection.get());
 }
 
 void handle_new_connection_cb(tls::Server::ConnectionPtr&& con, struct v2g_context* ctx) {
     assert(con != nullptr);
     assert(ctx != nullptr);
+    if (ctx->connection_initiated) {
+        dlog(DLOG_LEVEL_ERROR, "Incoming TLS connection on %s, but there is already an active connection.",
+             ctx->if_name);
+        return;
+    }
+    ctx->connection_initiated = true;
     // create a thread to process this connection
     try {
         // passing unique pointers through thread parameters is problematic
@@ -79,6 +87,7 @@ void handle_new_connection_cb(tls::Server::ConnectionPtr&& con, struct v2g_conte
         // unable to start thread
         dlog(DLOG_LEVEL_ERROR, "pthread_create() failed: %s", strerror(errno));
         con->shutdown();
+        ctx->connection_initiated = false;
     }
 }
 

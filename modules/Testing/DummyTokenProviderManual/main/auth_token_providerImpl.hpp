@@ -19,19 +19,14 @@
 namespace module {
 namespace main {
 
-struct Conf {
-    std::string token;
-    std::string type;
-    double timeout;
-};
+struct Conf {};
 
 class auth_token_providerImpl : public auth_token_providerImplBase {
 public:
     auth_token_providerImpl() = delete;
     auth_token_providerImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<DummyTokenProviderManual>& mod,
                             Conf& config) :
-        auth_token_providerImplBase(ev, "main"), mod(mod), config(config) {
-    }
+        auth_token_providerImplBase(ev, "main"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

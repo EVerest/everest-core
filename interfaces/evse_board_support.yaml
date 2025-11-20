@@ -55,18 +55,6 @@ cmds:
       value:
         description: Time in ms for the duration of the replug sequence
         type: integer
-  ac_read_pp_ampacity:
-    description: >-
-      Read the current carrying capacity of the connected cable in ampere for AC charging
-      with a socket. This function will be used by EvseManager to get the PP value at 
-      a distinct time. You should also publish the var pp_ampacity whenever the PP ampacity reading changes
-      to signal changes e.g. during the charging time.
-      This has no meaning for DC or AC charging with a fixed attached cable, it does not 
-      need to be implemented and the returned value is not used in those cases.
-    result:
-      description: Returns the current carrying capacity of the connected cable
-      type: object
-      $ref: /board_support_common#/ProximityPilot
   ac_set_overcurrent_limit_A:
     description: >-
       Many chargers implement a fast over current shutdown directly in the hardware that triggers if the EV draws more current than

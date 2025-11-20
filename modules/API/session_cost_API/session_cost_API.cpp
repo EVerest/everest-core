@@ -3,6 +3,7 @@
 
 #include "session_cost_API.hpp"
 
+#include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/session_cost/API.hpp>
 #include <everest_api_types/session_cost/codec.hpp>
 #include <everest_api_types/session_cost/wrapper.hpp>
@@ -14,13 +15,14 @@ namespace module {
 
 namespace API_types = ev_API::V1_0::types;
 namespace API_types_ext = API_types::session_cost;
+namespace API_generic = API_types::generic;
 using ev_API::deserialize;
 
 void session_cost_API::init() {
     invoke_init(*p_main);
     invoke_init(*p_generic_error);
 
-    topics.setTargetApiModuleID(info.id, "session_cost");
+    topics.setup(info.id, "session_cost", 1);
 }
 
 void session_cost_API::ready() {
@@ -72,7 +74,7 @@ void session_cost_API::generate_api_var_communication_check() {
 void session_cost_API::setup_heartbeat_generator() {
     auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
-        mqtt.publish(topic, "{}");
+        mqtt.publish(topic, API_generic::serialize(hb_id++));
         return true;
     };
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);

@@ -53,7 +53,10 @@ void ev_slacImpl::run() {
         publish_state(value);
     };
 
-    callbacks.log = [](const std::string& text) { EVLOG_info << "EvSlac: " << text; };
+    callbacks.log_debug = [](const std::string& text) { EVLOG_debug << "EvSlac: " << text; };
+    callbacks.log_info = [](const std::string& text) { EVLOG_info << "EvSlac: " << text; };
+    callbacks.log_warn = [](const std::string& text) { EVLOG_warning << "EvSlac: " << text; };
+    callbacks.log_error = [](const std::string& text) { EVLOG_error << "EvSlac: " << text; };
 
     auto fsm_ctx = slac::fsm::ev::Context(callbacks);
     // fsm_ctx.slac_config.set_key_timeout_ms = config.set_key_timeout_ms;

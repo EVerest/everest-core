@@ -19,28 +19,24 @@ void slacImpl::handle_reset(bool& enable) {
     set_state_to_unmatched();
 }
 
-bool slacImpl::handle_enter_bcd() {
+void slacImpl::handle_enter_bcd() {
     set_state_to_matching();
-    return true;
 }
 
-bool slacImpl::handle_leave_bcd() {
+void slacImpl::handle_leave_bcd() {
     set_state_to_unmatched();
-    return true;
 }
 
-bool slacImpl::handle_dlink_terminate() {
+void slacImpl::handle_dlink_terminate() {
     set_state_to_unmatched();
-    return true;
 }
 
-bool slacImpl::handle_dlink_error() {
+void slacImpl::handle_dlink_error() {
     set_state_to_unmatched();
-    return true;
 }
 
-bool slacImpl::handle_dlink_pause() {
-    return true;
+void slacImpl::handle_dlink_pause() {
+    // No action needed for D-LINK_PAUSE in simulation
 }
 
 void slacImpl::set_state_to_unmatched() {

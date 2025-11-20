@@ -422,13 +422,6 @@ bool configure_ssl_ctx(bool is_server, SSL_CTX*& ctx, const char* ciphersuites, 
     bool result{true};
 
     if (is_server) {
-        bool custom_key = false;
-
-        if (cert_config.private_key_file != nullptr) {
-            fs::path keyfile{std::string(cert_config.private_key_file)};
-            custom_key = evse_security::is_custom_private_key_file(keyfile);
-        }
-
         OpenSSLProvider provider;
 
         const SSL_METHOD* method = TLS_server_method();

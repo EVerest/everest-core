@@ -7,10 +7,10 @@ edition = "2021"
 
 [dependencies]
 everestrs = { workspace=true }
-anyhow = "1.0.75"
-zvt = { git = "https://github.com/Everest/zvt.git", rev = "67ecf299f80963d5ef6ed14922796532e05caf03" }
-zvt_feig_terminal = { git = "https://github.com/Everest/zvt.git", rev = "67ecf299f80963d5ef6ed14922796532e05caf03" }
-tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "net", "sync"] }
+anyhow = "1.0.82"
+zvt = { git = "https://github.com/Everest/zvt.git", rev = "60574939d2cbe35b5d4fc9b03af7e8c3e098706c" }
+zvt_feig_terminal = { git = "https://github.com/Everest/zvt.git", rev = "60574939d2cbe35b5d4fc9b03af7e8c3e098706c", features = ["with_lavego_error_codes"] }
+tokio = { version = "1.47.0", features = ["macros", "rt-multi-thread", "net", "sync"] }
 log = "0.4.20"
 mockall = { version = "0.12.1", optional = true }
 mockall_double = { version = "0.3.1", optional = true}
@@ -19,4 +19,5 @@ mockall_double = { version = "0.3.1", optional = true}
 everestrs-build = { workspace=true }
 
 [features]
-default = ["mockall", "mockall_double"]
+with_lavego_error_codes = ["zvt_feig_terminal/with_lavego_error_codes"]
+default = ["mockall", "mockall_double", "with_lavego_error_codes"]

@@ -18,7 +18,7 @@ SCENARIO("Commands can be registered", "[RegisteredCommand]") {
             command_registry.register_command(command_name, argument_count, test_comand_0_function);
 
             THEN("The command can be retrieved") {
-                const auto& registered_command = command_registry.get_registered_command(command_name);
+                const auto& registered_command = command_registry.get_registered_command(command_name, 0);
                 THEN("The command can be executed") {
                     CHECK(registered_command({}) == true);
                 }
@@ -47,7 +47,7 @@ SCENARIO("Commands can be registered", "[RegisteredCommand]") {
             command_registry.register_command(command_name, argument_count, test_comand_1_function);
 
             THEN("The command can be retrieved") {
-                const auto& registered_command = command_registry.get_registered_command(command_name);
+                const auto& registered_command = command_registry.get_registered_command(command_name, 1);
                 THEN("The command can be executed") {
                     CHECK(registered_command({"arg1"}) == true);
                 }
@@ -73,7 +73,7 @@ SCENARIO("Commands can be registered", "[RegisteredCommand]") {
             command_registry.register_command(command_name, argument_count, test_comand_2_function);
 
             THEN("The command can be retrieved") {
-                const auto& registered_command = command_registry.get_registered_command(command_name);
+                const auto& registered_command = command_registry.get_registered_command(command_name, 2);
                 THEN("The command can be executed") {
                     CHECK(registered_command({"arg1", "arg2"}) == true);
                 }
@@ -85,6 +85,44 @@ SCENARIO("Commands can be registered", "[RegisteredCommand]") {
                     CHECK_THROWS_WITH(registered_command({"arg1", "arg2", "arg3"}),
                                       "Invalid number of arguments for: test_command2 expected 2 got 3");
                 }
+            }
+        }
+    }
+
+    GIVEN("Two identical commands with different arguments") {
+        auto command_registry = CommandRegistry();
+        const std::string command_name = std::string{"test_command"};
+        const auto test_command_1_function = [](const std::vector<std::string>& arguments) {
+            return arguments.size() == 1;
+        };
+        const auto test_command_2_function = [](const std::vector<std::string>& arguments) {
+            return arguments.size() == 2;
+        };
+
+        WHEN("The command is registered") {
+            command_registry.register_command(command_name, 1, test_command_1_function);
+            command_registry.register_command(command_name, 2, test_command_2_function);
+
+            THEN("The command can be retrieved") {
+                const auto& registered_command1 = command_registry.get_registered_command(command_name, 1);
+                const auto& registered_command2 = command_registry.get_registered_command(command_name, 2);
+
+                THEN("The command can be executed") {
+                    CHECK(registered_command1({"arg1"}) == true);
+                    CHECK(registered_command2({"arg1", "arg2"}) == true);
+                }
+                THEN("The command throws when the number of arguments is invalid") {
+                    CHECK_THROWS_WITH(registered_command1({}),
+                                      "Invalid number of arguments for: test_command expected 1 got 0");
+                    CHECK_THROWS_WITH(registered_command1({"arg1", "arg2"}),
+                                      "Invalid number of arguments for: test_command expected 1 got 2");
+                }
+            }
+            THEN("The wrong commands can not be retrieved") {
+                CHECK_THROWS_WITH(command_registry.get_registered_command(command_name, 0),
+                                  "Command not found: test_command");
+                CHECK_THROWS_WITH(command_registry.get_registered_command(command_name, 4),
+                                  "Command not found: test_command");
             }
         }
     }

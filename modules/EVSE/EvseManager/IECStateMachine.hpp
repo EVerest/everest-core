@@ -74,6 +74,7 @@ public:
     // Allow power on from Charger state machine
     void allow_power_on(bool value, types::evse_board_support::Reason reason);
 
+    void set_pp_ampacity(types::board_support_common::ProximityPilot pp);
     double read_pp_ampacity();
     void evse_replug(int ms);
     void switch_three_phases_while_charging(bool n);
@@ -119,19 +120,19 @@ private:
     bool has_ventilation{false};
     bool power_on_allowed{false};
     bool last_power_on_allowed{false};
+    std::atomic<double> pp_ampacity{0.0};
     std::atomic<double> last_amps{-1};
     std::atomic_bool three_phases{true};
 
     bool car_plugged_in{false};
 
-    RawCPState cp_state{RawCPState::Disabled}, last_cp_state{RawCPState::Disabled};
+    RawCPState last_cp_state{RawCPState::Disabled};
     AsyncTimeout timeout_state_c1;
     AsyncTimeout timeout_unlock_state_F;
 
     Everest::timed_mutex_traceable state_machine_mutex;
-    void feed_state_machine();
-    void feed_state_machine_no_thread();
-    std::queue<CPEvent> state_machine();
+    void feed_state_machine(RawCPState cp_state);
+    std::queue<CPEvent> state_machine(RawCPState cp_state);
 
     types::evse_board_support::Reason power_on_reason{types::evse_board_support::Reason::PowerOff};
     void call_allow_power_on_bsp(bool value);

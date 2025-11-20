@@ -11,6 +11,7 @@ namespace everest::lib::API::V1_0::types::generic {
 
 std::string serialize(bool val) noexcept;
 std::string serialize(int val) noexcept;
+std::string serialize(size_t val) noexcept;
 std::string serialize(double val) noexcept;
 std::string serialize(float val) noexcept;
 std::string serialize(std::string const& val) noexcept;

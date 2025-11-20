@@ -553,8 +553,8 @@ void to_json(json& j, SetVariablesArgs const& k) noexcept {
 }
 
 void from_json(const json& j, SetVariablesArgs& k) {
-    k.variables = j["variables"];
-    k.source = j["source"];
+    k.variables = j.at("variables");
+    k.source = j.at("source");
 }
 
 void to_json(json& j, SecurityEvent const& k) noexcept {

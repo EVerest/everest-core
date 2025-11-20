@@ -27,7 +27,7 @@ void ocpp_consumer_API::init() {
     invoke_init(*p_main);
     invoke_init(*p_generic_error);
 
-    topics.setTargetApiModuleID(info.id, "ocpp_consumer");
+    topics.setup(info.id, "ocpp_consumer", 1);
 }
 
 void ocpp_consumer_API::ready() {
@@ -146,7 +146,7 @@ void ocpp_consumer_API::generate_api_var_communication_check() {
 void ocpp_consumer_API::setup_heartbeat_generator() {
     auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
-        mqtt.publish(topic, "{}");
+        mqtt.publish(topic, API_generic::serialize(hb_id++));
         return true;
     };
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);

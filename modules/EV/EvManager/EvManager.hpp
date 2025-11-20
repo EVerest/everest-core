@@ -15,7 +15,6 @@
 #include <generated/interfaces/ev_manager/Implementation.hpp>
 
 // headers for required interface implementations
-#include "generated/interfaces/kvs/Interface.hpp"
 #include <generated/interfaces/ISO15118_ev/Interface.hpp>
 #include <generated/interfaces/ev_board_support/Interface.hpp>
 #include <generated/interfaces/ev_slac/Interface.hpp>
@@ -48,8 +47,11 @@ struct Conf {
     int dc_discharge_v2g_minimal_soc;
     double max_current;
     bool three_phases;
+    int departure_time;
+    int e_amount;
     int soc;
     bool keep_cross_boot_plugin_state;
+    std::string plugin_commands;
 };
 
 class EvManager : public Everest::ModuleBase {

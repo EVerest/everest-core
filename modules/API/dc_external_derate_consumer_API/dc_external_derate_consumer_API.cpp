@@ -23,7 +23,7 @@ double to_external_api(double val) {
 void dc_external_derate_consumer_API::init() {
     invoke_init(*p_generic_error);
 
-    topics.setTargetApiModuleID(info.id, "dc_external_derate_consumer");
+    topics.setup(info.id, "dc_external_derate_consumer", 1);
 }
 
 void dc_external_derate_consumer_API::ready() {
@@ -84,7 +84,7 @@ void dc_external_derate_consumer_API::generate_api_var_communication_check() {
 void dc_external_derate_consumer_API::setup_heartbeat_generator() {
     auto topic = topics.everest_to_extern("heartbeat");
     auto action = [this, topic]() {
-        mqtt.publish(topic, "{}");
+        mqtt.publish(topic, API_generic::serialize(hb_id++));
         return true;
     };
     comm_check.heartbeat(config.cfg_heartbeat_interval_ms, action);

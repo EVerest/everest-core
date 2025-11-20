@@ -416,13 +416,13 @@ std::vector<uint16_t> TinyModbusRTU::txrx(uint8_t device_address, FunctionCode f
     return out;
 }
 
-std::vector<uint8_t> _make_single_write_request(uint8_t device_address, uint16_t register_address, bool wait_for_reply,
-                                                uint16_t data) {
+std::vector<uint8_t> _make_single_write_request(uint8_t device_address, FunctionCode function,
+                                                uint16_t register_address, bool wait_for_reply, uint16_t data) {
     const int req_len = 8;
     std::vector<uint8_t> req(req_len);
 
     req[DEVICE_ADDRESS_POS] = device_address;
-    req[FUNCTION_CODE_POS] = static_cast<uint8_t>(FunctionCode::WRITE_SINGLE_HOLDING_REGISTER);
+    req[FUNCTION_CODE_POS] = static_cast<uint8_t>(function);
 
     register_address = htobe16(register_address);
     data = htobe16(data);
@@ -479,8 +479,9 @@ std::vector<uint16_t> TinyModbusRTU::txrx_impl(uint8_t device_address, FunctionC
         }
 
         auto req =
-            function == FunctionCode::WRITE_SINGLE_HOLDING_REGISTER
-                ? _make_single_write_request(device_address, first_register_address, wait_for_reply, request.at(0))
+            function == FunctionCode::WRITE_SINGLE_HOLDING_REGISTER or function == FunctionCode::WRITE_SINGLE_COIL
+                ? _make_single_write_request(device_address, function, first_register_address, wait_for_reply,
+                                             request.at(0))
                 : _make_generic_request(device_address, function, first_register_address, register_quantity, request);
         // clear input and output buffer
         tcflush(fd, TCIOFLUSH);

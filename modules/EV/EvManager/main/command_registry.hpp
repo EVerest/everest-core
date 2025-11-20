@@ -16,6 +16,7 @@ class RegisteredCommandBase {
 public:
     virtual ~RegisteredCommandBase() = default;
     virtual bool operator()(const std::vector<std::string>& /*arguments*/) const = 0;
+    [[nodiscard]] virtual std::size_t get_argument_count() const = 0;
 };
 
 class RegisteredCommand : public RegisteredCommandBase {
@@ -35,6 +36,10 @@ public:
         return function(arguments);
     }
 
+    [[nodiscard]] std::size_t get_argument_count() const override {
+        return argument_count;
+    }
+
 private:
     std::string command_name;
     std::size_t argument_count;
@@ -47,21 +52,33 @@ public:
 
     void register_command(std::string command_name, size_t argument_count,
                           const std::function<bool(std::vector<std::string>)>& function) {
-        registered_commands.try_emplace(command_name,
-                                        std::make_unique<RegisteredCommand>(command_name, argument_count, function));
+        registered_commands.emplace(command_name,
+                                    std::make_unique<RegisteredCommand>(command_name, argument_count, function));
     }
 
-    const RegisteredCommandBase& get_registered_command(const std::string& command_name) const {
-        try {
-            const auto& registered_command = registered_commands.at(command_name);
-            return *registered_command.get();
-        } catch (const std::out_of_range&) {
-            throw std::invalid_argument{"Command not found: " + command_name};
+    const RegisteredCommandBase& get_registered_command(const std::string& command_name,
+                                                        std::size_t arguments_count) const {
+
+        const auto cmd_count = registered_commands.count(command_name);
+
+        if (cmd_count == 1) {
+            if (auto iter = registered_commands.find(command_name); iter != registered_commands.end()) {
+                return *iter->second;
+            }
+        } else if (cmd_count >= 2) {
+            auto range = registered_commands.equal_range(command_name);
+            for (auto iter = range.first; iter != range.second; ++iter) {
+                if (iter->second->get_argument_count() == arguments_count) {
+                    return *iter->second;
+                }
+            }
         }
+
+        throw std::invalid_argument{"Command not found: " + command_name};
     }
 
 private:
-    using RegisteredCommands = std::unordered_map<std::string, std::unique_ptr<RegisteredCommandBase>>;
+    using RegisteredCommands = std::unordered_multimap<std::string, std::unique_ptr<RegisteredCommandBase>>;
 
     RegisteredCommands registered_commands;
 };

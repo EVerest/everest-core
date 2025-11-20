@@ -81,6 +81,7 @@ private:
     void setup_heartbeat_generator();
 
     ev_API::Topics topics;
+    size_t hb_id{0};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

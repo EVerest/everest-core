@@ -39,6 +39,16 @@ event::unique_fd open_udp_client_socket(std::string const& host, std::uint16_t p
 event::unique_fd open_tcp_socket(const std::string& host, std::uint16_t port);
 
 /**
+ * @brief Open a TCP socket in client mode
+ * @param[in] host The host to connect to
+ * @param[in] port The port to listen to.
+ * @param[in] timeout_ms Timeout for the operation in ms
+ * @return The managed file descriptor of the socket
+ * @throws std::runtime_error if the operation fails.
+ */
+event::unique_fd open_tcp_socket_with_timeout(const std::string& host, std::uint16_t port, unsigned int timeout_ms);
+
+/**
  * @brief Enable <a href="https://man7.org/linux/man-pages/man7/tcp.7.html">TCP_NODELAY</a> on a socket
  * @details   If set, disable the Nagle algorithm.  This means that
  *            segments are always sent as soon as possible, even if there

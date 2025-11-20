@@ -64,8 +64,6 @@ public:
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    ev_API::CommCheckHandler<generic_errorImplBase> comm_check;
-
     const ev_API::Topics& get_topics() const;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
@@ -100,7 +98,9 @@ private:
     void setup_heartbeat_generator();
 
     ev_API::Topics topics;
+    ev_API::CommCheckHandler<generic_errorImplBase> comm_check;
 
+    size_t hb_id{0};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

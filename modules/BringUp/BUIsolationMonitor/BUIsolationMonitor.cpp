@@ -27,6 +27,14 @@ static std::vector<std::vector<std::string>> to_table(types::isolation_monitor::
         measurement.push_back({"DC Voltage", fmt::format("{} V", m.voltage_V.value())});
     }
 
+    if (m.voltage_to_earth_l1e_V.has_value()) {
+        measurement.push_back({"DC Voltage to Earth L1E", fmt::format("{} V", m.voltage_to_earth_l1e_V.value())});
+    }
+
+    if (m.voltage_to_earth_l2e_V.has_value()) {
+        measurement.push_back({"DC Voltage to Earth L2E", fmt::format("{} V", m.voltage_to_earth_l2e_V.value())});
+    }
+
     measurement.push_back({"Timestamp: ", Everest::Date::to_rfc3339(date::utc_clock::now())});
 
     return measurement;

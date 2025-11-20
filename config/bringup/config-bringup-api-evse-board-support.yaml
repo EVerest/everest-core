@@ -12,3 +12,9 @@ active_modules:
       bsp:
         - module_id: bsp_1
           implementation_id: main
+      lock_motor:
+        - module_id: bsp_1
+          implementation_id: connector_lock
+      ac_rcd:
+        - module_id: bsp_1
+          implementation_id: rcd

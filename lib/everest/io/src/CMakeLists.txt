@@ -19,7 +19,7 @@ target_sources(everest_io
         serial/serial.cpp
         serial/pty_handler.cpp
         serial/event_pty.cpp
-        mqtt/mqtt_handler.cpp
+        mqtt/mosquitto_cpp.cpp
         mqtt/mqtt_client.cpp
         tun_tap/tap_handler.cpp
         tcp/tcp_socket.cpp
@@ -30,11 +30,12 @@ target_include_directories(everest_io
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
         $<INSTALL_INTERFACE:include>
+        ${mosquitto_SOURCE_DIR}/include
 )
 
 target_link_libraries(everest_io
     PUBLIC
-        mqttc
+        everest::util
 )
 
 target_compile_features(everest_io PUBLIC cxx_std_17)
@@ -56,6 +57,18 @@ include(CMakePackageConfigHelpers)
 set_target_properties(everest_io
     PROPERTIES EXPORT_NAME io
 )
+
+if(DISABLE_EDM)
+  target_link_libraries(everest_io
+    PRIVATE
+    mosquitto
+  )
+else()
+  target_link_libraries(everest_io
+    PRIVATE
+    libmosquitto
+  )
+endif()
 
 install(
   TARGETS everest_io

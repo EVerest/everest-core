@@ -150,10 +150,6 @@ void evse_board_supportImpl::handle_evse_replug(int& value) {
     mod->serial.replug();
 }
 
-types::board_support_common::ProximityPilot evse_board_supportImpl::handle_ac_read_pp_ampacity() {
-    return {types::board_support_common::Ampacity::A_13};
-}
-
 void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
     // your code for cmd ac_set_overcurrent_limit_A goes here
 }

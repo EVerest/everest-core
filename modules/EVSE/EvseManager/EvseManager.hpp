@@ -190,6 +190,7 @@ public:
                                   float max_current_export);
     bool update_max_watt_limit(types::energy::ExternalLimits& limits, float max_watt_export,
                                std::optional<float> max_watt_import);
+    void update_to_zero_discharge_limit(types::energy::ExternalLimits& limits);
     bool update_local_energy_limit(types::energy::ExternalLimits l);
     types::energy::ExternalLimits get_local_energy_limits();
 
@@ -243,6 +244,7 @@ public:
     std::atomic<std::chrono::time_point<std::chrono::steady_clock>> timepoint_ready_for_charging;
 
     bool session_is_iso_d20_ac_bpt();
+    bool session_is_iso_d20_dc_bpt();
 
     types::power_supply_DC::Capabilities get_powersupply_capabilities();
     void set_external_derating(types::dc_external_derate::ExternalDerating d);
@@ -323,6 +325,12 @@ private:
     VarContainer<types::power_supply_DC::VoltageCurrent> powersupply_measurement;
     VarContainer<bool> selftest_result;
 
+    // Track voltage to earth failures for debouncing
+    int voltage_to_earth_failure_count{0};
+    std::chrono::steady_clock::time_point first_voltage_to_earth_failure_time{};
+    static constexpr std::chrono::seconds MIN_TIME_BETWEEN_FIRST_AND_LAST_FAILURE{2};
+    static constexpr int REQUIRED_CONSECUTIVE_FAILURES{2};
+
     double latest_target_voltage;
     double latest_target_current;
 
@@ -372,6 +380,7 @@ private:
     void setup_v2h_mode();
 
     bool check_isolation_resistance_in_range(double resistance);
+    bool check_voltage_to_protective_earth_in_range(types::isolation_monitor::IsolationMeasurement m);
 
     static constexpr auto CABLECHECK_CONTACTORS_CLOSE_TIMEOUT{std::chrono::seconds(5)};
     static constexpr double CABLECHECK_CURRENT_LIMIT{2};
