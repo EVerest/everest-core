@@ -75,17 +75,17 @@ config:
     default: false
   ac_hlc_use_5percent:
     description: >-
-      Use 5 percent PWM signalling to try to enforce HLC on AC. Note that if EIM arrives before SLAC matching, we will
-      fall back to nominal PWM charging. So most cars will never use HLC in this mode, especially on a free service
-      where EIM is always available, but that is what ISO15118-2/-3 requires to be compliant - it wants to use HLC only
-      for PnC and not for EIM.
+      If set to true, start with 5% PWM if HLC is enabled on AC. If set to false, start with X1. Note that
+      almost no EV will perform SLAC/HLC on X1. Recommendation is to set this to true.
     type: boolean
-    default: false
+    default: true
   ac_enforce_hlc:
     description: >-
-      Combine with 5percent option to really enforce HLC even with EIM. It is not ISO15118-2/-3 compliant as it waits
-      for matching even if EIM is available before SLAC reaches matched state. On cars that do not support ISO15118 on
-      AC this will take a very long time to timeout and fall back to basic nominal PWM charging, but it will eventually.
+      Combine with 5percent option to really enforce HLC even with EIM. ISO15118-3 forbids the usage of 5% if Auth happens before plugin,
+      but most EVs will not perform HLC with nominal PWM. For the home use case (always authorized or auth before plugin) it may still be desirable
+      to use HLC e.g. for better energy management.
+      In this case you can use this option, but be aware that EVs that do not support HLC may take a long time to start (or never start) charging.
+      This mode is not ISO15118-2/-3 compliant. Do not use for public charging stations.
     type: boolean
     default: false
   ac_with_soc:

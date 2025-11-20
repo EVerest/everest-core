@@ -390,6 +390,10 @@ private:
         bool t_step_ef_x1_pause{false};
         bool pwm_F_active{false};
 
+        bool ac_x1_fallback_nominal_timeout_running{false};
+        std::chrono::time_point<std::chrono::steady_clock> ac_x1_fallback_nominal_timeout_started;
+        bool auth_received_printed{false};
+
         std::chrono::time_point<std::chrono::steady_clock> fatal_error_became_active;
         bool fatal_error_timer_running{false};
     } internal_context;
@@ -433,6 +437,7 @@ private:
     // after the wake-up sequence.
     static constexpr int STAY_IN_X1_AFTER_TSTEP_EF_MS = 750;
     static constexpr int WAIT_FOR_ENERGY_IN_AUTHLOOP_TIMEOUT_MS = 5000;
+    static constexpr int AC_X1_FALLBACK_TO_NOMINAL_TIMEOUT_MS = 3000;
 
     types::evse_manager::EnableDisableSource active_enable_disable_source{
         types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Unassigned, 10000};

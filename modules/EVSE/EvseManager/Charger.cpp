@@ -244,6 +244,8 @@ void Charger::run_state_machine() {
             if (initialize_state) {
                 internal_context.pp_warning_printed = false;
                 internal_context.no_energy_warning_printed = false;
+                internal_context.ac_x1_fallback_nominal_timeout_running = false;
+                internal_context.auth_received_printed = false;
 
                 bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
 
@@ -277,8 +279,15 @@ void Charger::run_state_machine() {
                     // enabling PWM.
                     std::this_thread::sleep_for(
                         std::chrono::milliseconds(config_context.sleep_before_enabling_pwm_hlc_mode_ms));
-                    update_pwm_now(PWM_5_PERCENT);
-                    stopwatch.mark("HLC_PWM_5%_ON");
+
+                    // If already authorized before plugin, do not use 5% PWM on AC HLC
+                    if (shared_context.authorized and config_context.charge_mode == ChargeMode::AC and
+                        ac_hlc_enabled_current_session and not config_context.ac_enforce_hlc) {
+                        hlc_use_5percent_current_session = false;
+                    } else {
+                        update_pwm_now(PWM_5_PERCENT);
+                        stopwatch.mark("HLC_PWM_5%_ON");
+                    }
                 }
             }
 
@@ -338,7 +347,10 @@ void Charger::run_state_machine() {
             // in DC mode: go to error_slac for this session
 
             if (shared_context.authorized and not shared_context.authorized_pnc) {
-                session_log.evse(false, "EIM Authorization received");
+                if (not internal_context.auth_received_printed) {
+                    internal_context.auth_received_printed = true;
+                    session_log.evse(false, "EIM Authorization received");
+                }
 
                 // If we are restarting, the transaction may already be active
                 if (not shared_context.transaction_active) {
@@ -371,29 +383,71 @@ void Charger::run_state_machine() {
                                         "disable 5 percent if it was enabled before: {}",
                                         (bool)hlc_use_5percent_current_session));
 
-                                // Figure 3 of ISO15118-3: 5 percent start, PnC and EIM
-                                // Figure 4 of ISO15118-3: X1 start, PnC and EIM
-                                internal_context.t_step_EF_return_state = target_state;
-                                internal_context.t_step_EF_return_pwm = 0.;
-                                internal_context.t_step_EF_return_ampere = 0.;
-                                // fall back to nominal PWM after the t_step_EF break. Note that
-                                // ac_hlc_enabled_current_session remains untouched as HLC can still start later in
-                                // nominal PWM mode
                                 hlc_use_5percent_current_session = false;
-                                shared_context.current_state = EvseState::T_step_EF;
+
+                                if (hlc_use_5percent_current_session) {
+                                    // Figure 3 of ISO15118-3: 5 percent start, PnC and EIM
+                                    internal_context.t_step_EF_return_state = target_state;
+                                    internal_context.t_step_EF_return_pwm = 0.;
+                                    internal_context.t_step_EF_return_ampere = 0.;
+                                    shared_context.current_state = EvseState::T_step_EF;
+                                    // fall back to nominal PWM after the t_step_EF break. Note that
+                                    // ac_hlc_enabled_current_session remains untouched as HLC can still start later in
+                                    // nominal PWM mode
+                                } else {
+                                    // Figure 4 of ISO15118-3: X1 start, PnC and EIM
+                                    // This figure requires a T_step_F for X1->Nominal. This does not really make sense.
+                                    // Also this is basically the same case as auth before plugin (which here in Everest
+                                    // technically is auth very shortly after plugin as the auch module assigns auth
+                                    // only on plug events) For auth before plugin -3 requires no T_step_EF. Also normal
+                                    // BC does X1>nomainal without F. We deviate from the standard here and perform no
+                                    // T_step_EF.
+
+                                    shared_context.current_state = target_state;
+                                }
+
                             } else {
                                 // SLAC matching was started already when EIM arrived
                                 if (hlc_use_5percent_current_session) {
                                     // Figure 5 of ISO15118-3: 5 percent start, PnC and EIM, matching already started
                                     // when EIM was done
-                                    session_log.evse(
-                                        false, "AC mode, HLC enabled(5percent), matching already started. Go through "
-                                               "t_step_X1 and disable 5 percent.");
-                                    internal_context.t_step_X1_return_state = target_state;
-                                    internal_context.t_step_X1_return_pwm = 0.;
-                                    internal_context.t_step_EF_return_ampere = 0.;
-                                    hlc_use_5percent_current_session = false;
-                                    shared_context.current_state = EvseState::T_step_X1;
+                                    // This has the following real world issue: The X1 will kill the ISO-2 session and
+                                    // the EV will send a session stop. On EVs that actually support AC charge loop
+                                    // (such as VW), this would mean the end of it and they require a replug. To fix
+                                    // this, we should not go straight to X1 after EIM, but give the ISO stack some time
+                                    // to actually go into chargeloop. If that happens, we should keep 5% to not kill
+                                    // the ISO session, and if it does not within a timeout, we can still perform
+                                    // X1->nominal for EVs that performed the ISO auth loop but do not support ISO
+                                    // chargeloop (or non-HLC cars)
+
+                                    // If EV already sent a PowerDeliver.req
+                                    if (shared_context.hlc_charging_active) {
+                                        session_log.evse(
+                                            false,
+                                            "AC mode, HLC enabled(5percent), v2g_session_setup_finished shortly after "
+                                            "EIM. Keep 5% enabled to not accidentially kill the ISO session.");
+                                        shared_context.current_state = target_state;
+                                    } else {
+                                        if (internal_context.ac_x1_fallback_nominal_timeout_running) {
+                                            if (std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                    std::chrono::steady_clock::now() -
+                                                    internal_context.ac_x1_fallback_nominal_timeout_started)
+                                                    .count() > AC_X1_FALLBACK_TO_NOMINAL_TIMEOUT_MS) {
+                                                session_log.evse(false, "AC mode, HLC enabled(5percent), matching "
+                                                                        "already started. Go through "
+                                                                        "t_step_X1 and disable 5 percent.");
+                                                internal_context.t_step_X1_return_state = target_state;
+                                                internal_context.t_step_X1_return_pwm = 0.;
+                                                internal_context.t_step_EF_return_ampere = 0.;
+                                                hlc_use_5percent_current_session = false;
+                                                shared_context.current_state = EvseState::T_step_X1;
+                                            }
+                                        } else {
+                                            internal_context.ac_x1_fallback_nominal_timeout_running = true;
+                                            internal_context.ac_x1_fallback_nominal_timeout_started =
+                                                std::chrono::steady_clock::now();
+                                        }
+                                    }
                                 } else {
                                     // Figure 6 of ISO15118-3: X1 start, PnC and EIM, matching already started when EIM
                                     // was done. We can go directly to PrepareCharging, as we do not need to switch from
@@ -434,16 +488,49 @@ void Charger::run_state_machine() {
                 const EvseState target_state(EvseState::PrepareCharging);
 
                 // We got authorization by Plug and Charge
-                session_log.evse(false, "PnC Authorization received");
-                if (config_context.charge_mode == ChargeMode::AC) {
-                    // Figures 3,4,5,6 of ISO15118-3: Independent on how we started we can continue with 5 percent
-                    // signalling once we got PnC authorization without going through t_step_EF or t_step_X1.
+                if (not internal_context.auth_received_printed) {
+                    internal_context.auth_received_printed = true;
+                    session_log.evse(false, "PnC Authorization received");
+                }
 
-                    session_log.evse(
-                        false, "AC mode, HLC enabled, PnC auth received. We will continue with 5percent independent on "
-                               "how we started.");
-                    hlc_use_5percent_current_session = true;
-                    shared_context.current_state = target_state;
+                if (config_context.charge_mode == ChargeMode::AC) {
+                    // Figures 3,4,5,6 of ISO15118-3: Independent on how we started we can continue with 5 percent or
+                    // switch to nominal signalling once we got PnC authorization without going through t_step_EF or
+                    // t_step_X1. Some EVs implement a non-standard way for PnC with AC: They perform ISO until Auth
+                    // loop, and once authorization is provided, they close TCP (or send SessionStop). The intention is
+                    // to use only the PnC part of ISO (which is the same as DC to that point) and then do normal BC
+                    // instead of ISO charging loop. To support this we wait a short timeout to see if the chargeloop is
+                    // entered, and if not, we switch back to nominal. To get a similar behaviour for PnC and EIM we
+                    // still perform a T_step_EF here even if the standard says differently.
+                    if (shared_context.hlc_charging_active) {
+                        // AC HLC charging loop started
+                        session_log.evse(false, "AC mode, HLC, PnC auth received. We will continue with 5percent as "
+                                                "HLC charing loop was started.");
+                        hlc_use_5percent_current_session = true;
+                        shared_context.current_state = target_state;
+
+                    } else {
+                        // AC HLC charging loop not yet started
+                        if (internal_context.ac_x1_fallback_nominal_timeout_running) {
+                            if (std::chrono::duration_cast<std::chrono::milliseconds>(
+                                    std::chrono::steady_clock::now() -
+                                    internal_context.ac_x1_fallback_nominal_timeout_started)
+                                    .count() > AC_X1_FALLBACK_TO_NOMINAL_TIMEOUT_MS) {
+                                session_log.evse(
+                                    false,
+                                    "AC mode, HLC enabled, PnC authorized, but charging loop did not start. Go through "
+                                    "t_step_EF and disable 5 percent.");
+                                internal_context.t_step_EF_return_state = target_state;
+                                internal_context.t_step_EF_return_pwm = 0.;
+                                internal_context.t_step_EF_return_ampere = 0.;
+                                hlc_use_5percent_current_session = false;
+                                shared_context.current_state = EvseState::T_step_EF;
+                            }
+                        } else {
+                            internal_context.ac_x1_fallback_nominal_timeout_running = true;
+                            internal_context.ac_x1_fallback_nominal_timeout_started = std::chrono::steady_clock::now();
+                        }
+                    }
 
                 } else if (config_context.charge_mode == ChargeMode::DC) {
                     // Figure 8 of ISO15118-3: DC with EIM before or after plugin or PnC
@@ -843,7 +930,6 @@ void Charger::run_state_machine() {
                           << evse_state_to_string(internal_context.last_state_detect_state_change)
                           << " current_state: " << evse_state_to_string(shared_context.current_state);
         }
-
     } while (internal_context.last_state_detect_state_change not_eq shared_context.current_state);
 }
 
