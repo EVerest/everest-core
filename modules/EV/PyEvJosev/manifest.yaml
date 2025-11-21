@@ -49,7 +49,7 @@ config:
     type: boolean
     default: false
   select_all_vas_services:
-    description: If true, the ev will ask for details about all offered services
+    description: If true, the ev will select all offered services
     type: boolean
     default: false
   supported_d20_energy_services:
