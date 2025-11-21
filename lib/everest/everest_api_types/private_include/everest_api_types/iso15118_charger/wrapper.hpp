@@ -10,12 +10,6 @@
 
 namespace everest::lib::API::V1_0::types::iso15118_charger {
 
-using CertificateActionEnum_Internal = ::types::iso15118::CertificateActionEnum;
-using CertificateActionEnum_External = CertificateActionEnum;
-
-CertificateActionEnum_Internal to_internal_api(CertificateActionEnum_External const& val);
-CertificateActionEnum_External to_external_api(CertificateActionEnum_Internal const& val);
-
 using EnergyTransferMode_Internal = ::types::iso15118::EnergyTransferMode;
 using EnergyTransferMode_External = EnergyTransferMode;
 
@@ -33,18 +27,6 @@ using HashAlgorithm_External = HashAlgorithm;
 
 HashAlgorithm_Internal to_internal_api(HashAlgorithm_External const& val);
 HashAlgorithm_External to_external_api(HashAlgorithm_Internal const& val);
-
-using RequestExiStreamSchema_Internal = ::types::iso15118::RequestExiStreamSchema;
-using RequestExiStreamSchema_External = RequestExiStreamSchema;
-
-RequestExiStreamSchema_Internal to_internal_api(RequestExiStreamSchema_External const& val);
-RequestExiStreamSchema_External to_external_api(RequestExiStreamSchema_Internal const& val);
-
-using ResponseExiStreamStatus_Internal = ::types::iso15118::ResponseExiStreamStatus;
-using ResponseExiStreamStatus_External = ResponseExiStreamStatus;
-
-ResponseExiStreamStatus_Internal to_internal_api(ResponseExiStreamStatus_External const& val);
-ResponseExiStreamStatus_External to_external_api(ResponseExiStreamStatus_Internal const& val);
 
 using CertificateHashDataInfo_Internal = ::types::iso15118::CertificateHashDataInfo;
 using CertificateHashDataInfo_External = CertificateHashDataInfo;
