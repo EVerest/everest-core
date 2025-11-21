@@ -317,7 +317,7 @@ void ErrorHandling::raise_isolation_resistance_fault(const std::string& descript
 }
 
 void ErrorHandling::clear_isolation_resistance_fault(const std::string& sub_type) {
-    if (p_evse->error_state_monitor->is_error_active("evse_manager/MREC22ResistanceFault", "")) {
+    if (p_evse->error_state_monitor->is_error_active("evse_manager/MREC22ResistanceFault", sub_type)) {
         p_evse->clear_error("evse_manager/MREC22ResistanceFault", sub_type);
         process_error();
     }
