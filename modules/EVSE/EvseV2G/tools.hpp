@@ -67,4 +67,14 @@ types::iso15118::HashAlgorithm convert_to_hash_algorithm(const types::evse_secur
  */
 std::vector<types::iso15118::CertificateHashDataInfo>
 convert_to_certificate_hash_data_info_vector(const types::evse_security::OCSPRequestDataList& ocsp_request_data_list);
+
+/**
+ * \brief convert bytes into a colon delimited string
+ * \param[in] ptr - a pointer to the byte array
+ * \param[in] len - the length of the byte array
+ * \returns a string of hex digits separated by : or empty on error
+ */
+
+std::string to_mac_address_str(const uint8_t* ptr, size_t len);
+
 #endif /* TOOLS_H */

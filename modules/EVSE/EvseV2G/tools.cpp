@@ -19,6 +19,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <array>
+
 ssize_t safe_read(int fd, void* buf, size_t count) {
     for (;;) {
         ssize_t result = read(fd, buf, count);
@@ -209,4 +211,21 @@ convert_to_certificate_hash_data_info_vector(const types::evse_security::OCSPReq
         }
     }
     return certificate_hash_data_info_vec;
+}
+
+std::string to_mac_address_str(const uint8_t* const ptr, size_t len) {
+    std::string result;
+    if ((ptr != nullptr) && (len > 0) && (len <= 16)) {
+        for (uint8_t i = 0; i < len; i++) {
+            std::array<char, 4> buffer{};
+            const auto res = snprintf(&buffer[0], sizeof(buffer), "%02X:", ptr[i]);
+            if (res == 3) {
+                result += std::string{buffer.data(), 3};
+            }
+        }
+        if (!result.empty()) {
+            result.pop_back();
+        }
+    }
+    return result;
 }

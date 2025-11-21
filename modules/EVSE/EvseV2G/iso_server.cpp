@@ -524,22 +524,15 @@ static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx
 static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
     struct iso2_SessionSetupReqType* req = &conn->exi_in.iso2EXIDocument->V2G_Message.Body.SessionSetupReq;
     struct iso2_SessionSetupResType* res = &conn->exi_out.iso2EXIDocument->V2G_Message.Body.SessionSetupRes;
-    char buffer[iso2_evccIDType_BYTES_SIZE * 3 - 1 + 1]; /* format: (%02x:) * n - (1x ':') + (1x NULL) */
-    int i;
     enum v2g_event next_event = V2G_EVENT_NO_EVENT;
 
     /* format EVCC ID */
-    for (i = 0; i < req->EVCCID.bytesLen; i++) {
-        sprintf(&buffer[i * 3], "%02" PRIX8 ":", req->EVCCID.bytes[i]);
-    }
-    if (i)
-        buffer[i * 3 - 1] = '\0';
-    else
-        buffer[0] = '\0';
+    const auto mac_addr = to_mac_address_str(&req->EVCCID.bytes[0], req->EVCCID.bytesLen);
 
-    conn->ctx->p_charger->publish_evcc_id(buffer); // publish EVCC ID
+    conn->ctx->p_charger->publish_evcc_id(mac_addr); // publish EVCC ID
 
-    dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s", std::string(buffer).size() ? buffer : "(zero length provided)");
+    dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s",
+         (mac_addr.empty()) ? "(zero length provided)" : mac_addr.c_str());
 
     /* [V2G2-756]: If the SECC receives a SessionSetupReq including a SessionID value which is not
      * equal to zero (0) and not equal to the SessionID value stored from the preceding V2G
