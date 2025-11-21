@@ -76,6 +76,10 @@ AuthorizationStatus_Internal to_internal_api(AuthorizationStatus_External const&
         return TarT::NotAtThisTime;
     case SrcT::Unknown:
         return TarT::Unknown;
+    case SrcT::PinRequired:
+        return TarT::PinRequired;
+    case SrcT::Timeout:
+        return TarT::Timeout;
     }
     throw std::out_of_range("Unexpected value for everest::lib::API::V1_0::types::auth::AuthorizationStatus_External");
 }
@@ -104,6 +108,10 @@ AuthorizationStatus_External to_external_api(AuthorizationStatus_Internal const&
         return TarT::NotAtThisTime;
     case SrcT::Unknown:
         return TarT::Unknown;
+    case SrcT::PinRequired:
+        return TarT::PinRequired;
+    case SrcT::Timeout:
+        return TarT::Timeout;
     }
     throw std::out_of_range("Unexpected value for everest::lib::API::V1_0::types::auth::AuthorizationStatus_Internal");
 }
