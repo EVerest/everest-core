@@ -404,7 +404,7 @@ class TestOCPP16GenericInterfaceIntegration:
                             "component": {"name": "IGNORED"},
                             "variable": {"name": "RetryBackoffRandomRange"},
                         },
-                        # not custom - will be rejectged
+                        # not custom - will be Rejected
                         "value": "99",
                     },
                     {
@@ -412,6 +412,7 @@ class TestOCPP16GenericInterfaceIntegration:
                             "component": {"name": ""},
                             "variable": {"name": "UNKNOWN"},
                         },
+                        # does not exist - will be UnknownVariable
                         "attribute_type": "Target",
                         "value": "test_value",
                     },
@@ -446,7 +447,7 @@ class TestOCPP16GenericInterfaceIntegration:
                     "component": {"name": ""},
                     "variable": {"name": "UNKNOWN"},
                 },
-                "status": "Rejected",
+                "status": "UnknownVariable",
             },
             {
                 "component_variable": {

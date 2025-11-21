@@ -17,8 +17,8 @@ cmake --build build --target install --parallel -j$(nproc)
 cmake --build build --target everestpy_pip_install_dist
 cmake --build build --target everest-testing_pip_install_dist
 cmake --build build --target iso15118_pip_install_dist
-python3 -m pip install aiofile>=3.7.4
-python3 -m pip install netifaces>=0.11.0
+python3 -m pip install "aiofile>=3.7.4"
+python3 -m pip install "netifaces>=0.11.0"
 cd tests/ocpp_tests
 python3 -m pip install -r requirements.txt
 ```

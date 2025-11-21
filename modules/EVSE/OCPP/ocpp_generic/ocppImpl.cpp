@@ -252,7 +252,7 @@ ocppImpl::handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& req
         // retrieve key and value from the request
         auto key = request.component_variable.variable.name;
         auto value = request.value;
-        auto response = this->mod->charge_point->set_custom_configuration_key(key, value);
+        auto response = this->mod->charge_point->set_configuration_key(key, value);
 
         switch (response) {
         case ocpp::v16::ConfigurationStatus::Accepted:

@@ -110,13 +110,13 @@ types::ocpp::GetConfigurationResponse ocpp_1_6_charge_pointImpl::handle_get_conf
     return to_everest(response);
 }
 
-types::ocpp::ConfigurationStatus ocpp_1_6_charge_pointImpl::handle_set_custom_configuration_key(std::string& key,
-                                                                                                std::string& value) {
+types::ocpp::ConfigurationStatus ocpp_1_6_charge_pointImpl::handle_set_configuration_key(std::string& key,
+                                                                                         std::string& value) {
     if (this->mod->charge_point == nullptr) {
         EVLOG_warning << "ChargePoint not initialized, cannot handle set configuration key command";
         return types::ocpp::ConfigurationStatus::Rejected;
     }
-    const auto response = this->mod->charge_point->set_custom_configuration_key(key, value);
+    const auto response = this->mod->charge_point->set_configuration_key(key, value);
     return to_everest(response);
 }
 
