@@ -13,6 +13,7 @@ active_modules:
         - module_id: api_sink_1_evsemgr
           implementation_id: external_limits
   auth:
+    module: Auth
     config_module:
       connection_timeout: 10
       prioritize_authorization_over_stopping_transaction: true
@@ -28,8 +29,8 @@ active_modules:
       token_validator:
         - implementation_id: main
           module_id: token_validator
-    module: Auth
   ev_manager:
+    module: EvManager
     config_module:
       auto_enable: true
       auto_exec: false
@@ -45,8 +46,8 @@ active_modules:
       slac:
         - implementation_id: ev
           module_id: slac
-    module: EvManager
   energy_manager:
+    module: EnergyManager
     config_module:
       switch_3ph1ph_while_charging_mode: Both
       switch_3ph1ph_max_nr_of_switches_per_session: 5
@@ -60,7 +61,6 @@ active_modules:
       energy_trunk:
         - implementation_id: energy_grid
           module_id: grid_connection_point
-    module: EnergyManager
   api_sink_1_evsemgr:
     module: EnergyNode
     mapping:
@@ -74,6 +74,7 @@ active_modules:
         - module_id: connector_1
           implementation_id: energy_grid
   connector_1:
+    module: EvseManager
     mapping:
       module:
         evse: 1
@@ -115,10 +116,10 @@ active_modules:
       connector_lock:
         - implementation_id: connector_lock
           module_id: connector_1_powerpath
-    module: EvseManager
     telemetry:
       id: 1
   grid_connection_point:
+    module: EnergyNode
     mapping:
       module:
         evse: 0
@@ -129,19 +130,17 @@ active_modules:
       energy_consumer:
         - implementation_id: energy_grid
           module_id: api_sink_1_evsemgr
-    module: EnergyNode
   iso15118_car:
+    module: PyEvJosev
     config_module:
       device: auto
       supported_ISO15118_2: true
-    connections: {}
-    module: PyEvJosev
   iso15118_charger:
+    module: EvseV2G
     config_module:
       device: auto
       tls_security: allow
       supported_DIN70121: false
-    module: EvseV2G
     connections:
       security:
         - module_id: evse_security
@@ -151,11 +150,11 @@ active_modules:
     config_module:
       private_key_password: "123456"
   persistent_store:
+    module: PersistentStore
     config_module:
       sqlite_db_file_path: everest_persistent_store.db
-    connections: {}
-    module: PersistentStore
   setup:
+    module: Setup
     config_module:
       initialized_by_default: true
       localization: true
@@ -166,10 +165,10 @@ active_modules:
       store:
         - implementation_id: main
           module_id: persistent_store
-    module: Setup
   slac:
     module: SlacSimulator
   token_provider:
+    module: DummyTokenProvider
     config_implementation:
       main:
         timeout: 10
@@ -178,19 +177,16 @@ active_modules:
       evse:
         - implementation_id: evse
           module_id: connector_1
-    module: DummyTokenProvider
   token_validator:
+    module: DummyTokenValidator
     config_implementation:
       main:
         sleep: 0.25
         validation_reason: Token seems valid
         validation_result: Accepted
-    connections: {}
-    module: DummyTokenValidator
   connector_1_powerpath:
+    module: YetiSimulator
     config_module:
       connector_id: 1
-    connections: {}
-    module: YetiSimulator
     telemetry:
       id: 1
