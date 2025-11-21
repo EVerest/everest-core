@@ -47,7 +47,7 @@ pip install -r requirements.txt
 ## ▶️ How to Run
 
 ```bash
-python3 everest-json-rpc-api.py
+python3 everest-json-rpc-websocket-client.py
 ```
 
 ---
