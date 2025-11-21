@@ -25,14 +25,8 @@ void from_json(json const& j, SessionEventEnum& k);
 void to_json(json& j, SessionEvent const& k) noexcept;
 void from_json(json const& j, SessionEvent& k);
 
-void to_json(json& j, Limits const& k) noexcept;
-void from_json(json const& j, Limits& k);
-
 void to_json(json& j, EVInfo const& k) noexcept;
 void from_json(json const& j, EVInfo& k);
-
-void to_json(json& j, CarManufacturer const& k) noexcept;
-void from_json(json const& j, CarManufacturer& k);
 
 void to_json(json& j, SessionStarted const& k) noexcept;
 void from_json(json const& j, SessionStarted& k);
@@ -84,9 +78,6 @@ void from_json(json const& j, EnableDisableSource& k);
 
 void to_json(json& j, EnableDisableRequest const& k) noexcept;
 void from_json(json const& j, EnableDisableRequest& k);
-
-void to_json(json& j, AuthorizeResponseArgs const& k) noexcept;
-void from_json(json const& j, AuthorizeResponseArgs& k);
 
 void to_json(json& j, PlugAndChargeConfiguration const& k) noexcept;
 void from_json(json const& j, PlugAndChargeConfiguration& k);

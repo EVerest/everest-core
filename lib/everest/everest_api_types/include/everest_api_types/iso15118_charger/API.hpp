@@ -9,11 +9,6 @@
 
 namespace everest::lib::API::V1_0::types::iso15118_charger {
 
-enum class CertificateActionEnum {
-    Install,
-    Update,
-};
-
 enum class EnergyTransferMode {
     AC_single_phase_core,
     AC_two_phase,
@@ -41,18 +36,6 @@ enum class HashAlgorithm {
     SHA256,
     SHA384,
     SHA512,
-};
-
-struct RequestExiStreamSchema {
-    std::string exi_request;
-    std::string iso15118_schema_version;
-    CertificateActionEnum certificate_action;
-};
-
-struct ResponseExiStreamStatus {
-    Status status;
-    CertificateActionEnum certificate_action;
-    std::optional<std::string> exi_response;
 };
 
 struct CertificateHashDataInfo {
