@@ -64,7 +64,7 @@ provides:
     description: Reserves the `pre_authorization_amount` from a bank card.  
   payment_terminal:
     interface: payment_terminal
-    description: The interface
+    description: Provides all the commands specific for bank cards handling
 enable_external_mqtt: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
