@@ -1,0 +1,13 @@
+description: Tests for the Errors
+requires:
+  errors_multiple:
+    interface: errors_multiple
+provides:
+  multiple:
+    interface: errors_multiple
+    description: Multiple errors
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Everest authors
+enable_external_mqtt: false

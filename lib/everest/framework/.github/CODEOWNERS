@@ -1,0 +1,12 @@
+# default option unless later match takes precedence
+* @hikinggrass @corneliusclaussen @andistorm @pietfried
+
+# Rust bindings
+/everestrs/ @SirVer @dorezyuk @hikinggrass @corneliusclaussen @andistorm @pietfried
+
+# Rust & Bazel
+*.rs @SirVer @dorezyuk @hikinggrass @corneliusclaussen @andistorm @pietfried
+*.bazel @SirVer @dorezyuk @hikinggrass @corneliusclaussen @andistorm @pietfried
+*.bzl @SirVer @dorezyuk @hikinggrass @corneliusclaussen @andistorm @pietfried
+**/Cargo.toml @SirVer @dorezyuk @hikinggrass @corneliusclaussen @andistorm @pietfried
+**/Cargo.lock @SirVer @dorezyuk @hikinggrass @corneliusclaussen @andistorm @pietfried

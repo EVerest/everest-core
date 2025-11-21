@@ -1,0 +1,22 @@
+description: ModuleA
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - author@example.com
+config:
+  valid_module_config_entry:
+    description: "This is a valid config entry"
+    type: string
+provides:
+  main:
+    description: test description
+    interface: test_interface
+    config:
+      valid_impl_config_entry:
+        description: "This is a valid impl config entry"
+        type: integer
+requires:
+  req1:
+    interface: test_interface_cmd_var
+    min_connections: 1
+    max_connections: 1

@@ -1,0 +1,108 @@
+/// {{trait.description | replace("\n", " ")}}
+pub(crate) trait {{trait.name | title}}ServiceSubscriber: Sync + Send {
+{%- for cmd in trait.cmds %}
+   /// {{cmd.description | replace("\n", " ")}}
+   ///
+   {%- for arg in cmd.arguments %}
+   /// `{{arg.name}}`: {{arg.description | replace("\n", " ")}}
+   {%- endfor %}
+   {% if cmd.result -%}
+   ///
+   /// Returns: {{cmd.result.description | replace("\n", " ")}}
+   {% endif -%}
+   fn {{cmd.name}}(&self,
+      context: &Context,
+   {%- for arg in cmd.arguments %}
+      {{arg.name | identifier }}: {{arg.data_type.name}},
+   {%- endfor %}
+   ) -> ::everestrs::Result<{%- if cmd.result -%}
+      {{cmd.result.data_type.name}}
+   {%- else -%}
+      ()
+   {%- endif -%}>;
+{% endfor %}
+}
+
+fn dispatch_command_to_{{ trait.name | snake }}(
+   context: &Context,
+   service: &dyn {{trait.name | title}}ServiceSubscriber,
+   name: &str,
+   mut parameters: ::std::collections::HashMap<String, __serde_json::Value>,
+) -> ::everestrs::Result<__serde_json::Value> {
+   match name {
+{%- for cmd in trait.cmds %}
+   "{{ cmd.name }}" => {
+{%- for arg in cmd.arguments %}
+            let {{ arg.name | identifier }}: {{ arg.data_type.name }} = __serde_json::from_value(
+                parameters.remove("{{ arg.name }}")
+                    .ok_or(::everestrs::Error::MessageParsingError("Argument `{{ arg.name }}` not provided".to_string()))?,
+            )
+            .map_err(|e| ::everestrs::Error::MessageParsingError(format!("Failed to deserialize argument `{{ arg.name }}`: {e:?}")))?;
+{%- endfor %}
+            let retval = service.{{ cmd.name }}(context,
+{%- for arg in cmd.arguments %}
+                {{ arg.name | identifier }},
+{%- endfor %}
+            )?;
+            __serde_json::to_value(retval).map_err(|e| ::everestrs::Error::MessageParsingError(format!("Failed to serialize result: {e:?}")))
+    },
+{%- endfor %}
+        other => Err(::everestrs::Error::MessageParsingError(format!("Unknown command `{other}` called."))),
+   }
+}
+
+pub(crate) mod __mockall_{{trait.name | snake }}_service {
+
+#[derive(Clone)]
+pub(crate) struct {{trait.name | title }}ServicePublisher {
+   pub(super) implementation_id: &'static str,
+   pub(super) runtime: ::std::pin::Pin<::std::sync::Arc<::everestrs::Runtime>>,
+}
+
+impl {{trait.name | title }}ServicePublisher {
+{% for var in trait.vars %}
+   pub(crate) fn {{ var.name | identifier }}(&self, value: {{ var.data_type.name }}) -> ::everestrs::Result<()> {
+      self.runtime.publish_variable(self.implementation_id, "{{ var.name }}", &value);
+      Ok(())
+   }
+{% endfor %}
+
+{%- if trait.errors %}
+    pub(crate) fn raise_error(&self, error: ::everestrs::ErrorType<crate::generated::errors::{{ trait.name | snake }}::Error>) {
+        self.runtime.raise_error(self.implementation_id, error);
+    }
+
+    pub(crate) fn clear_error(&self, error: crate::generated::errors::{{ trait.name | snake }}::Error) {
+        self.runtime.clear_error(self.implementation_id, error, true);
+    }
+
+    pub(crate) fn clear_all_errors(&self) {
+        self.runtime.clear_error(self.implementation_id, "", true);
+    }
+{%- endif %}
+}
+
+#[cfg(feature="mockall")]
+mockall::mock!{
+   pub(crate) {{trait.name | title }}ServicePublisher {
+{% for var in trait.vars %}
+   pub(crate) fn {{ var.name | identifier }}(&self, value: {{ var.data_type.name }}) -> ::everestrs::Result<()>;
+{% endfor %}
+
+{%- if trait.errors %}
+    pub(crate) fn raise_error(&self, error: ::everestrs::ErrorType<crate::generated::errors::{{ trait.name | snake }}::Error>);
+
+    pub(crate) fn clear_error(&self, error: crate::generated::errors::{{ trait.name | snake }}::Error);
+
+    pub(crate) fn clear_all_errors(&self);
+{%- endif %}
+   }
+
+   impl Clone for {{trait.name | title }}ServicePublisher {
+      fn clone(&self) -> Self;
+   }
+}
+
+}
+#[cfg_attr(feature="mockall", mockall_double::double)]
+pub(crate) use __mockall_{{trait.name | snake }}_service::{{trait.name | title }}ServicePublisher;

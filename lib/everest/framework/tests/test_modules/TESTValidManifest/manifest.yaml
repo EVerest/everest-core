@@ -1,0 +1,20 @@
+description: "This is a valid manifest."
+config:
+  valid_config_entry:
+    description: "This is a valid config entry"
+    type: string
+  valid_config_entry_with_default:
+    description: "This is a valid config entry with a default"
+    type: number
+    default: 42
+provides:
+  main:
+    description: "This unit has a valid manifest but no corresponding class"
+    interface: "test_interface"
+    config:
+      valid_config_entry:
+        description: "This is a valid config entry"
+        type: string
+metadata:
+  license: "https://opensource.org/licenses/Apache-2.0"
+  authors: ["Kai-Uwe Hermann"]
