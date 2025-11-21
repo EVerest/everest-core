@@ -46,31 +46,6 @@ channels:
     messages:
       receive_reply_enable_disable:
         $ref: '#/components/messages/receive_reply_enable_disable'
-  send_authorize_response:
-    address: 'm2e/authorize_response'
-    messages:
-      send_authorize_response:
-        $ref: '#/components/messages/send_authorize_response'
-  send_withdraw_authorization:
-    address: 'm2e/withdraw_authorization'
-    messages:
-      send_withdraw_authorization:
-        $ref: '#/components/messages/send_withdraw_authorization'
-  send_request_reserve:
-    address: 'm2e/reserve'
-    messages:
-      send_request_reserve:
-        $ref: '#/components/messages/send_request_reserve'
-  receive_reply_reserve:
-    address: null
-    messages:
-      receive_reply_reserve:
-        $ref: '#/components/messages/receive_reply_reserve'
-  send_cancel_reservation:
-    address: 'm2e/cancel_reservation'
-    messages:
-      send_cancel_reservation:
-        $ref: '#/components/messages/send_cancel_reservation'
   send_request_pause_charging:
     address: 'm2e/pause_charging'
     messages:
@@ -111,17 +86,6 @@ channels:
     messages:
       receive_reply_force_unlock:
         $ref: '#/components/messages/receive_reply_force_unlock'
-  # set_plug_and_charge_configuration not implemented
-  send_request_external_ready_to_start_charging:
-    address: 'm2e/external_ready_to_start_charging'
-    messages:
-      send_request_external_ready_to_start_charging:
-        $ref: '#/components/messages/send_request_external_ready_to_start_charging'
-  receive_reply_external_ready_to_start_charging:
-    address: null
-    messages:
-      receive_reply_external_ready_to_start_charging:
-        $ref: '#/components/messages/receive_reply_external_ready_to_start_charging'
   # update_allowed_energy_transfer_modes not implemented
 
   receive_session_event:
@@ -129,21 +93,11 @@ channels:
     messages:
       receive_session_event:
         $ref: '#/components/messages/receive_session_event'
-  receive_limits:
-    address: 'e2m/limits'
-    messages:
-      receive_limits:
-        $ref: '#/components/messages/receive_limits'
   receive_ev_info:
     address: 'e2m/ev_info'
     messages:
-      receive_limits:
+      receive_ev_info:
         $ref: '#/components/messages/receive_ev_info'
-  receive_car_manufacturer:
-    address: 'e2m/car_manufacturer'
-    messages:
-      receive_car_manufacturer:
-        $ref: '#/components/messages/receive_car_manufacturer'
   receive_session_info:
     address: 'e2m/session_info'
     messages:
@@ -175,16 +129,6 @@ channels:
     messages:
       receive_enforced_limits:
         $ref: '#/components/messages/receive_enforced_limits'
-  receive_waiting_for_external_ready:
-    address: 'e2m/waiting_for_external_ready'
-    messages:
-      receive_waiting_for_external_ready:
-        $ref: '#/components/messages/receive_waiting_for_external_ready'
-  receive_ready:
-    address: 'e2m/ready'
-    messages:
-      receive_ready:
-        $ref: '#/components/messages/receive_ready'
   receive_selected_protocol:
     address: 'e2m/selected_protocol'
     messages:
@@ -315,37 +259,6 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_reply_enable_disable'
-  send_authorize_response:
-    title: 'Reports the result of an authorization request to the EvseManager.'
-    action: send
-    channel:
-      $ref: '#/channels/send_authorize_response'
-  send_withdraw_authorization:
-    title: 'Send withdraw authorization.'
-    action: send
-    channel:
-      $ref: '#/channels/send_withdraw_authorization'
-  send_request_reserve:
-    title: 'Send request to reserve evse.'
-    action: send
-    channel:
-      $ref: '#/channels/send_request_reserve'
-    description: 'Direction: Module to EVerest'
-    reply:
-      address:
-        location: "$message.header#/replyTo"
-      channel:
-        $ref: '#/channels/receive_reply_reserve'
-  receive_reply_reserve:
-    title: 'Reply'
-    action: receive
-    channel:
-      $ref: '#/channels/receive_reply_reserve'
-  send_cancel_reservation:
-    title: 'Send cancel reservation.'
-    action: send
-    channel:
-      $ref: '#/channels/send_cancel_reservation'
   send_request_pause_charging:
     title: 'Send request to pause charging'
     action: send
@@ -410,23 +323,6 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_reply_force_unlock'
-  # set_plug_and_charge_configuration not implemented
-  send_request_external_ready_to_start_charging:
-    title: 'Send external ready to start charging.'
-    action: send
-    channel:
-      $ref: '#/channels/send_request_external_ready_to_start_charging'
-    description: 'Direction: Module to EVerest'
-    reply:
-      address:
-        location: "$message.header#/replyTo"
-      channel:
-        $ref: '#/channels/receive_reply_external_ready_to_start_charging'
-  receive_reply_external_ready_to_start_charging:
-    title: 'Reply'
-    action: receive
-    channel:
-      $ref: '#/channels/receive_reply_external_ready_to_start_charging'
   # update_allowed_energy_transfer_modes not implemented
 
   receive_session_event:
@@ -434,21 +330,11 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_session_event'
-  receive_limits:
-    title: 'Receive limits of event'
-    action: receive
-    channel:
-      $ref: '#/channels/receive_limits'
   receive_ev_info:
     title: 'Receive details of EV'
     action: receive
     channel:
       $ref: '#/channels/receive_ev_info'
-  receive_car_manufacturer:
-    title: 'Receive car manufacturer'
-    action: receive
-    channel:
-      $ref: '#/channels/receive_car_manufacturer'
   receive_session_info:
     title: 'Receive session information'
     action: receive
@@ -480,16 +366,6 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_enforced_limits'
-  receive_waiting_for_external_ready:
-    title: 'Receive waiting for external ready status'
-    action: receive
-    channel:
-      $ref: '#/channels/receive_waiting_for_external_ready'
-  receive_ready:
-    title: 'Receive ready signal'
-    action: receive
-    channel:
-      $ref: '#/channels/receive_ready'
   receive_selected_protocol:
     title: 'Receive selected protocol for charging'
     action: receive
@@ -650,72 +526,6 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/EnableDisableReply'
-    send_authorize_response:
-      name: send_authorize_response
-      title: 'Send authorize response'
-      summary: >-
-        Reports the result of an authorization request to the EvseManager.
-        Contains the provided_token for which authorization was requested and
-        the validation_result
-      payload:
-         $ref: '#/components/schemas/AuthorizeResponseArgs'
-      examples:
-        - summary: ""
-          payload:
-            token:
-              request_id: 0
-              id_token:
-                value: string
-                type: Central
-              authorization_type: OCPP
-              connectors:
-              - 1
-            result:
-              authorization_status: Accepted
-              evse_ids:
-              - 1
-    send_withdraw_authorization:
-      name: send_withdraw_authorization
-      title: 'Send withddraw authorization'
-      summary: >-
-        Call to signals that EVSE is not further authorized to start a transaction
-        (e.g. on a connection_timeout)
-    send_request_reserve:
-      name: send_request_reserve
-      title: 'Call to signal that EVSE is reserved.'
-      summary: >-
-        Call to signal that EVSE is reserved. This can be used to e.g. change
-        the color of the HMI LEDs to indicate reservation.
-      contentType: application/json
-      payload:
-          type: object
-          properties:
-            headers:
-              type: object
-              properties:
-                replyTo:  # Address for the request to reply to
-                  type: string
-                  description: Address to send the response to.
-            payload:
-              $ref: '#/components/schemas/ReservationId'
-      examples:
-        - summary: ""
-          payload:
-            headers:
-              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
-            payload:
-              0
-    receive_reply_reserve:
-      name: receive_reply_reserve
-      title: 'Reply request reserve'
-      summary: 'Reply to the request to reserve the EVSE.'
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/ReservationReply'
-    send_cancel_reservation:
-      name: send_cancel_reservation
-      title: 'Send cancel reservation'
-      summary: 'Call to signal that EVSE is not reserved anymore'
     send_request_pause_charging:
       name: send_request_pause_charging
       title: 'Request pause charging'
@@ -831,37 +641,6 @@ components:
       contentType: application/json
       payload:
          $ref: '#/components/schemas/ForceUnlockReply'
-    # set_plug_and_charge_configuration not implemented
-    send_request_external_ready_to_start_charging:
-      name: send_request_external_ready_to_start_charging
-      title: 'Call to signal external ready to start charging.'
-      summary: >-
-        There are situations where another module needs to do some initialization after
-        evse manager is in principle ready to start charging.
-        This command can be used (optimally in combination with
-        a configuration option) to delay charging ready until the external
-        module is done with its initialization
-      payload:
-          type: object
-          properties:
-            headers:
-              type: object
-              properties:
-                replyTo:  # Address for the request to reply to
-                  type: string
-                  description: Address to send the response to.
-      examples:
-        - summary: ""
-          payload:
-            headers:
-              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
-    receive_reply_external_ready_to_start_charging:
-      name: receive_reply_external_ready_to_start_charging
-      title: 'Reply external ready to start charging'
-      summary: 'Reply to the request to external ready to start charging'
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/ExternalReadyToStartChargingReply'
     # update_allowed_energy_transfer_modes not implemented
 
     receive_session_event:
@@ -871,13 +650,6 @@ components:
       contentType: application/json
       payload:
          $ref: '#/components/schemas/SessionEvent'
-    receive_limits:
-      name: receive_limits
-      title: 'Receive limits of event'
-      summary: 'Limits of this event.'
-      contentType: application/json
-      payload:
-         $ref: '#/components/schemas/Limits'
     receive_ev_info:
       name: receive_ev_info
       title: 'Receive details about EV'
@@ -885,13 +657,6 @@ components:
       contentType: application/json
       payload:
          $ref: '#/components/schemas/EVInfo'
-    receive_car_manufacturer:
-      name: receive_car_manufacturer
-      title: 'Receive car manufacturer'
-      summary: 'The car manufacturer (if known)'
-      contentType: application/json
-      payload:
-         $ref: '#/components/schemas/CarManufacturer'
     receive_session_info:
       name: receive_session_info
       title: 'Receive session and transaction information'
@@ -947,20 +712,6 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/EnforcedLimits'
-    receive_waiting_for_external_ready:
-      name: receive_waiting_for_external_ready
-      title: 'Receive waiting for external ready status'
-      summary: 'Waiting for external ready status'
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/WaitingForExternalReady'
-    receive_ready:
-      name: receive_ready
-      title: 'Receive ready signal'
-      summary: 'Signals that the EVSE Manager is ready to start charging'
-      contentType: application/json
-      payload:
-         $ref: '#/components/schemas/Ready'
     receive_selected_protocol:
       name: receive_selected_protocol
       title: 'Receive selected protocol for charging for informative purposes'
@@ -1106,29 +857,6 @@ components:
           description: Exported meter value
           type: object
           $ref: '../powermeter_API/asyncapi.yaml#/components/schemas/Powermeter'
-    AuthorizeResponseArgs:
-      description: Arguments for authorize response
-      type: object
-      additionalProperties: true
-      required:
-        - token
-        - result
-      properties:
-        token:
-          type: object
-          $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/ProvidedIdToken'
-        result:
-          type: object
-          $ref: '../auth_token_validator_API/asyncapi.yaml#/components/schemas/ValidationResult'
-    CarManufacturer:
-      description: >-
-        Enum type for car manufacturers derived from MAC address.
-        May be different from actual brand, so e.g. Skoda falls under Volkswagen_Group.
-      type: string
-      enum:
-        - VolkswagenGroup
-        - Tesla
-        - Unknown
     EvseStateEnum:
         description: |
           State of the EVSE: 
@@ -1225,12 +953,6 @@ components:
             Timestamp of transaction end. Updated at each transaction end.
           type: string
           format: date-time
-    CertificateActionEnum:
-      description: Specifies the type of a certificate request
-      type: string
-      enum:
-        - Install
-        - Update
     ChargingStateChangedEvent:
       description: Context for ChargingStateChanged event
       type: object
@@ -1518,34 +1240,12 @@ components:
           type: number
           minimum: 0
           maximum: 100
-    ExternalReadyToStartChargingReply:
-      description: Returns true if the signal was used by the evse manager implementation
-      type: boolean
     ForceUnlockReply:
       description: "Returns true if unlocking sequence was successfully executed"
       type: boolean
     ForceUnlockRequest:
       description: "Specifies the ID of the connector that should be unlocked"
       type: integer
-    Limits:
-      description: Limits of this EVSE
-      type: object
-      additionalProperties: true
-      required:
-        - max_current
-        - nr_of_phases_available
-      properties:
-        uuid:
-          description: This module's UUID for global identification
-          type: string
-        max_current:
-          description: Instantaneous maximum current available to car
-          type: number
-        nr_of_phases_available:
-          description: Instantaneous phase count available to car
-          type: integer
-          minimum: 1
-          maximum: 3
     PauseChargingReply:
       description: "Reply to pause charging request. 'true' on success"
       type: boolean
@@ -1555,64 +1255,6 @@ components:
     Ready:
       description: "'true' signals ready"
       type: boolean
-    RequestExiStreamSchema:
-      description: The request raw exi stream and the schema version for the CSMS system
-      type: object
-      additionalProperties: true
-      required:
-        - exi_request
-        - iso15118_schema_version
-        - certificate_action
-      properties:
-        exi_request:
-          description: >-
-            Raw CertificateInstallationReq or CertificateUpdateReq message as
-            exi stream (Base64 encoded)
-          type: string
-          maxLength: 5600
-        iso15118_schema_version:
-          description: Schema Version used for CertificateReq message between EV and Charger
-          type: string
-          maxLength: 50
-        certificate_action:
-          description: Type of the certificate request
-          type: string
-          $ref: '#/components/schemas/CertificateActionEnum'
-    ReservationId:
-      description: >-
-        The reservation id (should be added to the TransactionStarted
-        event)
-      type: integer
-    ReservationReply:
-      description: Returns true if the EVSE accepted the reservation, else false.
-      type: boolean
-    ResponseExiStreamStatus:
-      description: The response raw exi stream and the status from the CSMS system
-      type: object
-      additionalProperties: true
-      required:
-        - status
-        - certificate_action
-      properties:
-        status:
-          description: >-
-            Indicates whether the message was processed properly
-            Accepted - The message was processed properly, exi_response included
-            Failed - Processing of the message was not successful, no exi_response included
-          type: string
-          enum:
-            - Accepted
-            - Failed
-        exi_response:
-          description: >-
-            Raw CertificateInstallationRes or CertificateUpdateRes message
-            as exi stream (Base64 encoded)
-          type: string
-          maxLength: 5600
-        certificate_action:
-          description: Type of the certificate request
-          type: string
-          $ref: '#/components/schemas/CertificateActionEnum'
     ResumeChargingReply:
       description: "Reply to resume charging request. 'true' on success, false otherwise (e.g. resuming
         a car pause won't work)"
@@ -1916,11 +1558,6 @@ components:
           description: Id tag that was used to stop the transaction. Only present if transaction was stopped locally.
           type: object
           $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/ProvidedIdToken'
-    WaitingForExternalReady:
-      description: >-
-        Signals that the EVSE Manager is in principle ready to start charging,
-        but delays sending its ready signal waiting for the external_ready_to_start_charging command.
-      type: boolean
 
     CommunicationCheck:
       type: boolean
