@@ -737,8 +737,10 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
                             } else if (parameter.value.finite_string.has_value()) {
                                 const auto& temp = parameter.value.finite_string.value();
                                 if (temp.length() > sizeof(out_parameter.stringValue.characters)) {
-                                    dlog(DLOG_LEVEL_WARNING,
-                                         "Parameter String is too long to copy into char array -> truncated");
+                                    EVLOG_warning << fmt::format("The value of parameter string '{}' is too long and "
+                                                                 "was truncated from '{}' to '{:.{}}'",
+                                                                 parameter.name, temp, temp,
+                                                                 sizeof(out_parameter.stringValue.characters));
                                 }
                                 strncpy(out_parameter.stringValue.characters, temp.c_str(),
                                         sizeof(out_parameter.stringValue.characters));
