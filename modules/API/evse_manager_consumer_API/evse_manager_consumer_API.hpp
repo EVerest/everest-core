@@ -107,15 +107,10 @@ private:
 
     void generate_api_cmd_get_evse();
     void generate_api_cmd_enable_disable();
-    void generate_api_cmd_authorize_response();
-    void generate_api_cmd_withdraw_authorization();
-    void generate_api_cmd_reserve();
-    void generate_api_cmd_cancel_reservation();
     void generate_api_cmd_pause_charging();
     void generate_api_cmd_resume_charging();
     void generate_api_cmd_stop_transaction();
     void generate_api_cmd_force_unlock();
-    void generate_api_cmd_external_ready_to_start_charging();
     void generate_api_cmd_random_delay_enable();
     void generate_api_cmd_random_delay_disable();
     void generate_api_cmd_random_delay_cancel();
@@ -123,15 +118,11 @@ private:
 
     void generate_api_var_session_event();
     void generate_api_var_session_info();
-    void generate_api_var_limits();
     void generate_api_var_ev_info();
-    void generate_api_var_car_manufacturer();
     void generate_api_var_powermeter();
     void generate_api_var_evse_id();
     void generate_api_var_hw_capabilities();
     void generate_api_var_enforced_limits();
-    void generate_api_var_waiting_for_external_ready();
-    void generate_api_var_ready();
     void generate_api_var_selected_protocol();
     void generate_api_var_powermeter_public_key_ocmf();
     void generate_api_var_supported_energy_transfer_modes();
