@@ -14,6 +14,9 @@
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 #include <bitset>
+#include <functional>
+#include <mutex>
+#include <utility>
 
 #include "utils.hpp"
 
@@ -92,10 +95,13 @@ private:
     iso15118::d20::EvseSetupConfig setup_config;
     std::bitset<NUMBER_OF_SETUP_STEPS> setup_steps_done{0};
 
-    std::vector<iso15118::d20::SupportedVASs> supported_vas_services_per_provider;
+    std::vector<types::iso15118_vas::OfferedServices> supported_vas_services_per_provider;
+    std::map<uint16_t, std::pair<std::size_t, std::reference_wrapper<types::iso15118_vas::OfferedService>>>
+        vas_service_id_to_provider_map;
+    std::mutex vas_mutex;
 
     void update_supported_vas_services();
-    std::optional<size_t> get_vas_provider_index(uint16_t service_id) const;
+    std::optional<size_t> get_vas_provider_index(uint16_t service_id);
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

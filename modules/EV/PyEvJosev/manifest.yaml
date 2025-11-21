@@ -44,6 +44,14 @@ config:
     description: If true, the ev will ask for internet service
     type: boolean
     default: false
+  request_all_service_details:
+    description: If true, the ev will ask for details about all offered services
+    type: boolean
+    default: false
+  select_all_vas_services:
+    description: If true, the ev will select all offered services
+    type: boolean
+    default: false
   supported_d20_energy_services:
     description: >-
       The supported ISO15118-20 energy services (DC, DC_BPT, AC, AC_BPT) the EV supports,
@@ -51,7 +59,7 @@ config:
       and is the most likely to be selected. The services should be separated only with commas.
     type: string
     default: "DC,DC_BPT"
-provides:  
+provides:
   ev:
     interface: ISO15118_ev
     description: This module implements the ISO15118-2 implementation of an EV

@@ -41,7 +41,7 @@ void ISO15118_vasImpl::init() {
 }
 
 void ISO15118_vasImpl::ready() {
-    this->publish_offered_vas({{InternetAccessServiceIdD2}});
+    this->publish_offered_vas({{{InternetAccessServiceIdD2}}});
 }
 
 std::vector<types::iso15118_vas::ParameterSet> ISO15118_vasImpl::handle_get_service_parameters(int& service_id) {
