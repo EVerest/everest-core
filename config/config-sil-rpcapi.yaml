@@ -7,9 +7,6 @@ active_modules:
       evse_manager:
         - module_id: connector_1
           implementation_id: evse
-      energy_listener:
-        - module_id: connector_1
-          implementation_id: energy_grid
       evse_energy_sink:
         - module_id: grid_connection_point
           implementation_id: external_limits
