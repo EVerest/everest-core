@@ -951,6 +951,7 @@ enum StateMachine {
 struct IskraMeter {
     state_machine: Mutex<StateMachine>,
     communication_errors_threshold: usize,
+    read_meter_values_interval_ms: u64,
 }
 
 impl generated::OnReadySubscriber for IskraMeter {
@@ -991,13 +992,15 @@ impl generated::OnReadySubscriber for IskraMeter {
 
         let ready_state_clone = ready_state.clone();
         let power_meter_clone = publishers.meter.clone();
+        let interval_ms = self.read_meter_values_interval_ms;
 
         let backoff = ConstantBuilder::default()
             .with_delay(std::time::Duration::from_secs(10))
             .with_max_times(self.communication_errors_threshold);
 
         std::thread::spawn(move || loop {
-            std::thread::sleep(std::time::Duration::from_secs(5));
+            let reading_start = std::time::Instant::now();
+            let interval = std::time::Duration::from_millis(interval_ms);
 
             match (|| ready_state_clone.read_meter_value())
                 .retry(backoff)
@@ -1022,22 +1025,27 @@ impl generated::OnReadySubscriber for IskraMeter {
                 }
             };
             // Check the time status. In case of failure we just carry on.
-            let Ok(time_status) = ready_state_clone.read_holding_registers_fixed::<1>(7071) else {
-                continue;
-            };
-            // Table 5: The clock is not synced. We lost power.
-            if time_status[0] == 0 {
-                log::warn!("Clock not syncronized - updating volatile data");
-                let _ = ready_state_clone.set_time();
-                // Update the lcd text.
-                let _ = match &(*ready_state_clone.transaction.lock().unwrap()) {
-                    Some(req) => ready_state_clone
-                        .write_lcd_text(req.tariff_text.as_ref().unwrap_or(&String::new()), ""),
-                    None => ready_state_clone.write_lcd_text(
-                        &ready_state_clone.main_text,
-                        &ready_state_clone.label_text,
-                    ),
-                };
+            if let Ok(time_status) = ready_state_clone.read_holding_registers_fixed::<1>(7071) {
+                // Table 5: The clock is not synced. We lost power.
+                if time_status[0] == 0 {
+                    log::warn!("Clock not syncronized - updating volatile data");
+                    let _ = ready_state_clone.set_time();
+                    // Update the lcd text.
+                    let _ = match &(*ready_state_clone.transaction.lock().unwrap()) {
+                        Some(req) => ready_state_clone
+                            .write_lcd_text(req.tariff_text.as_ref().unwrap_or(&String::new()), ""),
+                        None => ready_state_clone.write_lcd_text(
+                            &ready_state_clone.main_text,
+                            &ready_state_clone.label_text,
+                        ),
+                    };
+                }
+            }
+
+            // Wait until the next reading.
+            let reading_took_ms = reading_start.elapsed();
+            if reading_took_ms < interval {
+                std::thread::sleep(interval - reading_took_ms);
             }
         });
 
@@ -1110,6 +1118,7 @@ fn main() {
             config.lcd_label_text,
         ))),
         communication_errors_threshold: config.communication_errors_threshold as usize,
+        read_meter_values_interval_ms: config.read_meter_values_interval_ms as u64,
     });
 
     let _module = Module::new(class.clone(), class.clone(), class.clone());
