@@ -29,8 +29,11 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <everest/util/async/monitor.hpp>
 #include <everest_api_types/utilities/CommCheckHandler.hpp>
 #include <everest_api_types/utilities/Topics.hpp>
+
+#include "session_info.hpp"
 
 namespace ev_API = everest::lib::API;
 
@@ -119,6 +122,7 @@ private:
     void generate_api_cmd_random_delay_set_duration_s();
 
     void generate_api_var_session_event();
+    void generate_api_var_session_info();
     void generate_api_var_limits();
     void generate_api_var_ev_info();
     void generate_api_var_car_manufacturer();
@@ -148,6 +152,8 @@ private:
     ev_API::Topics topics;
     ev_API::CommCheckHandler<generic_errorImplBase> comm_check;
     size_t hb_id{0};
+    everest::lib::util::monitor<SessionInfo> session_info;
+
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

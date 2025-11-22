@@ -80,6 +80,7 @@ void evse_manager_consumer_API::ready() {
     generate_api_cmd_random_delay_set_duration_s();
 
     generate_api_var_session_event();
+    generate_api_var_session_info(); // special, not just forwarded
     generate_api_var_limits();
     generate_api_var_ev_info();
     generate_api_var_car_manufacturer();
@@ -440,4 +441,31 @@ void evse_manager_consumer_API::subscribe_api_topic(std::string const& var,
         }
     });
 }
+
+void evse_manager_consumer_API::generate_api_var_session_info() {
+    this->session_info.handle()->set_publish_callback(
+        [this](const everest::lib::API::V1_0::types::evse_manager::SessionInfo& external) {
+            auto topic = topics.everest_to_extern("session_info");
+            try {
+                auto&& payload = serialize(external);
+                mqtt.publish(topic, payload);
+            } catch (const std::exception& e) {
+                EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what();
+            } catch (...) {
+                EVLOG_warning << "Invalid data: Cannot convert internal to external or serialize it.\n" << topic;
+            }
+        });
+
+    this->r_evse_manager->subscribe_session_event([this](types::evse_manager::SessionEvent const& session_event) {
+        session_info.handle()->update_state(session_event);
+    });
+
+    this->r_evse_manager->subscribe_powermeter([this](types::powermeter::Powermeter const& powermeter) {
+        session_info.handle()->update_powermeter(powermeter);
+    });
+
+    this->r_evse_manager->subscribe_selected_protocol(
+        [this](std::string const& protocol) { session_info.handle()->update_selected_protocol(protocol); });
+}
+
 } // namespace module

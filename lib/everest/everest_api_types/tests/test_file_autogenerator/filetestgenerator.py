@@ -82,7 +82,7 @@ class FileTestGenerator:
         test_code = self.get_code_test()
         if test_code[0] != "" and with_warning:
             raise NotImplementedError("The generation of a struct could not be done automatically, it needs to be supplied manually.\n" +
-                                      "The suplying of manual helpers is not fully implemented. The imports need to be added and the manual helpers need to be registered with the accross file generator. \n" +
+                                      "The supplying of manual helpers is not fully implemented. The imports need to be added and the manual helpers need to be registered with the accross file generator. \n" +
                                       "The problematic struct is probably related to: " + test_code[0])
         code = (
             self.license_header
