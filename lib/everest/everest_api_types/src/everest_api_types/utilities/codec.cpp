@@ -14,6 +14,10 @@ template <> bool deserialize(std::string const& data, int& obj) {
     return everest::lib::API::V1_0::types::generic::adl_deserialize(data, obj);
 }
 
+template <> bool deserialize(std::string const& data, size_t& obj) {
+    return everest::lib::API::V1_0::types::generic::adl_deserialize(data, obj);
+}
+
 template <> bool deserialize(std::string const& data, double& obj) {
     return everest::lib::API::V1_0::types::generic::adl_deserialize(data, obj);
 }
