@@ -102,6 +102,8 @@ private:
     void clear_inoperative_error();
     std::optional<Everest::error::Error> errors_prevent_charging();
 
+    std::mutex error_mutex;
+
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>>& r_hlc;
     const std::vector<std::unique_ptr<connector_lockIntf>>& r_connector_lock;

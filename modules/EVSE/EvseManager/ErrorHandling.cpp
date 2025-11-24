@@ -228,21 +228,25 @@ std::optional<Everest::error::Error> ErrorHandling::errors_prevent_charging() {
 }
 
 void ErrorHandling::raise_inoperative_error(const Everest::error::Error& caused_by) {
-    if (p_evse->error_state_monitor->is_error_active("evse_manager/Inoperative", "")) {
-        // dont raise if already raised
-        return;
-    }
+    {
+        std::scoped_lock lock(error_mutex);
 
-    // raise externally
-    Everest::error::Error error_object = p_evse->error_factory->create_error(
-        "evse_manager/Inoperative", "", caused_by.type, Everest::error::Severity::High);
-    error_object.description = generate_description(caused_by);
-    if (inoperative_error_use_vendor_id && !caused_by.vendor_id.empty()) {
-        error_object.vendor_id = caused_by.vendor_id;
-    } else {
-        error_object.vendor_id = "EVerest";
+        if (p_evse->error_state_monitor->is_error_active("evse_manager/Inoperative", "")) {
+            // dont raise if already raised
+            return;
+        }
+
+        // raise externally
+        Everest::error::Error error_object = p_evse->error_factory->create_error(
+            "evse_manager/Inoperative", "", caused_by.type, Everest::error::Severity::High);
+        error_object.description = generate_description(caused_by);
+        if (inoperative_error_use_vendor_id && !caused_by.vendor_id.empty()) {
+            error_object.vendor_id = caused_by.vendor_id;
+        } else {
+            error_object.vendor_id = "EVerest";
+        }
+        p_evse->raise_error(error_object);
     }
-    p_evse->raise_error(error_object);
 
     // shutdown based on severity
     if (caused_by.severity == Everest::error::Severity::High) {
@@ -253,9 +257,17 @@ void ErrorHandling::raise_inoperative_error(const Everest::error::Error& caused_
 }
 
 void ErrorHandling::clear_inoperative_error() {
-    // clear externally
-    if (p_evse->error_state_monitor->is_error_active("evse_manager/Inoperative", "")) {
-        p_evse->clear_error("evse_manager/Inoperative");
+    bool all_cleared = false;
+    {
+        std::scoped_lock lock(error_mutex);
+        // clear externally
+        if (p_evse->error_state_monitor->is_error_active("evse_manager/Inoperative", "")) {
+            p_evse->clear_error("evse_manager/Inoperative");
+            all_cleared = true;
+        }
+    }
+
+    if (all_cleared) {
         signal_error(ErrorHandlingEvents::AllErrorsPreventingChargingCleared);
     }
 }
@@ -264,76 +276,142 @@ void ErrorHandling::raise_internal_error(const std::string& description) {
     // raise externally
     Everest::error::Error error_object =
         p_evse->error_factory->create_error("evse_manager/Internal", "", description, Everest::error::Severity::High);
-    p_evse->raise_error(error_object);
+    {
+        std::scoped_lock lock(error_mutex);
+        p_evse->raise_error(error_object);
+    }
     process_error();
 }
 
 void ErrorHandling::clear_internal_error() {
-    // clear externally
-    if (p_evse->error_state_monitor->is_error_active("evse_manager/Internal", "")) {
-        p_evse->clear_error("evse_manager/Internal");
+    bool cleared = false;
+
+    {
+        std::scoped_lock lock(error_mutex);
+        // clear externally
+        if (p_evse->error_state_monitor->is_error_active("evse_manager/Internal", "")) {
+            p_evse->clear_error("evse_manager/Internal");
+            cleared = true;
+        }
+    }
+
+    if (cleared) {
         process_error();
     }
 }
 
 void ErrorHandling::raise_authorization_timeout_error(const std::string& description) {
+
     // raise externally
     Everest::error::Error error_object = p_evse->error_factory->create_error(
         "evse_manager/MREC9AuthorizationTimeout", "", description, Everest::error::Severity::Medium);
-    p_evse->raise_error(error_object);
+    {
+        std::scoped_lock lock(error_mutex);
+        p_evse->raise_error(error_object);
+    }
+
     process_error();
 }
 
 void ErrorHandling::clear_authorization_timeout_error() {
-    // clear externally
-    if (p_evse->error_state_monitor->is_error_active("evse_manager/MREC9AuthorizationTimeout", "")) {
-        p_evse->clear_error("evse_manager/MREC9AuthorizationTimeout");
+    bool cleared = false;
+
+    {
+        std::scoped_lock lock(error_mutex);
+        // clear externally
+        if (p_evse->error_state_monitor->is_error_active("evse_manager/MREC9AuthorizationTimeout", "")) {
+            p_evse->clear_error("evse_manager/MREC9AuthorizationTimeout");
+            cleared = true;
+        }
+    }
+
+    if (cleared) {
         process_error();
     }
 }
 
 void ErrorHandling::raise_powermeter_transaction_start_failed_error(const std::string& description) {
+
     // raise externally
     Everest::error::Error error_object = p_evse->error_factory->create_error(
         "evse_manager/PowermeterTransactionStartFailed", "", description, Everest::error::Severity::Medium);
-    p_evse->raise_error(error_object);
+    {
+        std::scoped_lock lock(error_mutex);
+        p_evse->raise_error(error_object);
+    }
     process_error();
 }
 
 void ErrorHandling::clear_powermeter_transaction_start_failed_error() {
-    // clear externally
-    if (p_evse->error_state_monitor->is_error_active("evse_manager/PowermeterTransactionStartFailed", "")) {
-        p_evse->clear_error("evse_manager/PowermeterTransactionStartFailed");
+    bool cleared = false;
+
+    {
+        std::scoped_lock lock(error_mutex);
+        // clear externally
+        if (p_evse->error_state_monitor->is_error_active("evse_manager/PowermeterTransactionStartFailed", "")) {
+            p_evse->clear_error("evse_manager/PowermeterTransactionStartFailed");
+            cleared = true;
+        }
+    }
+
+    if (cleared) {
         process_error();
     }
 }
 
 void ErrorHandling::raise_isolation_resistance_fault(const std::string& description, const std::string& sub_type) {
+
     // Error shutdown according to IEC61851-23 Table CC.10 --> Severity::Medium
     Everest::error::Error error_object = p_evse->error_factory->create_error(
         "evse_manager/MREC22ResistanceFault", sub_type, description, Everest::error::Severity::Medium);
-    p_evse->raise_error(error_object);
+    {
+        std::scoped_lock lock(error_mutex);
+        p_evse->raise_error(error_object);
+    }
     process_error();
 }
 
 void ErrorHandling::clear_isolation_resistance_fault(const std::string& sub_type) {
-    if (p_evse->error_state_monitor->is_error_active("evse_manager/MREC22ResistanceFault", sub_type)) {
-        p_evse->clear_error("evse_manager/MREC22ResistanceFault", sub_type);
+    bool cleared = false;
+
+    {
+        std::scoped_lock lock(error_mutex);
+        if (p_evse->error_state_monitor->is_error_active("evse_manager/MREC22ResistanceFault", sub_type)) {
+            p_evse->clear_error("evse_manager/MREC22ResistanceFault", sub_type);
+            cleared = true;
+        }
+    }
+
+    if (cleared) {
         process_error();
     }
 }
 
 void ErrorHandling::raise_cable_check_fault(const std::string& description) {
+
     // Error shutdown according to IEC61851-23 Table CC.10 --> Severity::Medium
     Everest::error::Error error_object = p_evse->error_factory->create_error(
         "evse_manager/MREC11CableCheckFault", "Self test failed", description, Everest::error::Severity::Medium);
-    p_evse->raise_error(error_object);
+
+    {
+        std::scoped_lock lock(error_mutex);
+        p_evse->raise_error(error_object);
+    }
     process_error();
 }
 
 void ErrorHandling::clear_cable_check_fault() {
-    if (p_evse->error_state_monitor->is_error_active("evse_manager/MREC11CableCheckFault", "Self test failed")) {
-        p_evse->clear_error("evse_manager/MREC11CableCheckFault", "Self test failed");
+    bool cleared = false;
+
+    {
+        std::scoped_lock lock(error_mutex);
+        if (p_evse->error_state_monitor->is_error_active("evse_manager/MREC11CableCheckFault", "Self test failed")) {
+            p_evse->clear_error("evse_manager/MREC11CableCheckFault", "Self test failed");
+            cleared = true;
+        }
+    }
+
+    if (cleared) {
         process_error();
     }
 }
