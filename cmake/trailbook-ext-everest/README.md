@@ -8,6 +8,7 @@ The following additional features are provided:
 
 * cmake function: `trailbook_ev_add_module_explanation()`
 * cmake function: `trailbook_ev_create_snapshot()`
+* cmake function: `trailbook_ev_generate_api_doc()`
 * cmake function: `trailbook_ev_generate_rst_from_manifest()`
 * cmake function: `trailbook_ev_generate_rst_from_interface()`
 * cmake function: `trailbook_ev_generate_rst_from_types()`
