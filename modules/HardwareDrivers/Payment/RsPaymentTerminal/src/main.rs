@@ -201,7 +201,7 @@ impl From<ErrorMessages> for AuthorizationStatus {
             ErrorMessages::PaymentMethodNotSupported => AuthorizationStatus::Blocked,
             ErrorMessages::AbortViaTimeoutOrAbortKey => AuthorizationStatus::Invalid,
             #[cfg(feature = "with_lavego_error_codes")]
-            ErrorMessages::Declined => AuthorizationStatus::Blocked,
+            ErrorMessages::Declined => AuthorizationStatus::Timeout,
             ErrorMessages::ReceiverNotReady
                 | ErrorMessages::SystemError
                 | ErrorMessages::ErrorFromDialUp   // error from dial-up/communication fault
@@ -444,7 +444,7 @@ impl AuthTokenValidatorServiceSubscriber for PaymentTerminalModule {
         }
 
         if &provided_token.id_token.value == INVALID_BANK_TOKEN {
-            log::warn!("Received an {INVALID_BANK_TOKEN}");
+            log::warn!("Validating a `BankCard` without an invoice token");
             return Ok(AuthorizationStatus::Invalid.into());
         }
 
