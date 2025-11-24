@@ -188,8 +188,8 @@ target_compile_definitions(${V2GCTX_NAME} PRIVATE
 target_sources(${V2GCTX_NAME} PRIVATE
     v2g_ctx_test.cpp
     log.cpp
-     tools_test.cpp
-   ../v2g_ctx.cpp
+    tools_test.cpp
+    ../v2g_ctx.cpp
     ../tools.cpp
 )
 
