@@ -188,8 +188,9 @@ target_compile_definitions(${V2GCTX_NAME} PRIVATE
 target_sources(${V2GCTX_NAME} PRIVATE
     v2g_ctx_test.cpp
     log.cpp
+    tools_test.cpp
     ../v2g_ctx.cpp
-    ../tools.cpp # TODO: Maybe mock this one
+    ../tools.cpp
 )
 
 target_link_libraries(${V2GCTX_NAME}
