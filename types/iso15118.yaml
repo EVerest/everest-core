@@ -1847,13 +1847,13 @@ types:
         description: Target reactive power requested by the EVSE on L3 in W
         type: number
   EvTermination:
-    description: Information concerning TLS certificates used by EV, as well as supported protocols.
+    description: Information about EV termination code and explanation.
     type: object
     additionalProperties: false
     properties:
       ev_termination_code:
-        description: Defines the EV termination code
+        description: Contains the EV termination code
         type: string
-      ev_termination_explanation :
-        description: Defines the EV termination explanation
+      ev_termination_explanation:
+        description: Contains the EV termination explanation
         type: string
