@@ -8,12 +8,12 @@
 #include "ISO15118_vasImpl.hpp"
 #include <sys/types.h>
 
+namespace fs = std::filesystem;
+
 namespace module {
 namespace iso15118_vas {
 
 constexpr int32_t InternetAccessServiceIdD2 = 3;
-const std::string INTERNET_SETUP_SCRIPT = "vas-internet-setup.sh";
-
 constexpr int HTTP_PARAM_SET_ID = 3;
 constexpr int HTTPS_PARAM_SET_ID = 4;
 constexpr int HTTP_PORT = 80;
@@ -28,7 +28,6 @@ ISO15118_vasImpl::~ISO15118_vasImpl() {
 }
 
 void ISO15118_vasImpl::init() {
-    this->scripts_path = mod->info.paths.libexec;
     if (!this->mod->r_evse_manager.empty()) {
         this->mod->r_evse_manager.at(0)->subscribe_session_event(
             [this](types::evse_manager::SessionEvent session_event) {
@@ -37,6 +36,12 @@ void ISO15118_vasImpl::init() {
                     this->stop_internet_service();
                 }
             });
+    }
+    const auto config_setup_script = fs::path(this->mod->config.vas_setup_script);
+    if (config_setup_script.is_relative()) {
+        this->internet_setup_script = (this->mod->info.paths.libexec / this->mod->config.vas_setup_script).string();
+    } else {
+        this->internet_setup_script = this->mod->config.vas_setup_script;
     }
 }
 
@@ -134,8 +139,7 @@ void ISO15118_vasImpl::handle_selected_services(std::vector<types::iso15118_vas:
 }
 
 void ISO15118_vasImpl::start_script(const std::string& script_name, const std::vector<std::string>& args) {
-    const auto script_path = this->scripts_path / script_name;
-    auto output = everest::run_application::run_application(script_path, args);
+    auto output = everest::run_application::run_application(script_name, args);
     if (output.exit_code != 0) {
         EVLOG_warning << "Script: " << script_name << " exited with code: " << output.exit_code;
         EVLOG_warning << "Script output:";
@@ -155,7 +159,7 @@ void ISO15118_vasImpl::start_internet_service(const std::string& ports) {
     this->active_ports = ports;
     EVLOG_info << "Starting internet service for ports: " << this->active_ports;
 
-    std::thread(&ISO15118_vasImpl::start_script, this, INTERNET_SETUP_SCRIPT,
+    std::thread(&ISO15118_vasImpl::start_script, this, this->internet_setup_script,
                 std::vector<std::string>{"up", this->mod->config.ev_interface, this->mod->config.modem_interface,
                                          this->active_ports})
         .detach();
@@ -172,7 +176,7 @@ void ISO15118_vasImpl::stop_internet_service() {
     }
     EVLOG_info << "Stopping internet service for ports: " << this->active_ports;
 
-    std::thread(&ISO15118_vasImpl::start_script, this, INTERNET_SETUP_SCRIPT,
+    std::thread(&ISO15118_vasImpl::start_script, this, this->internet_setup_script,
                 std::vector<std::string>{"down", this->mod->config.ev_interface, this->mod->config.modem_interface,
                                          this->active_ports})
         .detach();
