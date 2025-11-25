@@ -55,9 +55,9 @@ function(_trailbook_ev_generate_html_from_api)
   endif()
 
   get_target_property(
-      TRAILBOOK_INSTANCE_SOURCE_DIRECTORY
+      TRAILBOOK_INSTANCE_BUILD_DIRECTORY
       trailbook_everest
-      TRAILBOOK_INSTANCE_SOURCE_DIRECTORY
+      TRAILBOOK_INSTANCE_BUILD_DIRECTORY
   )
 
   get_target_property(
@@ -69,7 +69,7 @@ function(_trailbook_ev_generate_html_from_api)
   get_filename_component(API_NAME ${args_API_FILE} NAME_WE)
 
   set(ASYNC_TARGET_NAME ${API_NAME}_AsyncApi)
-  set(GENERATED_HTML_PATH ${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}/${args_HTML_PATH}/${API_NAME})
+  set(GENERATED_HTML_PATH ${TRAILBOOK_INSTANCE_BUILD_DIRECTORY}/${args_HTML_PATH}/${API_NAME})
   set(PREVIEW_HTML_PATH ${TRAILBOOK_BUILD_DIRECTORY}/latest/reference/api/${API_NAME})
 
   add_custom_command(
