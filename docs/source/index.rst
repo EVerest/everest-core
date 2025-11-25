@@ -32,7 +32,7 @@ electrification of the mobility sector.
    :gutter: 2
 
    .. grid-item-card:: High-level overview
-      :link: explanation/framework-overview
+      :link: explanation/high-level-overview
       :link-type: doc
 
       Get an understanding of the most important mechanisms and the
