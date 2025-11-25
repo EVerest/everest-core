@@ -1847,7 +1847,7 @@ types:
         description: Target reactive power requested by the EVSE on L3 in W
         type: number
   EvTermination:
-    description: Information about EV termination code and explanation.
+    description: Information about EV termination code and explanation as described in ISO15118-20.
     type: object
     additionalProperties: false
     properties:

@@ -448,6 +448,7 @@ vars:
     type: object
     $ref: /iso15118#/SelectedServiceParameters
   ev_termination:
-    description: The EV termination code
+    description: >-
+      The EV termination code as described in ISO15118-20.
     type: object
     $ref: /iso15118#/EvTermination
