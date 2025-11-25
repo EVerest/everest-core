@@ -59,7 +59,7 @@ cmds:
         type: number
 vars:
   voltage_current:
-    description: Voltage/Current at the input/output
+    description: Voltage/Current at the input/output. Use negative current values if the PSU is sinking current (feeding into the grid, discharging mode).
     type: object
     $ref: /power_supply_DC#/VoltageCurrent
   mode:

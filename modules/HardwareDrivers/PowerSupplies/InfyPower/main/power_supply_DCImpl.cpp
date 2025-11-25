@@ -21,7 +21,11 @@ void power_supply_DCImpl::init() {
             }
 
             types::power_supply_DC::VoltageCurrent vc;
-            vc.current_A = total_current;
+            vc.current_A = std::abs(total_current);
+            // if discharging is active, publish as negative current
+            if (this->mode.load() == types::power_supply_DC::Mode::Import) {
+                vc.current_A *= -1;
+            }
             vc.voltage_V = ext_voltage;
             publish_voltage_current(vc);
         }
