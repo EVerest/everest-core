@@ -1,65 +1,67 @@
 .. _how_to_renesas_mpu:
 
-##################################
+##############################################
 How to for Renesas MPU (RZ/G2L family)
-##################################
+##############################################
 
 To get more information on EVerest and Renesas hardware, see here:
 https://www.renesas.com/en/products/microcontrollers-microprocessors/rz-mpus/rz-partner-solutions/pionix-basecamp
 
 Here is how to set it up and run an EVerest simulation:
 
-1. Clone the rz-community-bsp repo: https://github.com/renesas-rz/rz-community-bsp.git
+1. Clone the ``rz-community-bsp`` repo:
+   https://github.com/renesas-rz/rz-community-bsp.git
 
-2. Apply the patch, which you can find on the following page. The changes are
-  necessary to build everest-core:
-  :ref:`Patch file <how_to_renesas_mpu_patch>`
+2. Apply the patch necessary to build ``everest-core``.
+   You can find the patch here: :ref:`Patch file <how_to_renesas_mpu_patch>`
 
-3. Start kas-container menu to configure the environment:
-  (a) Run ./kas-container menu
-  (b) Select device as RZ/G2L.
-  (c) Save & Exit
+3. Start the ``kas-container`` menu to configure the environment:
 
-4. Start kas-shell with ./kas-container shell:
-  (a) Run *sudo apt-get update*
-  (b) Run *sudo apt-get install -y python3.11 python3.11-dev*
+   a. Run ``./kas-container menu``
+   b. Select the device **RZ/G2L**
+   c. Save & Exit
 
-5. Edit the file */work/poky/meta/recipes-devtools/elfutils/elfutils_0.186.bb*
-  to add the following line:
+4. Start ``kas-shell`` with ``./kas-container shell`` and install dependencies:
 
-  .. code-block:: bash
+   a. Run ``sudo apt-get update``  
+   b. Run ``sudo apt-get install -y python3.11 python3.11-dev``
 
-    CFLAGS:append = " -Wno-error=deprecated-declarations"
+5. Edit the file  
+   ``/work/poky/meta/recipes-devtools/elfutils/elfutils_0.186.bb``  
+   to add the following line:
 
-6. Finally, start the build: *bitbake renesas-image-minimal*
-  Once the build is complete, exit the shell.
+   .. code-block:: bash
 
-7. Flash the hardware with the information in the RZ/G2L startup guide, which
-  can be found here:
-  `Evaluation Board Kit Quick Start Guide <https://www.renesas.com/us/en/document/qsg/rzg2l-evaluation-board-kit-quick-start-guide>`_
+      CFLAGS:append = " -Wno-error=deprecated-declarations"
 
-  The generated image/binaries will be present in the directory:
+6. Start the build using:
 
-  .. code-block:: bash
+   ``bitbake renesas-image-minimal``
 
-    built/tmp/deploy/images/smarc-rzg2l
+   Once the build is complete, exit the shell.
 
-7. Start EVerest with the following command:
+7. Flash the hardware with the instructions in the RZ/G2L startup guide:
+   `Evaluation Board Kit Quick Start Guide <https://www.renesas.com/us/en/document/qsg/rzg2l-evaluation-board-kit-quick-start-guide>`_
 
-  .. code-block:: bash
+   The generated images/binaries will be present in:
 
-    /usr/bin/manager --conf /etc/everest/config-sil.yaml
+   .. code-block:: bash
 
-If everything has been set up correctly, you will be able to run simulation
-steps with EVerest now. Have a look at the
-:ref:`Quick Start Guide <quickstartguide_main>` to get more information on
-this.
+      built/tmp/deploy/images/smarc-rzg2l
 
-From there on, you might want to take it to the next level by implementing
-your own customized EVerest modules. Have a look at the dedicated
-:ref:`EVerest module concept documentation <moduleconcept_main>` to get an
-idea of doing that.
+8. Start EVerest with:
 
----------------------------------------------
+   .. code-block:: bash
 
-Authors: Manuel Ziegler
+      /usr/bin/manager --conf /etc/everest/config-sil.yaml
+
+If everything has been set up correctly, you will now be able to run simulation
+steps with EVerest. See the :ref:`Quick Start Guide <quickstartguide_main>`
+for more information.
+
+To go further and implement your own customized EVerest modules, have a look at
+the :ref:`EVerest module concept documentation <moduleconcept_main>`.
+
+----
+
+**Authors:** Manuel Ziegler
