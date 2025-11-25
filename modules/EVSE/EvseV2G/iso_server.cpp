@@ -726,10 +726,8 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
 
                             init_iso2_ParameterType(&out_parameter);
 
-                            strncpy(out_parameter.Name.characters, parameter.name.c_str(),
-                                    sizeof(out_parameter.Name.characters));
-                            out_parameter.Name.charactersLen =
-                                std::min(sizeof(out_parameter.Name.characters), parameter.name.length());
+                            strncpy_to_v2g(out_parameter.Name.characters, sizeof(out_parameter.Name.characters),
+                                           &out_parameter.Name.charactersLen, parameter.name);
 
                             if (parameter.value.int_value.has_value()) {
                                 out_parameter.intValue = parameter.value.int_value.value();
@@ -742,10 +740,9 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
                                                                  parameter.name, temp, temp,
                                                                  sizeof(out_parameter.stringValue.characters));
                                 }
-                                strncpy(out_parameter.stringValue.characters, temp.c_str(),
-                                        sizeof(out_parameter.stringValue.characters));
-                                out_parameter.stringValue.charactersLen =
-                                    std::min(sizeof(out_parameter.stringValue.characters), temp.length());
+                                strncpy_to_v2g(out_parameter.stringValue.characters,
+                                               sizeof(out_parameter.stringValue.characters),
+                                               &out_parameter.stringValue.charactersLen, temp);
                                 out_parameter.stringValue_isUsed = true;
                             } else if (parameter.value.bool_value.has_value()) {
                                 out_parameter.boolValue = static_cast<int>(parameter.value.bool_value.value());

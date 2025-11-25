@@ -81,4 +81,13 @@ convert_to_certificate_hash_data_info_vector(const types::evse_security::OCSPReq
 
 std::string to_mac_address_str(const uint8_t* ptr, size_t len);
 
+/**
+ * \brief Copy the content of \p src to the character array pointed by \p characters.
+ * \param characters The destination buffer (array)
+ * \param size_of_characters The size of the destination (must not be zero)
+ * \param characters_len Pointer to the corresponding string length field in the destination struct.
+ * \param src The source string to use.
+ */
+void strncpy_to_v2g(char* characters, size_t size_of_characters, uint16_t* characters_len, const std::string& src);
+
 #endif /* TOOLS_H */
