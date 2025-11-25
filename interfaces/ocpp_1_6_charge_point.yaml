@@ -33,9 +33,9 @@ cmds:
       description: Response to the requested operation
       type: object
       $ref: /ocpp#/GetConfigurationResponse
-  set_custom_configuration_key:
+  set_configuration_key:
     description: >-
-      Command to set a custom configuration key. Its not possible to set standardized configuration keys externally
+      Command to set a configuration key
     arguments:
       key:
         description: Key that should be set
