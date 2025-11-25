@@ -16,3 +16,5 @@ Have a look at this categorized list of all guides:
     configure-pnc
     debug-iso15118
     yocto-cross-compilation
+    eichrecht
+    uk-smart-charging-regulations
