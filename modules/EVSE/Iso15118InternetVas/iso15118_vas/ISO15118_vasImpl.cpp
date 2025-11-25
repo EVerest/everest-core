@@ -156,7 +156,7 @@ void ISO15118_vasImpl::start_internet_service(const std::string& ports) {
     this->active_ports = ports;
     EVLOG_info << "Starting internet service for ports: " << this->active_ports;
 
-    std::thread(&ISO15118_vasImpl::start_script, this, INTERNET_SETUP_SCRIPT,
+    std::thread(&ISO15118_vasImpl::start_script, this, internet_setup_script,
                 std::vector<std::string>{"up", this->mod->config.ev_interface, this->mod->config.modem_interface,
                                          this->active_ports})
         .detach();
@@ -173,7 +173,7 @@ void ISO15118_vasImpl::stop_internet_service() {
     }
     EVLOG_info << "Stopping internet service for ports: " << this->active_ports;
 
-    std::thread(&ISO15118_vasImpl::start_script, this, INTERNET_SETUP_SCRIPT,
+    std::thread(&ISO15118_vasImpl::start_script, this, internet_setup_script,
                 std::vector<std::string>{"down", this->mod->config.ev_interface, this->mod->config.modem_interface,
                                          this->active_ports})
         .detach();
