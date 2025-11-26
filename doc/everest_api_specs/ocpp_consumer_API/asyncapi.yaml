@@ -402,6 +402,14 @@ components:
     send_request_monitor_variables:
       title: 'Monitor variables'
       summary: 'Monitor the variables.'
+      description: |
+        Command to start monitoring the given ComponentVariable(s). Any of the provided
+        configuration keys will be published on change by the CSMS (or via this API).
+        Consecutive calls of this operation will not override but extend the existing monitors.
+
+        With OCPP1.6: This command can be used to monitor configuration keys
+
+        With OCPP2.0.1: This command can be used to monitor any kind of variable in the device model storage
       contentType: application/json
       payload:
         $ref: '#/components/schemas/MonitorVariableRequestList'
@@ -460,10 +468,17 @@ components:
     receive_charging_schedules:
       name: receive_charging_schedules
       title: 'Receive composite charging schedules'
-      summary: >-
-        Object that contains OCPP charging schedules of all connectors. The
-        object contains one composite charging schedule for each connector id starting
+      summary: Object that contains OCPP charging schedules of all connectors
+      description: |
+        The object contains one composite charging schedule for each connector id starting
         from connector 0. Connector 0 contains a schedule for the whole charging station.
+
+        The frequency of publication is controlled by PublishChargingScheduleIntervalS (OCPP 2.x)
+        and CompositeScheduleIntervalS (OCPP 1.6)
+
+        The duration of the composite schedules is controlled by
+        PublishChargingScheduleDurationS (OCPP 2.x) and
+        RequestCompositeScheduleDurationS (OCPP 1.6)
       contentType: application/json
       payload:
         $ref: '#/components/schemas/ChargingSchedules'

@@ -118,6 +118,7 @@ It is recommended that only the following types are used:
 
 - double
 - int32_t (not std::int32_t)
+- int64_t (not std::int64_t)
 - bool
 - std::string
 - struct

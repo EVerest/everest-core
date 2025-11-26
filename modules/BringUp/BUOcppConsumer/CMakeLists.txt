@@ -9,11 +9,11 @@ ev_setup_cpp_module()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 # insert your custom targets and additional config variables here
-target_link_libraries(${MODULE_NAME}
-  PRIVATE ftxui::screen
-  PRIVATE ftxui::dom
-  PRIVATE ftxui::component
-)
+# target_link_libraries(${MODULE_NAME}
+#   PRIVATE ftxui::screen
+#   PRIVATE ftxui::dom
+#   PRIVATE ftxui::component
+# )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
 target_sources(${MODULE_NAME}
