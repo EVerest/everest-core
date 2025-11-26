@@ -8,6 +8,8 @@
 #include "ISO15118_vasImpl.hpp"
 #include <sys/types.h>
 
+namespace fs = std::filesystem;
+
 namespace module {
 namespace iso15118_vas {
 
