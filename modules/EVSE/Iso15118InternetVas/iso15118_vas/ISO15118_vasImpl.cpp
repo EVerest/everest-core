@@ -28,7 +28,6 @@ ISO15118_vasImpl::~ISO15118_vasImpl() {
 }
 
 void ISO15118_vasImpl::init() {
-    this->scripts_path = mod->info.paths.libexec;
     if (!this->mod->r_evse_manager.empty()) {
         this->mod->r_evse_manager.at(0)->subscribe_session_event(
             [this](types::evse_manager::SessionEvent session_event) {
@@ -38,7 +37,12 @@ void ISO15118_vasImpl::init() {
                 }
             });
     }
-    internet_setup_script = this->mod->config.setup_script;
+    const auto config_setup_script = fs::path(this->mod->config.setup_script);
+    if (config_setup_script.is_relative()) {
+        internet_setup_script = mod->info.paths.libexec / this->mod->config.setup_script;
+    } else {
+        internet_setup_script = this->mod->config.setup_script;
+    }
 }
 
 void ISO15118_vasImpl::ready() {
@@ -135,8 +139,7 @@ void ISO15118_vasImpl::handle_selected_services(std::vector<types::iso15118_vas:
 }
 
 void ISO15118_vasImpl::start_script(const std::string& script_name, const std::vector<std::string>& args) {
-    const auto script_path = this->scripts_path / script_name;
-    auto output = everest::run_application::run_application(script_path, args);
+    auto output = everest::run_application::run_application(script_name, args);
     if (output.exit_code != 0) {
         EVLOG_warning << "Script: " << script_name << " exited with code: " << output.exit_code;
         EVLOG_warning << "Script output:";
