@@ -13,8 +13,8 @@ namespace everest::lib::API::V1_0::types::ocpp {
 
 namespace {
 template <class SrcT, class ConvT>
-auto srcToTarOpt(std::optional<SrcT> const& src,
-                 ConvT const& converter) -> std::optional<decltype(converter(src.value()))> {
+auto srcToTarOpt(std::optional<SrcT> const& src, ConvT const& converter)
+    -> std::optional<decltype(converter(src.value()))> {
     if (src) {
         return std::make_optional(converter(src.value()));
     }
