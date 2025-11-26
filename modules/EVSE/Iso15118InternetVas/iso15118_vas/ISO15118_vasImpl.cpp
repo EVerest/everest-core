@@ -37,11 +37,11 @@ void ISO15118_vasImpl::init() {
                 }
             });
     }
-    const auto config_setup_script = fs::path(this->mod->config.setup_script);
+    const auto config_setup_script = fs::path(this->mod->config.vas_setup_script);
     if (config_setup_script.is_relative()) {
-        internet_setup_script = mod->info.paths.libexec / this->mod->config.setup_script;
+        internet_setup_script = mod->info.paths.libexec / this->mod->config.vas_setup_script;
     } else {
-        internet_setup_script = this->mod->config.setup_script;
+        internet_setup_script = this->mod->config.vas_setup_script;
     }
 }
 
