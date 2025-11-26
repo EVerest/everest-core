@@ -14,7 +14,7 @@ namespace module {
 namespace iso15118_vas {
 
 constexpr int32_t InternetAccessServiceIdD2 = 3;
-const std::string internet_setup_script = "";
+std::string internet_setup_script = "";
 
 constexpr int HTTP_PARAM_SET_ID = 3;
 constexpr int HTTPS_PARAM_SET_ID = 4;
@@ -41,7 +41,7 @@ void ISO15118_vasImpl::init() {
     }
     const auto config_setup_script = fs::path(this->mod->config.vas_setup_script);
     if (config_setup_script.is_relative()) {
-        internet_setup_script = mod->info.paths.libexec / this->mod->config.vas_setup_script;
+        internet_setup_script = ( mod->info.paths.libexec / this->mod->config.setup_script ).string();
     } else {
         internet_setup_script = this->mod->config.vas_setup_script;
     }
