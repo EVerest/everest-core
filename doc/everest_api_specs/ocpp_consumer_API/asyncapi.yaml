@@ -71,6 +71,11 @@ channels:
     messages:
       receive_reply_set_variables:
         $ref: '#/components/messages/receive_reply_set_variables'
+  send_request_monitor_variables:
+    address: 'm2e/monitor_variables'
+    messages:
+      send_request_monitor_variables:
+        $ref: '#/components/messages/send_request_monitor_variables'
 
   receive_ocpp_transaction_event:
     address: 'e2m/ocpp_transaction_event'
@@ -92,6 +97,16 @@ channels:
     messages:
       receive_boot_notification_response:
         $ref: '#/components/messages/receive_boot_notification_response'
+  receive_event_data:
+    address: 'e2m/event_data'
+    messages:
+      receive_event_data:
+        $ref: '#/components/messages/receive_event_data'
+  receive_charging_schedules:
+    address: 'e2m/charging_schedules'
+    messages:
+      receive_charging_schedules:
+        $ref: '#/components/messages/receive_charging_schedules'
 
 
   receive_heartbeat:
@@ -177,6 +192,12 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_reply_set_variables'
+  send_request_monitor_variables:
+    title: 'Send request to monitor the requested variables'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_monitor_variables'
+    description: 'Direction: Module to EVerest'
 
   receive_ocpp_transaction_event:
     title: 'Receive is OCPP transaction event'
@@ -198,6 +219,16 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_boot_notification_response'
+  receive_event_data:
+    title: 'Receive event data'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_event_data'
+  receive_charging_schedules:
+    title: 'Receive composite charging schedules'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_charging_schedules'
 
 
   receive_heartbeat:
@@ -368,6 +399,34 @@ components:
       contentType: application/json
       payload:
          $ref: '#/components/schemas/SetVariableResultList'
+    send_request_monitor_variables:
+      title: 'Monitor variables'
+      summary: 'Monitor the variables.'
+      description: |
+        Command to start monitoring the given ComponentVariable(s). Any of the provided
+        configuration keys will be published on change by the CSMS (or via this API).
+        Consecutive calls of this operation will not override but extend the existing monitors.
+
+        With OCPP1.6: This command can be used to monitor configuration keys
+
+        With OCPP2.0.1: This command can be used to monitor any kind of variable in the device model storage
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/MonitorVariableRequestList'
+      examples:
+        - summary: ""
+          payload:
+            items:
+            - component_variable:
+                component:
+                  name: string
+                  instance: string
+                  evse:
+                    id: 1
+                    connector_id: 1
+                variable:
+                  name: string
+                  instance: string
 
     receive_ocpp_transaction_event:
       name: receive_ocpp_transaction_event
@@ -398,6 +457,31 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/BootNotificationResponse'
+    receive_event_data:
+      name: receive_event_data
+      title: 'Receive event data'
+      summary: >-
+        Published for a component variable combination when a variable with a monitor has been changed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/EventData'
+    receive_charging_schedules:
+      name: receive_charging_schedules
+      title: 'Receive composite charging schedules'
+      summary: Object that contains OCPP charging schedules of all connectors
+      description: |
+        The object contains one composite charging schedule for each connector id starting
+        from connector 0. Connector 0 contains a schedule for the whole charging station.
+
+        The frequency of publication is controlled by PublishChargingScheduleIntervalS (OCPP 2.x)
+        and CompositeScheduleIntervalS (OCPP 1.6)
+
+        The duration of the composite schedules is controlled by
+        PublishChargingScheduleDurationS (OCPP 2.x) and
+        RequestCompositeScheduleDurationS (OCPP 1.6)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ChargingSchedules'
 
 
     receive_heartbeat:
@@ -465,6 +549,276 @@ components:
           description: Detailed status information.
           type: object
           $ref: '#/components/schemas/StatusInfoType'
+    EventData:
+      description: Type to report an event notification for a component-variable
+      type: object
+      additionalProperties: true
+      required:
+        - component_variable
+        - event_id
+        - timestamp
+        - trigger
+        - actual_value
+        - event_notification_type
+      properties:
+        component_variable:
+          description: Identifier for which the event occurred
+          type: object
+          $ref: '#/components/schemas/ComponentVariable'
+        event_id:
+          description: Identifies the event
+          type: integer
+        timestamp:
+          description: Timestamp of the moment the report was generated
+          type: string
+          format: date-time
+        trigger:
+          description: Type of the monitor that triggered this event
+          type: string
+          $ref: '#/components/schemas/EventTriggerEnum'
+        actual_value:
+          description: Actual value of the variable
+          type: string
+          maxLength: 2500
+        event_notification_type:
+          description: Type of the event notification
+          type: string
+          $ref: '#/components/schemas/EventNotificationType'
+        cause:
+          description: Refers to the Id of an event that is considered to be the cause for this event
+          type: integer
+        tech_code:
+          description: Technical (error) code as reported by component
+          type: string
+          maxLength: 50
+        tech_info:
+          description: Technical detail information as reported by component
+          type: string
+          maxLength: 500
+        cleared:
+          description: Cleared is set to true to report the clearing of a monitored situation
+          type: boolean
+        transaction_id:
+          description: >-
+            If an event notification is linked to a specific transaction, this field can be used
+            to specify its transactionId
+          type: string
+          maxLength: 36
+        variable_monitoring_id:
+          description: Identifies the VariableMonitoring which triggered the event
+          type: integer
+    V2XFreqWattPointType:
+      description: A point of a frequency-watt curve.
+      type: object
+      required:
+        - frequency
+        - power
+      properties:
+        frequency:
+          type: number
+          description: Net frequency in Hz
+        power:
+          type: number
+          description: Power in W to charge (positive) or discharge (negative) at specified frequency.
+    V2XSignalWattPointCurve:
+      description: A point of a signal-watt curve.
+      type: object
+      required:
+        - signal
+        - power
+      properties:
+        signal:
+          type: integer
+          description: Signal value from an AFRRSignalRequest.
+        power:
+          type: number
+          description: Power in W to charge (positive) or discharge (negative) at specified frequency.
+    ChargingSchedulePeriod:
+      description: >-
+        Element providing information on a charging schedule period.
+      type: object
+      required:
+        - start_period
+        - limit
+      properties:
+        start_period:
+          type: integer
+        limit:
+          type: number
+          description: >-
+            Optional only when not required by the operationMode, as in CentralSetpoint, ExternalSetpoint, ExternalLimits,
+            LocalFrequency, LocalLoadBalancing.
+            Charging rate limit during the schedule period, in the applicable chargingRateUnit. This SHOULD be a
+            non-negative value; a negative value is only supported for backwards compatibility with older systems that
+            use a negative value to specify a discharging limit. When using chargingRateUnit = W, this field represents
+            the sum of the power of all phases, unless values are provided for L2 and L3, in which case this field
+            represents phase L1.
+        limit_L2:
+          type: number
+          description: Charging rate limit on phase L2 in the applicable chargingRateUnit.
+        limit_L3:
+          type: number
+          description: Charging rate limit on phase L3 in the applicable chargingRateUnit.
+        number_phases:
+          type: integer
+        stack_level:
+          type: integer
+        phase_to_use:
+          type: integer
+        discharge_limit:
+          type: number
+          description: >-
+            value <= 0. Limit in chargingRateUnit that the EV is allowed to discharge with. Note, these are negative
+            values in order to be consistent with setpoint, which can be positive and negative.
+            For AC this field represents the sum of all phases, unless values are provided for L2 and L3, in which case
+            this field represents phase L1.
+        discharge_limit_L2:
+          type: number
+          description: Limit in chargingRateUnit on phase L2 that the EV is allowed to discharge with
+        discharge_limit_L3:
+          type: number
+          description: Limit in chargingRateUnit on phase L3 that the EV is allowed to discharge with
+        setpoint:
+          type: number
+          description: >-
+            Setpoint in chargingRateUnit that the EV should follow as close as possible. Use negative values for
+            discharging.
+            When a limit and/or dischargeLimit are given the overshoot when following setpoint must remain within
+            these values. This field represents the sum of all phases,unless values are provided for L2 and L3, in which
+            case this field represents phase L1.
+        setpoint_L2:
+          type: number
+          description: Setpoint in chargingRateUnit that the EV should follow on phase L2 as close as possible.
+        setpoint_L3:
+          type: number
+          description: Setpoint in chargingRateUnit that the EV should follow on phase L3 as close as possible.
+        setpoint_reactive:
+          type: number
+          description: >-
+            Setpoint for reactive power (or current) in chargingRateUnit that the EV should follow as closely as possible.
+            Positive values for inductive, negative for capacitive reactive power or current.
+            This field represents the sum of all phases, unless values are provided for L2 and L3, in which case this
+            field represents phase L1.
+        setpoint_reactive_L2:
+          type: number
+          description: >-
+            Setpoint for reactive power (or current) in chargingRateUnit that the EV should follow on phase L2 as closely
+            as possible.
+        setpoint_reactive_L3:
+          type: number
+          description: >-
+            Setpoint for reactive power (or current) in chargingRateUnit that the EV should follow on phase L3 as closely
+            as possible.
+        preconditioning_request:
+          type: boolean
+          description: If true, the EV should attempt to keep the BMS preconditioned for this time interval.
+        evse_sleep:
+          type: boolean
+          description: >-
+            If true, the EVSE must turn off power electronics/modules associated with this transaction. Default value when
+            absent is false.
+        v2x_baseline:
+          type: number
+          description: >-
+            Power value that, when present, is used as a baseline on top of which values from v2xFreqWattCurve and
+            v2xSignalWattCurve are added
+        operation_mode:
+          type: string
+          description: Operation mode for (bi-)directional charging during a charging schedule period.
+          enum:
+            - Idle
+            - ChargingOnly
+            - CentralSetpoint
+            - ExternalSetpoint
+            - ExternalLimits
+            - CentralFrequency
+            - LocalFrequency
+            - LocalLoadBalancing
+        v2x_freq_watt_curve:
+          type: array
+          description: >-
+            Only required when operationMode = LocalFrequency. When used it must contain at least two coordinates to
+            specify a power-frequency table to use during this period. The table determines the value of setpoint power
+            for a given frequency. chargingRateUnit must be W for LocalFrequency control.
+          items:
+            type: object
+            $ref: '#/components/schemas/V2XFreqWattPointType'
+            description: A point of a frequency-watt curve.
+        v2x_signal_watt_curve:
+          type: array
+          description: >-
+            Only used, but not required, when operationMode = LocalFrequency. When used it must contain at least two
+            coordinates to specify a signal-frequency curve to use during this period. The curve determines the value of
+            setpoint power for a given signal. chargingRateUnit must be W for LocalFrequency control.
+          items:
+            type: object
+            $ref: '#/components/schemas/V2XSignalWattPointCurve'
+            description: A point of a signal-watt curve.
+    ChargingSchedule:
+      description: >-
+        Element providing information on an OCPP charging schedule.
+      type: object
+      required:
+        - evse
+        - charging_rate_unit
+        - charging_schedule_period
+      properties:
+        evse:
+          description: The OCPP 2.0.1 EVSE ID (not used in OCPP 1.6).
+          type: integer
+          minimum: 0
+        charging_rate_unit:
+          type: string
+        charging_schedule_period:
+          type: array
+          items:
+            description: schedule periods
+            type: object
+            $ref: '#/components/schemas/ChargingSchedulePeriod'
+        duration:
+          type: integer
+        start_schedule:
+          type: string
+        min_charging_rate:
+          type: number
+    ChargingSchedules:
+      description: schedules for connectors
+      type: object
+      additionalProperties: true
+      required:
+        - schedules
+      properties:
+        schedules:
+          description: array of schedules
+          type: array
+          items:
+            description: schedule for a connector
+            type: object
+            $ref: '#/components/schemas/ChargingSchedule'
+    EventTriggerEnum:
+      description: >-
+        Indicates the trigger reason of a generic event as part of the type EventData
+        Alerting: Monitored variable has passed an Lower or Upper Threshold
+        Delta: Delta Monitored Variable value has changed by more than specified amount
+        Periodic: Periodic Monitored Variable has been sampled for reporting at the specified interval
+      type: string
+      enum:
+        - Alerting
+        - Delta
+        - Periodic
+    EventNotificationType:
+      description: >-
+        Indicates the event notification type as part of the type EventData
+        HardWiredNotification: The software implemented by the manufacturer triggered a hardwired notification
+        HardWiredMonitor: Triggered by a monitor, which is hardwired by the manufacturer
+        PreconfiguredMonitor: Triggered by a monitor, which is preconfigured by the manufacturer.
+        CustomMonitor: Triggered by a monitor which is set by a message by the Charging Station Operator.
+      type: string
+      enum:
+        - HardWiredNotification
+        - HardWiredMonitor
+        - PreconfiguredMonitor
+        - CustomMonitor
     Component:
       description: >-
         Type for a component with name, optional instance and optional evse
@@ -677,6 +1031,18 @@ components:
         - UnknownComponent
         - UnknownVariable
         - NotSupportedAttributeType
+    MonitorVariableRequestList:
+      description: List of MonitorVariableRequest values
+      type: object
+      additionalProperties: true
+      required:
+        - items
+      properties:
+        items:
+          description: List of ComponentVariable values
+          type: array
+          items:
+            $ref: '#/components/schemas/ComponentVariable'
     OcppTransactionEvent:
       description: >-
         Element providing information on OCPP transactions.

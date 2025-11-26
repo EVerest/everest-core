@@ -10,82 +10,47 @@ namespace everest::lib::API::V1_0::types::ocpp {
 
 using json = nlohmann::json;
 
-void to_json(json& j, AttributeEnum const& k) noexcept;
-void from_json(const json& j, AttributeEnum& k);
+#define create_json_interface(A)                                                                                       \
+    void to_json(json& j, A const& k) noexcept;                                                                        \
+    void from_json(const json& j, A& k)
 
-void to_json(json& j, GetVariableStatusEnumType const& k) noexcept;
-void from_json(const json& j, GetVariableStatusEnumType& k);
+create_json_interface(AttributeEnum);
+create_json_interface(GetVariableStatusEnumType);
+create_json_interface(SetVariableStatusEnumType);
+create_json_interface(EventTriggerEnum);
+create_json_interface(EventNotificationType);
+create_json_interface(DataTransferStatus);
+create_json_interface(RegistrationStatus);
+create_json_interface(TransactionEvent);
+create_json_interface(CustomData);
+create_json_interface(DataTransferRequest);
+create_json_interface(DataTransferResponse);
+create_json_interface(EVSE);
+create_json_interface(Component);
+create_json_interface(Variable);
+create_json_interface(ComponentVariable);
+create_json_interface(GetVariableRequest);
+create_json_interface(GetVariableResult);
+create_json_interface(SetVariableRequest);
+create_json_interface(SetVariableResult);
+create_json_interface(GetVariableRequestList);
+create_json_interface(GetVariableResultList);
+create_json_interface(SetVariableRequestList);
+create_json_interface(SetVariableResultList);
+create_json_interface(SecurityEvent);
+create_json_interface(StatusInfoType);
+create_json_interface(BootNotificationResponse);
+create_json_interface(OcppTransactionEvent);
+create_json_interface(MonitorVariableRequestList);
+create_json_interface(SetVariablesArgs);
+create_json_interface(EventData);
+create_json_interface(ChargingSchedules);
+create_json_interface(ChargingSchedule);
+create_json_interface(ChargingSchedulePeriod);
+create_json_interface(OperationMode);
+create_json_interface(V2XSignalWattPointCurve);
+create_json_interface(V2XFreqWattPointType);
 
-void to_json(json& j, SetVariableStatusEnumType const& k) noexcept;
-void from_json(const json& j, SetVariableStatusEnumType& k);
-
-void to_json(json& j, DataTransferStatus const& k) noexcept;
-void from_json(const json& j, DataTransferStatus& k);
-
-void to_json(json& j, RegistrationStatus const& k) noexcept;
-void from_json(const json& j, RegistrationStatus& k);
-
-void to_json(json& j, TransactionEvent const& k) noexcept;
-void from_json(const json& j, TransactionEvent& k);
-
-void to_json(json& j, CustomData const& k) noexcept;
-void from_json(const json& j, CustomData& k);
-
-void to_json(json& j, DataTransferRequest const& k) noexcept;
-void from_json(const json& j, DataTransferRequest& k);
-
-void to_json(json& j, DataTransferResponse const& k) noexcept;
-void from_json(const json& j, DataTransferResponse& k);
-
-void to_json(json& j, EVSE const& k) noexcept;
-void from_json(const json& j, EVSE& k);
-
-void to_json(json& j, Component const& k) noexcept;
-void from_json(const json& j, Component& k);
-
-void to_json(json& j, Variable const& k) noexcept;
-void from_json(const json& j, Variable& k);
-
-void to_json(json& j, ComponentVariable const& k) noexcept;
-void from_json(const json& j, ComponentVariable& k);
-
-void to_json(json& j, GetVariableRequest const& k) noexcept;
-void from_json(const json& j, GetVariableRequest& k);
-
-void to_json(json& j, GetVariableResult const& k) noexcept;
-void from_json(const json& j, GetVariableResult& k);
-
-void to_json(json& j, SetVariableRequest const& k) noexcept;
-void from_json(const json& j, SetVariableRequest& k);
-
-void to_json(json& j, SetVariableResult const& k) noexcept;
-void from_json(const json& j, SetVariableResult& k);
-
-void to_json(json& j, GetVariableRequestList const& k) noexcept;
-void from_json(const json& j, GetVariableRequestList& k);
-
-void to_json(json& j, GetVariableResultList const& k) noexcept;
-void from_json(const json& j, GetVariableResultList& k);
-
-void to_json(json& j, SetVariableRequestList const& k) noexcept;
-void from_json(const json& j, SetVariableRequestList& k);
-
-void to_json(json& j, SetVariableResultList const& k) noexcept;
-void from_json(const json& j, SetVariableResultList& k);
-
-void to_json(json& j, SetVariablesArgs const& k) noexcept;
-void from_json(const json& j, SetVariablesArgs& k);
-
-void to_json(json& j, SecurityEvent const& k) noexcept;
-void from_json(const json& j, SecurityEvent& k);
-
-void to_json(json& j, StatusInfoType const& k) noexcept;
-void from_json(const json& j, StatusInfoType& k);
-
-void to_json(json& j, BootNotificationResponse const& k) noexcept;
-void from_json(const json& j, BootNotificationResponse& k);
-
-void to_json(json& j, OcppTransactionEvent const& k) noexcept;
-void from_json(const json& j, OcppTransactionEvent& k);
+#undef create_json_interface
 
 } // namespace everest::lib::API::V1_0::types::ocpp

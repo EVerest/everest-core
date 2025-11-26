@@ -12,7 +12,7 @@ class EnumHelper(Helper):
     regex_enum_field = "(" + w + r"([A-z_0-9]+)(" + w + r")*)"
     regex_structure_type = "enum" + w + r"class"
     regex_find_in_file = regex_structure_type + w + \
-        r"[A-z]*" + w + r"\{((" + regex_enum_field + r",?" + w + r")*)\};"
+        r"[A-z_][A-z0-9_]*" + w + r"\{((" + regex_enum_field + r",?" + w + r")*)\};"
 
     @staticmethod
     def get_regex_find_in_file():
