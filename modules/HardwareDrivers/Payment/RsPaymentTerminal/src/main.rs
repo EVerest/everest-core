@@ -347,6 +347,55 @@ impl PaymentTerminalModule {
         Ok(())
     }
 
+    /// Commits a transaction with retry logic.
+    ///
+    /// Attempts to commit the transaction up to MAX_RETRIES times.
+    /// Returns the transaction summary on success.
+    /// If all attempts fail, the transaction is cancelled and the
+    /// last error is returned.
+    fn commit_transaction_with_retry(
+        &self,
+        token: &str,
+        amount: u64,
+    ) -> Result<zvt_feig_terminal::feig::TransactionSummary> {
+        const MAX_RETRIES: usize = 5;
+        const RETRY_DELAY_SECONDS: u64 = 1;
+
+        let mut last_error = None;
+
+        for attempt in 1..=MAX_RETRIES {
+            match self.feig.commit_transaction(token, amount) {
+                Ok(res) => return Ok(res),
+                Err(err) => {
+                    last_error = Some(err);
+                    log::error!(
+                        "Transaction commit attempt {} failed: {:?}.",
+                        attempt,
+                        last_error.as_ref().unwrap(),
+                    );
+                }
+            }
+
+            // Avoid throttling the terminal
+            std::thread::sleep(Duration::from_secs(RETRY_DELAY_SECONDS));
+        }
+
+        // All retries exhausted
+        // We have to cancel the transaction, otherwise it will prevent
+        // future transactions from being started.
+        if let Err(err) = self.feig.cancel_transaction(token) {
+            log::error!("Failed to cancel transaction: {err:?}");
+        }
+
+        log::error!(
+            "Transaction commit failed after {} attempts: {:?}. amount: {}",
+            MAX_RETRIES,
+            last_error.as_ref().unwrap(),
+            amount
+        );
+        Err(last_error.unwrap())
+    }
+
     /// The implementation of the `SessionCostClientSubscriber::on_session_cost`,
     /// but here we can return errors.
     fn on_session_cost_impl(&self, context: &Context, value: SessionCost) -> Result<()> {
@@ -373,9 +422,7 @@ impl PaymentTerminalModule {
                 acc + chunk.cost.unwrap_or(MoneyAmount { value: 0 }).value
             });
 
-        let res = self
-            .feig
-            .commit_transaction(&id_tag.id_token.value, total_cost as u64)?;
+        let res = self.commit_transaction_with_retry(&id_tag.id_token.value, total_cost as u64)?;
 
         context
             .publisher
