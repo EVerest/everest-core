@@ -74,7 +74,7 @@ components:
       summary: 'The provided token'
       contentType: application/json
       payload:
-        $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/ProvidedIdToken'
+        $ref: 'auth_consumer_API.yaml#/components/schemas/ProvidedIdToken'
       examples:
         - summary: "CommunicationCheck"
           payload:

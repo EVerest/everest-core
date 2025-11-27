@@ -355,7 +355,7 @@ components:
           type: array
           items:
             type: object
-            $ref: '../display_message_API/asyncapi.yaml#/components/schemas/MessageContent'
+            $ref: 'display_message_API.yaml#/components/schemas/MessageContent'
     WithdrawAuthorizationRequest:
       description: >-
         Request to withdraw granted authorization.
