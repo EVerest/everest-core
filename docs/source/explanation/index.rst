@@ -34,3 +34,4 @@ Below that, you will be presented with a categorized list of all articles.
     linux-yocto/index
     hardware-architecture
     high-level-overview
+    adapt-everest/index
