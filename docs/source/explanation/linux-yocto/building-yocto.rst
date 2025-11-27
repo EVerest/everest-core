@@ -1,8 +1,8 @@
 .. _exp_linux_yocto_building_yocto:
 
-##############################
+#######################################
 Building Yocto for your custom hardware
-##############################
+#######################################
 
 A good starting point is to use a yocto distribution supplied by the SoM/Board/CPU manufacturer.
 This ensures you have a working Linux distribution before starting to add EVerest.

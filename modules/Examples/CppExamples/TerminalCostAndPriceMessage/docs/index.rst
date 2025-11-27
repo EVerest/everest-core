@@ -1,9 +1,9 @@
 :orphan:
 
-.. _everest_modules_handwritten_DisplayMessage:
+.. _everest_modules_handwritten_TerminalCostAndPriceMessage:
 
 ..  This file is a placeholder for optional multiple files
-    handwritten documentation for the DisplayMessage module.
+    handwritten documentation for the TerminalCostAndPriceMessage module.
     Please decide whether you want to use the doc.rst file
     or a set of files in the doc/ directory.
     In the latter case, you can delete the doc.rst file.
@@ -18,8 +18,8 @@
     This index.rst file is the entry point for the module documentation.
 
 *******************************************
-DisplayMessage
+TerminalCostAndPriceMessage
 *******************************************
 
-:ref:`Link <everest_modules_DisplayMessage>` to the module's reference.
-Example display message module
+:ref:`Link <everest_modules_TerminalCostAndPriceMessage>` to the module's reference.
+Example session cost client, which prints tariff and cost messages to the log. 
