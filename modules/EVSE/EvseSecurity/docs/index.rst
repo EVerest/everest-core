@@ -7,8 +7,8 @@ EvseSecurity
 ============
 
 This module implements the
-`evse_security <https://github.com/EVerest/everest-core/blob/main/interfaces/evse_security.yaml>`_
-interface. It wraps the functionality of the
+:ref:`evse_security interface <everest_interfaces_evse_security>`.
+It wraps the functionality of the
 `libevse-security <https://github.com/EVerest/libevse-security>`_
 to provide access to security-related operations to other Everest modules such
 as OCPP and ISO15118. These modules require similar security-related

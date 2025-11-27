@@ -150,7 +150,7 @@ In the `BUILD.bazel`, use predefined macros to define the module:
 
 
 Defining Rust EVerest Modules
-----------------------------
+-----------------------------
 
 To define a Rust module in EVerest, you need to create a BUILD.bazel file in
 the module directory.

@@ -22,4 +22,4 @@ TerminalDisplayMessage
 *******************************************
 
 :ref:`Link <everest_modules_TerminalDisplayMessage>` to the module's reference.
-Example display message module
+Example implementation of a display message module
