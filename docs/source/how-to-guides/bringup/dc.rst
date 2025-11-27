@@ -184,22 +184,22 @@ Add two things to this bring-up configuration:
 Test setup:
 
 -  Connect a CP tester to the control pilot and set state C.
--  Set “Allow power on” in the evse_board_support BringUp. The relais
+-  Set “Allow power on” in the evse_board_support BringUp. The relays
    should close now.
 -  Connect a scope with one channel to the high voltage (use a 1000 V
-   probe!) and one channel to coil voltage of the relais. Instead of the
+   probe!) and one channel to coil voltage of the relays. Instead of the
    coil voltage, any other signal that triggers when the emergency
    shutdown starts can be used.
 
 To test the basic functionality, use the check list below. Start each
-test with a fresh test setup (relais closed).
+test with a fresh test setup (relays closed).
 
 .. note::
 
    There are more requirements in the standard - especially regarding timing.
 
 -  ☐ Switch on power supply at 500 V. Set the OVM limit to 550 V and
-   start the monitoring. Then, set the power supply to 565 V. The relais
+   start the monitoring. Then, set the power supply to 565 V. The relays
    should open immediately. The point in time when the voltage rises
    above 550 V is t_1 - the time where the coil voltage indicates a
    start of emergency shutdown. Verify with the scope that the time
@@ -212,7 +212,7 @@ test with a fresh test setup (relais closed).
    to 1000 V. It is a test case in table 103 of IEC 61851-23:2023.
 -  ☐ Set a limit of 550 V. Switch on the power supply at 500 V. Start
    monitoring. Stop monitoring. Set the DC output voltage to 565 V. The
-   relais shall remain closed as the over-voltage monitoring is not
+   relays shall remain closed as the over-voltage monitoring is not
    active.
 
 More IEC 61851-23 test cases for DC

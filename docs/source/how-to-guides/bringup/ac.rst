@@ -106,10 +106,7 @@ after PWM is on and the relay should close.
    If this does not work, your BSP driver needs to publish the current state
    when the “enable” command is called.
 
-Repeat the same with state C on startup. This should close the relay
-directly once “Ready for charging” is shown.
-
-These two tests are important as they simulate the behavior of a power
+This test is important as it simulates the behavior of a power
 loss while a charging session is running. Especially in a home
 environment, it is expected that the charging continues once the grid is
 back.
@@ -146,7 +143,7 @@ EVerest BringUp for AC ISO 15118-2
 If basic AC charging is fully working, it is time for the ISO 15118-2
 charging bring-up. You can use a simulator for this, but unlike for
 basic charging, ISO 15118 simulators are quite complex and expensive.
-You can as well use a real car for this.
+You could use a real car for this.
 
 .. note::
 

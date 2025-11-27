@@ -128,7 +128,7 @@ Now, let’s use this on real hardware.
 
    During the hardware bring-up, you will switch on high voltages that can
    cause severe injury including death.
-   It may only be done by trained personnel.
+   It must only be done by trained personnel.
    Make sure to follow all necessary safety procedures.
 
 The following chapters will guide you through the individual steps of

@@ -61,7 +61,7 @@ simulate a diode failure / loss of PE connection between EV and EVSE
 failure.
 
 State D is not really used anymore nowadays; it dates back to the times
-when lead-acid batteries were used, that leak hydrogen gas during
+when lead-acid batteries were used that leak hydrogen gas during
 charging.
 
 Connect your EVSE, the simulator and a scope similar to this:
