@@ -1,0 +1,29 @@
+:orphan:
+
+
+.. _everest_interfaces_example:
+
+
+#######
+example
+#######
+
+| This interface defines an example interface that uses multiple framework features
+
+
+*********
+Variables
+*********
+| **max_current**:*number* 
+|  Provides maximum current of this supply in ampere
+
+********
+Commands
+********
+| **uses_something**:*boolean*
+|  This command checks if something is stored under a given key
+|  **key**:*string* <required>
+|   Key to check the existence for
+|   pattern:``^[A-Za-z0-9_.]+$``
+|  **Result**:*boolean* 
+|   Returns 'True' if something was stored for this key

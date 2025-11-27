@@ -1,0 +1,40 @@
+:orphan:
+
+
+.. _everest_interfaces_powermeter:
+
+
+##########
+powermeter
+##########
+
+| This interface defines a generic powermeter for 5 wire TN networks.
+
+
+*********
+Variables
+*********
+| **powermeter**:*object*  (:ref:`powermeter-Powermeter <powermeter-Powermeter>`)
+|  Measured dataset
+|  **There is an extended definition for this object** :ref:`here <powermeter-Powermeter>`.
+| **public_key_ocmf**:*string* 
+|  The public key for OCMF
+
+********
+Commands
+********
+| **start_transaction**:*object*
+|  Starts a transaction on the power meter (for signed metering according to German Eichrecht)
+|  **value**:*object* <required> (:ref:`powermeter-TransactionReq <powermeter-TransactionReq>`)
+|   All information that should be included in the signed OCMF packet
+|   **There is an extended definition for this object** :ref:`here <powermeter-TransactionReq>`.
+|  **Result**:*object*  (:ref:`powermeter-TransactionStartResponse <powermeter-TransactionStartResponse>`)
+|   True on success, False if transaction could not be started in the power meter
+|   **There is an extended definition for this object** :ref:`here <powermeter-TransactionStartResponse>`.
+| **stop_transaction**:*object*
+|  Stop the transaction on the power meter and return the signed metering information. If the transaction id is an empty string, all ongoing transaction should be cancelled. This is used on start up to clear dangling transactions that might still be ongoing in the power meter but are not known to the EvseManager.
+|  **transaction_id**:*string* <required>
+|   Transaction id
+|  **Result**:*object*  (:ref:`powermeter-TransactionStopResponse <powermeter-TransactionStopResponse>`)
+|   Response to transaction stop request including OCMF string.
+|   **There is an extended definition for this object** :ref:`here <powermeter-TransactionStopResponse>`.

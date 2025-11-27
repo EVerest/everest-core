@@ -1,0 +1,21 @@
+:orphan:
+
+
+.. _everest_interfaces_debug_json:
+
+
+##########
+debug_json
+##########
+
+| This interface defines a generic JSON object debug variable publisher for use in any module. Can be used to display debug variables e.g. in web interface.
+
+
+*********
+Variables
+*********
+| **title**:*string* 
+|  Title of the Debug object
+| **debug_json**:*object* 
+|  Provides the debug object as a json object
+

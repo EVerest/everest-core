@@ -1,0 +1,28 @@
+:orphan:
+
+
+.. _everest_interfaces_error_history:
+
+
+#############
+error_history
+#############
+
+| This interface provides access to the error history of the EVerest framework
+
+
+
+********
+Commands
+********
+| **get_errors**:*array*
+|  Takes a list of filters and returns a list of errors
+|  **filters**:*object* <required> (:ref:`error_history-FilterArguments <error_history-FilterArguments>`)
+|   Filters to apply to the list of errors
+|   **There is an extended definition for this object** :ref:`here <error_history-FilterArguments>`.
+|  **Result**:*array* 
+|   List of filtered errors
+|   **array_item**:*string/object*  (:ref:`error_history-ErrorObject <error_history-ErrorObject>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <error_history-ErrorObject>`.
+| 

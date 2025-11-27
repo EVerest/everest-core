@@ -1,0 +1,22 @@
+:orphan:
+
+
+.. _everest_interfaces_charger_information:
+
+
+###################
+charger_information
+###################
+
+| This interface is the internal charger information interface between nodes.
+
+
+
+********
+Commands
+********
+| **get_charger_information**:*object*
+|  Queries the current charger information
+|  **Result**:*object*  (:ref:`charger_information-ChargerInformation <charger_information-ChargerInformation>`)
+|   Returns an object with the current charger meta information
+|   **There is an extended definition for this object** :ref:`here <charger_information-ChargerInformation>`.

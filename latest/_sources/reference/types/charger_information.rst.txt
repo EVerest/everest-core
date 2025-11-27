@@ -1,0 +1,41 @@
+:orphan:
+
+
+.. _everest_types_charger_information:
+
+
+###################
+charger_information
+###################
+
+EVerest charger information type
+
+.. _charger_information-ChargerInformation:
+
+| **ChargerInformation**:*object* 
+|  Type holding (mostly static) meta information about the whole charger. Note: Vendor and manufacturer refer here to the very same company - it is the brand which appears physically on the device label and/or which is shown on device's web frontend, in UPnP etc. We use both terms here to differentiate the different usages - with legal suffix, or without. This is why e.g. no `vendor_url` field is defined - it would be the very same as `manufacturer_url`.
+|  properties:
+|   **vendor**:*string* <required>
+|    Name of vendor, not including any legal form. Is typically used with `model` to form a unique product name aka `vendor` + `single whitespace` + `model`. Example: Pionix
+|   **model**:*string* <required>
+|    A human-friendly name of the model, aka the product name; without vendor name, without any device specific data/numbers (serial numbers/MAC addresses). Example: BelayBox
+|   **chargepoint_serial**:*string* <optional>
+|    The traditional serial number as string. It does not necessarily consist of digits only. Usually, this serial appears also on a label on the device. Example: SH4CAWN00123
+|   **chargebox_serial**:*string* <optional>
+|    The serial number of the controller as string (if any). It does not necessarily consist of digits only. Example: CB123456
+|   **friendly_name**:*string* <optional>
+|    A string with can be used to display the device eg. in network listings/enumerations. As mentioned above, this could typically consist of eg.: `vendor` + `single whitespace` + `model` + ` [` + `serial` + `]` Printers or wifi access points for example often use the last digits of their MAC address instead of the serial number to allow users to differentiate multiple instances in the network.
+|   **manufacturer**:*string* <optional>
+|    The name of the vendor, but this may include the legal form. Typically used in product property lists or as text for the following URL.
+|   **manufacturer_url**:*string* <optional>
+|    An URL to the vendor website, ideally not a deep link so that it is available for the whole product lifetime.
+|   **model_url**:*string* <optional>
+|    An URL to the model website (if any); as above, ideally not a deep link.
+|   **model_number**:*string* <optional>
+|    A model number as string (if any).
+|   **model_revision**:*string* <optional>
+|    A model or product revision string. Very often this is not defined for the first one so that users of this variable should consider reasonable fallback/default values. For later product/model revisions, this is typically printed also on a device label so that customers can refer to it when e.g requesting product support.
+|   **board_revision**:*string* <optional>
+|    The revision (aka version) of the internal (main) PCB, ie. that one with the CPU running the EVerest system.
+|   **firmware_version**:*string* <optional>
+|    A string containing the current running firmware version of the complete system. This is typically not the EVerest version itself, but a firmware version which appears e.g. on the web frontend and as part of the filenames the customer can download from the manufacturer's website. This is the only property which is typically not static for the product lifetime, but determined at runtime.

@@ -1,0 +1,64 @@
+:orphan:
+
+
+.. _everest_interfaces_ISO15118_ev:
+
+
+###########
+ISO15118_ev
+###########
+
+| This interface defines a simple ISO15118 ev.
+
+
+*********
+Variables
+*********
+| **v2g_session_finished**:*null* 
+|  The v2g session between the charger and the car is finished
+| **ev_power_ready**:*boolean* 
+|  The car is ready for power (HLC)
+| **ac_evse_max_current**:*number* 
+|  EVSE max current per phase
+| **ac_evse_target_power**:*object*  (:ref:`iso15118-AcTargetPower <iso15118-AcTargetPower>`)
+|  Evse AC max target power
+|  **There is an extended definition for this object** :ref:`here <iso15118-AcTargetPower>`.
+| **dc_power_on**:*null* 
+|  The ev wants to close the dc contactors
+| **stop_from_charger**:*null* 
+|  The charger wants to stop the charging process
+| **pause_from_charger**:*null* 
+|  The charger wants to pause the session (only d20)
+
+********
+Commands
+********
+| **start_charging**:*boolean*
+|  Start the ev charging process
+|  **EnergyTransferMode**:*string* <required> (:ref:`iso15118-EnergyTransferMode <iso15118-EnergyTransferMode>`)
+|   Selected energy transfer mode for charging that is requested by the EVCC
+|   **There is an extended definition for this object** :ref:`here <iso15118-EnergyTransferMode>`.
+|  **DepartureTime**:*number* <required>
+|   The time when the EVCC wants to leave the charging station (in seconds)
+|  **EAmount**:*number* <required>
+|   The amount of energy that the EVCC wants to charge (in kWh)
+|  **Result**:*boolean* 
+|   Returns true if the evcc simulation started
+| **stop_charging**:*void*
+|  Stop the ev charging communication process
+| **pause_charging**:*void*
+|  Pause the ev charging communication process
+| **set_fault**:*void*
+|  TODO_SL: Set the different ev faults to communicate these errors to the charging station
+| **set_dc_params**:*void*
+|  Set the target parameters for a dc charging process
+|  **EvParameters**:*object* <required> (:ref:`iso15118-DcEvParameters <iso15118-DcEvParameters>`)
+|   Target parameters for dc charging
+|   **There is an extended definition for this object** :ref:`here <iso15118-DcEvParameters>`.
+| **set_bpt_dc_params**:*void*
+|  Set the bpt parameters for dc charging
+|  **EvBPTParameters**:*object* <required> (:ref:`iso15118-DcEvBPTParameters <iso15118-DcEvBPTParameters>`)
+|   BPT parameters for dc charging
+|   **There is an extended definition for this object** :ref:`here <iso15118-DcEvBPTParameters>`.
+| **enable_sae_j2847_v2g_v2h**:*void*
+|  Enable the SAE J2847 2 V2H V2G

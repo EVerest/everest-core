@@ -1,0 +1,842 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="Getting Started with EVerest" href="../getting-started/index.html"><link rel="prev" title="Sub-systems" href="sub-systems.html">
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
+        <title>EVerest APIs - EVerest Documentation 2025.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=acfd86a5" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=580074bf" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">EVerest Documentation 2025.9.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  <span class="sidebar-brand-text">EVerest Documentation 2025.9.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../tutorials/index.html">Tutorials</a><input aria-label="Toggle navigation of Tutorials" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/bazel.html">Experimental Bazel Support in Everest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/plug-and-charge.html">Plug&amp;Charge with EVerest Software in the loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/ocpp2.html">How To: OCPP 2.0.1 and 2.1 in EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/ocpp16.html">How To: OCPP 1.6 in EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/develop-new-module.html">Develop New Modules</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../how-to-guides/index.html">How To Guides</a><input aria-label="Toggle navigation of How To Guides" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/configure-pnc.html">Configure Plug&amp;Charge in EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/debug-iso15118.html">Debug ISO 15118</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/yocto-cross-compilation.html">Cross-compilation of EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/eichrecht.html">Eichrecht</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/uk-smart-charging-regulations.html">UK Smart Charging regulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/renesas-mpu/index.html">How to for Renesas MPU (RZ/G2L family)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/security-best-practices.html">Security Best Practices</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../how-to-guides/bringup/index.html">BringUp &amp; Qualification</a><input aria-label="Toggle navigation of BringUp &amp; Qualification" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../how-to-guides/bringup/basic.html">Basic BringUp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../how-to-guides/bringup/powermeter.html">BringUp Powermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../how-to-guides/bringup/ac.html">AC BringUp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../how-to-guides/bringup/dc.html">DC BringUp</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../index.html">Explanation</a><input aria-label="Toggle navigation of Explanation" checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="../modules/index.html">EVerest Modules</a><input aria-label="Toggle navigation of EVerest Modules" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/AdAcEvse22KwzKitBSP/index.html">AdAcEvse22KwzKitBSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/Auth/index.html">Auth Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/BUDCExternalDerate/index.html">BUDCExternalDerate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/BUOcppConsumer/index.html">BUOcppConsumer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/Bender_isoCHA425HV/index.html">Bender_isoCHA425HV</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/DZG_GSH01/index.html">DZG_GSH01</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/DummyTokenProvider/index.html">DummyTokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/DummyTokenProviderManual/index.html">DummyTokenProviderManual</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/DummyTokenValidator/index.html">DummyTokenValidator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/EnergyManager/index.html">EnergyManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/EvManager/index.html">EvManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/EvseManager/index.html">EvseManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/EvseSecurity/index.html">EvseSecurity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/EvseSlac/index.html">EvseSlac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/EvseSlac/index.html#todo">Todo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/EvseV2G/index.html">EvseV2G</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/ExampleErrorGlobalSubscriber/index.html">ExampleErrorGlobalSubscriber</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/ExampleErrorRaiser/index.html">ExampleErrorRaiser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/ExampleErrorSubscriber/index.html">ExampleErrorSubscriber</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/GenericPowermeter/index.html">GenericPowermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/IMDSimulator/index.html">IMDSimulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/IsabellenhuetteIemDcr/index.html">IsabellenhuetteIemDcr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/Iso15118InternetVas/index.html">Iso15118InternetVas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/LemDCBM400600/index.html">LEM DCBM 400/600</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/Linux_Systemd_Rauc/index.html">Linux_Systemd_Rauc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/NxpNfcFrontendTokenProvider/index.html">NxpNfcFrontendTokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/OCPP/index.html">OCPP1.6 Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/OCPP201/index.html">OCPP 2.1 and 2.0.1 Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/OCPPExtensionExample/index.html">OCPPExtensionExample</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/PN7160TokenProvider/index.html">PN7160TokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/PhyVersoBSP/index.html">PhyVersoBSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/TIDA010939/index.html">TIDA010939</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/TerminalCostAndPriceMessage/index.html">TerminalCostAndPriceMessage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/TerminalDisplayMessage/index.html">TerminalDisplayMessage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/YetiDriver/index.html">YetiDriver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/YetiEvDriver/index.html">YetiEvDriver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/auth_consumer_API/index.html">auth_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/auth_token_provider_API/index.html">auth_token_provider_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/auth_token_validator_API/index.html">auth_token_validator_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/dc_external_derate_consumer_API/index.html">dc_external_derate_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/display_message_API/index.html">display_message_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/error_history_consumer_API/index.html">error_history_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/evse_board_support_API/index.html">evse_board_support_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/evse_manager_consumer_API/index.html">evse_manager_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/external_energy_limits_consumer_API/index.html">external_energy_limits_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/generic_error_raiser_API/index.html">generic_error_raiser_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/isolation_monitor_API/index.html">isolation_monitor_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/ocpp_consumer_API/index.html">ocpp_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/over_voltage_monitor_API/index.html">over_voltage_monitor_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/power_supply_DC_API/index.html">power_supply_DC_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/powermeter_API/index.html">powermeter_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/session_cost_API/index.html">session_cost_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/system_API/index.html">system_API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../community-channels.html">Meet the EVerest Community</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pnc-process.html">The Plug&amp;Charge Process in EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev-tools/edm.html">edm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev-tools/ev-cli.html">ev-cli</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../linux-yocto/index.html">Linux / Yocto</a><input aria-label="Toggle navigation of Linux / Yocto" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../linux-yocto/setting-up-linux-os.html">Setting up the Linux operating system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../linux-yocto/building-yocto.html">Building Yocto for your custom hardware</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../linux-yocto/ota-updates.html">Over-the-air-updates (OTA)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../hardware-architecture.html">Hardware Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../high-level-overview.html">High-Level Overview of EVerest</a></li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="index.html">Adapt EVerest</a><input aria-label="Toggle navigation of Adapt EVerest" checked="" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="sub-systems.html">Sub-systems</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">EVerest APIs</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../getting-started/index.html">Getting Started with EVerest</a><input aria-label="Toggle navigation of Getting Started with EVerest" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../getting-started/get-started-sw.html">A Kind Of Quick Guide To EVerest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../getting-started/get-started-hw.html">Getting Started with EVerest on Hardware</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../detail-module-concept.html">EVerest Modules in Detail</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../reference/index.html">Reference</a><input aria-label="Toggle navigation of Reference" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/api/autogenerated_api_index.html">EVerest API Specification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../reference/snapshot.html">Snapshot</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../reference/modules_index.html">EVerest Modules</a><input aria-label="Toggle navigation of EVerest Modules" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/API.html">API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/AST_DC650.html">AST_DC650</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/Acrel_DJSF1352_RN.html">Acrel_DJSF1352_RN</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/AdAcEvse22KwzKitBSP.html">AdAcEvse22KwzKitBSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/Auth.html">Auth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/BUDCExternalDerate.html">BUDCExternalDerate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/BUDisplayMessage.html">BUDisplayMessage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/BUEvseBoardSupport.html">BUEvseBoardSupport</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/BUIsolationMonitor.html">BUIsolationMonitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/BUOcppConsumer.html">BUOcppConsumer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/BUOverVoltageMonitor.html">BUOverVoltageMonitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/BUPowerSupplyDC.html">BUPowerSupplyDC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/BUPowermeter.html">BUPowermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/BUSystem.html">BUSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/BUTokenProvider.html">BUTokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/Bender_isoCHA425HV.html">Bender_isoCHA425HV</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/ChargerInfo.html">ChargerInfo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/DCSupplySimulator.html">DCSupplySimulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/DPM1000.html">DPM1000</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/DZG_GSH01.html">DZG_GSH01</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/DummyBankSessionTokenProvider.html">DummyBankSessionTokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/DummyTokenProvider.html">DummyTokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/DummyTokenProviderManual.html">DummyTokenProviderManual</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/DummyTokenValidator.html">DummyTokenValidator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/DummyV2G.html">DummyV2G</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/EnergyManager.html">EnergyManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/EnergyNode.html">EnergyNode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/ErrorHistory.html">ErrorHistory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/EvAPI.html">EvAPI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/EvManager.html">EvManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/EvSlac.html">EvSlac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/Evse15118D20.html">Evse15118D20</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/EvseManager.html">EvseManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/EvseSecurity.html">EvseSecurity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/EvseSlac.html">EvseSlac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/EvseV2G.html">EvseV2G</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/Example.html">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/ExampleErrorGlobalSubscriber.html">ExampleErrorGlobalSubscriber</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/ExampleErrorRaiser.html">ExampleErrorRaiser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/ExampleErrorSubscriber.html">ExampleErrorSubscriber</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/ExampleUser.html">ExampleUser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/GenericPowermeter.html">GenericPowermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/Huawei_R100040Gx.html">Huawei_R100040Gx</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/IMDSimulator.html">IMDSimulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/InfyPower.html">InfyPower</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/InfyPower_BEG1K075G.html">InfyPower_BEG1K075G</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/IsabellenhuetteIemDcr.html">IsabellenhuetteIemDcr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/Iso15118InternetVas.html">Iso15118InternetVas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/IsoMux.html">IsoMux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/LemDCBM400600.html">LemDCBM400600</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/Linux_Systemd_Rauc.html">Linux_Systemd_Rauc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/LocalAllowlistTokenValidator.html">LocalAllowlistTokenValidator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/MicroMegaWattBSP.html">MicroMegaWattBSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/NxpNfcFrontendTokenProvider.html">NxpNfcFrontendTokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/OCPP.html">OCPP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/OCPP201.html">OCPP201</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/OCPPExtensionExample.html">OCPPExtensionExample</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/OVMSimulator.html">OVMSimulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/PN532TokenProvider.html">PN532TokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/PN7160TokenProvider.html">PN7160TokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/PacketSniffer.html">PacketSniffer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/PersistentStore.html">PersistentStore</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/PhyVersoBSP.html">PhyVersoBSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/PyEvJosev.html">PyEvJosev</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/PyExampleErrorRaiser.html">PyExampleErrorRaiser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/PyExampleErrorSubscriber.html">PyExampleErrorSubscriber</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/RsExample.html">RsExample</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/RsExampleUser.html">RsExampleUser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/SerialCommHub.html">SerialCommHub</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/Setup.html">Setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/SlacSimulator.html">SlacSimulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/StaticISO15118VASProvider.html">StaticISO15118VASProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/Store.html">Store</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/System.html">System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/TIDA010939.html">TIDA010939</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/TerminalCostAndPriceMessage.html">TerminalCostAndPriceMessage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/TerminalDisplayMessage.html">TerminalDisplayMessage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/UUGreenPower_UR1000X0.html">UUGreenPower_UR1000X0</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/Winline.html">Winline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/YamlStore.html">YamlStore</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/YetiDriver.html">YetiDriver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/YetiEvDriver.html">YetiEvDriver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/YetiSimulator.html">YetiSimulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/auth_consumer_API.html">auth_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/auth_token_provider_API.html">auth_token_provider_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/auth_token_validator_API.html">auth_token_validator_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/dc_external_derate_consumer_API.html">dc_external_derate_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/display_message_API.html">display_message_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/error_history_consumer_API.html">error_history_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/evse_board_support_API.html">evse_board_support_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/evse_manager_consumer_API.html">evse_manager_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/external_energy_limits_consumer_API.html">external_energy_limits_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/generic_error_raiser_API.html">generic_error_raiser_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/isolation_monitor_API.html">isolation_monitor_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/ocpp_consumer_API.html">ocpp_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/over_voltage_monitor_API.html">over_voltage_monitor_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/power_supply_DC_API.html">power_supply_DC_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/powermeter_API.html">powermeter_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/session_cost_API.html">session_cost_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/modules/system_API.html">system_API</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../reference/interfaces_index.html">EVerest Interfaces</a><input aria-label="Toggle navigation of EVerest Interfaces" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/ISO15118_charger.html">ISO15118_charger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/ISO15118_ev.html">ISO15118_ev</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/ISO15118_vas.html">ISO15118_vas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/ac_rcd.html">ac_rcd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/auth.html">auth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/auth_token_provider.html">auth_token_provider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/auth_token_validator.html">auth_token_validator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/bank_session_token_provider.html">bank_session_token_provider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/car_simulator.html">car_simulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/charger_information.html">charger_information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/connector_lock.html">connector_lock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/dc_external_derate.html">dc_external_derate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/debug_json.html">debug_json</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/display_message.html">display_message</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/empty.html">empty</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/energy.html">energy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/energy_manager.html">energy_manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/energy_price_information.html">energy_price_information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/error_history.html">error_history</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/ev_board_support.html">ev_board_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/ev_manager.html">ev_manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/ev_slac.html">ev_slac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/evse_board_support.html">evse_board_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/evse_manager.html">evse_manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/evse_security.html">evse_security</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/example.html">example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/example_error_framework.html">example_error_framework</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/example_user.html">example_user</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/external_energy_limits.html">external_energy_limits</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/generic_error.html">generic_error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/iso15118_extensions.html">iso15118_extensions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/isolation_monitor.html">isolation_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/kvs.html">kvs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/ocpp.html">ocpp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/ocpp_1_6_charge_point.html">ocpp_1_6_charge_point</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/ocpp_data_transfer.html">ocpp_data_transfer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/over_voltage_monitor.html">over_voltage_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/payment_terminal.html">payment_terminal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/power.html">power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/power_supply_DC.html">power_supply_DC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/powermeter.html">powermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/reservation.html">reservation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/serial_communication_hub.html">serial_communication_hub</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/session_cost.html">session_cost</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/slac.html">slac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/solar_forecast.html">solar_forecast</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/sunspec_ac_meter.html">sunspec_ac_meter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/sunspec_reader.html">sunspec_reader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/sunspec_scanner.html">sunspec_scanner</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/system.html">system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/test_control.html">test_control</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/tibber_price_forecast.html">tibber_price_forecast</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/interfaces/uk_random_delay.html">uk_random_delay</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../reference/types_index.html">EVerest Types</a><input aria-label="Toggle navigation of EVerest Types" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/authorization.html">authorization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/board_support_common.html">board_support_common</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/charger_information.html">charger_information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/dc_external_derate.html">dc_external_derate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/display_message.html">display_message</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/energy.html">energy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/energy_price_information.html">energy_price_information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/error_history.html">error_history</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/ev_board_support.html">ev_board_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/evse_board_support.html">evse_board_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/evse_manager.html">evse_manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/evse_security.html">evse_security</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/iso15118.html">iso15118</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/iso15118_vas.html">iso15118_vas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/isolation_monitor.html">isolation_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/money.html">money</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/ocpp.html">ocpp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/payment_terminal.html">payment_terminal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/power_supply_DC.html">power_supply_DC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/powermeter.html">powermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/reservation.html">reservation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/serial_comm_hub_requests.html">serial_comm_hub_requests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/session_cost.html">session_cost</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/sunspec_ac_meter.html">sunspec_ac_meter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/system.html">system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/temperature.html">temperature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/text_message.html">text_message</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/uk_random_delay.html">uk_random_delay</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/units.html">units</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reference/types/units_signed.html">units_signed</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../../_sources/explanation/adapt-everest/apis.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="everest-apis">
+<h1>EVerest APIs<a class="headerlink" href="#everest-apis" title="Link to this heading">¶</a></h1>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>You can find the API reference documentation here:
+<a class="reference internal" href="../../reference/api/autogenerated_api_index.html"><span class="doc">EVerest API Reference</span></a> .</p>
+</div>
+<p>EVerest can be extended and adapted to specific needs via two sets of
+APIs: The internal interfaces and the EVerest API.</p>
+<p>The EVerest API are versioned and guaranteed to not introduce breaking
+changes for the same major version of the API, while the internal
+interfaces may change between versions. Therefore, the EVerest API
+is the preferred way to implement custom integrations,
+extensions and adaptations.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you plan to integrate EVerest on your charging station hardware we
+strongly recommend to use the EVerest APIs for this purpose, since these
+interfaces are the ones that are supposed to be kept stable and maintained.
+over time.</p>
+</div>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p>The EVerest API is the interface for hardware integration,
+custom extensions and adaptations.
+It is provided via a public MQTT interface, and the format for data
+exchange is plain text JSON. The API is defined in AsyncAPI 3.</p>
+<p>Custom client software using the EVerest API is therefore only loosely
+coupled to the EVerest application and its internal interfaces.
+There are no obligatory binary or link time dependencies of any kind.
+As a result, the clients can be built individually and without
+reference to the EVerest application at all.</p>
+<p>This also implies that the programming language used for implementing
+the client can be chosen freely. Typically a compiled language is
+preferable for an embedded target, but it is not strictly required at
+all.</p>
+<p>The EVerest API is implemented in terms of EVerest modules, and every
+API module implements one or more of EVerest’s internal interfaces.
+There are two distinct versions of API modules, either to implement
+an interface (e.g. a driver for a DC power supply) or to consume it
+(e.g. to check for the validation status of a token).</p>
+<p>They can be included in the configuration file just like any other
+module. E.g. - in this example -, a EVerest API module was loaded to
+fulfill the power meter requirement of the EvseManager. The actual code
+that talks to the power meter hardware to fetch the measurements can now
+be implemented in a process running outside of EVerest (and is started
+e.g. by a separate <em>systemd</em> unit). It just needs to feed the measured
+values via MQTT into the
+<a class="reference internal" href="../../reference/modules/powermeter_API.html"><span class="doc">Powermeter API module</span></a>.</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../../_images/everest-api-1.png"><img alt="EVerest API - Image 1" src="../../_images/everest-api-1.png" style="width: 450px;" />
+</a>
+</figure>
+<p>For a better understanding of how the EVerest API works, let us have an
+exemplary closer look at the
+<span class="xref std std-doc">Power Supply DC API module</span>.</p>
+<p>The manifest can be reduced to this:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">config</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">cfg_communication_check_to_s</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">    </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">  </span><span class="nt">cfg_heartbeat_interval_ms</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">    </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+
+<span class="nt">provides</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">if_power_supply_DC</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">interface</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">power_supply_DC</span>
+</pre></div>
+</div>
+<p>There are two configuration variables which are common for every API
+module. Both are related to communication checks between EVerest and
+the client module.</p>
+<p>Below, there is the <em>provides</em> section, which states that this API
+module <em>is</em> a <a class="reference internal" href="../../reference/interfaces/power_supply_DC.html"><span class="doc">DC power supply</span></a>.
+This implies that it can be used in the configuration file for EVerest
+wherever a DC power supply is expected.</p>
+<p>In a product, this would be the <a class="reference internal" href="../../reference/modules/EvseManager.html"><span class="doc">EvseManager</span></a>
+requiring a DC power supply. During development or validation it could also be a
+BringUp module.</p>
+<p>In contrast to an integrated driver for actual hardware, the API module
+creates MQTT topics according to its specification and by this provides
+hooks for the client to do the implementation work.</p>
+<p>The documentation of the APIs can be found in the respective <a class="reference internal" href="../../reference/api/autogenerated_api_index.html"><span class="doc">reference
+pages</span></a>. Each API module has its own
+reference page describing the messages, topics and data structures used.</p>
+<p>Let’s take a look at an example configuration that uses the API module:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">active_modules</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">ps_dc_1</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">module</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">power_supply_DC_API</span>
+<span class="w">    </span><span class="nt">config_module</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">cfg_communication_check_to_s</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span>
+<span class="w">            </span><span class="l l-Scalar l-Scalar-Plain">cfg_heartbeat_interval_ms</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+<span class="w">  </span><span class="nt">cli</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">module</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BUPowerSupplyDC</span>
+<span class="w">    </span><span class="nt">standalone</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">connections</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">psu</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">module_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ps_dc_1</span>
+<span class="w">        </span><span class="nt">implementation_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">if_power_supply_DC</span>
+</pre></div>
+</div>
+<p>It loads two modules:
+The <span class="xref std std-doc">power_supply_DC_API</span>
+and the
+<a class="reference internal" href="../../reference/modules/BUPowerSupplyDC.html"><span class="doc">BringUp module for DC power supplies</span></a>.
+Starting EVerest with this  configuration enables the API for DC power
+supplies and a BringUp module, that can send to and receive messages from the
+API. The actual topics on the MQTT will be available under
+<em>everest_api/1/power_supply_DC/ps_dc_1/</em>.</p>
+<p>It is as simple as this.</p>
+<p>As explained previously, the client is only loosely coupled to EVerest.
+As a consequence, EVerest cannot know by itself whether the client is
+available and in good working conditions. For this reason, a
+bidirectional communication check is available.</p>
+<p>EVerest APIs sends <em>heartbeat</em> messages periodically
+(<em>cfg_heartbeat_interval_ms</em> - with negative values disabling heartbeat
+messages) and on the other hand requires the clients to send
+<em>communication_check</em> messages within the timeout interval specified
+(<em>cfg_communication_check_to_s</em> - with negative values disabling the
+requirement for these messages).</p>
+<p>The same timeout interval applies to the expected replies for requests.</p>
+</section>
+<section id="asyncapi">
+<h2>AsyncAPI<a class="headerlink" href="#asyncapi" title="Link to this heading">¶</a></h2>
+<p>The EVerest API is defined in terms of AsyncAPI 3.0.0.</p>
+<p>For a thorough introduction and reference refer to
+<a class="reference external" href="https://www.asyncapi.com">https://www.asyncapi.com</a> .</p>
+<p>All EVerest API modules are located in <em>everest-core/modules/API</em> and each
+module contains the API definition in
+<em>everest-core/docs/source/reference/EVerest_API/&lt;name-of-api&gt;.yaml</em> file.
+These files are used to generate the
+<a class="reference internal" href="../../reference/api/autogenerated_api_index.html"><span class="doc">HTML-based documentation</span></a>.</p>
+<p>In order to build the documentation including the API reference pages,
+run the following command in the <em>everest-core/build</em> folder:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>-DEVEREST_BUILD_DOCS<span class="o">=</span>ON<span class="w"> </span>..<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>make<span class="w"> </span>trailbook_everest
+</pre></div>
+</div>
+<p>Another possible way is to use the AsyncAPI yaml source file in
+<a class="reference external" href="https://https://studio.asyncapi.com/">AsyncAPI Studio</a>.</p>
+<p>The <em>&lt;name-of-api&gt;.yaml</em> is defined for the client implementing the API and
+reflects the client’s point of view, when using the words <em>send</em> and
+<em>receive</em> in the context of actions and operations.</p>
+<p>The MQTT topics of the EVerest API follow a fixed pattern. All topics
+are prefixed with <em>everest_api/1/{api_type}/{module_id}</em> - with <em>1</em>
+being the version and <em>{api_type}</em> the type of the API.</p>
+<p><em>{module_id}</em> is the <em>module id</em> of the API module as configured in the
+EVerest configuration file.</p>
+<p>The prefix is followed by the direction of the message. There are two
+options:</p>
+<ul class="simple">
+<li><p><em>m2e</em> for messages from the module (client) to EVerest and</p></li>
+<li><p><em>e2m</em> for messages from EVerest to the module (client).</p></li>
+</ul>
+<p>This is finally followed by the name of the message. Here is a complete
+example:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>everest_api/1/power_supply_DC/ps_dc_1/m2e/voltage_current
+</pre></div>
+</div>
+<p>In the example, <em>power_supply_DC</em> is the API type, <em>ps_dc_1</em> is the
+<em>module id</em> as configured in the EVerest configuration file, the
+message (<em>m2e</em>) originates from the client and is directed towards
+EVerest. The message name is <em>voltage_current</em>.</p>
+<p>AsyncAPI defines channels which carry messages. A channel can be
+addressed via the topic as defined above. Each channel can in principle
+carry multiple messages, but concerning EVerest API, there is a
+one-to-one mapping between a message and a channel. A message carries
+content in the form of payload and possibly headers.</p>
+<p>The content type for EVerest API is always JSON. The content is
+individual for each message and defined in <em>components:schemas</em> within
+the same file or sometimes in a referenced file.</p>
+<p>AsyncAPI finally specifies operations on channels. The operations define
+the action on a specific channel (for EVerest API always from the
+client’s point of view), which can be <em>send</em> or <em>receive</em>.</p>
+<p>In many situations, the sender of a message is not interested in the
+receive status of a message, e.g. in a situation where a meter publishes
+its current values. Simple send and receive operations are used in this
+case.</p>
+<p>There are situations however, where this is not the case, e.g. remote
+procedure calls or when a reply is requested. EVerest API handles this
+situation with the request/reply pattern offered by AsyncAPI.</p>
+<p>The operations are then augmented with a reply property holding the
+reply channel and a dynamic reply address.</p>
+<p>If the client receives a request, it has to reply to the topic provided
+in the header’s <em>replyTo</em> property within <em>cfg_communication_check_to_s</em>
+seconds. If it does not, a default response is given by the API to
+EVerest and an error is raised.</p>
+<p>If the client sends a request, it has to specify the reply topic, where
+it expects the answer. This information is communicated via the
+<em>replyTo</em> property of the headers object. It is the client’s
+responsibility to ensure that the topic is unique in order to relate
+replies to requests.</p>
+</section>
+<section id="using-the-everest-api">
+<h2>Using the EVerest API<a class="headerlink" href="#using-the-everest-api" title="Link to this heading">¶</a></h2>
+<p>In order to use the EVerest API, load the required API modules in the
+EVerest configuration file and connect its interfaces as presented in
+the <em>Overview</em> section.</p>
+<p>The chosen <em>module id</em> becomes part of the MQTT topic. EVerest API
+modules can be loaded multiple times, e.g. if two DC power supplies are
+connected.</p>
+<p>If needed, adjust the heartbeat interval and communication check timeout
+via the <em>cfg_heartbeat_interval_ms</em> and <em>cfg_communication_check_to_s</em>
+configuration variables of the module.</p>
+<p>Although communication check and heartbeat can be disabled with values
+smaller or equal to zero, this is not recommended in a production
+environment, since they are the only way to continuously check whether
+the client and EVerest are online and responsive.</p>
+<p>EVerest API clients are completely independent applications. They have
+to be started independently of EVerest, possibly by their own <em>systemd</em>
+service.</p>
+<p>EVerest cannot start them, since it is agnostic of them. On EVerest
+startup, the API modules raise an initial communication check error (if
+communication check is enabled). This error is cleared with the first
+communication check message sent from the client. It is raised again
+when a timeout occurs or a request is not answered. Sending a
+communication check message clears the error again.</p>
+<p>It is the responsibility of the user to ensure that the client is and
+remains available. This includes potentially a <em>watchdog</em> that restarts
+the client in case of crash or deadlock. It is also the client’s
+responsibility to ensure proper initialization, shutdown and
+surveillance of managed hardware, e.g. a DC power supply.</p>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="../getting-started/index.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Getting Started with EVerest</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="sub-systems.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Sub-systems</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2021-2025, EVerest community
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">EVerest APIs</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#asyncapi">AsyncAPI</a></li>
+<li><a class="reference internal" href="#using-the-everest-api">Using the EVerest API</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=5dbf898e"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    </body>
+</html>

@@ -1,0 +1,292 @@
+:orphan:
+
+
+.. _everest_types_evse_security:
+
+
+#############
+evse_security
+#############
+
+Types for evse security
+
+.. _evse_security-EncodingFormat:
+
+| **EncodingFormat**:*string* 
+|  Enum specifies the encoding of certificates or keys
+|  enum:
+|    - DER
+|    - PEM
+
+.. _evse_security-CaCertificateType:
+
+| **CaCertificateType**:*string* 
+|  Enum specifies the type of a CA certificate
+|  enum:
+|    - V2G
+|    - MO
+|    - CSMS
+|    - MF
+
+.. _evse_security-LeafCertificateType:
+
+| **LeafCertificateType**:*string* 
+|  Enum specifies the type of a leaf certificate
+|  enum:
+|    - CSMS
+|    - V2G
+|    - MF
+|    - MO
+
+.. _evse_security-CertificateType:
+
+| **CertificateType**:*string* 
+|  Enum specifies certificate type of leaf and CA certificates
+|  enum:
+|    - V2GRootCertificate
+|    - MORootCertificate
+|    - CSMSRootCertificate
+|    - V2GCertificateChain
+|    - MFRootCertificate
+
+.. _evse_security-HashAlgorithm:
+
+| **HashAlgorithm**:*string* 
+|  Enum specifies a hash algorithm
+|  enum:
+|    - SHA256
+|    - SHA384
+|    - SHA512
+
+.. _evse_security-InstallCertificateResult:
+
+| **InstallCertificateResult**:*string* 
+|  Result of the attempt to install a certificate
+|  enum:
+|    - InvalidSignature
+|    - InvalidCertificateChain
+|    - InvalidFormat
+|    - InvalidCommonName
+|    - NoRootCertificateInstalled
+|    - Expired
+|    - CertificateStoreMaxLengthExceeded
+|    - WriteError
+|    - Accepted
+
+.. _evse_security-CertificateValidationResult:
+
+| **CertificateValidationResult**:*string* 
+|  Result of the attempt to validate a certificate
+|  enum:
+|    - Valid
+|    - Expired
+|    - InvalidSignature
+|    - IssuerNotFound
+|    - InvalidLeafSignature
+|    - InvalidChain
+|    - Unknown
+
+.. _evse_security-DeleteCertificateResult:
+
+| **DeleteCertificateResult**:*string* 
+|  Result of the attempt to delete a certificate
+|  enum:
+|    - Accepted
+|    - Failed
+|    - NotFound
+
+.. _evse_security-GetInstalledCertificatesStatus:
+
+| **GetInstalledCertificatesStatus**:*string* 
+|  Status indicates the result of the attempt to retrieve certificates
+|  enum:
+|    - Accepted
+|    - NotFound
+
+.. _evse_security-GetCertificateSignRequestStatus:
+
+| **GetCertificateSignRequestStatus**:*string* 
+|  Status indicates the result to generate a certificate signing request
+|  enum:
+|    - Accepted
+|    - InvalidRequestedType
+|    - KeyGenError
+|    - GenerationError
+
+.. _evse_security-GetCertificateInfoStatus:
+
+| **GetCertificateInfoStatus**:*string* 
+|  Status indicates the result of the attempt to retrieve a certificate
+|  enum:
+|    - Accepted
+|    - Rejected
+|    - NotFound
+|    - NotFoundValid
+|    - PrivateKeyNotFound
+
+.. _evse_security-CertificateHashData:
+
+| **CertificateHashData**:*object* 
+|  Type specifies the hash data of a certificate
+|  properties:
+|   **hash_algorithm**:*string* <required> (:ref:`evse_security-HashAlgorithm <evse_security-HashAlgorithm>`)
+|    Algorithm used for the hashes provided
+|    **There is an extended definition for this object** :ref:`here <evse_security-HashAlgorithm>`.
+|   **issuer_name_hash**:*string* <required>
+|    The hash of the issuer's distinguished name (DN), calculated over the DER encoding of the issuer's name field.
+|   **issuer_key_hash**:*string* <required>
+|    The hash of the DER encoded public key: the value (excluding tag and length) of the subject public key field
+|   **serial_number**:*string* <required>
+|    The string representation of the hexadecimal value of the serial number without the prefix "0x" and without leading zeroes.
+
+.. _evse_security-CertificateHashDataChain:
+
+| **CertificateHashDataChain**:*object* 
+|  Type specifies the hash data chain of a certificate
+|  properties:
+|   **certificate_type**:*string* <required> (:ref:`evse_security-CertificateType <evse_security-CertificateType>`)
+|    Indicates the type of the certificate for which the hash data is provided
+|    **There is an extended definition for this object** :ref:`here <evse_security-CertificateType>`.
+|   **certificate_hash_data**:*object* <required> (:ref:`evse_security-CertificateHashData <evse_security-CertificateHashData>`)
+|    Contains the hash data of the certificate
+|    **There is an extended definition for this object** :ref:`here <evse_security-CertificateHashData>`.
+|   **child_certificate_hash_data**:*array* <optional>
+|    Contains the hash data of the child's certificates
+|    **array_item**:*object*  (:ref:`evse_security-CertificateHashData <evse_security-CertificateHashData>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <evse_security-CertificateHashData>`.
+| 
+
+.. _evse_security-GetInstalledCertificatesResult:
+
+| **GetInstalledCertificatesResult**:*object* 
+|  Result to a request to retrieve certificates
+|  properties:
+|   **status**:*string* <required> (:ref:`evse_security-GetInstalledCertificatesStatus <evse_security-GetInstalledCertificatesStatus>`)
+|    Indicates the status of the request
+|    **There is an extended definition for this object** :ref:`here <evse_security-GetInstalledCertificatesStatus>`.
+|   **certificate_hash_data_chain**:*array* <required>
+|    the hashed certificate data for each requested certificates
+|    **array_item**:*object*  (:ref:`evse_security-CertificateHashDataChain <evse_security-CertificateHashDataChain>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <evse_security-CertificateHashDataChain>`.
+| 
+
+.. _evse_security-OCSPRequestData:
+
+| **OCSPRequestData**:*object* 
+|  Type that specifies OCSP data
+|  properties:
+|   **certificate_hash_data**:*object* <required> (:ref:`evse_security-CertificateHashData <evse_security-CertificateHashData>`)
+|    Contains the hash data of the certificate
+|    **There is an extended definition for this object** :ref:`here <evse_security-CertificateHashData>`.
+|   **responder_url**:*string* <required>
+|    Contains the responder URL
+
+.. _evse_security-OCSPRequestDataList:
+
+| **OCSPRequestDataList**:*object* 
+|  List of OCSP Request data
+|  properties:
+|   **ocsp_request_data_list**:*array* <required>
+|    A list of OCSP request data
+|    **array_item**:*object*  (:ref:`evse_security-OCSPRequestData <evse_security-OCSPRequestData>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <evse_security-OCSPRequestData>`.
+| 
+
+.. _evse_security-CertificateOCSP:
+
+| **CertificateOCSP**:*object* 
+|  OCSP data related to requested the certificates
+|  properties:
+|   **hash**:*object* <required> (:ref:`evse_security-CertificateHashData <evse_security-CertificateHashData>`)
+|    Hash of certificate linked to the provided data
+|    **There is an extended definition for this object** :ref:`here <evse_security-CertificateHashData>`.
+|   **ocsp_path**:*string* <optional>
+|    OCSP path of the file containing the data
+
+.. _evse_security-GetCertificateSignRequestResult:
+
+| **GetCertificateSignRequestResult**:*object* 
+|  Response related to a CSR generation
+|  properties:
+|   **status**:*string* <required> (:ref:`evse_security-GetCertificateSignRequestStatus <evse_security-GetCertificateSignRequestStatus>`)
+|    Status of the request
+|    **There is an extended definition for this object** :ref:`here <evse_security-GetCertificateSignRequestStatus>`.
+|   **csr**:*string* <optional>
+|    PEM encoded certificate signing request
+
+.. _evse_security-CertificateInfo:
+
+| **CertificateInfo**:*object* 
+|  Type that specifies the paths of a certificate and the respective private key
+|  properties:
+|   **key**:*string* <required>
+|    The path of the PEM or DER encoded private key
+|   **certificate_root**:*string* <optional>
+|    The PEM of the root certificate that issued this leaf
+|   **certificate**:*string* <optional>
+|    The path of the PEM or DER encoded certificate chain
+|   **certificate_single**:*string* <optional>
+|    The path of the PEM or DER encoded single certificate
+|   **certificate_count**:*integer* <required>
+|    The count of certificates in the chain
+|   **password**:*string* <optional>
+|    Specifies the password for the private key if encrypted
+|   **ocsp**:*array* <optional>
+|    Certificate related OCSP data, if requested
+|    **array_item**:*object*  (:ref:`evse_security-CertificateOCSP <evse_security-CertificateOCSP>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <evse_security-CertificateOCSP>`.
+| 
+
+.. _evse_security-GetCertificateInfoResult:
+
+| **GetCertificateInfoResult**:*object* 
+|  Response to the command get_leaf_certificate_info
+|  properties:
+|   **status**:*string* <required> (:ref:`evse_security-GetCertificateInfoStatus <evse_security-GetCertificateInfoStatus>`)
+|    The status of the requested command
+|    **There is an extended definition for this object** :ref:`here <evse_security-GetCertificateInfoStatus>`.
+|   **info**:*object* <optional> (:ref:`evse_security-CertificateInfo <evse_security-CertificateInfo>`)
+|    The requested info
+|    **There is an extended definition for this object** :ref:`here <evse_security-CertificateInfo>`.
+
+.. _evse_security-GetCertificateFullInfoResult:
+
+| **GetCertificateFullInfoResult**:*object* 
+|  Response to the command get_all_valid_certificates_info
+|  properties:
+|   **status**:*string* <required> (:ref:`evse_security-GetCertificateInfoStatus <evse_security-GetCertificateInfoStatus>`)
+|    The status of the requested command
+|    **There is an extended definition for this object** :ref:`here <evse_security-GetCertificateInfoStatus>`.
+|   **info**:*array* <required>
+|    The requested info
+|    **array_item**:*object*  (:ref:`evse_security-CertificateInfo <evse_security-CertificateInfo>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <evse_security-CertificateInfo>`.
+| 
+
+.. _evse_security-CertificateStoreUpdateOperation:
+
+| **CertificateStoreUpdateOperation**:*string* 
+|  Type that specifies the operation performed on the certificate store
+|  enum:
+|    - Installed
+|    - Deleted
+
+.. _evse_security-CertificateStoreUpdate:
+
+| **CertificateStoreUpdate**:*object* 
+|  Type that specifies the update of the certificate store. One of leaf_certificate_type or ca_certificate_type must be present.
+|  properties:
+|   **operation**:*string* <required> (:ref:`evse_security-CertificateStoreUpdateOperation <evse_security-CertificateStoreUpdateOperation>`)
+|    The operation performed on the certificate store
+|    **There is an extended definition for this object** :ref:`here <evse_security-CertificateStoreUpdateOperation>`.
+|   **leaf_certificate_type**:*string* <optional> (:ref:`evse_security-LeafCertificateType <evse_security-LeafCertificateType>`)
+|    The type of the leaf certificate that was installed or deleted. Only present if type of updated certificate is a leaf certificate
+|    **There is an extended definition for this object** :ref:`here <evse_security-LeafCertificateType>`.
+|   **ca_certificate_type**:*string* <optional> (:ref:`evse_security-CaCertificateType <evse_security-CaCertificateType>`)
+|    The type of the CA certificate that was installed or deleted. Only present if type of updated certificate is a CA certificate
+|    **There is an extended definition for this object** :ref:`here <evse_security-CaCertificateType>`.

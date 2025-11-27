@@ -1,0 +1,30 @@
+:orphan:
+
+
+.. _everest_interfaces_car_simulator:
+
+
+#############
+car_simulator
+#############
+
+| This defines a car simulator that can execute a full charging session, from plugging in to plugging out. It uses HIL or SIL simulation controllers from e.g. the Yeti HIL simulator.
+
+
+*********
+Variables
+*********
+| **enabled**:*boolean* 
+|  Indicates whether simulation is currently enabled or not
+
+********
+Commands
+********
+| **enable**:*void*
+|  Enables or disables the simulation.
+|  **value**:*boolean* <required>
+|   Enable/Disable simulation mode
+| **execute_charging_session**:*void*
+|  Executes a charging simulation string
+|  **value**:*string* <required>
+|   Charging simulation string

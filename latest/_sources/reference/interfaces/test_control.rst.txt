@@ -1,0 +1,28 @@
+:orphan:
+
+
+.. _everest_interfaces_test_control:
+
+
+############
+test_control
+############
+
+| This interface defines the everest-testing control functions on everest-core
+
+
+*********
+Variables
+*********
+| **state**:*string* 
+|  State of the test control instance
+
+********
+Commands
+********
+| **start_charging**:*string*
+|  Enables the EvManager to begin charging
+|  **mode**:*string* <required>
+|   Sets charging mode (e.g. raw, iso15118)
+|  **Result**:*string* 
+|   Charging state of the EvManager

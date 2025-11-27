@@ -1,0 +1,101 @@
+:orphan:
+
+
+.. _everest_interfaces_ocpp:
+
+
+####
+ocpp
+####
+
+| This interface allows to control an OCPP service and set and get data from the OCPP service. It is designed to be used for both OCPP1.6 and OCPP2.0.1 module implementations. Therefore, the vars, commands and types are based more on the definitions of OCPP2.0.1, as this offers more flexibility and it is easier to transfer to the capabilities of OCPP1.6 than vice versa.
+
+
+*********
+Variables
+*********
+| **ocpp_transaction_event**:*object*  (:ref:`ocpp-OcppTransactionEvent <ocpp-OcppTransactionEvent>`)
+|  Emits events related to OCPP transactions
+|  **There is an extended definition for this object** :ref:`here <ocpp-OcppTransactionEvent>`.
+| **ocpp_transaction_event_response**:*object*  (:ref:`ocpp-OcppTransactionEventResponse <ocpp-OcppTransactionEventResponse>`)
+|  Emits OCPP transaction responses
+|  **There is an extended definition for this object** :ref:`here <ocpp-OcppTransactionEventResponse>`.
+| **charging_schedules**:*object*  (:ref:`ocpp-ChargingSchedules <ocpp-ChargingSchedules>`)
+|  Object that contains OCPP charging schedules of all connectors. The object contains one composite charging schedule for each connector id starting from connector 0. Connector 0 contains a schedule for the whole charging station.
+|  **There is an extended definition for this object** :ref:`here <ocpp-ChargingSchedules>`.
+| **is_connected**:*boolean* 
+|  Indicates if chargepoint is connected to CSMS
+| **security_event**:*object*  (:ref:`ocpp-SecurityEvent <ocpp-SecurityEvent>`)
+|  Published when an internal security event occurred
+|  **There is an extended definition for this object** :ref:`here <ocpp-SecurityEvent>`.
+| **event_data**:*object*  (:ref:`ocpp-EventData <ocpp-EventData>`)
+|  Published for a component variable combination when a variable with a monitor has been changed For OCPP1.6: The object may only contain the required properties of the EventData type because in OCPP1.6
+|   there is not more information available or required.
+| For OCPP2.0.1: The object may contain all available properties
+|  **There is an extended definition for this object** :ref:`here <ocpp-EventData>`.
+| **boot_notification_response**:*object*  (:ref:`ocpp-BootNotificationResponse <ocpp-BootNotificationResponse>`)
+|  Published any time a BootNotificationResponse message is received from the CSMS
+|  **There is an extended definition for this object** :ref:`here <ocpp-BootNotificationResponse>`.
+
+********
+Commands
+********
+| **stop**:*boolean*
+|  Disconnects the websocket connection and stops the OCPP communication. No OCPP messages will be stored and sent after a restart.
+|  **Result**:*boolean* 
+|   Returns true if the service could be stopped successfully, else false
+| **restart**:*boolean*
+|  Connects the websocket and enables OCPP communication after a previous stop call.
+|  **Result**:*boolean* 
+|   Returns true if the service could be restarted successfully, else false
+| **security_event**:*void*
+|  Triggers a SecurityEventNotification.req at the CSMS if it is deemed critical, either by setting the flag in this event or if absent automatically by libocpp
+|  **event**:*object* <required> (:ref:`ocpp-SecurityEvent <ocpp-SecurityEvent>`)
+|   A security event
+|   **There is an extended definition for this object** :ref:`here <ocpp-SecurityEvent>`.
+| **get_variables**:*array*
+|  Command to get a variable from OCPP. With OCPP1.6: Retrieves a configuration key. With OCPP2.0.1: Retrieves a variable with value from the device model storage
+|  **requests**:*array* <required>
+|   List of GetVariableRequest
+|   **array_item**:*object*  (:ref:`ocpp-GetVariableRequest <ocpp-GetVariableRequest>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <ocpp-GetVariableRequest>`.
+| 
+|  **Result**:*array* 
+|   List of GetVariableResult containing the result for every requested value. Preserves the order of the input requests.
+|   **array_item**:*object*  (:ref:`ocpp-GetVariableResult <ocpp-GetVariableResult>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <ocpp-GetVariableResult>`.
+| 
+| **set_variables**:*array*
+|  Command to set a variable at OCPP. With OCPP1.6: This command can be used to set configuration keys With OCPP2.0.1: This command can be used to set variables in the device model storage
+|  **requests**:*array* <required>
+|   List of SetVariableRequests
+|   **array_item**:*object*  (:ref:`ocpp-SetVariableRequest <ocpp-SetVariableRequest>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <ocpp-SetVariableRequest>`.
+| 
+|  **source**:*string* <required>
+|   Source of variable values
+|  **Result**:*array* 
+|   List of SetVariableResult containing the result for every requested set operation
+|   **array_item**:*object*  (:ref:`ocpp-SetVariableResult <ocpp-SetVariableResult>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <ocpp-SetVariableResult>`.
+| 
+| **change_availability**:*object*
+|  Allows to send a ChangeAvailabilityRequest internally (as can be done by the CSMS).
+|  **request**:*object* <required> (:ref:`ocpp-ChangeAvailabilityRequest <ocpp-ChangeAvailabilityRequest>`)
+|   The ChangeAvailabilityRequest as specified in OCPP2.0.1. For OCPP 1.6:
+|   **There is an extended definition for this object** :ref:`here <ocpp-ChangeAvailabilityRequest>`.
+|  **Result**:*object*  (:ref:`ocpp-ChangeAvailabilityResponse <ocpp-ChangeAvailabilityResponse>`)
+|   Response to ChangeAvailabilityRequest as specified in OCPP 2.0.1
+|   **There is an extended definition for this object** :ref:`here <ocpp-ChangeAvailabilityResponse>`.
+| **monitor_variables**:*void*
+|  Command to start monitoring the given ComponentVariable(s). Any of the provided configuration keys will be published on change by the CSMS. Consecutive calls of this operation will not override but extend the existing monitors. With OCPP1.6: This command can be used to monitor configuration keys With OCPP2.0.1: This command can be used to monitor any kind of variable in the device model storage
+|  **component_variables**:*array* <required>
+|   List of ComponentVariable(s) to monitor
+|   **array_item**:*object*  (:ref:`ocpp-ComponentVariable <ocpp-ComponentVariable>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <ocpp-ComponentVariable>`.
+| 

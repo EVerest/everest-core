@@ -1,0 +1,20 @@
+:orphan:
+
+
+.. _everest_interfaces_energy_price_information:
+
+
+########################
+energy_price_information
+########################
+
+| This interface defines the interface for an energy price forecast
+
+
+*********
+Variables
+*********
+| **energy_pricing**:*object*  (:ref:`energy_price_information-EnergyPriceSchedule <energy_price_information-EnergyPriceSchedule>`)
+|  Forecast JSON Object containing timestamps and the price forecast for both import and export.
+|  **There is an extended definition for this object** :ref:`here <energy_price_information-EnergyPriceSchedule>`.
+

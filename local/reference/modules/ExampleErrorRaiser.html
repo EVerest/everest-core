@@ -1,0 +1,652 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="ExampleErrorSubscriber" href="ExampleErrorSubscriber.html"><link rel="prev" title="ExampleErrorGlobalSubscriber" href="ExampleErrorGlobalSubscriber.html">
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
+        <title>ExampleErrorRaiser - EVerest Documentation 2025.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=acfd86a5" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=580074bf" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">EVerest Documentation 2025.9.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  <span class="sidebar-brand-text">EVerest Documentation 2025.9.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../tutorials/index.html">Tutorials</a><input aria-label="Toggle navigation of Tutorials" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/bazel.html">Experimental Bazel Support in Everest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/plug-and-charge.html">Plug&amp;Charge with EVerest Software in the loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/ocpp2.html">How To: OCPP 2.0.1 and 2.1 in EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/ocpp16.html">How To: OCPP 1.6 in EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../tutorials/develop-new-module.html">Develop New Modules</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../how-to-guides/index.html">How To Guides</a><input aria-label="Toggle navigation of How To Guides" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/configure-pnc.html">Configure Plug&amp;Charge in EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/debug-iso15118.html">Debug ISO 15118</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/yocto-cross-compilation.html">Cross-compilation of EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/eichrecht.html">Eichrecht</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/uk-smart-charging-regulations.html">UK Smart Charging regulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/renesas-mpu/index.html">How to for Renesas MPU (RZ/G2L family)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../how-to-guides/security-best-practices.html">Security Best Practices</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../how-to-guides/bringup/index.html">BringUp &amp; Qualification</a><input aria-label="Toggle navigation of BringUp &amp; Qualification" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../how-to-guides/bringup/basic.html">Basic BringUp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../how-to-guides/bringup/powermeter.html">BringUp Powermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../how-to-guides/bringup/ac.html">AC BringUp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../how-to-guides/bringup/dc.html">DC BringUp</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../explanation/index.html">Explanation</a><input aria-label="Toggle navigation of Explanation" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../explanation/modules/index.html">EVerest Modules</a><input aria-label="Toggle navigation of EVerest Modules" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/AdAcEvse22KwzKitBSP/index.html">AdAcEvse22KwzKitBSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/Auth/index.html">Auth Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/BUDCExternalDerate/index.html">BUDCExternalDerate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/BUOcppConsumer/index.html">BUOcppConsumer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/Bender_isoCHA425HV/index.html">Bender_isoCHA425HV</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/DZG_GSH01/index.html">DZG_GSH01</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/DummyTokenProvider/index.html">DummyTokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/DummyTokenProviderManual/index.html">DummyTokenProviderManual</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/DummyTokenValidator/index.html">DummyTokenValidator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/EnergyManager/index.html">EnergyManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/EvManager/index.html">EvManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/EvseManager/index.html">EvseManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/EvseSecurity/index.html">EvseSecurity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/EvseSlac/index.html">EvseSlac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/EvseSlac/index.html#todo">Todo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/EvseV2G/index.html">EvseV2G</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/ExampleErrorGlobalSubscriber/index.html">ExampleErrorGlobalSubscriber</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/ExampleErrorRaiser/index.html">ExampleErrorRaiser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/ExampleErrorSubscriber/index.html">ExampleErrorSubscriber</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/GenericPowermeter/index.html">GenericPowermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/IMDSimulator/index.html">IMDSimulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/IsabellenhuetteIemDcr/index.html">IsabellenhuetteIemDcr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/Iso15118InternetVas/index.html">Iso15118InternetVas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/LemDCBM400600/index.html">LEM DCBM 400/600</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/Linux_Systemd_Rauc/index.html">Linux_Systemd_Rauc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/NxpNfcFrontendTokenProvider/index.html">NxpNfcFrontendTokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/OCPP/index.html">OCPP1.6 Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/OCPP201/index.html">OCPP 2.1 and 2.0.1 Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/OCPPExtensionExample/index.html">OCPPExtensionExample</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/PN7160TokenProvider/index.html">PN7160TokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/PhyVersoBSP/index.html">PhyVersoBSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/TIDA010939/index.html">TIDA010939</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/TerminalCostAndPriceMessage/index.html">TerminalCostAndPriceMessage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/TerminalDisplayMessage/index.html">TerminalDisplayMessage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/YetiDriver/index.html">YetiDriver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/YetiEvDriver/index.html">YetiEvDriver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/auth_consumer_API/index.html">auth_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/auth_token_provider_API/index.html">auth_token_provider_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/auth_token_validator_API/index.html">auth_token_validator_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/dc_external_derate_consumer_API/index.html">dc_external_derate_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/display_message_API/index.html">display_message_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/error_history_consumer_API/index.html">error_history_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/evse_board_support_API/index.html">evse_board_support_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/evse_manager_consumer_API/index.html">evse_manager_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/external_energy_limits_consumer_API/index.html">external_energy_limits_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/generic_error_raiser_API/index.html">generic_error_raiser_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/isolation_monitor_API/index.html">isolation_monitor_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/ocpp_consumer_API/index.html">ocpp_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/over_voltage_monitor_API/index.html">over_voltage_monitor_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/power_supply_DC_API/index.html">power_supply_DC_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/powermeter_API/index.html">powermeter_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/session_cost_API/index.html">session_cost_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/modules/system_API/index.html">system_API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../explanation/community-channels.html">Meet the EVerest Community</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../explanation/pnc-process.html">The Plug&amp;Charge Process in EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../explanation/dev-tools/edm.html">edm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../explanation/dev-tools/ev-cli.html">ev-cli</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../explanation/linux-yocto/index.html">Linux / Yocto</a><input aria-label="Toggle navigation of Linux / Yocto" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/linux-yocto/setting-up-linux-os.html">Setting up the Linux operating system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/linux-yocto/building-yocto.html">Building Yocto for your custom hardware</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/linux-yocto/ota-updates.html">Over-the-air-updates (OTA)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../explanation/hardware-architecture.html">Hardware Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../explanation/high-level-overview.html">High-Level Overview of EVerest</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../explanation/adapt-everest/index.html">Adapt EVerest</a><input aria-label="Toggle navigation of Adapt EVerest" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/adapt-everest/sub-systems.html">Sub-systems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/adapt-everest/apis.html">EVerest APIs</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../explanation/getting-started/index.html">Getting Started with EVerest</a><input aria-label="Toggle navigation of Getting Started with EVerest" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/getting-started/get-started-sw.html">A Kind Of Quick Guide To EVerest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../explanation/getting-started/get-started-hw.html">Getting Started with EVerest on Hardware</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../explanation/detail-module-concept.html">EVerest Modules in Detail</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../index.html">Reference</a><input aria-label="Toggle navigation of Reference" checked="" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api/autogenerated_api_index.html">EVerest API Specification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snapshot.html">Snapshot</a></li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="../modules_index.html">EVerest Modules</a><input aria-label="Toggle navigation of EVerest Modules" checked="" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="API.html">API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="AST_DC650.html">AST_DC650</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Acrel_DJSF1352_RN.html">Acrel_DJSF1352_RN</a></li>
+<li class="toctree-l3"><a class="reference internal" href="AdAcEvse22KwzKitBSP.html">AdAcEvse22KwzKitBSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Auth.html">Auth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BUDCExternalDerate.html">BUDCExternalDerate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BUDisplayMessage.html">BUDisplayMessage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BUEvseBoardSupport.html">BUEvseBoardSupport</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BUIsolationMonitor.html">BUIsolationMonitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BUOcppConsumer.html">BUOcppConsumer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BUOverVoltageMonitor.html">BUOverVoltageMonitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BUPowerSupplyDC.html">BUPowerSupplyDC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BUPowermeter.html">BUPowermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BUSystem.html">BUSystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="BUTokenProvider.html">BUTokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Bender_isoCHA425HV.html">Bender_isoCHA425HV</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ChargerInfo.html">ChargerInfo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DCSupplySimulator.html">DCSupplySimulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DPM1000.html">DPM1000</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DZG_GSH01.html">DZG_GSH01</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DummyBankSessionTokenProvider.html">DummyBankSessionTokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DummyTokenProvider.html">DummyTokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DummyTokenProviderManual.html">DummyTokenProviderManual</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DummyTokenValidator.html">DummyTokenValidator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DummyV2G.html">DummyV2G</a></li>
+<li class="toctree-l3"><a class="reference internal" href="EnergyManager.html">EnergyManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="EnergyNode.html">EnergyNode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ErrorHistory.html">ErrorHistory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="EvAPI.html">EvAPI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="EvManager.html">EvManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="EvSlac.html">EvSlac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Evse15118D20.html">Evse15118D20</a></li>
+<li class="toctree-l3"><a class="reference internal" href="EvseManager.html">EvseManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="EvseSecurity.html">EvseSecurity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="EvseSlac.html">EvseSlac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="EvseV2G.html">EvseV2G</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Example.html">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ExampleErrorGlobalSubscriber.html">ExampleErrorGlobalSubscriber</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">ExampleErrorRaiser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ExampleErrorSubscriber.html">ExampleErrorSubscriber</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ExampleUser.html">ExampleUser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="GenericPowermeter.html">GenericPowermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Huawei_R100040Gx.html">Huawei_R100040Gx</a></li>
+<li class="toctree-l3"><a class="reference internal" href="IMDSimulator.html">IMDSimulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="InfyPower.html">InfyPower</a></li>
+<li class="toctree-l3"><a class="reference internal" href="InfyPower_BEG1K075G.html">InfyPower_BEG1K075G</a></li>
+<li class="toctree-l3"><a class="reference internal" href="IsabellenhuetteIemDcr.html">IsabellenhuetteIemDcr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Iso15118InternetVas.html">Iso15118InternetVas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="IsoMux.html">IsoMux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="LemDCBM400600.html">LemDCBM400600</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Linux_Systemd_Rauc.html">Linux_Systemd_Rauc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="LocalAllowlistTokenValidator.html">LocalAllowlistTokenValidator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="MicroMegaWattBSP.html">MicroMegaWattBSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="NxpNfcFrontendTokenProvider.html">NxpNfcFrontendTokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="OCPP.html">OCPP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="OCPP201.html">OCPP201</a></li>
+<li class="toctree-l3"><a class="reference internal" href="OCPPExtensionExample.html">OCPPExtensionExample</a></li>
+<li class="toctree-l3"><a class="reference internal" href="OVMSimulator.html">OVMSimulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PN532TokenProvider.html">PN532TokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PN7160TokenProvider.html">PN7160TokenProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PacketSniffer.html">PacketSniffer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PersistentStore.html">PersistentStore</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PhyVersoBSP.html">PhyVersoBSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PyEvJosev.html">PyEvJosev</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PyExampleErrorRaiser.html">PyExampleErrorRaiser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PyExampleErrorSubscriber.html">PyExampleErrorSubscriber</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RsExample.html">RsExample</a></li>
+<li class="toctree-l3"><a class="reference internal" href="RsExampleUser.html">RsExampleUser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SerialCommHub.html">SerialCommHub</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Setup.html">Setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="SlacSimulator.html">SlacSimulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="StaticISO15118VASProvider.html">StaticISO15118VASProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Store.html">Store</a></li>
+<li class="toctree-l3"><a class="reference internal" href="System.html">System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="TIDA010939.html">TIDA010939</a></li>
+<li class="toctree-l3"><a class="reference internal" href="TerminalCostAndPriceMessage.html">TerminalCostAndPriceMessage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="TerminalDisplayMessage.html">TerminalDisplayMessage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="UUGreenPower_UR1000X0.html">UUGreenPower_UR1000X0</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Winline.html">Winline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="YamlStore.html">YamlStore</a></li>
+<li class="toctree-l3"><a class="reference internal" href="YetiDriver.html">YetiDriver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="YetiEvDriver.html">YetiEvDriver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="YetiSimulator.html">YetiSimulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auth_consumer_API.html">auth_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auth_token_provider_API.html">auth_token_provider_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="auth_token_validator_API.html">auth_token_validator_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dc_external_derate_consumer_API.html">dc_external_derate_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="display_message_API.html">display_message_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="error_history_consumer_API.html">error_history_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="evse_board_support_API.html">evse_board_support_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="evse_manager_consumer_API.html">evse_manager_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="external_energy_limits_consumer_API.html">external_energy_limits_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generic_error_raiser_API.html">generic_error_raiser_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="isolation_monitor_API.html">isolation_monitor_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ocpp_consumer_API.html">ocpp_consumer_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="over_voltage_monitor_API.html">over_voltage_monitor_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="power_supply_DC_API.html">power_supply_DC_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="powermeter_API.html">powermeter_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="session_cost_API.html">session_cost_API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="system_API.html">system_API</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../interfaces_index.html">EVerest Interfaces</a><input aria-label="Toggle navigation of EVerest Interfaces" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/ISO15118_charger.html">ISO15118_charger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/ISO15118_ev.html">ISO15118_ev</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/ISO15118_vas.html">ISO15118_vas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/ac_rcd.html">ac_rcd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/auth.html">auth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/auth_token_provider.html">auth_token_provider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/auth_token_validator.html">auth_token_validator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/bank_session_token_provider.html">bank_session_token_provider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/car_simulator.html">car_simulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/charger_information.html">charger_information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/connector_lock.html">connector_lock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/dc_external_derate.html">dc_external_derate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/debug_json.html">debug_json</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/display_message.html">display_message</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/empty.html">empty</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/energy.html">energy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/energy_manager.html">energy_manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/energy_price_information.html">energy_price_information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/error_history.html">error_history</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/ev_board_support.html">ev_board_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/ev_manager.html">ev_manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/ev_slac.html">ev_slac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/evse_board_support.html">evse_board_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/evse_manager.html">evse_manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/evse_security.html">evse_security</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/example.html">example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/example_error_framework.html">example_error_framework</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/example_user.html">example_user</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/external_energy_limits.html">external_energy_limits</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/generic_error.html">generic_error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/iso15118_extensions.html">iso15118_extensions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/isolation_monitor.html">isolation_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/kvs.html">kvs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/ocpp.html">ocpp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/ocpp_1_6_charge_point.html">ocpp_1_6_charge_point</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/ocpp_data_transfer.html">ocpp_data_transfer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/over_voltage_monitor.html">over_voltage_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/payment_terminal.html">payment_terminal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/power.html">power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/power_supply_DC.html">power_supply_DC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/powermeter.html">powermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/reservation.html">reservation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/serial_communication_hub.html">serial_communication_hub</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/session_cost.html">session_cost</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/slac.html">slac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/solar_forecast.html">solar_forecast</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/sunspec_ac_meter.html">sunspec_ac_meter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/sunspec_reader.html">sunspec_reader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/sunspec_scanner.html">sunspec_scanner</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/system.html">system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/test_control.html">test_control</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/tibber_price_forecast.html">tibber_price_forecast</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../interfaces/uk_random_delay.html">uk_random_delay</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../types_index.html">EVerest Types</a><input aria-label="Toggle navigation of EVerest Types" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../types/authorization.html">authorization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/board_support_common.html">board_support_common</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/charger_information.html">charger_information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/dc_external_derate.html">dc_external_derate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/display_message.html">display_message</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/energy.html">energy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/energy_price_information.html">energy_price_information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/error_history.html">error_history</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/ev_board_support.html">ev_board_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/evse_board_support.html">evse_board_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/evse_manager.html">evse_manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/evse_security.html">evse_security</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/iso15118.html">iso15118</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/iso15118_vas.html">iso15118_vas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/isolation_monitor.html">isolation_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/money.html">money</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/ocpp.html">ocpp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/payment_terminal.html">payment_terminal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/power_supply_DC.html">power_supply_DC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/powermeter.html">powermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/reservation.html">reservation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/serial_comm_hub_requests.html">serial_comm_hub_requests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/session_cost.html">session_cost</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/sunspec_ac_meter.html">sunspec_ac_meter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/system.html">system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/temperature.html">temperature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/text_message.html">text_message</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/uk_random_delay.html">uk_random_delay</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/units.html">units</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../types/units_signed.html">units_signed</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../../_sources/reference/modules/ExampleErrorRaiser.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="exampleerrorraiser">
+<span id="everest-modules-exampleerrorraiser"></span><h1>ExampleErrorRaiser<a class="headerlink" href="#exampleerrorraiser" title="Link to this heading">¶</a></h1>
+<div class="line-block">
+<div class="line">Simple example module written in C++ to demonstrate error handling on raiser side</div>
+</div>
+<p>For a detailed handwritten documentation see <a class="reference internal" href="../../explanation/modules/ExampleErrorRaiser/index.html#everest-modules-handwritten-exampleerrorraiser"><span class="std std-ref">here</span></a></p>
+<section id="provides">
+<h2>Provides<a class="headerlink" href="#provides" title="Link to this heading">¶</a></h2>
+<div class="line-block">
+<div class="line"><strong>example_raiser</strong>:<a class="reference internal" href="../interfaces/example_error_framework.html#everest-interfaces-example-error-framework"><span class="std std-ref">example_error_framework</span></a></div>
+<div class="line-block">
+<div class="line">This implements an example interface</div>
+</div>
+</div>
+</section>
+<section id="metadata">
+<h2>Metadata<a class="headerlink" href="#metadata" title="Link to this heading">¶</a></h2>
+<section id="authors">
+<h3>Authors<a class="headerlink" href="#authors" title="Link to this heading">¶</a></h3>
+<div class="line-block">
+<div class="line">Andreas Heinrich</div>
+</div>
+</section>
+<section id="license">
+<h3>License<a class="headerlink" href="#license" title="Link to this heading">¶</a></h3>
+<div class="line-block">
+<div class="line"><a class="reference external" href="https://opensource.org/licenses/Apache-2.0">https://opensource.org/licenses/Apache-2.0</a></div>
+</div>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="ExampleErrorSubscriber.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">ExampleErrorSubscriber</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="ExampleErrorGlobalSubscriber.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">ExampleErrorGlobalSubscriber</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2021-2025, EVerest community
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">ExampleErrorRaiser</a><ul>
+<li><a class="reference internal" href="#provides">Provides</a></li>
+<li><a class="reference internal" href="#metadata">Metadata</a><ul>
+<li><a class="reference internal" href="#authors">Authors</a></li>
+<li><a class="reference internal" href="#license">License</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=5dbf898e"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    </body>
+</html>

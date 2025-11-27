@@ -1,0 +1,68 @@
+:orphan:
+
+
+.. _everest_interfaces_ocpp_1_6_charge_point:
+
+
+#####################
+ocpp_1_6_charge_point
+#####################
+
+| This interface defines a OCPP 1.6 charge point
+
+
+*********
+Variables
+*********
+| **is_connected**:*boolean* 
+|  Indicates if chargepoint is connected to CSMS
+| **configuration_key**:*object*  (:ref:`ocpp-KeyValue <ocpp-KeyValue>`)
+|  Published when a configuration key has been changed by the CSMS and a monitor has been registered using the command monitor_configuration_keys
+|  **There is an extended definition for this object** :ref:`here <ocpp-KeyValue>`.
+| **security_event**:*object*  (:ref:`ocpp-SecurityEvent <ocpp-SecurityEvent>`)
+|  Published when an internal security event occurred
+|  **There is an extended definition for this object** :ref:`here <ocpp-SecurityEvent>`.
+
+********
+Commands
+********
+| **stop**:*boolean*
+|  Disconnects the websocket connection and stops the OCPP communication. No OCPP messages will be stored and sent after a restart.
+|  **Result**:*boolean* 
+|   Returns true if the service could be stopped successfully, else false
+| **restart**:*boolean*
+|  Connects the websocket and enables OCPP communication after a previous stop call.
+|  **Result**:*boolean* 
+|   Returns true if the service could be restarted successfully, else false
+| **get_configuration_key**:*object*
+|  Gets the response to the requested configuration key containing a list of the values of the requested keys and a list of the keys that are unknown
+|  **keys**:*array* <required>
+|   List of keys for which the values are requested. If empty, all keys and values are returned
+|   **array_item**:*string* 
+|    A key
+| 
+|  **Result**:*object*  (:ref:`ocpp-GetConfigurationResponse <ocpp-GetConfigurationResponse>`)
+|   Response to the requested operation
+|   **There is an extended definition for this object** :ref:`here <ocpp-GetConfigurationResponse>`.
+| **set_configuration_key**:*string*
+|  Command to set a configuration key
+|  **key**:*string* <required>
+|   Key that should be set
+|  **value**:*string* <required>
+|   Value that should be set for the given key
+|  **Result**:*string*  (:ref:`ocpp-ConfigurationStatus <ocpp-ConfigurationStatus>`)
+|   Indicates the result of the requested operation
+|   **There is an extended definition for this object** :ref:`here <ocpp-ConfigurationStatus>`.
+| **monitor_configuration_keys**:*void*
+|  Monitors the given configuration key. In case this configuration keys is changed by the CSMS the configuration key the changed configuration key will be published. Consecutive calls of this operation will not override but extend the existing monitors
+|  **keys**:*array* <required>
+|   Keys that should be monitored
+|   **array_item**:*string* 
+|    Key that should be montired
+| 
+| **security_event**:*void*
+|  Triggers a SecurityEventNotification.req at the CSMS. This event is queued with a guaranteed delivery to the CSMS.
+|  **type**:*string* <required>
+|   type of the security event
+|  **info**:*string* <required>
+|   Additional information about the occurred security event

@@ -1,0 +1,24 @@
+:orphan:
+
+
+.. _everest_interfaces_sunspec_reader:
+
+
+##############
+sunspec_reader
+##############
+
+| This interface defines a generic Sunspec reader, which can be used to fetch values from Sunspec devices when an implementation is given.
+
+
+*********
+Variables
+*********
+| **measurement**:*object* 
+|  Measured dataset
+|  properties:
+|   **timestamp**:*number* <required>
+|    Timestamp of measurement
+|   **value**:*number* <optional>
+|    Measurement value
+

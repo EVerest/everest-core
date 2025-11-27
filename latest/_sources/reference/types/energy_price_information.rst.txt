@@ -1,0 +1,42 @@
+:orphan:
+
+
+.. _everest_types_energy_price_information:
+
+
+########################
+energy_price_information
+########################
+
+Energy price information types
+
+.. _energy_price_information-PricePerkWh:
+
+| **PricePerkWh**:*object* 
+|  Price information for this timepoint
+|  properties:
+|   **timestamp**:*string* <required>
+|    Absolute timestamp for this sample in RFC3339 UTC format
+|    format:date-time
+|   **value**:*number* <required>
+|    Price per kWh (cost)
+|   **currency**:*string* <required>
+|    Currency in 3 digit ISO 4217
+
+.. _energy_price_information-EnergyPriceSchedule:
+
+| **EnergyPriceSchedule**:*object* 
+|  Forecast JSON Object containing timestamps and the price forecast for both import and export.
+|  properties:
+|   **schedule_import**:*array* <required>
+|    Pricing time series. The first entry is special as it will be active already now even if the timestamp is in the future, so it is good practice to set the first entry to current time. The time series can have arbitrary time difference between entries and all timestamps are absolute UTC time.
+|    **array_item**:*object*  (:ref:`energy_price_information-PricePerkWh <energy_price_information-PricePerkWh>`)
+|     One entry for the time series
+|     **There is an extended definition for this object** :ref:`here <energy_price_information-PricePerkWh>`.
+| 
+|   **schedule_export**:*array* <required>
+|    Pricing time series. The first entry is special as it will be active already now even if the timestamp is in the future, so it is good practice to set the first entry to current time. The time series can have arbitrary time difference between entries and all timestamps are absolute UTC time.
+|    **array_item**:*object*  (:ref:`energy_price_information-PricePerkWh <energy_price_information-PricePerkWh>`)
+|     One entry for the time series
+|     **There is an extended definition for this object** :ref:`here <energy_price_information-PricePerkWh>`.
+| 

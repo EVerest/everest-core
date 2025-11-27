@@ -1,0 +1,19 @@
+:orphan:
+
+
+.. _everest_interfaces_power:
+
+
+#####
+power
+#####
+
+| This interface defines the interface of a power supply
+
+
+*********
+Variables
+*********
+| **max_current**:*number* 
+|  This is the maximum current of the power supply
+

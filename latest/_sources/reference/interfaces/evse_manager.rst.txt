@@ -1,0 +1,133 @@
+:orphan:
+
+
+.. _everest_interfaces_evse_manager:
+
+
+############
+evse_manager
+############
+
+| This interface defines the evse manager. An evse manager represents the charging kernel of one physical connector.
+
+
+*********
+Variables
+*********
+| **session_event**:*object*  (:ref:`evse_manager-SessionEvent <evse_manager-SessionEvent>`)
+|  Emits all events related to sessions
+|  **There is an extended definition for this object** :ref:`here <evse_manager-SessionEvent>`.
+| **limits**:*object*  (:ref:`evse_manager-Limits <evse_manager-Limits>`)
+|  Limits of this evse, published on change
+|  **There is an extended definition for this object** :ref:`here <evse_manager-Limits>`.
+| **ev_info**:*object*  (:ref:`evse_manager-EVInfo <evse_manager-EVInfo>`)
+|  More details about the EV if available
+|  **There is an extended definition for this object** :ref:`here <evse_manager-EVInfo>`.
+| **car_manufacturer**:*string*  (:ref:`evse_manager-CarManufacturer <evse_manager-CarManufacturer>`)
+|  Car manufacturer (if known)
+|  **There is an extended definition for this object** :ref:`here <evse_manager-CarManufacturer>`.
+| **telemetry**:*object*  (:ref:`evse_board_support-Telemetry <evse_board_support-Telemetry>`)
+|  Other telemetry
+|  **There is an extended definition for this object** :ref:`here <evse_board_support-Telemetry>`.
+| **powermeter**:*object*  (:ref:`powermeter-Powermeter <powermeter-Powermeter>`)
+|  Measured dataset
+|  **There is an extended definition for this object** :ref:`here <powermeter-Powermeter>`.
+| **powermeter_public_key_ocmf**:*string* 
+|  Powermeter public key
+| **evse_id**:*string* 
+|  EVSE ID including the connector number, e.g. DE*PNX*E123456*1
+| **hw_capabilities**:*object*  (:ref:`evse_board_support-HardwareCapabilities <evse_board_support-HardwareCapabilities>`)
+|  Hardware capability/limits
+|  **There is an extended definition for this object** :ref:`here <evse_board_support-HardwareCapabilities>`.
+| **enforced_limits**:*object*  (:ref:`energy-EnforcedLimits <energy-EnforcedLimits>`)
+|  Enforced limits for this node (coming from the EnergyManager)
+|  **There is an extended definition for this object** :ref:`here <energy-EnforcedLimits>`.
+| **waiting_for_external_ready**:*boolean* 
+|  Signals that the EVSE Manager is in principle ready to start charging, but delays sending its ready signal waiting for the external_ready_to_start_charging command.
+| **ready**:*boolean* 
+|  Signals that the EVSE Manager is ready to start charging
+| **selected_protocol**:*string* 
+|  Contains the selected protocol used for charging for informative purposes
+| **supported_energy_transfer_modes**:*array* 
+|  Contains the list of supported energy transfers e.g. AC mono/tri, DC, DC_BPT, etc.
+|  **array_item**:*object*  (:ref:`iso15118-EnergyTransferMode <iso15118-EnergyTransferMode>`)
+|   
+|   **There is an extended definition for this object** :ref:`here <iso15118-EnergyTransferMode>`.
+| 
+
+********
+Commands
+********
+| **get_evse**:*object*
+|  Call to get information about the EVSE including its connectors
+|  **Result**:*object*  (:ref:`evse_manager-Evse <evse_manager-Evse>`)
+|   Object that contains information of the EVSE including its connectors
+|   **There is an extended definition for this object** :ref:`here <evse_manager-Evse>`.
+| **enable_disable**:*boolean*
+|  Enables or disables the evse. Turns off PWM with error F. Charging is only possible if an EVSE is enabled.
+|  **connector_id**:*integer* <required>
+|   Specifies the ID of the connector to enable. If 0, the whole EVSE should be enabled
+|  **cmd_source**:*object* <required> (:ref:`evse_manager-EnableDisableSource <evse_manager-EnableDisableSource>`)
+|   Source of the enable command
+|   **There is an extended definition for this object** :ref:`here <evse_manager-EnableDisableSource>`.
+|  **Result**:*boolean* 
+|   Returns true if evse is enabled after the command, false if it is disabled. This may not be the same value as the request, since there may be a higher priority request from another source that is actually deciding whether it is enabled or disabled.
+| **authorize_response**:*void*
+|  Reports the result of an authorization request to the EvseManager. Contains the provided_token for which authorization was requested and the validation_result
+|  **provided_token**:*object* <required> (:ref:`authorization-ProvidedIdToken <authorization-ProvidedIdToken>`)
+|   The token for which authorization was requested
+|   **There is an extended definition for this object** :ref:`here <authorization-ProvidedIdToken>`.
+|  **validation_result**:*object* <required> (:ref:`authorization-ValidationResult <authorization-ValidationResult>`)
+|   The validation result
+|   **There is an extended definition for this object** :ref:`here <authorization-ValidationResult>`.
+| **withdraw_authorization**:*void*
+|  Call to signals that EVSE is not further authorized to start a transaction (e.g. on a connection_timeout)
+| **reserve**:*boolean*
+|  Call to signal that EVSE is reserved. This can be used to e.g. change the color of the HMI LEDs to indicate reservation.
+|  **reservation_id**:*integer* <required>
+|   The reservation id (should be added to the TransactionStarted event). Set this to a negative value if there is no specific reservation id for this evse but the evse should still move to a Reserved state because of total global reservations.
+|  **Result**:*boolean* 
+|   Returns true if the EVSE accepted the reservation, else false.
+| **cancel_reservation**:*void*
+|  Call to signal that EVSE is not reserved anymore
+| **pause_charging**:*boolean*
+|  Call to signal EVSE to pause charging
+|  **Result**:*boolean* 
+|   Returns true if successfully paused or was already in paused_by_evse mode
+| **resume_charging**:*boolean*
+|  Call to signal EVSE to resume charging
+|  **Result**:*boolean* 
+|   Returns true if resume was successful, false otherwise (e.g. resuming a car pause won't work)
+| **stop_transaction**:*boolean*
+|  Stops transaction and cancels charging externally, charging can only be resumed by replugging car. EVSE will also stop transaction automatically e.g. on disconnect, so this only needs to be called if the transaction should end before.
+|  **request**:*object* <required> (:ref:`evse_manager-StopTransactionRequest <evse_manager-StopTransactionRequest>`)
+|   Request to stop the transaction.
+|   **There is an extended definition for this object** :ref:`here <evse_manager-StopTransactionRequest>`.
+|  **Result**:*boolean* 
+|   Returns true if successful
+| **force_unlock**:*boolean*
+|  Forces connector to unlock connector now. During normal operation, connector will be locked/unlocked in the correct sequence. Do not use this function except if explicitly requested by e.g. management cloud.
+|  **connector_id**:*integer* <required>
+|   Specifies the ID of the connector that should be unlocked
+|  **Result**:*boolean* 
+|   Returns true if unlocking command was accepted, or false if it is not supported. It does not reflect the success/failure of the actual unlocking. If unlocking fails, the connector_lock interface shall raise an error asynchronously.
+| **external_ready_to_start_charging**:*boolean*
+|  There are situations where another module needs to do some initialization after evse manager is in principle ready to start charging. This command can be used (optimally in combination with a configuration option) to delay charging ready until the external module is done with its initialization
+|  **Result**:*boolean* 
+|   Returns true if the signal was used by the evse manager implementation
+| **set_plug_and_charge_configuration**:*void*
+|  Sets the configuration required for ISO15118 to handle contract authorization.
+|  **plug_and_charge_configuration**:*object* <required> (:ref:`evse_manager-PlugAndChargeConfiguration <evse_manager-PlugAndChargeConfiguration>`)
+|   The plug and charge configuration object
+|   **There is an extended definition for this object** :ref:`here <evse_manager-PlugAndChargeConfiguration>`.
+| **update_allowed_energy_transfer_modes**:*string*
+|  Sets the supported energy transfer mode for ISO15118. It is expected that this command will update the ISO15118 software stack to only propose the list of allowed_energy_transfer_modes presented in this message. If a transaction is already in progress, it is expected that this triggers a service renegotiation. If no HLC is present, this will be accepted, but do nothing.
+|  **allowed_energy_transfer_modes**:*array* <required>
+|   The list of supported energy transfer modes. It cannot be empty as we need to propose something to the EV.
+|   **array_item**:*string*  (:ref:`iso15118-EnergyTransferMode <iso15118-EnergyTransferMode>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <iso15118-EnergyTransferMode>`.
+| 
+|  **Result**:*string*  (:ref:`evse_manager-UpdateAllowedEnergyTransferModesResult <evse_manager-UpdateAllowedEnergyTransferModesResult>`)
+|   Returns an enum indicating whether the update was successful or not.
+|   **There is an extended definition for this object** :ref:`here <evse_manager-UpdateAllowedEnergyTransferModesResult>`.

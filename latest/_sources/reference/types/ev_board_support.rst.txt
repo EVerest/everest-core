@@ -1,0 +1,22 @@
+:orphan:
+
+
+.. _everest_types_ev_board_support:
+
+
+################
+ev_board_support
+################
+
+EV and EVSE board support types
+
+.. _ev_board_support-EvCpState:
+
+| **EvCpState**:*string* 
+|  ControlPilot state
+|  enum:
+|    - A
+|    - B
+|    - C
+|    - D
+|    - E

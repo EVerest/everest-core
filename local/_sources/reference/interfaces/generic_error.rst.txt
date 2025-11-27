@@ -1,0 +1,14 @@
+:orphan:
+
+
+.. _everest_interfaces_generic_error:
+
+
+#############
+generic_error
+#############
+
+| Interface providing access to generic errors
+
+
+

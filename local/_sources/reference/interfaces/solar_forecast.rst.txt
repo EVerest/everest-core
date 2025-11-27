@@ -1,0 +1,19 @@
+:orphan:
+
+
+.. _everest_interfaces_solar_forecast:
+
+
+##############
+solar_forecast
+##############
+
+| This interface defines the interface for an solar energy production forecast
+
+
+*********
+Variables
+*********
+| **forecast**:*object* 
+|  Forecast JSON Object containing a timestamp and the energy forecast in watthours.
+

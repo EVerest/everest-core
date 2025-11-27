@@ -1,0 +1,23 @@
+:orphan:
+
+
+.. _everest_types_temperature:
+
+
+###########
+temperature
+###########
+
+Temperature type
+
+.. _temperature-Temperature:
+
+| **Temperature**:*object* 
+|  Temperature sensor expressed in C and a description (vendor specific) allowing to identify its purpose or meaning
+|  properties:
+|   **temperature**:*number* <required>
+|    The temperature of the sensor measured in C
+|   **identification**:*string* <optional>
+|    A (vendor specific) ID if required
+|   **location**:*string* <optional>
+|    Location of the measurement

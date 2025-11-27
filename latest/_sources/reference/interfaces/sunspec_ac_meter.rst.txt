@@ -1,0 +1,24 @@
+:orphan:
+
+
+.. _everest_interfaces_sunspec_ac_meter:
+
+
+################
+sunspec_ac_meter
+################
+
+| Get sunspec ac meter measurement
+
+
+
+********
+Commands
+********
+| **get_sunspec_ac_meter_value**:*object*
+|  Returns a sunspec ac meter model
+|  **auth_token**:*string* <required>
+|   Auth token
+|  **Result**:*object*  (:ref:`sunspec_ac_meter-Result <sunspec_ac_meter-Result>`)
+|   Sunspec ac meter model
+|   **There is an extended definition for this object** :ref:`here <sunspec_ac_meter-Result>`.

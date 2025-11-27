@@ -1,0 +1,43 @@
+:orphan:
+
+
+.. _everest_interfaces_auth:
+
+
+####
+auth
+####
+
+| Interface of authentication framework
+
+
+*********
+Variables
+*********
+| **token_validation_status**:*object*  (:ref:`authorization-TokenValidationStatusMessage <authorization-TokenValidationStatusMessage>`)
+|  Emits all events related to current token validation
+|  **There is an extended definition for this object** :ref:`here <authorization-TokenValidationStatusMessage>`.
+
+********
+Commands
+********
+| **set_connection_timeout**:*void*
+|  Sets the connection timeout
+|  **connection_timeout**:*integer* <required>
+|   Connection timeout in seconds
+| **set_master_pass_group_id**:*void*
+|  Sets the master pass group id. IdTokens that have this id as parent_id_token belong to the Master Pass Group.  This means they can stop any ongoing transaction, but cannot start transactions. This can, for example, be used by law enforcement personal to stop any ongoing transaction when an EV has to be towed away. If master_pass_group_id  is an empty string, it is not used.
+|  **master_pass_group_id**:*string* <required>
+|   The master pass group id
+| **withdraw_authorization**:*string*
+|  Withdraw granted authorization. If only the evse_id is given, the granted authorization for this EVSE will be withdrawn. If only the id_token is given, the granted authorization for every EVSE where this id_token is placed will be
+|   withdrawn
+| If both parameters are given, the granted authorization for the given EVSE will be withdrawn, if the placed
+|   id_token matches the given id_token
+| If no parameter is given, all granted authorizations for all EVSEs will be removed
+|  **request**:*object* <required> (:ref:`authorization-WithdrawAuthorizationRequest <authorization-WithdrawAuthorizationRequest>`)
+|   The request
+|   **There is an extended definition for this object** :ref:`here <authorization-WithdrawAuthorizationRequest>`.
+|  **Result**:*string*  (:ref:`authorization-WithdrawAuthorizationResult <authorization-WithdrawAuthorizationResult>`)
+|   Accepted in case requested authorization was removed AuthorizationNotFound in case no match for request was found Rejected in case module could not process the request for other reasons
+|   **There is an extended definition for this object** :ref:`here <authorization-WithdrawAuthorizationResult>`.

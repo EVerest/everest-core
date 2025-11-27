@@ -1,0 +1,41 @@
+:orphan:
+
+
+.. _everest_interfaces_ISO15118_vas:
+
+
+############
+ISO15118_vas
+############
+
+| Custom VAS provider for ISO 15118
+
+
+*********
+Variables
+*********
+| **offered_vas**:*object*  (:ref:`iso15118_vas-OfferedServices <iso15118_vas-OfferedServices>`)
+|  List of offered VAS Service IDs
+|  **There is an extended definition for this object** :ref:`here <iso15118_vas-OfferedServices>`.
+
+********
+Commands
+********
+| **get_service_parameters**:*array*
+|  This command dynamically returns the parameter sets for a single service. It is called upon receiving ServiceDetailReq and returns the payload for ServiceDetailRes.
+|  **service_id**:*integer* <required>
+|   Service ID
+|  **Result**:*array* 
+|   Parameter Sets for this VAS
+|   **array_item**:*object*  (:ref:`iso15118_vas-ParameterSet <iso15118_vas-ParameterSet>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <iso15118_vas-ParameterSet>`.
+| 
+| **selected_services**:*void*
+|  Callback to notify the VAS provider which services and parameter sets were selected by the EV. It is called upon receiving ServiceSelectionReq and called only once per Request.
+|  **selected_services**:*array* <required>
+|   List of selected services and their parameter set IDs
+|   **array_item**:*object*  (:ref:`iso15118_vas-SelectedService <iso15118_vas-SelectedService>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <iso15118_vas-SelectedService>`.
+| 

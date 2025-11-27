@@ -1,0 +1,26 @@
+:orphan:
+
+
+.. _everest_types_uk_random_delay:
+
+
+###############
+uk_random_delay
+###############
+
+UK Random delay types
+
+.. _uk_random_delay-CountDown:
+
+| **CountDown**:*object* 
+|  Count down object
+|  properties:
+|   **countdown_s**:*integer* <required>
+|    Remaining count down in seconds. It is set to zero if random delay is inactive
+|   **current_limit_after_delay_A**:*number* <required>
+|    Current limit that will be used after the random delay is over
+|   **current_limit_during_delay_A**:*number* <required>
+|    Current limit that is used while the delay is active
+|   **start_time**:*string* <optional>
+|    UTC timestamp when this random delay was started
+|    format:date-time

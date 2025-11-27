@@ -1,0 +1,33 @@
+:orphan:
+
+
+.. _everest_interfaces_isolation_monitor:
+
+
+#################
+isolation_monitor
+#################
+
+| This interface defines an isolation monitoring device (IMD) according to IEC 61557-8 for DC charging. This is used to verify isolation of the DC lines before starting high voltage charging and during charging.
+
+
+*********
+Variables
+*********
+| **isolation_measurement**:*object*  (:ref:`isolation_monitor-IsolationMeasurement <isolation_monitor-IsolationMeasurement>`)
+|  Isolation monitoring measurement results
+|  **There is an extended definition for this object** :ref:`here <isolation_monitor-IsolationMeasurement>`.
+| **self_test_result**:*boolean* 
+|  Indicates the self test is done and publishes the result. Set "true" for success, "false" for failure.
+
+********
+Commands
+********
+| **start**:*void*
+|  Start recurring isolation measurements. The device should monitor the isolation status until stopped and publish the resistance data in regular intervals. The actual interval is device dependent.
+| **stop**:*void*
+|  Stop recurring measurements. The device should stop to monitor the isolation resistance and stop publishing the data.
+| **start_self_test**:*void*
+|  Start self test. This will be done during the CableCheck phase, so a DC voltage will be present according to IEC 61851-23 (2023). The command should return immediately. The "self_test_result" variable must be published once the self testing is done. Note that on many hardware devices this can take a long time (e.g. 20 seconds).
+|  **test_voltage_V**:*number* <required>
+|   Specifies the test voltage [V] that is applied on the DC pins during self test. This can be used to verify the internal voltage measurement of the IMD.

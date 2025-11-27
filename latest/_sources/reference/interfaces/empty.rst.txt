@@ -1,0 +1,14 @@
+:orphan:
+
+
+.. _everest_interfaces_empty:
+
+
+#####
+empty
+#####
+
+| This interface is empty and can be used for a config-only (main) implementation
+
+
+

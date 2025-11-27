@@ -1,0 +1,197 @@
+:orphan:
+
+
+.. _everest_types_system:
+
+
+######
+system
+######
+
+EVerest system types
+
+.. _system-FirmwareUpdateRequest:
+
+| **FirmwareUpdateRequest**:*object* 
+|  Type defining a Firmware update request
+|  properties:
+|   **retries**:*integer* <optional>
+|    This specifies how many times the system must try to download the firmware before giving up.
+|   **retry_interval_s**:*integer* <optional>
+|    The interval in seconds after which a retry may be attempted
+|   **request_id**:*integer* <required>
+|    The Id of this request
+|   **location**:*string* <required>
+|    URI defining the origin of the firmware
+|   **retrieve_timestamp**:*string* <optional>
+|    Time when the firmware update shall be retrieved in RFC3339 format
+|    format:date-time
+|   **install_timestamp**:*string* <optional>
+|    Time when the firmware update shall be installed in RFC3339 format
+|    format:date-time
+|   **signing_certificate**:*string* <optional>
+|    Certificate with which the firmware was signed. PEM encoded X.509 certificate
+|   **signature**:*string* <optional>
+|    Base64 encoded firmware signature
+
+.. _system-UpdateFirmwareResponse:
+
+| **UpdateFirmwareResponse**:*string* 
+|  Enum for the response of an update_firmware command
+|   Accepted: Accepted this firmware update request. This does not mean the firmware update is successful, the system will now start the firmware update process
+|   Rejected: Firmware update request rejected
+|   AcceptedCanceled: Accepted this firmware update request, but in doing this has cancelled an ongoing firmware update
+|   InvalidCertificate: The certificate is invalid
+|   RevokedCertificate: Failure end state. The Firmware Signing certificate has been revoked
+|  enum:
+|    - Accepted
+|    - Rejected
+|    - AcceptedCanceled
+|    - InvalidCertificate
+|    - RevokedCertificate
+
+.. _system-UploadLogsRequest:
+
+| **UploadLogsRequest**:*object* 
+|  Type defining an upload logs request.
+|  properties:
+|   **retries**:*integer* <optional>
+|    This specifies how many the system must try to upload the logs before giving up.
+|   **retry_interval_s**:*integer* <optional>
+|    The interval in seconds after which an upload retry may be attempted
+|   **oldest_timestamp**:*string* <optional>
+|    Oldest timestamp that should be incluced in the log in RFC3339 format
+|    format:date-time
+|   **latest_timestamp**:*string* <optional>
+|    Latest timestamp that should be incluced in the log in RFC3339 format
+|    format:date-time
+|   **location**:*string* <required>
+|    The URL of the location at the remote system where the log should be stored.
+|   **type**:*string* <optional>
+|    The type of the log (e.g. in OCPP there is the SecurityLog and the DiagnosticsLog
+|   **request_id**:*integer* <optional>
+|    The id of the request
+
+.. _system-UploadLogsStatus:
+
+| **UploadLogsStatus**:*string* 
+|  Enum for the upload logs status response
+|   Accepted: Request to upload logs has been accepted
+|   Rejected: Request to upload logs has been rejected
+|   AcceptedCanceled: Accepted this log upload, but in doing this has cancelled an ongoing log file upload
+|  enum:
+|    - Accepted
+|    - Rejected
+|    - AcceptedCanceled
+
+.. _system-UploadLogsResponse:
+
+| **UploadLogsResponse**:*object* 
+|  Response to a upload logs request
+|  properties:
+|   **file_name**:*string* <optional>
+|    This contains the name of the log file that will be uploaded.
+|   **upload_logs_status**:*string* <required> (:ref:`system-UploadLogsStatus <system-UploadLogsStatus>`)
+|    The log status enum
+|    **There is an extended definition for this object** :ref:`here <system-UploadLogsStatus>`.
+
+.. _system-LogStatusEnum:
+
+| **LogStatusEnum**:*string* 
+|  State describing the current status of log upload of the system
+|   BadMessage: A badly formatted packet or other protocol incompatibility was detected
+|   Idle: The system is not uploading a log file
+|   NotSupportedOperation: The server does not support the operation
+|   PermissionDenied: Insufficient permissions to perform the operation
+|   Uploaded: File has been uploaded successfully
+|   UploadFailure: Failed to upload the requested file
+|   Uploading: File is being uploaded
+|  enum:
+|    - BadMessage
+|    - Idle
+|    - NotSupportedOperation
+|    - PermissionDenied
+|    - Uploaded
+|    - UploadFailure
+|    - Uploading
+|    - AcceptedCanceled
+
+.. _system-LogStatus:
+
+| **LogStatus**:*object* 
+|  Type defining the status of a log upload
+|  properties:
+|   **log_status**:*string* <required> (:ref:`system-LogStatusEnum <system-LogStatusEnum>`)
+|    State describing the current status of log upload of the system
+|    **There is an extended definition for this object** :ref:`here <system-LogStatusEnum>`.
+|   **request_id**:*integer* <required>
+|    Id of the request
+
+.. _system-FirmwareUpdateStatusEnum:
+
+| **FirmwareUpdateStatusEnum**:*string* 
+|  State describing the current download/upload status of a firmware update of the system
+|   Downloaded: Intermediate state. New firmware has been downloaded by System
+|   DownloadFailed: Failure end state. System failed to download firmware
+|   Downloading: Intermediate state. Firmware is being downloaded
+|   DownloadScheduled: Intermediate state. Downloading of new firmware has been scheduled
+|   DownloadPaused: Intermediate state. Downloading has been paused
+|   Idle: System is not performing firmware update related tasks
+|   InstallationFailed: Failure end state. Installation of new firmware has failed
+|   Installing: Intermediate state. Firmware is being installed
+|   Installed: Successful end state. New firmware has successfully been installed in System
+|   InstallRebooting: Intermediate state. System is about to reboot to activate new firmware
+|   InstallScheduled: Intermediate state. Installation of the downloaded firmware is scheduled to take place on installDateTime
+|   InstallVerificationFailed: Failure end state. Verification of the new firmware (e.g. using a checksum or some other means) has failed and installation will not proceed. (Final failure state)
+|   InvalidSignature: Failure end state. The firmware signature is not valid
+|   SignatureVerified: Intermediate state. Provide signature successfully verified
+|  enum:
+|    - Downloaded
+|    - DownloadFailed
+|    - Downloading
+|    - DownloadScheduled
+|    - DownloadPaused
+|    - Idle
+|    - InstallationFailed
+|    - Installing
+|    - Installed
+|    - InstallRebooting
+|    - InstallScheduled
+|    - InstallVerificationFailed
+|    - InvalidSignature
+|    - SignatureVerified
+
+.. _system-FirmwareUpdateStatus:
+
+| **FirmwareUpdateStatus**:*object* 
+|  Type defining the status of a firmware update
+|  properties:
+|   **firmware_update_status**:*string* <required> (:ref:`system-FirmwareUpdateStatusEnum <system-FirmwareUpdateStatusEnum>`)
+|    State describing the current status of firmware update of the system
+|    **There is an extended definition for this object** :ref:`here <system-FirmwareUpdateStatusEnum>`.
+|   **request_id**:*integer* <required>
+|    Id of the request
+
+.. _system-ResetType:
+
+| **ResetType**:*string* 
+|  Enum defining the type of a reset
+|  enum:
+|    - Soft
+|    - Hard
+|    - NotSpecified
+
+.. _system-BootReason:
+
+| **BootReason**:*string* 
+|  Enum defining the boot reason
+|  enum:
+|    - ApplicationReset
+|    - FirmwareUpdate
+|    - LocalReset
+|    - PowerUp
+|    - RemoteReset
+|    - ScheduledReset
+|    - Triggered
+|    - Unknown
+|    - Watchdog

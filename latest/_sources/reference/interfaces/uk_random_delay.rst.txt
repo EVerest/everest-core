@@ -1,0 +1,33 @@
+:orphan:
+
+
+.. _everest_interfaces_uk_random_delay:
+
+
+###############
+uk_random_delay
+###############
+
+| This interface provides functions for a random delay feature as required by the UK smart charging regulations The logic whether to use a random delay or not is not included in EvseManager, a different module can use this interface to enable/disable the feature during runtime and cancel a running random delay. This always applies to all connectors of this EVSE. By default, on start up, random delays are disabled.
+
+
+*********
+Variables
+*********
+| **countdown**:*object*  (:ref:`uk_random_delay-CountDown <uk_random_delay-CountDown>`)
+|  Countdown of the currently running random delay
+|  **There is an extended definition for this object** :ref:`here <uk_random_delay-CountDown>`.
+
+********
+Commands
+********
+| **enable**:*void*
+|  Call to enable the random delay feature
+| **disable**:*void*
+|  Call to disable the random delay feature
+| **cancel**:*void*
+|  Cancels a running random delay. The effect is the same as if the time expired just now.
+| **set_duration_s**:*void*
+|  Set the maximum duration of the random delay. Default is 600 seconds.
+|  **value**:*integer* <required>
+|   Maximum duration in seconds

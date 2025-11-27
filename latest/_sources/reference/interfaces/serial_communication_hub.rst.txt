@@ -1,0 +1,103 @@
+:orphan:
+
+
+.. _everest_interfaces_serial_communication_hub:
+
+
+########################
+serial_communication_hub
+########################
+
+| This interface provides multiplexed access to one serial port (e.g. RS485) for multiple clients.
+
+
+
+********
+Commands
+********
+| **modbus_read_holding_registers**:*object*
+|  Send a Modbus RTU 'read holding registers' command via serial interface to the target hardware. (return value: response)
+|  **target_device_id**:*integer* <required>
+|   ID (1 byte) of the device to send the commands to
+|  **first_register_address**:*integer* <required>
+|   Start address for read operation (16 bit address)
+|  **num_registers_to_read**:*integer* <required>
+|   Number of registers to read (16 bit each)
+|  **Result**:*object*  (:ref:`serial_comm_hub_requests-Result <serial_comm_hub_requests-Result>`)
+|   Result of the transfer
+|   **There is an extended definition for this object** :ref:`here <serial_comm_hub_requests-Result>`.
+| **modbus_read_input_registers**:*object*
+|  Send a Modbus RTU 'read input registers' command via serial interface to the target hardware. (return value: response)
+|  **target_device_id**:*integer* <required>
+|   ID (1 byte) of the device to send the commands to
+|  **first_register_address**:*integer* <required>
+|   Start address for read operation (16 bit address)
+|  **num_registers_to_read**:*integer* <required>
+|   Number of registers to read (16 bit each)
+|  **Result**:*object*  (:ref:`serial_comm_hub_requests-Result <serial_comm_hub_requests-Result>`)
+|   Result of the transfer
+|   **There is an extended definition for this object** :ref:`here <serial_comm_hub_requests-Result>`.
+| **modbus_write_multiple_registers**:*string*
+|  Send a Modbus RTU 'write multiple registers' command via serial interface to the target hardware. (return value: response)
+|  **target_device_id**:*integer* <required>
+|   ID (1 byte) of the device to send the commands to
+|  **first_register_address**:*integer* <required>
+|   Start address for write operation (16 bit address)
+|  **data_raw**:*object* <required> (:ref:`serial_comm_hub_requests-VectorUint16 <serial_comm_hub_requests-VectorUint16>`)
+|   Data content to be written to the above selected registers (in 16 bit words)
+|   **There is an extended definition for this object** :ref:`here <serial_comm_hub_requests-VectorUint16>`.
+|  **Result**:*string*  (:ref:`serial_comm_hub_requests-StatusCodeEnum <serial_comm_hub_requests-StatusCodeEnum>`)
+|   Status code of the transfer
+|   **There is an extended definition for this object** :ref:`here <serial_comm_hub_requests-StatusCodeEnum>`.
+| **modbus_write_single_register**:*string*
+|  Send a Modbus RTU 'write single register' command via serial interface to the target hardware. (return value: response)
+|  **target_device_id**:*integer* <required>
+|   ID (1 byte) of the device to send the commands to
+|  **register_address**:*integer* <required>
+|   Address of the register to write to (16 bit address)
+|  **data**:*integer* <required>
+|   Data content to be written to the above selected register
+|  **Result**:*string*  (:ref:`serial_comm_hub_requests-StatusCodeEnum <serial_comm_hub_requests-StatusCodeEnum>`)
+|   Status code of the transfer
+|   **There is an extended definition for this object** :ref:`here <serial_comm_hub_requests-StatusCodeEnum>`.
+| **modbus_read_coils**:*object*
+|  Send a Modbus RTU 'read coils' command via serial interface to the target hardware. (return value: response)
+|  **target_device_id**:*integer* <required>
+|   ID (1 byte) of the device to send the commands to
+|  **first_coil_address**:*integer* <required>
+|   Start address for read operation (16 bit address)
+|  **num_coils_to_read**:*integer* <required>
+|   Number of coils to read (1 bit each)
+|  **Result**:*object*  (:ref:`serial_comm_hub_requests-ResultBool <serial_comm_hub_requests-ResultBool>`)
+|   Result of the transfer
+|   **There is an extended definition for this object** :ref:`here <serial_comm_hub_requests-ResultBool>`.
+| **modbus_write_single_coil**:*string*
+|  Send a Modbus RTU 'write single coil' command via serial interface to the target hardware. (return value: response)
+|  **target_device_id**:*integer* <required>
+|   ID (1 byte) of the device to send the commands to
+|  **coil_address**:*integer* <required>
+|   Address of the coil to write to (16 bit address)
+|  **data**:*boolean* <required>
+|   Data content to be written to the selected coil
+|  **Result**:*string*  (:ref:`serial_comm_hub_requests-StatusCodeEnum <serial_comm_hub_requests-StatusCodeEnum>`)
+|   Status code of the transfer
+|   **There is an extended definition for this object** :ref:`here <serial_comm_hub_requests-StatusCodeEnum>`.
+| **nonstd_write**:*void*
+|  Non standard mode to write registers in read discrete input mode without waiting for reply. Used e.g. by GYDCG-UBC1 isolation monitor.
+|  **target_device_id**:*integer* <required>
+|   ID (1 byte) of the device to send the commands to
+|  **first_register_address**:*integer* <required>
+|   Start address for read operation (16 bit address)
+|  **num_registers_to_read**:*integer* <required>
+|   Number of registers to read (16 bit each)
+| **nonstd_read**:*object*
+|  Non standard mode to read registers in read coils mode, but getting a malformed reply. Used e.g. by GYDCG-UBC1 isolation monitor.
+|  **target_device_id**:*integer* <required>
+|   ID (1 byte) of the device to send the commands to
+|  **first_register_address**:*integer* <required>
+|   Start address for write operation (16 bit address)
+|  **num_registers_to_read**:*integer* <required>
+|   Number of registers to read (16 bit each)
+|  **Result**:*object*  (:ref:`serial_comm_hub_requests-Result <serial_comm_hub_requests-Result>`)
+|   Result of the transfer
+|   **There is an extended definition for this object** :ref:`here <serial_comm_hub_requests-Result>`.

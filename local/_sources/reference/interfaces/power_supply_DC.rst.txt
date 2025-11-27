@@ -1,0 +1,69 @@
+:orphan:
+
+
+.. _everest_interfaces_power_supply_DC:
+
+
+###############
+power_supply_DC
+###############
+
+| Interface for power supplies used for DC charging
+| Implementation guidelines for this interface: 1) During start up of the driver, publish capabilities as soon as they are available, ideally in ready() function.
+|    The charging logic in EvseManager will not allow any charging until it receives the capabilities at least once.
+|    Capabilities may be published at any later point in time to update the values. This may happen if they e.g. change due
+|    to thermal derating etc. If a charging session is active when the update is received,
+|    only power/current limits will be applied immediately. All other values will become active at the next charging session.
+| 
+| 2) setMode/setVoltageCurrent commands should be executed on the hardware immediately. If this is not possible because an error is currently active
+|    (e.g. communication to the hardware is lost), the driver module shall cache the last mode and voltage/current settings.
+|    Once the PSU is back on-line (e.g. after a CommunicationFault), set the last mode and voltage/current value received and only after that clear the error.
+| 
+| 3) setMode to Off requires special attention. To avoid switching the output relays of the charger off under full load, make sure to return
+|    from the setMode function(Off) only when the current is below a safe threshold for switching off the relays (exact value is hardware dependent).
+|    If communication is lost with the power supply, make sure to still return, the call must not block for a longer period of time.
+|    EVerest will ensure the order of the calls is correct during shutdown, but will not wait for the power supply to actually turn off:
+|     1. call setMode(Off) on power_supply_DC
+|     2. call allow_power_on(false) on evse_board_support
+|   If the setMode(Off) returns immediately, it may happen that the bsp implementation opens the relays before the power supply is shutdown.
+| 
+| 4) var voltage_current shall be published on regular intervals. The interval depends on the hardware, but it shall be at least once per second. If possible,
+|    update at e.g. 4 Hertz is recommended.
+
+
+*********
+Variables
+*********
+| **voltage_current**:*object*  (:ref:`power_supply_DC-VoltageCurrent <power_supply_DC-VoltageCurrent>`)
+|  Voltage/Current at the input/output
+|  **There is an extended definition for this object** :ref:`here <power_supply_DC-VoltageCurrent>`.
+| **mode**:*string*  (:ref:`power_supply_DC-Mode <power_supply_DC-Mode>`)
+|  Current mode. Published on change.
+|  **There is an extended definition for this object** :ref:`here <power_supply_DC-Mode>`.
+| **capabilities**:*object*  (:ref:`power_supply_DC-Capabilities <power_supply_DC-Capabilities>`)
+|  Publish capabilities of this PSU.
+|  **There is an extended definition for this object** :ref:`here <power_supply_DC-Capabilities>`.
+
+********
+Commands
+********
+| **setMode**:*void*
+|  Set operation mode of the bidirectional DC power supply
+|  **mode**:*string* <required> (:ref:`power_supply_DC-Mode <power_supply_DC-Mode>`)
+|   Operation mode of power supply
+|   **There is an extended definition for this object** :ref:`here <power_supply_DC-Mode>`.
+|  **phase**:*string* <required> (:ref:`power_supply_DC-ChargingPhase <power_supply_DC-ChargingPhase>`)
+|   Charging phase for this mode change. This information should normally not be needed by the power supply, as it should always just operate in CCCV mode. Some special setups however are handling CableCheck/PreCharge/Charge a little bit different internally.
+|   **There is an extended definition for this object** :ref:`here <power_supply_DC-ChargingPhase>`.
+| **setExportVoltageCurrent**:*void*
+|  Set output target voltage limit. Must be within reported limits.
+|  **voltage**:*number* <required>
+|   Output voltage in Volt
+|  **current**:*number* <required>
+|   Output current limit in Ampere
+| **setImportVoltageCurrent**:*void*
+|  Set minimal import voltage and current limit.  Must be within reported limits.
+|  **voltage**:*number* <required>
+|   Current will be drawn if input is above this voltage (in Volt)
+|  **current**:*number* <required>
+|   Input current limit in Ampere

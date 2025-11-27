@@ -1,0 +1,35 @@
+:orphan:
+
+
+.. _everest_types_text_message:
+
+
+############
+text_message
+############
+
+Message to send, for example to show on a display
+
+.. _text_message-MessageContent:
+
+| **MessageContent**:*object* 
+|  Contains message details
+|  properties:
+|   **format**:*string* <optional> (:ref:`text_message-MessageFormat <text_message-MessageFormat>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <text_message-MessageFormat>`.
+|   **language**:*string* <optional>
+|    
+|   **content**:*string* <required>
+|    
+
+.. _text_message-MessageFormat:
+
+| **MessageFormat**:*string* 
+|  Format of the message to be displayed
+|  enum:
+|    - ASCII
+|    - HTML
+|    - URI
+|    - UTF8
+|    - QRCODE

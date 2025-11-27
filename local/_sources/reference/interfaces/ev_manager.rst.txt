@@ -1,0 +1,23 @@
+:orphan:
+
+
+.. _everest_interfaces_ev_manager:
+
+
+##########
+ev_manager
+##########
+
+| This interface defines the ev manager. An ev manager represents the charging logic of the ev side
+
+
+*********
+Variables
+*********
+| **bsp_event**:*object*  (:ref:`board_support_common-BspEvent <board_support_common-BspEvent>`)
+|  Events from CP/Relais
+|  **There is an extended definition for this object** :ref:`here <board_support_common-BspEvent>`.
+| **ev_info**:*object*  (:ref:`evse_manager-EVInfo <evse_manager-EVInfo>`)
+|  More details about the EV if available
+|  **There is an extended definition for this object** :ref:`here <evse_manager-EVInfo>`.
+

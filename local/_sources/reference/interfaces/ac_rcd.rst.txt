@@ -1,0 +1,28 @@
+:orphan:
+
+
+.. _everest_interfaces_ac_rcd:
+
+
+######
+ac_rcd
+######
+
+| This interface provides an AC Residual Current Monitor (RCD). Actual emergency switch off is done in HW directly, but this interface allows some control and telemetry.
+
+
+*********
+Variables
+*********
+| **rcd_current_mA**:*number* 
+|  Residual current in mA. Note that this does not trigger anything, it is merely for reporting.
+
+********
+Commands
+********
+| **self_test**:*void*
+|  Executes a self test of the RCD. If it fails, an error of type Selftest should be raised.
+| **reset**:*boolean*
+|  Resets the RCD after a trigger. May not be supported by actual hardware.
+|  **Result**:*boolean* 
+|   True: Reset successful, False: Reset failed.

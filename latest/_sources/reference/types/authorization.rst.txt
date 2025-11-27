@@ -1,0 +1,241 @@
+:orphan:
+
+
+.. _everest_types_authorization:
+
+
+#############
+authorization
+#############
+
+Auth token validator types
+
+.. _authorization-AuthorizationStatus:
+
+| **AuthorizationStatus**:*string* 
+|  Authorization Status enum
+|  enum:
+|    - Accepted
+|    - Blocked
+|    - ConcurrentTx
+|    - Expired
+|    - Invalid
+|    - NoCredit
+|    - NotAllowedTypeEVSE
+|    - NotAtThisLocation
+|    - NotAtThisTime
+|    - Unknown
+
+.. _authorization-CertificateStatus:
+
+| **CertificateStatus**:*string* 
+|  Certificate status information
+|  enum:
+|    - Accepted
+|    - SignatureError
+|    - CertificateExpired
+|    - CertificateRevoked
+|    - NoCertificateAvailable
+|    - CertChainError
+|    - ContractCancelled
+
+.. _authorization-TokenValidationStatus:
+
+| **TokenValidationStatus**:*string* 
+|  Ongoing token validation status
+|  enum:
+|    - Processing
+|    - Accepted
+|    - Rejected
+|    - TimedOut
+|    - UsedToStart
+|    - UsedToStop
+|    - Withdrawn
+
+.. _authorization-CustomIdToken:
+
+| **CustomIdToken**:*object* 
+|  Type for a custom id token with a free-form type
+|  properties:
+|   **value**:*string* <required>
+|    Arbitrary value of the IdToken
+|   **type**:*string* <required>
+|    Custom type of the token
+
+.. _authorization-IdToken:
+
+| **IdToken**:*object* 
+|  Type for an id token
+|  properties:
+|   **value**:*string* <required>
+|    Arbitrary value of the IdToken: This has to be printable case insensitive ascii
+|   **type**:*string* <required> (:ref:`authorization-IdTokenType <authorization-IdTokenType>`)
+|    Type of the token
+|    **There is an extended definition for this object** :ref:`here <authorization-IdTokenType>`.
+|   **additional_info**:*array* <optional>
+|    A list of additional custom id tokens than can be used for providing additional information for validation
+|    **array_item**:*object*  (:ref:`authorization-CustomIdToken <authorization-CustomIdToken>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <authorization-CustomIdToken>`.
+| 
+
+.. _authorization-ProvidedIdToken:
+
+| **ProvidedIdToken**:*object* 
+|  Type for IdToken provided by auth token providers. Contains additional information about the IdToken like the source and purpose
+|  properties:
+|   **request_id**:*integer* <optional>
+|    Id of the authorization request of this token. Could be used to put remoteStartId of OCPP2.0.1
+|   **id_token**:*object* <required> (:ref:`authorization-IdToken <authorization-IdToken>`)
+|    IdToken of the provided token
+|    **There is an extended definition for this object** :ref:`here <authorization-IdToken>`.
+|   **parent_id_token**:*object* <optional> (:ref:`authorization-IdToken <authorization-IdToken>`)
+|    Parent IdToken of the provided token
+|    **There is an extended definition for this object** :ref:`here <authorization-IdToken>`.
+|   **authorization_type**:*string* <required> (:ref:`authorization-AuthorizationType <authorization-AuthorizationType>`)
+|    Authorization type of the token.
+|    **There is an extended definition for this object** :ref:`here <authorization-AuthorizationType>`.
+|   **connectors**:*array* <optional>
+|    A list of connector ids to which the authorization can be assigned
+|    **array_item**:*integer* 
+|     
+| 
+|   **prevalidated**:*boolean* <optional>
+|    Indicates that the id token is already validated by the provider
+|   **certificate**:*string* <optional>
+|    The X.509 certificated presented by EV and encoded in PEM format
+|   **iso15118CertificateHashData**:*array* <optional>
+|    Contains the information needed to verify the EV Contract Certificate via OCSP
+|    **array_item**:*object*  (:ref:`iso15118-CertificateHashDataInfo <iso15118-CertificateHashDataInfo>`)
+|     An array of contract certificate infos
+|     **There is an extended definition for this object** :ref:`here <iso15118-CertificateHashDataInfo>`.
+| 
+
+.. _authorization-TokenValidationStatusMessage:
+
+| **TokenValidationStatusMessage**:*object* 
+|  The token validation status
+|  properties:
+|   **token**:*object* <required> (:ref:`authorization-ProvidedIdToken <authorization-ProvidedIdToken>`)
+|    The id tag assigned to this transaction
+|    **There is an extended definition for this object** :ref:`here <authorization-ProvidedIdToken>`.
+|   **status**:*string* <required> (:ref:`authorization-TokenValidationStatus <authorization-TokenValidationStatus>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <authorization-TokenValidationStatus>`.
+|   **messages**:*array* <optional>
+|    
+|    **array_item**:*object*  (:ref:`text_message-MessageContent <text_message-MessageContent>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <text_message-MessageContent>`.
+| 
+
+.. _authorization-ValidationResult:
+
+| **ValidationResult**:*object* 
+|  Result object containing authorization status enum value and an optional parentIdTag
+|  properties:
+|   **authorization_status**:*string* <required> (:ref:`authorization-AuthorizationStatus <authorization-AuthorizationStatus>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <authorization-AuthorizationStatus>`.
+|   **certificate_status**:*string* <optional> (:ref:`authorization-CertificateStatus <authorization-CertificateStatus>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <authorization-CertificateStatus>`.
+|   **tariff_messages**:*array* <required>
+|    Messages that can contain session price information to show the user. The array can contain multiple messages in different languages. The first message in this array shall be used to start the transaction at the powermeter (for OCMF).  Empty if no messages are available.
+|    **array_item**:*object*  (:ref:`text_message-MessageContent <text_message-MessageContent>`)
+|     Message with pricing information in a specific language
+|     **There is an extended definition for this object** :ref:`here <text_message-MessageContent>`.
+| 
+|   **expiry_time**:*string* <optional>
+|    Absolute UTC time point when reservation expires in RFC3339 format
+|    format:date-time
+|   **parent_id_token**:*object* <optional> (:ref:`authorization-IdToken <authorization-IdToken>`)
+|    Parent Id Tag of the validated token
+|    **There is an extended definition for this object** :ref:`here <authorization-IdToken>`.
+|   **evse_ids**:*array* <optional>
+|    Only used when the id token is valid for one or more specific evses, not for the whole charging station. Indicates for which evse ids the provided token is valid
+|    **array_item**:*integer* 
+|     
+| 
+|   **reservation_id**:*integer* <optional>
+|    The reservation id that is used with this validated token.
+|   **allowed_energy_transfer_modes**:*array* <optional>
+|    This is only used when we want to specify which energy transfer modes are allowed for the respective authorization request.
+|    **array_item**:*string*  (:ref:`iso15118-EnergyTransferMode <iso15118-EnergyTransferMode>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <iso15118-EnergyTransferMode>`.
+| 
+
+.. _authorization-SelectionAlgorithm:
+
+| **SelectionAlgorithm**:*string* 
+|  The selection algorithm defines the logic to select one connector for an incoming token.
+| SelectionAlgorithm enum:
+|   UserInput: This algorithm waits for a user to input for which connector the authorization is provided
+|   PlugEvents: This algorithms derives the selected connector based on the order of plug in events of EVs
+|   FindFirst: This algorithm chooses the first referenced EVSE that is available
+|  enum:
+|    - UserInput
+|    - PlugEvents
+|    - FindFirst
+
+.. _authorization-AuthorizationType:
+
+| **AuthorizationType**:*string* 
+|  Type of authorization of the provided token. The value of AuthorizationType can influence the authorization process
+|  enum:
+|    - OCPP
+|    - RFID
+|    - Autocharge
+|    - PlugAndCharge
+|    - BankCard
+
+.. _authorization-IdTokenType:
+
+| **IdTokenType**:*string* 
+|  IdTokenType of the provided token. Required by OCPP2.0.1 to distinguish between different types of tokens.
+|  enum:
+|    - Central
+|    - eMAID
+|    - MacAddress
+|    - ISO14443
+|    - ISO15693
+|    - KeyCode
+|    - Local
+|    - NoAuthorization
+
+.. _authorization-WithdrawAuthorizationRequest:
+
+| **WithdrawAuthorizationRequest**:*object* 
+|  Request to withdraw granted authorization. If only the evse_id is given, the granted authorization for this EVSE will be withdrawn. If only the id_token is given, the granted authorization for every EVSE where this id_token is placed will be
+|   withdrawn
+| If both parameters are given, the granted authorization for the given EVSE will be withdrawn, if the placed
+|   id_token matches the given id_token
+| If no parameter is given, all granted authorizations for all EVSEs will be removed
+|  properties:
+|   **evse_id**:*integer* <required>
+|    The evse id to withdraw authorization for.
+|   **id_token**:*object* <required> (:ref:`authorization-IdToken <authorization-IdToken>`)
+|    The id token to withdraw authorization for.
+|    **There is an extended definition for this object** :ref:`here <authorization-IdToken>`.
+
+.. _authorization-WithdrawAuthorizationResult:
+
+| **WithdrawAuthorizationResult**:*string* 
+|  The result of a WithdrawAuthorizationRequest: Accepted in case requested authorization was removed AuthorizationNotFound in case no match for request was found EvseNotFound in case no match for evse_id was found Rejected in case module could not process the request for other reasons
+|  enum:
+|    - Accepted
+|    - AuthorizationNotFound
+|    - EvseNotFound
+|    - Rejected
+
+.. _authorization-ValidationResultUpdate:
+
+| **ValidationResultUpdate**:*object* 
+|  Result object containing an updated validation result for a given token. This is needed since certain information can be updated at a later time.
+|  properties:
+|   **validation_result**:*object* <required> (:ref:`authorization-ValidationResult <authorization-ValidationResult>`)
+|    Result object containing authorization status enum value and an optional parentIdTag
+|    **There is an extended definition for this object** :ref:`here <authorization-ValidationResult>`.
+|   **connector_id**:*integer* <required>
+|    Id of the connector on which the id token information has been updated.

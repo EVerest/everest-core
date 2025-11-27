@@ -1,0 +1,1097 @@
+:orphan:
+
+
+.. _everest_types_iso15118:
+
+
+########
+iso15118
+########
+
+ISO15118 charger types
+
+.. _iso15118-PaymentOption:
+
+| **PaymentOption**:*string* 
+|  Payment options for the SECC and EVCC
+|  enum:
+|    - Contract
+|    - ExternalPayment
+
+.. _iso15118-EnergyTransferMode:
+
+| **EnergyTransferMode**:*string* 
+|  Possible energy transfer modes. The modes AC_single_phase_core to DC_unique apply to DIN70121 and ISO15118-2. The other modes DC to WPT apply to ISO15118-20.
+|  enum:
+|    - AC_single_phase_core
+|    - AC_two_phase
+|    - AC_three_phase_core
+|    - DC_core
+|    - DC_extended
+|    - DC_combo_core
+|    - DC_unique
+|    - DC
+|    - AC_BPT
+|    - AC_BPT_DER
+|    - AC_DER
+|    - DC_BPT
+|    - DC_ACDP
+|    - DC_ACDP_BPT
+|    - WPT
+
+.. _iso15118-IsolationStatus:
+
+| **IsolationStatus**:*string* 
+|  The different charger isolation status
+|  enum:
+|    - Invalid
+|    - Valid
+|    - Warning
+|    - Fault
+|    - No_IMD
+
+.. _iso15118-DcEvErrorCode:
+
+| **DcEvErrorCode**:*string* 
+|  Indicates the DC EV internal status
+|  enum:
+|    - NO_ERROR
+|    - FAILED_RESSTemperatureInhibit
+|    - FAILED_EVShiftPosition
+|    - FAILED_ChargerConnectorLockFault
+|    - FAILED_EVRESSMalfunction
+|    - FAILED_ChargingCurrentdifferential
+|    - FAILED_ChargingVoltageOutOfRange
+|    - Reserved_A
+|    - Reserved_B
+|    - Reserved_C
+|    - FAILED_ChargingSystemIncompatibility
+|    - NoData
+
+.. _iso15118-EvseError:
+
+| **EvseError**:*string* 
+|  Details on error type
+|   Error_Contactor: The contactor is opened or closed at the wrong moment.
+|   Error_RCD: The RCD has detected an error.
+|   Error_UtilityInterruptEvent: Utility Interrupt Event, Utility or Equipment operator has requested a temporary reduction in load
+|   Error_Malfunction: A non-recoverable charger fault has occurred (Isolation Failure, ...). It is permanently faulted.
+|   Error_EmergencyShutdown: Charging System Incompatibility, Emergency Shutdown or E-Stop button pressed at charging station
+|  enum:
+|    - Error_Contactor
+|    - Error_RCD
+|    - Error_UtilityInterruptEvent
+|    - Error_Malfunction
+|    - Error_EmergencyShutdown
+
+.. _iso15118-V2gMessageId:
+
+| **V2gMessageId**:*string* 
+|  This element contains the id of the v2g message body
+|  enum:
+|    - SupportedAppProtocolReq
+|    - SupportedAppProtocolRes
+|    - SessionSetupReq
+|    - SessionSetupRes
+|    - ServiceDiscoveryReq
+|    - ServiceDiscoveryRes
+|    - ServiceDetailReq
+|    - ServiceDetailRes
+|    - PaymentServiceSelectionReq
+|    - PaymentServiceSelectionRes
+|    - ServicePaymentSelectionReq
+|    - ServicePaymentSelectionRes
+|    - PaymentDetailsReq
+|    - PaymentDetailsRes
+|    - AuthorizationReq
+|    - AuthorizationRes
+|    - ContractAuthenticationReq
+|    - ContractAuthenticationRes
+|    - ChargeParameterDiscoveryReq
+|    - ChargeParameterDiscoveryRes
+|    - ChargingStatusReq
+|    - ChargingStatusRes
+|    - MeteringReceiptReq
+|    - MeteringReceiptRes
+|    - PowerDeliveryReq
+|    - PowerDeliveryRes
+|    - CableCheckReq
+|    - CableCheckRes
+|    - PreChargeReq
+|    - PreChargeRes
+|    - CurrentDemandReq
+|    - CurrentDemandRes
+|    - WeldingDetectionReq
+|    - WeldingDetectionRes
+|    - SessionStopReq
+|    - SessionStopRes
+|    - CertificateInstallationReq
+|    - CertificateInstallationRes
+|    - CertificateUpdateReq
+|    - CertificateUpdateRes
+|    - AuthorizationSetupReq
+|    - AuthorizationSetupRes
+|    - ScheduleExchangeReq
+|    - ScheduleExchangeRes
+|    - ServiceSelectionReq
+|    - ServiceSelectionRes
+|    - AcChargeLoopReq
+|    - AcChargeLoopRes
+|    - AcChargeParameterDiscoveryReq
+|    - AcChargeParameterDiscoveryRes
+|    - DcCableCheckReq
+|    - DcCableCheckRes
+|    - DcChargeLoopReq
+|    - DcChargeLoopRes
+|    - DcChargeParameterDiscoveryReq
+|    - DcChargeParameterDiscoveryRes
+|    - DcPreChargeReq
+|    - DcPreChargeRes
+|    - DcWeldingDetectionReq
+|    - DcWeldingDetectionRes
+|    - UnknownMessage
+
+.. _iso15118-SaeJ2847BidiMode:
+
+| **SaeJ2847BidiMode**:*string* 
+|  Bidi mode for sae j2847_2
+|  enum:
+|    - None
+|    - V2G
+|    - V2H
+
+.. _iso15118-CertificateActionEnum:
+
+| **CertificateActionEnum**:*string* 
+|  Specifies the type of a certificate request
+|  enum:
+|    - Install
+|    - Update
+
+.. _iso15118-NoEnergyPauseMode:
+
+| **NoEnergyPauseMode**:*string* 
+|  PauseAfterPrecharge the charger should pause but has power for cable check and pre charge. PauseBeforeCableCheck the charger should pause before cable check. AllowEvToIgnorePause charger should ignore, that the ev will go to CurrentDemand instead of pausing the session, this is against IEC61851-23:2023.
+|  enum:
+|    - PauseAfterPrecharge
+|    - PauseBeforeCableCheck
+|    - AllowEvToIgnorePause
+
+.. _iso15118-EVSEID:
+
+| **EVSEID**:*object* 
+|  An ID that uniquely identifies the EVSE and the power outlet the vehicle is connected to
+|  properties:
+|   **evse_id**:*string* <required>
+|    EVSE ID
+|   **evse_id_din**:*string* <optional>
+|    EVSE ID (DIN70121) according to DIN SPEC 91286
+
+.. _iso15118-DcEvsePresentVoltageCurrent:
+
+| **DcEvsePresentVoltageCurrent**:*object* 
+|  Set the present voltage and current for the EVSE
+|  properties:
+|   **evse_present_voltage**:*number* <required>
+|    Output voltage of the EVSE as defined in IEC CDV 61851-23 in V
+|   **evse_present_current**:*number* <optional>
+|    Present output current of the EVSE in A
+
+.. _iso15118-DcEvseMaximumLimits:
+
+| **DcEvseMaximumLimits**:*object* 
+|  Maximum Values (current, power and voltage) the EVSE can deliver
+|  properties:
+|   **evse_maximum_current_limit**:*number* <required>
+|    Maximum current the EVSE can deliver in A
+|   **evse_maximum_power_limit**:*number* <required>
+|    Maximum power the EVSE can deliver in W
+|   **evse_maximum_voltage_limit**:*number* <required>
+|    Maximum voltage the EVSE can deliver in V
+|   **evse_maximum_discharge_current_limit**:*number* <optional>
+|    Maximum discharge current the EVSE can deliver in A
+|   **evse_maximum_discharge_power_limit**:*number* <optional>
+|    Maximum discharge power the EVSE can deliver in W
+
+.. _iso15118-DcEvseMinimumLimits:
+
+| **DcEvseMinimumLimits**:*object* 
+|  Minimum Values the EVSE can deliver
+|  properties:
+|   **evse_minimum_current_limit**:*number* <required>
+|    Minimum current the EVSE can deliver with the expected accuracy in A
+|   **evse_minimum_voltage_limit**:*number* <required>
+|    Minimum voltage the EVSE can deliver with the expected accuracy in V
+|   **evse_minimum_power_limit**:*number* <required>
+|    Minimum power the EVSE can deliver with the expected accuracy in W
+|   **evse_minimum_discharge_current_limit**:*number* <optional>
+|    Minimum discharge current the EVSE can deliver in A
+|   **evse_minimum_discharge_power_limit**:*number* <optional>
+|    Minimum discharge power the EVSE can deliver in W
+
+.. _iso15118-SetupPhysicalValues:
+
+| **SetupPhysicalValues**:*object* 
+|  Initial physical values for setup a AC or DC charging session
+|  properties:
+|   **ac_nominal_voltage**:*number* <required>
+|    Set line voltage supported by the EVSE. This is the voltage measured between one phase and neutral in V.
+|   **dc_current_regulation_tolerance**:*number* <required>
+|    Set the absolute magnitude of the regulation tolerance of the EVSE in A.
+|   **dc_peak_current_ripple**:*number* <required>
+|    Set the peak-to-peak magnitude of the current ripple of the EVSE in A.
+|   **dc_energy_to_be_delivered**:*number* <required>
+|    Set the amount of energy to be delivered by the EVSE in Wh (optional)
+
+.. _iso15118-DcEvStatus:
+
+| **DcEvStatus**:*object* 
+|  Current status of the EV
+|  properties:
+|   **dc_ev_ready**:*boolean* <required>
+|    If set to TRUE, the EV is ready to charge
+|   **dc_ev_error_code**:*string* <required> (:ref:`iso15118-DcEvErrorCode <iso15118-DcEvErrorCode>`)
+|    Indicates the EV internal status
+|    **There is an extended definition for this object** :ref:`here <iso15118-DcEvErrorCode>`.
+|   **dc_ev_ress_soc**:*number* <required>
+|    State of charge of the EVs battery (RESS)
+|   **dc_ev_cabin_conditioning**:*boolean* <optional>
+|    'DIN70121 only: The EV is using energy from the DC supply to heat or cool the passenger compartment.'
+|   **dc_ev_ress_conditioning**:*boolean* <optional>
+|    'DIN70121 only: The vehicle is using energy from the DC charger to condition the RESS to a target temperature.'
+
+.. _iso15118-DcEvTargetValues:
+
+| **DcEvTargetValues**:*object* 
+|  Target voltage and current requested by the EV
+|  properties:
+|   **dc_ev_target_voltage**:*number* <required>
+|    Target Voltage requested by EV in V
+|   **dc_ev_target_current**:*number* <required>
+|    Current demanded by EV in A
+
+.. _iso15118-DcEvMaximumLimits:
+
+| **DcEvMaximumLimits**:*object* 
+|  Maximum Values (current, power and voltage) supported and allowed by the EV
+|  properties:
+|   **dc_ev_maximum_current_limit**:*number* <required>
+|    Maximum current supported and allowed by the EV in A
+|   **dc_ev_maximum_power_limit**:*number* <required>
+|    Maximum power supported and allowed by the EV in W (optional)
+|   **dc_ev_maximum_voltage_limit**:*number* <required>
+|    Maximum voltage supported and allowed by the EV in V
+
+.. _iso15118-DcEvRemainingTime:
+
+| **DcEvRemainingTime**:*object* 
+|  Estimated or calculated time until bulk and full charge is complete
+|  properties:
+|   **ev_remaining_time_to_full_soc**:*string* <required>
+|    [RFC3339 UTC] Estimated or calculated time until full charge (100% SOC) is complete
+|    format:date-time
+|   **ev_remaining_time_to_full_bulk_soc**:*string* <required>
+|    [RFC3339 UTC] Estimated or calculated time until bulk charge (approx. 80% SOC) is complete
+|    format:date-time
+
+.. _iso15118-AppProtocol:
+
+| **AppProtocol**:*object* 
+|  This message element is used by the EVCC for transmitting the list of supported protocols
+|  properties:
+|   **protocol_namespace**:*string* <required>
+|    This message element is used by the EVCC to uniquely identify the Namespace URI of a specific protocol supported by the EVCC
+|   **version_number_major**:*integer* <required>
+|    This message element is used by the EVCC to indicate the major version number of the protocol
+|   **version_number_minor**:*integer* <required>
+|    This message element is used by the EVCC to indicate the minor version number of the protocol
+|   **schema_id**:*integer* <required>
+|    This message element is used by the EVCC to indicate the SchemaID assigned by the EVCC to the protocol
+|   **priority**:*integer* <required>
+|    This message element is used by the EVCC for indicating the protocol priority of a specific protocol allowing the SECC to select a protocol based on priorities
+
+.. _iso15118-AppProtocols:
+
+| **AppProtocols**:*object* 
+|  This message element is used by the EVCC for transmitting the list of supported protocols
+|  properties:
+|   **Protocols**:*array* <required>
+|    
+|    **array_item**:*object*  (:ref:`iso15118-AppProtocol <iso15118-AppProtocol>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <iso15118-AppProtocol>`.
+| 
+
+.. _iso15118-V2gMessages:
+
+| **V2gMessages**:*object* 
+|  This element contains all V2G elements
+|  properties:
+|   **id**:*string* <required> (:ref:`iso15118-V2gMessageId <iso15118-V2gMessageId>`)
+|    This element contains the id of the v2g message body
+|    **There is an extended definition for this object** :ref:`here <iso15118-V2gMessageId>`.
+|   **xml**:*string* <optional>
+|    Contains the decoded EXI stream as V2G message XML file
+|   **v2g_json**:*string* <optional>
+|    Contains the decoded EXI stream as V2G message JSON file
+|   **exi**:*string* <optional>
+|    Contains the EXI stream as hex string
+|   **exi_base64**:*string* <optional>
+|    Contains the EXI stream as base64 string
+
+.. _iso15118-ResponseExiStreamStatus:
+
+| **ResponseExiStreamStatus**:*object* 
+|  The response raw exi stream and the status from the CSMS system
+|  properties:
+|   **status**:*string* <required>
+|    Indicates whether the message was processed properly Accepted - The message was processed properly, exi_response included Failed - Processing of the message was not successful, no exi_response included
+|    enum:
+|      - Accepted
+|      - Failed
+|   **exi_response**:*string* <optional>
+|    Raw CertificateInstallationRes or CertificateUpdateRes message as exi stream (Base64 encoded)
+|   **certificate_action**:*string* <required> (:ref:`iso15118-CertificateActionEnum <iso15118-CertificateActionEnum>`)
+|    Type of the certificate request
+|    **There is an extended definition for this object** :ref:`here <iso15118-CertificateActionEnum>`.
+
+.. _iso15118-RequestExiStreamSchema:
+
+| **RequestExiStreamSchema**:*object* 
+|  The request raw exi stream and the schema version for the CSMS system
+|  properties:
+|   **exi_request**:*string* <required>
+|    Raw CertificateInstallationReq or CertificateUpdateReq message as exi stream (Base64 encoded)
+|   **iso15118_schema_version**:*string* <required>
+|    Schema Version used for CertificateReq message between EV and Charger
+|   **certificate_action**:*string* <required> (:ref:`iso15118-CertificateActionEnum <iso15118-CertificateActionEnum>`)
+|    Type of the certificate request
+|    **There is an extended definition for this object** :ref:`here <iso15118-CertificateActionEnum>`.
+
+.. _iso15118-CertificateHashDataInfo:
+
+| **CertificateHashDataInfo**:*object* 
+|  Contains the certificate information
+|  properties:
+|   **hashAlgorithm**:*string* <required>
+|    Used algorithms for the hashes provided
+|    enum:
+|      - SHA256
+|      - SHA384
+|      - SHA512
+|   **issuerNameHash**:*string* <required>
+|    Hashed value of the Issuer Distinguished Name
+|   **issuerKeyHash**:*string* <required>
+|    Hashed value of the issuers public key
+|   **serialNumber**:*string* <required>
+|    The serial number of the certificate
+|   **responderURL**:*string* <required>
+|    This contains the responder URL
+
+.. _iso15118-DisplayParameters:
+
+| **DisplayParameters**:*object* 
+|  Parameters that may be displayed on the EVSE
+|  properties:
+|   **present_soc**:*number* <required>
+|    Current SoC of the EV battery
+|   **minimum_soc**:*number* <required>
+|    Minimum SoC EV needs after charging
+|   **target_soc**:*number* <required>
+|    Target SoC EV needs after charging
+|   **maximum_soc**:*number* <required>
+|    The SoC at which the EV will prohibit
+|   **remaining_time_to_minimum_soc**:*number* <required>
+|    Remaining time it takes to reach minimum SoC
+|   **remaining_time_to_target_soc**:*number* <required>
+|    Remaining time it takes to reach target SoC
+|   **remaining_time_to_maximum_soc**:*number* <required>
+|    Remaining time it takes to reach maximum SoC
+|   **charging_complete**:*boolean* <required>
+|    Indication if the charging is complete
+|   **battery_energy_capacity**:*number* <required>
+|    Energy capacity in Wh of the EV battery
+|   **inlet_hot**:*boolean* <required>
+|    Inlet temperature is too high
+
+.. _iso15118-DcChargeDynamicModeValues:
+
+| **DcChargeDynamicModeValues**:*object* 
+|  Parameters for dynamic control mode
+|  properties:
+|   **departure_time**:*number* <optional>
+|    The time when the EV wants to finish charging
+|   **target_energy_request**:*number* <required>
+|    Energy request to fulfil the target SoC
+|   **max_energy_request**:*number* <required>
+|    Maximum acceptable energy level of the EV
+|   **min_energy_request**:*number* <required>
+|    Energy request to fulfil the minimum SoC
+|   **max_charge_power**:*number* <required>
+|    Maximum charge power allowed by the EV
+|   **min_charge_power**:*number* <required>
+|    Minimum charge power allowed by the EV
+|   **max_charge_current**:*number* <required>
+|    Maximum charge current allowed by the EV
+|   **max_voltage**:*number* <required>
+|    Maximum voltage allowed by the EV
+|   **min_voltage**:*number* <required>
+|    Minimum voltage allowed by the EV
+|   **max_discharge_power**:*number* <optional>
+|    Maximum discharge current allowed by the EV
+|   **min_discharge_power**:*number* <optional>
+|    Minimum discharge current allowed by the EV
+|   **max_discharge_current**:*number* <optional>
+|    Maximum discharge current allowed by the EV
+|   **max_v2x_energy_request**:*number* <optional>
+|    Energy which may be charged until the PresentSOC has left the range dedicated for cycling activity.
+|   **min_v2x_energy_request**:*number* <optional>
+|    Energy which needs to be charged until the PresentSOC has left the range dedicated for cycling activity.
+
+.. _iso15118-DERControl:
+
+| **DERControl**:*string* 
+|  Name of control settings to clear. Not used when _controlId_ is provided.
+|  enum:
+|    - EnterService
+|    - FreqDroop
+|    - FreqWatt
+|    - FixedPFAbsorb
+|    - FixedPFInject
+|    - FixedVar
+|    - Gradients
+|    - HFMustTrip
+|    - HFMayTrip
+|    - HVMustTrip
+|    - HVMomCess
+|    - HVMayTrip
+|    - LimitMaxDischarge
+|    - LFMustTrip
+|    - LVMustTrip
+|    - LVMomCess
+|    - LVMayTrip
+|    - PowerMonitoringMustTrip
+|    - VoltVar
+|    - VoltWatt
+|    - WattPF
+|    - WattVar
+
+.. _iso15118-ServiceCategory:
+
+| **ServiceCategory**:*string* 
+|  Different service (energy and VAS) in ISO15118-20
+|  enum:
+|    - AC
+|    - DC
+|    - WPT
+|    - DC_ACDP
+|    - AC_BPT
+|    - DC_BPT
+|    - DC_ACDP_BPT
+|    - Internet
+|    - ParkingStatus
+
+.. _iso15118-Connector:
+
+| **Connector**:*string* 
+|  Different AC and DC connector
+|  enum:
+|    - SinglePhase
+|    - ThreePhase
+|    - Core
+|    - Extended
+|    - Dual2
+|    - Dual4
+
+.. _iso15118-ControlMode:
+
+| **ControlMode**:*string* 
+|  (2.1) Indicates whether EV wants to operate in Dynamic or Scheduled mode. When absent, Scheduled mode is assumed for backwards compatibility. ISO 15118-20: ServiceSelectionReq(SelectedEnergyTransferService)
+|  enum:
+|    - ScheduledControl
+|    - DynamicControl
+
+.. _iso15118-IslandingDetection:
+
+| **IslandingDetection**:*string* 
+|  None
+|  enum:
+|    - NoAntiIslandingSupport
+|    - RoCoF
+|    - UVP_OVP
+|    - UFP_OFP
+|    - VoltageVectorShift
+|    - ZeroCrossingDetection
+|    - OtherPassive
+|    - ImpedanceMeasurement
+|    - ImpedanceAtFrequency
+|    - SlipModeFrequencyShift
+|    - SandiaFrequencyShift
+|    - SandiaVoltageShift
+|    - FrequencyJump
+|    - RCLQFactor
+|    - OtherActive
+
+.. _iso15118-MobilityNeedsMode:
+
+| **MobilityNeedsMode**:*string* 
+|  (2.1) Value of EVCC indicates that EV determines min/target SOC and departure time. A value of EVCC_SECC indicates that charging station or CSMS may also update min/target SOC and departure time. ISO 15118-20: ServiceSelectionReq(SelectedEnergyTransferService)
+|  enum:
+|    - EVCC
+|    - EVCC_SECC
+
+.. _iso15118-Pricing:
+
+| **Pricing**:*string* 
+|  Providing information about which pricing structure will be used in the offered schedules.
+|  enum:
+|    - NoPricing
+|    - AbsolutePricing
+|    - PriceLevels
+
+.. _iso15118-BptChannel:
+
+| **BptChannel**:*string* 
+|  Type of installed power transfer channel
+|  enum:
+|    - Unified
+|    - Separated
+
+.. _iso15118-GeneratorMode:
+
+| **GeneratorMode**:*string* 
+|  Power converter behavior.
+|  enum:
+|    - GridFollowing
+|    - GridForming
+
+.. _iso15118-GridCodeIslandingDetectionMethod:
+
+| **GridCodeIslandingDetectionMethod**:*string* 
+|  Islanding detection method
+|  enum:
+|    - Active
+|    - Passive
+
+.. _iso15118-V2XChargingParameters:
+
+| **V2XChargingParameters**:*object* 
+|  Charging parameters for ISO 15118-20, also supporting V2X charging/discharging. All values are greater or equal to zero, with the exception of EVMinEnergyRequest, EVMaxEnergyRequest, EVTargetEnergyRequest, EVMinV2XEnergyRequest and EVMaxV2XEnergyRequest.
+|  properties:
+|   **min_charge_power**:*number* <optional>
+|    Minimum charge power in W, defined by max(EV, EVSE). This field represents the sum of all phases, unless values are provided for L2 and L3, in which case this field represents phase L1. Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMinimumChargePower
+|   **min_charge_power_l2**:*number* <optional>
+|    Minimum charge power on phase L2 in W, defined by max(EV, EVSE). Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMinimumChargePower_L2
+|   **min_charge_power_l3**:*number* <optional>
+|    Minimum charge power on phase L3 in W, defined by max(EV, EVSE). Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMinimumChargePower_L3
+|   **max_charge_power**:*number* <optional>
+|    Maximum charge (absorbed) power in W, defined by min(EV, EVSE) at unity power factor. This field represents the sum of all phases, unless values are provided for L2 and L3, in which case this field represents phase L1. It corresponds to the ChaWMax attribute in the IEC 61850. It is usually equivalent to the rated apparent power of the EV when discharging (ChaVAMax) in IEC 61850. Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMaximumChargePower
+|   **max_charge_power_l2**:*number* <optional>
+|    Maximum charge power on phase L2 in W, defined by min(EV, EVSE) Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMaximumChargePower_L2
+|   **max_charge_power_l3**:*number* <optional>
+|    Maximum charge power on phase L3 in W, defined by min(EV, EVSE) Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMaximumChargePower_L3
+|   **min_discharge_power**:*number* <optional>
+|    Minimum discharge (injected) power in W, defined by max(EV, EVSE) at unity power factor. Value >= 0. This field represents the sum of all phases, unless values are provided for L2 and L3, in which case this field represents phase L1. It corresponds to the WMax attribute in the IEC 61850. It is usually equivalent to the rated apparent power of the EV when discharging (VAMax attribute in the IEC 61850). Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMinimumDischargePower
+|   **min_discharge_power_l2**:*number* <optional>
+|    Minimum discharge power on phase L2 in W, defined by max(EV, EVSE).  Value >= 0. Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMinimumDischargePower_L2
+|   **min_discharge_power_l3**:*number* <optional>
+|    Minimum discharge power on phase L3 in W, defined by max(EV, EVSE).  Value >= 0. Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMinimumDischargePower_L3
+|   **max_discharge_power**:*number* <optional>
+|    Maximum discharge (injected) power in W, defined by min(EV, EVSE) at unity power factor.  Value >= 0. This field represents the sum of all phases, unless values are provided for L2 and L3, in which case this field represents phase L1. Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMaximumDischargePower
+|   **max_discharge_power_l2**:*number* <optional>
+|    Maximum discharge power on phase L2 in W, defined by min(EV, EVSE).  Value >= 0. Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMaximumDischargePowe_L2
+|   **max_discharge_power_l3**:*number* <optional>
+|    Maximum discharge power on phase L3 in W, defined by min(EV, EVSE).  Value >= 0. Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMaximumDischargePower_L3
+|   **min_charge_current**:*number* <optional>
+|    Minimum charge current in A, defined by max(EV, EVSE) Relates to: ISO 15118-20: BPT_DC_CPDReqEnergyTransferModeType: EVMinimumChargeCurrent
+|   **max_charge_current**:*number* <optional>
+|    Maximum charge current in A, defined by min(EV, EVSE) Relates to: ISO 15118-20: BPT_DC_CPDReqEnergyTransferModeType: EVMaximumChargeCurrent
+|   **min_discharge_current**:*number* <optional>
+|    Minimum discharge current in A, defined by max(EV, EVSE).  Value >= 0. Relates to: ISO 15118-20: BPT_DC_CPDReqEnergyTransferModeType: EVMinimumDischargeCurrent
+|   **max_discharge_current**:*number* <optional>
+|    Maximum discharge current in A, defined by min(EV, EVSE).  Value >= 0. Relates to: ISO 15118-20: BPT_DC_CPDReqEnergyTransferModeType: EVMaximumDischargeCurrent
+|   **min_voltage**:*number* <optional>
+|    Minimum voltage in V, defined by max(EV, EVSE) Relates to: ISO 15118-20: BPT_DC_CPDReqEnergyTransferModeType: EVMinimumVoltage
+|   **max_voltage**:*number* <optional>
+|    Maximum voltage in V, defined by min(EV, EVSE) Relates to: ISO 15118-20: BPT_DC_CPDReqEnergyTransferModeType: EVMaximumVoltage
+|   **ev_target_energy_request**:*number* <optional>
+|    Energy to requested state of charge in Wh Relates to: ISO 15118-20: Dynamic/Scheduled_SEReqControlModeType: EVTargetEnergyRequest
+|   **ev_min_energy_request**:*number* <optional>
+|    Energy to minimum allowed state of charge in Wh Relates to: ISO 15118-20: Dynamic/Scheduled_SEReqControlModeType: EVMinimumEnergyRequest
+|   **ev_max_energy_request**:*number* <optional>
+|    Energy to maximum state of charge in Wh Relates to: ISO 15118-20: Dynamic/Scheduled_SEReqControlModeType: EVMaximumEnergyRequest
+|   **ev_min_v2xenergy_request**:*number* <optional>
+|    Energy (in Wh) to minimum state of charge for cycling (V2X) activity. Positive value means that current state of charge is below V2X range. Relates to: ISO 15118-20: Dynamic_SEReqControlModeType: EVMinimumV2XEnergyRequest
+|   **ev_max_v2xenergy_request**:*number* <optional>
+|    Energy (in Wh) to maximum state of charge for cycling (V2X) activity. Negative value indicates that current state of charge is above V2X range. Relates to: ISO 15118-20: Dynamic_SEReqControlModeType: EVMaximumV2XEnergyRequest
+|   **target_soc**:*integer* <optional>
+|    Target state of charge at departure as percentage. Relates to: ISO 15118-20: BPT_DC_CPDReqEnergyTransferModeType: TargetSOC
+
+.. _iso15118-EVPriceRule:
+
+| **EVPriceRule**:*object* 
+|  (2.1) An entry in price schedule over time for which EV is willing to discharge.
+|  properties:
+|   **energy_fee**:*number* <required>
+|    Cost per kWh.
+|   **power_range_start**:*number* <required>
+|    The EnergyFee applies between this value and the value of the PowerRangeStart of the subsequent EVPriceRule. If the power is below this value, the EnergyFee of the previous EVPriceRule applies. Negative values are used for discharging.
+
+.. _iso15118-EVPowerScheduleEntry:
+
+| **EVPowerScheduleEntry**:*object* 
+|  (2.1) An entry in schedule of the energy amount over time that EV is willing to discharge. A negative value indicates the willingness to discharge under specific conditions, a positive value indicates that the EV currently is not able to offer energy to discharge.
+|  properties:
+|   **duration**:*integer* <required>
+|    The duration of this entry.
+|   **power**:*number* <required>
+|    Defines maximum amount of power for the duration of this EVPowerScheduleEntry to be discharged from the EV battery through EVSE power outlet. Negative values are used for discharging.
+
+.. _iso15118-EVPowerSchedule:
+
+| **EVPowerSchedule**:*object* 
+|  (2.1) Schedule of EV energy offer.
+|  properties:
+|   **ev_power_schedule_entries**:*array* <required>
+|    (2.1) An entry in schedule of the energy amount over time that EV is willing to discharge. A negative value indicates the willingness to discharge under specific conditions, a positive value indicates that the EV currently is not able to offer energy to discharge.
+|    **array_item**:*object*  (:ref:`iso15118-EVPowerScheduleEntry <iso15118-EVPowerScheduleEntry>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <iso15118-EVPowerScheduleEntry>`.
+| 
+|   **time_anchor**:*string* <required>
+|    The time that defines the starting point for the EVEnergyOffer.
+
+.. _iso15118-EVAbsolutePriceScheduleEntry:
+
+| **EVAbsolutePriceScheduleEntry**:*object* 
+|  (2.1) An entry in price schedule over time for which EV is willing to discharge.
+|  properties:
+|   **duration**:*integer* <required>
+|    The amount of seconds of this entry.
+|   **ev_price_rule**:*array* <required>
+|    (2.1) An entry in price schedule over time for which EV is willing to discharge.
+|    **array_item**:*object*  (:ref:`iso15118-EVPriceRule <iso15118-EVPriceRule>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <iso15118-EVPriceRule>`.
+| 
+
+.. _iso15118-EVAbsolutePriceSchedule:
+
+| **EVAbsolutePriceSchedule**:*object* 
+|  (2.1) Price schedule of EV energy offer.
+|  properties:
+|   **time_anchor**:*string* <required>
+|    Starting point in time of the EVEnergyOffer.
+|   **currency**:*string* <required>
+|    Currency code according to ISO 4217.
+|   **ev_absolute_price_schedule_entries**:*array* <required>
+|    (2.1) An entry in price schedule over time for which EV is willing to discharge.
+|    **array_item**:*object*  (:ref:`iso15118-EVAbsolutePriceScheduleEntry <iso15118-EVAbsolutePriceScheduleEntry>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <iso15118-EVAbsolutePriceScheduleEntry>`.
+| 
+|   **price_algorithm**:*string* <required>
+|    ISO 15118-20 URN of price algorithm: Power, PeakPower, StackedEnergy.
+
+.. _iso15118-EVEnergyOffer:
+
+| **EVEnergyOffer**:*object* 
+|  (2.1) A schedule of the energy amount over time that EV is willing to discharge. A negative value indicates the willingness to discharge under specific conditions, a positive value indicates that the EV currently is not able to offer energy to discharge.
+|  properties:
+|   **ev_absolute_price_schedule**:*object* <optional> (:ref:`iso15118-EVAbsolutePriceSchedule <iso15118-EVAbsolutePriceSchedule>`)
+|    (2.1) Price schedule of EV energy offer.
+|    **There is an extended definition for this object** :ref:`here <iso15118-EVAbsolutePriceSchedule>`.
+|   **ev_power_schedule**:*object* <required> (:ref:`iso15118-EVPowerSchedule <iso15118-EVPowerSchedule>`)
+|    (2.1) Schedule of EV energy offer.
+|    **There is an extended definition for this object** :ref:`here <iso15118-EVPowerSchedule>`.
+
+.. _iso15118-DERChargingParameters:
+
+| **DERChargingParameters**:*object* 
+|  (2.1) DERChargingParametersType is used in ChargingNeedsType during an ISO 15118-20 session for AC_BPT_DER to report the inverter settings related to DER control that were agreed between EVSE and EV. Fields starting with "ev" contain values from the EV. Other fields contain a value that is supported by both EV and EVSE. DERChargingParametersType type is only relevant in case of an ISO 15118-20 AC_BPT_DER/AC_DER charging session.
+|  properties:
+|   **ev_supported_dercontrol**:*array* <optional>
+|    DER control functions supported by EV. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType:DERControlFunctions (bitmap)
+|    **array_item**:*string*  (:ref:`iso15118-DERControl <iso15118-DERControl>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <iso15118-DERControl>`.
+| 
+|   **ev_over_excited_max_discharge_power**:*number* <optional>
+|    Rated maximum injected active power by EV, at specified over-excited power factor (overExcitedPowerFactor). It can also be defined as the rated maximum discharge power at the rated minimum injected reactive power value. This means that if the EV is providing reactive power support, and it is requested to discharge at max power (e.g. to satisfy an EMS request), the EV may override the request and discharge up to overExcitedMaximumDischargePower to meet the minimum reactive power requirements. Corresponds to the WOvPF attribute in IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVOverExcitedMaximumDischargePower
+|   **ev_over_excited_power_factor**:*number* <optional>
+|    EV power factor when injecting (over excited) the minimum reactive power. Corresponds to the OvPF attribute in IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVOverExcitedPowerFactor
+|   **ev_under_excited_max_discharge_power**:*number* <optional>
+|    Rated maximum injected active power by EV supported at specified under-excited power factor (EVUnderExcitedPowerFactor). It can also be defined as the rated maximum dischargePower at the rated minimum absorbed reactive power value. This means that if the EV is providing reactive power support, and it is requested to discharge at max power (e.g. to satisfy an EMS request), the EV may override the request and discharge up to underExcitedMaximumDischargePower to meet the minimum reactive power requirements. This corresponds to the WUnPF attribute in the IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVUnderExcitedMaximumDischargePower
+|   **ev_under_excited_power_factor**:*number* <optional>
+|    EV power factor when injecting (under excited) the minimum reactive power. Corresponds to the OvPF attribute in IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVUnderExcitedPowerFactor
+|   **max_apparent_power**:*number* <optional>
+|    Rated maximum total apparent power, defined by min(EV, EVSE) in va. Corresponds to the VAMaxRtg in IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumApparentPower
+|   **max_charge_apparent_power**:*number* <optional>
+|    Rated maximum absorbed apparent power, defined by min(EV, EVSE) in va. This field represents the sum of all phases, unless values are provided for L2 and L3, in which case this field represents phase L1. Corresponds to the ChaVAMaxRtg in IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumChargeApparentPower
+|   **max_charge_apparent_power_l2**:*number* <optional>
+|    Rated maximum absorbed apparent power on phase L2, defined by min(EV, EVSE) in va. Corresponds to the ChaVAMaxRtg in IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumChargeApparentPower_L2
+|   **max_charge_apparent_power_l3**:*number* <optional>
+|    Rated maximum absorbed apparent power on phase L3, defined by min(EV, EVSE) in va. Corresponds to the ChaVAMaxRtg in IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumChargeApparentPower_L3
+|   **max_discharge_apparent_power**:*number* <optional>
+|    Rated maximum injected apparent power, defined by min(EV, EVSE) in va. This field represents the sum of all phases, unless values are provided for L2 and L3, in which case this field represents phase L1. Corresponds to the DisVAMaxRtg in IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumDischargeApparentPower
+|   **max_discharge_apparent_power_l2**:*number* <optional>
+|    Rated maximum injected apparent power on phase L2, defined by min(EV, EVSE) in va. Corresponds to the DisVAMaxRtg in IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumDischargeApparentPower_L2
+|   **max_discharge_apparent_power_l3**:*number* <optional>
+|    Rated maximum injected apparent power on phase L3, defined by min(EV, EVSE) in va. Corresponds to the DisVAMaxRtg in IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumDischargeApparentPower_L3
+|   **max_charge_reactive_power**:*number* <optional>
+|    Rated maximum absorbed reactive power, defined by min(EV, EVSE), in vars. This field represents the sum of all phases, unless values are provided for L2 and L3, in which case this field represents phase L1. Corresponds to the AvarMax attribute in the IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumChargeReactivePower
+|   **max_charge_reactive_power_l2**:*number* <optional>
+|    Rated maximum absorbed reactive power, defined by min(EV, EVSE), in vars on phase L2. Corresponds to the AvarMax attribute in the IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumChargeReactivePower_L2
+|   **max_charge_reactive_power_l3**:*number* <optional>
+|    Rated maximum absorbed reactive power, defined by min(EV, EVSE), in vars on phase L3. Corresponds to the AvarMax attribute in the IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumChargeReactivePower_L3
+|   **min_charge_reactive_power**:*number* <optional>
+|    Rated minimum absorbed reactive power, defined by max(EV, EVSE), in vars. This field represents the sum of all phases, unless values are provided for L2 and L3, in which case this field represents phase L1. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMinimumChargeReactivePower
+|   **min_charge_reactive_power_l2**:*number* <optional>
+|    Rated minimum absorbed reactive power, defined by max(EV, EVSE), in vars on phase L2. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMinimumChargeReactivePower_L2
+|   **min_charge_reactive_power_l3**:*number* <optional>
+|    Rated minimum absorbed reactive power, defined by max(EV, EVSE), in vars on phase L3. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMinimumChargeReactivePower_L3
+|   **max_discharge_reactive_power**:*number* <optional>
+|    Rated maximum injected reactive power, defined by min(EV, EVSE), in vars. This field represents the sum of all phases, unless values are provided for L2 and L3, in which case this field represents phase L1. Corresponds to the IvarMax attribute in the IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumDischargeReactivePower
+|   **max_discharge_reactive_power_l2**:*number* <optional>
+|    Rated maximum injected reactive power, defined by min(EV, EVSE), in vars on phase L2. Corresponds to the IvarMax attribute in the IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumDischargeReactivePower_L2
+|   **max_discharge_reactive_power_l3**:*number* <optional>
+|    Rated maximum injected reactive power, defined by min(EV, EVSE), in vars on phase L3. Corresponds to the IvarMax attribute in the IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumDischargeReactivePower_L3
+|   **min_discharge_reactive_power**:*number* <optional>
+|    Rated minimum injected reactive power, defined by max(EV, EVSE), in vars. This field represents the sum of all phases, unless values are provided for L2 and L3, in which case this field represents phase L1. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMinimumDischargeReactivePower
+|   **min_discharge_reactive_power_l2**:*number* <optional>
+|    Rated minimum injected reactive power, defined by max(EV, EVSE), in var on phase L2. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMinimumDischargeReactivePower_L2
+|   **min_discharge_reactive_power_l3**:*number* <optional>
+|    Rated minimum injected reactive power, defined by max(EV, EVSE), in var on phase L3. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMinimumDischargeReactivePower_L3
+|   **nominal_voltage**:*number* <optional>
+|    Line voltage supported by EVSE and EV. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVNominalVoltage
+|   **nominal_voltage_offset**:*number* <optional>
+|    The nominal AC voltage (rms) offset between the Charging Station's electrical connection point and the utility’s point of common coupling. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVNominalVoltageOffset
+|   **max_nominal_voltage**:*number* <optional>
+|    Maximum AC rms voltage, as defined by min(EV, EVSE)  to operate with. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumNominalVoltage
+|   **min_nominal_voltage**:*number* <optional>
+|    Minimum AC rms voltage, as defined by max(EV, EVSE)  to operate with. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMinimumNominalVoltage
+|   **ev_inverter_manufacturer**:*string* <optional>
+|    Manufacturer of the EV inverter. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVInverterManufacturer
+|   **ev_inverter_model**:*string* <optional>
+|    Model name of the EV inverter. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVInverterModel
+|   **ev_inverter_serial_number**:*string* <optional>
+|    Serial number of the EV inverter. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVInverterSerialNumber
+|   **ev_inverter_sw_version**:*string* <optional>
+|    Software version of EV inverter. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVInverterSwVersion
+|   **ev_inverter_hw_version**:*string* <optional>
+|    Hardware version of EV inverter. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVInverterHwVersion
+|   **ev_islanding_detection_method**:*array* <optional>
+|    Type of islanding detection method. Only mandatory when islanding detection is required at the site, as set in the ISO 15118 Service Details configuration. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVIslandingDetectionMethod
+|    **array_item**:*string*  (:ref:`iso15118-IslandingDetection <iso15118-IslandingDetection>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <iso15118-IslandingDetection>`.
+| 
+|   **ev_islanding_trip_time**:*number* <optional>
+|    Time after which EV will trip if an island has been detected. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVIslandingTripTime
+|   **ev_maximum_level1dcinjection**:*number* <optional>
+|    Maximum injected DC current allowed at level 1 charging. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumLevel1DCInjection
+|   **ev_duration_level1dcinjection**:*number* <optional>
+|    Maximum allowed duration of DC injection at level 1 charging. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVDurationLevel1DCInjection
+|   **ev_maximum_level2dcinjection**:*number* <optional>
+|    Maximum injected DC current allowed at level 2 charging. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumLevel2DCInjection
+|   **ev_duration_level2dcinjection**:*number* <optional>
+|    Maximum allowed duration of DC injection at level 2 charging. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVDurationLevel2DCInjection
+|   **ev_reactive_susceptance**:*number* <optional>
+|    Measure of the susceptibility of the circuit to reactance, in Siemens (S). ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVReactiveSusceptance
+|   **ev_session_total_discharge_energy_available**:*number* <optional>
+|    Total energy value, in Wh, that EV is allowed to provide during the entire V2G session. The value is independent of the V2X Cycling area. Once this value reaches the value of 0, the EV may block any attempt to discharge in order to protect the battery health. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVSessionTotalDischargeEnergyAvailable
+
+.. _iso15118-DCChargingParameters:
+
+| **DCChargingParameters**:*object* 
+|  EV DC charging parameters for ISO 15118-2
+|  properties:
+|   **ev_max_current**:*number* <required>
+|    Maximum current (in A) supported by the electric vehicle. Includes cable capacity. Relates to: ISO 15118-2: DC_EVChargeParameterType:EVMaximumCurrentLimit
+|   **ev_max_voltage**:*number* <required>
+|    Maximum voltage supported by the electric vehicle. Relates to: ISO 15118-2: DC_EVChargeParameterType: EVMaximumVoltageLimit
+|   **ev_max_power**:*number* <optional>
+|    Maximum power (in W) supported by the electric vehicle. Required for DC charging. Relates to: ISO 15118-2: DC_EVChargeParameterType: EVMaximumPowerLimit
+|   **ev_energy_capacity**:*number* <optional>
+|    Capacity of the electric vehicle battery (in Wh). Relates to: ISO 15118-2: DC_EVChargeParameterType: EVEnergyCapacity
+|   **energy_amount**:*number* <optional>
+|    Amount of energy requested (in Wh). This includes energy required for preconditioning. Relates to: ISO 15118-2: DC_EVChargeParameterType: EVEnergyRequest
+|   **state_of_charge**:*integer* <optional>
+|    Energy available in the battery (in percent of the battery capacity) Relates to: ISO 15118-2: DC_EVChargeParameterType: DC_EVStatus: EVRESSSOC
+|   **full_soc**:*integer* <optional>
+|    Percentage of SoC at which the EV considers the battery fully charged. (possible values: 0 - 100) Relates to: ISO 15118-2: DC_EVChargeParameterType: FullSOC
+|   **bulk_soc**:*integer* <optional>
+|    Percentage of SoC at which the EV considers a fast charging process to end. (possible values: 0 - 100) Relates to: ISO 15118-2: DC_EVChargeParameterType: BulkSOC
+
+.. _iso15118-ACChargingParameters:
+
+| **ACChargingParameters**:*object* 
+|  EV AC charging parameters for ISO 15118-2
+|  properties:
+|   **energy_amount**:*number* <required>
+|    Amount of energy requested (in Wh). This includes energy required for preconditioning. Relates to: ISO 15118-2: AC_EVChargeParameterType: EAmount ISO 15118-20: Dynamic/Scheduled_SEReqControlModeType: EVTargetEnergyRequest
+|   **ev_min_current**:*number* <required>
+|    Minimum current (amps) supported by the electric vehicle (per phase). Relates to: ISO 15118-2: AC_EVChargeParameterType: EVMinCurrent
+|   **ev_max_current**:*number* <required>
+|    Maximum current (amps) supported by the electric vehicle (per phase). Includes cable capacity. Relates to: ISO 15118-2: AC_EVChargeParameterType: EVMaxCurrent
+|   **ev_max_voltage**:*number* <required>
+|    Maximum voltage supported by the electric vehicle. Relates to: ISO 15118-2: AC_EVChargeParameterType: EVMaxVoltage
+
+.. _iso15118-ChargingNeeds:
+
+| **ChargingNeeds**:*object* 
+|  None
+|  properties:
+|   **ac_charging_parameters**:*object* <optional> (:ref:`iso15118-ACChargingParameters <iso15118-ACChargingParameters>`)
+|    EV AC charging parameters for ISO 15118-2
+|    **There is an extended definition for this object** :ref:`here <iso15118-ACChargingParameters>`.
+|   **der_charging_parameters**:*object* <optional> (:ref:`iso15118-DERChargingParameters <iso15118-DERChargingParameters>`)
+|    (2.1) DERChargingParametersType is used in ChargingNeedsType during an ISO 15118-20 session for AC_BPT_DER to report the inverter settings related to DER control that were agreed between EVSE and EV. Fields starting with "ev" contain values from the EV. Other fields contain a value that is supported by both EV and EVSE. DERChargingParametersType type is only relevant in case of an ISO 15118-20 AC_BPT_DER/AC_DER charging session.
+|    **There is an extended definition for this object** :ref:`here <iso15118-DERChargingParameters>`.
+|   **ev_energy_offer**:*object* <optional> (:ref:`iso15118-EVEnergyOffer <iso15118-EVEnergyOffer>`)
+|    (2.1) A schedule of the energy amount over time that EV is willing to discharge. A negative value indicates the willingness to discharge under specific conditions, a positive value indicates that the EV currently is not able to offer energy to discharge.
+|    **There is an extended definition for this object** :ref:`here <iso15118-EVEnergyOffer>`.
+|   **requested_energy_transfer**:*object* <required> (:ref:`iso15118-EnergyTransferMode <iso15118-EnergyTransferMode>`)
+|    Mode of energy transfer requested by the EV.
+|    **There is an extended definition for this object** :ref:`here <iso15118-EnergyTransferMode>`.
+|   **dc_charging_parameters**:*object* <optional> (:ref:`iso15118-DCChargingParameters <iso15118-DCChargingParameters>`)
+|    EV DC charging parameters for ISO 15118-2
+|    **There is an extended definition for this object** :ref:`here <iso15118-DCChargingParameters>`.
+|   **v2x_charging_parameters**:*object* <optional> (:ref:`iso15118-V2XChargingParameters <iso15118-V2XChargingParameters>`)
+|    Charging parameters for ISO 15118-20, also supporting V2X charging/discharging. All values are greater or equal to zero, with the exception of EVMinEnergyRequest, EVMaxEnergyRequest, EVTargetEnergyRequest, EVMinV2XEnergyRequest and EVMaxV2XEnergyRequest.
+|    **There is an extended definition for this object** :ref:`here <iso15118-V2XChargingParameters>`.
+|   **available_energy_transfer**:*array* <optional>
+|    (2.1) Modes of energy transfer that are marked as available by EV.
+|    **array_item**:*string*  (:ref:`iso15118-EnergyTransferMode <iso15118-EnergyTransferMode>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <iso15118-EnergyTransferMode>`.
+| 
+|   **control_mode**:*object* <optional> (:ref:`iso15118-ControlMode <iso15118-ControlMode>`)
+|    (2.1) Indicates whether EV wants to operate in Dynamic or Scheduled mode. When absent, Scheduled mode is assumed for backwards compatibility. ISO 15118-20: ServiceSelectionReq(SelectedEnergyTransferService)
+|    **There is an extended definition for this object** :ref:`here <iso15118-ControlMode>`.
+|   **mobility_needs_mode**:*object* <optional> (:ref:`iso15118-MobilityNeedsMode <iso15118-MobilityNeedsMode>`)
+|    (2.1) Value of EVCC indicates that EV determines min/target SOC and departure time. A value of EVCC_SECC indicates that charging station or CSMS may also update min/target SOC and departure time. ISO 15118-20: ServiceSelectionReq(SelectedEnergyTransferService)
+|    **There is an extended definition for this object** :ref:`here <iso15118-MobilityNeedsMode>`.
+|   **departure_time**:*string* <optional>
+|    Estimated departure time of the EV. ISO 15118-2: AC/DC_EVChargeParameterType: DepartureTime ISO 15118-20: Dynamic/Scheduled_SEReqControlModeType: DepartureTime
+
+.. _iso15118-AcParameters:
+
+| **AcParameters**:*object* 
+|  Ac parameters the EVSE is setting
+|  properties:
+|   **nominal_frequency**:*number* <required>
+|    Nominal frequency supported by the EVSE in Hz
+|   **max_power_asymmetry**:*number* <optional>
+|    Maximum asymmetric power in W
+|   **power_ramp_limitation**:*number* <optional>
+|    Limitation of the power variation in %/min
+|   **nominal_voltage**:*number* <required>
+|    Nominal voltage supported by the EVSE in V
+|   **connectors**:*array* <required>
+|    Supported ac connectors from the EVSE
+|    **array_item**:*string*  (:ref:`iso15118-Connector <iso15118-Connector>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <iso15118-Connector>`.
+| 
+
+.. _iso15118-AcEvseMaximumPower:
+
+| **AcEvseMaximumPower**:*object* 
+|  Maximum ac power values (charge and discharge) the EVSE can deliver
+|  properties:
+|   **charge_power**:*object* <required> (:ref:`units-Power <units-Power>`)
+|    Maximum ac power the EVSE can deliver
+|    **There is an extended definition for this object** :ref:`here <units-Power>`.
+|   **discharge_power**:*object* <optional> (:ref:`units-Power <units-Power>`)
+|    Maximum ac discharge power the EVSE can deliver
+|    **There is an extended definition for this object** :ref:`here <units-Power>`.
+
+.. _iso15118-AcEvseMinimumPower:
+
+| **AcEvseMinimumPower**:*object* 
+|  Minimum ac power values (charge and discharge) the EVSE can deliver
+|  properties:
+|   **charge_power**:*object* <required> (:ref:`units-Power <units-Power>`)
+|    Minimum ac power the EVSE can deliver
+|    **There is an extended definition for this object** :ref:`here <units-Power>`.
+|   **discharge_power**:*object* <optional> (:ref:`units-Power <units-Power>`)
+|    Minimum ac discharge power the EVSE can deliver
+|    **There is an extended definition for this object** :ref:`here <units-Power>`.
+
+.. _iso15118-AcEvPowerLimits:
+
+| **AcEvPowerLimits**:*object* 
+|  Ac charge & discharge power values supported and allowed by the EV
+|  properties:
+|   **max_charge_power**:*object* <required> (:ref:`units-Power <units-Power>`)
+|    Maximum power supported by the EV
+|    **There is an extended definition for this object** :ref:`here <units-Power>`.
+|   **min_charge_power**:*object* <required> (:ref:`units-Power <units-Power>`)
+|    Minimum power supported by the EV
+|    **There is an extended definition for this object** :ref:`here <units-Power>`.
+|   **max_discharge_power**:*object* <required> (:ref:`units-Power <units-Power>`)
+|    Maximum discharge power supported by the EV
+|    **There is an extended definition for this object** :ref:`here <units-Power>`.
+|   **min_discharge_power**:*object* <required> (:ref:`units-Power <units-Power>`)
+|    Minimum discharge power supported by the EV
+|    **There is an extended definition for this object** :ref:`here <units-Power>`.
+
+.. _iso15118-AcEvPresentPowerValues:
+
+| **AcEvPresentPowerValues**:*object* 
+|  Present active and reactive power measured from the EV
+|  properties:
+|   **present_active_power**:*object* <required> (:ref:`units-Power <units-Power>`)
+|    Present active power measured from the EV
+|    **There is an extended definition for this object** :ref:`here <units-Power>`.
+|   **present_reactive_power**:*object* <optional> (:ref:`units-Power <units-Power>`)
+|    Present reactive power measured from the EV
+|    **There is an extended definition for this object** :ref:`here <units-Power>`.
+
+.. _iso15118-AcEvDynamicModeValues:
+
+| **AcEvDynamicModeValues**:*object* 
+|  Parameters for ac ev dynamic control mode
+|  properties:
+|   **departure_time**:*number* <optional>
+|    The time when the EV wants to finish charging
+|   **target_energy_request**:*number* <required>
+|    Energy request to fulfil the target SoC in Wh
+|   **max_energy_request**:*number* <required>
+|    Maximum acceptable energy level of the EV in Wh
+|   **min_energy_request**:*number* <required>
+|    Energy request to fulfil the minimum SoC in Wh
+|   **max_v2x_energy_request**:*number* <optional>
+|    Energy which may be charged until the PresentSOC has left the range dedicated for cycling activity in Wh
+|   **min_v2x_energy_request**:*number* <optional>
+|    Energy which needs to be charged until the PresentSOC has left the range dedicated for cycling activity in Wh
+
+.. _iso15118-AcTargetValues:
+
+| **AcTargetValues**:*object* 
+|  Target ac values requested by the EVSE
+|  properties:
+|   **target_active_power**:*object* <required> (:ref:`units-Power <units-Power>`)
+|    Target active power requested by the EVSE
+|    **There is an extended definition for this object** :ref:`here <units-Power>`.
+|   **target_reactive_power**:*object* <optional> (:ref:`units-ReactivePower <units-ReactivePower>`)
+|    Target reactive power requested by the EVSE
+|    **There is an extended definition for this object** :ref:`here <units-ReactivePower>`.
+|   **target_frequency**:*number* <optional>
+|    Target frequency requested by the EVSE
+
+.. _iso15118-SelectedServiceParameters:
+
+| **SelectedServiceParameters**:*object* 
+|  The selected service parameters selected from the EV in the ServiceSelectionReq message. Only for ISO15118-20.
+|  properties:
+|   **energy_transfer**:*string* <required> (:ref:`iso15118-ServiceCategory <iso15118-ServiceCategory>`)
+|    The selected energy mode by the EV
+|    **There is an extended definition for this object** :ref:`here <iso15118-ServiceCategory>`.
+|   **connector**:*string* <required> (:ref:`iso15118-Connector <iso15118-Connector>`)
+|    The selected connector by the EV
+|    **There is an extended definition for this object** :ref:`here <iso15118-Connector>`.
+|   **control_mode**:*string* <required> (:ref:`iso15118-ControlMode <iso15118-ControlMode>`)
+|    The selected control mode by the EV
+|    **There is an extended definition for this object** :ref:`here <iso15118-ControlMode>`.
+|   **mobility_needs_mode**:*string* <required> (:ref:`iso15118-MobilityNeedsMode <iso15118-MobilityNeedsMode>`)
+|    The selected mobility needs mode by the EV
+|    **There is an extended definition for this object** :ref:`here <iso15118-MobilityNeedsMode>`.
+|   **pricing**:*string* <required> (:ref:`iso15118-Pricing <iso15118-Pricing>`)
+|    The selected pricing by the EV
+|    **There is an extended definition for this object** :ref:`here <iso15118-Pricing>`.
+|   **bpt_channel**:*string* <optional> (:ref:`iso15118-BptChannel <iso15118-BptChannel>`)
+|    The selected bpt channel by the EV
+|    **There is an extended definition for this object** :ref:`here <iso15118-BptChannel>`.
+|   **generator_mode**:*string* <optional> (:ref:`iso15118-GeneratorMode <iso15118-GeneratorMode>`)
+|    The selected generator mode by the EV
+|    **There is an extended definition for this object** :ref:`here <iso15118-GeneratorMode>`.
+
+.. _iso15118-BptSetup:
+
+| **BptSetup**:*object* 
+|  The required parameters for a BPT setup
+|  properties:
+|   **bpt_channel**:*string* <required> (:ref:`iso15118-BptChannel <iso15118-BptChannel>`)
+|    The supported bpt channel by the EVSE
+|    **There is an extended definition for this object** :ref:`here <iso15118-BptChannel>`.
+|   **generator_mode**:*string* <required> (:ref:`iso15118-GeneratorMode <iso15118-GeneratorMode>`)
+|    The supported generator mode by the EVSE
+|    **There is an extended definition for this object** :ref:`here <iso15118-GeneratorMode>`.
+|   **grid_code_detection**:*string* <optional> (:ref:`iso15118-GridCodeIslandingDetectionMethod <iso15118-GridCodeIslandingDetectionMethod>`)
+|    The supported grid code detection method supported by the EVSE
+|    **There is an extended definition for this object** :ref:`here <iso15118-GridCodeIslandingDetectionMethod>`.
+
+.. _iso15118-DcEvParameters:
+
+| **DcEvParameters**:*object* 
+|  Target settings for dc charging
+|  properties:
+|   **max_current_limit**:*number* <required>
+|    [A] Maximum current allowed by the EV
+|   **max_power_limit**:*number* <required>
+|    [W] Maximum power allowed by the EV
+|   **max_voltage_limit**:*number* <required>
+|    [V] Maximum voltage allowed by the EV
+|   **energy_capacity**:*number* <required>
+|    [Wh] Energy capacity of the EV
+|   **target_current**:*number* <required>
+|    [A] Target current requested by the EV
+|   **target_voltage**:*number* <required>
+|    [V] Target voltage requested by the EV
+
+.. _iso15118-DcEvBPTParameters:
+
+| **DcEvBPTParameters**:*object* 
+|  BPT settings for dc charging
+|  properties:
+|   **discharge_max_current_limit**:*number* <required>
+|    [A] Maximum discharge current allowed by the EV
+|   **discharge_max_power_limit**:*number* <required>
+|    [W] Maximum discharge power allowed by the EV
+|   **discharge_target_current**:*number* <required>
+|    [A] Discharge target current requested by the EV
+|   **discharge_minimal_soc**:*number* <required>
+|    [%] Discharge minimal soc at which the evse should shutdown
+
+.. _iso15118-EvInformation:
+
+| **EvInformation**:*object* 
+|  Information concerning TLS certificates used by EV, as well as supported protocols.
+|  properties:
+|   **supported_protocols**:*object* <required> (:ref:`iso15118-AppProtocols <iso15118-AppProtocols>`)
+|    Ordered list of all of the supported protocols by the EV.
+|    **There is an extended definition for this object** :ref:`here <iso15118-AppProtocols>`.
+|   **selected_protocol**:*object* <required> (:ref:`iso15118-AppProtocol <iso15118-AppProtocol>`)
+|    The protocol chosen for the communication.
+|    **There is an extended definition for this object** :ref:`here <iso15118-AppProtocol>`.
+|   **evcc_id**:*string* <required>
+|    Specifies the EVs identification in a readable format. It contains the MAC address of the EVCC in uppercase
+|    pattern:``^[A-F0-9]{2}(:[A-F0-9]{2}){5}$``
+|   **tls_leaf_certificate**:*string* <optional>
+|    Certificate used by the EV for the TLS1.3 communication.
+|   **tls_sub_ca_1_certificate**:*string* <optional>
+|    Certificate used by the EV for the TLS1.3 communication.
+|   **tls_sub_ca_2_certificate**:*string* <optional>
+|    Certificate used by the EV for the TLS1.3 communication.
+|   **tls_root_certificate**:*string* <optional>
+|    Certificate used by the EV for the TLS1.3 communication.
+
+.. _iso15118-AcTargetPower:
+
+| **AcTargetPower**:*object* 
+|  Target active and reactive power from the EVSE
+|  properties:
+|   **target_active_power**:*number* <required>
+|    Target active power requested by the EVSE in W
+|   **target_active_power_L2**:*number* <required>
+|    Target active power requested by the EVSE on L2 in W
+|   **target_active_power_L3**:*number* <required>
+|    Target active power requested by the EVSE on L3 in W
+|   **target_reactive_power**:*number* <required>
+|    Target reactive power requested by the EVSE in W
+|   **target_reactive_power_L2**:*number* <required>
+|    Target reactive power requested by the EVSE on L2 in W
+|   **target_reactive_power_L3**:*number* <required>
+|    Target reactive power requested by the EVSE on L3 in W

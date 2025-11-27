@@ -1,0 +1,89 @@
+:orphan:
+
+
+.. _everest_types_sunspec_ac_meter:
+
+
+################
+sunspec_ac_meter
+################
+
+sunspec ac powermeter types
+
+.. _sunspec_ac_meter-Result:
+
+| **Result**:*object* 
+|  Measured dataset
+|  properties:
+|   **timestamp**:*integer* <required>
+|    Timestamp of measurement
+|   **ID**:*integer* <optional>
+|    ID Model ID uinteger no 203 SunSpec Model AC Meter
+|   **L**:*integer* <optional>
+|    L Model Payload Length uinteger no 105 Without the fields 'Model ID' and 'Length of payload.
+|   **A**:*integer* <optional>
+|    A Amps int16 A no
+|   **AphA**:*integer* <optional>
+|    AphA Amps PhaseA int16 A no
+|   **AphB**:*integer* <optional>
+|    AphB Amps PhaseB int16 A no
+|   **AphC**:*integer* <optional>
+|    AphC Amps PhaseC int16 A no
+|   **A_SF**:*integer* <optional>
+|    A_SF integer no
+|   **PhVphA**:*integer* <optional>
+|    PhVphA Phase Voltage AN int16 V no
+|   **PhVphB**:*integer* <optional>
+|    PhVphB Phase Voltage BN int16 V no
+|   **PhVphC**:*integer* <optional>
+|    PhVphC Phase Voltage CN int16 V no
+|   **V_SF**:*integer* <optional>
+|    V_SF sunssf no
+|   **Hz**:*integer* <optional>
+|    Hz Hz int16 Hz no
+|   **Hz_SF**:*integer* <optional>
+|    Hz_SF sunssf no
+|   **W**:*integer* <optional>
+|    W Watts int16 W no
+|   **WphA**:*integer* <optional>
+|    WphA Watts phase A int16 W no
+|   **WphB**:*integer* <optional>
+|    WphB Watts phase B int16 W no
+|   **WphC**:*integer* <optional>
+|    WphC Watts phase C int16 W no
+|   **W_SF**:*integer* <optional>
+|    W_SF sunssf no
+|   **VA**:*integer* <optional>
+|    VA VA int16 VA no
+|   **VAphA**:*integer* <optional>
+|    VAphA VA phase A int16 VA no
+|   **VAphB**:*integer* <optional>
+|    VAphB VA phase B int16 VA no
+|   **VAphC**:*integer* <optional>
+|    VAphC VA phase C int16 VA no
+|   **VA_SF**:*integer* <optional>
+|    VA_SF integer no
+|   **VAR**:*integer* <optional>
+|    VAR VAR int16 var no
+|   **VARphA**:*integer* <optional>
+|    VARphA VAR phase A int16 var no
+|   **VARphB**:*integer* <optional>
+|    VARphB VAR phase B int16 var no
+|   **VARphC**:*integer* <optional>
+|    VARphC VAR phase C int16 var no
+|   **VAR_SF**:*integer* <optional>
+|    VAR_SF sunssf no
+|   **PFphA**:*integer* <optional>
+|    PFphA PF phase A int16 Pct no
+|   **PFphB**:*integer* <optional>
+|    PFphB PF phase B int16 Pct no
+|   **PFphC**:*integer* <optional>
+|    PFphC PF phase C int16 Pct no
+|   **PF_SF**:*integer* <optional>
+|    PF_SF sunssf no
+|   **TotWhIm**:*integer* <optional>
+|    TotWhIm p Total Watt-hours Imported acc32 Wh no
+|   **TotWh_SF**:*integer* <optional>
+|    TotWh_SF sunssf no
+|   **Evt**:*integer* <optional>
+|    Evt Events bitfield32 no See chapter 17.5 Event flags of critical events of counter and communication module. A problem exists if this value is different from zero.

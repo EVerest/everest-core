@@ -1,0 +1,32 @@
+:orphan:
+
+
+.. _everest_modules_TerminalDisplayMessage:
+
+######################
+TerminalDisplayMessage
+######################
+| Example display message module
+
+
+For a detailed handwritten documentation see :ref:`here <everest_modules_handwritten_TerminalDisplayMessage>`
+
+
+********
+Provides
+********
+| **display_message**::ref:`display_message <everest_interfaces_display_message>`
+|  module to show a message
+
+
+********
+Metadata
+********
+Authors
+=======
+| Maaike Zijderveld
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

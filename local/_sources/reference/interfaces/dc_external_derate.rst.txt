@@ -1,0 +1,30 @@
+:orphan:
+
+
+.. _everest_interfaces_dc_external_derate:
+
+
+##################
+dc_external_derate
+##################
+
+| Provides an interface for implementing DC power supply derating functionality. This allows integration of hardware-specific derating logic, for example, adjusting output current based on internal temperature measurements.
+| In the simplest case, derating is determined solely by the plug temperature, as reported by the evse_board_support driver. This value is exposed here for convenience.
+| More advanced implementations may incorporate additional temperature sensors, such as relay temperature or other relevant measurements, to enable more precise control.
+| Note that this is for DC output in DC charging only. To derate for AC chargers (or the AC side in DC chargers), use an EnergyNode and set external_limits instead.
+
+
+*********
+Variables
+*********
+| **plug_temperature_C**:*number* 
+|  Current temperature of the plug in degree celsius
+
+********
+Commands
+********
+| **set_external_derating**:*void*
+|  Set external derating values. The provided values will be merged with the existing internal capabilities of the power supply: The minimum of the internal and external values will be used. All values are optional, unset means no limit.
+|  **derate**:*object* <required> (:ref:`dc_external_derate-ExternalDerating <dc_external_derate-ExternalDerating>`)
+|   Operation mode of power supply
+|   **There is an extended definition for this object** :ref:`here <dc_external_derate-ExternalDerating>`.

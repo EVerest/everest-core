@@ -1,0 +1,75 @@
+:orphan:
+
+
+.. _everest_types_evse_board_support:
+
+
+##################
+evse_board_support
+##################
+
+Board support types
+
+.. _evse_board_support-HardwareCapabilities:
+
+| **HardwareCapabilities**:*object* 
+|  Hardware capability/limits
+|  properties:
+|   **max_current_A_import**:*number* <required>
+|    Maximum current (ampere) the hardware can handle (import from grid)
+|   **min_current_A_import**:*number* <required>
+|    Minimum current (ampere) the hardware can use to charge. Values below may be set but may result in pause instead.  (import from grid)
+|   **max_phase_count_import**:*integer* <required>
+|    Max nr of phases the hardware can use  (import from grid)
+|   **min_phase_count_import**:*integer* <required>
+|    Minimum nr of phases the hardware can use  (import from grid)
+|   **max_current_A_export**:*number* <required>
+|    Maximum current (ampere) the hardware can handle (export to grid)
+|   **min_current_A_export**:*number* <required>
+|    Minimum current (ampere) the hardware can use to charge. Values below may be set but may result in pause instead. (export to grid)
+|   **max_phase_count_export**:*integer* <required>
+|    Max nr of phases the hardware can use (export to grid)
+|   **min_phase_count_export**:*integer* <required>
+|    Minimum nr of phases the hardware can use (export to grid)
+|   **supports_changing_phases_during_charging**:*boolean* <required>
+|    Indicates whether changing number of phases is supported during charging (true) or not (false)
+|   **max_plug_temperature_C**:*number* <optional>
+|    
+|   **connector_type**:*string* <required>
+|    Type of charging connector available at this EVSE
+|    enum:
+|      - IEC62196Type2Cable
+|      - IEC62196Type2Socket
+
+.. _evse_board_support-Telemetry:
+
+| **Telemetry**:*object* 
+|  Other telemetry
+|  properties:
+|   **evse_temperature_C**:*number* <required>
+|    Current temperature of the EVSE in degree celsius
+|   **plug_temperature_C**:*number* <optional>
+|    Current temperature of the plug in degree celsius
+|   **fan_rpm**:*number* <required>
+|    RPM of the fan. 0 if off or no fan available.
+|   **supply_voltage_12V**:*number* <required>
+|    Internal 12V supply voltage
+|   **supply_voltage_minus_12V**:*number* <required>
+|    Internal -12V supply voltage
+|   **relais_on**:*boolean* <required>
+|    true if power to the car is currently on, false if off
+
+.. _evse_board_support-PowerOnOff:
+
+| **PowerOnOff**:*object* 
+|  Flag and context for switching power on/off. In some architectures e.g. DC power train needs to know whether it should switch on with limited current or full current on the output contactors.
+|  properties:
+|   **allow_power_on**:*boolean* <required>
+|    Allow switching on (true) or force switching off (false)
+|   **reason**:*string* <required>
+|    Reason for switching on/off
+|    enum:
+|      - DCCableCheck
+|      - DCPreCharge
+|      - FullPowerCharging
+|      - PowerOff

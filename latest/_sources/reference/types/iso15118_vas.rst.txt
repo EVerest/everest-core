@@ -1,0 +1,75 @@
+:orphan:
+
+
+.. _everest_types_iso15118_vas:
+
+
+############
+iso15118_vas
+############
+
+Custom VAS types for ISO 15118
+
+.. _iso15118_vas-ParameterValue:
+
+| **ParameterValue**:*object* 
+|  Value variant of a parameter -> only one of the values should be set
+|  properties:
+|   **finite_string**:*string* <required>
+|    String value of the parameter
+|   **rational_number**:*number* <required>
+|    Rational value of the parameter
+|   **byte_value**:*integer* <required>
+|    Byte value of the parameter
+|   **short_value**:*integer* <required>
+|    Short value of the parameter
+|   **int_value**:*integer* <required>
+|    Integer value of the parameter
+|   **bool_value**:*boolean* <required>
+|    Boolean value of the parameter
+
+.. _iso15118_vas-Parameter:
+
+| **Parameter**:*object* 
+|  Single Parameter
+|  properties:
+|   **name**:*string* <required>
+|    Name of the parameter
+|   **value**:*object* <required> (:ref:`iso15118_vas-ParameterValue <iso15118_vas-ParameterValue>`)
+|    Value of the parameter
+|    **There is an extended definition for this object** :ref:`here <iso15118_vas-ParameterValue>`.
+
+.. _iso15118_vas-ParameterSet:
+
+| **ParameterSet**:*object* 
+|  Parameter Set
+|  properties:
+|   **set_id**:*integer* <required>
+|    ParameterSetId
+|   **parameters**:*array* <required>
+|    List of parameters
+|    **array_item**:*object*  (:ref:`iso15118_vas-Parameter <iso15118_vas-Parameter>`)
+|     
+|     **There is an extended definition for this object** :ref:`here <iso15118_vas-Parameter>`.
+| 
+
+.. _iso15118_vas-SelectedService:
+
+| **SelectedService**:*object* 
+|  Selected Service
+|  properties:
+|   **service_id**:*integer* <required>
+|    Service ID
+|   **parameter_set_id**:*integer* <required>
+|    Parameter Set ID
+
+.. _iso15118_vas-OfferedServices:
+
+| **OfferedServices**:*object* 
+|  List of offered VAS Service IDs
+|  properties:
+|   **service_ids**:*array* <required>
+|    List of offered VAS Service IDs
+|    **array_item**:*integer* 
+|     Service ID
+| 

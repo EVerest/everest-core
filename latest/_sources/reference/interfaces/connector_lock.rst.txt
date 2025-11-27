@@ -1,0 +1,21 @@
+:orphan:
+
+
+.. _everest_interfaces_connector_lock:
+
+
+##############
+connector_lock
+##############
+
+| This interface defines one connector locking motor (e.g. for AC sockets with no fixed attached cable)
+
+
+
+********
+Commands
+********
+| **lock**:*void*
+|  Lock connector lock
+| **unlock**:*void*
+|  Unlock connector lock (e.g. normal unlock or enforced by OCPP)

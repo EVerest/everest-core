@@ -1,0 +1,19 @@
+:orphan:
+
+
+.. _everest_interfaces_tibber_price_forecast:
+
+
+#####################
+tibber_price_forecast
+#####################
+
+| This interface defines the interface for an energy price forecast
+
+
+*********
+Variables
+*********
+| **forecast**:*object* 
+|  Forecast JSON Object containing a timestamp and the price forecast
+

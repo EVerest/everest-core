@@ -1,0 +1,22 @@
+:orphan:
+
+
+.. _everest_interfaces_bank_session_token_provider:
+
+
+###########################
+bank_session_token_provider
+###########################
+
+| Provides the token that can be used to uniquely identify the session in the bank statement.
+
+
+
+********
+Commands
+********
+| **get_bank_session_token**:*object*
+|  Returns the token.
+|  **Result**:*object*  (:ref:`payment_terminal-BankSessionToken <payment_terminal-BankSessionToken>`)
+|   token
+|   **There is an extended definition for this object** :ref:`here <payment_terminal-BankSessionToken>`.

@@ -1,0 +1,58 @@
+:orphan:
+
+
+.. _everest_types_serial_comm_hub_requests:
+
+
+########################
+serial_comm_hub_requests
+########################
+
+Request types for the SerialCommHub Module
+
+.. _serial_comm_hub_requests-StatusCodeEnum:
+
+| **StatusCodeEnum**:*string* 
+|  Success or error indication of command
+|  enum:
+|    - Success
+|    - Error
+
+.. _serial_comm_hub_requests-Result:
+
+| **Result**:*object* 
+|  Return type for IO transfer functions with 16 bit return values
+|  properties:
+|   **status_code**:*string* <required> (:ref:`serial_comm_hub_requests-StatusCodeEnum <serial_comm_hub_requests-StatusCodeEnum>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <serial_comm_hub_requests-StatusCodeEnum>`.
+|   **value**:*array* <optional>
+|    
+|    **array_item**:*integer* 
+|     
+| 
+
+.. _serial_comm_hub_requests-ResultBool:
+
+| **ResultBool**:*object* 
+|  Return type for IO transfer functions with boolean return values, e.g. for coil states
+|  properties:
+|   **status_code**:*string* <required> (:ref:`serial_comm_hub_requests-StatusCodeEnum <serial_comm_hub_requests-StatusCodeEnum>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <serial_comm_hub_requests-StatusCodeEnum>`.
+|   **value**:*array* <optional>
+|    
+|    **array_item**:*boolean* 
+|     
+| 
+
+.. _serial_comm_hub_requests-VectorUint16:
+
+| **VectorUint16**:*object* 
+|  Data content (raw data bytes)
+|  properties:
+|   **data**:*array* <required>
+|    
+|    **array_item**:*integer* 
+|     
+| 

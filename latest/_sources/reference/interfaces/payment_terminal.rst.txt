@@ -1,0 +1,38 @@
+:orphan:
+
+
+.. _everest_interfaces_payment_terminal:
+
+
+################
+payment_terminal
+################
+
+| Interface that provides functionality for a Payment Terminal
+
+
+*********
+Variables
+*********
+| **bank_transaction_summary**:*object*  (:ref:`payment_terminal-BankTransactionSummary <payment_terminal-BankTransactionSummary>`)
+|  Provides information of the session that was committed to the bank. This data may be needed for accounting purposes. Summary of a bank transaction. Depends on bank and the backend. Therefore it's mostly opaque data at the moment.
+|  **There is an extended definition for this object** :ref:`here <payment_terminal-BankTransactionSummary>`.
+| **rejection_reason**:*string*  (:ref:`payment_terminal-RejectionReason <payment_terminal-RejectionReason>`)
+|  Provides a rejection reason for the rejected credit card read.
+|  **There is an extended definition for this object** :ref:`here <payment_terminal-RejectionReason>`.
+
+********
+Commands
+********
+| **enable_card_reading**:*void*
+|  Enables or disables card reading for given connector
+|  **supported_cards**:*array* <required>
+|   Supported card types array
+|   **array_item**:*string*  (:ref:`payment_terminal-CardType <payment_terminal-CardType>`)
+|    
+|    **There is an extended definition for this object** :ref:`here <payment_terminal-CardType>`.
+| 
+|  **connector_id**:*integer* <required>
+|   Which connector
+| **allow_all_cards_for_every_connector**:*void*
+|  Enable all card types on each connector. This is default behavior on the startup

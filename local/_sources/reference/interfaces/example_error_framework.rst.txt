@@ -1,0 +1,14 @@
+:orphan:
+
+
+.. _everest_interfaces_example_error_framework:
+
+
+#######################
+example_error_framework
+#######################
+
+| This is an example interface used for the error framework example modules.
+
+
+

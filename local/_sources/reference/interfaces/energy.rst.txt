@@ -1,0 +1,28 @@
+:orphan:
+
+
+.. _everest_interfaces_energy:
+
+
+######
+energy
+######
+
+| This interface is the internal energy management interface between nodes.
+
+
+*********
+Variables
+*********
+| **energy_flow_request**:*object*  (:ref:`energy-EnergyFlowRequest <energy-EnergyFlowRequest>`)
+|  Request energy flow to supply/limit energy import (direction from grid to car) and/or consume/limit energy export (car to grid).
+|  **There is an extended definition for this object** :ref:`here <energy-EnergyFlowRequest>`.
+
+********
+Commands
+********
+| **enforce_limits**:*void*
+|  The EnergyManager enforces a limit using this command.
+|  **value**:*object* <required> (:ref:`energy-EnforcedLimits <energy-EnforcedLimits>`)
+|   Limit object that will be routed through the tree.
+|   **There is an extended definition for this object** :ref:`here <energy-EnforcedLimits>`.
