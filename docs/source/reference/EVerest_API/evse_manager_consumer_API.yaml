@@ -1406,7 +1406,7 @@ components:
         limits_root_side:
           description: Enforced limits that must be respected at the root side.
           type: object
-          $ref: '../external_energy_limits_consumer_API/asyncapi.yaml#/components/schemas/LimitsRes'
+          $ref: 'external_energy_limits_consumer_API.yaml#/components/schemas/LimitsRes'
         schedule:
           description: >-
             Informative only. Do not use for actual limiting. Energy import/export limits
@@ -1418,7 +1418,7 @@ components:
           items:
             description: One entry for the time series. Values are positive for import from grid and negative for export to grid.
             type: object
-            $ref: '../external_energy_limits_consumer_API/asyncapi.yaml#/components/schemas/ScheduleResEntry'
+            $ref: 'external_energy_limits_consumer_API.yaml#/components/schemas/ScheduleResEntry'
 
 
     SupportedEnergyTransferModeList:
