@@ -36,6 +36,7 @@ extensions = [
     'sphinx.ext.viewcode',     # Add links to highlighted source code
     'sphinx_copybutton',       # Add a "copy" button to code blocks
     'sphinx_design',           # For advanced design elements like cards, grids
+    'sphinx.ext.mathjax',      # For rendering math equations
     'staticpages.extension',   # For static pages like versions_index.html
 ]
 
