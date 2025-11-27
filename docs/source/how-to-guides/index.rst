@@ -20,3 +20,4 @@ Have a look at this categorized list of all guides:
     uk-smart-charging-regulations
     renesas-mpu/index
     security-best-practices
+    bringup/index
