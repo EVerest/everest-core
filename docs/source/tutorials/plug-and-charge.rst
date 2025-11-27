@@ -19,8 +19,8 @@ If you have done that successfully, you can move on with this tutorial.
 
 If you are interested in more in-depth information about how Plug&Charge is
 implemented in EVerest, please refer to the 
-:doc:`Plug&Charge explanations <explanation/pnc-process>`
-and the :doc:`Plug&Charge Configuration Howto <how-to-guides/configure-pnc>`
+:doc:`Plug&Charge explanations </explanation/pnc-process>`
+and the :doc:`Plug&Charge Configuration Howto </how-to-guides/configure-pnc>`
 
 Packages for ISO 15118 communication
 ------------------------------------

@@ -1,8 +1,8 @@
 .. _tutorial-ocpp16:
 
-##########################
+###########################
 How To: OCPP 1.6 in EVerest
-##########################
+###########################
 
 .. note::
 
@@ -285,7 +285,7 @@ EVerest configuration file:
      complete charging station.
 
      *Module typically used to fulfill this requirement:*  
-     :doc:`EnergyNode <reference/modules/EnergyNode>`
+     :doc:`EnergyNode </reference/modules/EnergyNode>`
 
      More information about the energy management setup can be found in the
      :doc:`EnergyManager module documentation </explanation/modules/EnergyManager/index>`.

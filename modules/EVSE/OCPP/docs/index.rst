@@ -213,9 +213,9 @@ Typically the `EvseSecurity <../EvseSecurity/>`_ module is used to fulfill this 
 
 This module makes use of the following commands of this interface:
 
-* **install_ca_certificate** to handle **InstallCertificate.req** and **DataTransfer.req(InstallCertificate) messages from the CSMS
+* **install_ca_certificate** to handle **InstallCertificate.req** and **DataTransfer.req(InstallCertificate)** messages from the CSMS
 * **delete_certificate** to handle **DeleteCertificate.req** and **DataTransfer.req(DeleteCertificate)** messages from the CSMS
-* **update_leaf_certificate** to handle **CertificateSigned.req** and **DataTransfer.req(CertificateSigned) messages from the CSMS
+* **update_leaf_certificate** to handle **CertificateSigned.req** and **DataTransfer.req(CertificateSigned)** messages from the CSMS
 * **verify_certificate** to verify certificates from the CSMS that are sent as part of **SignedUpdateFirmware.req**
 * **get_installed_certificates** to handle **GetInstalledCertificateIds.req** and **DataTransfer.req(GetInstalledCertificateIds)**
   messages from the CSMS

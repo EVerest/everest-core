@@ -28,6 +28,22 @@ def make_rst_ref(input):
     return output
 
 
+def literal_rst_filter(value):
+    """Wraps a string in double backticks to treat it as a literal in RST."""
+    str_value = str(value)
+    has_trailing_whitespace = (str_value != str_value.rstrip())
+    cleaned_value = str_value.rstrip()
+    parts = cleaned_value.split(':', 1)
+    if len(parts) == 2 and parts[0] == "pattern":
+        formatted_value = f"{parts[0]}:``{parts[1].lstrip()}``"
+    else:
+        formatted_value = cleaned_value
+    if has_trailing_whitespace:
+        return formatted_value + '\r\n'
+    else:
+        return formatted_value
+
+
 def main():
     parser = argparse.ArgumentParser(description='Processes a template file with Jinja2 and YAML data.')
     parser.add_argument(
@@ -121,6 +137,7 @@ def main():
     )
     env.filters['rst_indent'] = rst_indent
     env.filters['make_rst_ref'] = make_rst_ref
+    env.filters['literal_rst'] = literal_rst_filter
 
     template_file_name = args.template_file.relative_to(args.template_dir)
     template = env.get_template(str(template_file_name))

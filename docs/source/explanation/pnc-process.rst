@@ -123,7 +123,7 @@ Step 4
 ======
 
 The Auth module sends commands containing the *ProvidedIdToken* to its registered
-:doc:`token_validator(s) <reference/interfaces/auth_token_validator>`,
+:doc:`token_validator(s) </reference/interfaces/auth_token_validator>`,
 which are OCPP/OCPP201 in the case of Plug&Charge. The OCPP module(s) validate the token based on the requirements
 specified in the OCPP protocol (either validating locally or by the CSMS).
 
