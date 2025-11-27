@@ -35,3 +35,4 @@ Below that, you will be presented with a categorized list of all articles.
     hardware-architecture
     high-level-overview
     adapt-everest/index
+    getting-started/index
