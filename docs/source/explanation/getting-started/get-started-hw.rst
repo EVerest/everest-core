@@ -1,13 +1,12 @@
 .. _exp_getting_started_hw:
 
 ############################
-Getting Started with EVerest with Hardware
+Getting Started with EVerest on Hardware
 ############################
 
-There are different ways to get started with EVerest based on the
-hardware you want to run EVerest on in the beginning. For each journey,
-we have collected some best practices how to start reading and get you
-into the experiencing mode with EVerest.
+There are different approaches for getting started with running EVerest
+on hardware. For each approach we have collected some starting points
+and best practices to help you get up and running with EVerest.
 
 For each of the following starting scenarios, you can find more detail
 in the sections below:
@@ -15,8 +14,7 @@ in the sections below:
 -  **Using an EVerest-compatible development kit and add the BSP.** This
    is a great path to start learning about the benefits of EVerest. A
    device including a deployed EVerest image can let you experience
-   charging in a more practical manner than doing software simulation
-   only.
+   charging in a more practical manner moving beyond software simulation.
 
 -  **Start with your own hardware.** This is a less out-of-the-box
    start, but a more direct path to your own system environment. We will
@@ -42,13 +40,16 @@ They will help you to:
 Currently, there are three development kits available. Choose the one that matches 
 your product the closest:
 
-1. **AC all-integrated PCB development kit: The Belaybox.**  
+1. **AC all-integrated PCB development kit: The BelayBox.**  
     It is available at https://shop.pionix.com with a touch screen display, 
     up to 22 kW 3ph AC charging, RCD, PCB-integrated power meter, RFID reader and 
     a Raspberry Pi CM4 compute module.
      
     Schematics and MCU firmware are open source:
     https://github.com/PionixPublic/reference-hardware
+
+    Yocto for the BelayBox is available at:
+    https://github.com/PionixPublic/dev-hardware-yocto
 
     Find the manual here: https://pionix.com/user-manual-belaybox
      
@@ -68,8 +69,6 @@ your product the closest:
     DC development kit as well, which includes a 40 kW DC power supply, isolation monitor,
     power meter and everything else needed to make it a complete charger ready for
     evaluation.
-
-TODO: Should we list more/others?
 
 .. note::
 
@@ -99,8 +98,6 @@ needs and HW setup.
 This will give you an overview on which in- and outputs are required,
 the dependencies per module and how to set up the MQTT communication
 accordingly.
-
-TODO: Link belaybox-yocto + phyverso repos when available.
 
 -----------------------------------
 

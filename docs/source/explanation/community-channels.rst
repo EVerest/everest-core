@@ -1,3 +1,5 @@
+.. _exp_communicity_channels:
+
 ##########################
 Meet the EVerest Community
 ##########################
