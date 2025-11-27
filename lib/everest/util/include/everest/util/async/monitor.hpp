@@ -183,19 +183,28 @@ public:
 
     /**
      * @brief Thread-safe move constructor. Locks the source mutex before swapping.
+     * @details The move constructor is 'noexcept' if the monitor with it's template parameters
+     * is no-throw swappable.
      */
-    monitor(monitor<T, MTX>&& other) {
+    monitor(monitor<T, MTX>&& other) noexcept(std::is_nothrow_swappable_v<T>) {
         // Lock the source monitor's mutex before moving its data to ensure thread safety
         std::unique_lock lock(other.m_mtx);
-        std::swap(m_obj, other.m_obj);
+        // This pattern is important, don't just use std::swap, but enable std::swap for the case
+        // no specialized optimazation is available. The following always prefers the the specialized version
+        // via ADL lookup
+        using std::swap;
+        swap(m_obj, other.m_obj);
         // Note: m_mtx and m_cv are not swapped; they remain tied to the current object.
     }
 
     /**
      * @brief Thread-safe move assignment operator. Locks the source mutex before swapping.
+     * @details The move assignment operator is 'noexcept' if the monitor with it's template parameters
+     * is no-throw swappable.
      * @return Reference to the current object.
      */
-    monitor<T, MTX>& operator=(monitor<T, MTX>&& rhs) {
+    monitor<T, MTX>&
+    operator=(monitor<T, MTX>&& rhs) noexcept(noexcept(std::declval<monitor&>().swap(std::declval<monitor&>()))) {
         if (this != &rhs) {
             this->swap(rhs);
         }
@@ -249,15 +258,18 @@ public:
 
     /**
      * @brief Member swap function for thread-safe and exception-safe exchange of resources.
-     * * Locks both mutexes using RAII and deadlock avoidance (via std::unique_lock constructors)
+     * * Locks both mutexes using RAII and deadlock avoidance (via std::scoped_lock)
      * before swapping the protected resource T.
+     * @details This function is 'noexcept' if T is no-throw swappable
      * @param other The monitor to swap resources with.
      */
-    void swap(monitor<T, MTX>& other) noexcept {
-        std::unique_lock this_lock(m_mtx, std::defer_lock);
-        std::unique_lock other_lock(other.m_mtx, std::defer_lock);
-        std::lock(this_lock, other_lock);
-        std::swap(m_obj, other.m_obj);
+    void swap(monitor<T, MTX>& other) noexcept(std::is_nothrow_swappable_v<T>) {
+        std::scoped_lock lock(m_mtx, other.m_mtx);
+        // This pattern is important, don't just use std::swap, but enable std::swap for the case
+        // no specialized optimazation is available. The following always prefers the the specialized version
+        // via ADL lookup
+        using std::swap;
+        swap(m_obj, other.m_obj);
     }
 
 private:
@@ -271,11 +283,12 @@ private:
  * * This function delegates the call to the thread-safe member swap function, ensuring
  * a safe, deadlock-avoiding exchange of resources between two monitor objects.
  * * @tparam T The type of the resource being protected.
+ * @details This function is 'noexcept' if the monitor with its template parameters is no-throw swappable
  * @tparam MTX The mutex type used for locking.
  * @param lhs The first monitor object.
  * @param rhs The second monitor object.
  */
-template <class T, class MTX> void swap(monitor<T, MTX>& lhs, monitor<T, MTX>& rhs) {
+template <class T, class MTX> void swap(monitor<T, MTX>& lhs, monitor<T, MTX>& rhs) noexcept(noexcept(lhs.swap(rhs))) {
     lhs.swap(rhs);
 }
 
