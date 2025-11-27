@@ -86,7 +86,7 @@ Tested with Fedora 40, 41 and 42. Here is how to get your needed libraries with
    java-21-openjdk-devel boost-devel nodejs nodejs-devel npm openssl openssl-devel \
    libsqlite3x-devel curl rfkill libpcap-devel libevent-devel libcap-devel
 
-.. _exp_getting_started_sw:
+.. _exp_getting_started_sw_download_install:
 
 Download And Install EVerest
 =============================
@@ -198,6 +198,7 @@ side, we need to source the preinstalled virtual environment and install the res
 python requirements for ISO15118 using a make target:
 
 .. code-block:: bash
+  
   source venv/bin/activate
   make iso15118_pip_install_dist
 
