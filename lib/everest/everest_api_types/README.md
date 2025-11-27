@@ -93,8 +93,8 @@ If a field of a struct or a whole type is removed, then the external API types m
 ### Steps to Take for Type and Interface Updates
 
 - Add/update new/changed types in everest_api_types library
-- Include changed/added type in asyncapi.yaml files
-- Update/add changed/new commands and variables in asyncapi.yaml files
+- Include changed/added type in *_API.yaml files
+- Update/add changed/new commands and variables in *_API.yaml files
 - If applicable: increase version number on the correct level (major, minor, patch-level)
 - Check if API module code needs to be adapted to changed commands/variables
   - At the time of writing the API modules implement a one-to-one conversion between internal and external types
