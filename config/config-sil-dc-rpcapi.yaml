@@ -56,10 +56,10 @@ active_modules:
   slac:
     module: SlacSimulator
   imd:
+    module: IMDSimulator
     config_implementation:
       main:
         selftest_success: true
-    module: IMDSimulator
   ovm:
     module: OVMSimulator
     config_implementation:
