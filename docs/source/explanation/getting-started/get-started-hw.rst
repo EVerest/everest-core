@@ -1,8 +1,8 @@
 .. _exp_getting_started_hw:
 
-############################
+########################################
 Getting Started with EVerest on Hardware
-############################
+########################################
 
 There are different approaches for getting started with running EVerest
 on hardware. For each approach we have collected some starting points
