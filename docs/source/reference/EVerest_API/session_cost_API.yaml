@@ -692,7 +692,7 @@ components:
         id_tag:
           description: The id tag assigned to this transaction
           type: object
-          $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/ProvidedIdToken'
+          $ref: 'auth_consumer_API.yaml#/components/schemas/ProvidedIdToken'
         session_id:
           description: The session id
           type: string
@@ -743,7 +743,7 @@ components:
           items:
             description: Message with pricing information in a specific language
             type: object
-            $ref: '../display_message_API/asyncapi.yaml#/components/schemas/MessageContent'
+            $ref: 'display_message_API.yaml#/components/schemas/MessageContent'
         qr_code:
           description: >-
             QR Code with more information. For example when the charging is finished,
@@ -811,14 +811,14 @@ components:
         identifier_type:
           description: The type of 'identifier_id'. If omitted, type will be session id.
           type: string
-          $ref: '../display_message_API/asyncapi.yaml#/components/schemas/IdentifierType'
+          $ref: 'display_message_API.yaml#/components/schemas/IdentifierType'
         messages:
           description: Message with session price information to show the user.
           type: array
           items:
             description: Message with pricing information in a specific language
             type: object
-            $ref: '../display_message_API/asyncapi.yaml#/components/schemas/MessageContent'
+            $ref: 'display_message_API.yaml#/components/schemas/MessageContent'
 
     CommunicationCheck:
       type: boolean

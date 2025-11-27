@@ -6,6 +6,7 @@ find_package(
 )
 
 include("${CMAKE_CURRENT_LIST_DIR}/add-module-explanation.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/generate-api-docs.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/generate-rst-from-interface.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/generate-rst-from-types.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/generate-rst-from-manifest.cmake")

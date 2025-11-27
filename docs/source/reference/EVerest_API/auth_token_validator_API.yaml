@@ -113,7 +113,7 @@ components:
                   type: string
                   description: Address to send the response to.
             payload:
-              $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/ProvidedIdToken'
+              $ref: 'auth_consumer_API.yaml#/components/schemas/ProvidedIdToken'
     send_reply_validate_token:
       name: send_reply_validate_token
       title: 'Reply validate token'
@@ -245,7 +245,7 @@ components:
           items:
             description: Message with pricing information in a specific language
             type: object
-            $ref: '../display_message_API/asyncapi.yaml#/components/schemas/MessageContent'
+            $ref: 'display_message_API.yaml#/components/schemas/MessageContent'
         expiry_time:
           description: Absolute UTC time point when reservation expires in RFC3339 format
           type: string
@@ -253,7 +253,7 @@ components:
         parent_id_token:
           description: Parent Id Tag of the validated token
           type: object
-          $ref: '../auth_consumer_API/asyncapi.yaml#/components/schemas/IdToken'
+          $ref: 'auth_consumer_API.yaml#/components/schemas/IdToken'
         evse_ids:
           description: >-
             Only used when the id token is valid for one or more specific evses,

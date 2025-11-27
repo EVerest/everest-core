@@ -1,0 +1,12 @@
+{%  import 'macros.jinja' as funcs %}
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+{{ funcs.explicit_target('everest_api') }}
+{{ funcs.h1("EVerest API Specification") }}
+
+{% for item in apis %}
+* `{{ item.name }} <{{ item.path }}/index.html>`_
+{% endfor %}

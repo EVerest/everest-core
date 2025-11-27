@@ -473,7 +473,7 @@ components:
       summary: 'Publish to stop the transaction gracefully (e.g. user pressed the stop button)'
       contentType: application/json
       payload:
-        $ref: '../evse_manager_consumer_API/asyncapi.yaml#/components/schemas/StopTransactionRequest'
+        $ref: 'evse_manager_consumer_API.yaml#/components/schemas/StopTransactionRequest'
       examples:
         - summary: ""
           payload:

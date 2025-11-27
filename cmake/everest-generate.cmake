@@ -85,6 +85,36 @@ function(_ev_add_project)
         endif ()
     endif ()
 
+    # check for API
+    set(API_DIR "${EVEREST_PROJECT_DIR}/docs/source/reference/EVerest_API")
+    if (EXISTS ${API_DIR})
+        message(STATUS "Adding API definitions from ${API_DIR}")
+        file(GLOB API_FILES
+            ${API_DIR}/*.yaml
+        )
+
+        if(EVEREST_BUILD_DOCS)
+            find_package(
+                trailbook-ext-everest
+                0.1.0
+                REQUIRED
+                PATHS "${CMAKE_SOURCE_DIR}/cmake"
+            )
+            trailbook_ev_generate_api_doc(
+                TRAILBOOK_NAME "everest"
+                API_FILES ${API_FILES}
+            )
+        endif()
+
+        if (CALLED_FROM_WITHIN_PROJECT)
+            install(
+                DIRECTORY ${API_DIR}
+                DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
+                FILES_MATCHING PATTERN "*.yaml"
+            )
+        endif ()
+    endif ()
+
     # check for errors
     set(ERRORS_DIR "${EVEREST_PROJECT_DIR}/errors")
     if (EXISTS ${ERRORS_DIR})
