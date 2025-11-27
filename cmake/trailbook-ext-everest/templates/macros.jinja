@@ -143,7 +143,7 @@
 {%      set ignore_keys = ['default', 'description', 'type', 'properties', 'documentation', '$ref', 'required', 'items'] %}
 {%      set mapping_result = mapping( var_name, var_data.items(), ignore_keys, False) %}
 {%      if mapping_result != '' %}
-{{ mapping_result | indent(1, True) -}}
+{{ mapping_result | literal_rst | indent(1, True) -}}
 {%      endif %}
 {%      if var_data.type == 'object' and 'properties' in var_data %}
  properties:

@@ -90,7 +90,7 @@ All the scenarios above can be represented within EVerest.
 The power distribution to the EVSEs is managed by this module, considering the
 limitations of each individual node.
 How these setups above can be represented in EVerest is presented in section
-:ref:`configuration-of-energy-trees-in-everest`.
+:ref:`'Configuration of energy trees in EVerest' <configuration_of_energy_trees_in_everest>`.
 
 Energy requests and distribution
 --------------------------------
@@ -181,76 +181,76 @@ Below is an example JSON representation of an **EnergyFlowRequest** for a leaf n
 
 .. code-block:: json
 
-{
-  "children": [],
-  "evse_state": "Charging",
-  "node_type": "Evse",
-  "priority_request": false,
-  "schedule_export": [
-    {
-      "limits_to_leaves": {
-        "ac_max_current_A": {
-          "value": 10.0,
-          "source": "EVSE1_leave"
-        }
-      },
-      "limits_to_root": {
-        "ac_max_current_A": {
-          "value": 16.0,
-          "source": "EVSE1_root"
+  {
+    "children": [],
+    "evse_state": "Charging",
+    "node_type": "Evse",
+    "priority_request": false,
+    "schedule_export": [
+      {
+        "limits_to_leaves": {
+          "ac_max_current_A": {
+            "value": 10.0,
+            "source": "EVSE1_leave"
+          }
         },
-        "ac_max_phase_count": {
-          "value": 3,
-          "source": "EVSE1_phase"
+        "limits_to_root": {
+          "ac_max_current_A": {
+            "value": 16.0,
+            "source": "EVSE1_root"
+          },
+          "ac_max_phase_count": {
+            "value": 3,
+            "source": "EVSE1_phase"
+          },
+          "ac_min_current_A": {
+            "value": 0.0,
+            "source": "EVSE1_mincurrent"
+          },
+          "ac_min_phase_count": {
+            "value": 1,
+            "source": "EVSE1_minphase"
+          },
+          "ac_number_of_active_phases": 3,
+          "ac_supports_changing_phases_during_charging": true
         },
-        "ac_min_current_A": {
-          "value": 0.0,
-          "source": "EVSE1_mincurrent"
+        "timestamp": "2024-12-17T13:08:36.479Z"
+      }
+    ],
+    "schedule_import": [
+      {
+        "limits_to_leaves": {
+          "ac_max_current_A": {
+            "value": 32.0,
+            "source": "EVSE1_leave"
+          }
         },
-        "ac_min_phase_count": {
-          "value": 1,
-          "source": "EVSE1_minphase"
+        "limits_to_root": {
+          "ac_max_current_A": {
+            "value": 32.0,
+            "source": "EVSE1_root"
+          },
+          "ac_max_phase_count": {
+            "value": 3,
+            "source": "EVSE1_phase"
+          },
+          "ac_min_current_A": {
+            "value": 6.0,
+            "source": "EVSE1_mincurrent"
+          },
+          "ac_min_phase_count": {
+            "value": 1,
+            "source": "EVSE1_minphase"
+          },
+          "ac_number_of_active_phases": 3,
+          "ac_supports_changing_phases_during_charging": true
         },
-        "ac_number_of_active_phases": 3,
-        "ac_supports_changing_phases_during_charging": true
-      },
-      "timestamp": "2024-12-17T13:08:36.479Z"
-    }
-  ],
-  "schedule_import": [
-    {
-      "limits_to_leaves": {
-        "ac_max_current_A": {
-          "value": 32.0,
-          "source": "EVSE1_leave"
-        }
-      },
-      "limits_to_root": {
-        "ac_max_current_A": {
-          "value": 32.0,
-          "source": "EVSE1_root"
-        },
-        "ac_max_phase_count": {
-          "value": 3,
-          "source": "EVSE1_phase"
-        },
-        "ac_min_current_A": {
-          "value": 6.0,
-          "source": "EVSE1_mincurrent"
-        },
-        "ac_min_phase_count": {
-          "value": 1,
-          "source": "EVSE1_minphase"
-        },
-        "ac_number_of_active_phases": 3,
-        "ac_supports_changing_phases_during_charging": true
-      },
-      "timestamp": "2024-12-17T13:08:36.479Z"
-    }
-  ],
-  "schedule_setpoints": [],
-  "uuid": "evse1"
-}
+        "timestamp": "2024-12-17T13:08:36.479Z"
+      }
+    ],
+    "schedule_setpoints": [],
+    "uuid": "evse1"
+  }
 
 Setpoints
 ---------
@@ -295,6 +295,8 @@ To apply external limits, a module must require the `external_energy_limits`
 interface and invoke the **set_external_limits** command.
 The next section details how to configure these limits in EVerest.
 
+.. _configuration_of_energy_trees_in_everest:
+
 Configuration of energy trees in EVerest
 ----------------------------------------
 
@@ -306,8 +308,10 @@ this in the configuration step by step.
 This is the energy tree that we are going to represent in the EVerest
 configuration:
 
+.. _energy_tree_complex_label:
+
 .. image:: img/energy_tree_complex.drawio.svg
-    :name: energy-tree-complex-label
+    :alt: Example of a complex energy tree
     :align: center
 
 This energy tree represents a setup with two EVSEs.
@@ -539,7 +543,7 @@ Finally, we also add the **EnergyManager** module and connect the
 
 
 We have now added all the required modules and connections to represent the
-energy tree example of :ref:`energy-tree-complex-label`.
+energy tree example :ref:`shown above <energy_tree_complex_label>`.
 One important detail is still missing, which is the module mapping.
 For detailed information about the module mapping please see 
 `3-tier module mappings <https://everest.github.io/nightly/general/05_existing_modules.html#tier-module-mappings>`_.
@@ -662,7 +666,7 @@ to energy leaf nodes:
   **switch_3ph1ph_while_charging_mode** is enabled.
 
 Phase switching
-===============
+---------------
 
 This module supports switching between single-phase (1ph) and three-phase (3ph)
 configurations during AC charging.
@@ -698,16 +702,16 @@ To enable this, an external limit must be set.
 There are two ways to configure the limit:
 
 1. **Watt-based limit (preferred option):** The limit is set in Watts (not
-  Amperes), even though this involves AC charging.
-  This provides the EnergyManager with the flexibility to decide when to
-  switch.
-  The limit can be defined by an OCPP schedule or through an additional
-  EnergyNode.
+   Amperes), even though this involves AC charging.
+   This provides the EnergyManager with the flexibility to decide when to
+   switch.
+   The limit can be defined by an OCPP schedule or through an additional
+   EnergyNode.
 2. **Ampere-based limit:** The limit is defined in Amperes, along with a
-  restriction on the number of phases (e.g., ``min_phase=1`` and
-  ``max_phase=1``).
-  This enforces switching and allows external control over the switching time,
-  but the EnergyManager loses its ability to choose when to switch.
+   restriction on the number of phases (e.g., ``min_phase=1`` and
+   ``max_phase=1``).
+   This enforces switching and allows external control over the switching time,
+   but the EnergyManager loses its ability to choose when to switch.
 
 Best practices
 ^^^^^^^^^^^^^^

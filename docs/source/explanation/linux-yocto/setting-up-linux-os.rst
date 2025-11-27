@@ -1,8 +1,8 @@
 .. _exp_linux_yocto_setup_linux_os:
 
-##############################
+#####################################
 Setting up the Linux operating system
-##############################
+#####################################
 
 In principle, you can use any Linux-based operating system as long as it
 comes with the required dependencies to run EVerest.

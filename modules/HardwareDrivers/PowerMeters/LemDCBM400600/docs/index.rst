@@ -32,7 +32,7 @@ to the meter are translated and forwarded to the device via HTTP/HTTPS.
 
 
 Initialization
-------------
+--------------
 
 On module initialization, the driver fetches the device's metric id from the  ``/v1/status`` api. Consequently, this also ensures
 connectivity to the device.
@@ -42,13 +42,13 @@ Furthermore, at initialization the initial time sync setup is scheduled after a 
 during the module's "ready" thread loop), cf. also the notes on time synchronization below.
 
 Variable Powermeter
-------------
+-------------------
 
 Publication of the ``powermeter`` var is done with approx. frequency 1/second. This fetches the current ``livemeasure``
 values from the device's ``/v1/livemeasure`` endpoint and injects the meter id as determined at initialization.
 
 Command start_transaction
-------------
+-------------------------
 
 A ``start_transaction`` command is directly forwarded via a ``POST``  to the ``/v1/legal`` endpoint with a copy of the transaction request
 as payload (up to renaming of attributes). It returns ``true``, if the device (possibly after a limited amount of retries) returns a success
@@ -56,7 +56,7 @@ response with a valid payload that indicates a ``running`` transaction status, o
 
 
 Command stop_transaction
-------------
+------------------------
 
 A ``stop_transaction`` command  results into two requets to the devie.
 
@@ -72,27 +72,27 @@ In case of an error, an empty string is returned.
 
 
 Module Configuration
-===========
+====================
 
 The module has the following configuration parameters:
 
 ip_address
-------------
+----------
 IP address (or DNS/Host name) of the device.
 
 port (optional)
-------------
+---------------
 Port used to reach the device. Defaults to ``80``. Note that the default value of ``80`` is used independent on whether
 TLS is enabled or not (which is in coherence with the device`s behavior).
 
 meter_tls_certificate (optional)
-------------
+--------------------------------
 The meter's TLS X.509 certificate in PEM format. If provided, TLS will be used for communication with the device. See
 :ref:`notes on TLS <TLS Notes>` below.
 
 
 NTP Settings (optional)
-------------
+-----------------------
 
 If NTP servers are supposed to be used for time sync by the device,
 those can provided via
@@ -109,28 +109,27 @@ However, according to this manual DNS names are allowed, too.
 
 
 Resilience Settings (optional)
-------------
+------------------------------
 The following optional settings may be set to adapt the resilience behavior behavior of the module:
 
 - ``resilience_initial_connection_retries`` and ``resilience_initial_connection_retry_delay`` define the number of attempted
-retries and delay inbetween in  milliseconds in case of an error (failed connection or unexpected response from the device) during the module
-initialization. This potentially delays module initialization, but may prevent a module failure at startup (e.g., if the device
-is not ready yet).
+  retries and delay inbetween in  milliseconds in case of an error (failed connection or unexpected response from the device) during the module
+  initialization. This potentially delays module initialization, but may prevent a module failure at startup (e.g., if the device
+  is not ready yet).
 - ``resilience_transaction_request_retries`` and ``resilience_transaction_request_retry_delay`` similarly
-define the according values but for connection attempts during a transaction start or stop command handling.
-In order to prevent a greater command return delay (and since the device is assumed to be set up and running when
-transactions are started), default values are considerably lower than the ones for initialization.
+  define the according values but for connection attempts during a transaction start or stop command handling.
+  In order to prevent a greater command return delay (and since the device is assumed to be set up and running when
+  transactions are started), default values are considerably lower than the ones for initialization.
 
 
 
 Notes
-===========
+=====
 
 Time Sync
-------------
+---------
 
 The powermeter device needs to be regularly time synced in order to function properly
-(cf.
 The module is capable of performing regular syncs with the system time, or -- alternatively --
 allows to setup NTP servers (cf. the configuration parameters above).
 
@@ -143,7 +142,7 @@ time sync) should be persisted (cf. the `Communication protocols manual` section
 This is payed regard to in the module.
 
 Error Handling / Resilience
-------------
+---------------------------
 
 In general responses are checked for a valid response code and body. In case of validation errors or an http error,
 requests are retried to provide some resilience.
@@ -155,7 +154,7 @@ For start/stop transaction requests, 3 retry attempts with a 200ms delay are mad
 .. _TLS Notes:
 
 TLS Notes & Limitations
-------------
+-----------------------
 
 The device brings its own self-signed certificate. Since there is no manufacturer root CA, this certificate must be provided
 in order to establish a reasonable TLS connection. Note that the provided certificate uses a private key of 1024bit length, which
@@ -178,7 +177,7 @@ TLS can be enabled via:
   }'
 
 References / Links
-============
+==================
 - `Official product page https://www.lem.com/en/dcbm-400-600 <https://www.lem.com/en/dcbm-400-600>`_
 - `Operation Manual <https://www.lem.com/en/file/10314/download>`_
 - `Communication protocols manual <https://www.lem.com/en/file/11215/download>`_
