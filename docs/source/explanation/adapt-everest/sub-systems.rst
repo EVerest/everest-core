@@ -85,7 +85,7 @@ of energy. It may not be needed e.g. in a private installation.
 
 You can use any hardware driver module that provides a 
 :doc:`powermeter interface </reference/interfaces/powermeter>`
-implementation. For the Belaybox, we could have used the
+implementation. For the BelayBox, we could have used the
 *powermeter* implementation of the YetiDriver (which uses the Yeti
 onboard metering). In most configurations, an external DIN-rail power
 meter is used with an RS485/ModBus connection, so we use the
@@ -311,7 +311,7 @@ module takes a simple ASCII file (see config) with one line per token.
 All tokens listed in this file are considered valid, all others are invalid.
 With this Auth system, we already have a very simple version that can be
 used to authenticate RFID tokens, that have been previously added to the
-whitelist file.
+local whitelist file.
 
 OCPP sub-system
 ==================
@@ -327,8 +327,8 @@ It provides tokens when a *RemoteStart* /
 *RequestStartTransactionRequest* command is issued, and it is used as a
 token validator if e.g. an RFID or Plug&Charge contract should be
 validated in the CSMS. So we will connect both of those connections and
-remove the local whitelist. OCPP has its own internal local whitelist
-and cache implementation, that is according to the standard:
+remove the LocalWhiteListTokenValidator. OCPP has its own internal local whitelist
+and authorization cache implementation, that is according to the standard:
 
 .. figure:: images/remove-whitelist.png
    :alt: Remove Whitelist
