@@ -8,4 +8,8 @@ external_energy_limits_consumer_API
 
 :ref:`Link <everest_modules_external_energy_limits_consumer_API>` to the module's reference.
 
-See ``doc/everest_api_specs/external_energy_limits_consumer_API/asyncapi.yaml`` for a full AsycAPI specification.
+The complete API specification can be found in the
+
+``docs/source/reference/EVerest_API/external_energy_limits_consumer_API.yaml``
+
+file in the source repository, or in the `AsyncAPI HTML documentation <../../../reference/api/external_energy_limits_consumer_API/index.html>`_ automatically generated from it.

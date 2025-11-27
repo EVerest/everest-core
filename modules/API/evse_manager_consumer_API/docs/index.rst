@@ -8,7 +8,11 @@ evse_manager_consumer_API
 
 :ref:`Link <everest_modules_evse_manager_consumer_API>` to the module's reference.
 
-See ``doc/everest_api_specs/evse_manager_consumer_API/asyncapi.yaml`` for a full AsycAPI specification.
+The complete API specification can be found in the
+
+``docs/source/reference/EVerest_API/evse_manager_consumer_API.yaml``
+
+file in the source repository, or in the `AsyncAPI HTML documentation <../../../reference/api/evse_manager_consumer_API/index.html>`_ automatically generated from it.
 
 Session Info
 =============
