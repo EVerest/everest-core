@@ -69,7 +69,7 @@ private:
 
     void update_data_is_valid();
     // Internal method to set the current limit in the AC charge parameters without checking for pending requests
-    void set_ac_charge_param_evse_current_limit_internal(int32_t phase_count);
+    void set_ac_charge_param_evse_current_limit_internal(float max_current);
 
 public:
     EVSEStatusStore();
