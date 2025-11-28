@@ -17,6 +17,11 @@ config:
     description: >-
       Boolean dictating whether we should let the EV know we support HTTPS
     type: boolean
+  vas_setup_script:
+    description: >-
+      Script name, which is executed to setup the VaS network
+    type: string
+    default: "vas-internet-setup.sh"
 provides:
   iso15118_vas:
     interface: ISO15118_vas

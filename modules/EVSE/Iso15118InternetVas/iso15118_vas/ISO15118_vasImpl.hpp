@@ -55,7 +55,6 @@ private:
     std::vector<int>
     get_selected_internet_ports(const std::vector<types::iso15118_vas::SelectedService>& selected_services);
 
-    std::filesystem::path scripts_path;
     bool internet_service_running{false};
     std::mutex internet_mutex;
     std::string active_ports;
