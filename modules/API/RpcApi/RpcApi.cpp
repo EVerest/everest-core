@@ -179,12 +179,17 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
         evse_data.evsestatus.set_charge_protocol(var_selected_protocol);
     });
 
-    evse_manager->subscribe_limits([this, &evse_data](const types::evse_manager::Limits& limits) {
+    evse_manager->subscribe_enforced_limits([this, &evse_data](const types::energy::EnforcedLimits& enforced_limits) {
         // set the external limits in the data store
         if (evse_data.evseinfo.get_is_ac_transfer_mode()) {
-            evse_data.evsestatus.set_ac_charge_param_evse_max_current(limits.max_current);
+            const auto& max_current = enforced_limits.limits_root_side.ac_max_current_A;
+            if (max_current.has_value()) {
+                evse_data.evsestatus.set_ac_charge_param_evse_max_current(max_current.value().value);
+            }
+
             RPCDataTypes::ACChargeStatusObj ac_charge_status;
-            ac_charge_status.evse_active_phase_count = limits.nr_of_phases_available;
+            const auto& max_phase_count = enforced_limits.limits_root_side.ac_max_phase_count;
+            ac_charge_status.evse_active_phase_count = max_phase_count.has_value() ? max_phase_count.value().value : 3;
             evse_data.evsestatus.set_ac_charge_status(ac_charge_status);
         } else {
             evse_data.evsestatus.set_ac_charge_param(std::nullopt);
