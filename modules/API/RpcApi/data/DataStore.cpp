@@ -178,7 +178,7 @@ void EVSEStatusStore::set_ac_charge_param_evse_max_phase_count(int32_t phase_cou
     }
 }
 
-void EVSEStatusStore::set_ac_charge_param_evse_current_limit_internal(int32_t phase_count) {
+void EVSEStatusStore::set_ac_charge_param_evse_current_limit_internal(float max_current) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     auto& ac_charge_param = this->dataobj.ac_charge_param;
 
@@ -188,8 +188,8 @@ void EVSEStatusStore::set_ac_charge_param_evse_current_limit_internal(int32_t ph
 
     auto& evse_max_current = ac_charge_param.value().evse_max_current;
 
-    if (!almost_equal(evse_max_current, phase_count)) {
-        evse_max_current = phase_count;
+    if (!almost_equal(evse_max_current, max_current)) {
+        evse_max_current = max_current;
         data_lock.unlock();
         this->notify_data_changed();
     }
