@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Pionix GmbH and Contributors to EVerest
+#
+"""
+author: andreas.heinrich@pionix.de
+This script checks whether a directory exists or not and returns zero based on the flags provided.
+"""
+
+
+import argparse
+from pathlib import Path
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Checks whether a directory exists or not and returns zero based on the flags provided')
+    parser.add_argument(
+        '--directory',
+        type=Path,
+        dest='directory',
+        action='store',
+        required=False,
+        help='Directory to check for existence'
+    )
+    parser.add_argument(
+        '--file',
+        type=Path,
+        dest='file',
+        action='store',
+        required=False,
+        help='Path to a file to check for existence'
+    )
+    parser.add_argument(
+        '--return-zero-if-exists',
+        action='store_true',
+        help='Return zero if the file/directory exists',
+        dest='return_zero_if_exists',
+    )
+    parser.add_argument(
+        '--return-zero-if-not-exists',
+        action='store_true',
+        help='Return zero if the file/directory does not exist',
+        dest='return_zero_if_not_exists',
+    )
+    args = parser.parse_args()
+
+    if not args.directory and not args.file:
+        raise ValueError("Either --directory or --file must be specified")
+    if args.return_zero_if_exists and args.return_zero_if_not_exists:
+        raise ValueError("Cannot use both --return-zero-if-exists and --return-zero-if-not-exists at the same time")
+
+    if args.file:
+        if not args.file.is_absolute():
+            raise ValueError("File path must be absolute")
+        if args.return_zero_if_exists:
+            if not args.file.exists():
+                print(f"❌ File does not exist at {args.file}")
+                exit(1)
+            if not args.file.is_file():
+                print(f"❌ Path exists but is not a file at {args.file}")
+                exit(2)
+            print(f"✅ File exists at {args.file}")
+            exit(0)
+        elif args.return_zero_if_not_exists:
+            if args.file.is_file():
+                print(f"❌ File exists at {args.file}")
+                exit(1)
+            if args.file.exists():
+                print(f"❌ Path exists but is not a file at {args.file}")
+                exit(2)
+            print(f"✅ File does not exist at {args.file}")
+            exit(0)
+        else:
+            raise ValueError("Either --return-zero-if-exists or --return-zero-if-not-exists must be specified")
+    else:
+        if not args.directory.is_absolute():
+            raise ValueError("Directory path must be absolute")
+        if args.return_zero_if_exists:
+            if not args.directory.exists():
+                print(f"❌ Directory does not exist at {args.directory}")
+                exit(1)
+            if not args.directory.is_dir():
+                print(f"❌ Path exists but is not a directory at {args.directory}")
+                exit(2)
+            print(f"✅ Directory exists at {args.directory}")
+            exit(0)
+        elif args.return_zero_if_not_exists:
+            if args.directory.is_dir():
+                print(f"❌ Directory exists at {args.directory}")
+                exit(1)
+            if args.directory.exists():
+                print(f"❌ Path exists but is not a directory at {args.directory}")
+                exit(2)
+            print(f"✅ Directory does not exist at {args.directory}")
+            exit(0)
+        else:
+            raise ValueError("Either --return-zero-if-exists or --return-zero-if-not-exists must be specified")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"Error: {e}")
+        exit(1)
