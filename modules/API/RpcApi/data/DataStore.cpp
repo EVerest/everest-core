@@ -129,33 +129,34 @@ void EVSEStatusStore::set_ac_charge_param_evse_max_current(float current_limit) 
     if (current_limit == 0.0f) {
         return;
     }
-    configured_current_limit = current_limit;
+    this->configured_current_limit = current_limit;
 
     // Check if a new current limit is requested
-    if (requested_current_limit != 0.0f) {
+    if (this->requested_current_limit != 0.0f) {
         // Check if the requested limit is applied
-        cv_current_limit_applied.notify_all();
+        this->cv_current_limit_applied.notify_all();
         // We are skipping applying the new current limit, as long as a new limit is requested and not yet applied
         return;
     }
     // Apply the new current limit
-    EVLOG_debug << "Applying new current limit: " << configured_current_limit;
-    set_ac_charge_param_evse_current_limit_internal(configured_current_limit);
+    EVLOG_debug << "Applying new current limit: " << this->configured_current_limit;
+    set_ac_charge_param_evse_current_limit_internal(this->configured_current_limit);
 }
 
 bool EVSEStatusStore::wait_until_current_limit_applied(float requested_limit, std::chrono::milliseconds timeout_ms) {
     std::unique_lock<std::mutex> lock(mtx_current_limit_applied);
     bool is_current_limit_applied{false};
-    requested_current_limit = requested_limit;
-    if (cv_current_limit_applied.wait_for(
-            lock, timeout_ms, [this] { return almost_equal(configured_current_limit, requested_current_limit); })) {
-        requested_current_limit = 0.0f;
+    this->requested_current_limit = requested_limit;
+    if (this->cv_current_limit_applied.wait_for(lock, timeout_ms, [this] {
+            return almost_equal(this->configured_current_limit, this->requested_current_limit);
+        })) {
+        this->requested_current_limit = 0.0f;
         is_current_limit_applied = true;
-        EVLOG_debug << "Current limit applied: " << configured_current_limit;
+        EVLOG_debug << "Current limit applied: " << this->configured_current_limit;
     } else {
         // If there is already a new limit configured, notify it now
-        requested_current_limit = 0.0f;
-        set_ac_charge_param_evse_current_limit_internal(configured_current_limit);
+        this->requested_current_limit = 0.0f;
+        set_ac_charge_param_evse_current_limit_internal(this->configured_current_limit);
     }
 
     return is_current_limit_applied;
