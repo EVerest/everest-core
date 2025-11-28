@@ -1,0 +1,46 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
+
+filegroup(
+    name = "templates",
+    srcs = glob(["jinja/**/*"]),
+)
+
+rust_library(
+    name = "everestrs-build",
+    srcs = glob(["src/**/*.rs"], exclude = ["src/bin/**"]),
+    deps = [
+        "@everest_framework_crate_index//:anyhow",
+        "@everest_framework_crate_index//:argh",
+        "@everest_framework_crate_index//:convert_case",
+        "@everest_framework_crate_index//:minijinja",
+        "@everest_framework_crate_index//:serde",
+        "@everest_framework_crate_index//:serde_json",
+        "@everest_framework_crate_index//:serde_yaml",
+    ],
+    compile_data = ["@everest-framework//everestrs/everestrs-build:templates"],
+    visibility = ["//visibility:public"],
+    edition = "2021",
+)
+
+rust_binary(
+    name = "codegen",
+    srcs = glob(["src/bin/**/*.rs"]),
+    deps = [
+        "@everest_framework_crate_index//:anyhow",
+        "@everest_framework_crate_index//:argh",
+        "@everest_framework_crate_index//:convert_case",
+        "@everest_framework_crate_index//:minijinja",
+        "@everest_framework_crate_index//:serde",
+        "@everest_framework_crate_index//:serde_json",
+        "@everest_framework_crate_index//:serde_yaml",
+        "@everest-framework//everestrs/everestrs-build:everestrs-build",
+    ],
+    visibility = ["//visibility:public"],
+    edition = "2021",
+)
+
+rust_test(
+    name = "test",
+    crate = ":everestrs-build",
+    edition = "2021",
+)

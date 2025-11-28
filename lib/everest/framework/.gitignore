@@ -1,0 +1,18 @@
+*build
+*build-cross
+/build*
+!build.rs
+!everestrs-build
+target
+bazel-bin
+bazel-out
+bazel-everest-framework
+bazel-testlogs
+watcher.lua
+workspace.yaml
+
+# Clang
+.cache/
+
+# Bazel
+/bazel-*

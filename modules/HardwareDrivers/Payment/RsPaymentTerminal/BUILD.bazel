@@ -15,7 +15,9 @@ cargo_build_script(
         "@everest-core//interfaces",
         "@everest-core//types",
     ],
-    deps = all_crate_deps(build = True),
+    deps = all_crate_deps(build = True) + [
+        "@everest-framework//everestrs/everestrs-build",
+    ],
 )
 
 rust_binary(
@@ -26,6 +28,7 @@ rust_binary(
     visibility = ["//visibility:public"],
     deps = all_crate_deps(normal = True) + [
         ":build_script",
+        "@everest-framework//everestrs/everestrs",
         "@everest-framework//everestrs/everestrs:everestrs_sys",
         "@everest-framework//everestrs/everestrs:everestrs_bridge",
     ],

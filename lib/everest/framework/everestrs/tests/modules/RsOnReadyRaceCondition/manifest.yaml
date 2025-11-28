@@ -1,0 +1,13 @@
+description: Simple Example
+provides:
+  example:
+    interface: example
+    description: An example interface.
+requires:
+  other:
+    interface: example
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Everest authors
+enable_external_mqtt: false
