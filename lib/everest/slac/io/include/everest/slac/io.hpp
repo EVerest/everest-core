@@ -20,6 +20,9 @@ public:
     void send(slac::messages::HomeplugMessage& msg);
     void quit();
 
+    // cannot be const while libslac's SlacChannel::get_mac_addr() isn't const
+    const uint8_t* get_mac_addr() /* const */;
+
 private:
     void loop();
     slac::Channel slac_channel;

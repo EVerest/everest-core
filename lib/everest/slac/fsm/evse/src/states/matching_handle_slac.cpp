@@ -305,12 +305,25 @@ void MatchingState::handle_cm_atten_profile_ind(const slac::messages::cm_atten_p
     session->set_next_timeout(FINALIZE_SOUNDING_DELAY_MS);
 }
 
-static bool validate_cm_atten_char_rsp(const slac::messages::cm_atten_char_rsp& msg) {
+static bool validate_cm_atten_char_rsp(const slac::messages::cm_atten_char_rsp& msg, const MatchingSession& session) {
 
     if (msg.application_type not_eq slac::defs::COMMON_APPLICATION_TYPE) {
         return false;
     }
     if (msg.security_type not_eq slac::defs::COMMON_SECURITY_TYPE) {
+        return false;
+    }
+    if (memcmp(msg.source_address, session.ev_mac, ETH_ALEN)) {
+        return false;
+    }
+    uint8_t source_id_ref[slac::messages::SOURCE_ID_LEN];
+    memset(source_id_ref, 0, sizeof(source_id_ref));
+    if (memcmp(source_id_ref, msg.source_id, slac::messages::SOURCE_ID_LEN)) {
+        return false;
+    }
+    uint8_t resp_id_ref[slac::messages::RESP_ID_LEN];
+    memset(resp_id_ref, 0, sizeof(resp_id_ref));
+    if (memcmp(resp_id_ref, msg.resp_id, slac::messages::RESP_ID_LEN)) {
         return false;
     }
     if (msg.result not_eq slac::defs::CM_ATTEN_CHAR_RSP_RESULT) {
@@ -322,14 +335,14 @@ static bool validate_cm_atten_char_rsp(const slac::messages::cm_atten_char_rsp& 
 
 void MatchingState::handle_cm_atten_char_rsp(const slac::messages::cm_atten_char_rsp& msg) {
 
-    if (not validate_cm_atten_char_rsp(msg)) {
-        ctx.log_warn("Invalid CM_ATTEN_CHAR_RSP received, ignoring");
-        return;
-    }
-
     auto session = find_session(sessions, tmp_ev_mac, msg.run_id);
     if (!session) {
         ctx.log_warn("No session found for CM_ATTEN_CHAR_RSP");
+        return;
+    }
+
+    if (not validate_cm_atten_char_rsp(msg, *session)) {
+        session_log(ctx, *session, LogLevel::WARN, "Invalid CM_ATTEN_CHAR_RSP received, ignoring");
         return;
     }
 
@@ -348,6 +361,7 @@ void MatchingState::handle_cm_atten_char_rsp(const slac::messages::cm_atten_char
 
 void MatchingState::handle_cm_validate_req(const slac::messages::cm_validate_req& msg) {
     // NOTE: CM_VALIDATE.REQ does not specify its session
+    // EVSE allowed to not implement: [V2G3-A09-51]
     ctx.log_warn("Received CM_VALIDATE.REQ / not implemented - will return failure code");
 
     slac::messages::cm_validate_cnf validate_cnf;
@@ -358,7 +372,8 @@ void MatchingState::handle_cm_validate_req(const slac::messages::cm_validate_req
     ctx.send_slac_message(tmp_ev_mac, validate_cnf);
 }
 
-static bool validate_cm_slac_match_req(const slac::messages::cm_slac_match_req& msg) {
+static bool validate_cm_slac_match_req(const slac::messages::cm_slac_match_req& msg, const MatchingSession& session,
+                                       const Context& ctx) {
 
     if (msg.application_type not_eq slac::defs::COMMON_APPLICATION_TYPE) {
         return false;
@@ -369,16 +384,34 @@ static bool validate_cm_slac_match_req(const slac::messages::cm_slac_match_req& 
     if (msg.mvf_length not_eq slac::defs::CM_SLAC_MATCH_REQ_MVF_LENGTH) {
         return false;
     }
-
+    // PEV ID = 0x00 TC_SECC_CMN_VTB_CmSlacMatch_013/014(?)
+    uint8_t pev_id_ref[slac::messages::PEV_ID_LEN];
+    memset(pev_id_ref, 0, sizeof(pev_id_ref));
+    if (memcmp(pev_id_ref, msg.pev_id, slac::messages::PEV_ID_LEN)) {
+        return false;
+    }
+    // PEV MAC TC_SECC_CMN_VTB_CmSlacMatch_015/016(?)
+    if (memcmp(msg.pev_mac, session.ev_mac, ETH_ALEN)) {
+        return false;
+    }
+    // EVSE ID = 0x00 TC_SECC_CMN_VTB_CmSlacMatch_017/018(?)
+    uint8_t evse_id_ref[slac::messages::EVSE_ID_LEN];
+    memset(evse_id_ref, 0, sizeof(evse_id_ref));
+    if (memcmp(evse_id_ref, msg.evse_id, slac::messages::EVSE_ID_LEN)) {
+        return false;
+    }
+    // EVSE MAC TC_SECC_CMN_VTB_CmSlacMatch_019/020
+    if (memcmp(ctx.evse_mac, msg.evse_mac, ETH_ALEN)) {
+        return false;
+    }
+    // RunID TC_SECC_CMN_VTB_CmSlacMatch_021/022
+    if (memcmp(msg.run_id, session.run_id, slac::defs::RUN_ID_LEN)) {
+        return false;
+    }
     return true;
 }
 
 void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match_req& msg) {
-
-    if (not validate_cm_slac_match_req(msg)) {
-        ctx.log_warn("Invalid CM_SLAC_MATCH_REQ received, ignoring");
-        return;
-    }
 
     auto session = find_session(sessions, tmp_ev_mac, msg.run_id);
     if (!session) {
@@ -386,8 +419,14 @@ void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match
         return;
     }
 
-    if (session->state != MatchingSubState::WAIT_FOR_SLAC_MATCH) {
-        session_log(ctx, *session, LogLevel::WARN, "needs to be in state WAIT_FOR_SLAC_MATCH for CM_SLAC_MATCH_REQ");
+    if (not validate_cm_slac_match_req(msg, *session, ctx)) {
+        session_log(ctx, *session, LogLevel::WARN, "Invalid CM_SLAC_MATCH_REQ received, ignoring");
+        return;
+    }
+
+    if (session->state != MatchingSubState::WAIT_FOR_SLAC_MATCH && session->state != MatchingSubState::MATCH_COMPLETE) {
+        session_log(ctx, *session, LogLevel::WARN,
+                    "needs to be in state WAIT_FOR_SLAC_MATCH or MATCH_COMPLETE for CM_SLAC_MATCH_REQ");
         return;
     }
 
