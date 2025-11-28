@@ -656,6 +656,135 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
         this->mod->p_charger->publish_ev_termination(termination_ctx);
     };
 
+    callbacks.response_code = [this](const iso15118::message_20::datatypes::ResponseCode& code) {
+        namespace rc = iso15118::message_20::datatypes;
+
+        switch (code) {
+        case rc::ResponseCode::OK:
+            this->mod->p_charger->publish_response_code("OK");
+            break;
+        case rc::ResponseCode::OK_CertificateExpiresSoon:
+            this->mod->p_charger->publish_response_code("OK_CertificateExpiresSoon");
+            break;
+        case rc::ResponseCode::OK_NewSessionEstablished:
+            this->mod->p_charger->publish_response_code("OK_NewSessionEstablished");
+            break;
+        case rc::ResponseCode::OK_OldSessionJoined:
+            this->mod->p_charger->publish_response_code("OK_OldSessionJoined");
+            break;
+        case rc::ResponseCode::OK_PowerToleranceConfirmed:
+            this->mod->p_charger->publish_response_code("OK_PowerToleranceConfirmed");
+            break;
+        case rc::ResponseCode::WARNING_AuthorizationSelectionInvalid:
+            this->mod->p_charger->publish_response_code("WARNING_AuthorizationSelectionInvalid");
+            break;
+        case rc::ResponseCode::WARNING_CertificateExpired:
+            this->mod->p_charger->publish_response_code("WARNING_CertificateExpired");
+            break;
+        case rc::ResponseCode::WARNING_CertificateNotYetValid:
+            this->mod->p_charger->publish_response_code("WARNING_CertificateNotYetValid");
+            break;
+        case rc::ResponseCode::WARNING_CertificateRevoked:
+            this->mod->p_charger->publish_response_code("WARNING_CertificateRevoked");
+            break;
+        case rc::ResponseCode::WARNING_CertificateValidationError:
+            this->mod->p_charger->publish_response_code("WARNING_CertificateValidationError");
+            break;
+        case rc::ResponseCode::WARNING_ChallengeInvalid:
+            this->mod->p_charger->publish_response_code("WARNING_ChallengeInvalid");
+            break;
+        case rc::ResponseCode::WARNING_EIMAuthorizationFailure:
+            this->mod->p_charger->publish_response_code("WARNING_EIMAuthorizationFailure");
+            break;
+        case rc::ResponseCode::WARNING_eMSPUnknown:
+            this->mod->p_charger->publish_response_code("WARNING_eMSPUnknown");
+            break;
+        case rc::ResponseCode::WARNING_EVPowerProfileViolation:
+            this->mod->p_charger->publish_response_code("WARNING_EVPowerProfileViolation");
+            break;
+        case rc::ResponseCode::WARNING_GeneralPnCAuthorizationError:
+            this->mod->p_charger->publish_response_code("WARNING_GeneralPnCAuthorizationError");
+            break;
+        case rc::ResponseCode::WARNING_NoCertificateAvailable:
+            this->mod->p_charger->publish_response_code("WARNING_NoCertificateAvailable");
+            break;
+        case rc::ResponseCode::WARNING_NoContractMatchingPCIDFound:
+            this->mod->p_charger->publish_response_code("WARNING_NoContractMatchingPCIDFound");
+            break;
+        case rc::ResponseCode::WARNING_PowerToleranceNotConfirmed:
+            this->mod->p_charger->publish_response_code("WARNING_PowerToleranceNotConfirmed");
+            break;
+        case rc::ResponseCode::WARNING_ScheduleRenegotiationFailed:
+            this->mod->p_charger->publish_response_code("WARNING_ScheduleRenegotiationFailed");
+            break;
+        case rc::ResponseCode::WARNING_StandbyNotAllowed:
+            this->mod->p_charger->publish_response_code("WARNING_StandbyNotAllowed");
+            break;
+        case rc::ResponseCode::WARNING_WPT:
+            this->mod->p_charger->publish_response_code("WARNING_WPT");
+            break;
+        case rc::ResponseCode::FAILED:
+            this->mod->p_charger->publish_response_code("FAILED");
+            break;
+        case rc::ResponseCode::FAILED_AssociationError:
+            this->mod->p_charger->publish_response_code("FAILED_AssociationError");
+            break;
+        case rc::ResponseCode::FAILED_ContactorError:
+            this->mod->p_charger->publish_response_code("FAILED_ContactorError");
+            break;
+        case rc::ResponseCode::FAILED_EVPowerProfileInvalid:
+            this->mod->p_charger->publish_response_code("FAILED_EVPowerProfileInvalid");
+            break;
+        case rc::ResponseCode::FAILED_EVPowerProfileViolation:
+            this->mod->p_charger->publish_response_code("FAILED_EVPowerProfileViolation");
+            break;
+        case rc::ResponseCode::FAILED_MeteringSignatureNotValid:
+            this->mod->p_charger->publish_response_code("FAILED_MeteringSignatureNotValid");
+            break;
+        case rc::ResponseCode::FAILED_NoEnergyTransferServiceSelected:
+            this->mod->p_charger->publish_response_code("FAILED_NoEnergyTransferServiceSelected");
+            break;
+        case rc::ResponseCode::FAILED_NoServiceRenegotiationSupported:
+            this->mod->p_charger->publish_response_code("FAILED_NoServiceRenegotiationSupported");
+            break;
+        case rc::ResponseCode::FAILED_PauseNotAllowed:
+            this->mod->p_charger->publish_response_code("FAILED_PauseNotAllowed");
+            break;
+        case rc::ResponseCode::FAILED_PowerDeliveryNotApplied:
+            this->mod->p_charger->publish_response_code("FAILED_PowerDeliveryNotApplied");
+            break;
+        case rc::ResponseCode::FAILED_PowerToleranceNotConfirmed:
+            this->mod->p_charger->publish_response_code("FAILED_PowerToleranceNotConfirmed");
+            break;
+        case rc::ResponseCode::FAILED_ScheduleRenegotiation:
+            this->mod->p_charger->publish_response_code("FAILED_ScheduleRenegotiation");
+            break;
+        case rc::ResponseCode::FAILED_ScheduleSelectionInvalid:
+            this->mod->p_charger->publish_response_code("FAILED_ScheduleSelectionInvalid");
+            break;
+        case rc::ResponseCode::FAILED_SequenceError:
+            this->mod->p_charger->publish_response_code("FAILED_SequenceError");
+            break;
+        case rc::ResponseCode::FAILED_ServiceIDInvalid:
+            this->mod->p_charger->publish_response_code("FAILED_ServiceIDInvalid");
+            break;
+        case rc::ResponseCode::FAILED_ServiceSelectionInvalid:
+            this->mod->p_charger->publish_response_code("FAILED_ServiceSelectionInvalid");
+            break;
+        case rc::ResponseCode::FAILED_SignatureError:
+            this->mod->p_charger->publish_response_code("FAILED_SignatureError");
+            break;
+        case rc::ResponseCode::FAILED_UnknownSession:
+            this->mod->p_charger->publish_response_code("FAILED_UnknownSession");
+            break;
+        case rc::ResponseCode::FAILED_WrongChargeParameter:
+            this->mod->p_charger->publish_response_code("FAILED_WrongChargeParameter");
+            break;
+        default:
+            this->mod->p_charger->publish_response_code("FAILED");
+        }
+    };
+
     return callbacks;
 }
 

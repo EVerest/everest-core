@@ -452,3 +452,7 @@ vars:
       The EV termination code as described in ISO15118-20.
     type: object
     $ref: /iso15118#/EvTermination
+  response_code:
+    description:
+      The response code send to EV
+    type: string
