@@ -1187,6 +1187,8 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
         } else {
             res->ResponseCode = iso2_responseCodeType_FAILED;
         }
+    } else if (conn->ctx->session.authorization_rejected == true) {
+        res->ResponseCode = iso2_responseCodeType_FAILED;
     }
 
 error_out:
