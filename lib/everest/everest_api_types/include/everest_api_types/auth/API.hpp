@@ -21,6 +21,8 @@ enum class AuthorizationStatus {
     NotAtThisLocation,
     NotAtThisTime,
     Unknown,
+    PinRequired,
+    Timeout,
 };
 
 enum class CertificateStatus {

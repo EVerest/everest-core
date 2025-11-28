@@ -1,6 +1,6 @@
 # Add all *.yaml files that the everest_api_types library depends upon here.
 # Add the SHA256 hashes.
-types/authorization.yaml,9743f3c1af9be2ee33dab1be5bf8da4a85a83a352d925c38d30c2c87507b2706
+types/authorization.yaml,1731d780f2d127afc882fcfed268066ac4763f77fd1f630f5141f9ae22b18700
 types/board_support_common.yaml,68570b2da730a5fb340c5c9c7a8f7dc93979d5ab6b2b78ea3210bb869ee693ad
 types/dc_external_derate.yaml,d5a01bd02cbe22d4e05da39dfc534e00287939e0d8c1faa90122110a89ce767c
 types/display_message.yaml,943864fe458ce04da31fb7001dce9a3529fa2dc11d9a415f95814712dd4a5d18
