@@ -48,6 +48,34 @@ template <class SrcT> auto vecToInternal(std::vector<SrcT> const& src) {
 
 namespace iso15118_charger {
 
+CertificateActionEnum_Internal to_internal_api(CertificateActionEnum_External const& val) {
+    using SrcT = CertificateActionEnum_External;
+    using TarT = CertificateActionEnum_Internal;
+
+    switch (val) {
+    case SrcT::Install:
+        return TarT::Install;
+    case SrcT::Update:
+        return TarT::Update;
+    }
+
+    throw std::out_of_range("Unexpected value for CertificateActionEnum_External");
+}
+
+CertificateActionEnum_External to_external_api(CertificateActionEnum_Internal const& val) {
+    using SrcT = CertificateActionEnum_Internal;
+    using TarT = CertificateActionEnum_External;
+
+    switch (val) {
+    case SrcT::Install:
+        return TarT::Install;
+    case SrcT::Update:
+        return TarT::Update;
+    }
+
+    throw std::out_of_range("Unexpected value for CertificateActionEnum_Internal");
+}
+
 EnergyTransferMode_Internal to_internal_api(EnergyTransferMode_External const& val) {
     using SrcT = EnergyTransferMode_External;
     using TarT = EnergyTransferMode_Internal;
@@ -154,6 +182,38 @@ Status_External to_external_api(Status_Internal const& val) {
     }
 
     throw std::out_of_range("Unexpected value for Status_Internal");
+}
+
+RequestExiStreamSchema_Internal to_internal_api(RequestExiStreamSchema_External const& val) {
+    RequestExiStreamSchema_Internal result;
+    result.exi_request = val.exi_request;
+    result.iso15118_schema_version = val.iso15118_schema_version;
+    result.certificate_action = to_internal_api(val.certificate_action);
+    return result;
+}
+
+RequestExiStreamSchema_External to_external_api(RequestExiStreamSchema_Internal const& val) {
+    RequestExiStreamSchema_External result;
+    result.exi_request = val.exi_request;
+    result.iso15118_schema_version = val.iso15118_schema_version;
+    result.certificate_action = to_external_api(val.certificate_action);
+    return result;
+}
+
+ResponseExiStreamStatus_Internal to_internal_api(ResponseExiStreamStatus_External const& val) {
+    ResponseExiStreamStatus_Internal result;
+    result.status = to_internal_api(val.status);
+    result.certificate_action = to_internal_api(val.certificate_action);
+    result.exi_response = val.exi_response;
+    return result;
+}
+
+ResponseExiStreamStatus_External to_external_api(ResponseExiStreamStatus_Internal const& val) {
+    ResponseExiStreamStatus_External result;
+    result.status = to_external_api(val.status);
+    result.certificate_action = to_external_api(val.certificate_action);
+    result.exi_response = val.exi_response;
+    return result;
 }
 
 EnergyTransferModeList_Internal to_internal_api(EnergyTransferModeList_External const& val) {

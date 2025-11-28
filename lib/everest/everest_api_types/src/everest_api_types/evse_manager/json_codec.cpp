@@ -469,6 +469,25 @@ void from_json(json const& j, SessionEvent& k) {
     }
 }
 
+void to_json(json& j, Limits const& k) noexcept {
+    j = json{
+        {"max_current", k.max_current},
+        {"nr_of_phases_available", k.nr_of_phases_available},
+    };
+    if (k.uuid) {
+        j["uuid"] = k.uuid.value();
+    }
+}
+
+void from_json(json const& j, Limits& k) {
+    k.max_current = j.at("max_current");
+    k.nr_of_phases_available = j.at("nr_of_phases_available");
+
+    if (j.contains("uuid")) {
+        k.uuid.emplace(j.at("uuid"));
+    }
+}
+
 void to_json(json& j, EVInfo const& k) noexcept {
     j = json({});
     if (k.soc) {
@@ -576,6 +595,40 @@ void from_json(json const& j, EVInfo& k) {
     if (j.contains("battery_bulk_soc")) {
         k.battery_bulk_soc.emplace(j.at("battery_bulk_soc"));
     }
+}
+
+void to_json(json& j, CarManufacturer const& k) noexcept {
+    switch (k) {
+    case CarManufacturer::VolkswagenGroup:
+        j = "VolkswagenGroup";
+        return;
+    case CarManufacturer::Tesla:
+        j = "Tesla";
+        return;
+    case CarManufacturer::Unknown:
+        j = "Unknown";
+        return;
+    }
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::evse_manger::CarManufacturer";
+}
+
+void from_json(json const& j, CarManufacturer& k) {
+    std::string s = j;
+    if (s == "VolkswagenGroup") {
+        k = CarManufacturer::VolkswagenGroup;
+        return;
+    }
+    if (s == "Tesla") {
+        k = CarManufacturer::Tesla;
+        return;
+    }
+    if (s == "Unknown") {
+        k = CarManufacturer::Unknown;
+        return;
+    }
+
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type API_V1_0_CarManufacturer");
 }
 
 void to_json(json& j, SessionStarted const& k) noexcept {
@@ -1122,6 +1175,18 @@ void to_json(json& j, EnableDisableRequest const& k) noexcept {
 void from_json(json const& j, EnableDisableRequest& k) {
     k.connector_id = j.at("connector_id");
     k.source = j.at("source");
+}
+
+void to_json(json& j, AuthorizeResponseArgs const& k) noexcept {
+    j = json{
+        {"token", k.token},
+        {"result", k.result},
+    };
+}
+
+void from_json(json const& j, AuthorizeResponseArgs& k) {
+    k.token = j.at("token");
+    k.result = j.at("result");
 }
 
 void to_json(json& j, PlugAndChargeConfiguration const& k) noexcept {

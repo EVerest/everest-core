@@ -138,6 +138,12 @@ struct Error {
     ErrorState state;
 };
 
+struct Limits {
+    float max_current;
+    int32_t nr_of_phases_available;
+    std::optional<std::string> uuid;
+};
+
 struct EVInfo {
     std::optional<float> soc;
     std::optional<float> present_voltage;
@@ -156,6 +162,12 @@ struct EVInfo {
     std::optional<float> battery_capacity;
     std::optional<float> battery_full_soc;
     std::optional<float> battery_bulk_soc;
+};
+
+enum class CarManufacturer {
+    VolkswagenGroup,
+    Tesla,
+    Unknown,
 };
 
 enum class ConnectorTypeEnum {
@@ -233,6 +245,11 @@ struct SessionEvent {
 struct EnableDisableRequest {
     int32_t connector_id;
     EnableDisableSource source;
+};
+
+struct AuthorizeResponseArgs {
+    auth::ProvidedIdToken token;
+    auth::ValidationResult result;
 };
 
 struct PlugAndChargeConfiguration {

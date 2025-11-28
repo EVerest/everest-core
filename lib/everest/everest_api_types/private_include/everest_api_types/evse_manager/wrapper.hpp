@@ -41,11 +41,23 @@ using SessionEvent_External = SessionEvent;
 SessionEvent_Internal to_internal_api(SessionEvent_External const& val);
 SessionEvent_External to_external_api(SessionEvent_Internal const& val);
 
+using Limits_Internal = ::types::evse_manager::Limits;
+using Limits_External = Limits;
+
+Limits_Internal to_internal_api(Limits_External const& val);
+Limits_External to_external_api(Limits_Internal const& val);
+
 using EVInfo_Internal = ::types::evse_manager::EVInfo;
 using EVInfo_External = EVInfo;
 
 EVInfo_Internal to_internal_api(EVInfo_External const& val);
 EVInfo_External to_external_api(EVInfo_Internal const& val);
+
+using CarManufacturer_Internal = ::types::evse_manager::CarManufacturer;
+using CarManufacturer_External = CarManufacturer;
+
+CarManufacturer_Internal to_internal_api(CarManufacturer_External const& val);
+CarManufacturer_External to_external_api(CarManufacturer_Internal const& val);
 
 using SessionStarted_Internal = ::types::evse_manager::SessionStarted;
 using SessionStarted_External = SessionStarted;

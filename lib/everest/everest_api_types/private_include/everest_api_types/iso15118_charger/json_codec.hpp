@@ -10,6 +10,9 @@ namespace everest::lib::API::V1_0::types::iso15118_charger {
 
 using json = nlohmann::json;
 
+void to_json(json& j, CertificateActionEnum const& k) noexcept;
+void from_json(json const& j, CertificateActionEnum& k);
+
 void to_json(json& j, EnergyTransferMode const& k) noexcept;
 void from_json(json const& j, EnergyTransferMode& k);
 
@@ -18,6 +21,12 @@ void from_json(json const& j, Status& k);
 
 void to_json(json& j, HashAlgorithm const& k) noexcept;
 void from_json(json const& j, HashAlgorithm& k);
+
+void to_json(json& j, RequestExiStreamSchema const& k) noexcept;
+void from_json(json const& j, RequestExiStreamSchema& k);
+
+void to_json(json& j, ResponseExiStreamStatus const& k) noexcept;
+void from_json(json const& j, ResponseExiStreamStatus& k);
 
 void to_json(json& j, CertificateHashDataInfo const& k) noexcept;
 void from_json(json const& j, CertificateHashDataInfo& k);

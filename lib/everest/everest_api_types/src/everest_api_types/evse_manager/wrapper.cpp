@@ -329,6 +329,22 @@ SessionEvent_External to_external_api(SessionEvent_Internal const& val) {
     return result;
 }
 
+Limits_Internal to_internal_api(Limits_External const& val) {
+    Limits_Internal result;
+    result.max_current = val.max_current;
+    result.nr_of_phases_available = val.nr_of_phases_available;
+    result.uuid = val.uuid;
+    return result;
+}
+
+Limits_External to_external_api(Limits_Internal const& val) {
+    Limits_External result;
+    result.max_current = val.max_current;
+    result.nr_of_phases_available = val.nr_of_phases_available;
+    result.uuid = val.uuid;
+    return result;
+}
+
 EVInfo_Internal to_internal_api(EVInfo_External const& val) {
     EVInfo_Internal result;
     result.soc = val.soc;
@@ -371,6 +387,38 @@ EVInfo_External to_external_api(EVInfo_Internal const& val) {
     result.battery_full_soc = val.battery_full_soc;
     result.battery_bulk_soc = val.battery_bulk_soc;
     return result;
+}
+
+CarManufacturer_External to_external_api(CarManufacturer_Internal const& val) {
+    using SrcT = CarManufacturer_Internal;
+    using TarT = CarManufacturer_External;
+
+    switch (val) {
+    case SrcT::VolkswagenGroup:
+        return TarT::VolkswagenGroup;
+    case SrcT::Tesla:
+        return TarT::Tesla;
+    case SrcT::Unknown:
+        return TarT::Unknown;
+    }
+
+    throw std::out_of_range("Unexpected value for CarManufacturer_Internal");
+}
+
+CarManufacturer_Internal to_external_api(CarManufacturer_External const& val) {
+    using SrcT = CarManufacturer_External;
+    using TarT = CarManufacturer_Internal;
+
+    switch (val) {
+    case SrcT::VolkswagenGroup:
+        return TarT::VolkswagenGroup;
+    case SrcT::Tesla:
+        return TarT::Tesla;
+    case SrcT::Unknown:
+        return TarT::Unknown;
+    }
+
+    throw std::out_of_range("Unexpected value for CarManufacturer_Internal");
 }
 
 SessionStarted_Internal to_internal_api(SessionStarted_External const& val) {

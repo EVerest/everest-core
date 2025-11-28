@@ -36,7 +36,17 @@ std::string serialize(SessionEvent const& val) noexcept {
     return result.dump(json_indent);
 }
 
+std::string serialize(Limits const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
 std::string serialize(EVInfo const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
+std::string serialize(CarManufacturer val) noexcept {
     json result = val;
     return result.dump(json_indent);
 }
@@ -126,6 +136,10 @@ std::string serialize(EnableDisableRequest const& val) noexcept {
     return result.dump(json_indent);
 }
 
+std::string serialize(AuthorizeResponseArgs const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
 std::string serialize(PlugAndChargeConfiguration const& val) noexcept {
     json result = val;
     return result.dump(json_indent);
@@ -166,7 +180,17 @@ std::ostream& operator<<(std::ostream& os, SessionEvent const& val) {
     return os;
 }
 
+std::ostream& operator<<(std::ostream& os, Limits const& val) {
+    os << serialize(val);
+    return os;
+}
+
 std::ostream& operator<<(std::ostream& os, EVInfo const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, CarManufacturer const& val) {
     os << serialize(val);
     return os;
 }
@@ -256,6 +280,10 @@ std::ostream& operator<<(std::ostream& os, EnableDisableRequest const& val) {
     return os;
 }
 
+std::ostream& operator<<(std::ostream& os, AuthorizeResponseArgs const& val) {
+    os << serialize(val);
+    return os;
+}
 std::ostream& operator<<(std::ostream& os, PlugAndChargeConfiguration const& val) {
     os << serialize(val);
     return os;
@@ -301,9 +329,21 @@ template <> SessionEvent deserialize(std::string const& s) {
     return result;
 }
 
+template <> Limits deserialize(std::string const& s) {
+    auto data = json::parse(s);
+    Limits result = data;
+    return result;
+}
+
 template <> EVInfo deserialize(std::string const& s) {
     auto data = json::parse(s);
     EVInfo result = data;
+    return result;
+}
+
+template <> CarManufacturer deserialize(const std::string& s) {
+    auto data = json::parse(s);
+    CarManufacturer result = data;
     return result;
 }
 
@@ -406,6 +446,12 @@ template <> EnableDisableSource deserialize(std::string const& s) {
 template <> EnableDisableRequest deserialize(std::string const& s) {
     auto data = json::parse(s);
     EnableDisableRequest result = data;
+    return result;
+}
+
+template <> AuthorizeResponseArgs deserialize(std::string const& s) {
+    auto data = json::parse(s);
+    AuthorizeResponseArgs result = data;
     return result;
 }
 
