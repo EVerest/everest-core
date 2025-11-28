@@ -20,12 +20,13 @@ set(SET13 "over_voltage_monitor_API" "OverVoltageMonitorAPI" "over_voltage_monit
 set(SET14 "power_supply_DC_API" "PowerSupplyDCAPI" "power_supply_dc_api" "ps")
 set(SET15 "powermeter_API" "PowermeterAPI" "powermeter_api" "pm")
 set(SET16 "session_cost_API" "SessionCostAPI" "session_cost_api" "sc")
-set(SET17 "system_API" "SystemAPI" "system_api" "sys")
+set(SET17 "session_cost_consumer_API" "SessionCostConsumerAPI" "session_cost_api" "scc")
+set(SET18 "system_API" "SystemAPI" "system_api" "sys")
 
 
 
 # create a list to iterate over (for documetation generation and client)
-set(API_SPECS "SET01" "SET02" "SET03" "SET04" "SET05" "SET06" "SET07" "SET08" "SET09" "SET10" "SET11" "SET12" "SET13" "SET14" "SET15" "SET16" "SET17")
+set(API_SPECS "SET01" "SET02" "SET03" "SET04" "SET05" "SET06" "SET07" "SET08" "SET09" "SET10" "SET11" "SET12" "SET13" "SET14" "SET15" "SET16" "SET17" "SET18")
 
 # Iterate over the list and create the documentation
 if(EVEREST_BUILD_API_DOCS)
