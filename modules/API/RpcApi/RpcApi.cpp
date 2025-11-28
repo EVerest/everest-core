@@ -49,7 +49,7 @@ void RpcApi::ready() {
     // get charger information (cmd not available during init())
     if (r_charger_information.size() > 0) {
         types::json_rpc_api::ChargerInfoObj charger_info;
-        auto info = r_charger_information[0]->call_get_charger_information();
+        const auto info = r_charger_information[0]->call_get_charger_information();
         // mandatory members
         charger_info.vendor = info.vendor;
         charger_info.model = info.model;
@@ -111,12 +111,12 @@ void RpcApi::check_evse_session_event(data::DataStoreEvse& evse_data,
 
     if (session_event.event == types::evse_manager::SessionEventEnum::TransactionStarted) {
         if (session_event.transaction_started.has_value()) {
-            auto transaction_started = session_event.transaction_started.value();
-            auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
+            const auto transaction_started = session_event.transaction_started.value();
+            const auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
             evse_data.sessioninfo.set_start_energy_import_wh(energy_Wh_import);
 
             if (transaction_started.meter_value.energy_Wh_export.has_value()) {
-                auto energy_Wh_export = transaction_started.meter_value.energy_Wh_export.value().total;
+                const auto energy_Wh_export = transaction_started.meter_value.energy_Wh_export.value().total;
                 evse_data.sessioninfo.set_start_energy_export_wh(energy_Wh_export);
             } else {
                 evse_data.sessioninfo.start_energy_export_wh_was_set = false;
@@ -124,12 +124,12 @@ void RpcApi::check_evse_session_event(data::DataStoreEvse& evse_data,
         }
     } else if (session_event.event == types::evse_manager::SessionEventEnum::TransactionFinished) {
         if (session_event.transaction_finished.has_value()) {
-            auto transaction_finished = session_event.transaction_finished.value();
-            auto energy_Wh_import = transaction_finished.meter_value.energy_Wh_import.total;
+            const auto transaction_finished = session_event.transaction_finished.value();
+            const auto energy_Wh_import = transaction_finished.meter_value.energy_Wh_import.total;
             evse_data.sessioninfo.set_end_energy_import_wh(energy_Wh_import);
 
             if (transaction_finished.meter_value.energy_Wh_export.has_value()) {
-                auto energy_Wh_export = transaction_finished.meter_value.energy_Wh_export.value().total;
+                const auto energy_Wh_export = transaction_finished.meter_value.energy_Wh_export.value().total;
                 evse_data.sessioninfo.set_end_energy_export_wh(energy_Wh_export);
             } else {
                 evse_data.sessioninfo.end_energy_export_wh_was_set = false;
@@ -175,7 +175,8 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     });
 
     evse_manager->subscribe_selected_protocol([this, &evse_data](const std::string& selected_protocol) {
-        auto var_selected_protocol = types::json_rpc_api::evse_manager_protocol_to_charge_protocol(selected_protocol);
+        const auto var_selected_protocol =
+            types::json_rpc_api::evse_manager_protocol_to_charge_protocol(selected_protocol);
         evse_data.evsestatus.set_charge_protocol(var_selected_protocol);
     });
 
@@ -200,7 +201,7 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
         [this, &evse_data](const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
             // convert to rpc type
             bool is_ac_transfer_mode = false;
-            auto rpc_supported_energy_transfer_modes =
+            const auto rpc_supported_energy_transfer_modes =
                 types::json_rpc_api::iso15118_energy_transfer_modes_to_json_rpc_api(supported_energy_transfer_modes,
                                                                                     is_ac_transfer_mode);
             evse_data.evseinfo.set_supported_energy_transfer_modes(rpc_supported_energy_transfer_modes);
@@ -211,11 +212,11 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
 void RpcApi::subscribe_global_errors() {
     // Subscribe to global error events
     const auto error_handler = [this](const Everest::error::Error& error) {
-        auto tmp_error = types::json_rpc_api::everest_error_to_rpc_error(error);
+        const auto tmp_error = types::json_rpc_api::everest_error_to_rpc_error(error);
         helpers::handle_error_raised(this->data, tmp_error);
     };
     const auto error_cleared_handler = [this](const Everest::error::Error& error) {
-        auto tmp_error = types::json_rpc_api::everest_error_to_rpc_error(error);
+        const auto tmp_error = types::json_rpc_api::everest_error_to_rpc_error(error);
         helpers::handle_error_cleared(this->data, tmp_error);
     };
     subscribe_global_all_errors(error_handler, error_cleared_handler);
