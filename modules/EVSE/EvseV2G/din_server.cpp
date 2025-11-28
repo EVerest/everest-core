@@ -463,7 +463,11 @@ enum v2g_event states::handle_din_contract_authentication(struct v2g_connection*
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
 
     /* Fill the EVSE response message */
-    res->ResponseCode = din_responseCodeType_OK; // [V2G-DC-388]
+    if (conn->ctx->session.authorization_rejected == true) {
+        res->ResponseCode = din_responseCodeType_FAILED;
+    } else {
+        res->ResponseCode = din_responseCodeType_OK; // [V2G-DC-388]
+    }
     res->EVSEProcessing = (conn->ctx->evse_v2g_data.evse_processing[PHASE_AUTH] == (uint8_t)0)
                               ? din_EVSEProcessingType_Finished
                               : din_EVSEProcessingType_Ongoing;
