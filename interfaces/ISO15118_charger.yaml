@@ -447,3 +447,7 @@ vars:
     description: From the EV selected service parameters
     type: object
     $ref: /iso15118#/SelectedServiceParameters
+  response_code:
+    description:
+      The response code send to EV
+    type: string
