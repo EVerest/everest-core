@@ -14,7 +14,10 @@ namespace module {
 
 class OverVoltageMonitor {
 public:
-    enum class FaultType { Error, Emergency };
+    enum class FaultType {
+        Error,
+        Emergency
+    };
     using ErrorCallback = std::function<void(FaultType, const std::string&)>;
 
     OverVoltageMonitor(ErrorCallback callback, std::chrono::milliseconds duration);
@@ -47,4 +50,3 @@ private:
 };
 
 } // namespace module
-

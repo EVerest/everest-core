@@ -11,8 +11,7 @@
 namespace module {
 
 OverVoltageMonitor::OverVoltageMonitor(ErrorCallback callback, std::chrono::milliseconds duration) :
-    error_callback_(std::move(callback)),
-    duration_(duration) {
+    error_callback_(std::move(callback)), duration_(duration) {
 }
 
 void OverVoltageMonitor::set_limits(double emergency_limit, double error_limit) {
@@ -97,9 +96,8 @@ void OverVoltageMonitor::arm_error_timer(double voltage_v) {
             error_timer_active_ = false;
             voltage = timer_voltage_snapshot_;
         }
-        trigger_fault(FaultType::Error,
-                      fmt::format("Voltage {:.2f} V exceeded limit {:.2f} V for at least {} ms.", voltage, error_limit_,
-                                  duration_.count()));
+        trigger_fault(FaultType::Error, fmt::format("Voltage {:.2f} V exceeded limit {:.2f} V for at least {} ms.",
+                                                    voltage, error_limit_, duration_.count()));
     }).detach();
 }
 
@@ -114,4 +112,3 @@ void OverVoltageMonitor::cancel_error_timer() {
 }
 
 } // namespace module
-
