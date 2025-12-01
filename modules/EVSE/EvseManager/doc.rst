@@ -62,6 +62,16 @@ In addition, on the DC side the following hardware modules can be connected:
   CableCheck, PreCharge and CurrentDemand steps.
 * DC power supply: This is the AC/DC converter that actually charges the car.
 
+Software over-voltage supervision is always active during DC charging. The configuration option
+``internal_over_voltage_duration_ms`` defines for how long the measured DC voltage
+must exceed the negotiated limit before EvseManager raises ``MREC5OverVoltage``.
+Set it to ``0`` to trigger immediately once the threshold is crossed.
+
+Software over-voltage supervision is always active during DC charging. The configuration option
+``internal_over_voltage_duration_ms`` defines for how long the measured DC voltage
+must exceed the negotiated limit before EvseManager raises ``MREC5OverVoltage``.
+Set it to ``0`` to trigger immediately once the threshold is crossed.
+
 Published variables
 ===================
 
@@ -281,7 +291,7 @@ Powermeter errors cause the EvseManager to become Inoperative, if fail_on_powerm
 
 * powermeter/CommunicationFault
 
-When a charging session is stopped because of an error, the EvseManager differentiates between **Emergency Shutdowns** and **Error Shutdowns**. The severity of the 
+When a charging session is stopped because of an error, the EvseManager differentiates between **Emergency Shutdowns** and **Error Shutdowns**. The severity of the
 error influences the type of the shudown. Emergency shutdowns are caused by errors with `Severity::High` and error shutdowns are caused by errors with `Severity::Medium` or `Severity::Low`.
 
 In case of an **Emergency Shutdown** the EvseManager will immediately:
