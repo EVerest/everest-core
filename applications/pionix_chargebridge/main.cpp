@@ -88,6 +88,10 @@ int main(int argc, char* argv[]) {
 
     for (auto const& elem : config_files) {
         auto config_list = utilities::parse_config_multi(elem);
+        if (config_list.empty()) {
+            g_run_application.store(false);
+            break;
+        }
         for (auto const& config : config_list) {
             print_charge_bridge_config(config);
             if (cb_ids_in_use.count(config.cb_name) > 0) {

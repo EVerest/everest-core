@@ -1,21 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
-#include "charge_bridge/utilities/string.hpp"
-#include "protocol/cb_config.h"
-#include "protocol/cb_management.h"
-#include <charge_bridge/charge_bridge.hpp>
 #include <charge_bridge/utilities/parse_config.hpp>
+#include <charge_bridge/utilities/string.hpp>
 #include <charge_bridge/utilities/type_converters.hpp>
 #include <everest_api_types/evse_board_support/API.hpp>
 #include <everest_api_types/evse_board_support/codec.hpp>
-#include <exception>
 #include <iostream>
 
 #include <filesystem>
-#include <stdexcept>
-#include <string>
-#include <yaml-cpp/yaml.h>
-
+// clang-format off
+#include <ryml_std.hpp>
+#include <ryml.hpp>
+// clang-format on
 using namespace everest::lib::API::V1_0::types;
 
 namespace {
@@ -25,47 +21,121 @@ static const int g_cb_port_plc = 6002;
 static const int g_cb_port_can0 = 6003;
 static const int g_cb_port_serial_1 = 6004;
 static const int g_cb_port_serial_2 = 6005;
+
+std::string print_yaml_location(ryml::Location const& loc) {
+    std::stringstream error_msg;
+
+    if (loc) {
+        if (not loc.name.empty()) {
+            auto tmp = std::string(loc.name.str, loc.name.len);
+            if (charge_bridge::utilities::string_ends_with(tmp, ".hpp")) {
+                return "";
+            }
+            error_msg << "\n  file ";
+            error_msg << tmp;
+        }
+        error_msg << "\n  line " << loc.line;
+        ;
+        if (loc.col) {
+            error_msg << " column " << loc.col;
+        }
+        if (loc.offset) {
+            error_msg << " offset " << loc.offset << "B";
+        }
+        error_msg << "\n";
+    }
+    return error_msg.str();
+}
+
+void yaml_error_handler(const char* msg, std::size_t len, ryml::Location loc, void*) {
+    std::stringstream error_msg;
+    error_msg << "YAML parsing error: ";
+    error_msg << print_yaml_location(loc);
+    error_msg.write(msg, len);
+
+    std::cerr << error_msg.str() << std::endl;
+    throw std::runtime_error(error_msg.str());
+}
+
+void print_location(ryml::ConstNodeRef node, ryml::Parser& parser) {
+    std::cerr << print_yaml_location(node.location(parser)) << std::endl;
+}
+
+void load_yaml_file(const std::string& filename, ryml::Parser* parser, ryml::Tree* t) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file: " + filename);
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string file_content = buffer.str();
+
+    parse_in_arena(parser, ryml::to_csubstr(filename), ryml::to_csubstr(file_content), t);
+}
+
+template <class T> c4::yml::ConstNodeRef decode(c4::yml::ConstNodeRef const& node, T& rhs) {
+    using namespace charge_bridge::utilities;
+    node >> rhs;
+    return node;
+}
+
+template <class DataT>
+bool get_node_impl(c4::yml::ConstNodeRef node, ryml::Parser& parser, std::string const& node_str, DataT& data) {
+    if (node.invalid()) {
+        std::cerr << "Node not found: " << node_str << std::endl;
+        throw std::runtime_error("");
+    }
+    try {
+        decode(node, data);
+        return true;
+    } catch (std::exception const& e) {
+        std::cerr << "Cannot parse config: " << node_str << std::endl;
+        std::cerr << e.what() << std::endl;
+    } catch (charge_bridge::utilities::yml_node_error const& e) {
+        std::cerr << "Error source: \n"
+                  << "  parent " << node_str << "\n"
+                  << "  data " << e.m_msg << std::flush;
+        print_location(e.m_node, parser);
+    }
+    throw std::runtime_error("");
+}
+
+struct RymlCallbackInitializer {
+    RymlCallbackInitializer() {
+        ryml::set_callbacks({nullptr, nullptr, nullptr, yaml_error_handler});
+    }
+};
+
 } // namespace
 
 namespace charge_bridge::utilities {
 
-void parse_config_impl(YAML::Node& config, charge_bridge_config& c, std::filesystem::path const& config_path) {
-    auto get_node = [&config](std::string const& main, std::string const& sub, auto& data) {
-        if (config[main][sub]) {
-            try {
-                data = config[main][sub].as<typename std::remove_reference<decltype(data)>::type>();
-                return true;
-            } catch (std::exception const& e) {
-                std::cerr << "Cannot parse config: " << main << "::" << sub << std::endl;
-                std::cerr << e.what() << std::endl;
-            }
+void parse_config_impl(c4::yml::NodeRef& config, charge_bridge_config& c, std::filesystem::path const& config_path,
+                       ryml::Parser& parser) {
+    auto get_node = [&config, &parser](auto& data, std::string const& main, std::string const& sub = "") {
+        auto main_str = ryml::to_csubstr(main);
+        auto node_str = main;
+        c4::yml::ConstNodeRef node;
+        if (not sub.empty()) {
+            node_str = node_str + "::" + sub;
+            auto sub_str = ryml::to_csubstr(sub);
+            node = config.find_child(main_str).find_child(sub_str);
         } else {
-            std::cerr << "Node not found: " << main << "::" << sub << std::endl;
+            node = config[main_str];
         }
-        throw std::runtime_error("");
-    };
-    auto get_main_node = [&config](std::string const& main, auto& data) {
-        if (config[main]) {
-            try {
-                data = config[main].as<typename std::remove_reference<decltype(data)>::type>();
-                return true;
-            } catch (std::exception const& e) {
-                std::cerr << "Cannot parse config: " << main << std::endl;
-                std::cerr << e.what() << std::endl;
-            }
-        } else {
-            std::cerr << "Node not found: " << main << std::endl;
-        }
-        throw std::runtime_error("");
+
+        get_node_impl(node, parser, node_str, data);
     };
 
-    auto get_block = [&config, &get_node, &c](std::string const& block, auto& block_cfg, auto const& ftor) {
+    auto get_block = [&config, &c](std::string const& block, auto& block_cfg, auto const& ftor) {
         bool enable = false;
-        if (config[block]) {
-            if (config[block]["enable"]) {
-                enable = config[block]["enable"].as<bool>();
-            } else {
+        auto block_str = ryml::to_csubstr(block);
+        if (not config.find_child(block_str).invalid()) {
+            if (config[block_str].find_child("enable").invalid()) {
                 enable = true;
+            } else {
+                decode(config[block_str]["enable"], enable);
             }
         }
         if (enable) {
@@ -76,26 +146,26 @@ void parse_config_impl(YAML::Node& config, charge_bridge_config& c, std::filesys
         }
     };
 
-    get_node("charge_bridge", "name", c.cb_name);
+    get_node(c.cb_name, "charge_bridge", "name");
 
-    get_node("charge_bridge", "ip", c.cb_remote);
+    get_node(c.cb_remote, "charge_bridge", "ip");
 
     c.cb_port = g_cb_port_management;
 
     get_block("can_0", c.can0, [&](auto& cfg, auto const& main) {
-        get_node(main, "local", cfg.can_device);
+        get_node(cfg.can_device, main, "local");
         cfg.cb_port = g_cb_port_can0;
         cfg.cb_remote = c.cb_remote;
     });
 
     get_block("serial_1", c.serial1, [&](auto& cfg, auto const& main) {
-        get_node(main, "local", cfg.serial_device);
+        get_node(cfg.serial_device, main, "local");
         cfg.cb_port = g_cb_port_serial_1;
         cfg.cb_remote = c.cb_remote;
     });
 
     get_block("serial_2", c.serial2, [&](auto& cfg, auto const& main) {
-        get_node(main, "local", cfg.serial_device);
+        get_node(cfg.serial_device, main, "local");
         cfg.cb_port = g_cb_port_serial_2;
         cfg.cb_remote = c.cb_remote;
     });
@@ -108,48 +178,49 @@ void parse_config_impl(YAML::Node& config, charge_bridge_config& c, std::filesys
     // });
 
     get_block("plc", c.plc, [&](auto& cfg, auto const& main) {
-        get_node(main, "tap", cfg.plc_tap);
-        get_node(main, "ip", cfg.plc_ip);
-        get_node(main, "netmask", cfg.plc_netmaks);
-        get_node(main, "mtu", cfg.plc_mtu);
+        get_node(cfg.plc_tap, main, "tap");
+        get_node(cfg.plc_ip, main, "ip");
+        get_node(cfg.plc_netmaks, main, "netmask");
+        get_node(cfg.plc_mtu, main, "mtu");
         cfg.cb_port = g_cb_port_plc;
         cfg.cb_remote = c.cb_remote;
     });
 
     get_block("evse_bsp", c.evse, [&](auto& cfg, auto const& main) {
         cfg.cb_port = g_cb_port_evse_bsp;
-        get_node(main, "module_id", cfg.api.bsp.module_id);
-        get_node(main, "mqtt_remote", cfg.api.mqtt_remote);
-        get_node(main, "mqtt_port", cfg.api.mqtt_port);
-        get_node(main, "mqtt_ping_interval_ms", cfg.api.mqtt_ping_interval_ms);
+        get_node(cfg.api.bsp.module_id, main, "module_id");
+        get_node(cfg.api.mqtt_remote, main, "mqtt_remote");
+        get_node(cfg.api.mqtt_port, main, "mqtt_port");
+        get_node(cfg.api.mqtt_ping_interval_ms, main, "mqtt_ping_interval_ms");
         cfg.cb_remote = c.cb_remote;
-        get_node(main, "capabilities", cfg.api.bsp.capabilities);
-        get_node(main, "ovm_enabled", cfg.api.ovm.enabled);
-        get_node(main, "ovm_module_id", cfg.api.ovm.module_id);
+        get_node(cfg.api.bsp.capabilities, main, "capabilities");
+        get_node(cfg.api.ovm.enabled, main, "ovm_enabled");
+        get_node(cfg.api.ovm.module_id, main, "ovm_module_id");
     });
 
     get_block("gpio", c.gpio, [&](auto& cfg, auto const& main) {
-        get_node(main, "interval_s", cfg.interval_s);
-        get_node(main, "mqtt_remote", cfg.mqtt_remote);
-        get_node(main, "mqtt_port", cfg.mqtt_port);
-        get_node(main, "mqtt_ping_interval_ms", cfg.mqtt_ping_interval_ms);
+        get_node(cfg.interval_s, main, "interval_s");
+        get_node(cfg.mqtt_remote, main, "mqtt_remote");
+        get_node(cfg.mqtt_port, main, "mqtt_port");
+        get_node(cfg.mqtt_ping_interval_ms, main, "mqtt_ping_interval_ms");
         cfg.cb_remote = c.cb_remote;
         cfg.cb_port = c.cb_port;
     });
 
     get_block("heartbeat", c.heartbeat, [&](auto& cfg, auto const& main) {
-        get_node(main, "interval_s", cfg.interval_s);
+        get_node(cfg.interval_s, main, "interval_s");
         cfg.cb_remote = c.cb_remote;
         cfg.cb_port = c.cb_port;
-        get_main_node("charge_bridge", cfg.cb_config.network);
-        get_main_node("safety", cfg.cb_config.safety);
+        get_node(cfg.cb_config.network, "charge_bridge");
+        get_node(cfg.cb_config.safety, "safety");
+
         std::memset(cfg.cb_config.gpios, 0, CB_NUMBER_OF_GPIOS * sizeof(CbGpioConfig));
         std::memset(cfg.cb_config.uarts, 0, CB_NUMBER_OF_UARTS * sizeof(CbUartConfig));
         if (c.serial1) {
-            get_main_node("serial_1", cfg.cb_config.uarts[0]);
+            get_node(cfg.cb_config.uarts[0], "serial_1");
         }
         if (c.serial2) {
-            get_main_node("serial_2", cfg.cb_config.uarts[1]);
+            get_node(cfg.cb_config.uarts[1], "serial_2");
         }
         // FIXME (JH) serial 3 not available in first release
         // if (c.serial3) {
@@ -157,18 +228,18 @@ void parse_config_impl(YAML::Node& config, charge_bridge_config& c, std::filesys
         // }
         if (c.gpio) {
             for (auto i = 0; i < CB_NUMBER_OF_GPIOS; ++i) {
-                get_node("gpio", "gpio_" + std::to_string(i), cfg.cb_config.gpios[i]);
+                get_node(cfg.cb_config.gpios[i], "gpio", "gpio_" + std::to_string(i));
             }
         }
         if (c.can0) {
-            get_main_node("can_0", cfg.cb_config.can);
+            get_node(cfg.cb_config.can, "can_0");
         }
-        get_node("plc", "powersaving_mode", cfg.cb_config.plc_powersaving_mode);
+        get_node(cfg.cb_config.plc_powersaving_mode, "plc", "powersaving_mode");
         cfg.cb_config.config_version = CB_CONFIG_VERSION;
     });
 
-    get_node("charge_bridge", "fw_file", c.firmware.fw_path);
-    get_node("charge_bridge", "fw_update_on_start", c.firmware.fw_update_on_start);
+    get_node(c.firmware.fw_path, "charge_bridge", "fw_file");
+    get_node(c.firmware.fw_update_on_start, "charge_bridge", "fw_update_on_start");
 
     // If the path to the firmware file is relative, make it relative to the config file
     std::filesystem::path fw_path = c.firmware.fw_path;
@@ -250,19 +321,27 @@ charge_bridge_config set_config_placeholders(charge_bridge_config const& src, ch
 }
 
 std::vector<charge_bridge_config> parse_config_multi(std::string const& config_file) {
+    const static RymlCallbackInitializer ryml_callback_initializer;
+
     try {
-        YAML::Node config = YAML::LoadFile(config_file);
-        if (not config) {
+        ryml::EventHandlerTree evt_handler = {};
+        ryml::Parser parser(&evt_handler, ryml::ParserOptions().locations(true));
+        ryml::Tree config_tree;
+        load_yaml_file(config_file, &parser, &config_tree);
+        c4::yml::NodeRef config = config_tree.rootref();
+        if (config.invalid()) {
             std::cerr << "Config file not found: " << config_file << std::endl;
             return {};
         }
         charge_bridge_config base_config;
-        parse_config_impl(config, base_config, config_file);
+        parse_config_impl(config, base_config, config_file, parser);
 
-        if (not config["charge_bridge_ip_list"]) {
+        auto ip_list_node = config.find_child("charge_bridge_ip_list");
+        if (ip_list_node.invalid()) {
             return {base_config};
         }
-        auto ip_list = config["charge_bridge_ip_list"].as<std::vector<std::string>>();
+        std::vector<std::string> ip_list;
+        ip_list_node >> ip_list;
         std::vector<charge_bridge_config> cb_config_list(ip_list.size());
 
         for (size_t i = 0; i < ip_list.size(); ++i) {
@@ -274,22 +353,6 @@ std::vector<charge_bridge_config> parse_config_multi(std::string const& config_f
         std::cerr << "FAILED to parse configuration!" << std::endl;
     }
     return {};
-}
-
-bool parse_config(std::string const& config_file, charge_bridge_config& c) {
-    try {
-        YAML::Node config = YAML::LoadFile(config_file);
-        if (not config) {
-            std::cerr << "Config file not found: " << config_file << std::endl;
-            return false;
-        }
-
-        parse_config_impl(config, c, config_file);
-        return true;
-    } catch (...) {
-        std::cerr << "FAILED to parse configuration!" << std::endl;
-    }
-    return false;
 }
 
 } // namespace charge_bridge::utilities

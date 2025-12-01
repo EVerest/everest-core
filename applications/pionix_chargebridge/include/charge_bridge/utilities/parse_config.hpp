@@ -6,6 +6,5 @@
 
 namespace charge_bridge::utilities {
 
-bool parse_config(std::string const& config_file, charge_bridge_config& config);
 std::vector<charge_bridge_config> parse_config_multi(std::string const& config_file);
 } // namespace charge_bridge::utilities
