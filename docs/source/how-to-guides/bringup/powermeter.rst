@@ -29,7 +29,7 @@ Complete the following steps:
    exported energy values.
 -  ☐ Validate the other reported measurements.
 -  ☐ If supported by the power meter (e.g. for
-    :doc:`German Eichrecht </explanation/eichrecht>`), click
+   :doc:`German Eichrecht </explanation/eichrecht>`), click
    on “Start Transaction”. Verify that it replies correctly, and verify
    the time to reply is less than a few seconds.
 -  ☐ Click on “Stop Transaction” and verify the reply. The reply should
