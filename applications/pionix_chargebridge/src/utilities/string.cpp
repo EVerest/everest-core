@@ -7,6 +7,12 @@ bool string_starts_with(std::string_view const& str, std::string_view const& pat
     return str.rfind(pattern, 0) == 0;
 }
 
+bool string_ends_with(std::string const& str, std::string const& pattern) {
+    if (pattern.size() > str.size())
+        return false;
+    return std::equal(pattern.rbegin(), pattern.rend(), str.rbegin());
+}
+
 std::string string_after_pattern(std::string_view const& str, std::string_view const& pattern) {
     if (charge_bridge::utilities::string_starts_with(str, pattern)) {
         return static_cast<std::string>(str.substr(pattern.length()));
