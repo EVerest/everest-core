@@ -10,6 +10,7 @@ void powermeterImpl::init() {
 }
 
 void powermeterImpl::ready() {
+    this->publish_public_key_ocmf("TESTPUBLICKEY" + std::to_string(this->mod->config.connector_id));
 }
 
 types::powermeter::TransactionStartResponse

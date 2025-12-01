@@ -48,9 +48,12 @@
 
 struct ErrorRaised : public Everest::error::Error {};
 struct ErrorCleared : public Everest::error::Error {};
+struct PowermeterPublicKey {
+    std::string value;
+};
 
 using EventData = std::variant<types::evse_manager::SessionEvent, ErrorRaised, ErrorCleared, types::system::LogStatus,
-                               types::system::FirmwareUpdateStatus>;
+                               types::system::FirmwareUpdateStatus, PowermeterPublicKey>;
 
 struct Event {
     EventData data;
