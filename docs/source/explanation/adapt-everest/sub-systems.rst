@@ -340,10 +340,10 @@ OCPP requires several connections. Let's go through them step by step:
    and :doc:`Auth token validators </reference/interfaces/auth_token_validator>` 
    are the main ones for remote start and token validation functionality.
    Connect them to the Auth module.
--  :doc: `auth interface </reference/interfaces/auth>` needs to be connected to
+-  :doc:`auth interface </reference/interfaces/auth>` needs to be connected to
    the *Auth* module. This connection is mostly used to set the connection
    timeout setting via the OCPP protocol.
--  :doc: `reservation interface </reference/interfaces/reservation>` is used to
+-  :doc:`reservation interface </reference/interfaces/reservation>` is used to
    reserve/cancel reservations of connectors via OCPP from the CSMS.
 -  OCPP also requires a connection to the
    :doc:`EvseSecurity </reference/modules/EvseSecurity>` module, which
