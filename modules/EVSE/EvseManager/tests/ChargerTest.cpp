@@ -755,6 +755,9 @@ void ErrorHandling::raise_overcurrent_error(const std::string& description) {
 void ErrorHandling::clear_overcurrent_error() {
 }
 
+void ErrorHandling::raise_over_voltage_error(Everest::error::Severity severity, const std::string& description) {
+}
+
 void ErrorHandling::raise_internal_error(const std::string& description) {
 }
 void ErrorHandling::clear_internal_error() {

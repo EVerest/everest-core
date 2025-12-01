@@ -17,6 +17,7 @@ target_sources(${MODULE_NAME}
         CarManufacturer.cpp
         IECStateMachine.cpp
         ErrorHandling.cpp
+        OverVoltageMonitor.cpp
         backtrace.cpp
         PersistentStore.cpp
 )
