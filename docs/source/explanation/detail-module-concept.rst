@@ -25,7 +25,7 @@ A typical EVerest deployment consists of the following components:
 
 * Several **module instances**, which are separate processes offering some
   type of functionality;
-* An **MQTT broker** (mosquitto), which provides the backbone of communication
+* A **MQTT broker** (mosquitto), which provides the backbone of communication
   between module instances;
 * A **manager process**, which orchestrates the execution of module instances.
 
