@@ -1,0 +1,9 @@
+{
+  "name": "everestjs",
+  "main": "index.js",
+  "version": "0.25.0",
+  "description": "EVerest API for node.js",
+  "dependencies": {
+    "node-addon-api": "^3.2.1"
+  }
+}

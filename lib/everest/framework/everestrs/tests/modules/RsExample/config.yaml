@@ -1,0 +1,14 @@
+# Test config for regression tests for the framework.
+active_modules:
+  example_0:
+    module: RsExample
+    connections:
+      a_friend:
+        - module_id: example_1
+          implementation_id: foobar
+  example_1:
+    module: RsExample
+    connections:
+      a_friend:
+        - module_id: example_0
+          implementation_id: foobar

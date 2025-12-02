@@ -1,0 +1,13 @@
+description: Test object type
+types:
+  AnObject:
+    description: An object type
+    type: object
+    additionalProperties: false
+    properties:
+      first:
+        description: first property
+        type: number
+      second:
+        description: second property
+        type: string

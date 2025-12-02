@@ -1,0 +1,5 @@
+filegroup(
+    name = "types",
+    srcs = glob(["*.yaml"]),
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,23 @@
+active_modules:
+  module_a:
+    module: TESTModuleA
+    config_module:
+      valid_module_config_entry: "test"
+    config_implementation:
+      main:
+        valid_impl_config_entry: 42
+    connections:
+      req1:
+        - module_id: module_b
+          implementation_id: impl1
+  module_b:
+    module: TESTModuleB
+    config_module: {}
+settings:
+  interfaces_dir: "interfaces"
+  modules_dir: "modules"
+  types_dir: "types"
+  errors_dir: "errors"
+  schemas_dir: "schemas"
+  www_dir: "www"
+  logging_config_file: "logging.ini"

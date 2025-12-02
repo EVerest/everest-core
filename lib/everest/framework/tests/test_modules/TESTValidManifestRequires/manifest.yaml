@@ -1,0 +1,13 @@
+description: "This is a valid manifest."
+provides:
+  main:
+    description: "Empty"
+    interface: "test_interface"
+requires:
+  test_cmd_var:
+    interface: "test_interface_cmd_var"
+    min_connections: 0
+    max_connections: 1
+metadata:
+  license: "https://opensource.org/licenses/Apache-2.0"
+  authors: ["Kai-Uwe Hermann"]
