@@ -1,21 +1,7 @@
-cmake_minimum_required(VERSION 3.11)
-
-project(fsm
-    VERSION 0.2.0
-    DESCRIPTION "Finite State Machine library"
-    HOMEPAGE_URL "https://github.com/EVerest/libfsm"
-	LANGUAGES CXX
-)
-
-find_package(everest-cmake 0.1 REQUIRED
-    PATHS ../everest-cmake
-)
-
 #
 # options
 #
 option(BUILD_EXAMPLES "enable building of examples" OFF)
-option(FSM_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 
 
 #
@@ -39,29 +25,7 @@ endif()
 #
 # tests
 #
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+if(BUILD_TESTING)
     include(CTest)
     add_subdirectory(tests)
-endif()
-
-
-#
-# installation definition
-#
-if (FSM_INSTALL)
-    install(
-        TARGETS fsm
-        EXPORT fsm-targets
-    )
-
-    install(
-        DIRECTORY include/
-        TYPE INCLUDE
-    )
-
-    evc_setup_package(
-        NAME fsm
-        EXPORT fsm-targets
-        NAMESPACE fsm
-    )
 endif()
