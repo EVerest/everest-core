@@ -9,6 +9,10 @@ cmds:
           by the EVCC
         type: string
         $ref: /iso15118#/EnergyTransferMode
+      SelectedPaymentOption:
+        description: Selected payment option
+        type: object
+        $ref: /iso15118#/SelectedPaymentOption
       DepartureTime:
         description: >-
           The time when the EVCC wants to leave the charging station (in seconds)
