@@ -1,0 +1,172 @@
+{% from "helper_macros.j2" import print_template_info, var_to_cpp, print_spdx_line %}
+{{ print_spdx_line('Apache-2.0') }}
+{{ print_template_info('5') }}
+
+#include "{{ info.ld_ev_header }}"
+
+#ifdef EVEREST_COVERAGE_ENABLED
+#include <everest/helpers/coverage.hpp>
+#endif
+
+#include "{{ info.module_header }}"
+{% for impl in provides %}
+#include "{{ impl.class_header }}"
+{% endfor %}
+
+#include <framework/runtime.hpp>
+#include <utils/types.hpp>
+#include <generated/version_information.hpp>
+#ifndef PROJECT_NAME
+#define PROJECT_NAME "undefined project"
+#endif
+#ifndef PROJECT_VERSION
+#define PROJECT_VERSION "undefined version"
+#endif
+#ifndef GIT_VERSION
+#define GIT_VERSION "undefined git version"
+#endif
+
+{% if info.enable_global_errors %}
+#include <utils/error/error_manager_req_global.hpp>
+
+{% endif %}
+namespace module {
+
+// FIXME (aw): could this way of keeping static variables be changed somehow?
+static Everest::ModuleAdapter adapter {};
+static Everest::PtrContainer<{{info.class_name }}> mod_ptr {};
+
+// per module configs
+{# FIXME (aw): instead of being static, this could also be inside a map #}
+{% for impl in provides %}
+static {{ impl.id }}::Conf {{ impl.id }}_config;
+{% endfor %}
+static Conf module_conf;
+static ModuleInfo module_info;
+
+{% if info.enable_global_errors %}
+void subscribe_global_all_errors(
+    const Everest::error::ErrorCallback& callback,
+    const Everest::error::ErrorCallback& clear_callback
+) {
+    adapter.get_global_error_manager()->subscribe_global_all_errors(callback, clear_callback);
+}
+
+std::shared_ptr<Everest::error::ErrorStateMonitor> get_global_error_state_monitor() {
+    return adapter.get_global_error_state_monitor();
+}
+
+{% endif %}
+
+std::shared_ptr<Everest::config::ConfigServiceClient> get_config_service_client() {
+    return adapter.get_config_service_client();
+}
+
+void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
+    EVLOG_debug << "init() called on module {{ info.name }}";
+
+    // populate config for provided implementations
+    {% for impl in provides %}
+    auto {{ impl.id }}_config_input = std::move(module_configs["{{ impl.id }}"]);
+    {% for item in impl.config %}
+    {{ impl.id }}_config.{{ item.name }} = std::get<{{ item.cpp_type }}>({{ impl.id }}_config_input["{{ item.name }}"]);
+    {% endfor %}
+
+    {% endfor %}
+    {% if info.module_config|length %}
+
+    {% for item in info.module_config %}
+    module_conf.{{ item.name }} = std::get<{{ item.cpp_type }}>(module_configs["!module"]["{{ item.name }}"]);
+    {% endfor %}
+    {% endif %}
+
+    module_info = mod_info;
+
+    mod_ptr->init();
+}
+
+void LdEverest::ready() {
+    EVLOG_debug << "ready() called on module {{ info.name }}";
+    mod_ptr->ready();
+}
+
+void register_module_adapter(Everest::ModuleAdapter module_adapter) {
+    adapter = std::move(module_adapter);
+}
+
+std::vector<Everest::cmd> everest_register(const RequirementInitialization& requirement_init) {
+    EVLOG_debug << "everest_register() called on module {{ info.name }}";
+
+    adapter.check_complete();
+
+    {% for impl in provides %}
+    auto p_{{ impl.id }} = std::make_unique<{{ impl.id }}::{{ impl.class_name }}>(&adapter, mod_ptr, {{ impl.id }}_config);
+    adapter.gather_cmds(*p_{{ impl.id }});
+
+    {% endfor %}
+    {% for requirement in requires %}
+    {# FIXME: needs refactoring #}
+    {% if requirement.is_vector %}
+    auto r_{{ requirement.id }} = std::vector<std::unique_ptr<{{ requirement.class_name }}>>();
+    if (auto it = requirement_init.find("{{ requirement.id }}"); it != requirement_init.end()) {
+        for (const auto& requirement_initializer : (*it).second) {
+            auto requirement_module_id = requirement_initializer.fulfillment.module_id;
+            auto requirement = requirement_initializer.requirement;
+            auto mapping = requirement_initializer.mapping;
+            r_{{ requirement.id }}.emplace_back(std::make_unique<{{ requirement.class_name }}>(&adapter, requirement, requirement_module_id, mapping));
+        }
+    }
+    {% else %}
+    std::string r_{{ requirement.id }}_requirement_module_id;
+    Requirement r_{{ requirement.id }}_requirement;
+    std::optional<Mapping> r_{{ requirement.id }}_mapping;
+    if (auto it = requirement_init.find("{{ requirement.id }}"); it != requirement_init.end()) {
+        auto requirement_initializer = (*it).second;
+        if (requirement_initializer.size() > 0) {
+            r_{{ requirement.id }}_requirement_module_id = requirement_initializer.at(0).fulfillment.module_id;
+            r_{{ requirement.id }}_requirement = requirement_initializer.at(0).requirement;
+            r_{{ requirement.id }}_mapping = requirement_initializer.at(0).mapping;
+        }
+    }
+    auto r_{{ requirement.id }} = std::make_unique<{{ requirement.class_name }}>(&adapter, r_{{ requirement.id }}_requirement, r_{{ requirement.id }}_requirement_module_id, r_{{ requirement.id }}_mapping);
+    {% endif %}
+    {% else %}
+        (void) requirement_init; // no requirements -> unused requirement initialization
+    {% endfor %}
+
+    {% if info.enable_external_mqtt %}
+    static Everest::MqttProvider mqtt_provider(adapter);
+    {% endif %}
+    static Everest::TelemetryProvider telemetry_provider(adapter);
+
+    static {{ info.class_name }} module(
+    module_info,
+    {%- if info.enable_external_mqtt %}mqtt_provider, {% endif -%}
+    {%- if info.enable_telemetry %}telemetry_provider, {% endif -%}
+    {%- for impl in provides -%}
+    std::move(p_{{ impl.id }}){{ ', ' }}
+    {%- endfor -%}
+    {%- for requirement in requires -%}
+    std::move(r_{{ requirement.id }}){{ ', ' }}
+    {%- endfor -%}
+    module_conf);
+
+    mod_ptr.set(&module);
+
+    return adapter.registered_commands;
+}
+
+} // namespace module
+
+int main(int argc, char* argv[]) {
+#ifdef EVEREST_COVERAGE_ENABLED
+    everest::helpers::install_signal_handlers_for_gcov();
+#endif
+
+    auto module_loader = Everest::ModuleLoader(argc, argv, Everest::ModuleCallbacks(
+        module::register_module_adapter, module::everest_register,
+        module::LdEverest::init, module::LdEverest::ready),
+        {PROJECT_NAME, PROJECT_VERSION, GIT_VERSION});
+
+    return module_loader.initialize();
+}

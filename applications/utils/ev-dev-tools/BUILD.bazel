@@ -1,0 +1,28 @@
+load("@everest-utils//:requirements.bzl", "requirement")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+
+exports_files(
+    ["BUILD.bazel"],
+)
+
+py_library(
+    name = "lib",
+    srcs = glob(["src/ev_cli/*.py"]),
+    imports = ["src"],
+    deps = [
+        requirement("jinja2"),
+        requirement("jsonschema"),
+        requirement("stringcase"),
+        requirement("pyyaml"),
+    ],
+)
+
+py_binary(
+    name = "ev-cli",
+    srcs = ["src/ev_cli/ev.py"],
+    data = glob(["src/ev_cli/templates/**"]),
+    legacy_create_init = False,
+    main = "src/ev_cli/ev.py",
+    visibility = ["//visibility:public"],
+    deps = [":lib"],
+)
