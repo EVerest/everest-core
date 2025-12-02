@@ -15,10 +15,6 @@ ev_define_dependency(
     DEPENDENT_MODULES_LIST Auth LemDCBM400600 System)
 
 ev_define_dependency(
-    DEPENDENCY_NAME libslac
-    DEPENDENT_MODULES_LIST EvSlac EvseSlac)
-
-ev_define_dependency(
     DEPENDENCY_NAME libcurl
     DEPENDENT_MODULES_LIST LemDCBM400600 IsabellenhuetteIemDcr)
 
