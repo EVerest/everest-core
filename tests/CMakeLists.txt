@@ -22,4 +22,17 @@ setup_target_for_coverage_gcovr_html(
     EXCLUDE "${GENERATED_OUTPUT_DIR}/*" ".*tests/"
 )
 
+# automatically install everest-testing if venv is active
+ev_is_python_venv_active(
+    RESULT_VAR IS_PYTHON_VENV_ACTIVE
+)
+if(IS_PYTHON_VENV_ACTIVE)
+    get_target_property(SOURCE_DIRECTORY ev_pip_package_everest-testing SOURCE_DIRECTORY)
+    message(STATUS "Installing everest-testing from: ${SOURCE_DIRECTORY}")
+    ev_pip_install_local(
+        PACKAGE_NAME "everest-testing"
+        PACKAGE_SOURCE_DIRECTORY "${SOURCE_DIRECTORY}"
+    )
+endif()
+
 add_subdirectory(everest-core_tests)
