@@ -1,7 +1,7 @@
-add_executable(${PROJECT_NAME}_unit_test libslac_unit_test.cpp)
+set(TEST_TARGET_NAME ${PROJECT_NAME}_unit_test)
+add_executable(${TEST_TARGET_NAME} libslac_unit_test.cpp)
 
-target_include_directories(${PROJECT_NAME}_unit_test PUBLIC${GTEST_INCLUDE_DIRS})
-
+target_include_directories(${TEST_TARGET_NAME} PUBLIC${GTEST_INCLUDE_DIRS})
 
 if(DISABLE_EDM)
     find_package(GTest REQUIRED)
@@ -12,9 +12,12 @@ else()
     )
 endif()
 
-target_link_libraries(${PROJECT_NAME}_unit_test PRIVATE
+target_link_libraries(${TEST_TARGET_NAME} PRIVATE
         ${GTEST_LIBRARIES}
         slac::slac
 )
 
-add_test(${PROJECT_NAME}_unit_test ${PROJECT_NAME}_unit_test)
+include(GoogleTest)
+gtest_discover_tests(${TEST_TARGET_NAME})
+
+ev_register_test_target(${TEST_TARGET_NAME})
