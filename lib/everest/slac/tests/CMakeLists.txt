@@ -1,4 +1,4 @@
-set(TEST_TARGET_NAME ${PROJECT_NAME}_unit_test)
+set(TEST_TARGET_NAME slac_unit_test)
 add_executable(${TEST_TARGET_NAME} libslac_unit_test.cpp)
 
 target_include_directories(${TEST_TARGET_NAME} PUBLIC${GTEST_INCLUDE_DIRS})
