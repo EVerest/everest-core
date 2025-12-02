@@ -23,12 +23,8 @@ if(NOT DISABLE_EDM)
     evc_setup_edm()
 endif()
 
-add_subdirectory(3rd_party)
-
 add_library(slac)
 add_library(slac::slac ALIAS slac)
-
-target_include_directories(slac PRIVATE $<TARGET_PROPERTY:HashLibrary,INTERFACE_INCLUDE_DIRECTORIES>)
 
 target_include_directories(slac PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -40,7 +36,11 @@ target_sources(slac
         src/channel.cpp
         src/slac.cpp
         src/packet_socket.cpp
-        $<TARGET_OBJECTS:HashLibrary>
+)
+
+target_link_libraries(slac
+    PRIVATE
+        everest::tls
 )
 
 if (BUILD_SLAC_TOOLS)
