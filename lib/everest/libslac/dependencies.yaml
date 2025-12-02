@@ -1,6 +1,0 @@
----
-gtest:
-  # GoogleTest now follows the Abseil Live at Head philosophy. We recommend updating to the latest commit in the main branch as often as possible.
-  git: https://github.com/google/googletest.git
-  git_tag: release-1.12.1
-  cmake_condition: "LIBSLAC_BUILD_TESTING"
