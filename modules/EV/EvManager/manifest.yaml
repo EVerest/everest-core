@@ -101,6 +101,10 @@ config:
       Simulation commands for the EV on "plugin" sim command, e.g. sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
     type: string
     default: ""
+  force_payment_option:
+    description: Force the use of the selected payment option
+    type: boolean
+    default: false
 provides:
   main:
     interface: car_simulator

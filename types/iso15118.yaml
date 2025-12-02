@@ -1722,6 +1722,18 @@ types:
         type: string
         $ref: /iso15118#/GridCodeIslandingDetectionMethod
 # EV Side
+  SelectedPaymentOption:
+    description: The selected payment option for the Ev.
+    type: object
+    additionalProperties: false
+    properties:
+      payment_option:
+        description: Selected payment option
+        type: string
+        $ref: /iso15118#/PaymentOption
+      enforce_payment_option:
+        description: Enforce the selected payment option
+        type: boolean
   DcEvParameters:
     description: Target settings for dc charging
     type: object
