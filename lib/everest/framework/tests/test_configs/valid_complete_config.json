@@ -1,0 +1,63 @@
+{
+  "settings": {
+    "interfaces_dir": "interfaces",
+    "modules_dir": "modules",
+    "types_dir": "types",
+    "errors_dir": "errors",
+    "schemas_dir": "schemas",
+    "www_dir": "www",
+    "logging_config_file": "logging.ini"
+  },
+  "active_modules": {
+    "valid_module": {
+      "mapping": {
+        "module": {
+          "evse": 1
+        },
+        "implementations": {
+          "main": {
+            "evse": 1,
+            "connector": 1
+          }
+        }
+      },
+      "module": "TESTValidManifest",
+      "config_module": {
+        "valid_config_entry": "hello there"
+      },
+      "config_implementation": {
+        "main": {
+          "valid_config_entry": "hello there"
+        }
+      }
+    },
+    "valid_module_cmd_var": {
+      "module": "TESTValidManifestCmdVar",
+      "config_module": {
+        "valid_config_entry": "hello there"
+      },
+      "config_implementation": {
+        "main": {
+          "valid_config_entry": "hello there"
+        }
+      }
+    },
+    "valid_module_requires": {
+      "module": "TESTValidManifestRequires",
+      "mapping": {
+        "module": {
+          "evse": 2
+        }
+      },
+      "connections": {
+        "test_cmd_var": [
+          {
+            "module_id": "valid_module_cmd_var",
+            "implementation_id": "main"
+          }
+        ]
+      }
+    }
+  },
+  "x-module-layout": {}
+}

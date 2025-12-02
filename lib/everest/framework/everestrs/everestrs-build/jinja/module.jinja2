@@ -1,0 +1,250 @@
+mod generated {
+
+#![allow(
+    clippy::let_unit_value,
+    clippy::match_single_binding,
+    clippy::upper_case_acronyms,
+    clippy::useless_conversion,
+    clippy::too_many_arguments,
+    dead_code,
+    non_camel_case_types,
+    unused_mut,
+    unused_variables,
+    unused_imports,
+)]
+
+use everestrs::serde_json as __serde_json;
+use everestrs::serde_yaml as __serde_yaml;
+
+pub mod types {
+{% include "types" %}
+}
+
+pub mod errors {
+{% include "errors" %}
+}
+
+{% include "config" %}
+
+/// Called when the module receives on_ready from EVerest.
+pub(crate) trait OnReadySubscriber: Sync + Send {
+    fn on_ready(&self, pub_impl: &ModulePublisher);
+}
+
+{% for trait in provided_interfaces %}
+{% include "service" %}
+{% endfor %}
+
+{% for trait in required_interfaces %}
+{% include "client" %}
+{% endfor %}
+
+#[derive(Clone)]
+#[cfg_attr(all(test, feature="mockall"), derive(Default))]
+pub(crate) struct ModulePublisher {
+{% for provide in provides %}
+   pub(crate) {{ provide.implementation_id | identifier }}: {{provide.interface | title}}ServicePublisher,
+{% endfor %}
+{% for require in requires %}
+    {% if require.min_connections == 1 and require.max_connections == 1 %}
+   pub(crate) {{ require.implementation_id | identifier }}: {{require.interface | title}}ClientPublisher,
+    {% elif require.min_connections == require.max_connections %}
+   pub(crate) {{ require.implementation_id | identifier }}_slots: [{{ require.interface | title}}ClientPublisher; {{require.min_connections}}],
+    {% else %}
+   pub(crate) {{ require.implementation_id | identifier }}_slots: Vec<{{require.interface | title}}ClientPublisher>,
+    {% endif %}
+{% endfor %}
+}
+
+pub(crate) struct Module {
+    on_ready: ::std::sync::Arc<dyn OnReadySubscriber>,
+{% for provide in provides %}
+   {{ provide.implementation_id | identifier }}: ::std::sync::Arc<dyn {{provide.interface | title}}ServiceSubscriber>,
+{% endfor %}
+{% for require in requires %}
+    {% if require.min_connections == 1 and require.max_connections == 1 %}
+      {{ require.implementation_id | identifier }}: ::std::sync::Arc<dyn {{require.interface | title}}ClientSubscriber>,
+    {% elif require.min_connections == require.max_connections %}
+      {{ require.implementation_id | identifier }}_slots: [::std::sync::Arc<dyn {{require.interface | title}}ClientSubscriber>; {{require.max_connections}}],
+    {% else %}
+      {{ require.implementation_id | identifier }}_slots: Vec<::std::sync::Arc<dyn {{require.interface | title}}ClientSubscriber>>,
+    {% endif %}
+{% endfor %}
+
+    publisher: ModulePublisher,
+}
+
+/// The context structure.
+pub(crate) struct Context<'a> {
+    pub(crate) publisher: &'a ModulePublisher,
+    {# TODO(ddo) Clarify the naming. #}
+    /// The name as in `implementation_id`.
+    pub name: &'a str,
+    /// The index of the slot.
+    pub index: usize,
+}
+
+impl Module {
+    #[must_use]
+    pub(crate) fn new
+{% if requires_with_generics %}
+    <
+    {% for require in requires %}
+        {% if require.min_connections != 1 or require.max_connections != 1 %}
+            {{ require.implementation_id | title }}Callback: FnMut(usize) -> ::std::sync::Arc<dyn {{require.interface | title}}ClientSubscriber>,
+        {% endif %}
+    {% endfor %}
+    >
+{% endif %}
+    (
+        on_ready: ::std::sync::Arc<dyn OnReadySubscriber>,
+{% for provide in provides %}
+        {{ provide.implementation_id | identifier }}: ::std::sync::Arc<dyn {{provide.interface | title}}ServiceSubscriber>,
+{% endfor %}
+{% for require in requires %}
+    {% if require.min_connections == 1 and require.max_connections == 1 %}
+        {{ require.implementation_id | identifier }}: ::std::sync::Arc<dyn {{require.interface | title}}ClientSubscriber>,
+    {% else %}
+        {{ require.implementation_id | identifier }}_cb: {{ require.implementation_id | title }}Callback,
+    {% endif %}
+{% endfor %}
+    ) -> ::std::sync::Arc<Self> {
+        let runtime = ::everestrs::Runtime::new();
+        let connections = runtime.get_module_connections();
+        let this = ::std::sync::Arc::new(Self {
+            on_ready,
+{% for provide in provides %}
+            {{ provide.implementation_id | identifier }},
+{% endfor %}
+{% for require in requires %}
+    {% if require.min_connections == 1 and require.max_connections == 1 %}
+            {{ require.implementation_id | identifier }},
+    {% elif require.min_connections == require.max_connections %}
+            {{ require.implementation_id | identifier }}_slots: ::core::array::from_fn({{ require.implementation_id | identifier }}_cb),
+    {% else %}
+            {{ require.implementation_id | identifier }}_slots: (0..connections.get("{{require.implementation_id}}").cloned().unwrap_or(0)).map({{ require.implementation_id | identifier }}_cb).collect(),
+    {% endif %}
+{% endfor %}
+            #[cfg(any(not(test), not(feature = "mockall")))]
+            publisher: ModulePublisher {
+{% for provide in provides %}
+   {{ provide.implementation_id | identifier }}: {{provide.interface | title}}ServicePublisher {
+      implementation_id: "{{ provide.implementation_id }}",
+      runtime: runtime.clone(),
+    },
+{% endfor %}
+{% for require in requires %}
+    {% if require.min_connections == 1 and require.max_connections == 1 %}
+        {{ require.implementation_id | identifier }}: {{require.interface | title}}ClientPublisher {
+            implementation_id: "{{ require.implementation_id }}",
+            runtime: runtime.clone(),
+            index: 0,
+        },
+    {% elif require.min_connections == require.max_connections %}
+        {{ require.implementation_id | identifier }}_slots: ::core::array::from_fn(|i| {{require.interface | title}}ClientPublisher{
+            implementation_id: "{{ require.implementation_id }}",
+            runtime: runtime.clone(),
+            index: i,
+        }),
+    {% else %}
+        {{ require.implementation_id | identifier }}_slots: (0..connections.get("{{require.implementation_id}}").cloned().unwrap_or(0)).map(|i| {{require.interface | title}}ClientPublisher{
+            implementation_id: "{{ require.implementation_id }}",
+            runtime: runtime.clone(),
+            index: i,
+        }).collect(),
+    {% endif %}
+{% endfor %}
+            },
+            #[cfg(all(test, feature = "mockall"))]
+            publisher: ModulePublisher::default(),
+        });
+
+        runtime.as_ref().set_subscriber(this.clone());
+        this
+    }
+}
+
+impl ::everestrs::Subscriber for Module {
+    fn handle_command(
+        &self,
+        implementation_id: &str,
+        name: &str,
+        parameters: ::std::collections::HashMap<String, __serde_json::Value>,
+    ) -> ::everestrs::Result<__serde_json::Value> {
+        let context = Context {
+            publisher: &self.publisher,
+            name: implementation_id,
+            index: 0,
+        };
+        match implementation_id {
+{% for provide in provides %}
+    "{{ provide.implementation_id }}" => {
+        dispatch_command_to_{{ provide.interface | snake }}(&context, self.{{ provide.implementation_id | identifier }}.as_ref(), name, parameters)
+    },
+{% endfor %}
+            other => Err(::everestrs::Error::MessageParsingError(
+                format!("Unknown implementation_id {other} called."),
+            )),
+        }
+    }
+
+    fn handle_variable(
+        &self,
+        implementation_id: &str,
+        index: usize,
+        name: &str,
+        value: __serde_json::Value,
+    ) -> ::everestrs::Result<()> {
+        let context = Context {
+            publisher: &self.publisher,
+            name: implementation_id,
+            index,
+        };
+        match implementation_id {
+{% for req in requires %}
+    "{{ req.implementation_id }}" => {
+    {% if req.min_connections == 1 and req.max_connections == 1 %}
+        dispatch_variable_to_{{ req.interface | snake }}(&context, self.{{ req.implementation_id  | identifier }}.as_ref(), name, value)
+    {% else %}
+        dispatch_variable_to_{{ req.interface | snake }}(&context, self.{{ req.implementation_id  | identifier }}_slots[index].as_ref(), name, value)
+    {% endif %}
+    },
+{% endfor %}
+      other => Err(::everestrs::Error::MessageParsingError(
+                  format!("Unknown variable {other} received."),
+              ))
+        }
+    }
+
+    fn handle_on_error(
+        &self,
+        implementation_id: &str,
+        index: usize,
+        error: ::everestrs::FfiErrorType,
+        raised: bool
+    ) {
+        let context = Context {
+            publisher: &self.publisher,
+            name: implementation_id,
+            index,
+        };
+        match implementation_id {
+{% for req in requires %}
+            "{{ req.implementation_id }}" => {
+    {% if req.min_connections == 1 and req.max_connections == 1 %}
+                dispatch_error_to_{{ req.interface | snake }}(&context, self.{{ req.implementation_id  | identifier }}.as_ref(), error, raised)
+    {% else %}
+                dispatch_error_to_{{ req.interface | snake }}(&context, self.{{ req.implementation_id  | identifier }}_slots[index].as_ref(), error, raised)
+    {% endif %}
+            },
+{% endfor %}
+            _ => everestrs::log::error!("Received an unknown error from {implementation_id}"),
+        }
+    }
+
+    fn on_ready(&self) {
+        self.on_ready.on_ready(&self.publisher)
+    }
+}
+
+}

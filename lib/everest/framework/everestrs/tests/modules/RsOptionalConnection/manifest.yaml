@@ -1,0 +1,15 @@
+description: The tests how to use optinal connections in Rust
+provides:
+  foobar:
+    interface: example
+    description: An example interface.
+requires:
+  optional_connection:
+    interface: example
+    min_connections: 0
+    max_connections: 1
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Everest authors
+enable_external_mqtt: false

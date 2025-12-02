@@ -1,0 +1,14 @@
+# Test config for regression tests for the framework.
+active_modules:
+  errors_0:
+    module: RsErrorsModule
+    connections:
+      errors_multiple:
+        - module_id: errors_1
+          implementation_id: multiple
+  errors_1:
+    module: RsErrorsModule
+    connections:
+      errors_multiple:
+        - module_id: errors_0
+          implementation_id: multiple

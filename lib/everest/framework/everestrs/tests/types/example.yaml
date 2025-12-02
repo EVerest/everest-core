@@ -1,0 +1,5 @@
+description: Example type
+types:
+  Something:
+    description: Some simple type.
+    type: string
