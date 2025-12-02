@@ -7,6 +7,7 @@ if(DISABLE_EDM)
     find_package(GTest REQUIRED)
 else()
     set(GTEST_LIBRARIES
+        GTest::gmock
         GTest::gtest
         GTest::gtest_main
     )
