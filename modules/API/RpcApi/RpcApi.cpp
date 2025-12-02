@@ -158,6 +158,7 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
         evse_data.evsestatus.set_charged_energy_wh(evse_data.sessioninfo.get_charged_energy_wh());
         evse_data.evsestatus.set_discharged_energy_wh(evse_data.sessioninfo.get_discharged_energy_wh());
     });
+
     evse_manager->subscribe_hw_capabilities(
         [this, &evse_data](const types::evse_board_support::HardwareCapabilities& hwcaps) {
             // there is only one connector supported currently
@@ -165,6 +166,7 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
             // also update evse_max_phase_count
             evse_data.evsestatus.set_ac_charge_param_evse_max_phase_count(hwcaps.max_phase_count_import);
         });
+
     evse_manager->subscribe_evse_id([this, &evse_data](const std::string& evse_id) {
         // set the EVSE id in the data store
         evse_data.evseinfo.set_id(evse_id);
@@ -202,8 +204,8 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
             // convert to rpc type
             bool is_ac_transfer_mode = false;
             const auto rpc_supported_energy_transfer_modes =
-                types::json_rpc_api::iso15118_energy_transfer_modes_to_json_rpc_api(supported_energy_transfer_modes,
-                                                                                    is_ac_transfer_mode);
+                RPCDataTypes::iso15118_energy_transfer_modes_to_json_rpc_api(supported_energy_transfer_modes,
+                                                                             is_ac_transfer_mode);
             evse_data.evseinfo.set_supported_energy_transfer_modes(rpc_supported_energy_transfer_modes);
             evse_data.evseinfo.set_is_ac_transfer_mode(is_ac_transfer_mode);
         });
