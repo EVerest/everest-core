@@ -140,7 +140,6 @@ else()
 
     find_package(PalSigslot REQUIRED)
 
-    find_package(fsm REQUIRED)
     find_package(slac REQUIRED)
     find_package(libnfc-nci REQUIRED)
 
