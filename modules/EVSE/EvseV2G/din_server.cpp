@@ -919,7 +919,7 @@ static enum v2g_event handle_din_session_stop(struct v2g_connection* conn) {
     utils::din_validate_response_code(&res->ResponseCode, conn);
 
     /* Setuo dlink action */
-    conn->dlink_action = MQTT_DLINK_ACTION_TERMINATE;
+    conn->d_link_action = dLinkAction::D_LINK_ACTION_TERMINATE;
 
     /* Set next expected req msg */
     conn->ctx->state = WAIT_FOR_TERMINATED_SESSION; // [V2G-DC-451]
