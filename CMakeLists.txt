@@ -132,6 +132,9 @@ if(NOT DISABLE_EDM)
     if(EVEREST_DEPENDENCY_ENABLED_SDBUS_CPP AND NOT TARGET SDBusCpp::sdbus-c++)
         add_library(SDBusCpp::sdbus-c++ ALIAS sdbus-c++)
     endif()
+
+    # ev-cli and everest-testing
+    add_subdirectory(applications/utils)
 else()
     find_package(everest-framework REQUIRED)
     find_package(everest-ocpp REQUIRED)
