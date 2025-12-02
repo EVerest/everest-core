@@ -208,7 +208,7 @@
     "@@rules_python+//python/extensions:pip.bzl%pip": {
       "general": {
         "bzlTransitiveDigest": "mcgpqVewQ1wCdDIsG71QPqk/7q0oSuflIwAZXZ35Ec0=",
-        "usagesDigest": "DAKTJ1SQ9XDMH4VKWf98HrKG4lqj2kZtmxEIvY/jLBY=",
+        "usagesDigest": "swWbEgTRQ/eg2uAakFllzHW/EIhH4DvRlDeLN+kDlR4=",
         "recordedFileInputs": {
           "@@//requirements-bazel.txt": "86d6c66ef03d93aeb7a5b6576fc419790fd34918ac13d91c5948f82df97fb5bf",
           "@@protobuf+//python/requirements.txt": "983be60d3cec4b319dcab6d48aeb3f5b2f7c3350f26b3a9e97486c37967c73c5",
