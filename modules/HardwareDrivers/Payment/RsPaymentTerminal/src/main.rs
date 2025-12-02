@@ -146,7 +146,10 @@ impl ProvidedIdToken {
             parent_id_token: None,
             id_token: IdToken {
                 value: id_token,
-                r#type: IdTokenType::Local,
+                r#type: match authorization_type {
+                    AuthorizationType::BankCard => IdTokenType::NoAuthorization,
+                    _ => IdTokenType::Local,
+                },
                 additional_info: None,
             },
             authorization_type,
