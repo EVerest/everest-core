@@ -1,0 +1,22 @@
+{
+    "id": 66,
+    "chargingProfileKind": "Relative",
+    "chargingProfilePurpose": "TxProfile",
+    "chargingSchedule": [
+        {
+            "id": 0,
+            "chargingRateUnit": "W",
+            "chargingSchedulePeriod": [
+                {
+                    "limit": 2000.0,
+                    "numberPhases": 1,
+                    "startPeriod": 0
+                }
+            ],
+            "duration": 3601,
+            "minChargingRate": 0.0
+        }
+    ],
+    "stackLevel": 1,
+    "transactionId": "f1522902-1170-416f-8e43-9e3bce28fde7"
+}

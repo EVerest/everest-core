@@ -1,0 +1,186 @@
+{
+    "id": 24,
+    "chargingProfileKind": "Recurring",
+    "chargingProfilePurpose": "ChargingStationMaxProfile",
+    "chargingSchedule": [
+        {
+            "id": 0,
+            "chargingRateUnit": "A",
+            "chargingSchedulePeriod": [
+                {
+                    "limit": 10.0,
+                    "limit_L2": 20.0,
+                    "limit_L3": 30.0,
+                    "numberPhases": 3,
+                    "startPeriod": 0
+                },
+                {
+                    "limit": 20.0,
+                    "limit_L2": 40.0,
+                    "limit_L3": 60.0,
+                    "numberPhases": 3,
+                    "startPeriod": 3600
+                },
+                {
+                    "limit": 30.0,
+                    "limit_L2": 60.0,
+                    "limit_L3": 90.0,
+                    "numberPhases": 3,
+                    "startPeriod": 7200
+                },
+                {
+                    "limit": 40.0,
+                    "limit_L2": 80.0,
+                    "limit_L3": 120.0,
+                    "numberPhases": 3,
+                    "startPeriod": 10800
+                },
+                {
+                    "limit": 50.0,
+                    "limit_L2": 1000,
+                    "limit_L3": 150.0,
+                    "numberPhases": 3,
+                    "startPeriod": 14400
+                },
+                {
+                    "limit": 60.0,
+                    "limit_L2": 120.0,
+                    "limit_L3": 180.0,
+                    "numberPhases": 3,
+                    "startPeriod": 18000
+                },
+                {
+                    "limit": 70.0,
+                    "limit_L2": 140.0,
+                    "limit_L3": 210.0,
+                    "numberPhases": 3,
+                    "startPeriod": 21600
+                },
+                {
+                    "limit": 80.0,
+                    "limit_L2": 160.0,
+                    "limit_L3": 240.0,
+                    "numberPhases": 3,
+                    "startPeriod": 25200
+                },
+                {
+                    "limit": 90.0,
+                    "limit_L2": 180.0,
+                    "limit_L3": 270.0,
+                    "numberPhases": 3,
+                    "startPeriod": 28800
+                },
+                {
+                    "limit": 100.0,
+                    "limit_L2": 200.0,
+                    "limit_L3": 300.0,
+                    "numberPhases": 3,
+                    "startPeriod": 32400
+                },
+                {
+                    "limit": 110.0,
+                    "limit_L2": 220.0,
+                    "limit_L3": 330.0,
+                    "numberPhases": 3,
+                    "startPeriod": 36000
+                },
+                {
+                    "limit": 120.0,
+                    "limit_L2": 240.0,
+                    "limit_L3": 360.0,
+                    "numberPhases": 3,
+                    "startPeriod": 39600
+                },
+                {
+                    "limit": 130.0,
+                    "limit_L2": 260.0,
+                    "limit_L3": 390.0,
+                    "numberPhases": 3,
+                    "startPeriod": 43200
+                },
+                {
+                    "limit": 140.0,
+                    "limit_L2": 280.0,
+                    "limit_L3": 420.0,
+                    "numberPhases": 3,
+                    "startPeriod": 46800
+                },
+                {
+                    "limit": 150.0,
+                    "limit_L2": 300.0,
+                    "limit_L3": 450.0,
+                    "numberPhases": 3,
+                    "startPeriod": 50400
+                },
+                {
+                    "limit": 160.0,
+                    "limit_L2": 320.0,
+                    "limit_L3": 480.0,
+                    "numberPhases": 3,
+                    "startPeriod": 54000
+                },
+                {
+                    "limit": 170.0,
+                    "limit_L2": 340.0,
+                    "limit_L3": 510.0,
+                    "numberPhases": 3,
+                    "startPeriod": 57600
+                },
+                {
+                    "limit": 180.0,
+                    "limit_L2": 360.0,
+                    "limit_L3": 540.0,
+                    "numberPhases": 3,
+                    "startPeriod": 61200
+                },
+                {
+                    "limit": 190.0,
+                    "limit_L2": 380.0,
+                    "limit_L3": 570.0,
+                    "numberPhases": 3,
+                    "startPeriod": 64800
+                },
+                {
+                    "limit": 200.0,
+                    "limit_L2": 400.0,
+                    "limit_L3": 600.0,
+                    "numberPhases": 3,
+                    "startPeriod": 68400
+                },
+                {
+                    "limit": 210.0,
+                    "limit_L2": 420.0,
+                    "limit_L3": 630.0,
+                    "numberPhases": 3,
+                    "startPeriod": 72000
+                },
+                {
+                    "limit": 220.0,
+                    "limit_L2": 440.0,
+                    "limit_L3": 660.0,
+                    "numberPhases": 3,
+                    "startPeriod": 75600
+                },
+                {
+                    "limit": 230.0,
+                    "limit_L2": 460.0,
+                    "limit_L3": 690.0,
+                    "numberPhases": 3,
+                    "startPeriod": 79200
+                },
+                {
+                    "limit": 240.0,
+                    "limit_L2": 480.0,
+                    "limit_L3": 720.0,
+                    "numberPhases": 3,
+                    "startPeriod": 82800
+                }
+            ],
+            "duration": 86400,
+            "minChargingRate": 0.0,
+            "startSchedule": "2024-01-17T00:00:00.000Z"
+        }
+    ],
+    "recurrencyKind": "Daily",
+    "stackLevel": 0
+}

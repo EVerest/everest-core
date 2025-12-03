@@ -1,0 +1,31 @@
+
+target_sources(ocpp
+    PRIVATE
+        AFRRSignal.cpp
+        AdjustPeriodicEventStream.cpp
+        BatterySwap.cpp
+        ChangeTransactionTariff.cpp
+        ClearDERControl.cpp
+        ClearTariffs.cpp
+        ClosePeriodicEventStream.cpp
+        GetCertificateChainStatus.cpp
+        GetDERControl.cpp
+        GetPeriodicEventStream.cpp
+        GetTariffs.cpp
+        NotifyAllowedEnergyTransfer.cpp
+        NotifyDERAlarm.cpp
+        NotifyDERStartStop.cpp
+        NotifyPeriodicEventStream.cpp
+        NotifyPriorityCharging.cpp
+        NotifySettlement.cpp
+        NotifyWebPaymentStarted.cpp
+        OpenPeriodicEventStream.cpp
+        PullDynamicScheduleUpdate.cpp
+        ReportDERControl.cpp
+        RequestBatterySwap.cpp
+        SetDERControl.cpp
+        SetDefaultTariff.cpp
+        UpdateDynamicSchedule.cpp
+        UsePriorityCharging.cpp
+        VatNumberValidation.cpp
+    )

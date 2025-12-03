@@ -1,0 +1,47 @@
+{% if first %}
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
+#ifndef OCPP_{{namespace | upper}}_OCPP_ENUMS_HPP
+#define OCPP_{{namespace | upper}}_OCPP_ENUMS_HPP
+
+#include <iosfwd>
+#include <string>
+
+namespace ocpp {
+namespace {{namespace}} {
+{% endif %}
+{%- if enum_types|length %}
+{%- for enum_type in enum_types %}
+
+// from: {{action.class_name}}
+enum class {{ enum_type.name }}
+{
+{% for enum in enum_type.enums %}
+    {{ enum.replace('.', '_').replace('-', '_') }},
+{% endfor %}
+};
+
+namespace conversions {
+    /// \brief Converts the given {{ enum_type.name }} \p e to human readable string
+    /// \returns a string representation of the {{ enum_type.name }}
+    std::string {{ enum_type.name | snake_case }}_to_string({{ enum_type.name }} e);
+
+    /// \brief Converts the given std::string \p s to {{ enum_type.name }}
+    /// \returns a {{ enum_type.name }} from a string representation
+    {{ enum_type.name }} string_to_{{ enum_type.name | snake_case }}(const std::string& s);
+}
+
+/// \brief Writes the string representation of the given {{ enum_type.name }} \p {{ enum_type.name | snake_case }} to the given output stream \p os
+/// \returns an output stream with the {{ enum_type.name }} written to
+std::ostream& operator<<(std::ostream& os, const {{ enum_type.name }}& {{ enum_type.name | snake_case }});
+{% endfor %}
+{%- endif %}
+{% if last %}
+
+} // namespace {{namespace}}
+} // namespace ocpp
+
+#endif // OCPP_{{namespace | upper}}_OCPP_ENUMS_HPP
+{% endif %}

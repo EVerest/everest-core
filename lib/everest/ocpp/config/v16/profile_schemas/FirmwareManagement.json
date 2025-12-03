@@ -1,0 +1,13 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Json schema for Firmware Management Profile config",
+    "type": "object",
+    "required": [],
+    "properties": {
+        "SupportedFileTransferProtocols": {
+            "type": "string",
+            "readOnly": true
+        }
+    },
+    "additionalProperties": false
+}

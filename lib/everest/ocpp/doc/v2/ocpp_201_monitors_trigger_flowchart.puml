@@ -1,0 +1,35 @@
+@startuml Periodic Monitors
+
+start
+:DB Monitor Config Setup;
+:DB Monitor Initialization;
+if (Monitoring Enabled?) then (yes)
+  :Inject Device\nModel Listener;
+  :Enable Monitor\nProcessor;
+  repeat
+    :Verify Variable\nMonitors;
+    if(Variable Monitor\nTriggered?) then (yes)
+      if(Online?) then (yes)
+        if(Active Monitoring Severity\n> Monitor Severity?) then (yes)
+          :Queue Monitor;
+        else (no)
+          :Discard Monitor;
+        endif
+      else (no)
+        if(Offline Monitoring Severity\n> Monitor Severity?) then (yes)
+          :Queue Monitor;
+        else (no)
+          :Discard Monitor;
+        endif
+      endif
+    else(no)
+      :Do Nothing;
+    endif
+    :Process Queued\nMonitors;
+  repeat while (DB Variable Updated)
+else (no) 
+  :Do Nothing;
+endif
+stop
+
+@enduml

@@ -1,0 +1,19 @@
+{
+    "chargingProfileId": 401,
+    "chargingProfileKind": "Recurring",
+    "chargingProfilePurpose": "TxDefaultProfile",
+    "chargingSchedule": {
+        "id": 0,
+        "chargingRateUnit": "A",
+        "chargingSchedulePeriod": [
+            {
+                "limit": 16.0,
+                "startPeriod": 0
+            }
+        ],
+        "duration": 300,
+        "startSchedule": "2024-01-01T08:00:00Z"
+    },
+    "recurrencyKind": "Daily",
+    "stackLevel": 5
+}

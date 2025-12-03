@@ -1,0 +1,30 @@
+{
+    "chargingProfileId": 100,
+    "chargingProfileKind": "Recurring",
+    "chargingProfilePurpose": "TxDefaultProfile",
+    "chargingSchedule": {
+        "chargingRateUnit": "W",
+        "chargingSchedulePeriod": [
+            {
+                "limit": 11000.0,
+                "numberPhases": 3,
+                "startPeriod": 0
+            },
+            {
+                "limit": 6000.0,
+                "numberPhases": 3,
+                "startPeriod": 28800
+            },
+            {
+                "limit": 12000.0,
+                "numberPhases": 3,
+                "startPeriod": 72000
+            }
+        ],
+        "duration": 86400,
+        "minChargingRate": 0.0,
+        "startSchedule": "2023-01-17T17:00:00.000Z"
+    },
+    "recurrencyKind": "Daily",
+    "stackLevel": 0
+}
