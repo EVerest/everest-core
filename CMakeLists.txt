@@ -147,7 +147,6 @@ if(NOT DISABLE_EDM)
     # ev-cli and everest-testing
     add_subdirectory(applications/utils)
 else()
-    find_package(everest-ocpp REQUIRED)
     find_package(cbv2g REQUIRED)
 
     find_package(PalSigslot REQUIRED)
