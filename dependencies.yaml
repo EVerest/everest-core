@@ -64,11 +64,12 @@ libevse-security:
   git_tag: v0.10.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
-# OCPP
-libocpp:
-  git: https://github.com/EVerest/libocpp.git
-  git_tag: 2c727f86e9ff988bdf13fcf5b049f0d5c3650384
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
+# ocpp
+liblog:
+  git: https://github.com/EVerest/liblog.git
+  git_tag: v0.3.0
+  options: ["BUILD_EXAMPLES OFF", "CMAKE_POSITION_INDEPENDENT_CODE ON"]
+
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
