@@ -44,7 +44,7 @@
 #include "CarManufacturer.hpp"
 #include "Charger.hpp"
 #include "ErrorHandling.hpp"
-#include "OverVoltageMonitor.hpp"
+#include "over_voltage/OverVoltageMonitor.hpp"
 #include "PersistentStore.hpp"
 #include "SessionLog.hpp"
 #include "VarContainer.hpp"

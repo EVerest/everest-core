@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include "OverVoltageMonitor.hpp"
+#include "over_voltage/OverVoltageMonitor.hpp"
 
 #include <algorithm>
 #include <fmt/core.h>

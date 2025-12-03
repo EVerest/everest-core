@@ -8,7 +8,6 @@
 #include <fmt/core.h>
 
 #include "IECStateMachine.hpp"
-#include "OverVoltageMonitor.hpp"
 #include "SessionLog.hpp"
 #include "Timeout.hpp"
 #include "scoped_lock_timeout.hpp"
