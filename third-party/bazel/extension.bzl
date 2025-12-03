@@ -2,6 +2,7 @@ load("@bazel_features//:features.bzl", "bazel_features")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
+load("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
 
 def _deps_impl(module_ctx):
     maybe(
@@ -40,12 +41,9 @@ def _deps_impl(module_ctx):
         build_file = "@everest-core//third-party/bazel:BUILD.libevse-security.bazel",
     )
 
-    maybe(
-        http_archive,
+    new_local_repository(
         name = "libocpp",
-        url = "https://github.com/EVerest/libocpp/archive/1c6fb7c5fd92b4651648bcf3a6c8f32b58b935dc.tar.gz",
-        sha256 = "f8f9794c5f73f9ab417c921d18e192b91c93f1b57bf360dbed15d6b2462e565b",
-        strip_prefix = "libocpp-1c6fb7c5fd92b4651648bcf3a6c8f32b58b935dc",
+        path = "lib/everest/ocpp",
         build_file = "@everest-core//third-party/bazel:BUILD.libocpp.bazel",
     )
 
