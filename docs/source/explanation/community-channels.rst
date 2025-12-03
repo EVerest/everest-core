@@ -72,8 +72,8 @@ The Technical Steering Committee (TSC) is the governing body of the EVerest Proj
 project health and direction, coordination of activities, and working with other projects and committees as needed for
 the continued growth of the project.
 
-You can find the TSC meeting recordings and other resources on the EVerest YouTube channel:
-https://www.youtube.com/channel/UCF0Mt88gmn7Hbx2fvaQPE4A
+You can find more resources about the TSC here:
+https://github.com/EVerest/EVerest/tree/main/tsc
 
 Tech discussion for email lovers
 ********************************
