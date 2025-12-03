@@ -594,6 +594,12 @@ void ISO15118_chargerImpl::handle_no_energy_pause_charging(types::iso15118::NoEn
     }
 }
 
+bool ISO15118_chargerImpl::handle_update_supported_app_protocols(
+    types::iso15118::SupportedAppProtocols& supported_app_protocols) {
+    // your code for cmd no_energy_pause_charging goes here
+    return false;
+}
+
 void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
     std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
     mod->r_iso20->call_update_energy_transfer_modes(supported_energy_transfer_modes);
