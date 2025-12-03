@@ -80,6 +80,7 @@ endif()
 if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     set(EVEREST_CORE_BUILD_TESTING ON)
     set(everest-framework_BUILD_TESTING ON)
+    set(ocpp_BUILD_TESTING ON)
 endif()
 # This is a flag for building development tests, but not necessarily to run them, for expample in case
 # tests requires hardware.
