@@ -21,6 +21,12 @@
 
 namespace module {
 
+// helper type for visitor
+template <class... Ts> struct overloaded : Ts... {
+    using Ts::operator()...;
+};
+template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
 const std::string CERTS_SUB_DIR = "certs";
 const std::string SQL_CORE_MIGRTATIONS = "core_migrations";
 const std::string INOPERATIVE_ERROR_TYPE = "evse_manager/Inoperative";
@@ -312,6 +318,7 @@ void OCPP::init_evse_subscriptions() {
         });
 
         evse->subscribe_session_event([this, evse_id](types::evse_manager::SessionEvent session_event) {
+            std::lock_guard<std::mutex> lg(this->event_mutex);
             if (this->ocpp_stopped) {
                 // dont call any on handler in case ocpp is stopped
                 return;
@@ -325,7 +332,7 @@ void OCPP::init_evse_subscriptions() {
             if (!this->started) {
                 EVLOG_info << "OCPP not fully initialized, but received a session event on evse_id: " << evse_id
                            << " that will be queued up: " << session_event.event;
-                this->event_queue.push(Event(evse_id, EventType::SessionEvent, session_event));
+                this->event_queue.emplace(evse_id, session_event);
                 return;
             }
 
@@ -469,21 +476,25 @@ void OCPP::init() {
     }
 
     const auto error_handler = [this](const Everest::error::Error& error) {
+        std::lock_guard<std::mutex> lg(this->event_mutex);
         const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
         if (this->started) {
             const auto error_info = get_error_info(error);
             this->charge_point->on_error(evse_id, error_info);
         } else {
-            this->event_queue.push(Event(evse_id, EventType::ErrorRaised, error));
+            ErrorRaised error_raised{error};
+            this->event_queue.emplace(evse_id, error_raised);
         }
     };
 
     const auto error_cleared_handler = [this](const Everest::error::Error& error) {
+        std::lock_guard<std::mutex> lg(this->event_mutex);
         const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
         if (this->started) {
             this->charge_point->on_error_cleared(evse_id, error.uuid.uuid);
         } else {
-            this->event_queue.push(Event(evse_id, EventType::ErrorCleared, error));
+            ErrorCleared error_cleared{error};
+            this->event_queue.emplace(evse_id, error_cleared);
         }
     };
 
@@ -493,7 +504,7 @@ void OCPP::init() {
 
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
         this->r_evse_manager.at(evse_id - 1)->subscribe_waiting_for_external_ready([this, evse_id](bool ready) {
-            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
+            std::lock_guard<std::mutex> lg(this->evse_ready_mutex);
             if (ready) {
                 this->evse_ready_map[evse_id] = true;
                 this->evse_ready_cv.notify_one();
@@ -581,22 +592,24 @@ void OCPP::init() {
     this->init_evse_subscriptions(); // initialize EvseManager subscriptions as early as possible
 
     this->r_system->subscribe_log_status([this](types::system::LogStatus log_status) {
+        std::lock_guard<std::mutex> lg(this->event_mutex);
         if (this->started) {
             this->charge_point->on_log_status_notification(
                 log_status.request_id, types::system::log_status_enum_to_string(log_status.log_status));
         } else {
-            this->event_queue.push(Event(0, EventType::LogStatus, log_status));
+            this->event_queue.emplace(0, log_status);
         }
     });
 
     this->r_system->subscribe_firmware_update_status(
         [this](types::system::FirmwareUpdateStatus firmware_update_status) {
+            std::lock_guard<std::mutex> lg(this->event_mutex);
             if (this->started) {
                 this->charge_point->on_firmware_update_status_notification(
                     firmware_update_status.request_id,
                     conversions::to_ocpp_firmware_status_notification(firmware_update_status.firmware_update_status));
             } else {
-                this->event_queue.push(Event(0, EventType::FirmwareUpdateStatus, firmware_update_status));
+                this->event_queue.emplace(0, firmware_update_status);
             }
         });
 }
@@ -1030,11 +1043,7 @@ void OCPP::ready() {
 
     // we can now call init(), which initializes the charge points state machine. It reads the connector availability
     // from the internal database and potentially triggers enable/disable callbacks at the evse.
-    if (this->charge_point->init({}, this->resuming_session_ids)) {
-        // signal that we're started
-        this->started = true;
-        EVLOG_info << "OCPP initialized";
-    }
+    this->charge_point->init({}, this->resuming_session_ids);
 
     // this signals to the evses they can now start their internal state machines
     // signal to the EVSEs that OCPP is initialized
@@ -1046,57 +1055,34 @@ void OCPP::ready() {
     // plugged in at startup)
     std::this_thread::sleep_for(std::chrono::milliseconds(this->config.DelayOcppStart));
     const auto boot_reason = conversions::to_ocpp_boot_reason_enum(this->r_system->call_get_boot_reason());
-    // we can now start the OCPP connection
-    if (this->charge_point->start({}, boot_reason, this->resuming_session_ids)) {
-        EVLOG_info << "OCPP started";
-        // process event queue
-        std::vector<Event> events;
-        while (auto ev = this->event_queue.try_pop()) {
-            events.push_back(std::move(ev.value()));
-        }
 
-        for (const auto& queued_event : events) {
-            switch (queued_event.type) {
-            case EventType::SessionEvent: {
-                const auto session_event = std::get<types::evse_manager::SessionEvent>(queued_event.data);
-                EVLOG_info << "Processing queued event for evse_id: " << queued_event.evse_id
-                           << ", event: " << session_event.event;
-                this->process_session_event(queued_event.evse_id, session_event);
-                break;
-            }
-            case EventType::ErrorRaised: {
-                const auto error = std::get<Everest::error::Error>(queued_event.data);
-                const auto error_info = get_error_info(error);
-                EVLOG_info << "Processing queued error event for evse_id: " << queued_event.evse_id
-                           << ", error id: " << error.uuid.uuid;
-                this->charge_point->on_error(queued_event.evse_id, error_info);
-                break;
-            }
-            case EventType::ErrorCleared: {
-                const auto error = std::get<Everest::error::Error>(queued_event.data);
-                EVLOG_info << "Processing queued cleared error event for evse_id: " << queued_event.evse_id
-                           << ", error id: " << error.uuid.uuid;
-                this->charge_point->on_error_cleared(queued_event.evse_id, error.uuid.uuid);
-                break;
-            }
-            case EventType::LogStatus: {
-                const auto log_status = std::get<types::system::LogStatus>(queued_event.data);
-                EVLOG_info << "Processing queued log status event";
-                this->charge_point->on_log_status_notification(
-                    log_status.request_id, types::system::log_status_enum_to_string(log_status.log_status));
-                break;
-            }
-            case EventType::FirmwareUpdateStatus: {
-                const auto firmware_status = std::get<types::system::FirmwareUpdateStatus>(queued_event.data);
-                EVLOG_info << "Processing queued firmware status event";
-                this->charge_point->on_firmware_update_status_notification(
-                    firmware_status.request_id,
-                    conversions::to_ocpp_firmware_status_notification(firmware_status.firmware_update_status));
-                break;
-            }
-            }
-        }
+    // we can now start the OCPP connection and process any queued events. We lock the event mutex to avoid
+    // race conditions with error/event handlers that might be called from other threads
+    std::lock_guard<std::mutex> lg(this->event_mutex);
+    this->charge_point->start({}, boot_reason, this->resuming_session_ids);
+    EVLOG_info << "OCPP started";
+    while (!this->event_queue.empty()) {
+        auto queued_event = this->event_queue.front();
+        this->event_queue.pop();
+        std::visit(
+            overloaded{
+                [&](const types::evse_manager::SessionEvent& s) { process_session_event(queued_event.evse_id, s); },
+                [&](const ErrorRaised& e) {
+                    auto info = get_error_info(e);
+                    charge_point->on_error(queued_event.evse_id, info);
+                },
+                [&](const ErrorCleared& e) { charge_point->on_error_cleared(queued_event.evse_id, e.uuid.uuid); },
+                [&](const types::system::LogStatus& log) {
+                    charge_point->on_log_status_notification(log.request_id,
+                                                             types::system::log_status_enum_to_string(log.log_status));
+                },
+                [&](const types::system::FirmwareUpdateStatus& fw) {
+                    charge_point->on_firmware_update_status_notification(
+                        fw.request_id, conversions::to_ocpp_firmware_status_notification(fw.firmware_update_status));
+                }},
+            queued_event.data);
     }
+    this->started = true;
 }
 
 int32_t OCPP::get_ocpp_connector_id(int32_t evse_id, int32_t connector_id) {

@@ -39,31 +39,24 @@
 #include <filesystem>
 #include <memory>
 #include <mutex>
+#include <queue>
 
-#include <everest/util/queue/thread_safe_queue.hpp>
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/types.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 
-enum class EventType {
-    SessionEvent,
-    ErrorRaised,
-    ErrorCleared,
-    FirmwareUpdateStatus,
-    LogStatus
-};
+struct ErrorRaised : public Everest::error::Error {};
+struct ErrorCleared : public Everest::error::Error {};
 
-using EventData = std::variant<types::evse_manager::SessionEvent, Everest::error::Error, types::system::LogStatus,
+using EventData = std::variant<types::evse_manager::SessionEvent, ErrorRaised, ErrorCleared, types::system::LogStatus,
                                types::system::FirmwareUpdateStatus>;
 
 struct Event {
-    EventType type;
     EventData data;
     int32_t evse_id;
 
-    explicit Event(int32_t evse_id_, EventType type_, EventData data_) :
-        evse_id(evse_id_), type(type_), data(std::move(data_)) {
+    explicit Event(int32_t evse_id_, EventData data_) : evse_id(evse_id_), data(std::move(data_)) {
     }
 };
 
@@ -184,8 +177,9 @@ private:
     std::condition_variable evse_ready_cv;
     bool all_evse_ready();
 
-    std::atomic_bool started{false};
-    everest::lib::util::thread_safe_queue<Event> event_queue;
+    std::mutex event_mutex;
+    bool started{false};
+    std::queue<Event> event_queue;
     void process_session_event(int32_t evse_id, const types::evse_manager::SessionEvent& session_event);
 
     std::string source_ext_limit;
