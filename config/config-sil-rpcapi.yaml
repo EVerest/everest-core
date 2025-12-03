@@ -1,0 +1,192 @@
+settings:
+  telemetry_enabled: true
+active_modules:
+  api:
+    module: RpcApi
+    connections:
+      evse_manager:
+        - module_id: connector_1
+          implementation_id: evse
+      evse_energy_sink:
+        - module_id: grid_connection_point
+          implementation_id: external_limits
+        - module_id: api_sink_1_evsemgr
+          implementation_id: external_limits
+  auth:
+    module: Auth
+    config_module:
+      connection_timeout: 10
+      prioritize_authorization_over_stopping_transaction: true
+      selection_algorithm: FindFirst
+      ignore_connector_faults: true
+    connections:
+      evse_manager:
+        - implementation_id: evse
+          module_id: connector_1
+      token_provider:
+        - implementation_id: main
+          module_id: token_provider
+      token_validator:
+        - implementation_id: main
+          module_id: token_validator
+  ev_manager:
+    module: EvManager
+    config_module:
+      auto_enable: true
+      auto_exec: false
+      auto_exec_commands: sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
+      connector_id: 1
+    connections:
+      ev:
+        - implementation_id: ev
+          module_id: iso15118_car
+      ev_board_support:
+        - implementation_id: ev_board_support
+          module_id: connector_1_powerpath
+      slac:
+        - implementation_id: ev
+          module_id: slac
+  energy_manager:
+    module: EnergyManager
+    config_module:
+      switch_3ph1ph_while_charging_mode: Both
+      switch_3ph1ph_max_nr_of_switches_per_session: 5
+      switch_3ph1ph_time_hysteresis_s: 20
+      switch_3ph1ph_power_hysteresis_W: 1000
+      switch_3ph1ph_switch_limit_stickyness: SinglePhase
+      schedule_interval_duration: 60
+      schedule_total_duration: 10
+      debug: false
+    connections:
+      energy_trunk:
+        - implementation_id: energy_grid
+          module_id: grid_connection_point
+  api_sink_1_evsemgr:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: connector_1
+          implementation_id: energy_grid
+  connector_1:
+    module: EvseManager
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      ac_enforce_hlc: false
+      ac_hlc_enabled: true
+      ac_hlc_use_5percent: false
+      ac_nominal_voltage: 230
+      charge_mode: AC
+      connector_id: 1
+      ev_receipt_required: false
+      evse_id: DE*PNX*E12345*1
+      has_ventilation: true
+      max_current_import_A: 32
+      max_current_export_A: 32
+      payment_enable_contract: true
+      payment_enable_eim: true
+      session_logging: true
+      session_logging_path: /tmp/everest-logs
+      session_logging_xml: false
+      switch_3ph1ph_delay_s: 5
+      switch_3ph1ph_cp_state: X1
+    connections:
+      bsp:
+        - implementation_id: board_support
+          module_id: connector_1_powerpath
+      hlc:
+        - implementation_id: charger
+          module_id: iso15118_charger
+      powermeter_grid_side:
+        - implementation_id: powermeter
+          module_id: connector_1_powerpath
+      slac:
+        - implementation_id: evse
+          module_id: slac
+      ac_rcd:
+        - implementation_id: rcd
+          module_id: connector_1_powerpath
+      connector_lock:
+        - implementation_id: connector_lock
+          module_id: connector_1_powerpath
+    telemetry:
+      id: 1
+  grid_connection_point:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 0
+    config_module:
+      fuse_limit_A: 40
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - implementation_id: energy_grid
+          module_id: api_sink_1_evsemgr
+  iso15118_car:
+    module: PyEvJosev
+    config_module:
+      device: auto
+      supported_ISO15118_2: true
+  iso15118_charger:
+    module: EvseV2G
+    config_module:
+      device: auto
+      tls_security: allow
+      supported_DIN70121: false
+    connections:
+      security:
+        - module_id: evse_security
+          implementation_id: main
+  evse_security:
+    module: EvseSecurity
+    config_module:
+      private_key_password: "123456"
+  persistent_store:
+    module: PersistentStore
+    config_module:
+      sqlite_db_file_path: everest_persistent_store.db
+  setup:
+    module: Setup
+    config_module:
+      initialized_by_default: true
+      localization: true
+      online_check_host: lfenergy.org
+      setup_simulation: true
+      setup_wifi: false
+    connections:
+      store:
+        - implementation_id: main
+          module_id: persistent_store
+  slac:
+    module: SlacSimulator
+  token_provider:
+    module: DummyTokenProvider
+    config_implementation:
+      main:
+        timeout: 10
+        token: DEADBEEF
+    connections:
+      evse:
+        - implementation_id: evse
+          module_id: connector_1
+  token_validator:
+    module: DummyTokenValidator
+    config_implementation:
+      main:
+        sleep: 0.25
+        validation_reason: Token seems valid
+        validation_result: Accepted
+  connector_1_powerpath:
+    module: YetiSimulator
+    config_module:
+      connector_id: 1
+    telemetry:
+      id: 1
