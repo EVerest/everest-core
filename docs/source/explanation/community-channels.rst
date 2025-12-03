@@ -65,6 +65,15 @@ people and suggest creating a new working group.
 You might want to join the working group chat channels in Zulip.
 See the “Zulip chat” section above to see how to get there!
 
+Technical Steering Committee (TSC)
+**********************************
+
+The Technical Steering Committee (TSC) is the governing body of the EVerest Project It is responsible for the overall
+project health and direction, coordination of activities, and working with other projects and committees as needed for
+the continued growth of the project.
+
+You can find the TSC meeting recordings and other resources on the EVerest YouTube channel:
+https://www.youtube.com/channel/UCF0Mt88gmn7Hbx2fvaQPE4A
 
 Tech discussion for email lovers
 ********************************
