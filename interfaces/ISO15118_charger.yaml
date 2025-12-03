@@ -140,6 +140,21 @@ cmds:
           CurrentDemand instead of pausing the session, this is against IEC61851-23:2023.
         type: string
         $ref: /iso15118#/NoEnergyPauseMode
+  update_supported_app_protocols:
+    description: >-
+      Update the supported charging protocols (DIN70121, ISO15118-2, ISO15118-20). Defaults are typically
+      configured already; if this command is not called, the module keeps its default set of supported protocols.
+      Note: This command is intended exclusively for Fake DC, primarily to disable specific supported protocols
+      in case of incompatibilities between EVCC and SECC.
+    arguments:
+      supported_app_protocols:
+        description: Supported communication protocols advertised by the EVSE
+        type: object
+        $ref: /iso15118#/SupportedAppProtocols
+    result:
+      description: >-
+        Returns true if the supported protocols were updated successfully
+      type: boolean
 # Update physical values
   update_energy_transfer_modes:
     description: >-
@@ -249,6 +264,12 @@ cmds:
   reset_error:
     description: Reset all errors
 vars:
+  supported_app_protocols_secc:
+     description: >-
+      Supported charging protocols of the SECC. This always returns all supported protocols,
+      even if they are restricted via cmd update_supported_app_protocols.
+     type: object
+     $ref: /iso15118#/SupportedAppProtocols
   require_auth_eim:
     description: An EIM authorization is required
     type: "null"
