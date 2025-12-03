@@ -134,7 +134,6 @@ if(NOT DISABLE_EDM)
     endif()
 else()
     find_package(everest-framework REQUIRED)
-    find_package(everest-ocpp REQUIRED)
     find_package(cbv2g REQUIRED)
     find_package(iso15118 REQUIRED)
 
