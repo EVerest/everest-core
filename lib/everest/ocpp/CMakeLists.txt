@@ -6,9 +6,9 @@ project(ocpp
     LANGUAGES CXX
 )
 
-find_package(everest-cmake 0.1 REQUIRED
-    PATHS ../everest-cmake
-)
+if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+    include(cmake/exported-build.cmake)
+endif()
 
 # options
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
