@@ -299,7 +299,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
+              replyTo: everest_api/1/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
             payload:
               vendor_id: string
               message_id: string
@@ -335,7 +335,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
+              replyTo: everest_api/1/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
             payload:
               items:
               - component_variable:
@@ -375,7 +375,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
+              replyTo: everest_api/1/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
             payload:
               variables:
                 items:
