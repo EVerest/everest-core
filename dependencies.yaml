@@ -34,10 +34,6 @@ libslac:
   git: https://github.com/EVerest/libslac.git
   git_tag: v0.3.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBSLAC"
-libfsm:
-  git: https://github.com/EVerest/libfsm.git
-  git_tag: v0.2.0
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBFSM"
 
 # libcbv2g
 libcbv2g:
