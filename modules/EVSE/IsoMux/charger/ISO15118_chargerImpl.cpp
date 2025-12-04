@@ -4,6 +4,7 @@
 #include "ISO15118_chargerImpl.hpp"
 #include "log.hpp"
 #include "v2g_ctx.hpp"
+#include <algorithm>
 
 const std::string CERTS_SUB_DIR = "certs"; // relativ path of the certs
 
@@ -40,6 +41,11 @@ void ISO15118_chargerImpl::init() {
     v2g_ctx->certs_path = mod->info.paths.etc / CERTS_SUB_DIR;
 
     // Subscribe all vars
+    mod->r_iso2->subscribe_supported_app_protocols_secc([this](const auto value) {
+        if (auto merged = merge_supported_app_protocols(value, ProtocolSource::Iso2)) {
+            publish_supported_app_protocols_secc(*merged);
+        }
+    });
     mod->r_iso2->subscribe_require_auth_eim([this]() {
         if (not mod->selected_iso20()) {
             publish_require_auth_eim(nullptr);
@@ -76,6 +82,11 @@ void ISO15118_chargerImpl::init() {
     mod->r_iso2->subscribe_ac_open_contactor([this]() {
         if (not mod->selected_iso20()) {
             publish_ac_open_contactor(nullptr);
+        }
+    });
+    mod->r_iso20->subscribe_supported_app_protocols_secc([this](const auto value) {
+        if (auto merged = merge_supported_app_protocols(value, ProtocolSource::Iso20)) {
+            publish_supported_app_protocols_secc(*merged);
         }
     });
     mod->r_iso20->subscribe_ac_open_contactor([this]() {
@@ -511,6 +522,28 @@ void ISO15118_chargerImpl::init() {
 void ISO15118_chargerImpl::ready() {
 }
 
+std::optional<types::iso15118::SupportedAppProtocols>
+ISO15118_chargerImpl::merge_supported_app_protocols(const types::iso15118::SupportedAppProtocols& value,
+                                                    ProtocolSource source) {
+    std::lock_guard<std::mutex> lock(supported_app_protocols_mutex);
+    bool changed = false;
+
+    for (const auto protocol : value.app_protocols) {
+        if (std::find(supported_app_protocols.app_protocols.begin(), supported_app_protocols.app_protocols.end(),
+                      protocol) == supported_app_protocols.app_protocols.end()) {
+            supported_app_protocols.app_protocols.push_back(protocol);
+            changed = true;
+        }
+        protocol_sources[protocol] = source;
+    }
+
+    if (!changed) {
+        return std::nullopt;
+    }
+
+    return supported_app_protocols;
+}
+
 void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
                                         types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
     mod->r_iso20->call_setup(evse_id, sae_j2847_mode, debug_mode);
@@ -607,8 +640,48 @@ void ISO15118_chargerImpl::handle_no_energy_pause_charging(types::iso15118::NoEn
 
 bool ISO15118_chargerImpl::handle_update_supported_app_protocols(
     types::iso15118::SupportedAppProtocols& supported_app_protocols) {
-    // your code for cmd no_energy_pause_charging goes here
-    return false;
+    if (supported_app_protocols.app_protocols.empty()) {
+        // Forward empty updates to both implementations
+        const bool ok_iso2 = mod->r_iso2->call_update_supported_app_protocols(supported_app_protocols);
+        return ok_iso2;
+    }
+
+    types::iso15118::SupportedAppProtocols iso2_payload;
+    types::iso15118::SupportedAppProtocols iso20_payload;
+
+    {
+        /* Iterate though the list of supported_app_protocols and check whether the received protocol is intended for
+        the r_iso2 or the r_iso20 instance */
+        std::lock_guard<std::mutex> lock(supported_app_protocols_mutex);
+        for (const auto protocol : supported_app_protocols.app_protocols) {
+            const auto source_it = protocol_sources.find(protocol);
+            const bool known_protocol = std::find(this->supported_app_protocols.app_protocols.begin(),
+                                                  this->supported_app_protocols.app_protocols.end(),
+                                                  protocol) != this->supported_app_protocols.app_protocols.end();
+            if (source_it == protocol_sources.end() || !known_protocol) {
+                EVLOG_warning << "Received update for unsupported app protocol: "
+                              << types::iso15118::supported_app_protocol_to_string(protocol);
+                return false;
+            }
+
+            if (source_it->second == ProtocolSource::Iso20) {
+                iso20_payload.app_protocols.push_back(protocol);
+            } else {
+                iso2_payload.app_protocols.push_back(protocol);
+            }
+        }
+    }
+
+    /* update supported protocols */
+    bool ok = true;
+    if (!iso2_payload.app_protocols.empty()) {
+        ok = mod->r_iso2->call_update_supported_app_protocols(iso2_payload) && ok;
+    }
+    if (!iso20_payload.app_protocols.empty()) {
+        ok = mod->r_iso20->call_update_supported_app_protocols(iso20_payload) && ok;
+    }
+
+    return ok;
 }
 
 void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
