@@ -1,0 +1,10 @@
+date:
+  git: https://github.com/HowardHinnant/date.git
+  git_tag: v3.0.4
+  options: ["BUILD_TZ_LIB ON", "HAS_REMOTE_API 0", "USE_AUTOLOAD 0", "USE_SYSTEM_TZ_DB ON"]
+gtest:
+  # GoogleTest now follows the Abseil Live at Head philosophy. We recommend updating to the latest commit in the main branch as often as possible.
+  git: https://github.com/google/googletest.git
+  git_tag: release-1.12.1
+  cmake_condition: "LIBTIMER_BUILD_TESTING"
+
