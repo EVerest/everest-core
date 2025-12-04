@@ -482,8 +482,7 @@ void OCPP::init() {
             const auto error_info = get_error_info(error);
             this->charge_point->on_error(evse_id, error_info);
         } else {
-            ErrorRaised error_raised{error};
-            this->event_queue.emplace(evse_id, error_raised);
+            this->event_queue.emplace(evse_id, ErrorRaised{error});
         }
     };
 
@@ -493,8 +492,7 @@ void OCPP::init() {
         if (this->started) {
             this->charge_point->on_error_cleared(evse_id, error.uuid.uuid);
         } else {
-            ErrorCleared error_cleared{error};
-            this->event_queue.emplace(evse_id, error_cleared);
+            this->event_queue.emplace(evse_id, ErrorCleared{error});
         }
     };
 
