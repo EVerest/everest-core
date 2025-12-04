@@ -34,6 +34,11 @@ if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TEST
     if(POLICY CMP0079)
         set(CMAKE_POLICY_DEFAULT_CMP0079 NEW)
     endif()
+    if(EVEREST_ENABLE_DEBUG_BUILD)
+        set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    else()
+        set(CMAKE_BUILD_TYPE MinSizeRel CACHE STRING "Build type" FORCE)
+    endif()
 endif()
 
 # make own cmake modules available

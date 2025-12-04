@@ -1,7 +1,6 @@
 if(NOT DISABLE_EDM)
     list(APPEND CMAKE_MODULE_PATH ${CPM_PACKAGE_catch2_SOURCE_DIR}/extras)
 endif()
-set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 
 include(Catch)
 

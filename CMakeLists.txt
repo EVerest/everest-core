@@ -99,6 +99,8 @@ if(EVEREST_CORE_BUILD_TESTING)
 
     if(EVEREST_ENABLE_DEBUG_BUILD)
         set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    else()
+        set(CMAKE_BUILD_TYPE MinSizeRel CACHE STRING "Build type" FORCE)
     endif()
 endif()
 
