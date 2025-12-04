@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ninja -C "$EXT_MOUNT/build" install
+ninja -C "$EXT_MOUNT/build" install/strip
 retVal=$?
 
 if [ $retVal -ne 0 ]; then
