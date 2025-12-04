@@ -237,10 +237,11 @@ struct v2g_context {
     enum V2gMsgTypeId last_v2g_msg;    /* holds the current v2g msg type */
     enum V2gMsgTypeId current_v2g_msg; /* holds the last v2g msg type */
     int state;                         /* holds the current state id */
-    bool is_dc_charger;         /* Is set to true if it is a DC charger. Value is configured after configuration of the
-                                   supported energy type */
-    bool debugMode;             /* To activate/deactivate the debug mode */
-    int8_t supported_protocols; /* Is an bit mask and holds the supported app protocols. See v2g_protocol enum */
+    bool is_dc_charger; /* Is set to true if it is a DC charger. Value is configured after configuration of the
+                           supported energy type */
+    bool debugMode;     /* To activate/deactivate the debug mode */
+    std::atomic<int8_t>
+        supported_protocols; /* Is an bit mask and holds the supported app protocols. See v2g_protocol enum */
     enum v2g_protocol selected_protocol; /* Holds the selected protocole after supported app protocol */
     std::atomic<bool>
         intl_emergency_shutdown; /* Is set to true if an internal emergency_shutdown has occurred (send failed response,
