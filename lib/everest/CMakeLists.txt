@@ -6,16 +6,13 @@ add_subdirectory(external_energy_limits)
 add_subdirectory(fsm)
 add_subdirectory(helpers)
 add_subdirectory(run_application)
+add_subdirectory(slac)
 add_subdirectory(tls)
 add_subdirectory(util)
 add_subdirectory(io)
 
 if(EVEREST_DEPENDENCY_ENABLED_EVEREST_GPIO)
     add_subdirectory(gpio)
-endif()
-
-if(EVEREST_DEPENDENCY_ENABLED_LIBSLAC)
-    add_subdirectory(slac)
 endif()
 
 if(EVEREST_DEPENDENCY_ENABLED_SDBUS_CPP)
