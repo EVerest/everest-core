@@ -25,9 +25,6 @@ date:
   git: https://github.com/HowardHinnant/date.git
   git_tag: v3.0.4
   options: ["BUILD_TZ_LIB ON", "HAS_REMOTE_API 0", "USE_AUTOLOAD 0", "USE_SYSTEM_TZ_DB ON"]
-libevse-security:
-  git: https://github.com/EVerest/libevse-security.git
-  git_tag: 06db4b29e0a4ea4c6c40d77b6ecae7c153f4d9d7 # FIXME v0.10.0
 libwebsockets:
   git: https://github.com/warmcat/libwebsockets.git
   git_tag: v4.4.1
