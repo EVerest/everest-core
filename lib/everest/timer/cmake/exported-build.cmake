@@ -20,6 +20,3 @@ if (NOT everest-cmake_FOUND)
     set(everest-cmake_FIND_COMPONENTS "bundling")
     include("${everest-cmake_SOURCE_DIR}/everest-cmake-config.cmake")
 endif()
-
-# use libtimer from parent directory
-add_subdirectory(../timer timer-src)

@@ -21,13 +21,13 @@ if (NOT everest-cmake_FOUND)
     include("${everest-cmake_SOURCE_DIR}/everest-cmake-config.cmake")
 endif()
 
-# download everest-core (source of libcbv2g)
+# download everest-core (source of libevse-security and libtimer)
 include(ExternalProject)
 ExternalProject_Add(
     everest-core-src
     DOWNLOAD_DIR "everest-core/src"
     GIT_REPOSITORY "https://github.com/EVerest/everest-core.git"
-    GIT_TAG "8b8cfb2e3349408156c4ef84f2ecebafac0f6784" # FIXME: on branch
+    GIT_TAG "a97544555b4e9914346c11e7ef0eef68d40f566e" # FIXME: on branch
     TIMEOUT 30 # TODO: choose appropriate value
     LOG_DOWNLOAD ON
     CONFIGURE_COMMAND ""
@@ -61,3 +61,28 @@ set_property(TARGET evse_security PROPERTY IMPORTED_LOCATION ${EVSE_SECURITY_LIB
 set_property(TARGET evse_security PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${EVSE_SECURITY_INCLUDE_DIR})
 add_dependencies(evse_security evse_security-src)
 
+# build everest-core/lib/everest/timer
+ExternalProject_Add(
+    timer-src
+    DOWNLOAD_COMMAND ""
+    SOURCE_DIR "everest-core-src-prefix/src/everest-core-src/lib/everest/timer"
+    PREFIX "everest-core"
+    INSTALL_COMMAND ""
+    LOG_CONFIGURE ON
+    LOG_BUILD ON
+    DEPENDS everest-core-src
+)
+ExternalProject_Get_Property(timer-src SOURCE_DIR)
+ExternalProject_Get_Property(timer-src BINARY_DIR)
+set(TIMER_INCLUDE_DIR "${SOURCE_DIR}/include")
+set(TIMER_LIB_DIR "${BINARY_DIR}/lib/timer")
+
+# workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/15052
+# create TIMER_INCLUDE_DIR since it will not exist in configure step
+file(MAKE_DIRECTORY ${TIMER_INCLUDE_DIR})
+
+add_library(timer STATIC IMPORTED)
+add_library(everest::timer ALIAS timer)
+set_property(TARGET timer PROPERTY IMPORTED_LOCATION ${TIMER_LIB_DIR}/libtimer.a)
+set_property(TARGET timer PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${TIMER_INCLUDE_DIR})
+add_dependencies(timer timer-src)
