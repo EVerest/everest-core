@@ -27,6 +27,10 @@ if (NOT everest-cmake_FOUND)
     include("${everest-cmake_SOURCE_DIR}/everest-cmake-config.cmake")
 endif()
 
+if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+    include(cmake/exported-build.cmake)
+endif()
+
 # options
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)

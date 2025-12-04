@@ -29,12 +29,6 @@ libtimer:
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBTIMER"
   options: ["BUILD_EXAMPLES OFF"]
 
-# libcbv2g
-libcbv2g:
-  git: https://github.com/EVerest/libcbv2g.git
-  git_tag: v0.3.1
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
-
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
 libcurl:
   git: https://github.com/curl/curl.git
