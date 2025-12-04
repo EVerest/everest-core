@@ -51,14 +51,6 @@ libcurl:
     "USE_NGHTTP2 OFF",
   ]
 
-# EvseSecurity
-# This has to appear before libocpp in this file since it is also a direct dependency
-# of libocpp and would otherwise be overwritten by the version used there
-libevse-security:
-  git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.10.0
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
-
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
