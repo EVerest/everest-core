@@ -30,9 +30,11 @@ void ISO15118_chargerImpl::init() {
     /* Configure hlc_protocols */
     if (mod->config.supported_DIN70121 == true) {
         v2g_ctx->supported_protocols |= (1 << V2G_PROTO_DIN70121);
+        supp_app_protocols_secc.app_protocols.push_back(types::iso15118::SupportedAppProtocol::DIN70121);
     }
     if (mod->config.supported_ISO15118_2 == true) {
         v2g_ctx->supported_protocols |= (1 << V2G_PROTO_ISO15118_2013);
+        supp_app_protocols_secc.app_protocols.push_back(types::iso15118::SupportedAppProtocol::ISO15118d2);
     }
 
     /* Configure tls_security */
@@ -114,6 +116,7 @@ void ISO15118_chargerImpl::init() {
 }
 
 void ISO15118_chargerImpl::ready() {
+    publish_supported_app_protocols_secc(supp_app_protocols_secc);
 }
 
 void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
@@ -364,8 +367,59 @@ void ISO15118_chargerImpl::handle_no_energy_pause_charging(types::iso15118::NoEn
 
 bool ISO15118_chargerImpl::handle_update_supported_app_protocols(
     types::iso15118::SupportedAppProtocols& supported_app_protocols) {
-    // your code for cmd no_energy_pause_charging goes here
-    return false;
+    bool rv{true};
+    v2g_ctx->supported_protocols = 0;
+
+    if (supported_app_protocols.app_protocols.empty()) {
+        dlog(DLOG_LEVEL_WARNING, "No supported app protocols configured");
+        return true;
+    } else {
+        std::string configured_protocols;
+
+        for (const auto& protocol : supported_app_protocols.app_protocols) {
+            if (!configured_protocols.empty()) {
+                configured_protocols += ", ";
+            }
+            configured_protocols += types::iso15118::supported_app_protocol_to_string(protocol);
+        }
+
+        dlog(DLOG_LEVEL_INFO, "Configured charging protocols: [%s]", configured_protocols.c_str());
+    }
+
+    for (const auto& protocol : supported_app_protocols.app_protocols) {
+        // Check if the supported app protocol is in the SECC list
+        const bool allowed = std::find(this->supp_app_protocols_secc.app_protocols.begin(),
+                                       this->supp_app_protocols_secc.app_protocols.end(),
+                                       protocol) != this->supp_app_protocols_secc.app_protocols.end();
+
+        if (!allowed) {
+            dlog(DLOG_LEVEL_WARNING, "Skip unsupported app protocol: %s",
+                 types::iso15118::supported_app_protocol_to_string(protocol).c_str());
+            rv = false;
+            continue;
+        }
+        /* Configure supported app bitmask. This bitmark is used in the supportedAppHandshake handle
+           to select the protocol */
+        switch (protocol) {
+        case types::iso15118::SupportedAppProtocol::DIN70121:
+            v2g_ctx->supported_protocols |= (1 << V2G_PROTO_DIN70121);
+            break;
+        case types::iso15118::SupportedAppProtocol::ISO15118d2:
+            v2g_ctx->supported_protocols |= (1 << V2G_PROTO_ISO15118_2013);
+            break;
+        case types::iso15118::SupportedAppProtocol::ISO15118d20:
+        default:
+            dlog(DLOG_LEVEL_WARNING, "Unsupported app protocol: %s",
+                 types::iso15118::supported_app_protocol_to_string(protocol).c_str());
+            rv = false;
+        }
+    }
+
+    if (v2g_ctx->supported_protocols == 0) {
+        dlog(DLOG_LEVEL_WARNING, "No supported app protocols provided");
+        rv = false;
+    }
+    return rv;
 }
 
 void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
