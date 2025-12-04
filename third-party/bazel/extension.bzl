@@ -32,12 +32,9 @@ def _deps_impl(module_ctx):
         build_file = "@everest-core//third-party/bazel:BUILD.libtimer.bazel",
     )
 
-    maybe(
-        http_archive,
+    new_local_repository(
         name = "libevse-security",
-        url = "https://github.com/EVerest/libevse-security/archive/06db4b29e0a4ea4c6c40d77b6ecae7c153f4d9d7.tar.gz",
-        sha256 = "e174e75f5d4af5c08f27e12c55787239b832a2e0bf60f341d7faa066847aef3a",
-        strip_prefix = "libevse-security-06db4b29e0a4ea4c6c40d77b6ecae7c153f4d9d7",
+        path = "lib/everest/evse_security",
         build_file = "@everest-core//third-party/bazel:BUILD.libevse-security.bazel",
     )
 
