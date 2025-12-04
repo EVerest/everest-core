@@ -1,4 +1,5 @@
 add_subdirectory(can_dpm1000)
+add_subdirectory(cbv2g)
 add_subdirectory(conversions)
 add_subdirectory(crc)
 add_subdirectory(everest_api_types)
