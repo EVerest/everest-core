@@ -7,6 +7,7 @@
 #include <charge_bridge/utilities/parse_config.hpp>
 #include <chrono>
 #include <csignal>
+#include <cstdlib>
 #include <cstring>
 #include <everest/io/event/fd_event_handler.hpp>
 #include <everest/io/event/timer_fd.hpp>
@@ -23,16 +24,19 @@ enum class mode {
     update,
     update_only,
 };
+
+
+
 mode parse_args(int argc, char* argv[], std::vector<std::string>& config_files) {
     // clang-format off
     auto print_msg = []() {
         std::cout << "\nUSAGE: \n";
-        std::cout << "pionix_chargebridge_tool [--update][--update_only] {config_file [config_file_2 ....]} \n";
+        std::cout << "pionix_chargebridge [--update][--update_only] {config_file [config_file_2 ....]} \n";
         std::cout << "\n";
-        std::cout << "--update                 use this flag to execute an update at start and continue operation after\n";
-        std::cout << "--update_only            use this flag to execute an update and stop the application after\n";
-        std::cout << "config_file              use this configuration file\n";
-        std::cout << "config_file_x            add more configuration files for each additional ChargeBridge group\n";
+        std::cout << "--update            use this flag to execute an update at start and continue operation after\n";
+        std::cout << "--update_only       use this flag to execute an update and stop the application after\n";
+        std::cout << "config_file         use this configuration file\n";
+        std::cout << "config_file_x       add more configuration files for each additional ChargeBridge group\n";
         std::cout << "\n";
     };
     // clang-format on
@@ -80,7 +84,7 @@ int main(int argc, char* argv[]) {
 
     auto mode_of_operation = parse_args(argc, argv, config_files);
     if (mode_of_operation == mode::error) {
-        return 1;
+        return EXIT_FAILURE;
     }
     fd_event_handler ev_handler;
 
@@ -96,7 +100,7 @@ int main(int argc, char* argv[]) {
             print_charge_bridge_config(config);
             if (cb_ids_in_use.count(config.cb_name) > 0) {
                 std::cerr << "Dublicate charge_bridge::name '" << config.cb_name << "'" << std::endl;
-                return -1;
+                return EXIT_FAILURE;
             }
 
             cb_ids_in_use.insert(config.cb_name);
@@ -113,5 +117,5 @@ int main(int argc, char* argv[]) {
     }
 
     ev_handler.run(g_run_application);
-    return 0;
+    return EXIT_SUCCESS;
 }
