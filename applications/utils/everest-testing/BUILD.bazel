@@ -1,0 +1,24 @@
+load("@everest-utils//:requirements.bzl", "requirement")
+load("@rules_python//python:defs.bzl", "py_library")
+
+exports_files(
+    ["BUILD.bazel"],
+)
+
+py_library(
+    name = "everest-testing",
+    srcs = glob(["src/**/*.py"]),
+    imports = ["src"],
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("pytest"),
+        requirement("pytest-asyncio"),
+        requirement("python-dateutil"),
+        requirement("paho-mqtt"),
+        requirement("pyftpdlib"),
+        requirement("ocpp"),
+        requirement("websockets"),
+        requirement("pyOpenSSL"),
+        requirement("pyyaml"),
+    ],
+)

@@ -1,0 +1,27 @@
+{% from "helper_macros.j2" import handle_cmd_signature, print_license_header %}
+{{ print_license_header(info.license_header) }}
+
+#include "{{ info.class_name}}.hpp"
+
+namespace module {
+namespace {{ info.interface_implementation_id }} {
+
+void {{ info.class_name }}::init() {
+
+}
+
+void {{ info.class_name }}::ready() {
+
+}
+{% for cmd in cmds %}
+
+{{ handle_cmd_signature(cmd, info.class_name, '::'+info.interface) }}{
+    // your code for cmd {{ cmd.name }} goes here
+    {% if cmd.result %}
+    return {{ cmd.result.json_type|create_dummy_result }};
+    {% endif %}
+}
+{% endfor %}
+
+} // namespace {{ info.interface_implementation_id }}
+} // namespace module

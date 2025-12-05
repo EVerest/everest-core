@@ -1,0 +1,160 @@
+{% from "helper_macros.j2" import call_cmd_signature, var_to_any, var_to_cpp, print_template_info, cpp_type, result_type, print_spdx_line, string_to_enum, enum_to_string %}
+{{ print_spdx_line('Apache-2.0') }}
+#ifndef {{ info.hpp_guard }}
+#define {{ info.hpp_guard }}
+
+{{ print_template_info('4') }}
+
+#include <framework/ModuleAdapter.hpp>
+#include <utils/types.hpp>
+#include <utils/error.hpp>
+#include <utils/error/error_state_monitor.hpp>
+#include <utils/error/error_manager_req.hpp>
+
+#include "Types.hpp"
+
+class {{ info.class_name }} {
+public:
+    {{ info.class_name }}(Everest::ModuleAdapter* adapter, Requirement req, const std::string& module_id, std::optional<Mapping> mapping)
+        : module_id(module_id),
+        _adapter(adapter),
+        _req(req),
+        _mapping(mapping) {
+        if (adapter == nullptr) {
+            EVLOG_error << "adapter is nullptr, please check the initialization of the module";
+            error_manager = nullptr;
+            error_state_monitor = nullptr;
+            EVLOG_error << "error_manager and error_state_monitor are nullptr";
+        } else {
+            error_manager = adapter->get_error_manager_req(req);
+            if (error_manager == nullptr) {
+                EVLOG_error << "error_manager is nullptr";
+            }
+            error_state_monitor = adapter->get_error_state_monitor_req(req);
+            if (error_state_monitor == nullptr) {
+                EVLOG_error << "error_state_monitor is nullptr";
+            }
+        }
+    }
+
+    const std::string module_id;
+
+    {% if not vars %}
+    // this interface does not export any variables to subscribe to
+    {% else %}
+    // variables available for subscription
+    {% for var in vars %}
+    void subscribe_{{ var.name }}(const std::function<void({% if var.json_type != 'null' %}{{ cpp_type(var) }}{% endif %})>& listener) {
+        ValueCallback cb = [listener](const Value& value) {
+        {% if 'object_type' in var %}
+            listener(value);
+        {% elif 'enum_type' in var %}
+            auto native_value = {{ string_to_enum(var.enum_type) }}({{ var_to_cpp(var) }}(value));
+            listener(native_value);
+        {% elif 'array_type' in var %}
+            {% if 'array_type_contains_enum' in var %}
+            std::vector<{{ var.array_type }}> typed_value;
+            for (auto& entry : value) {
+                typed_value.push_back({{ string_to_enum(var.array_type) }}(entry));
+            }
+            listener(typed_value);
+            {% else %}
+            listener(value);
+            {% endif %}
+        {% elif var.json_type != 'null' %}
+            listener({{ var_to_cpp(var) }}(value));
+        {% else %}
+            if (not Everest::detail::is_type_compatible<{{ cpp_type(var) }}>(value.type())) {
+                EVLOG_error << "Callback for variable '{{ var.name }}' in interface '{{ info.interface }}' has wrong type!";
+            }
+            listener();
+        {% endif %}
+        };
+        _adapter->subscribe(_req, "{{ var.name }}", cb);
+    }
+    {% if not loop.last %}
+
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+
+    void subscribe_error(
+        const Everest::error::ErrorType& type,
+        const Everest::error::ErrorCallback& callback,
+        const Everest::error::ErrorCallback& clear_callback
+    ) {
+        error_manager->subscribe_error(type, callback, clear_callback);
+    }
+
+    void subscribe_all_errors(
+        const Everest::error::ErrorCallback& callback,
+        const Everest::error::ErrorCallback& clear_callback
+    ) {
+        error_manager->subscribe_all_errors(callback, clear_callback);
+    }
+
+    {% if not cmds %}
+    // this interface does not export any commands to call
+    {% else %}
+    // commands available to call
+    {% for cmd in cmds %}
+    {{ call_cmd_signature(cmd, info.interface_name) }} {
+        Parameters args;
+        {% for arg in cmd.args %}
+        {% if 'enum_type' in arg %}
+        auto {{ arg.name }}_string = {{ enum_to_string(arg.enum_type) }}({{ arg.name }});
+        args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name + '_string') }};
+        {% elif 'object_type' in arg %}
+        json {{ arg.name }}_json = {{ arg.name }};
+        Object {{ arg.name }}_object = {{ arg.name }}_json;
+        args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name + '_object') }};
+        {% elif 'array_type' in arg %}
+        {% if 'array_type_contains_enum' in arg %}
+        Array {{ arg.name }}_array;
+        for (auto {{ arg.name }}_entry : {{ arg.name }}) {
+            {{ arg.name }}_array.push_back({{ enum_to_string(arg.array_type) }}({{ arg.name }}_entry));
+        }
+        {% else %}
+        json {{ arg.name }}_json = {{ arg.name }};
+        Array {{ arg.name }}_array = {{ arg.name }}_json;
+        {% endif %}
+        args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name + '_array') }};
+        {% else %}
+        args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name) }};
+        {% endif%}
+        {% endfor %}
+        {{ '' }}{% if cmd.result %}Result result = {% endif %}_adapter->call(_req, "{{ cmd.name }}", args);
+        {% if cmd.result %}
+        {% if 'enum_type' in cmd.result %}
+        auto retval = {{ string_to_enum(cmd.result.enum_type) }}({{ var_to_cpp(cmd.result) }}(result.value()));
+        {% elif 'object_type' in cmd.result %}
+        json retval_json = result.value();
+        {{ result_type(cmd.result) }} retval = retval_json;
+        {% elif 'array_type' in cmd.result %}
+        {{ result_type(cmd.result) }} retval (result.value().begin(), result.value().end());
+        {% else %}
+        auto retval = {{ var_to_cpp(cmd.result) }}(result.value());
+        {% endif %}
+        return retval;
+        {% endif %}
+    }
+    {% if not loop.last %}
+
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+
+    std::shared_ptr<Everest::error::ErrorStateMonitor> error_state_monitor;
+
+    std::optional<Mapping> get_mapping() {
+        return _mapping;
+    }
+
+private:
+    std::shared_ptr<Everest::error::ErrorManagerReq> error_manager;
+    Everest::ModuleAdapter* const _adapter;
+    Requirement _req;
+    std::optional<Mapping> _mapping;
+};
+
+#endif // {{ info.hpp_guard }}

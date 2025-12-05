@@ -76,10 +76,6 @@ Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
   git_tag: 89db9d27db551801d45627f802e4c3a029ed29c2
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
-# everest-testing and ev-dev-tools
-everest-utils:
-  git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.7.3
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git

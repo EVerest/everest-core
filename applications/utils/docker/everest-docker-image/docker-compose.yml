@@ -1,0 +1,34 @@
+version: "3.6"
+
+services:
+  mqtt-server:
+    image: eclipse-mosquitto:2.0.18
+    ports:
+      - 1883:1883
+    volumes:
+      - ../mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+  nodered:
+    build:
+      context: ./nodered
+      dockerfile: Dockerfile
+    ports:
+      - 1880:1880
+    volumes:
+      - ./nodered/flows:/data/flows
+    depends_on:
+      - mqtt-server
+  everest:
+    image: everest-core:latest
+    ports:
+      - 8849:8849
+    depends_on:
+      - mqtt-server
+    environment:
+      - MQTT_SERVER_ADDRESS=mqtt-server
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    volumes:
+      - ./logs:/opt/everest/logs
+      - ./configuration/everest/${EVEREST_CONFIG}:/opt/everest/config/config.yaml
+      - ./configuration/ocpp/${OCPP_CONFIG}:/opt/everest/config/ocpp-config.json
+    command: ${EVEREST_COMMAND}
