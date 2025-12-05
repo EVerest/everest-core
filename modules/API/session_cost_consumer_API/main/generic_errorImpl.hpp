@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+
 #ifndef MAIN_GENERIC_ERROR_IMPL_HPP
 #define MAIN_GENERIC_ERROR_IMPL_HPP
 
@@ -7,15 +8,12 @@
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
 // template version 3
 //
-
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wunused-function"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <generated/interfaces/generic_error/Implementation.hpp>
 #pragma GCC diagnostic pop
 
-#include "../evse_manager_consumer_API.hpp"
+#include "../session_cost_consumer_API.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
@@ -29,7 +27,7 @@ struct Conf {};
 class generic_errorImpl : public generic_errorImplBase {
 public:
     generic_errorImpl() = delete;
-    generic_errorImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<evse_manager_consumer_API>& mod,
+    generic_errorImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<session_cost_consumer_API>& mod,
                       Conf& config) :
         generic_errorImplBase(ev, "main"), mod(mod), config(config){};
 
@@ -45,7 +43,7 @@ protected:
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
-    const Everest::PtrContainer<evse_manager_consumer_API>& mod;
+    const Everest::PtrContainer<session_cost_consumer_API>& mod;
     const Conf& config;
 
     virtual void init() override;

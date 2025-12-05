@@ -1,0 +1,129 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:everest:session_cost_consumer_API'
+info:
+  title: 'EVerest API definition for session cost consumer'
+  version: 1.0.0
+  description: >-
+    API for EVerest API clients which allows to access modules that implement session_cost.
+
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
+  tags:
+    - name: EVerest
+    - name: SessionCost
+servers:
+  default:
+    pathname: 'everest_api/1/session_cost_consumer/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module as defined in the EVerest config file.
+defaultContentType: application/json
+
+
+channels:
+  receive_tariff_message:
+    address: 'e2m/tariff_message'
+    messages:
+      tariff_message:
+        $ref: '#/components/messages/receive_tariff_message'
+  receive_session_cost:
+    address: 'e2m/session_cost'
+    messages:
+      session_cost:
+        $ref: '#/components/messages/receive_session_cost'
+
+
+  receive_heartbeat:
+    address: 'e2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
+
+
+operations:
+  receive_tariff_message:
+    title: 'Receive tariff message'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_tariff_message'
+  receive_session_cost:
+    title: 'Receive session cost'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_session_cost'
+
+
+  receive_heartbeat:
+    title: 'Receive heatbeat'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref : '#/channels/send_communication_check'
+
+
+
+components:
+  messages:
+    receive_tariff_message:
+      name: receive_tariff_message
+      title: 'Receive tariff message'
+      summary: Message to show tariff information
+      contentType: application/json
+      payload:
+        $ref: '../session_cost_API/asyncapi.yaml#/components/schemas/TariffMessage'
+    receive_session_cost:
+      name: receive_session_cost
+      title: 'Receive session cost'
+      summary: Message to show session cost
+      contentType: application/json
+      payload:
+        $ref: '../session_cost_API/asyncapi.yaml#/components/schemas/SessionCost'
+
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartBeatId'
+      examples:
+        - summary: "Heartbeat"
+          payload: 42
+
+    send_communication_check:
+      name: send_communication_check
+      title: 'Send communication check'
+      summary: Signal to EVerest that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: "CommunicationCheck"
+          payload:
+            true
+
+
+  schemas:
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
+
+    HeartBeatId:
+      type: integer
+      description: "64bit unsigned integer. The id of every heartbeat increases by 1 and overflows when the maximum representable value is reached"

@@ -1,37 +1,35 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
-#ifndef MAIN_GENERIC_ERROR_IMPL_HPP
-#define MAIN_GENERIC_ERROR_IMPL_HPP
+// Copyright Pionix GmbH and Contributors to EVerest
+#ifndef MAIN_SESSION_COST_IMPL_HPP
+#define MAIN_SESSION_COST_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
 // template version 3
 //
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wunused-function"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#include <generated/interfaces/generic_error/Implementation.hpp>
-#pragma GCC diagnostic pop
+#include <generated/interfaces/session_cost/Implementation.hpp>
 
-#include "../evse_manager_consumer_API.hpp"
+#include "../DummySessionCostProvider.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
+#include <cstdint>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
 namespace main {
 
-struct Conf {};
+struct Conf {
+    int period_s;
+};
 
-class generic_errorImpl : public generic_errorImplBase {
+class session_costImpl : public session_costImplBase {
 public:
-    generic_errorImpl() = delete;
-    generic_errorImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<evse_manager_consumer_API>& mod,
-                      Conf& config) :
-        generic_errorImplBase(ev, "main"), mod(mod), config(config){};
+    session_costImpl() = delete;
+    session_costImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<DummySessionCostProvider>& mod,
+                     Conf& config) :
+        session_costImplBase(ev, "main"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -45,7 +43,7 @@ protected:
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
-    const Everest::PtrContainer<evse_manager_consumer_API>& mod;
+    const Everest::PtrContainer<DummySessionCostProvider>& mod;
     const Conf& config;
 
     virtual void init() override;
@@ -53,6 +51,7 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
+    std::uint32_t msg_count{0};
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
@@ -63,4 +62,4 @@ private:
 } // namespace main
 } // namespace module
 
-#endif // MAIN_GENERIC_ERROR_IMPL_HPP
+#endif // MAIN_SESSION_COST_IMPL_HPP
