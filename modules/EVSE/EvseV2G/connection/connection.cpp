@@ -379,15 +379,12 @@ void connection_teardown(struct v2g_connection* conn) {
     v2g_ctx_init_charging_session(conn->ctx, true);
 
     /* print dlink status */
-    switch (conn->dlink_action) {
-    case MQTT_DLINK_ACTION_ERROR:
-        dlog(DLOG_LEVEL_TRACE, "d_link/error");
-        break;
-    case MQTT_DLINK_ACTION_TERMINATE:
+    switch (conn->d_link_action) {
+    case dLinkAction::D_LINK_ACTION_TERMINATE:
         conn->ctx->p_charger->publish_dlink_terminate(nullptr);
         dlog(DLOG_LEVEL_TRACE, "d_link/terminate");
         break;
-    case MQTT_DLINK_ACTION_PAUSE:
+    case dLinkAction::D_LINK_ACTION_PAUSE:
         conn->ctx->p_charger->publish_dlink_pause(nullptr);
         dlog(DLOG_LEVEL_TRACE, "d_link/pause");
         break;
