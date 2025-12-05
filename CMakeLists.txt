@@ -79,6 +79,7 @@ if(EVEREST_ENABLE_GLOBAL_COMPILE_WARNINGS)
 endif()
 if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     set(EVEREST_CORE_BUILD_TESTING ON)
+    set(ocpp_BUILD_TESTING ON)
 endif()
 # This is a flag for building development tests, but not necessarily to run them, for expample in case
 # tests requires hardware.
@@ -98,6 +99,8 @@ if(EVEREST_CORE_BUILD_TESTING)
 
     if(EVEREST_ENABLE_DEBUG_BUILD)
         set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    else()
+        set(CMAKE_BUILD_TYPE MinSizeRel CACHE STRING "Build type" FORCE)
     endif()
 endif()
 
@@ -134,7 +137,6 @@ if(NOT DISABLE_EDM)
     endif()
 else()
     find_package(everest-framework REQUIRED)
-    find_package(everest-ocpp REQUIRED)
     find_package(cbv2g REQUIRED)
     find_package(iso15118 REQUIRED)
 

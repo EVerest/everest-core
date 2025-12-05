@@ -1,0 +1,20 @@
+{
+  "chargingProfileId": 1,
+  "chargingProfileKind": "Absolute",
+  "chargingProfilePurpose": "TxDefaultProfile",
+  "chargingSchedule": {
+    "chargingRateUnit": "W",
+    "chargingSchedulePeriod": [
+      {
+        "limit": 2000.0,
+        "numberPhases": 1,
+        "startPeriod": 0
+      }
+    ],
+    "duration": 1080,
+    "minChargingRate": 0.0,
+    "startSchedule": "2024-01-17T18:00:00.000Z"
+  },
+  "recurrencyKind": "Daily",
+  "stackLevel": 1
+}

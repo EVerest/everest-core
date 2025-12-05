@@ -1,0 +1,379 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Json schema for internal config",
+    "type": "object",
+    "required": [
+        "ChargePointId",
+        "CentralSystemURI",
+        "ChargeBoxSerialNumber",
+        "ChargePointModel",
+        "ChargePointVendor",
+        "FirmwareVersion"
+    ],
+    "properties": {
+        "ChargePointId": {
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1
+        },
+        "CentralSystemURI": {
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1
+        },
+        "ChargeBoxSerialNumber": {
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 25
+        },
+        "ChargePointModel": {
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 20
+        },
+        "ChargePointSerialNumber": {
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 25
+        },
+        "ChargePointVendor": {
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 20
+        },
+        "FirmwareVersion": {
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 50
+        },
+        "ICCID": {
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 20
+        },
+        "HostName": {
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1
+        },
+        "IFace": {
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1
+        },
+        "IMSI": {
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 20
+        },
+        "MeterSerialNumber": {
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 25
+        },
+        "MeterType": {
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 25
+        },
+        "SupportedCiphers12": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "readOnly": true,
+            "default": [
+                "ECDHE-ECDSA-AES128-GCM-SHA256",
+                "ECDHE-ECDSA-AES256-GCM-SHA384",
+                "AES128-GCM-SHA256",
+                "AES256-GCM-SHA384"
+            ]
+        },
+        "SupportedCiphers13": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "readOnly": true,
+            "default": [
+                "TLS_AES_256_GCM_SHA384",
+                "TLS_AES_128_GCM_SHA256"
+            ]
+        },
+        "UseTPM": {
+            "$comment": "Indicates if TPM is used to generate and retrieve private keys for the CSMS leaf certificate",
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
+        },
+        "UseTPMSeccLeafCertificate": {
+            "$comment": "Indicates if TPM is used to generate and retrieve private keys for the SECC leaf certificate",
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
+        },
+        "RetryBackoffRandomRange": {
+            "$comment": "maximum value for the random part of the websocket reconnect back-off time",
+            "type": "integer",
+            "readOnly": false,
+            "default": 10
+        },
+        "RetryBackoffRepeatTimes": {
+            "$comment": "amount of times previous reconnect back-off time will be doubled",
+            "type": "integer",
+            "readOnly": false,
+            "default": 3
+        },
+        "RetryBackoffWaitMinimum": {
+            "$comment": "minimum back-off time of the first reconnect",
+            "type": "integer",
+            "readOnly": false,
+            "default": 3
+        },
+        "AuthorizeConnectorZeroOnConnectorOne": {
+            "$comment": "Automatically authorize id tags on connector 1 when there is only one connector",
+            "type": "boolean",
+            "readOnly": true,
+            "default": true
+        },
+        "LogMessages": {
+            "$comment": "Automatically log all sent and received messages to a temporary file at /tmp/libocpp_messages_<LIBOCPP_START_TIMESTAMP>.txt",
+            "type": "boolean",
+            "readOnly": true,
+            "default": true
+        },
+        "LogMessagesRaw": {
+            "$comment": "If messages are additionally supposed to be logged without parsing them first. This can be useful to log and debug messages that violate the schema.",
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
+        },
+        "LogMessagesFormat": {
+            "$comment": "Supported log formats are console, log, html, console_detailed, session_logging, callback and security. \"security\" logs security events into a seperate logfile",
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "readOnly": true,
+            "default": [
+                "log",
+                "html",
+                "session_logging",
+                "security"
+            ]
+        },
+        "LogRotation": {
+            "$comment": "Enable log rotation",
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
+        },
+        "LogRotationDateSuffix": {
+            "$comment": "Use a datetime suffix in log rotation files instead of the traditional .0, .1",
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
+        },
+        "LogRotationMaximumFileSize": {
+            "$comment": "Maximum file size in bytes for the log file after which it will be rotated. Setting this to 0 disables log rotation.",
+            "type": "integer",
+            "readOnly": true,
+            "default": 0,
+            "minimum": 0
+        },
+        "LogRotationMaximumFileCount": {
+            "$comment": "Maximum amount of files before rotated logs will be deleted. Setting this to 0 disables log rotation.",
+            "type": "integer",
+            "readOnly": true,
+            "default": 0,
+            "minimum": 0
+        },
+        "SupportedChargingProfilePurposeTypes": {
+            "$comment": "Indicates which ChargingProfilePurposeTypes are supported. SetChargingProfile.req for profiles not listed will be rejected.",
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "readOnly": true,
+            "default": [
+                "ChargePointMaxProfile",
+                "TxDefaultProfile",
+                "TxProfile"
+            ]
+        },
+        "IgnoredProfilePurposesOffline": {
+            "$comment": "Allows configuration of comma seperated list of ChargingProfilePurposes that are ignored in the composite schedule caluclation when offline.",
+            "type": "string",
+            "readOnly": false
+        },
+        "MaxCompositeScheduleDuration": {
+            "$comment": "Maximum duration in seconds of GetCompositeSchedule.req. For GetCompositeSchedule.req with a greater duration the schedule for only the MaxCompositeScheduleDuration will be calculated",
+            "type": "integer",
+            "readOnly": true,
+            "default": 31536000
+        },
+        "CompositeScheduleDefaultLimitAmps": {
+            "description": "Default amps limit applied when composite schedule is calculated and no limit was provided by the CSMS",
+            "type": "number",
+            "readOnly": false,
+            "default": 48,
+            "minimum": 0
+        },
+        "CompositeScheduleDefaultLimitWatts": {
+            "description": "Default watts limit applied when composite schedule is calculated and no limit was provided by the CSMS",
+            "type": "number",
+            "readOnly": false,
+            "default": 33120,
+            "minimum": 0
+        },
+        "CompositeScheduleDefaultNumberPhases": {
+            "description": "Default number of phases applied when composite schedule is calculated and no limit was provided by the CSMS",
+            "type": "number",
+            "readOnly": false,
+            "default": 3,
+            "minimum": 1,
+            "maximum": 3
+        },
+        "SupplyVoltage": {
+            "description": "Supply voltage of the grid. This value is only used in case a conversion between smart charging amp and watt limits is required",
+            "type": "number",
+            "readOnly": false,
+            "default": 230,
+            "minimum": 0
+        },
+        "WebsocketPingPayload": {
+            "$comment": "The payload sent in a websocket ping.",
+            "type": "string",
+            "readOnly": true,
+            "default": "hello there"
+        },
+        "WebsocketPongTimeout": {
+            "$comment": "Maximum timeout for receiving a pong message in seconds",
+            "type": "integer",
+            "readOnly": true,
+            "default": 5
+        },
+        "UseSslDefaultVerifyPaths": {
+            "$comment": "Use default verify paths for validating CSMS server certificate",
+            "type": "boolean",
+            "readOnly": true,
+            "default": true
+        },
+        "VerifyCsmsCommonName": {
+            "$comment": "Verify that the CSMS certificates commonName matches the CSMS FQDN",
+            "type": "boolean",
+            "readOnly": true,
+            "default": true
+        },
+        "VerifyCsmsAllowWildcards": {
+            "$comment": "Allow wildcards when verifying the CSMS commonName",
+            "type": "boolean",
+            "readOnly": false,
+            "default": false
+        },
+        "OcspRequestInterval": {
+            "$comment": "Interval in seconds used to request OCSP revocation status information on the CSO Sub-CA certificates",
+            "type": "integer",
+            "readOnly": false,
+            "default": 604800,
+            "minimum": 86400
+        },
+        "SeccLeafSubjectCommonName": {
+            "$comment": "Common Name(s) of the SECC (EVSE) leaf certificate(s). The CN must be a SECCID. The field can contain optional multiple SECCIDs if necessary.",
+            "type": "string",
+            "readOnly": false,
+            "minLength": 7,
+            "maxLength": 64
+        },
+        "SeccLeafSubjectCountry": {
+            "$comment": "County of the SECC (EVSE) leaf certificate. Indicates in which country the CPO operates.",
+            "type": "string",
+            "readOnly": false,
+            "minLength": 2,
+            "maxLength": 2
+        },
+        "SeccLeafSubjectOrganization": {
+            "$comment": "Organization of the SECC (EVSE) leaf certificate. Indicates which CPO operates this EVSE. Example: Hubject GmbH",
+            "type": "string",
+            "readOnly": false,
+            "minLength": 0,
+            "maxLength": 64
+        },
+        "ConnectorEvseIds": {
+            "$comment": "Comma separated EVSEIDs for OCPP connectors starting with connector 1 in one string.",
+            "type": "string",
+            "readOnly": false,
+            "minLength": 7,
+            "maxLength": 1000
+        },
+        "AllowChargingProfileWithoutStartSchedule": {
+            "$comment": "OCPP1.6 specifies that for certain ChargingProfiles the startSchedule field needs to be set. This flag ignores this requirement and will accept those profiles without startSchedule, assuming startSchedule is now.",
+            "type": "boolean",
+            "readOnly": false
+        },
+        "WaitForStopTransactionsOnResetTimeout": {
+            "$comment": "Specifies the timeout that is used when transactions are stopped because of a Reset.req . If timeout exceeds, the reset callback is executed even if StopTransaction.conf messages not yet received for transactions that have been active.",
+            "type": "integer",
+            "readOnly": false,
+            "minimum": 0,
+            "default": 60
+        },
+        "QueueAllMessages": {
+            "$comment": "If set to true, also non-transactional messages are queued in memory in case they cannot be sent immediately.",
+            "type": "boolean",
+            "readOnly": true
+        },
+        "MessageTypesDiscardForQueueing": {
+            "$comment": "Comma seperated list of message types that shall not be queued (when offline) even in case QueueAllMessages is true. If QueueAllMessages is false, the configuration of this paramater has no effect.",
+            "type": "string",
+            "readOnly": true   
+        },
+        "MessageQueueSizeThreshold": {
+            "$comment": "Threshold for the size of in-memory message queues used to buffer messages (and store e.g. while offline). If threshold is exceeded, messages  will be dropped according to OCPP specification to avoid memory issues.",
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 1
+        },
+        "SupportedMeasurands": {
+            "$comment": "Comma separated list of supported measurands of the powermeter",
+            "type": "string",
+            "readOnly": true,
+            "default": "Energy.Active.Import.Register,Energy.Active.Export.Register,Power.Active.Import,Voltage,Current.Import,Frequency,Current.Offered,Power.Offered,SoC,Temperature"
+        },
+        "MaxMessageSize": {
+            "$comment": "Maximum size in bytes for messages sent to the CSMS via websocket. If a message exceeds this size, data of the message may be dropped",
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 32000,
+            "default": 65000
+        },
+        "TLSKeylogFile": {
+            "$comment": "The file to which the OCPP TLS keylog in SSLKEYLOGFILE format is written to.",
+            "type": "string",
+            "readOnly": true,
+            "default": "/tmp/ocpp_tls_keylog.txt"
+        },
+        "EnableTLSKeylog": {
+            "$comment": "If the TLS keylogging is enabled.",
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
+        },
+        "StopTransactionIfUnlockNotSupported": {
+            "$comment": "If true, a transaction is stopped on an Unlock.req even if unlocking is not supported",
+            "type": "boolean",
+            "readOnly": false,
+            "default": false
+        }
+    },
+    "additionalProperties": false
+}

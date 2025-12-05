@@ -1,0 +1,78 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+!pragma teoz true
+actor user order 10
+participant core order 20
+participant libocpp order 30
+database database order 40
+participant csms order 50
+
+autonumber "<b><font color=red>"
+skinparam sequenceArrowThickness 2
+
+== Start a transaction ==
+user->core: Swipe ID tag
+core->libocpp ++: Authorize
+libocpp-->core --: Authorized
+user->core: Plug in cable
+core->libocpp: on_transaction_started()
+libocpp->csms: TransactionEventRequest::Started
+libocpp->database: Insert transaction details
+
+== Charging state changed (Example) ==
+user->core: Pauses charging of car
+core->libocpp: on_charging_state_changed()
+libocpp->csms: TransactionEventRequest::Updated
+libocpp->database: Update transaction charging state
+libocpp->database: Update transaction sequence number
+
+== Power Outage / Crash of libocpp ==
+core->libocpp ++ : Construct ChargePoint
+
+loop For each evse_id
+  alt Database does not contain transaction
+  libocpp->database ++: Get transaction for evse_id
+  database-->libocpp --: Return empty
+  else Database contains transaction
+  libocpp->database ++: Get transaction for evse_id
+  database-->libocpp --: Return transaction details
+  libocpp->libocpp: Re-initialize transaction for evse_id
+  end
+end
+
+libocpp-->core -- : Construction complete
+
+
+note over core,database: Continue normal operations
+
+user->core: Continues charging of car
+core->libocpp: on_charging_state_changed()
+
+alt No support for resuming transactions
+
+libocpp->libocpp: Print warning of no know transaction
+
+else With support for resuming transactions
+
+libocpp->csms: TransactionEventRequest::Updated
+libocpp->database: Update transaction charging state
+libocpp->database: Update transaction sequence number
+
+end
+
+
+user->core: Swipe ID tag
+core->libocpp: on_transaction_finished()
+
+alt No support for resuming transactions
+
+libocpp->libocpp: Print warning of no know transaction
+
+else With support for resuming transactions
+
+libocpp->csms: TransactionEventRequest::Ended
+libocpp->database: Delete transaction
+
+end
+
+@enduml

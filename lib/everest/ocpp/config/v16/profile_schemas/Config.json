@@ -1,0 +1,49 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Json schema for OCPP 1.6 config",
+    "type": "object",
+    "required": [
+        "Internal",
+        "Core",
+        "Security"
+    ],
+    "properties": {
+        "Internal": {
+            "type": "object",
+            "$ref": "Internal.json"
+        },
+        "Core": {
+            "type": "object",
+            "$ref": "Core.json"
+        },
+        "LocalAuthListManagement": {
+            "type": "object",
+            "$ref": "LocalAuthListManagement.json"
+        },
+        "SmartCharging": {
+            "type": "object",
+            "$ref": "SmartCharging.json"
+        },
+        "FirmwareManagement": {
+            "type": "object",
+            "$ref": "FirmwareManagement.json"
+        },
+        "Reservation": {
+            "type": "object",
+            "$ref": "Reservation.json"
+        },
+        "Security": {
+            "type": "object",
+            "$ref": "Security.json"
+        },
+        "PnC": {
+            "type": "object",
+            "$ref": "PnC.json"
+        },
+        "CostAndPrice": {
+            "type": "object",
+            "$ref": "CostAndPrice.json"
+        }
+    },
+    "additionalProperties": false
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for CustomizationCtrlr",
+  "name": "CustomizationCtrlr",
+  "type": "object",
+  "properties": {
+    "": {
+      "variable_name": "Enabled",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "type": "boolean"
+    },
+    "CustomImplementationEnabled": {
+      "variable_name": "CustomImplementationEnabled",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Custom implementation <vendorId> has been enabled.",
+      "type": "boolean"
+    },
+    "CustomImplementationCaliforniaPricingEnabled": {
+        "variable_name":  "CustomImplementationEnabled",
+        "instance": "org.openchargealliance.costmsg",
+        "characteristics": {
+          "supportsMonitoring": true,
+          "dataType": "boolean"
+        },
+        "attributes": [
+          {
+            "type": "Actual",
+            "mutability": "ReadWrite"
+          }
+        ],
+        "description": "Custom implementation org.openchargealliance.costmsg (California Pricing) has been enabled.",
+        "type": "boolean"
+    },
+    "CustomImplementationMultiLanguageEnabled": {
+        "variable_name":  "CustomImplementationEnabled",
+        "instance": "org.openchargealliance.multilanguage",
+        "characteristics": {
+          "supportsMonitoring": true,
+          "dataType": "boolean"
+        },
+        "attributes": [
+          {
+            "type": "Actual",
+            "mutability": "ReadWrite"
+          }
+        ],
+        "description": "Custom implementation org.openchargealliance.multilanguage has been enabled.",
+        "type": "boolean"
+    }
+  },
+  "required": []
+}

@@ -1,0 +1,37 @@
+@startuml Periodic Monitors
+
+start
+:DB Monitor Config Setup;
+:DB Monitor Initialization;
+if (Monitoring Enabled?) then (yes)
+  :Query Config\nProcess Time;
+  :Enable Monitor\nProcessor;
+  repeat
+    :Verify Periodic\nMonitors;
+    if(Periodic Monitor\nTime Elapsed?) then (yes)
+      if(Online?) then (yes)
+        if(Active Monitoring Severity\n> Monitor Severity?) then (yes)
+          :Queue \nPeriodic Monitor;
+        else (no)
+          :Discard Monitor;
+        endif
+      else (no)
+        if(Offline Monitoring Severity\n> Monitor Severity?) then (yes)
+          :Queue \nPeriodic Monitor;
+        else (no)
+          :Discard Monitor;
+        endif
+      endif
+    else(no)
+      :Update Monitor\nElapsed Time;
+    endif
+    :Verify Triggered\nMonitors\n(see trigger flowchart);
+    :Queue Triggered\nMonitors;
+    :Send Queued\nMonitors to CSMS;
+  repeat while (Each N Seconds)
+else (no) 
+  :Do Nothing;
+endif
+stop
+
+@enduml

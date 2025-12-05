@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for Connector",
+  "type": "object",
+  "name": "Connector",
+  "evse_id": 2,
+  "connector_id": 2,
+  "properties": {
+    "ConnectorAvailabilityState": {
+      "variable_name": "AvailabilityState",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "OptionList",
+        "valuesList": "Available,Unavailable"
+      },
+      "attributes": [
+        {
+          "type": "Actual"
+        }
+      ],
+      "description": "This variable reports current availability state for the Connector. Optional, because already reported in StatusNotification.",
+      "type": "string"
+    },
+    "ConnectorAvailable": {
+      "variable_name": "Available",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Component exists",
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "ConnectorAvailable"
+  ]
+}

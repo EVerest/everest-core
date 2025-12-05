@@ -1,0 +1,26 @@
+{
+    "id": 2,
+    "chargingProfileKind": "Absolute",
+    "chargingProfilePurpose": "TxDefaultProfile",
+    "chargingSchedule": [
+        {
+            "id": 0,
+            "chargingRateUnit": "W",
+            "chargingSchedulePeriod": [
+                {
+                    "operationMode": "CentralSetpoint",
+                    "limit": 60.0,
+                    "dischargeLimit": -60.0,
+                    "numberPhases": 3,
+                    "setpoint": 60.0,
+                    "startPeriod": 0
+                }
+            ],
+            "duration": 600,
+            "minChargingRate": 0.0,
+            "startSchedule": "2024-01-17T18:00:00.000Z"
+        }
+    ],
+    "stackLevel": 1,
+    "transactionId": "f1522902-1170-416f-8e43-9e3bce28fde7"
+}

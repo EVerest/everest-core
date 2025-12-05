@@ -1,0 +1,40 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Json schema for Smart Charging Profile config",
+    "type": "object",
+    "required": [
+        "ChargeProfileMaxStackLevel",
+        "ChargingScheduleAllowedChargingRateUnit",
+        "ChargingScheduleMaxPeriods",
+        "MaxChargingProfilesInstalled"
+    ],
+    "properties": {
+        "ChargeProfileMaxStackLevel": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0
+        },
+        "ChargingScheduleAllowedChargingRateUnit": {
+            "type": "string",
+            "readOnly": true,
+            "default": "Current,Power"
+        },
+        "ChargingScheduleMaxPeriods": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0,
+            "default": 1440
+        },
+        "ConnectorSwitch3to1PhaseSupported": {
+            "type": "boolean",
+            "readOnly": true
+        },
+        "MaxChargingProfilesInstalled": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0,
+            "default": 500
+        }
+    },
+    "additionalProperties": false
+}

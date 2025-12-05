@@ -1,0 +1,39 @@
+{
+    "id": 66,
+    "chargingProfileKind": "Relative",
+    "chargingProfilePurpose": "TxDefaultProfile",
+    "chargingSchedule": [
+        {
+            "id": 0,
+            "chargingRateUnit": "W",
+            "chargingSchedulePeriod": [
+                {
+                    "limit": 1000,
+                    "startPeriod": 0
+                },
+                {
+                    "limit": 7000,
+                    "startPeriod": 70
+                },
+                {
+                    "limit": 0,
+                    "startPeriod": 140
+                },
+                {
+                    "limit": 6000,
+                    "startPeriod": 210
+                },
+                {
+                    "limit": 1500,
+                    "startPeriod": 280
+                },
+                {
+                    "limit": 5000,
+                    "startPeriod": 350
+                }
+            ],
+            "minChargingRate": 500
+        }
+    ],
+    "stackLevel": 1
+}

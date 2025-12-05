@@ -1,0 +1,52 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Json schema for Security Profile config",
+    "type": "object",
+    "required": [
+        "SecurityProfile"
+    ],
+    "properties": {
+        "AdditionalRootCertificateCheck": {
+            "type": "boolean",
+            "description": "When set to true, only one certificate (plus a temporarily fallback certificate) of certificateType CentralSystemRootCertificate is allowed to be installed at a time",
+            "readOnly": true
+        },
+        "AuthorizationKey": {
+            "type": "string",
+            "description": "The basic authentication password is used for HTTP Basic Authentication",
+            "minLength": 8,
+            "readOnly": false
+        },
+        "CertificateSignedMaxChainSize": {
+            "type": "integer",
+            "description": "This configuration key can be used to limit the size of the 'certificateChain' field from the CertificateSigned.req PDU.",
+            "maximum": 10000,
+            "readOnly": true
+        },
+        "CertificateStoreMaxLength": {
+            "type": "integer",
+            "description": "Maximum number of Root/CA certificates that can be installed in the Charge Point.",
+            "minimum": 0,
+            "readOnly": true
+        },
+        "CpoName": {
+            "type": "string",
+            "description": "This configuration key contains CPO name (or an organization trusted by the CPO) as used in the Charge Point Certificate.",
+            "readOnly": false
+        },
+        "SecurityProfile": {
+            "type": "integer",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 3,
+            "description": "This configuration key is used to set the security profile used by the Charge Point",
+            "readOnly": false
+        },
+        "DisableSecurityEventNotifications": {
+            "type": "boolean",
+            "description": "When set to true, no SecurityEventNotification.req messages will be sent by the Charge Point",
+            "readOnly": false,
+            "default": false
+        }
+    }
+}
