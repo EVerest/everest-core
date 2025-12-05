@@ -129,6 +129,7 @@ enum class PsuOutputPortAvailability : std::uint16_t {
 };
 
 std::string working_status_to_string(const WorkingStatus& status);
+std::string psu_output_port_availability_to_string(const PsuOutputPortAvailability& availability);
 
 class CollectedConnectorRegisters : public ComplexRegisterSubregistry {
 public:

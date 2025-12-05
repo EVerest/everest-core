@@ -76,6 +76,14 @@ void Huawei_V100R023C10::init() {
             std::runtime_error("OVMs are necessary but number of OVMs does not match number of connectors in use"));
     }
 
+    if (config.telemetry_topic_prefix.empty()) {
+        this->telemetry_manager = std::make_shared<fusion_charger::telemetry::TelemetryManagerNull>();
+    } else {
+        this->telemetry_manager = std::make_shared<TelementryManagerEverest>(
+            [this](const std::string& topic, const nlohmann::json& data) { mqtt.publish(topic, data.dump()); },
+            config.telemetry_topic_prefix);
+    }
+
     // Initialize all connectors. After that the config was loaded and we can initialize the dispenser
     for (int i = 0; i < number_of_connectors_used; i++) {
         invoke_init(*implementations[i]);
@@ -97,6 +105,8 @@ void Huawei_V100R023C10::init() {
     dispenser_config.verify_secure_goose_hmac = config.verify_secure_goose;
     dispenser_config.module_placeholder_allocation_timeout =
         std::chrono::seconds(config.module_placeholder_allocation_timeout_s);
+
+    dispenser_config.telemetry_manager = this->telemetry_manager;
 
     if (config.tls_enabled) {
         tls_util::MutualTlsClientConfig mutual_tls_config;

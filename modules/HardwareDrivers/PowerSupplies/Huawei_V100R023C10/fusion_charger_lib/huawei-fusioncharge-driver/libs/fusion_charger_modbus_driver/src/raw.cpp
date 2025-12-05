@@ -23,6 +23,18 @@ std::string fusion_charger::modbus_driver::raw_registers::working_status_to_stri
     }
 }
 
+std::string fusion_charger::modbus_driver::raw_registers::psu_output_port_availability_to_string(
+    const PsuOutputPortAvailability& availability) {
+    switch (availability) {
+    case PsuOutputPortAvailability::AVAILABLE:
+        return "AVAILABLE";
+    case PsuOutputPortAvailability::NOT_AVAILABLE:
+        return "NOT_AVAILABLE";
+    default:
+        return "UNKNOWN";
+    }
+}
+
 std::string fusion_charger::modbus_driver::raw_registers::SettingPowerUnitRegisters::psu_running_mode_to_string(
     const PSURunningMode& mode) {
     switch (mode) {

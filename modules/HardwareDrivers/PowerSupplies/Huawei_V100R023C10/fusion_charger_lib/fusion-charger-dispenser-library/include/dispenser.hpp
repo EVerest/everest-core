@@ -22,6 +22,7 @@
 #include "connector.hpp"
 #include "connector_goose_sender.hpp"
 #include "state.hpp"
+#include "telemetry.hpp"
 
 using namespace fusion_charger::modbus_driver::raw_registers;
 using namespace fusion_charger::modbus_driver;
