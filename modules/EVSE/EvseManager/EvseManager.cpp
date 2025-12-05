@@ -324,10 +324,24 @@ void EvseManager::ready() {
             setup_physical_values.ac_nominal_voltage = config.ac_nominal_voltage;
             r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
-            transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_three_phase_core);
+            switch (hw_capabilities.max_phase_count_import) {
+            case 3:
+                transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_three_phase_core);
+                [[fallthrough]];
+            case 2:
+                transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_two_phase);
+                [[fallthrough]];
+            case 1:
+                transfer_modes.push_back(types::iso15118::EnergyTransferMode::AC_single_phase_core);
+                break;
+            default:
+                break;
+            }
+
             update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_three_phase_core);
 
-            if (config.supported_iso_ac_bpt) {
+            if (config.supported_iso_ac_bpt and hw_capabilities.max_current_A_export > 0 and
+                hw_capabilities.max_phase_count_export >= 1) {
                 transfer_modes.push_back({types::iso15118::EnergyTransferMode::AC_BPT});
                 update_supported_energy_transfers(types::iso15118::EnergyTransferMode::AC_BPT);
             }
