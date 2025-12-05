@@ -65,6 +65,11 @@ void ConnectorBase::ev_init() {
 
     init_capabilities();
 
+    telemetry_subtopic = "connector/" + std::to_string(config.global_connector_number) + "/dispenser_to_psu";
+    mod->telemetry_publisher->add_subtopic(telemetry_subtopic);
+
+    mod->telemetry_publisher->initialize_datapoint(telemetry_subtopic, telemetry_datapoint_keys::BSP_EVENT);
+
     mod->r_board_support[this->connector_no]->subscribe_event(
         [this](const types::board_support_common::BspEvent& event) {
             EVLOG_verbose << log_prefix << "Received event: " << event;
@@ -75,6 +80,9 @@ void ConnectorBase::ev_init() {
                 this->external_provided_data.contactor_status = ContactorStatus::OFF;
             }
 
+            mod->telemetry_publisher->datapoint_changed(telemetry_subtopic, telemetry_datapoint_keys::BSP_EVENT,
+                                                        types::board_support_common::event_to_string(event.event));
+
             auto connector = this->get_connector();
             std::lock_guard lock(connector_mutex);
 
@@ -84,6 +92,9 @@ void ConnectorBase::ev_init() {
                 connector->on_car_connected();
             }
         });
+
+    mod->telemetry_publisher->initialize_datapoint(telemetry_subtopic, telemetry_datapoint_keys::OUTPUT_VOLTAGE);
+    mod->telemetry_publisher->initialize_datapoint(telemetry_subtopic, telemetry_datapoint_keys::OUTPUT_CURRENT);
 
     if (not mod->r_carside_powermeter.empty()) {
         mod->r_carside_powermeter[this->connector_no]->subscribe_powermeter(
@@ -111,8 +122,15 @@ void ConnectorBase::ev_init() {
 
                 // Everest voltage measurement publishing
                 this->impl->publish_voltage_current(export_vc);
+
+                mod->telemetry_publisher->datapoint_changed(telemetry_subtopic,
+                                                            telemetry_datapoint_keys::OUTPUT_VOLTAGE, output_voltage);
+                mod->telemetry_publisher->datapoint_changed(telemetry_subtopic,
+                                                            telemetry_datapoint_keys::OUTPUT_CURRENT, output_current);
             });
     }
+
+    mod->telemetry_publisher->initialize_datapoint(telemetry_subtopic, telemetry_datapoint_keys::UPSTREAM_VOLTAGE);
 
     // note that Huawei_V100R023C10 already checks, if the required interfaces are available
     if (mod->upstream_voltage_source == Huawei_V100R023C10::UpstreamVoltageSource::IMD) {
@@ -124,6 +142,9 @@ void ConnectorBase::ev_init() {
                 EVLOG_debug << log_prefix << "Publishing upstream voltage from IMD: " << iso.voltage_V.value_or(0)
                             << "V";
                 this->external_provided_data.upstream_voltage = iso.voltage_V.value_or(0);
+                mod->telemetry_publisher->datapoint_changed(telemetry_subtopic,
+                                                            telemetry_datapoint_keys::UPSTREAM_VOLTAGE,
+                                                            this->external_provided_data.upstream_voltage);
             });
     }
 
@@ -137,6 +158,9 @@ void ConnectorBase::ev_init() {
             if (mod->upstream_voltage_source == Huawei_V100R023C10::UpstreamVoltageSource::OVM) {
                 EVLOG_debug << log_prefix << "Publishing upstream voltage from OVM: " << voltage << "V";
                 this->external_provided_data.upstream_voltage = voltage;
+                mod->telemetry_publisher->datapoint_changed(telemetry_subtopic,
+                                                            telemetry_datapoint_keys::UPSTREAM_VOLTAGE,
+                                                            this->external_provided_data.upstream_voltage);
             }
 
             // Everest voltage measurement publishing
@@ -155,6 +179,11 @@ void ConnectorBase::ev_init() {
             }
         });
     }
+
+    mod->telemetry_publisher->initialize_datapoint(telemetry_subtopic, telemetry_datapoint_keys::EVEREST_MODE);
+    mod->telemetry_publisher->initialize_datapoint(telemetry_subtopic, telemetry_datapoint_keys::EVEREST_PHASE);
+    mod->telemetry_publisher->initialize_datapoint(telemetry_subtopic, telemetry_datapoint_keys::EXPORT_VOLTAGE);
+    mod->telemetry_publisher->initialize_datapoint(telemetry_subtopic, telemetry_datapoint_keys::EXPORT_CURRENT);
 }
 
 void ConnectorBase::ev_ready() {
@@ -214,6 +243,11 @@ void ConnectorBase::ev_handle_setMode(types::power_supply_DC::Mode mode, types::
         break;
     }
 
+    mod->telemetry_publisher->datapoint_changed(telemetry_subtopic, telemetry_datapoint_keys::EVEREST_MODE,
+                                                types::power_supply_DC::mode_to_string(mode));
+    mod->telemetry_publisher->datapoint_changed(telemetry_subtopic, telemetry_datapoint_keys::EVEREST_PHASE,
+                                                types::power_supply_DC::charging_phase_to_string(phase));
+
     this->impl->publish_mode(mode);
 }
 void ConnectorBase::ev_handle_setExportVoltageCurrent(double voltage, double current) {
@@ -232,6 +266,9 @@ void ConnectorBase::ev_handle_setExportVoltageCurrent(double voltage, double cur
 
     export_voltage = voltage;
     export_current_limit = current;
+
+    mod->telemetry_publisher->datapoint_changed(telemetry_subtopic, telemetry_datapoint_keys::EXPORT_VOLTAGE, voltage);
+    mod->telemetry_publisher->datapoint_changed(telemetry_subtopic, telemetry_datapoint_keys::EXPORT_CURRENT, current);
 
     this->get_connector()->new_export_voltage_current(voltage, current);
 }
