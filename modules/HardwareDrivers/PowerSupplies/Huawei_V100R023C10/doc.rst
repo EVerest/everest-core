@@ -79,6 +79,29 @@ The units are SI units (Amps, Volts, Watts, Watt-hours).
 
     All telemetry values can be null, indicating that no value has been received or sent yet.
 
+BSP Errors
+==========
+
+This driver supports publishing a few BSP errors to the Power supply unit as Dispenser and Conenctor Alarms:
+
++-------------------------------------------------+---------------------------+---------------+
+|                Everest BSP Error                | PSU Modbus Register name  |     Scope     |
++=================================================+===========================+===============+
+| ``evse_board_support/DoorOpen``                 | Door status alarm         | Dispenser     |
++-------------------------------------------------+---------------------------+---------------+
+| ``evse_board_support/Water``                    | Water alarm               | Dispenser     |
++-------------------------------------------------+---------------------------+---------------+
+| ``evse_board_support/MREC8EmergencyStop``       | EPO alarm                 | Dispenser     |
++-------------------------------------------------+---------------------------+---------------+
+| ``evse_board_support/Tilted``                   | Tilt alarm                | Dispenser     |
++-------------------------------------------------+---------------------------+---------------+
+| ``evse_board_support/MREC17EVSEContactorFault`` | DC output contactor fault | Per Connector |
++-------------------------------------------------+---------------------------+---------------+
+
+The connector alarms are published 1:1 to the connectors (if the BSP for connector 1 has the error, connector 1 gets the alarm, etc).
+
+For the dispenser alarms, if any of the BSPs has the error, the alarm is published to the dispenser. If all BSPs clear the error, the alarm is cleared.
+
 Power Supply Mock
 ==================
 
