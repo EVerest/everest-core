@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 #include "ISO15118_chargerImpl.hpp"
+#include <fmt/core.h>
+#include <fmt/ranges.h>
 
 #include "session_logger.hpp"
 #include "utils.hpp"
@@ -144,13 +146,16 @@ void ISO15118_chargerImpl::init() {
         this->mod->r_iso15118_vas[i]->subscribe_offered_vas(
             [this, i](const types::iso15118_vas::OfferedServices& offered_services) {
                 std::vector<uint16_t> service_ids;
+                std::scoped_lock lock(vas_mutex);
 
-                service_ids.reserve(offered_services.service_ids.size());
-                for (const auto& item : offered_services.service_ids) {
-                    service_ids.push_back(item);
+                service_ids.reserve(offered_services.services.size());
+                for (const auto& item : offered_services.services) {
+                    service_ids.push_back(item.service_id);
                 }
 
-                EVLOG_verbose << "Updated Supported VAS services for provider #" << i;
+                EVLOG_verbose << fmt::format("Updated Supported VAS services for provider #{} ({} service{})", i,
+                                             offered_services.services.size(),
+                                             offered_services.services.size() > 1 ? "s" : "");
                 supported_vas_services_per_provider[i] = service_ids;
 
                 // report to controller if it exists, also check for duplicate service ids
@@ -225,7 +230,10 @@ void ISO15118_chargerImpl::ready() {
 
     // if the vas providers report their supported vas services before the controller exists,
     // we need to update the controller with the supported vas services after instantiation
-    update_supported_vas_services();
+    {
+        std::scoped_lock lock(vas_mutex);
+        update_supported_vas_services();
+    }
 
     try {
         controller->loop();
@@ -252,13 +260,16 @@ void ISO15118_chargerImpl::update_supported_vas_services() {
     }
 
     if (this->controller) {
+        EVLOG_verbose << fmt::format("Updated controller VAS list: {}", fmt::join(supported_vas_services, ","));
         this->controller->update_supported_vas_services(supported_vas_services);
     } else {
         EVLOG_verbose << "Controller not initialized, skipping setting supported VAS services.";
     }
 }
 
-std::optional<size_t> ISO15118_chargerImpl::get_vas_provider_index(uint16_t service_id) const {
+std::optional<size_t> ISO15118_chargerImpl::get_vas_provider_index(uint16_t service_id) {
+    std::scoped_lock lock(vas_mutex);
+
     for (size_t i = 0; i < supported_vas_services_per_provider.size(); i++) {
         const auto& provider_services = supported_vas_services_per_provider[i];
         if (std::find(provider_services.begin(), provider_services.end(), service_id) != provider_services.end()) {

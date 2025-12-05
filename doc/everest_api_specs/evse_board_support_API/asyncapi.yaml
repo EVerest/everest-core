@@ -505,7 +505,7 @@ components:
         - summary: ""
           payload:
             headers:
-              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
+              replyTo: everest_api/1/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
     send_reply_reset:
       name: send_reply_reset
       title: 'Reply to request for RCD reset'

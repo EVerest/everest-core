@@ -9,10 +9,121 @@
 #include <thread>
 #include <vector>
 
+using namespace everest::lib::util;
+
 struct SharedData {
     int value = 0;
     std::string name = "initial";
+    // Unique ID to track object identity across moves/swaps
+    long long id = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                       std::chrono::high_resolution_clock::now().time_since_epoch())
+                       .count();
 };
+
+// --- Test Fixtures for Noexcept Checks ---
+// 1. Type that is NOT nothrow-swappable (due to non-noexcept move constructor)
+struct ThrowingMover {
+    int* ptr;
+
+    // Move Constructor: NOT noexcept (This is the key difference)
+    ThrowingMover(ThrowingMover&& other) noexcept(false) : ptr(std::exchange(other.ptr, nullptr)) {
+        if (!ptr)
+            throw std::runtime_error("simulated throw on move");
+    }
+
+    // Move Assignment: NOT noexcept
+    ThrowingMover& operator=(ThrowingMover&& other) noexcept(false) {
+        if (this != &other) {
+            std::swap(ptr, other.ptr);
+        }
+        return *this;
+    }
+
+    ThrowingMover() : ptr(new int(42)) {
+    }
+    ~ThrowingMover() {
+        delete ptr;
+    }
+    ThrowingMover(const ThrowingMover&) = delete;
+    ThrowingMover& operator=(const ThrowingMover&) = delete;
+
+    // Define custom swap for ADL (must use the same non-noexcept status)
+    friend void swap(ThrowingMover& lhs, ThrowingMover& rhs) noexcept(false) {
+        std::swap(lhs.ptr, rhs.ptr);
+    }
+};
+
+// 2. Type that IS nothrow-swappable
+struct NoThrowMover {
+    int* ptr;
+
+    // Move Constructor: IS noexcept
+    NoThrowMover(NoThrowMover&& other) noexcept : ptr(std::exchange(other.ptr, nullptr)) {
+    }
+
+    // Move Assignment: IS noexcept
+    NoThrowMover& operator=(NoThrowMover&& other) noexcept {
+        if (this != &other) {
+            std::swap(ptr, other.ptr);
+        }
+        return *this;
+    }
+
+    NoThrowMover() : ptr(new int(42)) {
+    }
+    ~NoThrowMover() {
+        delete ptr;
+    }
+    NoThrowMover(const NoThrowMover&) = delete;
+    NoThrowMover& operator=(const NoThrowMover&) = delete;
+
+    // Define custom swap for ADL (must be noexcept)
+    friend void swap(NoThrowMover& lhs, NoThrowMover& rhs) noexcept {
+        std::swap(lhs.ptr, rhs.ptr);
+    }
+};
+
+// --- The Static Assert Tests ---
+// We use basic static_asserts to verify the compiler's calculated noexcept status.
+
+namespace NoexceptTests {
+using namespace everest::lib::util;
+template <typename T> using monitor = everest::lib::util::monitor<T>;
+using M_NT = monitor<NoThrowMover>; // Monitor protecting the safe type
+using M_T = monitor<ThrowingMover>; // Monitor protecting the unsafe type
+
+// --- 1. Test against NoThrowMover (T is noexcept swappable) ---
+// All move and swap operations on the monitor should be noexcept(true).
+
+static_assert(std::is_nothrow_swappable_v<NoThrowMover>,
+              "Prerequisite 1 failed: NoThrowMover must be noexcept swappable.");
+
+// Move Constructor: Should be noexcept(true)
+static_assert(std::is_nothrow_move_constructible_v<M_NT>, "NT Test 1 failed: Move Constructor must be noexcept.");
+
+// Member Swap: Should be noexcept(true)
+static_assert(noexcept(std::declval<M_NT>().swap(std::declval<M_NT&>())),
+              "NT Test 2 failed: Member Swap must be noexcept.");
+
+// Move Assignment: Should be noexcept(true)
+static_assert(std::is_nothrow_move_assignable_v<M_NT>, "NT Test 3 failed: Move Assignment must be noexcept.");
+
+// --- 2. Test against ThrowingMover (T is NOT noexcept swappable) ---
+// All move and swap operations on the monitor should be noexcept(false).
+
+static_assert(!std::is_nothrow_swappable_v<ThrowingMover>,
+              "Prerequisite 2 failed: ThrowingMover must NOT be noexcept swappable.");
+
+// Move Constructor: Should be noexcept(false) (allows exceptions)
+static_assert(!std::is_nothrow_move_constructible_v<M_T>, "T Test 1 failed: Move Constructor must NOT be noexcept.");
+
+// Member Swap: Should be noexcept(false) (allows exceptions)
+static_assert(!noexcept(std::declval<M_T>().swap(std::declval<M_T&>())),
+              "T Test 2 failed: Member Swap must NOT be noexcept.");
+
+// Move Assignment: Should be noexcept(false) (allows exceptions)
+static_assert(!std::is_nothrow_move_assignable_v<M_T>, "T Test 3 failed: Move Assignment must NOT be noexcept.");
+} // namespace NoexceptTests
 
 using namespace everest::lib::util;
 
@@ -22,6 +133,11 @@ protected:
     monitor<std::unique_ptr<SharedData>> ptr_monitor_;
     // A timed mutex enabled monitor::handle(timeout)
     monitor<SharedData, std::timed_mutex> timed_mtx_monitor_;
+
+    // Time constants for tests
+    const std::chrono::milliseconds BLOCK_TIME = std::chrono::milliseconds(200);
+    const std::chrono::milliseconds SHORT_WAIT = std::chrono::milliseconds(10);
+    const std::chrono::milliseconds LONG_WAIT = std::chrono::milliseconds(300);
 };
 
 TEST_F(MonitorTest, SingleThreadedAccess) {
@@ -60,7 +176,6 @@ TEST_F(MonitorTest, PointerLikeAccessChaining) {
         // Acquire lock
         auto handle = ptr_monitor_.handle();
 
-        // Access via chaining (T=unique_ptr<SharedData>)
         handle->value = 42;
         handle->name = "chained";
     } // handle is destroyed, lock released.
@@ -157,7 +272,7 @@ TEST_F(MonitorTest, TryLockHandleTimeout) {
         blocker_locked_promise.set_value();
 
         // Hold the lock for a specified duration
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(BLOCK_TIME);
 
         // Lock released when handle goes out of scope 🔓
     });
@@ -166,27 +281,29 @@ TEST_F(MonitorTest, TryLockHandleTimeout) {
     blocker_locked_future.get();
 
     // Test 1: Try to acquire the lock with a short timeout (Expected to FAIL)
-    auto handle_opt = timed_mtx_monitor_.handle(std::chrono::milliseconds(10));
+    auto handle_opt = timed_mtx_monitor_.handle(SHORT_WAIT);
     EXPECT_FALSE(handle_opt.has_value());
 
     // Test 2: Try to acquire the lock with a long timeout (Expected to SUCCEED eventually)
-    // Note: The total wait time will be about 300ms, which is sufficient for the blocker to finish.
-    auto handle_long_opt = timed_mtx_monitor_.handle(std::chrono::milliseconds(300));
+    // The total wait time will be slightly longer than BLOCK_TIME (200ms).
+    auto start_success = std::chrono::steady_clock::now();
+    auto handle_long_opt = timed_mtx_monitor_.handle(LONG_WAIT);
+
+    auto duration_success = std::chrono::steady_clock::now() - start_success;
+
     EXPECT_TRUE(handle_long_opt.has_value());
+    // FIX 2: Explicitly compare the count() to ensure stable comparison and output
+    EXPECT_GE(duration_success.count(), BLOCK_TIME.count());
 
     blocker.join();
 }
 
 TEST_F(MonitorTest, TimedMutexLockAcquisition) {
-    // Synchronization barriers
+    // This test ensures the complex timing logic for acquisition is sound.
+
+    // Synchronization barrier: Blocker signals it has acquired the lock
     std::promise<void> blocker_locked_promise;
     std::future<void> blocker_locked_future = blocker_locked_promise.get_future();
-    std::promise<void> start_waiting_promise;
-    std::future<void> start_waiting_future = start_waiting_promise.get_future();
-
-    std::chrono::milliseconds hold_time(100);
-    std::chrono::milliseconds short_wait(10);
-    std::chrono::milliseconds long_wait(200);
 
     // THREAD A: The Blocker (Holds the lock on timed_mtx_monitor_)
     std::thread blocker([&] {
@@ -194,74 +311,65 @@ TEST_F(MonitorTest, TimedMutexLockAcquisition) {
         auto handle = timed_mtx_monitor_.handle();
         blocker_locked_promise.set_value(); // Signal: Lock is now held
 
-        // 3. Wait for the main thread to start waiting/timing
-        start_waiting_future.get();
-
-        // 4. Hold the lock for the required duration
-        std::this_thread::sleep_for(hold_time);
+        // 2. Hold the lock for the required duration
+        std::this_thread::sleep_for(BLOCK_TIME); // 200ms
 
         // Lock released when handle goes out of scope
     });
 
-    // 2. Main thread waits until the lock is actively held
+    // 3. Main thread waits until the lock is actively held
     blocker_locked_future.get();
 
     // --- Test 1: Fail Case (Wait is shorter than remaining lock time) ---
-    // The previous timing logic was adequate here, as failure should be fast.
-    auto fail_handle = timed_mtx_monitor_.handle(short_wait);
+    auto fail_handle = timed_mtx_monitor_.handle(SHORT_WAIT);
     EXPECT_FALSE(fail_handle.has_value());
 
     // --- Test 2: Success Case (Wait is longer than remaining lock time) ---
-    // We now start the timer precisely when the blocker starts its hold duration.
-    auto start_success = std::chrono::steady_clock::now();
+    auto start_success_timing = std::chrono::steady_clock::now();
 
-    // Signal the blocker to start its sleep/hold time
-    start_waiting_promise.set_value();
+    // Acquire the lock with a sufficient timeout (300ms)
+    auto success_handle = timed_mtx_monitor_.handle(LONG_WAIT);
 
-    // Acquire the lock with a sufficient timeout (this call blocks and times the wait)
-    auto success_handle = timed_mtx_monitor_.handle(long_wait);
-
-    // Calculate duration from the point the blocker started holding the lock
-    auto duration_success = std::chrono::steady_clock::now() - start_success;
+    auto duration_success = std::chrono::steady_clock::now() - start_success_timing;
 
     // Must succeed acquisition
     EXPECT_TRUE(success_handle.has_value());
 
-    // The time waited MUST be greater than or equal to the hold_time
-    // We use EXPECT_GE (Greater than or Equal to) for robustness against scheduler timing
-    EXPECT_GE(duration_success, hold_time);
+    // FIX 3: Explicitly compare the count() to ensure stable comparison and output
+    EXPECT_GE(duration_success.count(), BLOCK_TIME.count());
 
     blocker.join();
 }
 
 TEST_F(MonitorTest, ConditionVariableAtomicity) {
-    bool predicate_was_checked = false;
     bool notification_sent = false;
+    // Use the SharedData member to track state
+    simple_monitor_.handle()->value = 0;
 
     // THREAD A: The Waiter
     std::thread waiter([&] {
-        // Use simple_monitor_ (std::mutex) for CV operations
         auto handle = simple_monitor_.handle();
 
         // Waiter signals that it is holding the lock and about to enter the wait state
-        // (This part is simplified here to focus on the CV logic itself)
+        // (This is implicitly tested by the notifier having to wait for the lock)
 
         // Predicate check: Ensure 'notification_sent' is only true IF the lock is reacquired
         handle.wait([&] {
-            predicate_was_checked = true;
+            // The predicate will be checked spuriously, but the critical check is on wake
             return notification_sent;
         });
 
         // After waking up, the lock is held. Verify the resource state.
+        // This checks that the state modification (value=1) happened while the lock was released.
         EXPECT_EQ(1, handle->value);
     });
 
-    // Give the waiter time to acquire the lock and block on the CV
+    // Give the waiter time to acquire the lock and block on the CV (Crucial setup time)
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     // THREAD B: The Notifier (This thread modifies the state and notifies)
     {
-        // Must acquire the lock. This proves the waiter released it.
+        // Must acquire the lock. This proves the waiter released it atomically inside wait().
         auto handle = simple_monitor_.handle();
 
         // 1. Modify the resource while holding the lock
@@ -270,23 +378,27 @@ TEST_F(MonitorTest, ConditionVariableAtomicity) {
         // 2. Set the wait condition *after* modification
         notification_sent = true;
 
-        // 3. Ensure the predicate has NOT been checked since the wait began (it will be checked on wake)
-        // This is tricky to assert safely without more barriers, but the logic holds:
-        // The first successful predicate check occurs only after the notify/wake.
-    } // Lock released, waiter is notified
+        // Lock is released here, which allows the waiter to potentially reacquire it.
+    }
 
     simple_monitor_.notify_one();
 
     waiter.join();
 
-    // Final verification that the CV logic executed properly
-    EXPECT_TRUE(predicate_was_checked);
+    // Final check that the state is 1, confirming the waiter successfully completed its EXPECT.
+    EXPECT_EQ(1, simple_monitor_.handle()->value);
 }
 
 TEST_F(MonitorTest, ThreadSafeMoveOperations) {
-    // Setup: Monitor m1 is the source, initialized with a value
+    // Setup: Monitor m1 (Source) starts with data, Monitor m2 (Destination) starts empty.
     monitor<SharedData> m1;
     m1.handle()->value = 10;
+    auto m1_initial_id = m1.handle()->id; // Track resource identity
+
+    // Create m2 with different data
+    monitor<SharedData> m2;
+    m2.handle()->value = 99;
+    auto m2_initial_id = m2.handle()->id;
 
     std::promise<void> blocker_locked_promise;
     std::future<void> blocker_locked_future = blocker_locked_promise.get_future();
@@ -295,26 +407,31 @@ TEST_F(MonitorTest, ThreadSafeMoveOperations) {
     std::thread blocker([&] {
         auto handle = m1.handle(); // Lock m1
         blocker_locked_promise.set_value();
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(BLOCK_TIME);
     });
 
     // Main thread waits until m1 is locked by the blocker
     blocker_locked_future.get();
 
-    // --- Move Assignment Test ---
-    monitor<SharedData> m2;
+    // --- Move Assignment Test: m2 = std::move(m1) ---
 
-    // Move m1 to m2. This operation MUST wait for the blocker thread to release m1's lock
-    // because the move assignment operator correctly acquires a unique_lock on the source (m1) mutex.
+    // Because the move assignment operator calls monitor::swap(m2, m1), and swap locks both,
+    // it must wait for m1's lock (held by blocker thread) to be released.
     auto start_move = std::chrono::steady_clock::now();
     m2 = std::move(m1); // Should block here until blocker releases m1's lock
     auto duration_move = std::chrono::steady_clock::now() - start_move;
 
     // Verify the move blocked until the blocker thread finished (duration > hold time)
-    EXPECT_GT(duration_move, std::chrono::milliseconds(100));
+    EXPECT_GE(duration_move, BLOCK_TIME);
 
-    // Verify data transfer (m2 should now have the data)
+    // Verify data transfer (m2 now has m1's initial data)
     EXPECT_EQ(10, m2.handle()->value);
+    EXPECT_EQ(m1_initial_id, m2.handle()->id); // m2 now owns m1's resource
+
+    // Verify source state (m1 now has m2's initial data)
+    // The move assignment resulted in a SWAP.
+    EXPECT_EQ(99, m1.handle()->value);
+    EXPECT_EQ(m2_initial_id, m1.handle()->id); // m1 now owns m2's original resource
 
     blocker.join();
 }

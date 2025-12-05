@@ -45,10 +45,11 @@ std::string token_handling_result_to_string(const TokenHandlingResult& result) {
 } // namespace conversions
 
 AuthHandler::AuthHandler(const SelectionAlgorithm& selection_algorithm, const int connection_timeout,
-                         bool prioritize_authorization_over_stopping_transaction, bool ignore_faults,
-                         const std::string& id, kvsIntf* store) :
+                         bool plug_in_timeout_enabled, bool prioritize_authorization_over_stopping_transaction,
+                         bool ignore_faults, const std::string& id, kvsIntf* store) :
     selection_algorithm(selection_algorithm),
     connection_timeout(connection_timeout),
+    plug_in_timeout_enabled(plug_in_timeout_enabled),
     prioritize_authorization_over_stopping_transaction(prioritize_authorization_over_stopping_transaction),
     ignore_faults(ignore_faults),
     reservation_handler(evses, id, store) {
@@ -567,7 +568,7 @@ AuthHandler::SelectEvseResult AuthHandler::select_evse(const std::vector<int>& s
             // transaction is active
             for (const auto& evse_id : selected_evses) {
                 const auto& evse = this->evses.at(evse_id);
-                if (!evse->transaction_active) {
+                if (evse->is_available()) {
                     result.status = SelectEvseReturnStatus::EvseSelected;
                     result.evse_id = evse_id;
                     return result;
@@ -777,6 +778,12 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
             this->evses.at(evse_id)->plugged_in = true;
             EVLOG_info << "Plug In event for evse#" << evse_id << ", starting auth";
 
+            // only set timeout if there are multiple evses managed by this auth handler
+            // or plug in timeout is explicitly enabled
+            if (this->evses.size() == 1 or !this->plug_in_timeout_enabled) {
+                break;
+            }
+
             this->evses.at(evse_id)->timeout_timer.timeout(
                 [this, evse_id]() {
                     this->evses.at(evse_id)->timeout_in_progress = true;
@@ -885,6 +892,11 @@ void AuthHandler::set_connection_timeout(const int connection_timeout) {
     std::lock_guard<std::mutex> lk(this->event_mutex);
     this->connection_timeout = connection_timeout;
 };
+
+void AuthHandler::set_plug_in_timeout_enabled(bool enabled) {
+    std::lock_guard<std::mutex> lk(this->event_mutex);
+    this->plug_in_timeout_enabled = enabled;
+}
 
 void AuthHandler::set_master_pass_group_id(const std::string& master_pass_group_id) {
     std::lock_guard<std::mutex> lk(this->event_mutex);

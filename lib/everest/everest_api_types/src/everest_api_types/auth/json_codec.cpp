@@ -43,6 +43,12 @@ void to_json(json& j, AuthorizationStatus const& k) noexcept {
     case AuthorizationStatus::Unknown:
         j = "Unknown";
         return;
+    case AuthorizationStatus::PinRequired:
+        j = "PinRequired";
+        return;
+    case AuthorizationStatus::Timeout:
+        j = "Timeout";
+        return;
     }
 
     j = "INVALID_VALUE__everest::lib::API::V1_0::types::auth::AuthorizationStatus";
@@ -88,6 +94,14 @@ void from_json(const json& j, AuthorizationStatus& k) {
     }
     if (s == "Unknown") {
         k = AuthorizationStatus::Unknown;
+        return;
+    }
+    if (s == "PinRequired") {
+        k = AuthorizationStatus::PinRequired;
+        return;
+    }
+    if (s == "Timeout") {
+        k = AuthorizationStatus::Timeout;
         return;
     }
 

@@ -397,7 +397,7 @@ void OCPP::init_module_configuration() {
         return;
     }
 
-    for (const auto kv : res.configurationKey.value()) {
+    for (const auto& kv : res.configurationKey.value()) {
         this->handle_config_key(kv);
     }
 }

@@ -18,6 +18,7 @@
 #include <iostream>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +31,7 @@
 #define DEFAULT_TCP_PORT              61341
 #define DEFAULT_TLS_PORT              64109
 #define ERROR_SESSION_ALREADY_STARTED 2
+#define CLIENT_FIN_TIMEOUT            3000
 
 /*!
  * \brief connection_create_socket This function creates a tcp/tls socket
@@ -392,12 +394,30 @@ void connection_teardown(struct v2g_connection* conn) {
     }
 }
 
+static void wait_for_peer_close(int fd, int timeout_ms) {
+    struct pollfd pfd = {};
+    pfd.fd = fd;
+    pfd.events = POLLIN | POLLHUP;
+
+    int rc = poll(&pfd, 1, timeout_ms);
+    if (rc <= 0) {
+        return;
+    }
+
+    if (pfd.revents & (POLLIN | POLLHUP)) {
+        char buf[64];
+        while (recv(fd, buf, sizeof(buf), MSG_DONTWAIT) > 0) {
+        }
+    }
+}
+
 /**
  * This is the 'main' function of a thread, which handles a TCP connection.
  */
 static void* connection_handle_tcp(void* data) {
     struct v2g_connection* conn = static_cast<struct v2g_connection*>(data);
     int rv = 0;
+    bool error_occurred{false};
 
     dlog(DLOG_LEVEL_INFO, "Started new TCP connection thread");
 
@@ -418,19 +438,25 @@ static void* connection_handle_tcp(void* data) {
     /* tear down connection gracefully */
     dlog(DLOG_LEVEL_INFO, "Closing TCP connection");
 
+    /* some EV's did not like the immediate shutdown. Therefore we sleep for 2 seconds */
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    if (shutdown(conn->conn.socket_fd, SHUT_RDWR) == -1) {
+    if (shutdown(conn->conn.socket_fd, SHUT_WR) == -1) {
         dlog(DLOG_LEVEL_ERROR, "shutdown() failed: %s", strerror(errno));
+        error_occurred = true;
     }
 
-    // Waiting for client closing the connection
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    /* wait briefly for peer FIN or timeout */
+    wait_for_peer_close(conn->conn.socket_fd, CLIENT_FIN_TIMEOUT);
 
     if (close(conn->conn.socket_fd) == -1) {
         dlog(DLOG_LEVEL_ERROR, "close() failed: %s", strerror(errno));
+        error_occurred = true;
     }
-    dlog(DLOG_LEVEL_INFO, "TCP connection closed gracefully");
+
+    if (not error_occurred) {
+        dlog(DLOG_LEVEL_INFO, "TCP connection closed gracefully");
+    }
 
     conn->ctx->connection_initiated = false;
 

@@ -53,6 +53,22 @@ config:
       If false, faulty connectors are treated as not available and will not be authorized. This is a good setting for e.g. public chargers.
     type: boolean
     default: false
+  plug_in_timeout_enabled:
+    description: >-
+      This parameter is only used if the charging station has multiple EVSEs managed by this Auth module.
+
+      Controls the authorization-timeout behavior after a plug-in event. When enabled, an internal timer is started immediately after an EV
+      is detected as plugged in. During the time defined by connection_timeout, the user must present a valid authorization token.
+      
+      If no valid token is received within the specified connection_timeout, the authorization attempt is considered as timed out and a
+      re-plug by the user is required to start a new authorization process.
+      
+      This setting is particularly useful for charging stations with multiple EVSEs and a shared, non-EVSE-specific authorization interface
+      (e.g., a single RFID reader). It prevents authorization tokens from being incorrectly associated with an EVSE where an EV is
+      plugged in but has not been authorized, by ensuring that expired or ambiguous plug-ins are not considered for EVSE assignments
+      for future authorization attempts.
+    type: boolean
+    default: false
 provides:
   main:
     description: This implements the auth interface for EVerest

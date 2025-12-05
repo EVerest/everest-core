@@ -58,7 +58,7 @@ class Helper(metaclass=ABCMeta):
 
     def get_type(self):
         return re.search(
-            r"%s%s([A-z]*)%s\{" % (self.get_regex_structure_type(),
+            r"%s%s([A-z_][0-9A-z_]*)%s\{" % (self.get_regex_structure_type(),
                                    Helper.regex_whitespaces, Helper.regex_whitespaces),
             self.get_representation()).group(1)
 

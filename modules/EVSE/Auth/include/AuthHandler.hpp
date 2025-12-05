@@ -63,8 +63,8 @@ class AuthHandler {
 
 public:
     AuthHandler(const SelectionAlgorithm& selection_algorithm, const int connection_timeout,
-                bool prioritize_authorization_over_stopping_transaction, bool ignore_connector_faults,
-                const std::string& id, kvsIntf* store);
+                bool plug_in_timeout_enabled, bool prioritize_authorization_over_stopping_transaction,
+                bool ignore_connector_faults, const std::string& id, kvsIntf* store);
     virtual ~AuthHandler();
 
     /**
@@ -169,6 +169,13 @@ public:
     void set_connection_timeout(const int connection_timeout);
 
     /**
+     * @brief Set the plug in timeout enabled flag of the handler.
+     *
+     * @param plug_in_timeout_enabled
+     */
+    void set_plug_in_timeout_enabled(bool plug_in_timeout_enabled);
+
+    /**
      * @brief Set the master pass group id of the handler.
      *
      * @param master_pass_group_id
@@ -254,6 +261,7 @@ private:
 
     SelectionAlgorithm selection_algorithm;
     int connection_timeout;
+    bool plug_in_timeout_enabled;
     std::optional<std::string> master_pass_group_id;
     bool prioritize_authorization_over_stopping_transaction;
     bool ignore_faults;

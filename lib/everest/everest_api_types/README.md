@@ -8,6 +8,20 @@ While EVerest's internal types evolve and might force changes on modules dependi
 Modules acting as API servers can use this library to convert between EVerest's internal types and external API types.
 The differences between EVerest's internal types and external API types have to be handled in these modules.
 
+## Recommendations for updating and extending APIs
+
+The aim is for these APIs to be stable across versions of EVerest.
+
+In general the following is supported:
+
+- adding new topics
+- adding new APIs
+- adding additional items to a JSON object
+- adaptations to the API implementation to support an internal EVerest API change
+
+Where changes to an existing API are needed then they are considered breaking
+changes and the API version number needs to increase.
+
 ## Tests
 
 All type serializations are unit tested by a round-trip conversion.
@@ -18,7 +32,7 @@ Tests are generated automatically.
 ### Description of the Mechanism
 
 When EVerest's internal types are changed, the API conversions might be required to change as well.
-Therfore, all type files which the *everest_API_types* library depends upon and all interface files which the actual *API modules* depend upon are monitored for changes.
+Therefore, all type files which the *everest_API_types* library depends upon and all interface files which the actual *API modules* depend upon are monitored for changes.
 
 To detect changes to EVerest's types and interfaces definitions, the files
 
@@ -32,7 +46,7 @@ When building EVerest, the actual hashes of all files listed in these files are 
 A unit test compares them with the stored hashes and fails if any of them differs.
 CMake will also issue a warning if there is a mismatch, but not fail the build or the CI pipeline.
 
-The list of monitored files must be updated manually. 
+The list of monitored files must be updated manually.
 In order to compute the checksum simply run sha256sum tool on the file that has been changed and copy the hash in the respective CSV file.
 Here is how this can look like (example):
 
@@ -64,7 +78,7 @@ The simplest way to do so is to copy the `actual_*_file_hashes.csv` after first 
 
 The general philosophy for the external API is to follow the EVerest's internal types and interfaces as close as possible but at the same time to only break compatibility when unavoidable.
 
-E.g. adding an optional field to one of EVerest's internal types should immediatly be implemented for the corresponding external API type as well.
+E.g. adding an optional field to one of EVerest's internal types should immediately be implemented for the corresponding external API type as well.
 Since API clients can ignore additional incoming fields and are free to not send optional fields themselves, compatibility is maintained.
 
 Another example:
@@ -86,3 +100,30 @@ If a field of a struct or a whole type is removed, then the external API types m
   - At the time of writing the API modules implement a one-to-one conversion between internal and external types
   - When types/interfaces change, the code might need to do real transformation of the data
 - Implement new functions in the API modules to add new commands/variables
+
+### Compile errors
+
+The code generator may not understand the API and can generate code that doesn't
+compile.
+
+Errors such as:
+
+```
+error: ‘manual_variable_11’ was not declared in this scope
+```
+
+indicate an issue parsing the file.
+
+It is recommended that only the following types are used:
+
+- double
+- int32_t (not std::int32_t)
+- int64_t (not std::int64_t)
+- bool
+- std::string
+- struct
+- std::vector
+
+### Unit test errors
+
+The automated unit tests rely on being able to convert in both directions.

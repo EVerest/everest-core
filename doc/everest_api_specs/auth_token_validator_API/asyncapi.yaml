@@ -190,6 +190,8 @@ components:
         - NotAtThisLocation
         - NotAtThisTime
         - Unknown
+        - PinRequired
+        - Timeout
     CertificateStatus:
       description: Certificate status information
       type: string

@@ -582,7 +582,7 @@ static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
 }
 
 /*!
- * \brief handle_iso_service_discovery This function handles the din service discovery msg pair. It analyzes the request
+ * \brief handle_iso_service_discovery This function handles the iso service discovery msg pair. It analyzes the request
  * msg and fills the response msg. The request and response msg based on the open V2G structures. This structures must
  * be provided within the \c conn structure.
  * \param conn holds the structure with the V2G msg pair.
@@ -592,7 +592,6 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     struct iso2_ServiceDiscoveryReqType* req = &conn->exi_in.iso2EXIDocument->V2G_Message.Body.ServiceDiscoveryReq;
     struct iso2_ServiceDiscoveryResType* res = &conn->exi_out.iso2EXIDocument->V2G_Message.Body.ServiceDiscoveryRes;
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
-    int8_t scope_idx = -1; // To find a list entry within the evse service list */
 
     /* At first, publish the received ev request message to the MQTT interface */
     publish_iso_service_discovery_req(req);
@@ -629,33 +628,27 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
            conn->ctx->evse_v2g_data.payment_option_list_len * sizeof(iso2_paymentOptionType));
     res->PaymentOptionList.PaymentOption.arrayLen = conn->ctx->evse_v2g_data.payment_option_list_len;
 
-    /* Find requested scope id within evse service list */
-    if (req->ServiceScope_isUsed) {
-        /* Check if ServiceScope is in evse ServiceList */
-        for (uint8_t idx = 0; idx < conn->ctx->evse_v2g_data.evse_service_list.size(); idx++) {
-            if ((conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope_isUsed == (unsigned int)1) &&
-                (strcmp(conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope.characters,
-                        req->ServiceScope.characters) == 0)) {
-                scope_idx = idx;
-                break;
-            }
-        }
+    // ensure a "clean" service list
+    res->ServiceList.Service.arrayLen = 0;
+
+    // consider all services by default, but...
+    for (const auto& service : conn->ctx->evse_v2g_data.evse_service_list) {
+        // ...skip the service if the (possibly set) scope does not match a (possibly) requested one
+        if (req->ServiceScope_isUsed and service.ServiceScope_isUsed and
+            strncmp(req->ServiceScope.characters, service.ServiceScope.characters,
+                    sizeof(req->ServiceScope.characters)) != 0)
+            continue;
+        // ...skip if a possibly requested service category does not match the category of the service
+        if (req->ServiceCategory_isUsed and req->ServiceCategory != service.ServiceCategory)
+            continue;
+        // copy otherwise
+        res->ServiceList.Service.array[res->ServiceList.Service.arrayLen] = service;
+        // update the new size
+        res->ServiceList.Service.arrayLen++;
     }
 
-    /*  The SECC always returns all supported services for all scopes if no specific ServiceScope has been
-        indicated in request message. */
-    if (scope_idx == (int8_t)-1) {
-        std::copy(conn->ctx->evse_v2g_data.evse_service_list.begin(), conn->ctx->evse_v2g_data.evse_service_list.end(),
-                  res->ServiceList.Service.array);
-        res->ServiceList.Service.arrayLen = conn->ctx->evse_v2g_data.evse_service_list.size();
-    } else {
-        /* Offer only the requested ServiceScope entry */
-        res->ServiceList.Service.array[0] = conn->ctx->evse_v2g_data.evse_service_list[scope_idx];
-        res->ServiceList.Service.arrayLen = 1;
-    }
-
-    res->ServiceList_isUsed =
-        ((uint16_t)0 < conn->ctx->evse_v2g_data.evse_service_list.size()) ? (unsigned int)1 : (unsigned int)0;
+    // tell the EXI encoder that we want to use the filled list
+    res->ServiceList_isUsed = res->ServiceList.Service.arrayLen ? 1 : 0;
 
     /* Check the current response code and check if no external error has occurred */
     nextEvent = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
@@ -715,9 +708,10 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
 
                     iso2_ServiceParameterListType vas_parameter_list{};
                     init_iso2_ServiceParameterListType(&vas_parameter_list);
-                    vas_parameter_list.ParameterSet.arrayLen = vas_parameters.size() <= 5 ? vas_parameters.size() : 5;
+                    size_t maxParameterSetArrayLen = ARRAY_SIZE(vas_parameter_list.ParameterSet.array);
+                    vas_parameter_list.ParameterSet.arrayLen = std::min(maxParameterSetArrayLen, vas_parameters.size());
 
-                    for (size_t j = 0; j < vas_parameters.size() and j <= 5; j++) {
+                    for (size_t j = 0; j < vas_parameters.size() and j < maxParameterSetArrayLen; j++) {
                         const auto& vas_parameter = vas_parameters.at(j);
 
                         vas_parameter_list.ParameterSet.array[j].ParameterSetID =
@@ -725,24 +719,30 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
 
                         size_t t{0};
                         for (const auto& parameter : vas_parameter.parameters) {
+                            // quit loop when the maximum count of elements our encoder can handle is reached
+                            if (t == ARRAY_SIZE(vas_parameter_list.ParameterSet.array[j].Parameter.array))
+                                break;
                             auto& out_parameter = vas_parameter_list.ParameterSet.array[j].Parameter.array[t++];
 
                             init_iso2_ParameterType(&out_parameter);
 
-                            parameter.name.copy(out_parameter.Name.characters, parameter.name.length());
-                            out_parameter.Name.charactersLen = parameter.name.length();
+                            strncpy_to_v2g(out_parameter.Name.characters, sizeof(out_parameter.Name.characters),
+                                           &out_parameter.Name.charactersLen, parameter.name);
 
                             if (parameter.value.int_value.has_value()) {
                                 out_parameter.intValue = parameter.value.int_value.value();
                                 out_parameter.intValue_isUsed = true;
                             } else if (parameter.value.finite_string.has_value()) {
-                                // TODO(SL): Check if string is too big to copy char array
                                 const auto& temp = parameter.value.finite_string.value();
-                                if (temp.length() > sizeof(out_parameter)) {
-                                    dlog(DLOG_LEVEL_WARNING, "Paramater String is too long to copy into char array");
+                                if (temp.length() > sizeof(out_parameter.stringValue.characters)) {
+                                    EVLOG_warning << fmt::format("The value of parameter string '{}' is too long and "
+                                                                 "was truncated from '{}' to '{:.{}}'",
+                                                                 parameter.name, temp, temp,
+                                                                 sizeof(out_parameter.stringValue.characters));
                                 }
-                                temp.copy(out_parameter.stringValue.characters, temp.length());
-                                out_parameter.stringValue.charactersLen = temp.length();
+                                strncpy_to_v2g(out_parameter.stringValue.characters,
+                                               sizeof(out_parameter.stringValue.characters),
+                                               &out_parameter.stringValue.charactersLen, temp);
                                 out_parameter.stringValue_isUsed = true;
                             } else if (parameter.value.bool_value.has_value()) {
                                 out_parameter.boolValue = static_cast<int>(parameter.value.bool_value.value());
@@ -762,7 +762,7 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
                             }
                         }
 
-                        vas_parameter_list.ParameterSet.array[j].Parameter.arrayLen = vas_parameter.parameters.size();
+                        vas_parameter_list.ParameterSet.array[j].Parameter.arrayLen = t;
                     }
 
                     res->ServiceParameterList.ParameterSet = vas_parameter_list.ParameterSet;
