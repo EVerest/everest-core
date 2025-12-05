@@ -36,3 +36,4 @@ Below that, you will be presented with a categorized list of all articles.
     high-level-overview
     adapt-everest/index
     getting-started/index
+    detail-module-concept
