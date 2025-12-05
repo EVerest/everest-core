@@ -103,6 +103,13 @@ inline const auto evse_board_support_MREC25BrokenLatch =
 inline const auto evse_board_support_MREC26CutCable =
     ErrorDefinition{"evse_board_support/MREC26CutCable", "", "Simulated fault event"};
 
+inline const auto evse_board_support_Tilted = ErrorDefinition{"evse_board_support/Tilted", "", "Simulated fault event"};
+
+inline const auto evse_board_support_Water = ErrorDefinition{"evse_board_support/Water", "", "Simulated fault event"};
+
+inline const auto evse_board_support_DoorOpen =
+    ErrorDefinition{"evse_board_support/DoorOpen", "", "Simulated fault event"};
+
 inline const auto ac_rcd_VendorError = ErrorDefinition{"ac_rcd/VendorError", "", "Simulated fault event"};
 
 inline const auto ac_rcd_Selftest = ErrorDefinition{"ac_rcd/Selftest", "", "Simulated fault event"};
