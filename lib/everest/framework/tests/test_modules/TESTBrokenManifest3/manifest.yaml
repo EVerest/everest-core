@@ -1,0 +1,13 @@
+description: "This is an invalid manifest (broken config)."
+config:
+  invalidvalid_config_entry:
+    description: "This is a invalid config entry"
+    type: string
+    default: 42
+provides:
+  main:
+    description: "This unit has a invalid manifest."
+    interface: "test_interface"
+metadata:
+  license: "https://opensource.org/licenses/Apache-2.0"
+  authors: ["Kai-Uwe Hermann"]
