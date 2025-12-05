@@ -93,7 +93,7 @@ config:
     default: IMD
   telemetry_topic_prefix:
     description: |
-      MQTT Topic prefix for telemetry data published by this module.
+      MQTT Topic prefix for telemetry data published by this module. No trailing slash.
       Set to an empty string (default) to disable telemetry publishing.
     type: string
     default: ""

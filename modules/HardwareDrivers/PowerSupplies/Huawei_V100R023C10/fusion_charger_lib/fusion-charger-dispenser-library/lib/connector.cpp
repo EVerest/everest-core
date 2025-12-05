@@ -160,8 +160,9 @@ std::string state_to_string(States state) {
     return "UNKNOWN";
 }
 
-Connector::Connector(ConnectorConfig connector_config, std::uint16_t local_connector_number,
-                     DispenserConfig dispenser_config, logs::LogIntf log) :
+Connector::Connector(ConnectorConfig connector_config, uint16_t local_connector_number,
+                     DispenserConfig dispenser_config, logs::LogIntf log,
+                     std::function<void()> trigger_unsolicited_report_cb) :
     connector_config(connector_config),
     local_connector_number(local_connector_number),
     dispenser_config(dispenser_config),
@@ -187,6 +188,7 @@ Connector::Connector(ConnectorConfig connector_config, std::uint16_t local_conne
         config.get_output_current = connector_config.connector_callbacks.output_current;
         config.get_contactor_status = connector_config.connector_callbacks.contactor_status;
         config.get_electronic_lock_status = connector_config.connector_callbacks.electronic_lock_status;
+        config.get_dc_output_contact_fault = [this]() { return dc_output_contactor_fault_alarm_active.load(); };
         return config;
     }()),
     connector_registers(connector_registers_config),
@@ -199,7 +201,9 @@ Connector::Connector(ConnectorConfig connector_config, std::uint16_t local_conne
                                                  std::placeholders::_1, std::placeholders::_2);
             return callbacks;
         }(),
-        log, log_prefix) {
+        log, log_prefix),
+    trigger_unsolicited_report_cb(trigger_unsolicited_report_cb),
+    dc_output_contactor_fault_alarm_active(false) {
 }
 
 Connector::~Connector() {
@@ -544,4 +548,13 @@ void Connector::on_psu_mac_change(std::vector<std::uint8_t> mac_address) {
 std::vector<std::uint8_t> Connector::get_hmac_key() {
     const std::uint8_t* hmac_key = connector_registers.hmac_key.get_value(); // pointer to private memory
     return std::vector<std::uint8_t>(hmac_key, hmac_key + connector_registers.hmac_key.get_size());
+}
+
+void Connector::set_dc_output_contactor_fault_alarm(bool active) {
+    dc_output_contactor_fault_alarm_active = active;
+
+    // immediately do an unsolicited report
+    if (trigger_unsolicited_report_cb) {
+        trigger_unsolicited_report_cb();
+    }
 }

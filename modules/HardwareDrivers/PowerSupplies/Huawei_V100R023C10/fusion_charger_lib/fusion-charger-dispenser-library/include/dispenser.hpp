@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #pragma once
 #include <atomic>
+#include <condition_variable>
 #include <fusion_charger/goose/power_request.hpp>
 #include <fusion_charger/goose/stop_charge_request.hpp>
 #include <fusion_charger/modbus/extensions/unsolicitated_registry.hpp>
@@ -46,6 +47,16 @@ typedef fusion_charger::modbus_driver::raw_registers::SettingPowerUnitRegisters:
 // category and subcategory
 typedef std::set<ErrorEvent, ErrorEventComparator> ErrorEventSet;
 
+enum class DispenserAlarms {
+    DOOR_STATUS_ALARM,
+    WATER_ALARM,
+    EPO_ALARM,
+    TILT_ALARM,
+};
+
+/// @brief Get a list of all possible DispenserAlarms
+const std::vector<DispenserAlarms>& get_all_dispenser_alarms();
+
 class Dispenser {
 private:
     std::vector<std::shared_ptr<Connector>> connectors;
@@ -77,12 +88,22 @@ private:
     std::optional<PowerUnitRegisters> psu_registers;
     std::optional<ErrorRegisters> error_registers;
 
+    // Raised errors by the PSU
     ErrorEventSet raised_errors = {};
     std::mutex raised_error_mutex;
 
+    // Raised errrors by the dispenser (this driver)
+    std::unordered_map<DispenserAlarms, std::atomic<bool>> dispenser_alarms;
+
     std::optional<SettingPowerUnitRegisters::PSURunningMode> psu_running_mode = std::nullopt;
 
+    // Mutex + CV combination to trigger unsolicited reports
+    std::mutex unsolicited_report_mutex;
+    std::condition_variable unsolicited_report_cv;
+
     const int MAX_NUMBER_OF_CONNECTORS = 4;
+
+    static const std::string DISPENSER_TELEMETRY_ALARMS_SUBTOPIC;
 
     // true if the psu wrote its mac address via modbus
     bool psu_mac_received = false;
@@ -100,6 +121,12 @@ private:
     void goose_receiver_thread_run();
     bool psu_communication_is_ok();
     bool is_stop_requested();
+
+    /// @brief get the state of a dispenser alarm, true if active
+    bool get_dispenser_alarm_state(DispenserAlarms alarm);
+
+    /// @brief get the telemetry datapoint key for a dispenser alarm
+    std::string dispenser_alarm_to_telemetry_datapoint(DispenserAlarms alarm);
 
 public:
     Dispenser(DispenserConfig dispenser_config, std::vector<ConnectorConfig> connector_configs,
@@ -136,4 +163,13 @@ public:
         // Connector numbers start at 1
         return connectors[local_connector_number - 1];
     }
+
+    /// @brief Trigger an unsolicited report to be sent now.
+    void trigger_unsolicited_report();
+
+    /// @brief Set state for a dispenser alarm. Also triggers an immediate
+    /// unsolicited report.
+    /// @param alarm the alarm to set
+    /// @param active true to set the alarm, false to clear it
+    void set_dispenser_alarm(DispenserAlarms alarm, bool active);
 };
