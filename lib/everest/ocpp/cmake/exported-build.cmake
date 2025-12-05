@@ -27,7 +27,7 @@ ExternalProject_Add(
     everest-core-src
     DOWNLOAD_DIR "everest-core/src"
     GIT_REPOSITORY "https://github.com/EVerest/everest-core.git"
-    GIT_TAG "a97544555b4e9914346c11e7ef0eef68d40f566e" # FIXME: on branch
+    GIT_TAG "7628a09e4e050465b7f50947dee9b8aff8f94450" # FIXME: currently on branch, update this automatically when exporting
     TIMEOUT 30 # TODO: choose appropriate value
     LOG_DOWNLOAD ON
     CONFIGURE_COMMAND ""
