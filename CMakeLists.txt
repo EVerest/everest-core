@@ -6,12 +6,12 @@ project(everest-core
 	LANGUAGES CXX C
 )
 
-find_package(everest-cmake 0.5
+find_package(everest-cmake 0.6
     COMPONENTS bundling
     PATHS ../everest-cmake
     NO_DEFAULT_PATH
 )
-find_package(everest-cmake 0.5
+find_package(everest-cmake 0.6
     COMPONENTS bundling
 )
 
@@ -21,7 +21,7 @@ if (NOT everest-cmake_FOUND)
     FetchContent_Declare(
         everest-cmake
         GIT_REPOSITORY https://github.com/EVerest/everest-cmake.git
-        GIT_TAG        main
+        GIT_TAG        v0.6.0
     )
     FetchContent_MakeAvailable(everest-cmake)
     set(everest-cmake_DIR "${everest-cmake_SOURCE_DIR}")
@@ -65,6 +65,7 @@ option(CREATE_SYMLINKS "Create symlinks to javascript modules and auxillary file
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 option(EVEREST_BUILD_API_DOCS "Build EVerest API documentation" OFF)
 option(ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES "Automatically generate and install certificates for development purposes" ON)
+option(EEBUS_GENERATE_AND_INSTALL_CERTIFICATES "Automatically generate and install certificates for development purposes" ON)
 option(EVEREST_ENABLE_RUN_SCRIPT_GENERATION "Enables the generation of run scripts (convenience scripts for starting available configurations)" ON)
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
@@ -123,6 +124,10 @@ include(compatibility/boost)
 if(NOT DISABLE_EDM)
     # FIXME (aw): this implicit definition for child projects is hacky
     set(THIRD_PARTY_APP_DST "${CMAKE_INSTALL_LIBEXECDIR}/everest/3rd_party")
+
+    if(GRPC_EDM)
+        enable_language(ASM)
+    endif()
 
     evc_setup_edm()
 
