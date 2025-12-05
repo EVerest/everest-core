@@ -105,8 +105,9 @@ class Connector {
     friend class Dispenser;
 
 public:
-    Connector(ConnectorConfig connector_config, std::uint16_t local_connector_number, DispenserConfig dispenser_config,
-              logs::LogIntf log);
+    Connector(
+        ConnectorConfig connector_config, uint16_t local_connector_number, DispenserConfig dispenser_config,
+        logs::LogIntf log, std::function<void()> do_unsolicitated_report_callback = []() {});
     Connector(const Connector&) = delete;
     ~Connector();
 
@@ -182,20 +183,32 @@ public:
      */
     void reset_psu_capabilities();
 
+    /**
+     * @brief Set or clear the DC output contactor fault alarm for this connector.
+     * This will immediately publish the alarm state via Modbus.
+     */
+    void set_dc_output_contactor_fault_alarm(bool active);
+
 private:
     logs::LogIntf log;
-    std::string log_prefix;               // Prefix for log messages
-    std::uint16_t local_connector_number; // 1-4
+    std::string log_prefix;          // Prefix for log messages
+    uint16_t local_connector_number; // 1-4
     ConnectorConfig connector_config;
     DispenserConfig dispenser_config;
     std::shared_ptr<goose_ethernet::EthernetInterface> eth_interface;
     ConnectorGooseSender goose_sender;
     ConnectorRegistersConfig connector_registers_config;
     ConnectorRegisters connector_registers;
+    std::function<void()> do_unsolicitated_report_callback; // callback to dispenser to trigger an
+                                                            // unsolicitated report
 
     std::optional<float> rated_output_power_psu; // in kW, set by register callback
     std::optional<float> max_rated_psu_voltage;  // in V, set by register callback
     std::optional<float> max_rated_psu_current;  // in A, set by register callback
+
+    // persistant storage for the dc output contactor fault alarm state; used in
+    // start() to populate the register
+    std::optional<bool> dc_output_contactor_fault_alarm_active;
 
     ConnectorFSM fsm;
     bool last_module_placeholder_allocation_failed;

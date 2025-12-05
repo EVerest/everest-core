@@ -12,10 +12,16 @@ using namespace fusion_charger::modbus_driver::raw_registers;
 using namespace fusion_charger::modbus_driver;
 using namespace fusion_charger::modbus_extensions;
 
+std::vector<DispenserAlarms> get_all_dispenser_alarms() {
+  return {DispenserAlarms::DOOR_STATUS_ALARM, DispenserAlarms::WATER_ALARM,
+          DispenserAlarms::EPO_ALARM, DispenserAlarms::TILT_ALARM};
+}
+
 void Dispenser::modbus_unsolicitated_event_thread_run() {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     while (psu_communication_is_ok()) {
         try {
+            std::lock_guard<std::mutex> lock(registry_mutex);
             auto req = registry->unsolicitated_report();
             if (req.has_value()) {
                 server->send_unsolicitated_report(req.value(), std::chrono::seconds(3));
@@ -178,8 +184,9 @@ Dispenser::Dispenser(DispenserConfig dispenser_config, std::vector<ConnectorConf
     // number connectors from 1 to n
     for (size_t local_connector_number = 1; local_connector_number <= connector_configs.size();
          local_connector_number++) {
-        std::shared_ptr<Connector> connector = std::make_shared<Connector>(
-            connector_configs[local_connector_number - 1], local_connector_number, dispenser_config, log);
+        std::shared_ptr<Connector> connector =
+            std::make_shared<Connector>(connector_configs[local_connector_number - 1], local_connector_number,
+                                        dispenser_config, log, [this]() { do_unsolicitated_report_now(); });
         connectors.push_back(connector);
     }
 }
@@ -305,6 +312,8 @@ PSURunningMode Dispenser::get_psu_running_mode() {
 }
 
 void Dispenser::init() {
+    std::lock_guard<std::mutex> lock(registry_mutex);
+
     log.info << "Using host, port and interface: " + dispenser_config.psu_host + ":" +
                     std::to_string(dispenser_config.psu_port) + " % " + dispenser_config.eth_interface;
 
@@ -493,4 +502,36 @@ bool Dispenser::is_stop_requested() {
 
 Dispenser::~Dispenser() {
     stop();
+}
+
+void Dispenser::do_unsolicitated_report_now() {
+    std::lock_guard<std::mutex> lock(registry_mutex);
+    if (registry.has_value()) {
+        auto req = registry->unsolicitated_report();
+        if (req.has_value() && server.has_value()) {
+            server->send_unsolicitated_report(req.value(), std::chrono::seconds(3));
+        }
+    }
+}
+
+void Dispenser::set_dispenser_alarm(DispenserAlarms alarm, bool active) {
+  switch (alarm) {
+    case DispenserAlarms::DOOR_STATUS_ALARM:
+      dispenser_registers->door_status_alarm.update_value(active ? 1 : 0);
+      break;
+    case DispenserAlarms::WATER_ALARM:
+      dispenser_registers->water_alarm.update_value(active ? 1 : 0);
+      break;
+    case DispenserAlarms::EPO_ALARM:
+      dispenser_registers->epo_alarm.update_value(active ? 1 : 0);
+      break;
+    case DispenserAlarms::TILT_ALARM:
+      dispenser_registers->tilt_alarm.update_value(active ? 1 : 0);
+      break;
+    default:
+      log.error << "Unknown alarm type";
+      break;
+  }
+
+  do_unsolicitated_report_now();
 }

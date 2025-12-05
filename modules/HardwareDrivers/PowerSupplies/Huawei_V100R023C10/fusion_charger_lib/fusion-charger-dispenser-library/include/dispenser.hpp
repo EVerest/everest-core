@@ -46,6 +46,16 @@ typedef fusion_charger::modbus_driver::raw_registers::SettingPowerUnitRegisters:
 // category and subcategory
 typedef std::set<ErrorEvent, ErrorEventComparator> ErrorEventSet;
 
+enum class DispenserAlarms {
+    DOOR_STATUS_ALARM,
+    WATER_ALARM,
+    EPO_ALARM,
+    TILT_ALARM,
+};
+
+/// @brief Get a list of all possible DispenserAlarms
+std::vector<DispenserAlarms> get_all_dispenser_alarms();
+
 class Dispenser {
 private:
     std::vector<std::shared_ptr<Connector>> connectors;
@@ -81,6 +91,9 @@ private:
     std::mutex raised_error_mutex;
 
     std::optional<SettingPowerUnitRegisters::PSURunningMode> psu_running_mode = std::nullopt;
+
+    // mutex to call functions on the registry from multiple threads
+    std::mutex registry_mutex;
 
     const int MAX_NUMBER_OF_CONNECTORS = 4;
 
@@ -136,4 +149,13 @@ public:
         // Connector numbers start at 1
         return connectors[local_connector_number - 1];
     }
+
+    /// @brief Trigger an unsolicitated report to be sent now.
+    void do_unsolicitated_report_now();
+
+    /// @brief Set state for a dispenser alarm. Also triggers an immediate
+    /// unsolicitated report.
+    /// @param alarm the alarm to set
+    /// @param active true to set the alarm, false to clear it
+    void set_dispenser_alarm(DispenserAlarms alarm, bool active);
 };

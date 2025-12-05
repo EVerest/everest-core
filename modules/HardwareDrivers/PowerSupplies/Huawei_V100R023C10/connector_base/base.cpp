@@ -93,6 +93,17 @@ void ConnectorBase::ev_init() {
             }
         });
 
+    mod->r_board_support[this->connector_no]->subscribe_error(
+        "evse_board_support/MREC17EVSEContactorFault",
+        [this](const Everest::error::Error& error) {
+            get_connector()->set_dc_output_contactor_fault_alarm(true);
+            EVLOG_info << "Received contactor fault error from BSP";
+        },
+        [this](const Everest::error::Error& error) {
+            get_connector()->set_dc_output_contactor_fault_alarm(false);
+            EVLOG_info << "Contactor fault error from BSP cleared";
+        });
+
     mod->telemetry_manager->initialize_datapoint(telemetry_subtopic, "output_voltage");
     mod->telemetry_manager->initialize_datapoint(telemetry_subtopic, "output_current");
 
