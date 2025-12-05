@@ -1,0 +1,12 @@
+description: Interactive bring up helper for SLAC interface
+provides:
+  main:
+    interface: empty
+    description: This module does not provide anything
+requires:
+  slac:
+    interface: slac
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Piet Gömpel
