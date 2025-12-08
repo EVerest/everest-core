@@ -1,6 +1,6 @@
-.. _tutorial_develop_new_module:
+.. _tutorial_develop_new_everest_module:
 
-Develop New Modules
+Develop New EVerest Modules
 ***************************
 
 .. hint::
