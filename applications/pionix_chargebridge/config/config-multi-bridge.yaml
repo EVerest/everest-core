@@ -8,7 +8,8 @@ charge_bridge:
   mdns_name: "pionix_cb_##"
 
 heartbeat:
-  interval_s: 2
+  interval_s: 1
+  connection_to_s: 10
 
 safety:
   pp_mode: "disabled"

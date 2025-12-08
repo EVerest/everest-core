@@ -20,6 +20,7 @@ struct gpio_config {
     std::string cb_remote;
     std::uint16_t interval_s;
     std::string mqtt_remote;
+    std::string mqtt_bind;
     std::uint16_t mqtt_port;
     std::uint32_t mqtt_ping_interval_ms;
 };

@@ -13,7 +13,8 @@
 
 namespace {
 const int default_udp_timeout_ms = 1000;
-}
+const std::uint16_t s_to_ms_factor = 1000;
+} // namespace
 
 namespace charge_bridge {
 using namespace std::chrono_literals;
@@ -25,8 +26,9 @@ heartbeat_service::heartbeat_service(heartbeat_config const& config,
     m_identifier = config.cb + "/" + config.item;
     std::memcpy(&m_config_message.data, &config.cb_config, sizeof(CbConfig));
     m_config_message.type = CbStructType::CST_HostToCb_Heartbeat;
-    m_heartbeat_interval = std::chrono::milliseconds(config.interval_s * 1000);
-    m_heartbeat_timer.set_timeout(m_heartbeat_interval / 2);
+    m_heartbeat_interval = std::chrono::milliseconds(config.interval_s * s_to_ms_factor);
+    m_connection_to = std::chrono::milliseconds(config.connection_to_s * s_to_ms_factor);
+    m_heartbeat_timer.set_timeout(m_heartbeat_interval);
     m_last_heartbeat_reply = std::chrono::steady_clock::time_point();
 
     m_udp.set_rx_handler([this](auto const& data, auto&) { handle_udp_rx(data); });
@@ -72,7 +74,7 @@ void heartbeat_service::handle_heartbeat_timer() {
         utilities::struct_to_vector(m_config_message, payload.buffer);
         m_udp.tx(payload);
     }
-    auto timeout = std::chrono::steady_clock::now() - m_last_heartbeat_reply > m_heartbeat_interval;
+    auto timeout = std::chrono::steady_clock::now() - m_last_heartbeat_reply > m_connection_to;
     if (timeout and m_cb_connected) {
         utilities::print_error(m_identifier, "HEARTBEAT/UDP", 1) << "ChargeBridge connection lost" << std::endl;
         m_cb_connected = false;

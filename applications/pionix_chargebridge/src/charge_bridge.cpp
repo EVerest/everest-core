@@ -233,6 +233,9 @@ void print_charge_bridge_config(charge_bridge_config const& c) {
         std::cout << " * evse_bsp:  " << c.evse->cb_remote << ":" << c.evse->cb_port;
         std::cout << " module " << c.evse->api.bsp.module_id;
         std::cout << " MQTT " << c.evse->api.mqtt_remote << ":" << c.evse->api.mqtt_port;
+        if (not c.evse->api.mqtt_bind.empty()) {
+            std::cout << " on " << c.evse->api.mqtt_bind;
+        }
         std::cout << " ping " << c.evse->api.mqtt_ping_interval_ms << "ms";
         if (c.evse->api.ovm.enabled) {
             std::cout << " OVM module " << c.evse->api.ovm.module_id;
@@ -245,6 +248,10 @@ void print_charge_bridge_config(charge_bridge_config const& c) {
     }
     if (c.gpio) {
         std::cout << " * gpio:      " << c.cb_remote << ":" << c.cb_port;
+        std::cout << " MQTT " << c.gpio->mqtt_remote << ":" << c.gpio->mqtt_port;
+        if (not c.gpio->mqtt_bind.empty()) {
+            std::cout << " on " << c.gpio->mqtt_bind;
+        }
         std::cout << " send interval " << c.gpio->interval_s << "s" << std::endl;
     }
 

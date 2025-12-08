@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include "everest/io/udp/udp_payload.hpp"
-#include <charge_bridge/crypto/openssl_crypto_supplier.hpp>
 #include <charge_bridge/firmware_update/sync_fw_updater.hpp>
 #include <charge_bridge/utilities/filesystem.hpp>
 #include <charge_bridge/utilities/logging.hpp>

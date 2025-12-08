@@ -45,7 +45,7 @@ api_connector::api_connector(everest_api_config const& config, std::string const
 
     m_mqtt.set_callback_connect([this, config](auto&, auto, auto, auto const&) { handle_mqtt_connect(); });
 
-    m_mqtt.connect(config.mqtt_remote, config.mqtt_port, config.mqtt_ping_interval_ms);
+    m_mqtt.connect(config.mqtt_bind, config.mqtt_remote, config.mqtt_port, config.mqtt_ping_interval_ms);
 
     m_sync_timer.set_timeout(1s);
 

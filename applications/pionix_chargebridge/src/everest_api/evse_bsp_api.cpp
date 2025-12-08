@@ -391,15 +391,12 @@ void evse_bsp_api::receive_allow_power_on(std::string const& payload) {
 }
 
 void evse_bsp_api::receive_ac_switch_three_phases_while_charging(std::string const&) {
-    std::cerr << "evse_bsp_api::receive_ac_switch_three_phases_while_charging: not implemented" << std::endl;
 }
 
 void evse_bsp_api::receive_evse_replug(std::string const&) {
-    std::cerr << "evse_bsp_api::receive_evse_replug: not implemented" << std::endl;
 }
 
 void evse_bsp_api::receive_ac_overcurrent_limit(std::string const&) {
-    std::cerr << "evse_bsp_api::receive_ac_overcurrent_limit: not implemented" << std::endl;
 }
 
 void evse_bsp_api::receive_lock() {
@@ -413,11 +410,9 @@ void evse_bsp_api::receive_unlock() {
 }
 
 void evse_bsp_api::receive_self_test([[maybe_unused]] std::string const& payload) {
-    std::cerr << "evse_bsp_api::receive_self_test: not implemented" << std::endl;
 }
 
 void evse_bsp_api::receive_request_reset(std::string const&) {
-    std::cerr << "evse_bsp_api::receive_request_reset: not implemented" << std::endl;
 }
 
 void evse_bsp_api::receive_heartbeat(std::string const& pl) {
@@ -464,7 +459,6 @@ void evse_bsp_api::send_request_stop_transaction(API_EVM::StopTransactionReason 
 }
 
 void evse_bsp_api::send_rcd_current(std::uint8_t) {
-    std::cerr << "evse_bsp_api::send_rcd_current: not implemented" << std::endl;
 }
 
 void evse_bsp_api::send_raise_error(API_BSP::ErrorEnum error, std::string const& subtype, std::string const& msg) {
@@ -488,7 +482,6 @@ void evse_bsp_api::send_communication_check() {
 }
 
 void evse_bsp_api::send_reply_reset([[maybe_unused]] std::string const& replyTo) {
-    std::cerr << "evse_bsp_api::send_reply_reset: not implemented" << std::endl;
 }
 
 void evse_bsp_api::send_mqtt(std::string const& topic, std::string const& message) {

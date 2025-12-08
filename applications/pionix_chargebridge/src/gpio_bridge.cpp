@@ -56,7 +56,7 @@ gpio_bridge::gpio_bridge(gpio_config const& config) :
             everest::lib::io::mqtt::mqtt_client::QoS::at_most_once);
     });
 
-    m_mqtt.connect(config.mqtt_remote, config.mqtt_port, config.mqtt_ping_interval_ms);
+    m_mqtt.connect(config.mqtt_bind, config.mqtt_remote, config.mqtt_port, config.mqtt_ping_interval_ms);
 
     m_message.type = CbStructType::CST_HostToCb_Gpio;
     m_message.data.number_of_gpios = CB_NUMBER_OF_GPIOS;

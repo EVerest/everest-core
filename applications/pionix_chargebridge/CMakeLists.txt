@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 
-find_package(OpenSSL 3 REQUIRED)
 find_package(ryml QUIET)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -9,8 +8,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
 add_executable(pionix_chargebridge
-  src/crypto/openssl_crypto_supplier.cpp
-
   src/everest_api/api_connector.cpp
   src/everest_api/evse_bsp_api.cpp
   src/everest_api/ovm_api.cpp
@@ -42,9 +39,6 @@ target_link_libraries(pionix_chargebridge
   everest::everest_api_types
   nlohmann_json::nlohmann_json
   ryml::ryml
-
-  OpenSSL::SSL
-  OpenSSL::Crypto
 )
 
 target_include_directories(pionix_chargebridge

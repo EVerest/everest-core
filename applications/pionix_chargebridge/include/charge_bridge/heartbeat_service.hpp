@@ -19,6 +19,7 @@ struct heartbeat_config {
     std::uint16_t cb_port;
     std::string cb_remote;
     std::uint16_t interval_s;
+    std::uint16_t connection_to_s;
     CbConfig cb_config;
 };
 
@@ -44,6 +45,7 @@ private:
     bool m_cb_connected{false};
     bool m_inital_cb_commcheck{true};
     std::chrono::milliseconds m_heartbeat_interval;
+    std::chrono::milliseconds m_connection_to;
     std::function<void(bool)> m_publish_connection_status;
     std::uint32_t m_mcu_timestamp{0};
     int m_mcu_reset_count{0};

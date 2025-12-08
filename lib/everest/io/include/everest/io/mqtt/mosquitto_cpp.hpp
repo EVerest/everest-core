@@ -213,7 +213,8 @@ private:
     void publish_ccb(int mid, ResponseCode rc, const PropertiesAccess& props);
 
 protected:
-    virtual ErrorCode connect_impl(const std::string_view& host, std::uint16_t port, std::uint16_t keepalive_seconds);
+    virtual ErrorCode connect_impl(const std::string_view& bind_address, const std::string_view& host,
+                                   std::uint16_t port, std::uint16_t keepalive_seconds);
     virtual ErrorCode set_will_impl(const std::string_view& topic, const std::string_view& payload, QoS qos,
                                     bool retain, PropertiesBase&& props);
 
@@ -246,6 +247,11 @@ public:
     ErrorCode tls(const ::std::string& ca_file, const ::std::string& ca_path, const ::std::string& cert_file,
                   const ::std::string& key_file);
     ErrorCode connect(const std::string_view& host, std::uint16_t port, std::uint16_t keepalive_seconds);
+    ErrorCode connect(const std::string_view& bind_address, const std::string_view& host, std::uint16_t port,
+                      std::uint16_t keepalive_seconds);
+
+    ErrorCode connect(const std::string_view& unix_domain_socket, std::uint16_t keepalive_seconds);
+
     ErrorCode reconnect();
     ErrorCode disconnect();
 

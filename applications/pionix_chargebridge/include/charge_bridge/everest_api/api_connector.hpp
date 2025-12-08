@@ -24,6 +24,7 @@ namespace API_BSP = everest::lib::API::V1_0::types::evse_board_support;
 
 struct everest_api_config {
     std::string mqtt_remote;
+    std::string mqtt_bind;
     uint16_t mqtt_port;
     uint32_t mqtt_ping_interval_ms;
     evse_bsp_config bsp;

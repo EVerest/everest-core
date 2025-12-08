@@ -75,6 +75,7 @@ int main(int argc, char* argv[]) {
 
     std::signal(SIGINT, signal_handler);
     std::signal(SIGHUP, signal_handler);
+    std::signal(SIGTERM, signal_handler);
 
     std::vector<std::string> config_files;
     std::vector<charge_bridge_config> cb_configs;

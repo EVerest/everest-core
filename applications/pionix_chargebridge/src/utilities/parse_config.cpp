@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+#include "c4/yml/node.hpp"
 #include <charge_bridge/utilities/parse_config.hpp>
 #include <charge_bridge/utilities/string.hpp>
 #include <charge_bridge/utilities/type_converters.hpp>
@@ -21,6 +22,7 @@ static const int g_cb_port_plc = 6002;
 static const int g_cb_port_can0 = 6003;
 static const int g_cb_port_serial_1 = 6004;
 static const int g_cb_port_serial_2 = 6005;
+static const std::uint16_t default_mqtt_ping_interval_ms = 1000;
 
 std::string print_yaml_location(ryml::Location const& loc) {
     std::stringstream error_msg;
@@ -79,6 +81,21 @@ template <class T> c4::yml::ConstNodeRef decode(c4::yml::ConstNodeRef const& nod
     return node;
 }
 
+std::pair<std::string, c4::yml::ConstNodeRef> find_node(c4::yml::NodeRef& config, std::string const& main,
+                                                        std::string const& sub) {
+    auto main_str = ryml::to_csubstr(main);
+    auto node_str = main;
+    c4::yml::ConstNodeRef node;
+    if (not sub.empty()) {
+        node_str = node_str + "::" + sub;
+        auto sub_str = ryml::to_csubstr(sub);
+        node = config.find_child(main_str).find_child(sub_str);
+    } else {
+        node = config[main_str];
+    }
+    return {node_str, node};
+}
+
 template <class DataT>
 bool get_node_impl(c4::yml::ConstNodeRef node, ryml::Parser& parser, std::string const& node_str, DataT& data) {
     if (node.invalid()) {
@@ -113,18 +130,22 @@ namespace charge_bridge::utilities {
 void parse_config_impl(c4::yml::NodeRef& config, charge_bridge_config& c, std::filesystem::path const& config_path,
                        ryml::Parser& parser) {
     auto get_node = [&config, &parser](auto& data, std::string const& main, std::string const& sub = "") {
-        auto main_str = ryml::to_csubstr(main);
-        auto node_str = main;
-        c4::yml::ConstNodeRef node;
-        if (not sub.empty()) {
-            node_str = node_str + "::" + sub;
-            auto sub_str = ryml::to_csubstr(sub);
-            node = config.find_child(main_str).find_child(sub_str);
-        } else {
-            node = config[main_str];
-        }
-
+        auto [node_str, node] = find_node(config, main, sub);
         get_node_impl(node, parser, node_str, data);
+    };
+
+    auto get_node_or_default = [&get_node, &config](auto& data, std::string const& main, std::string const& sub,
+                                                    auto fallback) {
+        auto [node_str, node] = find_node(config, main, sub);
+        if (node.invalid()) {
+            data = fallback;
+            return;
+        }
+        try {
+            get_node(data, main, sub);
+        } catch (...) {
+            data = fallback;
+        }
     };
 
     auto get_block = [&config, &c](std::string const& block, auto& block_cfg, auto const& ftor) {
@@ -189,8 +210,10 @@ void parse_config_impl(c4::yml::NodeRef& config, charge_bridge_config& c, std::f
         cfg.cb_port = g_cb_port_evse_bsp;
         get_node(cfg.api.bsp.module_id, main, "module_id");
         get_node(cfg.api.mqtt_remote, main, "mqtt_remote");
+        get_node_or_default(cfg.api.mqtt_bind, main, "mqtt_bind", "");
         get_node(cfg.api.mqtt_port, main, "mqtt_port");
-        get_node(cfg.api.mqtt_ping_interval_ms, main, "mqtt_ping_interval_ms");
+        get_node_or_default(cfg.api.mqtt_ping_interval_ms, main, "mqtt_ping_interval_ms",
+                            default_mqtt_ping_interval_ms);
         cfg.cb_remote = c.cb_remote;
         get_node(cfg.api.bsp.capabilities, main, "capabilities");
         get_node(cfg.api.ovm.enabled, main, "ovm_enabled");
@@ -200,14 +223,16 @@ void parse_config_impl(c4::yml::NodeRef& config, charge_bridge_config& c, std::f
     get_block("gpio", c.gpio, [&](auto& cfg, auto const& main) {
         get_node(cfg.interval_s, main, "interval_s");
         get_node(cfg.mqtt_remote, main, "mqtt_remote");
+        get_node_or_default(cfg.mqtt_bind, main, "mqtt_bind", "");
         get_node(cfg.mqtt_port, main, "mqtt_port");
-        get_node(cfg.mqtt_ping_interval_ms, main, "mqtt_ping_interval_ms");
+        get_node_or_default(cfg.mqtt_ping_interval_ms, main, "mqtt_ping_interval_ms", default_mqtt_ping_interval_ms);
         cfg.cb_remote = c.cb_remote;
         cfg.cb_port = c.cb_port;
     });
 
     get_block("heartbeat", c.heartbeat, [&](auto& cfg, auto const& main) {
-        get_node(cfg.interval_s, main, "interval_s");
+        get_node_or_default(cfg.interval_s, main, "interval_s", 1);
+        get_node_or_default(cfg.connection_to_s, main, "connection_to_s", 3 * cfg.interval_s);
         cfg.cb_remote = c.cb_remote;
         cfg.cb_port = c.cb_port;
         get_node(cfg.cb_config.network, "charge_bridge");
