@@ -531,6 +531,11 @@ void EvseManager::ready() {
                 });
             }
 
+            // On start up, stop ovm in case it is still enabled from a previous run
+            if (not r_over_voltage_monitor.empty()) {
+                r_over_voltage_monitor[0]->call_stop();
+            }
+
             // Get voltage/current from DC power supply
             if (not r_powersupply_DC.empty()) {
                 r_powersupply_DC[0]->subscribe_voltage_current([this](types::power_supply_DC::VoltageCurrent m) {
