@@ -72,11 +72,11 @@ std::string ConfigValidator::get_serial_number() const {
 }
 
 int ConfigValidator::get_failsafe_control_limit() const {
-    return this->config.failsafe_control_limit;
+    return this->config.failsafe_control_limit_W;
 }
 
 int ConfigValidator::get_max_nominal_power() const {
-    return this->config.max_nominal_power;
+    return this->config.max_nominal_power_W;
 }
 
 bool ConfigValidator::validate_eebus_service_port() const {
@@ -180,7 +180,7 @@ bool ConfigValidator::validate_serial_number() const {
 }
 
 bool ConfigValidator::validate_failsafe_control_limit() const {
-    if (this->config.failsafe_control_limit < 0) {
+    if (this->config.failsafe_control_limit_W < 0) {
         EVLOG_error << "failsafe_control_limit is negative";
         return false;
     }
@@ -188,7 +188,7 @@ bool ConfigValidator::validate_failsafe_control_limit() const {
 }
 
 bool ConfigValidator::validate_max_nominal_power() const {
-    if (this->config.max_nominal_power < 0) {
+    if (this->config.max_nominal_power_W < 0) {
         EVLOG_error << "max_nominal_power is negative";
         return false;
     }
