@@ -188,6 +188,7 @@ Connector::Connector(ConnectorConfig connector_config, uint16_t local_connector_
         config.get_output_current = connector_config.connector_callbacks.output_current;
         config.get_contactor_status = connector_config.connector_callbacks.contactor_status;
         config.get_electronic_lock_status = connector_config.connector_callbacks.electronic_lock_status;
+        config.get_dc_output_contact_fault = [this]() { return dc_output_contactor_fault_alarm_active.load(); };
         return config;
     }()),
     connector_registers(connector_registers_config),
@@ -312,11 +313,6 @@ void Connector::start() {
         max_rated_psu_current = value;
         log.info << log_prefix + "PSU Max rated current changed to " + std::to_string(value) + " A";
     });
-
-    if (dc_output_contactor_fault_alarm_active.has_value()) {
-        connector_registers.dc_output_contact_fault.update_value(dc_output_contactor_fault_alarm_active.value() ? 1
-                                                                                                                : 0);
-    }
 
     // todo: reset fsm?
 
@@ -554,9 +550,6 @@ std::vector<std::uint8_t> Connector::get_hmac_key() {
 }
 
 void Connector::set_dc_output_contactor_fault_alarm(bool active) {
-    connector_registers.dc_output_contact_fault.update_value(active ? 1 : 0);
-
-    // persisted to be set on start()
     dc_output_contactor_fault_alarm_active = active;
 
     // immediately do an unsolicitated report

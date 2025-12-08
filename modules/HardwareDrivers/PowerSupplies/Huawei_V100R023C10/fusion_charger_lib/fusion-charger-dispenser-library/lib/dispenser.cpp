@@ -354,6 +354,18 @@ void Dispenser::init() {
     dispenser_registers_config.software_version = dispenser_config.software_version;
     dispenser_registers_config.esn = dispenser_config.esn;
     dispenser_registers_config.connector_count = dispenser_config.charging_connector_count;
+    dispenser_registers_config.get_door_status_alarm = [this]() {
+        return get_dispenser_alarm_state(DispenserAlarms::DOOR_STATUS_ALARM);
+    };
+    dispenser_registers_config.get_water_alarm = [this]() {
+        return get_dispenser_alarm_state(DispenserAlarms::WATER_ALARM);
+    };
+    dispenser_registers_config.get_epo_alarm = [this]() {
+        return get_dispenser_alarm_state(DispenserAlarms::EPO_ALARM);
+    };
+    dispenser_registers_config.get_tilt_alarm = [this]() {
+        return get_dispenser_alarm_state(DispenserAlarms::TILT_ALARM);
+    };
 
     dispenser_registers.emplace(dispenser_registers_config);
 
@@ -515,23 +527,14 @@ void Dispenser::do_unsolicitated_report_now() {
 }
 
 void Dispenser::set_dispenser_alarm(DispenserAlarms alarm, bool active) {
-  switch (alarm) {
-    case DispenserAlarms::DOOR_STATUS_ALARM:
-      dispenser_registers->door_status_alarm.update_value(active ? 1 : 0);
-      break;
-    case DispenserAlarms::WATER_ALARM:
-      dispenser_registers->water_alarm.update_value(active ? 1 : 0);
-      break;
-    case DispenserAlarms::EPO_ALARM:
-      dispenser_registers->epo_alarm.update_value(active ? 1 : 0);
-      break;
-    case DispenserAlarms::TILT_ALARM:
-      dispenser_registers->tilt_alarm.update_value(active ? 1 : 0);
-      break;
-    default:
-      log.error << "Unknown alarm type";
-      break;
-  }
+    dispenser_alarms[alarm] = active;
 
-  do_unsolicitated_report_now();
+    do_unsolicitated_report_now();
+}
+
+bool Dispenser::get_dispenser_alarm_state(DispenserAlarms alarm) {
+    if (this->dispenser_alarms.find(alarm) == this->dispenser_alarms.end()) {
+        this->dispenser_alarms[alarm] = false;
+    }
+    return this->dispenser_alarms[alarm].load();
 }

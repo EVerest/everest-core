@@ -206,9 +206,9 @@ private:
     std::optional<float> max_rated_psu_voltage;  // in V, set by register callback
     std::optional<float> max_rated_psu_current;  // in A, set by register callback
 
-    // persistant storage for the dc output contactor fault alarm state; used in
-    // start() to populate the register
-    std::optional<bool> dc_output_contactor_fault_alarm_active;
+    // dc output contactor fault alarm state; used directly in register read
+    // callback
+    std::atomic<bool> dc_output_contactor_fault_alarm_active;
 
     ConnectorFSM fsm;
     bool last_module_placeholder_allocation_failed;
