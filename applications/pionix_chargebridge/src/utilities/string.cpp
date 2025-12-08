@@ -26,7 +26,7 @@ std::string& replace_all_in_place(std::string& source, std::string const& placeh
         return source;
     }
 
-    size_t start_pos = 0;
+    std::size_t start_pos = 0;
 
     while ((start_pos = source.find(placeholder, start_pos)) != std::string::npos) {
         source.replace(start_pos, placeholder.length(), substitute);

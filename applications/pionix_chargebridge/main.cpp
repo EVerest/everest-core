@@ -25,8 +25,6 @@ enum class mode {
     update_only,
 };
 
-
-
 mode parse_args(int argc, char* argv[], std::vector<std::string>& config_files) {
     // clang-format off
     auto print_msg = []() {
@@ -99,7 +97,7 @@ int main(int argc, char* argv[]) {
         for (auto const& config : config_list) {
             print_charge_bridge_config(config);
             if (cb_ids_in_use.count(config.cb_name) > 0) {
-                std::cerr << "Dublicate charge_bridge::name '" << config.cb_name << "'" << std::endl;
+                std::cerr << "Duplicate charge_bridge::name '" << config.cb_name << "'" << std::endl;
                 return EXIT_FAILURE;
             }
 

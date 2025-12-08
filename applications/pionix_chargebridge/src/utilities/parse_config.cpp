@@ -35,7 +35,6 @@ std::string print_yaml_location(ryml::Location const& loc) {
             error_msg << tmp;
         }
         error_msg << "\n  line " << loc.line;
-        ;
         if (loc.col) {
             error_msg << " column " << loc.col;
         }
@@ -253,7 +252,7 @@ void parse_config_impl(c4::yml::NodeRef& config, charge_bridge_config& c, std::f
 }
 
 charge_bridge_config set_config_placeholders(charge_bridge_config const& src, charge_bridge_config& result,
-                                             std::string const& ip, size_t index) {
+                                             std::string const& ip, std::size_t index) {
     auto index_str = std::to_string(index);
     result = src;
     auto replace = [index_str](std::string& src) { replace_all_in_place(src, "##", index_str); };
@@ -344,7 +343,7 @@ std::vector<charge_bridge_config> parse_config_multi(std::string const& config_f
         ip_list_node >> ip_list;
         std::vector<charge_bridge_config> cb_config_list(ip_list.size());
 
-        for (size_t i = 0; i < ip_list.size(); ++i) {
+        for (std::size_t i = 0; i < ip_list.size(); ++i) {
             set_config_placeholders(base_config, cb_config_list[i], ip_list[i], i);
         }
 

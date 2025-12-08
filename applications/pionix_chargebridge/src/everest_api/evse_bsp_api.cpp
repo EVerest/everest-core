@@ -146,7 +146,7 @@ void evse_bsp_api::clear_comm_fault() {
     send_clear_error(API_BSP::ErrorEnum::CommunicationFault, "ChargeBridge not available", "");
 }
 
-void evse_bsp_api::handle_event_cp(uint8_t cp) {
+void evse_bsp_api::handle_event_cp(std::uint8_t cp) {
     using bc_event = API_BSP::Event;
     bc_event cp_event;
     bool cp_state_valid = true;
@@ -187,7 +187,7 @@ void evse_bsp_api::handle_event_cp(uint8_t cp) {
     }
 }
 
-void evse_bsp_api::handle_event_relay(uint8_t relay) {
+void evse_bsp_api::handle_event_relay(std::uint8_t relay) {
     using bc_event = API_BSP::Event;
     bc_event relaise_event;
     bool relaise_state_valid = true;
@@ -206,7 +206,7 @@ void evse_bsp_api::handle_event_relay(uint8_t relay) {
     }
 }
 
-void evse_bsp_api::handle_pp_type2(uint8_t data) {
+void evse_bsp_api::handle_pp_type2(std::uint8_t data) {
     API_BSP::Ampacity bc_ampacity;
     bool bc_ampacity_valid = true;
     switch (data) {
@@ -238,7 +238,7 @@ void evse_bsp_api::handle_pp_type2(uint8_t data) {
     }
 }
 
-void evse_bsp_api::handle_pp_type1(uint8_t data) {
+void evse_bsp_api::handle_pp_type1(std::uint8_t data) {
     // EVerest does not really have support for type 1 PP.
     // We just send a stop charging if some one presses the button,
     // for everything else the PP state does not really matter.
@@ -307,17 +307,17 @@ static constexpr FlagSpec print_warning_specs[] = {
 
 // 4) Edge-driven handler
 void evse_bsp_api::handle_error(const SafetyErrorFlags& data) {
-    uint32_t prev = cb_status.error_flags.raw; // cached raw value from before
-    uint32_t next = data.raw;                  // current raw value
+    std::uint32_t prev = cb_status.error_flags.raw; // cached raw value from before
+    std::uint32_t next = data.raw;                  // current raw value
 
-    uint32_t became_active = next & ~prev;   // rising edges
-    uint32_t became_inactive = prev & ~next; // falling edges
+    std::uint32_t became_active = next & ~prev;   // rising edges
+    std::uint32_t became_inactive = prev & ~next; // falling edges
 
     for (const auto& s : error_specs) {
-        if (became_active & static_cast<uint32_t>(s.mask)) {
+        if (became_active & static_cast<std::uint32_t>(s.mask)) {
             send_raise_error(s.error, s.subtype, s.message);
         }
-        if (became_inactive & static_cast<uint32_t>(s.mask)) {
+        if (became_inactive & static_cast<std::uint32_t>(s.mask)) {
             send_clear_error(s.error, s.subtype, "");
         }
     }
@@ -325,13 +325,13 @@ void evse_bsp_api::handle_error(const SafetyErrorFlags& data) {
     std::stringstream log;
 
     for (const auto& s : print_warning_specs) {
-        if (next & static_cast<uint32_t>(s.mask)) {
+        if (next & static_cast<std::uint32_t>(s.mask)) {
             log << "[" << s.message << "] ";
         }
     }
 
     for (const auto& s : error_specs) {
-        if (next & static_cast<uint32_t>(s.mask)) {
+        if (next & static_cast<std::uint32_t>(s.mask)) {
             log << "[" << s.message << "] ";
         }
     }
@@ -346,7 +346,7 @@ void evse_bsp_api::handle_error(const SafetyErrorFlags& data) {
     }
 }
 
-void evse_bsp_api::handle_stop_button([[maybe_unused]] uint8_t data) {
+void evse_bsp_api::handle_stop_button([[maybe_unused]] std::uint8_t data) {
     auto reason = API_EVM::StopTransactionReason::Local;
     send_request_stop_transaction(reason);
 }
@@ -422,7 +422,7 @@ void evse_bsp_api::receive_request_reset(std::string const&) {
 
 void evse_bsp_api::receive_heartbeat(std::string const& pl) {
     last_everest_heartbeat = std::chrono::steady_clock::now();
-    size_t id = 0;
+    std::size_t id = 0;
     if (deserialize(pl, id)) {
         auto delta = id - m_last_hb_id;
         if (delta > 1) {
@@ -441,7 +441,7 @@ void evse_bsp_api::send_event(API_BSP::Event data) {
     send_mqtt("event", serialize(event));
 }
 
-void evse_bsp_api::send_ac_nr_of_phases(uint8_t data) {
+void evse_bsp_api::send_ac_nr_of_phases(std::uint8_t data) {
     auto phases = static_cast<int>(data);
     if (phases > 0 && phases <= 3) {
         send_mqtt("ac_nr_of_phases", serialize(phases));
@@ -463,7 +463,7 @@ void evse_bsp_api::send_request_stop_transaction(API_EVM::StopTransactionReason 
     send_mqtt("request_stop_transaction", serialize(request));
 }
 
-void evse_bsp_api::send_rcd_current(uint8_t) {
+void evse_bsp_api::send_rcd_current(std::uint8_t) {
     std::cerr << "evse_bsp_api::send_rcd_current: not implemented" << std::endl;
 }
 

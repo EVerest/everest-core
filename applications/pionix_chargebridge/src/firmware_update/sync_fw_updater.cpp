@@ -12,10 +12,14 @@
 #include <cstring>
 #include <fstream>
 
+namespace {
+const int default_udp_timeout_ms = 3000;
+}
+
 namespace charge_bridge::firmware_update {
 
-const uint32_t sync_fw_updater::app_udp_sector_size = 0x2000;
-const uint16_t sync_fw_updater::sub_chunk_size = 1024;
+const std::uint32_t sync_fw_updater::app_udp_sector_size = 0x2000;
+const std::uint16_t sync_fw_updater::sub_chunk_size = 1024;
 
 using namespace everest::lib::io::udp;
 
@@ -42,7 +46,7 @@ static everest::lib::io::udp::udp_payload make_get_version_command() {
 }
 
 sync_fw_updater::sync_fw_updater(fw_update_config const& config) :
-    m_udp(config.cb_remote, config.cb_port, 3, 3000), m_config(config) {
+    m_udp(config.cb_remote, config.cb_port, 3, default_udp_timeout_ms), m_config(config) {
 }
 
 std::optional<std::string> sync_fw_updater::get_fw_version() {
@@ -53,8 +57,9 @@ std::optional<std::string> sync_fw_updater::get_fw_version() {
         return std::nullopt;
     }
 
-    result->buffer[result->buffer.size() - 1] = 0x00;       // ensure it is actually a 0 terminated string
-    return std::string(((char*)result->buffer.data()) + 2); // skip 2 byte header
+    result->buffer[result->buffer.size() - 1] = 0x00;               // ensure it is actually a 0 terminated string
+    auto* str_ptr = reinterpret_cast<char*>(result->buffer.data()); // reinterpret for string conversion
+    return std::string(str_ptr + 2);                                // skip 2 byte header
 }
 
 void sync_fw_updater::print_fw_version() {
@@ -71,7 +76,7 @@ bool sync_fw_updater::check_if_correct_fw_installed() {
     }
 
     charge_bridge::filesystem_utils::CryptSignedHeader hdr;
-    uint32_t offset;
+    std::uint32_t offset;
     if (not read_crypt_signed_header(m_config.fw_path, hdr, offset)) {
         utilities::print_error(m_config.cb, "FIRMWARE", 1)
             << "Could not read header for file: " << m_config.fw_path << std::endl;
@@ -91,18 +96,22 @@ bool sync_fw_updater::check_if_correct_fw_installed() {
 }
 
 bool sync_fw_updater::quick_check_connection() {
-    everest::lib::io::udp::udp_payload pl = make_ping_command();
+    static const std::uint16_t rr_timeout_ms = 200;
+    static const std::uint16_t rr_retires_ms = 10;
 
-    auto result = m_udp.request_reply(pl, 200, 10).has_value();
+    everest::lib::io::udp::udp_payload pl = make_ping_command();
+    auto result = m_udp.request_reply(pl, rr_timeout_ms, rr_retires_ms).has_value();
     utilities::print_error(m_config.cb, "FIRMWARE", not result)
         << (result ? "ChargeBride Connected" : "No connection to ChargeBridge") << std::endl;
     return result;
 }
 
 bool sync_fw_updater::check_connection() {
-    everest::lib::io::udp::udp_payload pl = make_ping_command();
+    static const std::uint16_t rr_timeout_ms = 150;
+    static const std::uint16_t rr_retires_ms = 100;
 
-    auto result = m_udp.request_reply(pl, 150, 100).has_value();
+    everest::lib::io::udp::udp_payload pl = make_ping_command();
+    auto result = m_udp.request_reply(pl, rr_timeout_ms, rr_retires_ms).has_value();
     utilities::print_error(m_config.cb, "FIRMWARE", not result)
         << (result ? "ChargeBride Connected" : "No connection to ChargeBridge") << std::endl;
     return result;
@@ -144,15 +153,15 @@ bool sync_fw_updater::upload_firmware() {
         return false;
     }
 
-    uint32_t offset;
+    std::uint32_t offset;
     charge_bridge::filesystem_utils::CryptSignedHeader hdr;
 
     if (not upload_init(path, offset, hdr)) {
         return false;
     }
 
-    uint32_t total_bytes = 0;
-    uint16_t sector = 0;
+    std::uint32_t total_bytes = 0;
+    std::uint16_t sector = 0;
 
     if (not upload_transfer(path, sector, offset, total_bytes)) {
         utilities::print_error(m_config.cb, "FIRMWARE", 1) << "Upload failed at sector: " << sector << std::endl;
@@ -176,7 +185,7 @@ bool sync_fw_updater::upload_firmware() {
 # ... rest of the file is assembled firmware image: secure part...padding...non secure part (encrypted)
 */
 
-bool sync_fw_updater::upload_init(const fs::path& file_path, uint32_t& offset,
+bool sync_fw_updater::upload_init(const fs::path& file_path, std::uint32_t& offset,
                                   charge_bridge::filesystem_utils::CryptSignedHeader& hdr) {
     everest::lib::io::udp::udp_payload payload;
 
@@ -207,8 +216,8 @@ bool sync_fw_updater::upload_init(const fs::path& file_path, uint32_t& offset,
     return check_reply(result);
 }
 
-bool sync_fw_updater::upload_transfer(const fs::path& file_path, uint16_t& sector, uint32_t offset,
-                                      uint32_t& total_bytes) {
+bool sync_fw_updater::upload_transfer(const fs::path& file_path, std::uint16_t& sector, std::uint32_t offset,
+                                      std::uint32_t& total_bytes) {
     bool send_failed = false;
 
     std::ifstream file(file_path, std::ios::binary);
@@ -221,7 +230,7 @@ bool sync_fw_updater::upload_transfer(const fs::path& file_path, uint16_t& secto
     file.seekg(offset, std::ios::beg);
 
     bool processed_file = filesystem_utils::process_file(
-        file, sub_chunk_size, [&](const std::vector<uint8_t>& buffer, bool last_chunk) -> bool {
+        file, sub_chunk_size, [&](const std::vector<std::uint8_t>& buffer, bool last_chunk) -> bool {
             total_bytes += buffer.size();
 
             // Care must be taken when sending this over, since on the
@@ -244,7 +253,7 @@ bool sync_fw_updater::upload_transfer(const fs::path& file_path, uint16_t& secto
     return (processed_file) && (send_failed == false);
 }
 
-bool sync_fw_updater::upload_finish([[maybe_unused]] const fs::path& file_path, uint32_t total_bytes,
+bool sync_fw_updater::upload_finish([[maybe_unused]] const fs::path& file_path, std::uint32_t total_bytes,
                                     const charge_bridge::filesystem_utils::CryptSignedHeader& hdr) {
     CbManagementPacket<CbFirmwareEnd> fw_check_packet;
 
@@ -262,12 +271,15 @@ bool sync_fw_updater::upload_finish([[maybe_unused]] const fs::path& file_path, 
     utilities::struct_to_vector(fw_check_packet, payload.buffer);
 
     // The final check can be a very slow operation due to the cryptography involved
-    auto result = m_udp.request_reply(payload, 10000, 1);
+    static const std::uint16_t rr_timeout_ms = 10000;
+    static const std::uint16_t rr_retires_ms = 1;
+    auto result = m_udp.request_reply(payload, rr_timeout_ms, rr_retires_ms);
 
     return check_reply(result);
 }
 
-udp_payload sync_fw_updater::make_fw_chunk(uint16_t sector, uint8_t last_chunk, std::vector<uint8_t> const& data) {
+udp_payload sync_fw_updater::make_fw_chunk(std::uint16_t sector, std::uint8_t last_chunk,
+                                           std::vector<std::uint8_t> const& data) {
     CbManagementPacket<CbFirmwarePacket> fw_data_packet;
     fw_data_packet.type = CbStructType::CST_CbFirmwarePacket;
     fw_data_packet.data.last_packet = last_chunk;

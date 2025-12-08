@@ -23,7 +23,7 @@ namespace charge_bridge {
 
 struct charge_bridge_config {
     std::string cb_name;
-    uint16_t cb_port;
+    std::uint16_t cb_port;
     std::string cb_remote;
     std::optional<can_bridge_config> can0;
     std::optional<serial_bridge_config> serial1;
@@ -57,14 +57,14 @@ public:
     void manage(everest::lib::io::event::fd_event_handler& handler, std::atomic_bool const& exit, bool force_update);
 
 private:
-    std::unique_ptr<can_bridge> can_0_client;
-    std::unique_ptr<serial_bridge> pty_1;
-    std::unique_ptr<serial_bridge> pty_2;
-    std::unique_ptr<serial_bridge> pty_3;
-    std::unique_ptr<evse_bridge> bsp;
-    std::unique_ptr<plc_bridge> plc;
-    std::unique_ptr<heartbeat_service> heartbeat;
-    std::unique_ptr<gpio_bridge> gpio;
+    std::unique_ptr<can_bridge> m_can_0_client;
+    std::unique_ptr<serial_bridge> m_pty_1;
+    std::unique_ptr<serial_bridge> m_pty_2;
+    std::unique_ptr<serial_bridge> m_pty_3;
+    std::unique_ptr<evse_bridge> m_bsp;
+    std::unique_ptr<plc_bridge> m_plc;
+    std::unique_ptr<heartbeat_service> m_heartbeat;
+    std::unique_ptr<gpio_bridge> m_gpio;
 
     everest::lib::io::event::fd_event_handler* m_event_handler{nullptr};
     bool m_force_firmware_update{false};

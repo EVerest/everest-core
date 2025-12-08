@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Pionix GmbH and Contributors to EVerest
+
 #ifndef EVSE_BSP_CB_TO_HOST_H
 #define EVSE_BSP_CB_TO_HOST_H
 

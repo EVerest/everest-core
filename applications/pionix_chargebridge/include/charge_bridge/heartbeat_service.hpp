@@ -16,9 +16,9 @@ namespace charge_bridge {
 struct heartbeat_config {
     std::string cb;
     std::string item;
-    uint16_t cb_port;
+    std::uint16_t cb_port;
     std::string cb_remote;
-    uint16_t interval_s;
+    std::uint16_t interval_s;
     CbConfig cb_config;
 };
 
@@ -45,7 +45,7 @@ private:
     bool m_inital_cb_commcheck{true};
     std::chrono::milliseconds m_heartbeat_interval;
     std::function<void(bool)> m_publish_connection_status;
-    uint32_t m_mcu_timestamp{0};
+    std::uint32_t m_mcu_timestamp{0};
     int m_mcu_reset_count{0};
 };
 

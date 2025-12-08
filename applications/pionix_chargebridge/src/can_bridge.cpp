@@ -9,6 +9,10 @@
 #include <memory>
 #include <protocol/cb_can_message.h>
 
+namespace {
+const int default_udp_timeout_ms = 1000;
+}
+
 namespace charge_bridge {
 using namespace std::chrono_literals;
 
@@ -46,7 +50,7 @@ bool is_data_msg([[maybe_unused]] cb_can_message const& msg) {
 } // namespace
 
 can_bridge::can_bridge(can_bridge_config const& config) :
-    m_udp(config.cb_remote, config.cb_port, 1000),
+    m_udp(config.cb_remote, config.cb_port, default_udp_timeout_ms),
     m_can_device(config.can_device),
     m_last_msg_to_cb(std::chrono::steady_clock::time_point()) {
 
@@ -77,9 +81,9 @@ can_bridge::can_bridge(can_bridge_config const& config) :
         }
     });
 
-    identifier = config.cb + "/" + config.item;
+    m_identifier = config.cb + "/" + config.item;
     m_can->set_error_handler([this](auto id, auto const& msg) {
-        utilities::print_error(identifier, "CAN/HW", id) << msg << std::endl;
+        utilities::print_error(m_identifier, "CAN/HW", id) << msg << std::endl;
         if (id not_eq 0) {
             // This is a smart pointer!! Using .reset() would delete the obj!
             m_can->reset();
@@ -87,7 +91,7 @@ can_bridge::can_bridge(can_bridge_config const& config) :
     });
 
     m_udp.set_error_handler([this](auto id, auto const& msg) {
-        utilities::print_error(identifier, "CAN/UDP", id) << msg << std::endl;
+        utilities::print_error(m_identifier, "CAN/UDP", id) << msg << std::endl;
         if (id not_eq 0) {
             m_udp.reset();
         }

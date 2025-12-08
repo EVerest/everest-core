@@ -8,10 +8,14 @@
 #include <protocol/evse_bsp_cb_to_host.h>
 #include <protocol/evse_bsp_host_to_cb.h>
 
+namespace {
+const int default_udp_timeout_ms = 1000;
+}
+
 namespace charge_bridge {
 
 evse_bridge::evse_bridge(evse_bridge_config const& config) :
-    m_api(config.api, config.cb + "/" + config.item), m_udp(config.cb_remote, config.cb_port, 1000) {
+    m_api(config.api, config.cb + "/" + config.item), m_udp(config.cb_remote, config.cb_port, default_udp_timeout_ms) {
     using namespace std::chrono_literals;
     m_timer.set_timeout(5s);
 

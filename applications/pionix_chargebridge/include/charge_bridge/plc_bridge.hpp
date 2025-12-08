@@ -12,12 +12,12 @@ namespace charge_bridge {
 struct plc_bridge_config {
     std::string cb;
     std::string item;
-    uint16_t cb_port;
+    std::uint16_t cb_port;
     std::string cb_remote;
     std::string plc_tap;
     std::string plc_ip;
     std::string plc_netmaks;
-    int plc_mtu{1518};
+    int plc_mtu;
 };
 
 class plc_bridge : public everest::lib::io::event::fd_event_register_interface {

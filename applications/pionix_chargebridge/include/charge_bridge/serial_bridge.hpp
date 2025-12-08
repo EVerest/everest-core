@@ -13,7 +13,7 @@ namespace charge_bridge {
 struct serial_bridge_config {
     std::string cb;
     std::string item;
-    uint16_t cb_port;
+    std::uint16_t cb_port;
     std::string cb_remote;
     std::string serial_device;
 };
@@ -34,7 +34,6 @@ private:
     everest::lib::io::tcp::tcp_client m_tcp;
     utilities::symlink m_symlink;
     int m_tcp_last_error_id = -1;
-    //    everest::lib::io::event::timer_fd m_timer;
 };
 
 } // namespace charge_bridge

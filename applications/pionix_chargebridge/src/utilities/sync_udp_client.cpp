@@ -9,16 +9,17 @@ namespace charge_bridge::utilities {
 using reply = sync_udp_client::reply;
 using namespace std::chrono_literals;
 
-sync_udp_client::sync_udp_client(std::string const& remote, uint16_t port) : m_retries(0), m_timeout_ms(1000) {
+sync_udp_client::sync_udp_client(std::string const& remote, std::uint16_t port) : m_retries(0), m_timeout_ms(1000) {
     init(remote, port);
 }
 
-sync_udp_client::sync_udp_client(std::string const& remote, uint16_t port, uint16_t retries, uint16_t timeout_ms) :
+sync_udp_client::sync_udp_client(std::string const& remote, std::uint16_t port, std::uint16_t retries,
+                                 std::uint16_t timeout_ms) :
     m_retries(retries), m_timeout_ms(timeout_ms) {
     init(remote, port);
 }
 
-void sync_udp_client::init(std::string const& remote, uint16_t port) {
+void sync_udp_client::init(std::string const& remote, std::uint16_t port) {
     m_udp.open_as_client(remote, port);
     m_handler.register_event_handler(m_udp.get_fd(), [this](auto) {}, {everest::lib::io::event::poll_events::read});
 }
@@ -27,13 +28,13 @@ reply sync_udp_client::request_reply(udp_payload const& payload) {
     return request_reply(payload, m_timeout_ms, m_retries);
 }
 
-reply sync_udp_client::request_reply(udp_payload const& payload, uint16_t timeout_ms, uint16_t retries) {
+reply sync_udp_client::request_reply(udp_payload const& payload, std::uint16_t timeout_ms, std::uint16_t retries) {
     udp_payload result;
     clear_socket();
     if (not m_udp.tx(payload)) {
         return std::nullopt;
     }
-    for (uint16_t i = 0; i < retries; ++i) {
+    for (std::uint16_t i = 0; i < retries; ++i) {
         if (not m_handler.poll(std::chrono::milliseconds(timeout_ms))) {
             if (not m_udp.tx(payload)) {
                 return std::nullopt;
@@ -56,7 +57,7 @@ reply sync_udp_client::rx() {
     return rx(m_timeout_ms);
 }
 
-reply sync_udp_client::rx(uint16_t timeout_ms) {
+reply sync_udp_client::rx(std::uint16_t timeout_ms) {
     udp_payload result;
     if (not m_handler.poll(std::chrono::milliseconds(timeout_ms))) {
         return std::nullopt;

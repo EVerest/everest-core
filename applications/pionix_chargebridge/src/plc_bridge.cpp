@@ -6,11 +6,15 @@
 #include <everest/io/udp/udp_payload.hpp>
 #include <iostream>
 
+namespace {
+const int default_udp_timeout_ms = 1000;
+} // namespace
+
 namespace charge_bridge {
 
 plc_bridge::plc_bridge(plc_bridge_config const& config) :
     m_tap(config.plc_tap, config.plc_ip, config.plc_netmaks, config.plc_mtu),
-    m_udp(config.cb_remote, config.cb_port, 1000) {
+    m_udp(config.cb_remote, config.cb_port, default_udp_timeout_ms) {
     using namespace std::chrono_literals;
     m_timer.set_timeout(5s);
 

@@ -12,7 +12,7 @@ namespace charge_bridge {
 struct evse_bridge_config {
     std::string cb;
     std::string item;
-    uint16_t cb_port;
+    std::uint16_t cb_port;
     std::string cb_remote;
     evse_bsp::everest_api_config api;
 };

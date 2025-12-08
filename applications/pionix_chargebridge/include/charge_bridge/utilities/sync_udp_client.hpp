@@ -13,21 +13,21 @@ class sync_udp_client {
 public:
     using udp_payload = everest::lib::io::udp::udp_payload;
     using reply = std::optional<udp_payload>;
-    sync_udp_client(std::string const& remote, uint16_t port);
-    sync_udp_client(std::string const& remote, uint16_t port, uint16_t retries, uint16_t timeout_ms);
+    sync_udp_client(std::string const& remote, std::uint16_t port);
+    sync_udp_client(std::string const& remote, std::uint16_t port, std::uint16_t retries, std::uint16_t timeout_ms);
     reply request_reply(udp_payload const& payload);
-    reply request_reply(udp_payload const& payload, uint16_t timeout_ms, uint16_t retries);
+    reply request_reply(udp_payload const& payload, std::uint16_t timeout_ms, std::uint16_t retries);
     bool tx(udp_payload const& payload);
     reply rx();
-    reply rx(uint16_t timeout_ms);
+    reply rx(std::uint16_t timeout_ms);
     bool is_open();
 
 private:
-    void init(std::string const& remote, uint16_t port);
+    void init(std::string const& remote, std::uint16_t port);
     void clear_socket();
 
-    uint16_t m_retries;
-    uint16_t m_timeout_ms;
+    std::uint16_t m_retries;
+    std::uint16_t m_timeout_ms;
     everest::lib::io::udp::udp_client_socket m_udp;
     everest::lib::io::event::fd_event_handler m_handler;
 };

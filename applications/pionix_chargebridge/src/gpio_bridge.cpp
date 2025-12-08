@@ -21,9 +21,14 @@ namespace charge_bridge {
 using namespace std::chrono_literals;
 namespace mqtt = everest::lib::io::mqtt;
 
+namespace {
+const int default_udp_timeout_ms = 1000;
+const int mqtt_reconnect_timeout_ms = 1000;
+} // namespace
+
 gpio_bridge::gpio_bridge(gpio_config const& config) :
-    m_udp(config.cb_remote, config.cb_port, 1000),
-    m_mqtt(1000)
+    m_udp(config.cb_remote, config.cb_port, default_udp_timeout_ms),
+    m_mqtt(mqtt_reconnect_timeout_ms)
 
 {
     m_identifier = config.cb + "/" + config.item;
@@ -140,7 +145,7 @@ void gpio_bridge::handle_udp_rx(everest::lib::io::udp::udp_payload const& payloa
     CbManagementPacket<CbGpioPacket> data;
     if (payload.size() == sizeof(data)) {
         std::memcpy(&data, payload.buffer.data(), sizeof(data));
-        for (size_t i = 0; i < sizeof(data.data.gpio_values) / sizeof(data.data.gpio_values[0]); ++i) {
+        for (std::size_t i = 0; i < sizeof(data.data.gpio_values) / sizeof(data.data.gpio_values[0]); ++i) {
             send_mqtt(std::to_string(i), std::to_string(data.data.gpio_values[i]));
         }
     } else {

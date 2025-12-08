@@ -78,7 +78,7 @@ private:
 
     API_OVM::OverVoltageLimits m_limits{0, 0};
     mqtt_ftor m_mqtt_tx;
-    size_t m_last_hb_id{0};
+    std::size_t m_last_hb_id{0};
 };
 
 } // namespace charge_bridge::evse_bsp

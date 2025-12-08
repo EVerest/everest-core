@@ -9,7 +9,7 @@
 namespace charge_bridge::utilities {
 
 // Converts a struct to raw bytes
-template <typename T> static inline void struct_to_vector(const T& data_struct, std::vector<uint8_t>& buffer) {
+template <typename T> static inline void struct_to_vector(const T& data_struct, std::vector<std::uint8_t>& buffer) {
     static constexpr auto struct_size = sizeof(T);
 
     buffer.resize(struct_size);

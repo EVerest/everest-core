@@ -71,7 +71,7 @@ option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(EVEREST_ENABLE_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag" OFF)
 option(EVEREST_ENABLE_GLOBAL_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag globally" OFF)
 option(EVEREST_ENABLE_DEBUG_BUILD "Enable debug build" OFF)
-option(BUILD_APPLICATIONS "Build applications like drivers for the everest stable API" ON)
+option(EVEREST_BUILD_APPLICATIONS "Build applications like drivers for the EVerest stable API" ON)
 # list of compile options that are passed to modules if EVEREST_ENABLE_COMPILE_WARNINGS=ON
 # generated code has functions often not used
 set(EVEREST_COMPILE_OPTIONS "-Wall;-Wno-unused-function" CACHE STRING "A list of compile options used for building modules")
@@ -171,7 +171,7 @@ add_subdirectory(config)
 
 add_subdirectory(doc)
 
-if(BUILD_APPLICATIONS)
+if(EVEREST_BUILD_APPLICATIONS)
   add_subdirectory(applications)
 endif()
 

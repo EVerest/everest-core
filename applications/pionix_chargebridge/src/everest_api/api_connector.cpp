@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Pionix GmbH and Contributors to EVerest
+
 #include "charge_bridge/utilities/string.hpp"
 #include "everest/io/mqtt/mosquitto_cpp.hpp"
 #include "protocol/evse_bsp_cb_to_host.h"
@@ -8,10 +11,14 @@
 using namespace std::chrono_literals;
 namespace mqtt = everest::lib::io::mqtt;
 
+namespace {
+const int mqtt_reconnect_to_ms = 1000;
+}
+
 namespace charge_bridge::evse_bsp {
 api_connector::api_connector(everest_api_config const& config, std::string const& cb_identifier) :
     m_cb_identifier(cb_identifier),
-    m_mqtt(1000),
+    m_mqtt(mqtt_reconnect_to_ms),
     m_bsp(config.bsp, cb_identifier, m_host_status),
     m_ovm(config.ovm, cb_identifier, m_host_status) {
 

@@ -11,12 +11,17 @@
 #include <memory>
 #include <protocol/cb_management.h>
 
+namespace {
+const int default_udp_timeout_ms = 1000;
+}
+
 namespace charge_bridge {
 using namespace std::chrono_literals;
 
 heartbeat_service::heartbeat_service(heartbeat_config const& config,
                                      std::function<void(bool)> const& publish_connection_status) :
-    m_udp(config.cb_remote, config.cb_port, 1000), m_publish_connection_status(publish_connection_status) {
+    m_udp(config.cb_remote, config.cb_port, default_udp_timeout_ms),
+    m_publish_connection_status(publish_connection_status) {
     m_identifier = config.cb + "/" + config.item;
     std::memcpy(&m_config_message.data, &config.cb_config, sizeof(CbConfig));
     m_config_message.type = CbStructType::CST_HostToCb_Heartbeat;

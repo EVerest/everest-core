@@ -1,19 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
-
-# include(FetchContent)
-# FetchContent_Declare(
-#   nlohmann_json
-#   GIT_REPOSITORY git@github.com:nlohmann/json.git
-#   GIT_TAG        v3.12.0
-# )
-# FetchContent_MakeAvailable(nlohmann_json)
-
-# FetchContent_Declare(
-#   yaml-cpp
-#   GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-#   GIT_TAG master
-# )
-# FetchContent_MakeAvailable(yaml-cpp)
+cmake_minimum_required(VERSION 3.16)
 
 find_package(OpenSSL 3 REQUIRED)
 find_package(ryml QUIET)
@@ -78,8 +63,6 @@ add_custom_command(
   COMMENT "Copying Pionix ChargeBridge firmware binary..."
 )
 
-# target_compile_options(pionix_chargebridge PRIVATE -fsanitize=address -g)
-# target_link_options(pionix_chargebridge PRIVATE -static-libasan -fsanitize=address)
 
 install (TARGETS pionix_chargebridge)
 install (FILES "${CMAKE_CURRENT_SOURCE_DIR}/${cb_firmware_binary}" DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/chargebridge/firmware)

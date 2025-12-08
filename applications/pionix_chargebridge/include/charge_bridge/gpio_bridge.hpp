@@ -16,12 +16,12 @@ namespace charge_bridge {
 struct gpio_config {
     std::string cb;
     std::string item;
-    uint16_t cb_port;
+    std::uint16_t cb_port;
     std::string cb_remote;
-    uint16_t interval_s;
+    std::uint16_t interval_s;
     std::string mqtt_remote;
-    uint16_t mqtt_port;
-    uint32_t mqtt_ping_interval_ms;
+    std::uint16_t mqtt_port;
+    std::uint32_t mqtt_ping_interval_ms;
 };
 
 class gpio_bridge : public everest::lib::io::event::fd_event_register_interface {

@@ -17,25 +17,25 @@ namespace charge_bridge {
 
 charge_bridge::charge_bridge(charge_bridge_config const& config) : m_config(config) {
     if (config.can0.has_value()) {
-        can_0_client = std::make_unique<can_bridge>(config.can0.value());
+        m_can_0_client = std::make_unique<can_bridge>(config.can0.value());
     }
     if (config.serial1.has_value()) {
-        pty_1 = std::make_unique<serial_bridge>(config.serial1.value());
+        m_pty_1 = std::make_unique<serial_bridge>(config.serial1.value());
     }
     if (config.serial2.has_value()) {
-        pty_2 = std::make_unique<serial_bridge>(config.serial2.value());
+        m_pty_2 = std::make_unique<serial_bridge>(config.serial2.value());
     }
     if (config.serial3.has_value()) {
-        pty_3 = std::make_unique<serial_bridge>(config.serial3.value());
+        m_pty_3 = std::make_unique<serial_bridge>(config.serial3.value());
     }
     if (config.plc.has_value()) {
-        plc = std::make_unique<plc_bridge>(config.plc.value());
+        m_plc = std::make_unique<plc_bridge>(config.plc.value());
     }
     if (config.evse.has_value()) {
-        bsp = std::make_unique<evse_bridge>(config.evse.value());
+        m_bsp = std::make_unique<evse_bridge>(config.evse.value());
     }
     if (config.heartbeat.has_value()) {
-        heartbeat = std::make_unique<heartbeat_service>(config.heartbeat.value(), [this](bool connected) {
+        m_heartbeat = std::make_unique<heartbeat_service>(config.heartbeat.value(), [this](bool connected) {
             {
                 auto handle = m_is_connected.handle();
                 *handle = connected;
@@ -44,7 +44,7 @@ charge_bridge::charge_bridge(charge_bridge_config const& config) : m_config(conf
         });
     }
     if (config.gpio.has_value()) {
-        gpio = std::make_unique<gpio_bridge>(config.gpio.value());
+        m_gpio = std::make_unique<gpio_bridge>(config.gpio.value());
     }
 }
 
@@ -110,79 +110,79 @@ bool charge_bridge::update_firmware(bool force) {
 }
 
 std::string charge_bridge::get_pty_1_slave_path() {
-    if (pty_1) {
-        return pty_1->get_slave_path();
+    if (m_pty_1) {
+        return m_pty_1->get_slave_path();
     }
     return "";
 }
 
 std::string charge_bridge::get_pty_2_slave_path() {
-    if (pty_2) {
-        return pty_2->get_slave_path();
+    if (m_pty_2) {
+        return m_pty_2->get_slave_path();
     }
     return "";
 }
 
 std::string charge_bridge::get_pty_3_slave_path() {
-    if (pty_3) {
-        return pty_3->get_slave_path();
+    if (m_pty_3) {
+        return m_pty_3->get_slave_path();
     }
     return "";
 }
 
 bool charge_bridge::register_events(everest::lib::io::event::fd_event_handler& handler) {
     auto result = true;
-    if (can_0_client) {
-        result = handler.register_event_handler(can_0_client.get()) && result;
+    if (m_can_0_client) {
+        result = handler.register_event_handler(m_can_0_client.get()) && result;
     }
-    if (pty_1) {
-        result = handler.register_event_handler(pty_1.get()) && result;
+    if (m_pty_1) {
+        result = handler.register_event_handler(m_pty_1.get()) && result;
     }
-    if (pty_2) {
-        result = handler.register_event_handler(pty_2.get()) && result;
+    if (m_pty_2) {
+        result = handler.register_event_handler(m_pty_2.get()) && result;
     }
-    if (pty_3) {
-        result = handler.register_event_handler(pty_3.get()) && result;
+    if (m_pty_3) {
+        result = handler.register_event_handler(m_pty_3.get()) && result;
     }
-    if (bsp) {
-        result = handler.register_event_handler(bsp.get()) && result;
+    if (m_bsp) {
+        result = handler.register_event_handler(m_bsp.get()) && result;
     }
-    if (plc) {
-        result = handler.register_event_handler(plc.get()) && result;
+    if (m_plc) {
+        result = handler.register_event_handler(m_plc.get()) && result;
     }
-    if (heartbeat) {
-        result = handler.register_event_handler(heartbeat.get()) && result;
+    if (m_heartbeat) {
+        result = handler.register_event_handler(m_heartbeat.get()) && result;
     }
-    if (gpio) {
-        result = handler.register_event_handler(gpio.get()) && result;
+    if (m_gpio) {
+        result = handler.register_event_handler(m_gpio.get()) && result;
     }
     return result;
 }
 bool charge_bridge::unregister_events(everest::lib::io::event::fd_event_handler& handler) {
     auto result = true;
-    if (can_0_client) {
-        result = handler.unregister_event_handler(can_0_client.get()) && result;
+    if (m_can_0_client) {
+        result = handler.unregister_event_handler(m_can_0_client.get()) && result;
     }
-    if (pty_1) {
-        result = handler.unregister_event_handler(pty_1.get()) && result;
+    if (m_pty_1) {
+        result = handler.unregister_event_handler(m_pty_1.get()) && result;
     }
-    if (pty_2) {
-        result = handler.unregister_event_handler(pty_2.get()) && result;
+    if (m_pty_2) {
+        result = handler.unregister_event_handler(m_pty_2.get()) && result;
     }
-    if (pty_3) {
-        result = handler.unregister_event_handler(pty_3.get()) && result;
+    if (m_pty_3) {
+        result = handler.unregister_event_handler(m_pty_3.get()) && result;
     }
-    if (bsp) {
-        result = handler.unregister_event_handler(bsp.get()) && result;
+    if (m_bsp) {
+        result = handler.unregister_event_handler(m_bsp.get()) && result;
     }
-    if (plc) {
-        result = handler.unregister_event_handler(plc.get()) && result;
+    if (m_plc) {
+        result = handler.unregister_event_handler(m_plc.get()) && result;
     }
-    if (heartbeat) {
-        result = handler.unregister_event_handler(heartbeat.get()) && result;
+    if (m_heartbeat) {
+        result = handler.unregister_event_handler(m_heartbeat.get()) && result;
     }
-    if (gpio) {
-        result = handler.unregister_event_handler(gpio.get()) && result;
+    if (m_gpio) {
+        result = handler.unregister_event_handler(m_gpio.get()) && result;
     }
     return result;
 }

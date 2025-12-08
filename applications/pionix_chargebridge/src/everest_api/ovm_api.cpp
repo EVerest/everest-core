@@ -37,15 +37,11 @@ void ovm_api::sync(bool cb_connected) {
 }
 
 bool ovm_api::register_events([[maybe_unused]] everest::lib::io::event::fd_event_handler& handler) {
-    // clang-format off
     return true;
-    // clang-format on
 }
 
 bool ovm_api::unregister_events([[maybe_unused]] everest::lib::io::event::fd_event_handler& handler) {
-    // clang-format off
     return true;
-    // clang-format on
 }
 
 void ovm_api::set_cb_tx(tx_ftor const& handler) {
@@ -132,8 +128,8 @@ void ovm_api::handle_cp_state(CpState state) {
 void ovm_api::receive_set_limits(std::string const& payload) {
     static auto const V_to_mV_factor = 1000;
     if (everest::lib::API::deserialize(payload, m_limits)) {
-        host_status.ovm_limit_emergency_mV = static_cast<uint32_t>(m_limits.emergency_limit_V * V_to_mV_factor);
-        host_status.ovm_limit_error_mV = static_cast<uint32_t>(m_limits.error_limit_V * V_to_mV_factor);
+        host_status.ovm_limit_emergency_mV = static_cast<std::uint32_t>(m_limits.emergency_limit_V * V_to_mV_factor);
+        host_status.ovm_limit_error_mV = static_cast<std::uint32_t>(m_limits.error_limit_V * V_to_mV_factor);
         tx(host_status);
     } else {
         std::cerr << "ovm_api::receive_set_limits: payload invalid -> " << payload << std::endl;
@@ -158,7 +154,7 @@ void ovm_api::receive_reset_over_voltage_error() {
 
 void ovm_api::receive_heartbeat(std::string const& pl) {
     last_everest_heartbeat = std::chrono::steady_clock::now();
-    size_t id = 0;
+    std::size_t id = 0;
     if (deserialize(pl, id)) {
         auto delta = id - m_last_hb_id;
         if (delta > 1) {

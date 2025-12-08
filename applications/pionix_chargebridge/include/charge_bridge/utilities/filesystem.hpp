@@ -19,10 +19,10 @@ bool read_from_file(const fs::path& file_path, std::string& out_data);
 /// @brief Process the file in chunks with the provided function. If the process function
 /// returns false, this function will also immediately  return
 /// @return True if the file was properly opened false otherwise
-bool process_file(const fs::path& file_path, size_t buffer_size,
+bool process_file(const fs::path& file_path, std::size_t buffer_size,
                   std::function<bool(const std::vector<std::uint8_t>&, bool last_chunk)>&& func);
 
-bool process_file(std::ifstream& file, size_t buffer_size,
+bool process_file(std::ifstream& file, std::size_t buffer_size,
                   std::function<bool(const std::vector<std::uint8_t>&, bool last_chunk)>&& func);
 
 struct CryptSignedHeader {

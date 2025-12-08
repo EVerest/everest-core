@@ -17,7 +17,7 @@ namespace charge_bridge {
 struct can_bridge_config {
     std::string cb;
     std::string item;
-    uint16_t cb_port;
+    std::uint16_t cb_port;
     std::string cb_remote;
     std::string can_device;
 };
@@ -37,7 +37,7 @@ private:
     std::unique_ptr<everest::lib::io::can::socket_can> m_can;
     everest::lib::io::udp::udp_client m_udp;
     std::string m_can_device;
-    std::string identifier;
+    std::string m_identifier;
     everest::lib::io::event::timer_fd m_heartbeat_timer;
     std::chrono::steady_clock::time_point m_last_msg_to_cb;
 };

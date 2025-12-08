@@ -46,19 +46,19 @@ public:
 private:
     void tx(evse_bsp_host_to_cb const& msg);
 
-    void handle_event_cp(uint8_t cp);
-    void handle_event_relay(uint8_t relay);
+    void handle_event_cp(std::uint8_t cp);
+    void handle_event_relay(std::uint8_t relay);
     void handle_error(const SafetyErrorFlags& data);
-    void handle_pp_type1(uint8_t data);
-    void handle_pp_type2(uint8_t data);
-    void handle_stop_button(uint8_t data);
+    void handle_pp_type1(std::uint8_t data);
+    void handle_pp_type2(std::uint8_t data);
+    void handle_stop_button(std::uint8_t data);
 
     void send_event(API_BSP::Event data);
-    void send_ac_nr_of_phases(uint8_t data);
+    void send_ac_nr_of_phases(std::uint8_t data);
     void send_capabilities();
     void send_ac_pp_amapcity(API_BSP::Ampacity data);
     void send_request_stop_transaction(API_EVM::StopTransactionReason data);
-    void send_rcd_current(uint8_t data);
+    void send_rcd_current(std::uint8_t data);
     void send_raise_error(API_BSP::ErrorEnum error, std::string const& subtype, std::string const& msg);
     void send_clear_error(API_BSP::ErrorEnum error, std::string const& subtype, std::string const& msg);
     void send_communication_check();
@@ -97,7 +97,7 @@ private:
     std::chrono::steady_clock::time_point last_everest_heartbeat;
 
     mqtt_ftor m_mqtt_tx;
-    size_t m_last_hb_id{0};
+    std::size_t m_last_hb_id{0};
 };
 
 } // namespace charge_bridge::evse_bsp

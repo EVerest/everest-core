@@ -7,10 +7,15 @@
 #include <everest/io/event/fd_event_handler.hpp>
 #include <protocol/cb_can_message.h>
 
+namespace {
+const int default_udp_timeout_ms = 1000;
+const std::uint32_t tcp_user_timeout_ms = 4000;
+} // namespace
+
 namespace charge_bridge {
 
 serial_bridge::serial_bridge(serial_bridge_config const& config) :
-    m_pty(), m_tcp(config.cb_remote, config.cb_port, 1000) {
+    m_pty(), m_tcp(config.cb_remote, config.cb_port, default_udp_timeout_ms) {
     using namespace std::chrono_literals;
 
     auto link_ok = m_symlink.set_link(m_pty.get_slave_path(), config.serial_device);
@@ -20,7 +25,7 @@ serial_bridge::serial_bridge(serial_bridge_config const& config) :
 
     m_tcp.set_on_ready_action([this]() {
         m_tcp.get_raw_handler()->set_keep_alive(3, 1, 1);
-        m_tcp.get_raw_handler()->set_user_timeout(4000);
+        m_tcp.get_raw_handler()->set_user_timeout(tcp_user_timeout_ms);
     });
 
     m_pty.set_data_handler([this](auto const& data, auto&) { m_tcp.tx(data); });
