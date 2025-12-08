@@ -38,8 +38,8 @@ struct Conf {
     std::string device_brand;
     std::string device_model;
     std::string serial_number;
-    int failsafe_control_limit;
-    int max_nominal_power;
+    int failsafe_control_limit_W;
+    int max_nominal_power_W;
 };
 
 class EEBUS : public Everest::ModuleBase {
