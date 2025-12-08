@@ -9,7 +9,7 @@ config:
     type: integer
     default: 4715
   grpc_port:
-    description: Port for grpc control service connection. This is the port on which we will create our control service channel and start the grpc binary with.
+    description: Port for grpc control service connection. This is the port on which we will create our control service channel and start the grpc binary with, required/used when manage_eebus_grpc_api_binary=true
     type: integer
     default: 50051
   eebus_ems_ski:
@@ -17,17 +17,17 @@ config:
     type: string
     required: true
   certificate_path:
-    description: Path to the certificate file used by eebus go client. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    description: Path to the certificate file used by eebus go client. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used, required/used when manage_eebus_grpc_api_binary=true
     type: string
     required: false
     default: eebus/evse_cert
   private_key_path:
-    description: Path to the private key file used by eebus go client. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+    description: Path to the private key file used by eebus go client. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used, required/used when manage_eebus_grpc_api_binary=true
     type: string
     required: false
     default: eebus/evse_key
   eebus_grpc_api_binary_path:
-    description: Path to the eebus grpc api binary. If relative will be prefixed with everest prefix + libexec. Otherwise absolute file path is used.
+    description: Path to the eebus grpc api binary. If relative will be prefixed with everest prefix + libexec. Otherwise absolute file path is used, required/used when manage_eebus_grpc_api_binary=true
     type: string
     required: false
     default: eebus_grpc_api
@@ -47,11 +47,11 @@ config:
     description: Serial number for the configuration of the control service
     type: string
     required: true
-  failsafe_control_limit:
+  failsafe_control_limit_W:
     description: Failsafe control limit for LPC use case. This will also be used for the default consumption limit, unit is Watts
     type: integer
     default: 4200
-  max_nominal_power:
+  max_nominal_power_W:
     description: Maximum nominal power of the charging station. This is the max power the CS can consume.
     type: integer
     default: 32000
