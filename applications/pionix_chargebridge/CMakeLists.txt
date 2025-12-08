@@ -66,5 +66,5 @@ add_custom_command(
 
 install (TARGETS pionix_chargebridge)
 install (FILES "${CMAKE_CURRENT_SOURCE_DIR}/${cb_firmware_binary}" DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/chargebridge/firmware)
-install (FILES "${CMAKE_CURRENT_SOURCE_DIR}/config/config-CB-EVAL.yaml" DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/chargebridge)
-install (FILES "${CMAKE_CURRENT_SOURCE_DIR}/config/config-CB-SAT-AC.yaml" DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/chargebridge)
+install (FILES "${CMAKE_CURRENT_SOURCE_DIR}/config/config-CB-EVAL.yaml" DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/chargebridge RENAME "config-CB-EVAL.yaml-example")
+install (FILES "${CMAKE_CURRENT_SOURCE_DIR}/config/config-CB-SAT-AC.yaml" DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/chargebridge RENAME "config-CB-SAT-AC.yaml-example")
