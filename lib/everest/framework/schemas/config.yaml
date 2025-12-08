@@ -1,0 +1,235 @@
+$schema: http://json-schema.org/draft-07/schema#
+description: Json schema of main EVerest config file
+$defs:
+  config_map:
+    type: object
+    description: >-
+      This is a config map.  Each property specifies one simple config
+      option and will be validated agains the schema provided by the module's manifest
+      file.
+    patternProperties:
+      ^[a-zA-Z_][a-zA-Z0-9_.-]*$:
+        description: A single config option
+        type:
+          - boolean
+          - integer
+          - number
+          - string
+    default: {}
+    additionalProperties: false
+type: object
+required:
+  - active_modules
+additionalProperties: false
+properties:
+  settings:
+    type: object
+    properties:
+      prefix:
+        type: string
+      config_file:
+        type: string
+      configs_dir:
+        type: string
+      schemas_dir:
+        type: string
+      modules_dir:
+        type: string
+      interfaces_dir:
+        type: string
+      types_dir:
+        type: string
+      errors_dir:
+        type: string
+      www_dir:
+        type: string
+      logging_config_file:
+        type: string
+      controller_port:
+        type: integer
+      controller_rpc_timeout_ms:
+        type: integer
+      mqtt_broker_socket_path:
+        type: string
+      mqtt_broker_host:
+        type: string
+      mqtt_broker_port:
+        type: integer
+      mqtt_everest_prefix:
+        type: string
+      mqtt_external_prefix:
+        type: string
+      telemetry_prefix:
+        type: string
+      telemetry_enabled:
+        type: boolean
+      validate_schema:
+        type: boolean
+      run_as_user:
+        type: string
+      forward_exceptions:
+        type: boolean
+    additionalProperties: false
+  active_modules:
+    type: object
+    patternProperties:
+      # module id
+      ^[a-zA-Z_][a-zA-Z0-9_.-]*$:
+        description: This are the required properties for every module id entry
+        required:
+          - module
+        properties:
+          standalone:
+            description: Indicates to the manager that the module will be started standalone
+            type: boolean
+          module:
+            description: Module name (e.g. directory name in the modules subdirectory)
+            type: string
+            #  module name
+            pattern: ^[a-zA-Z_][a-zA-Z0-9_-]*$
+          capabilities:
+            description: Linux capabilities required to run this module
+            type: array
+            items:
+              type: string
+          config_module:
+            description: Config map for the module
+            $ref: '#/$defs/config_map'
+          config_implementation:
+            description: List of config maps for each implementation
+            type: object
+            patternProperties:
+              # implementation id
+              ^[a-zA-Z_][a-zA-Z0-9_.-]*$:
+                description: Config map for this implementation.
+                # arbitrary implementation config validated by our schema in the module manifest later on
+                $ref: '#/$defs/config_map'
+            # add empty config if not already present
+            default: {}
+            # don't allow arbitrary additional properties
+            additionalProperties: false
+          telemetry:
+            description: If this object is present telemetry for the module will be enabled
+            type: object
+            required:
+              - id
+            properties:
+              id:
+                description: Telemetry from modules using the same id will be grouped together
+                type: integer
+          connections:
+            type: object
+            description: >-
+              List of requirements: a mapping of all requirement ids listed
+              in the module's manifest to module_id (declared in this file) and implementation_id
+              (declared in manifest).
+            patternProperties:
+              # requirement id
+              ^[a-zA-Z_][a-zA-Z0-9_.-]*$:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - module_id
+                    - implementation_id
+                  properties:
+                    module_id:
+                      description: module_id this requirement id maps to
+                      type: string
+                      # reference to module id
+                      pattern: ^[a-zA-Z_][a-zA-Z0-9_.-]*$
+                    implementation_id:
+                      description: implementation_id this requirement id maps to
+                      type: string
+                      # reference to implementation id
+                      pattern: ^[a-zA-Z_][a-zA-Z0-9_.-]*$
+                  # don't allow arbitrary additional properties
+                  additionalProperties: false
+            # add empty config if not already present
+            default: {}
+            # don't allow arbitrary additional properties
+            additionalProperties: false
+          mapping:
+            description: >-
+              this configures a module mapping and a list of implementations this module provides and their mapping to the 3-tier-model of charging station, evse and connector
+              if no mapping is provided by default this implementation is associated with the charging station
+            type: object
+            properties:
+              module:
+                type: object
+                properties:
+                  evse:
+                    description: evse this module id maps to
+                    type: integer
+                  connector:
+                    description: connector this module id maps to
+                    type: integer
+                # allow arbitrary additional properties for future extensions (not used at the moment)
+              additionalProperties: true
+              implementations:
+                type: object
+                patternProperties:
+                  # implementation id
+                  ^[a-zA-Z_][a-zA-Z0-9_.-]*$:
+                    type: object
+                    required:
+                      - evse
+                    properties:
+                      evse:
+                        description: evse this implementation id maps to
+                        type: integer
+                      connector:
+                        description: connector this implementation id maps to
+                        type: integer
+                      # allow arbitrary additional properties for future extensions (not used at the moment)
+                      additionalProperties: true
+            # add empty config if not already present
+            default: {}
+            # don't allow arbitrary additional properties
+            additionalProperties: false
+          access:
+            description: >-
+              Access control settings for this specific module
+            type: object
+            properties:
+              config:
+                description: >-
+                  Fine grained control about configuration access to other modules
+                type: object
+                properties:
+                  allow_global_read:
+                    description: Allow global read access to config items
+                    type: boolean
+                  allow_global_write:
+                    description: Allow global write access to config items
+                    type: boolean
+                  allow_set_read_only:
+                    description: Allow setting of readonly config items, will need a restart
+                    type: boolean
+                  modules:
+                    description: Module access settings
+                    type: object
+                    patternProperties:
+                      # reference to module id
+                      ^[a-zA-Z_][a-zA-Z0-9_.-]*$:
+                        type: object
+                        properties:
+                          allow_read:
+                            description: Allow read access to config items
+                            type: boolean
+                          allow_write:
+                            description: Allow write access to config items
+                            type: boolean
+                          allow_set_read_only:
+                            description: Allow setting of a readonly config items, will need a restart
+                            type: boolean
+                additionalProperties: false
+            additionalProperties: false
+        # don't allow arbitrary additional properties
+        additionalProperties: false
+    # add empty config dict if not already present
+    default: {}
+    # don't allow arbitrary additional properties
+    additionalProperties: false
+  
+  x-module-layout: {}

@@ -79,6 +79,7 @@ if(EVEREST_ENABLE_GLOBAL_COMPILE_WARNINGS)
 endif()
 if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     set(EVEREST_CORE_BUILD_TESTING ON)
+    set(everest-framework_BUILD_TESTING ON)
 endif()
 # This is a flag for building development tests, but not necessarily to run them, for expample in case
 # tests requires hardware.
@@ -120,14 +121,15 @@ find_package(Boost
 
 include(compatibility/boost)
 
+set(everest-framework_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/everest/framework)
+set(everest-framework_BINARY_DIR ${CMAKE_BINARY_DIR}/lib/everest/framework)
+set(EVEREST_SCHEMA_DIR ${everest-framework_SOURCE_DIR}/schemas)
+
 if(NOT DISABLE_EDM)
     # FIXME (aw): this implicit definition for child projects is hacky
     set(THIRD_PARTY_APP_DST "${CMAKE_INSTALL_LIBEXECDIR}/everest/3rd_party")
 
     evc_setup_edm()
-
-    # FIXME (aw): we need to set this by hand due to edm
-    set(EVEREST_SCHEMA_DIR ${everest-framework_SOURCE_DIR}/schemas)
 
     if(EVEREST_DEPENDENCY_ENABLED_SDBUS_CPP AND NOT TARGET SDBusCpp::sdbus-c++)
         add_library(SDBusCpp::sdbus-c++ ALIAS sdbus-c++)
@@ -136,7 +138,6 @@ if(NOT DISABLE_EDM)
     # ev-cli and everest-testing
     add_subdirectory(applications/utils)
 else()
-    find_package(everest-framework REQUIRED)
     find_package(everest-ocpp REQUIRED)
     find_package(cbv2g REQUIRED)
     find_package(iso15118 REQUIRED)
@@ -153,6 +154,9 @@ else()
     find_package(ftxui 6 QUIET) # optional, if not available BringUp module will not be built
 
     find_package(sdbus-c++ REQUIRED)
+
+    find_package(fmt REQUIRED)
+    find_package(date REQUIRED)
 endif()
 
 

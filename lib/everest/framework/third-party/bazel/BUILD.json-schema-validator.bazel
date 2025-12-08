@@ -1,0 +1,13 @@
+cc_library(
+    name = "json-schema-validator",
+    srcs = glob([
+        "src/*.cpp",
+        "src/*.hpp",
+    ]),
+    hdrs = glob(["src/nlohmann/*.hpp"]),
+    strip_include_prefix = "src",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_nlohmann_json//:json",
+    ],
+)
