@@ -1,0 +1,35 @@
+cmake_minimum_required(VERSION 3.14)
+
+# project(everest-dev-environment
+#     VERSION 0.8.1
+#     DESCRIPTION "Useful tools for developing EVerest "
+#     LANGUAGES CXX C
+# )
+
+# find_package(everest-cmake 0.5 REQUIRED
+#     PATHS ../everest-cmake
+# )
+
+ev_setup_cmake_variables_python_wheel()
+
+ev_add_pip_package(
+    NAME edm
+    SOURCE_DIRECTORY dependency_manager
+)
+
+ev_is_python_venv_active(
+    RESULT_VAR IS_PYTHON_VENV_ACTIVE
+)
+if(NOT ${IS_PYTHON_VENV_ACTIVE})
+    message(FATAL_ERROR "Python venv is not active. Please activate the python venv before running this command.")
+endif()
+
+get_target_property(SOURCE_DIRECTORY ev_pip_package_edm SOURCE_DIRECTORY)
+message(STATUS "Installing edm from: ${SOURCE_DIRECTORY}")
+ev_pip_install_local(
+    PACKAGE_NAME "edm"
+    PACKAGE_SOURCE_DIRECTORY "${SOURCE_DIRECTORY}"
+)
+unset(EVEREST_DEPENDENCY_MANAGER CACHE)
+find_program(EVEREST_DEPENDENCY_MANAGER edm HINTS ${EV_ACTIVATE_PYTHON_VENV_PATH_TO_VENV}/bin REQUIRED)
+message(STATUS "Using edm from: ${EDM}")
