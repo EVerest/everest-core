@@ -1,15 +1,3 @@
-cmake_minimum_required(VERSION 3.14)
-
-# project(everest-dev-environment
-#     VERSION 0.8.1
-#     DESCRIPTION "Useful tools for developing EVerest "
-#     LANGUAGES CXX C
-# )
-
-# find_package(everest-cmake 0.5 REQUIRED
-#     PATHS ../everest-cmake
-# )
-
 ev_setup_cmake_variables_python_wheel()
 
 ev_add_pip_package(
