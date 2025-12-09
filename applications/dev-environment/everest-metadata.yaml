@@ -1,0 +1,224 @@
+everest-admin-panel:
+  name: "EVerest admin panel"
+  description: "A beta-stage frontend for graphically editing the everest config file"
+  license: "Apache-2.0"
+
+everest-cmake:
+  description: "CMake utility scripts for everest"
+  license: "Apache-2.0"
+# dependencies of everest-cmake
+cpm:
+  name: "CPM.cmake"
+  description: "CMake's missing package manager. A small CMake script for setup-free, cross-platform, reproducible dependency management"
+  license: "MIT"
+code-coverage:
+  name: "CodeCoverage.cmake"
+  license: "BSD-3-Clause"
+
+everest-core:
+  description: "This is the main part of EVerest containing the actual charge controller logic included in a large set of modules"
+  license: "Apache-2.0"
+# dependencies of everest-core
+nanopb:
+  description: "Protocol Buffers with small code size"
+  license: "Zlib"
+sigslot:
+  name: "Sigslot, a signal-slot library"
+  description: "A simple C++14 signal-slots implementation "
+  license: "MIT"
+ext-mbedtls:
+  name: "Mbed TLS"
+  description: "An open source, portable, easy to use, readable and flexible SSL library"
+  license: "Apache-2.0"
+boost:
+  description: "Boost provides free peer-reviewed portable C++ source libraries."
+  license: "BSL-1.0 & MIT & Python-2.0"
+pugixml:
+  description: "Light-weight, simple and fast XML parser for C++ with XPath support"
+  license: "MIT"
+Josev:
+  description: "Implementation of the ISO 15118 Communication Protocol (-2, -20, -8)"
+  license: "Apache-2.0"
+sqlite_cpp:
+  name: "SQLiteCpp"
+  description: "SQLiteC++ (SQLiteCpp) is a smart and easy to use C++ SQLite3 wrapper"
+  license: "MIT"
+libcurl:
+  name: "curl"
+  description: "A command line tool and library for transferring data with URL syntax, supporting DICT, FILE, FTP, FTPS, GOPHER, GOPHERS, HTTP, HTTPS, IMAP, IMAPS, LDAP, LDAPS, MQTT, POP3, POP3S, RTMP, RTMPS, RTSP, SCP, SFTP, SMB, SMBS, SMTP, SMTPS, TELNET, TFTP, WS and WSS. libcurl offers a myriad of powerful features"
+  license: "curl"
+libcbv2g:
+  name: "libcbV2G"
+  description: "libcbV2G - The V2GTP EXI codec library"
+  license: "Apache-2.0"
+everest-utils:
+  description: "EVerest utilities"
+  license: "Apache-2.0"
+libpcap:
+  license: "BSD-3-Clause"
+libevent:
+  license: "BSD-3-Clause & MIT"
+openssl:
+  license: "Apache-2.0"
+
+# from everest-dev-environment
+edm:
+  name: "EDM"
+  description: "Dependency Manager for EVerest"
+  license: "Apache-2.0"
+# dependencies of edm
+jinja2:
+  name: "Jinja2"
+  description: "Jinja is a fast, expressive, extensible templating engine"
+  license: "BSD-3-Clause"
+pyyaml:
+  name: "PyYAML"
+  description: "PyYAML is a YAML parser and emitter for Python"
+  license: "MIT"
+requests:
+  name: "Requests"
+  description: "Requests is a simple, yet elegant, HTTP library."
+  license: "Apache-2.0"
+
+everest-framework:
+  description: "Provides a mechanism to manage dependencies between different modules communicating with a wrapped MQTT protocol"
+  license: "Apache-2.0"
+# dependencies of everest-framework
+catch2:
+  name: "Catch2"
+  description: "A modern, C++-native, test framework for unit-tests, TDD and BDD - using C++14, C++17 and later"
+  license: "BSL-1.0"
+date:
+  name: "Date"
+  description: "A date and time library based on the C++11/14/17 <chrono> header"
+  license: "MIT"
+libfmt:
+  name: "{fmt}"
+  description: "A modern formatting library"
+  license: "MIT"
+libwebsockets:
+  name: "Libwebsockets"
+  description: "Canonical libwebsockets.org networking library"
+  license: "MIT"
+mqttc:
+  name: "MQTT-C"
+  description: "A portable MQTT C client for embedded systems and PCs alike."
+  license: "MIT"
+nlohmann_json:
+  description: "JSON for Modern C++"
+  license: "MIT"
+nlohmann_json_schema_validator:
+  description: "JSON schema validator for JSON for Modern C++"
+  license: "MIT"
+pybind11:
+  description: "Seamless operability between C++11 and Python"
+  license: "BSD-3-Clause"
+pybind11_json:
+  description: "Using nlohmann::json with pybind11"
+  license: "BSD-3-Clause"
+ryml:
+  name: "Rapid YAML"
+  description: "Rapid YAML - a library to parse and emit YAML, and do it fast."
+  license: "MIT"
+libcap:
+  license: "BSD-3-Clause"
+node-addon-api:
+  license: "MIT"
+nodejs:
+  license: "MIT & ISC & BSD-2-Clause & BSD-3-Clause & Artistic-2.0 & Apache-2.0"
+
+# from everest-utils
+ev-dev-tools:
+  name: "ev-cli"
+  description: "EVerest module auto generation"
+  license: "Apache-2.0"
+# dependencies of ev-cli
+jsonschema:
+  description: "jsonschema is an implementation of the JSON Schema specification for Python"
+  license: "MIT"
+stringcase:
+  description: "String case converter"
+  license: "MIT"
+
+# from everest-utils
+everest-testing:
+  name: "EVerest Testing"
+  description: "This python package provides utilities for testing EVerest with pytest"
+  license: "Apache-2.0"
+# dependencies of everest-testing
+pytest:
+  description: "pytest: simple powerful testing with Python"
+  license: "MIT"
+pytest-asyncio:
+  description: "Pytest support for asyncio"
+  license: "Apache-2.0"
+python-dateutil:
+  description: "Extensions to the standard Python datetime module"
+  license: "Apache-2.0"
+paho-mqtt:
+  description: "MQTT version 5.0/3.1.1 client class"
+  license: "EPL-2.0"
+pyftpdlib:
+  description: "Very fast asynchronous FTP server library"
+  license: "MIT"
+ocpp:
+  description: "Python package implementing the JSON version of the Open Charge Point Protocol (OCPP)"
+  license: "MIT"
+websockets:
+  description: "An implementation of the WebSocket Protocol (RFC 6455 & 7692)"
+  license: "BSD-3-Clause"
+pyOpenSSL:
+  description: "Python wrapper module around the OpenSSL library"
+  license: "Apache-2.0"
+
+libfsm:
+  description: "A tiny C++14 library for writing maintainable finite state machines"
+  license: "Apache-2.0"
+
+liblog:
+  description: "C++ logging and exceptions library for the EVerest framework"
+  license: "Apache-2.0"
+# dependencies of liblog
+metamacros:
+  description: "Macros for metaprogramming"
+  license: "MIT"
+libbacktrace:
+  description: "A C library that may be linked into a C/C++ program to produce symbolic backtraces"
+  license: "BSD-3-Clause"
+
+libmodbus:
+  description: "This is an implementation of the MODBUS communication protocol"
+  license: "Apache-2.0"
+# dependencies of libmodbus
+gtest:
+  name: "GoogleTest"
+  description: "GoogleTest - Google Testing and Mocking Framework"
+  license: "BSD-3-Clause"
+
+libocpp:
+  description: "This is a C++ library implementation of OCPP for version 1.6 and 2.0.1"
+  license: "Apache-2.0"
+# dependencies of libocpp
+sqlite3:
+  name: "SQLite"
+  description: "SQLite is a C-language library that implements a small, fast, self-contained, high-reliability, full-featured, SQL database engine"
+  license: "SQLite Blessing (Public Domain)"
+websocketpp:
+  name: "WebSocket++"
+  description: "C++ websocket client/server library"
+  license: "BSD-3-Clause"
+libevse-security:
+  description: "This is a C++ library for security related operations for charging stations"
+  license: "Apache-2.0"
+
+libslac:
+  description: "Simple ISO15118-3 SLAC library"
+  license: "Apache-2.0"
+# dependencies of libslac
+hash-library:
+  description: "Portable C++ hashing library"
+  license: "Zlib"
+
+libtimer:
+  description: "C++ timer library for the EVerest framework"
+  license: "Apache-2.0"

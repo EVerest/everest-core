@@ -1,0 +1,63 @@
+{
+  "name": "EVerest - ${localWorkspaceFolderBasename}",
+  "dockerComposeFile": ["../docker-compose.yml", "./docker-compose.devcontainer.yml"],
+  "service": "devcontainer",
+
+  "remoteUser": "docker",
+  "workspaceFolder": "/workspace",
+  "forwardPorts": [
+    "mqtt-explorer:4000",
+    "steve:8180"
+  ],
+  "portsAttributes": {
+    "mqtt-explorer:4000": {
+      "label": "MQTT Explorer - WebView"
+    },
+    "steve:8180": {
+      "label": "Steve - WebTool"
+    }
+  },
+  "otherPortsAttributes": {
+    "onAutoForward": "notify",
+    "protocol": "http",
+    "requireLocalPort": false
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "/bin/bash",
+            "icon": "terminal-bash",
+            "args": ["-l"]
+          }
+        },
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "python.pythonPath": "/usr/bin/python3",
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "editor.rulers": [79, 120],
+        // RST/Sphinx language server
+        "esbonio.sphinx.buildDir": "${workspaceFolder}/everest/docs/_build",
+        "esbonio.sphinx.confDir": "${workspaceFolder}/everest/docs",
+        // RST
+        "restructuredtext.preview.scrollEditorWithPreview": false,
+        "restructuredtext.pythonRecommendation.disabled": true,
+        "liveServer.settings.root": "/everest/docs/_build/html"
+      },
+      "extensions": [
+        // language support CPP
+        "ms-vscode.cpptools",
+        // language support cmake
+        "twxs.cmake",
+        "ms-vscode.cmake-tools",
+				// language support python
+				"ms-python.python",
+				// language support restructured text
+				"lextudio.restructuredtext",
+				"trond-snekvik.simple-rst",
+				// doc live server
+				"ritwickdey.liveserver"
+      ]
+    }
+  }
+}
