@@ -1,0 +1,109 @@
+name: Build Documentation
+on:
+  workflow_call:
+    inputs:
+      # General inputs
+      runner:
+        description: 'Which runner to use'
+        required: false
+        default: 'ubuntu-24.04'
+        type: string
+      use_build_cache:
+        description: 'Whether to use build cache or not'
+        required: false
+        default: true
+        type: boolean
+      build_kit_scripts_directory:
+        description: 'Directory in the repository where the build kit scripts are located'
+        required: false
+        default: '.ci/build-kit/scripts'
+        type: string
+
+
+jobs:
+  build-docs:
+    name: Build EVerest Documentation
+    runs-on: ${{ inputs.runner }}
+    env:
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+    steps:
+      - name: Setup SSH Agent, optional with SSH key
+        env:
+          SSH_KEY: ${{ secrets.SA_GITHUB_SSH_KEY }}
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          if [ -z "${{ env.SSH_KEY }}" ]; then
+            echo "No SSH key provided, skipping SSH key setup"
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          echo "${{ env.SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          # Check if github.com is already in known_hosts, if not, add it
+          if ! grep -q "^github.com " ~/.ssh/known_hosts; then
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+          fi
+          ssh-add ~/.ssh/id_ed25519
+      - name: Docker Meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.BUILD_KIT_IMAGE_NAME }}
+          sep-tags: ","
+      - name: Set output tag
+        id: buildkit_tag
+        shell: python3 {0}
+        run: |
+          import os
+          tags = "${{ steps.meta.outputs.tags }}".split(",")
+          if len(tags) == 0:
+            print("No tags found!❌")
+            exit(1)
+          tag = f"local/build-kit-everest-core:{tags[0]}"
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            f.write(f"tag={tag}\n")
+            print(f"Set tag={tag}")
+      - name: Download build-kit image
+        uses: actions/download-artifact@v4
+        with:
+          name: build-kit
+      - name: Load build-kit image
+        run: |
+          docker load -i build-kit.tar
+          docker image tag ${{ steps.buildkit_tag.outputs.tag }} build-kit
+      - name: Format branch name for cache key
+        if: ${{ inputs.use_build_cache == 'true' }}
+        run: |
+          BRANCH_NAME_FOR_CACHE="${GITHUB_REF_NAME//-/_}"
+          echo "branch_name_for_cache=${BRANCH_NAME_FOR_CACHE}" >> "$GITHUB_ENV"
+      - name: Setup cache
+        if: ${{ inputs.use_build_cache == 'true' }}
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: compile-${{ env.branch_name_for_cache }}-${{ github.sha }}
+          restore-keys: |
+            compile-${{ env.branch_name_for_cache }}-
+            compile-
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: source
+      - name: Setup run scripts
+        run: |
+          mkdir scripts
+          rsync -a source/${{ inputs.build_kit_scripts_directory }}/ scripts
+      - name: Build Documentation
+        run: |
+          docker run \
+          --mount type=bind,source=$SSH_AUTH_SOCK,target=/ssh-agent \
+          --env SSH_AUTH_SOCK=/ssh-agent \
+          --volume "${{ github.workspace }}:/ext" \
+          --name build-docs-container \
+          build-kit run-script build_docs
+      - name: Upload Documentation Artifact
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          if-no-files-found: error
+          path: build/docs/trailbook_everest_build
+          name: docs-html
