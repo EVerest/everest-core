@@ -2,4 +2,4 @@
 Q & A
 #####
 
-TODO: Here, we will collect dedicated questions and answers.
+Here, we will collect dedicated questions and answers.

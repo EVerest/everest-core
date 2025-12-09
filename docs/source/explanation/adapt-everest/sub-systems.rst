@@ -358,8 +358,13 @@ OCPP requires several connections. Let's go through them step by step:
    :doc:`PersistentStore </reference/modules/PersistentStore>` module, 
    which is shared here with the EvseManager.
 
-For OCPP detailed configuration, check out the 
-:ref:`TODO: OCPP1.6 and OCPP2.x documentation <todo>`.
+For more detailed information about the OCPP configuration, check out the 
+following resources:
+
+- :doc:`OCPP1.6 module documentation </reference/modules/OCPP>`
+- :doc:`OCPP2.0.1 module documentation </reference/modules/OCPP201>`
+- :doc:`OCPP1.6 tutorial </tutorials/ocpp16>`
+- :doc:`OCPP2.0.1 tutorial </tutorials/ocpp2>`
 
 Now, we have a configuration that can be used in public environments. It
 supports authentication via OCPP for RFID tags, and - since the LEM
