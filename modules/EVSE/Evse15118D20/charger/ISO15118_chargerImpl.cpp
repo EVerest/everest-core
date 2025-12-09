@@ -648,6 +648,14 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
         this->mod->p_extensions->publish_ev_info(info);
     };
 
+    callbacks.ev_termination = [this](const std::string& ev_termination_code,
+                                      const std::string& ev_termination_explanation) {
+        types::iso15118::EvTermination termination_ctx;
+        termination_ctx.ev_termination_code = ev_termination_code;
+        termination_ctx.ev_termination_explanation = ev_termination_explanation;
+        this->mod->p_charger->publish_ev_termination(termination_ctx);
+    };
+
     return callbacks;
 }
 
