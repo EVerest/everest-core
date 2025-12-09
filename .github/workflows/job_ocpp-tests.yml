@@ -1,53 +1,60 @@
-name: Build, Lint and Test
+name: OCPP Tests
+
 on:
-  pull_request: {}
-  merge_group: {}
-  workflow_dispatch:
+  workflow_call:
     inputs:
       runner:
-        description: Which runner to use
-        type: choice
-        default: 'ubuntu-22.04'
+        description: 'Which runner to use'
+        required: false
+        default: 'ubuntu-24.04'
+        type: string
+      dist_artifact_name:
+        description: 'The name of the dist artifact to download'
         required: true
-        options:
-          - 'ubuntu-22.04'
-          - 'large-ubuntu-22.04-xxl'
-  schedule:
-    - cron: '37 13,1 * * *'
+        type: string
+      wheels_artifact_name:
+        description: 'The name of the wheels artifact to download'
+        required: true
+        type: string
+      build_kit_artifact_name:
+        description: 'The name of the build-kit artifact to download'
+        required: true
+        type: string
+      build_kit_image_tag:
+        description: 'The tag of the build-kit image to use for building the project'
+        required: true
+        type: string
+      build_kit_scripts_directory:
+        description: 'Directory in the repository where the build kit scripts are located'
+        required: false
+        default: '.ci/build-kit/scripts'
+        type: string
+    outputs:
+      ocpp_tests_artifact_name:
+        description: 'The name of the OCPP tests artifact'
+        value: ${{ jobs.ocpp-tests.outputs.ocpp_tests_artifact_name }}
+    
 
 jobs:
-  ci:
-    name: Build, Lint and Test
-    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@v1.4.6
-    permissions:
-      contents: read
-    secrets:
-      coverage_deploy_token: ${{ secrets.SA_GITHUB_PAT }}
-    with:
-      runner: ${{ inputs.runner || 'ubuntu-22.04' }}
-      artifact_deploy_target_repo: EVerest/everest.github.io
-      run_coverage: false
-      do_not_run_coverage_badge_creation: true
-      run_install_wheels: true
-      run_integration_tests: true
   ocpp-tests:
-    name: OCPP Tests
-    needs:
-      - ci
-    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
+    name: Run OCPP Tests
+    runs-on: ${{ inputs.runner }}
+    env:
+      OCPP_TESTS_ARTIFACT_NAME: ocpp-tests-artifacts
+    outputs:
+      ocpp_tests_artifact_name: ${{ env.OCPP_TESTS_ARTIFACT_NAME }}
     steps:
       - name: Download dist dir
         uses: actions/download-artifact@v4.1.8
         with:
-          name: dist
+          name: ${{ inputs.dist_artifact_name }}
       - name: Extract dist.tar.gz
         run: |
           tar -xzf ${{ github.workspace }}/dist.tar.gz -C ${{ github.workspace }}
       - name: Download wheels
-        # if: ${{ inputs.run_install_wheels == 'true' }}
         uses: actions/download-artifact@v4.1.8
         with:
-          name: wheels
+          name: ${{ inputs.wheels_artifact_name }}
           path: wheels
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
@@ -56,34 +63,15 @@ jobs:
       - name: Setup run scripts
         run: |
           mkdir scripts
-          rsync -a source/.ci/build-kit/scripts/ scripts
-      - name: Docker Meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.BUILD_KIT_IMAGE_NAME }}
-          sep-tags: ","
-      - name: Set output tag
-        id: buildkit_tag
-        shell: python3 {0}
-        run: |
-          import os
-          tags = "${{ steps.meta.outputs.tags }}".split(",")
-          if len(tags) == 0:
-            print("No tags found!❌")
-            exit(1)
-          tag = f"local/build-kit-everest-core:{tags[0]}"
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-            f.write(f"tag={tag}\n")
-            print(f"Set tag={tag}")
+          rsync -a source/${{ inputs.build_kit_scripts_directory }}/ scripts
       - name: Download build-kit image
         uses: actions/download-artifact@v4
         with:
-          name: build-kit
+          name: ${{ inputs.build_kit_artifact_name }}
       - name: Load build-kit image
         run: |
           docker load -i build-kit.tar
-          docker image tag ${{ steps.buildkit_tag.outputs.tag }} build-kit
+          docker image tag ${{ inputs.build_kit_image_tag }} build-kit
       - name: Create integration-image
         run: |
           docker run \
@@ -106,7 +94,7 @@ jobs:
         uses: actions/upload-artifact@v4.4.3
         with:
           if-no-files-found: error
-          name: ocpp-tests-report
+          name: ${{ env.OCPP_TESTS_ARTIFACT_NAME }}
           path: |
             ocpp-tests-result.xml
             ocpp-tests-report.html

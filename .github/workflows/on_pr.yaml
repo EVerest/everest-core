@@ -1,0 +1,130 @@
+name: Build, Lint and Test
+on:
+  pull_request: {}
+  merge_group: {}
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Which runner to use
+        type: choice
+        default: 'ubuntu-22.04'
+        required: true
+        options:
+          - 'ubuntu-22.04'
+          - 'large-ubuntu-22.04-xxl'
+  schedule:
+    - cron: '37 13,1 * * *'
+  push:
+
+jobs:
+
+
+  setup-env:
+    name: Setup Environment
+    uses: ./.github/workflows/job_setup-env.yml
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      ref_everest_ci: v1.5.4
+
+
+  build-build-kit:
+    name: Build the build-kit
+    uses: ./.github/workflows/job_build-build-kit.yml
+    needs:
+      - setup-env
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      base_image_tag_everest_ci: ${{ needs.setup-env.outputs.closest_tag_everest_ci }}
+
+
+  build-cmake-gcc:
+    name: Build with CMake and GCC
+    uses: ./.github/workflows/job_build-cmake-gcc.yml
+    needs:
+      - setup-env
+      - build-build-kit
+    secrets:
+      coverage_deploy_token: ""
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      ref_everest_ci: ${{ needs.setup-env.outputs.ref_everest_ci }}
+      is_fork: ${{ needs.setup-env.outputs.is_fork }}
+      build-kit-artifact-name: ${{ needs.build-build-kit.outputs.build_kit_artifact_name }}
+      build_kit_image_tag: ${{ needs.build-build-kit.outputs.build_kit_image_tag }}
+      artifact_deploy_target_repo: EVerest/everest.github.io
+
+
+  integration-tests:
+    name: Run Integration Tests
+    uses: ./.github/workflows/job_integrations-tests.yml
+    needs:
+      - setup-env
+      - build-cmake-gcc
+      - build-build-kit
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      build_kit_artifact_name: ${{ needs.build-build-kit.outputs.build_kit_artifact_name }}
+      build_kit_image_tag: ${{ needs.build-build-kit.outputs.build_kit_image_tag }}
+      dist_artifact_name: ${{ needs.build-cmake-gcc.outputs.dist_artifact_name }}
+      wheels_artifact_name: ${{ needs.build-cmake-gcc.outputs.wheels_artifact_name }}
+
+
+  ocpp-tests:
+    name: Run OCPP Tests
+    uses: ./.github/workflows/job_ocpp-tests.yml
+    needs:
+      - setup-env
+      - build-cmake-gcc
+      - build-build-kit
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      build_kit_artifact_name: ${{ needs.build-build-kit.outputs.build_kit_artifact_name }}
+      build_kit_image_tag: ${{ needs.build-build-kit.outputs.build_kit_image_tag }}
+      dist_artifact_name: ${{ needs.build-cmake-gcc.outputs.dist_artifact_name }}
+      wheels_artifact_name: ${{ needs.build-cmake-gcc.outputs.wheels_artifact_name }}
+
+
+  lint:
+    name: Lint Repository
+    uses: ./.github/workflows/job_lint.yml
+    needs:
+      - setup-env
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      ref_everest_ci: ${{ needs.setup-env.outputs.ref_everest_ci }}
+
+
+  build-docs:
+    name: Call Build Documentation
+    needs:
+      - setup-env
+      - build-build-kit
+    uses: ./.github/workflows/job_build-docs.yaml
+    secrets:
+      SA_GITHUB_SSH_KEY: ${{ secrets.SA_GITHUB_SSH_KEY }}
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      build_kit_artifact_name: ${{ needs.build-build-kit.outputs.build_kit_artifact_name }}
+      build_kit_image_tag: ${{ needs.build-build-kit.outputs.build_kit_image_tag }}
+      deploy_docs: false
+
+
+  dco-check:
+    name: DCO Check
+    uses: ./.github/workflows/job_dco-check.yaml
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+
+
+  manifest-tests:
+    name: Manifests Test
+    uses: ./.github/workflows/job_manifest-tests.yml
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+
+
+  bazel-build-and-test:
+    name: Bazel Build And Test
+    uses: ./.github/workflows/job_bazel-build-test.yaml
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
