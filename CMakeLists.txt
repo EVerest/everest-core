@@ -97,8 +97,12 @@ ev_setup_python_executable(
 if(EVEREST_CORE_BUILD_TESTING)
     include(CTest)
 
-    if(EVEREST_ENABLE_DEBUG_BUILD)
-        set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    if (NOT CMAKE_BUILD_TYPE)
+        if(EVEREST_ENABLE_DEBUG_BUILD)
+            set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+        else()
+            set(CMAKE_BUILD_TYPE MinSizeRel CACHE STRING "Build type" FORCE)
+        endif()
     endif()
 endif()
 
