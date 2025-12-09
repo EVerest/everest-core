@@ -14,7 +14,6 @@ find_package(
 add_trailbook(
     NAME "everest"
     STEM_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/source
-    INSTANCE_NAME "${EVEREST_DOCS_VERSION_NAME}"
     DEPLOYED_DOCS_REPO_URL "https://github.com/everest/everest.github.io"
     DEPLOYED_DOCS_REPO_BRANCH "main"
 )
