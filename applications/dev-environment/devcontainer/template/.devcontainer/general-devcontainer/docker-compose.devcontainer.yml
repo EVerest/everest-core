@@ -1,0 +1,73 @@
+networks:
+  docker-proxy-network:
+    internal: true
+
+volumes:
+  cpm-source-cache:
+    name: everest-cpm-source-cache
+
+services:
+
+
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    environment:
+      - CONTAINERS=1
+      - IMAGES=1
+      - POST=1
+      - NETWORKS=1
+      - VOLUMES=1
+    networks:
+      - docker-proxy-network
+    profiles:
+      - all
+      - ocpp
+      - sil
+
+  devcontainer:
+    depends_on:
+      - docker-proxy
+    env_file:
+      - .env
+    build:
+      context: ./general-devcontainer
+      dockerfile: Dockerfile
+      args:
+        USER_UID: ${UID:-1000}
+        USER_GID: ${GID:-1000}
+        ORGANIZATION_ARG: ${ORGANIZATION_ARG:-EVerest}
+        REPOSITORY_HOST: ${REPOSITORY_HOST:-github.com}
+        REPOSITORY_USER: ${REPOSITORY_USER:-git}
+        EVEREST_TOOL_BRANCH: ${EVEREST_TOOL_BRANCH:-main}
+    volumes:
+      - type: bind
+        source: ${HOST_WORKSPACE_FOLDER:-..}
+        target: /workspace
+      - type: volume
+        source: cpm-source-cache
+        target: /home/docker/.cache/cpm
+      # Mount the host's SSH agent socket into the container
+      - type: bind
+        source: ${SSH_AUTH_SOCK}
+        target: /ssh-agent
+    command: sleep infinity
+    environment:
+      MQTT_SERVER_ADDRESS: mqtt-server
+      MQTT_SERVER_PORT: 1883
+      DOCKER_HOST: tcp://docker-proxy:2375
+      CPM_SOURCE_CACHE: /home/docker/.cache/cpm
+      # Tell SSH to use the forwarded agent
+      SSH_AUTH_SOCK: /ssh-agent
+    networks:
+      - docker-proxy-network
+      - default
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    profiles:
+      - all
+      - ocpp
+      - sil

@@ -1,0 +1,48 @@
+version: "3.6"
+
+volumes:
+  ocpp-db-data:
+    external: false
+  node-red-data:
+    external: false
+
+networks:
+  default:
+    external: true
+    name: infranet_network
+
+services:
+  mqtt-server:
+    build: images/mosquitto
+    ports:
+      - 1883:1883
+      - 9001:9001
+
+  ocpp-db:
+    image: mariadb:10.4.30 # pinned to patch-version because https://github.com/steve-community/steve/pull/1213
+    volumes:
+      - ocpp-db-data:/var/lib/mysql
+    ports:
+      - 13306:3306
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: ocpp-db
+      MYSQL_USER: ocpp
+      MYSQL_PASSWORD: ocpp
+
+  steve:
+    build: images/steve
+    ports:
+      - 8180:8180
+      - 8443:8443
+    depends_on:
+      - ocpp-db
+
+  nodered:
+    build: images/nodered
+    volumes:
+      - node-red-data:/data
+    depends_on:
+      - mqtt-server
+    ports:
+      - 1880:1880

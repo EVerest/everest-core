@@ -133,6 +133,9 @@ if(NOT DISABLE_EDM)
     # FIXME (aw): this implicit definition for child projects is hacky
     set(THIRD_PARTY_APP_DST "${CMAKE_INSTALL_LIBEXECDIR}/everest/3rd_party")
 
+    # edm
+    add_subdirectory(applications/dev-environment)
+
     evc_setup_edm()
 
     if(EVEREST_DEPENDENCY_ENABLED_SDBUS_CPP AND NOT TARGET SDBusCpp::sdbus-c++)
