@@ -113,7 +113,7 @@ def main():
             for dep_versions in versions:
                 dependency, version = dep_versions.split(':')
                 if dependency in snapshot:
-                    print(f'Overriding {dependency} version {snapshot[dependency]['git_tag']} to {version}')
+                    print(f'Overriding {dependency} version {snapshot[dependency]["git_tag"]} to {version}')
                     snapshot[dependency]['git_tag'] = version
         for dependency, entry in snapshot.items():
             git_tag = ''
