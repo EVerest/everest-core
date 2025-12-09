@@ -165,8 +165,8 @@ Start EVerest the same as we did for the basic charging test.
 Now connect a real car and watch the output. Explaining the actual ISO
 15118 protocol is beyond the scope of this document.
 
-For more information on how to debug ISO communication, refer to the
-:doc:`TODO Debug section </how-to-guide/debug>` of the documentation.
+For more information on how to debug ISO communication, refer to
+:doc:`Debugging ISO15118 </how-to-guides/debug-iso15118>`.
 
 Now we have the charging functionality up and running for the most
 important paths.

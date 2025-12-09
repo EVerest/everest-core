@@ -8,7 +8,7 @@ We provide several entry points for a fast start with EVerest.
 Whether you want to do a software-based simulation or start
 working with existing hardware, you will find your way here.
 
-.. grid:: 1 2 2 4
+.. grid:: 1 2 2 2
    :gutter: 3
    :margin: 2 0 2 0
 
@@ -31,9 +31,17 @@ working with existing hardware, you will find your way here.
       hardware components. You will find the right approach for your
       specific use case here.
 
+   .. grid-item-card:: 🔌 EVerest APIs
+      :link: /explanation/adapt-everest/index
+      :link-type: doc
+
+      Learn about the APIs provided by EVerest that help you integrating
+      EVerest into your system and adapting it to your needs.
+
 .. toctree::
     :maxdepth: 1
     :hidden:
     
     get-started-sw
     get-started-hw
+    /explanation/adapt-everest/index

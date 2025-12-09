@@ -43,8 +43,8 @@ electrification of the mobility sector.
       :link: explanation/getting-started/index
       :link-type: doc
 
-      We provide several entry points for a fast first experience with the
-      framework. Whether you want to do a software-based simulation or start
+      We provide several entry points for a fast first experience with EVerest.
+      Whether you want to do a software-based simulation or start
       working with existing hardware, you will find your way here.
 
    .. grid-item-card:: GitHub source
