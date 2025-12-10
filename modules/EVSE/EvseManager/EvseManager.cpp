@@ -1429,7 +1429,7 @@ void EvseManager::ready_to_start_charging() {
     charger->enable_disable_initial_state_publish();
 
     this->p_evse->publish_ready(true);
-    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),"🌀🌀🌀 Ready to start charging 🌀🌀🌀");
+    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
     if (!initial_powermeter_value_received) {
         EVLOG_warning << "No powermeter value received yet!";
     }
