@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(iso15118
-    VERSION 0.8.0
+    VERSION 0.9.1
     DESCRIPTION "iso15118 library suite"
 	LANGUAGES CXX C
 )
