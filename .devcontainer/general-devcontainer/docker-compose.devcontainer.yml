@@ -8,7 +8,6 @@ volumes:
 
 services:
 
-
   docker-proxy:
     image: tecnativa/docker-socket-proxy:latest
     volumes:
@@ -34,15 +33,16 @@ services:
     env_file:
       - .env
     build:
-      context: ./general-devcontainer
       dockerfile: Dockerfile
+      context: ./general-devcontainer
+      additional_contexts:
+        everest_dev_tool_src: ../applications/everest_dev_tool
       args:
         USER_UID: ${UID:-1000}
         USER_GID: ${GID:-1000}
-        ORGANIZATION_ARG: ${ORGANIZATION_ARG:-EVerest}
-        REPOSITORY_HOST: ${REPOSITORY_HOST:-github.com}
-        REPOSITORY_USER: ${REPOSITORY_USER:-git}
-        EVEREST_TOOL_BRANCH: ${EVEREST_TOOL_BRANCH:-main}
+        EVEREST_DEV_TOOL_DEFAULT_GIT_ORGANIZATION_ARG: ${EVEREST_DEV_TOOL_DEFAULT_GIT_ORGANIZATION:-EVerest}
+        EVEREST_DEV_TOOL_DEFAULT_GIT_HOST_ARG: ${EVEREST_DEV_TOOL_DEFAULT_GIT_HOST:-github.com}
+        EVEREST_DEV_TOOL_DEFAULT_GIT_SSH_USER_ARG: ${EVEREST_DEV_TOOL_DEFAULT_GIT_SSH_USER:-git}
     volumes:
       - type: bind
         source: ${HOST_WORKSPACE_FOLDER:-..}
