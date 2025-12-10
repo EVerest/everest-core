@@ -44,6 +44,7 @@ def main():
     parser.add_argument('--allow-relative-to-working-dir', action='store_true', help='Allow temporary directory to be relative to working dir (dangerous!)')
     parser.add_argument('--post-process', action='store_true', help='Postprocess existing snapshot')
     parser.add_argument('--include-external-deps', action='store_true', help='Include external dependencies in snapshot')
+    parser.add_argument('--exclude-dir', action='append', dest='excluded_dirs', type=str, help='Exclude specified directory from snapshot (can be used multiple times)', default=[])
 
     args = parser.parse_args()
 
@@ -62,6 +63,12 @@ def main():
         print(f'Temporary directory cannot be relative to working directory: {tmp_dir}')
         return 1
 
+    excluded_paths = []
+    for excluded_dir in args.excluded_dirs:
+        excluded_path = working_dir / excluded_dir
+        excluded_path = excluded_path.expanduser().resolve()
+        excluded_paths.append(excluded_path)
+
     if not args.post_process and tmp_dir.exists():
         print(f'Temporary directory dir already exists, deleting it: {tmp_dir}')
         shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -76,6 +83,9 @@ def main():
                 continue
             if subdir_path == tmp_dir:
                 print(f'{subdir_path} is tmp dir, ignoring')
+                continue
+            if subdir_path in excluded_paths:
+                print(f'{subdir_path} is excluded, ignoring')
                 continue
             print(f'Copying {subdir_path} to {tmp_dir}')
             destdir = tmp_dir / subdir_path.name
