@@ -56,10 +56,10 @@ using EventData = std::variant<types::evse_manager::SessionEvent, ErrorRaised, E
                                types::system::FirmwareUpdateStatus, PowermeterPublicKey>;
 
 struct Event {
-    EventData data;
     int32_t evse_id;
+    EventData data;
 
-    explicit Event(int32_t evse_id_, EventData data_) : evse_id(evse_id_), data(std::move(data_)) {
+    Event(int32_t evse_id_, EventData data_) : evse_id(evse_id_), data(std::move(data_)) {
     }
 };
 
