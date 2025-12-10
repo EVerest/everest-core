@@ -6,7 +6,7 @@ volumes:
 
 services:
   mqtt-server:
-    image: ghcr.io/everest/everest-dev-environment/mosquitto:docker-images-v0.2.0
+    build: ../applications/containers/mosquitto
     ports:
       - 1883:1883
       - 9001:9001
@@ -31,7 +31,7 @@ services:
       - all
       - ocpp
   steve:
-    image: ghcr.io/everest/everest-dev-environment/steve:docker-images-v0.2.0
+    build: ../applications/containers/steve
     ports:
       - 8180:8180
       - 8443:8443
@@ -41,7 +41,7 @@ services:
       - all
       - ocpp
   mqtt-explorer:
-    image: ghcr.io/everest/everest-dev-environment/mqtt-explorer:docker-images-v0.2.0
+    build: ../applications/containers/mqtt-explorer
     depends_on:
       - mqtt-server
     ports:
@@ -50,12 +50,11 @@ services:
       - all
       - sil
   nodered:
-    image: ghcr.io/everest/everest-dev-environment/nodered:docker-images-v0.2.0
+    build: ../applications/containers/nodered
     ports:
       - 1880:1880
     volumes:
       - node-red-data:/data
-      - ./nodered-settings.js:/data/settings.js
     environment:
       - NODE_RED_ENABLE_PROJECTS=false
       - MQTT_BROKER=mqtt-server

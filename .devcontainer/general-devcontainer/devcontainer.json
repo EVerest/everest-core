@@ -1,10 +1,23 @@
 {
   "name": "EVerest - ${localWorkspaceFolderBasename}",
-  "dockerComposeFile": ["../docker-compose.yml", "./docker-compose.devcontainer.yml"],
-  "service": "devcontainer",
 
-  "remoteUser": "docker",
+  // Compose configuration
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "./docker-compose.devcontainer.yml"
+  ],
+  "service": "devcontainer",
+  "runServices": [ "mqtt-server", "ocpp-db", "steve", "mqtt-explorer" ],
+
+  // Workspace inside the container
   "workspaceFolder": "/workspace",
+
+  // Prevent generation of broken override compose files
+  "overrideFeatureInstallCommand": false,
+  "updateRemoteUserUID": false,
+
+  // Networking / forwarded ports
+  "remoteUser": "docker",
   "forwardPorts": [
     "mqtt-explorer:4000",
     "steve:8180"
@@ -22,7 +35,12 @@
     "protocol": "http",
     "requireLocalPort": false
   },
+
+  // VS Code customizations
   "customizations": {
+
+    // Be aware that anything set here will not apply to the devcontainer
+    // when used without VS Code (e.g., plain Docker Compose).
     "vscode": {
       "settings": {
         "terminal.integrated.profiles.linux": {
@@ -36,27 +54,26 @@
         "python.pythonPath": "/usr/bin/python3",
         "python.defaultInterpreterPath": "/usr/bin/python3",
         "editor.rulers": [79, 120],
-        // RST/Sphinx language server
-        "esbonio.sphinx.buildDir": "${workspaceFolder}/everest/docs/_build",
-        "esbonio.sphinx.confDir": "${workspaceFolder}/everest/docs",
+
         // RST
         "restructuredtext.preview.scrollEditorWithPreview": false,
-        "restructuredtext.pythonRecommendation.disabled": true,
-        "liveServer.settings.root": "/everest/docs/_build/html"
+        "restructuredtext.pythonRecommendation.disabled": true
       },
+
       "extensions": [
         // language support CPP
         "ms-vscode.cpptools",
+
         // language support cmake
         "twxs.cmake",
         "ms-vscode.cmake-tools",
-				// language support python
-				"ms-python.python",
-				// language support restructured text
-				"lextudio.restructuredtext",
-				"trond-snekvik.simple-rst",
-				// doc live server
-				"ritwickdey.liveserver"
+
+        // language support python
+        "ms-python.python",
+
+        // language support reStructuredText
+        "lextudio.restructuredtext",
+        "trond-snekvik.simple-rst"
       ]
     }
   }
