@@ -1,8 +1,5 @@
 #!/bin/sh
 
-echo "Contents of EXT_MOUNT before build:"
-du -sh "$EXT_MOUNT/*"
-
 TRAILBOOK_everest_IS_RELEASE=${TRAILBOOK_everest_IS_RELEASE:-"OFF"}
 TRAILBOOK_everest_INSTANCE_NAME=${TRAILBOOK_everest_INSTANCE_NAME:-"local"}
 TRAILBOOK_everest_OVERWRITE_EXISTING_INSTANCE=${TRAILBOOK_everest_OVERWRITE_EXISTING_INSTANCE:-"OFF"}
@@ -23,11 +20,6 @@ if [ $retVal -ne 0 ]; then
     echo "Configuring failed with return code $retVal"
     exit $retVal
 fi
-
-echo "Contents of EXT_MOUNT after configure:"
-du -sh "$EXT_MOUNT/*"
-echo "Contents of EXT_MOUNT/build:"
-du -sh "$EXT_MOUNT/build/*"
 
 ninja -C "$EXT_MOUNT/build" trailbook_everest
 retVal=$?
