@@ -1,0 +1,30 @@
+{%  import 'macros.jinja' as funcs %}
+:orphan:
+
+{{ funcs.explicit_target('everest_modules_' + name) -}}
+{{ funcs.h1(name) -}}
+{{ data.description | rst_indent() }}
+{%  if 'documentation' in manifest %}
+{{ funcs.documentation(data.documentation) | rst_indent() -}}
+{%  endif %}
+
+{%  if has_module_explanation %}
+For a detailed handwritten documentation see {{ funcs.ref("everest_modules_handwritten_" + name, "here")}}
+{%  endif %}
+
+{%  if data.config %}
+{{ funcs.h2('Module Configuration') -}}
+{{ funcs.config(data.config.items()) | rst_indent() -}}
+{% endif %}
+
+{%  if data.provides %}
+{{ funcs.h2('Provides') -}}
+{{ funcs.impls(data.provides.items()) | rst_indent() -}}
+{%  endif %}
+
+{%  if data.requires %}
+{{ funcs.h2('Requirements') -}}
+{{ funcs.reqs(data.requires.items()) | rst_indent() -}}
+{%  endif %}
+
+{{ funcs.metadata(data.metadata) -}}
