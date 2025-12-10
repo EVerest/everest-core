@@ -1,0 +1,11 @@
+/build*
+!.gitignore
+*vscode
+.cache/
+workspace.yaml
+CMakeLists.txt.user
+__pycache__
+!doc/build-with-fetchcontent
+/dist
+clang-tidy-*.yaml
+clang-tidy-*.txt
