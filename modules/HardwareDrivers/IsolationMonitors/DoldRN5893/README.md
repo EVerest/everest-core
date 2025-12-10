@@ -1,4 +1,12 @@
-# Dold RN5893 Isolation Monitor
+# Dold RN5893 IMD with UL 2231 approval - especially for DC charging stations
+
+Electrical safety must be guaranteed during the charging process. For this purpose, an unearthed DC power supply system (IT system) with insulation monitoring is set up and monitored with an insulation monitoring device (IMD).
+Dold has developed a smart insulation monitoring solution for DC charging stations that also fulfils the requirements of UL 2231.
+The insulation monitor RN 5893 from the VARIMETER IMD family monitors the charging process from the charging station to the vehicle in combination with the coupling device RP 5898.
+
+- Response delay < 10 s
+- Nominal voltage up to DC 1000 V
+- Manipulation protection due to sealable transparent cover
 
 ## Self test
 
@@ -26,17 +34,15 @@ The driver will try to write the device reset command every cycle until the devi
 ## Measurement and publishing modes
 
 This driver supports three modes of operation:
-- Standard mode: The device pauses measurements upon startup and when `stop()` is called. Measurements are started by calling `start()`
-- Continous measurement mode: The device continuously performs measurements, bit 8 of the "control word 1" register (address 40001) is not set at any time. This is useful if the device should always alarm on isolation faults, even when no EV is connected. Measurements are still only published when `start()` is called, until `stop()` is called
+- **Standard mode**: The device pauses measurements upon startup and when `stop()` is called. Measurements are started by calling `start()`
+- **Continous measurement mode**: The device continuously performs measurements, bit 8 of the "control word 1" register (address 40001) is not set at any time. This is useful if the device should always alarm on isolation faults, even when no EV is connected. Measurements are still only published when `start()` is called, until `stop()` is called
   - This mode is enabled by setting `keep_measurement_active` to `true`
-- Always publish mode: Like in continous measurement mode, the device continuously performs measurements. Additionally, all measurements are published, even when `stop()` is called. This is only useful in very specific scenarios, e.g. if a special module needs measurements all the time
+- **Always publish mode**: Like in continous measurement mode, the device continuously performs measurements. Additionally, all measurements are published, even when `stop()` is called. This is only useful in very specific scenarios, e.g. if a special module needs measurements all the time
   - This mode is enabled by setting both `always_publish_measurements` and `keep_measurement_active` to `true`
 
-## Other notes
+## Device instructions
 
 - For applications following UL 2231 the parameter `automatic_self_test` has to be disabled (i.e. set to `false`)
-- Self testing is only possible when bit 8 of the "control word 1" register (address 40001) is not set, i.e. when measurement is not disabled. Because of this, the module enables measurements temporarily before starting a self test
 - Changes to modbus registers triggered by modbus messages may have a short delay before they can be read back over the bus. The device's internal reaction is faster than what is reported via Modbus, however
 - The device state may not always report "Error" when a device fault is present (i.e. the device has an internal fault or the device fault register reports a fault), because of internal prioritization of faults. Because of this, we only check the device fault register to determine if a fault is present and report that to Everest
-- If a modbus communication timeout occurs, the device only responds to modbus requests that either read data or write a reset command. All other requests will receive a 0x04 exception code
-- The voltage register does not differentiate between a voltage of 0 or an invalid measurement, this means that we do not publish a voltage when 0 is reported
+- If a modbus communication timeout occurs, the device only responds to modbus requests that either read data or write a reset command
