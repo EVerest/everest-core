@@ -289,7 +289,7 @@ void Charger::run_state_machine() {
                 // retry if the value is not yet available. Some BSPs may take some time to measure the PP.
                 if (shared_context.max_current_cable == 0) {
                     if (not internal_context.pp_warning_printed) {
-                        EVLOG_warning << "PP ampacity is zero, still retrying to read PP ampacity...";
+                        EVLOG_warning << "PP ampacity is zero, still waiting for BSP to report it...";
                         internal_context.pp_warning_printed = true;
                     }
                     break;
