@@ -2,7 +2,6 @@ name: Build Documentation
 on:
   workflow_call:
     inputs:
-      # General inputs
       runner:
         description: 'Which runner to use'
         required: false
@@ -18,6 +17,11 @@ on:
         required: false
         default: '.ci/build-kit/scripts'
         type: string
+      deploy_docs:
+        description: 'Whether to deploy the built documentation to the target repository'
+        required: false
+        default: false
+        type: boolean
 
 
 jobs:
@@ -44,6 +48,10 @@ jobs:
             ssh-keyscan github.com >> ~/.ssh/known_hosts
           fi
           ssh-add ~/.ssh/id_ed25519
+      - name: Configure Git user
+        run: |
+          git config --global user.name "Pionix Github Service Account"
+          git config --global user.email "compiler@pionix.de"
       - name: Docker Meta
         id: meta
         uses: docker/metadata-action@v5
@@ -98,6 +106,9 @@ jobs:
           docker run \
           --mount type=bind,source=$SSH_AUTH_SOCK,target=/ssh-agent \
           --env SSH_AUTH_SOCK=/ssh-agent \
+          --env TRAILBOOK_everest_IS_RELEASE=OFF \
+          --env TRAILBOOK_everest_INSTANCE_NAME=nightly \
+          --env TRAILBOOK_everest_OVERWRITE_EXISTING_INSTANCE=ON \
           --volume "${{ github.workspace }}:/ext" \
           --name build-docs-container \
           build-kit run-script build_docs
@@ -105,5 +116,11 @@ jobs:
         uses: actions/upload-artifact@v4.6.2
         with:
           if-no-files-found: error
-          path: ${{ github.workspace }}build/docs/trailbook_everest_build
+          path: ${{ github.workspace }}/build/docs/deployed_docs_repo/docs/
           name: docs-html
+      - name: Deploy Documentation
+        if: ${{ inputs.deploy_docs == true }}
+        run: |
+          cd ${{ github.workspace }}/build/docs/deployed_docs_repo
+          git commit -a -m "Update nightly documentation from commit ${{ github.sha }}"
+          git push

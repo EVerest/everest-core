@@ -37,6 +37,7 @@ jobs:
     uses: ./.github/workflows/build_docs.yaml
     with:
       runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      deploy_docs: false
   ocpp-tests:
     name: OCPP Tests
     needs:
