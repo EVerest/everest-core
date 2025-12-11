@@ -338,6 +338,18 @@ void OCPP::init_evse_subscriptions() {
 
             this->process_session_event(evse_id, session_event);
         });
+
+        evse->subscribe_powermeter_public_key_ocmf([this, evse_id](std::string public_key_ocmf) {
+            if (!this->started) {
+                this->event_queue.emplace(evse_id, PowermeterPublicKey{public_key_ocmf});
+                return;
+            }
+
+            if (!this->charge_point->set_powermeter_public_key(evse_id, public_key_ocmf)) {
+                EVLOG_error << "Failed to set powermeter public key for evse_id: " << evse_id;
+            }
+        });
+
         evse_id++;
     }
 
@@ -1077,6 +1089,9 @@ void OCPP::ready() {
                 [&](const types::system::FirmwareUpdateStatus& fw) {
                     charge_point->on_firmware_update_status_notification(
                         fw.request_id, conversions::to_ocpp_firmware_status_notification(fw.firmware_update_status));
+                },
+                [&](const PowermeterPublicKey public_key) {
+                    this->charge_point->set_powermeter_public_key(queued_event.evse_id, public_key.value);
                 }},
             queued_event.data);
     }
