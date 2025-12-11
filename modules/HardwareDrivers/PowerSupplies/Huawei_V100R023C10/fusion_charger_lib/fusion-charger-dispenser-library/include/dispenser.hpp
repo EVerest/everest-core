@@ -103,6 +103,8 @@ private:
 
     const int MAX_NUMBER_OF_CONNECTORS = 4;
 
+    static const std::string DISPENSER_TELEMETRY_ALARMS_SUBTOPIC;
+
     // true if the psu wrote its mac address via modbus
     bool psu_mac_received = false;
     // true if the psu wrote the connectors hmac key via modbus
@@ -122,6 +124,9 @@ private:
 
     /// @brief get the state of a dispenser alarm, true if active
     bool get_dispenser_alarm_state(DispenserAlarms alarm);
+
+    /// @brief get the telemetry datapoint key for a dispenser alarm
+    std::string dispenser_alarm_to_telemetry_datapoint(DispenserAlarms alarm);
 
 public:
     Dispenser(DispenserConfig dispenser_config, std::vector<ConnectorConfig> connector_configs,

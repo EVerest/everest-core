@@ -49,6 +49,7 @@ The data published looks like this (example for base topic ``base_topic``):
 
     {
       "bsp_event": "PowerOn",
+      "dc_output_contactor_fault_alarm": false,
       "everest_mode": "Export",
       "everest_phase": "Charging",
       "export_current": 20.0,
@@ -71,6 +72,17 @@ The data published looks like this (example for base topic ``base_topic``):
       "ac_input_voltage_c": 229.0,
       "psu_running_mode": "RUNNING",
       "total_historic_input_energy": 100000.0
+    }
+
+``base_topic/dispenser/published_alarms``
+
+.. code-block:: json
+
+    {
+      "door_status_alarm": false,
+      "epo_alarm": false,
+      "tilt_alarm": false,
+      "water_alarm": false
     }
 
 The units are SI units (Amps, Volts, Watts, Watt-hours).

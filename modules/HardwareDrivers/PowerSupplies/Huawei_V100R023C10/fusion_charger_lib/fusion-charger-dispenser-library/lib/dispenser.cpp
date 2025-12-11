@@ -12,6 +12,8 @@ using namespace fusion_charger::modbus_driver::raw_registers;
 using namespace fusion_charger::modbus_driver;
 using namespace fusion_charger::modbus_extensions;
 
+const std::string Dispenser::DISPENSER_TELEMETRY_ALARMS_SUBTOPIC = "dispenser/published_alarms";
+
 std::vector<DispenserAlarms> get_all_dispenser_alarms() {
     return {DispenserAlarms::DOOR_STATUS_ALARM, DispenserAlarms::WATER_ALARM, DispenserAlarms::EPO_ALARM,
             DispenserAlarms::TILT_ALARM};
@@ -484,6 +486,14 @@ void Dispenser::init() {
     dispenser_config.telemetry_publisher->register_complex_register_data_provider<double>(
         "psu", "total_historic_input_energy", &psu_registers->total_historic_input_energy,
         [](const double& kwh) { return kwh * 1000.0; });
+
+    // publish alarms
+    dispenser_config.telemetry_manager->add_subtopic(DISPENSER_TELEMETRY_ALARMS_SUBTOPIC);
+
+    for (auto alarm : get_all_dispenser_alarms()) {
+        dispenser_config.telemetry_manager->initialize_datapoint(DISPENSER_TELEMETRY_ALARMS_SUBTOPIC,
+                                                                 dispenser_alarm_to_telemetry_datapoint(alarm), false);
+    }
 }
 
 void Dispenser::update_psu_communication_state() {
@@ -526,10 +536,28 @@ void Dispenser::trigger_unsolicited_report() {
 void Dispenser::set_dispenser_alarm(DispenserAlarms alarm, bool active) {
     dispenser_alarms[alarm] = active;
 
+    dispenser_config.telemetry_manager->datapoint_changed(DISPENSER_TELEMETRY_ALARMS_SUBTOPIC,
+                                                          dispenser_alarm_to_telemetry_datapoint(alarm), active);
+
     trigger_unsolicited_report();
 }
 
 bool Dispenser::get_dispenser_alarm_state(DispenserAlarms alarm) {
     // note that dispenser_alarms[alarm] exists for all DispenserAlarms due to initialization in constructor
     return this->dispenser_alarms[alarm].load();
+}
+
+std::string Dispenser::dispenser_alarm_to_telemetry_datapoint(DispenserAlarms alarm) {
+    switch (alarm) {
+    case DispenserAlarms::DOOR_STATUS_ALARM:
+        return "door_status_alarm";
+    case DispenserAlarms::WATER_ALARM:
+        return "water_alarm";
+    case DispenserAlarms::EPO_ALARM:
+        return "epo_alarm";
+    case DispenserAlarms::TILT_ALARM:
+        return "tilt_alarm";
+    default:
+        throw std::runtime_error("Unknown dispenser alarm");
+    }
 }
