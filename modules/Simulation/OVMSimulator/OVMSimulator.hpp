@@ -24,9 +24,11 @@ struct Conf {};
 class OVMSimulator : public Everest::ModuleBase {
 public:
     OVMSimulator() = delete;
-    OVMSimulator(const ModuleInfo& info, std::unique_ptr<over_voltage_monitorImplBase> p_main, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), config(config){};
+    OVMSimulator(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
+                 std::unique_ptr<over_voltage_monitorImplBase> p_main, Conf& config) :
+        ModuleBase(info), mqtt(mqtt_provider), p_main(std::move(p_main)), config(config){};
 
+    Everest::MqttProvider& mqtt;
     const std::unique_ptr<over_voltage_monitorImplBase> p_main;
     const Conf& config;
 
