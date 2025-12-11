@@ -1,6 +1,7 @@
 generate_config_tmux_run_script(CONFIG bringup-api-display-message)
 generate_config_tmux_run_script(CONFIG bringup-api-error-history-consumer)
 generate_config_tmux_run_script(CONFIG bringup-api-evse-board-support)
+generate_config_tmux_run_script(CONFIG bringup-api-evse-bsp-and-ovm)
 generate_config_tmux_run_script(CONFIG bringup-api-isolation-monitor)
 generate_config_tmux_run_script(CONFIG bringup-api-ocpp-consumer)
 generate_config_tmux_run_script(CONFIG bringup-api-over-voltage-monitor)

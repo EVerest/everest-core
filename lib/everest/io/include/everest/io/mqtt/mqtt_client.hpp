@@ -37,7 +37,8 @@ protected:
                              subscribe_callback cb) override;
 
     ErrorCode unsubscribe_impl(std::string_view const& topic, PropertiesBase const& props) override;
-    ErrorCode connect_impl(std::string_view const& host, std::uint16_t port, std::uint16_t keepalive_seconds) override;
+    ErrorCode connect_impl(std::string_view const& bind_adress, std::string_view const& host, std::uint16_t port,
+                           std::uint16_t keepalive_seconds) override;
 
     void set_callback_connect_impl(connect_callback cb) override;
     void set_callback_disconnect_impl(disconnect_callback cb) override;
