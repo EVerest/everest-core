@@ -105,5 +105,5 @@ jobs:
         uses: actions/upload-artifact@v4.6.2
         with:
           if-no-files-found: error
-          path: build/docs/trailbook_everest_build
+          path: ${{ github.workspace }}build/docs/trailbook_everest_build
           name: docs-html
