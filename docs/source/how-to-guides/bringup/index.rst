@@ -45,7 +45,7 @@ but later in production they should not be installed.
 
 To get familiar with this method, you can use a pure SIL version on your
 development PC. This step is optional. From the build folder of
-BaseCamp, start the following run script:
+everest-core, start the following run script:
 
 .. code-block:: bash
 

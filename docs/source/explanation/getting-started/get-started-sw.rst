@@ -15,7 +15,7 @@ For a native build, EVerest requires a Linux based system.
 To build on a Windows or Mac system, you can use WSL2 (Windows) or
 Docker / Podman (Mac).
 
-For Mac, see the :doc:`How-to for MAC setup </how-to-guides/how-to-mac-setup>`.
+For Mac, see the :doc:`TODO How-to for MAC setup </how-to-guides/how-to-mac-setup>`.
 
 System Requirements and Dependencies
 ====================================
@@ -292,7 +292,7 @@ connections between them.
 
 The role of each module in this system and how to configure an EVerest module
 environment with the Admin Panel will be explained on page
-:doc:`EVerest Modules </explanation/module-configurations>`.
+:doc:`TODO EVerest Modules </explanation/module-configurations>`.
 
 Next, let's see how fast we can create a new module in EVerest.
 
@@ -540,7 +540,7 @@ Please see the documentation about :ref:`exp_dev_tools_evcli` for further docume
 
 Or - if you rather would like to have more theoretical input about EVerest
 modules - continue
-:ref:`with the EVerest Module Concept page <exp_detail_module_concept>`.
+:ref:`TODO with the EVerest Module Concept page <exp_detail_module_concept>`.
 
 One Deep Breath And Next Steps
 ===============================
@@ -555,7 +555,7 @@ with implementing your specific scenarios?
 
 Good news: A tutorial about developing EVerest modules is waiting for you.
 
-:ref:`Continue with the tutorial here! <tutorial_create_modules_main>`
+:ref:`Continue with the tutorial here! <tutorial_develop_new_everest_module>`
 
 See you in our :ref:`weekly tech meetings <exp_communicity_channels>` and thanks for
 being a part of the EVerest community!

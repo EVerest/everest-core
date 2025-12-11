@@ -75,7 +75,7 @@ In addition to the EVerest configuration yaml file, OCPP 1.6 is configured
 using a JSON configuration file.
 This configuration file can contain all configuration keys from the OCPP 1.6
 specification.
-Examples for that can be found `here <https://github.com/EVerest/libocpp/tree/main/config/v16>`_.
+Examples for that can be found `here <https://github.com/EVerest/libocpp/tree/main/config/v16>`__.
 
 This is the one we used to connect to SteVe:
 
@@ -224,7 +224,7 @@ and it might also include to change the parameters ``AuthorizationKey`` and
   - Minimal length: 16 bytes
 
 Modify these parameters according to the connection requirements of the CSMS. Find all available configuration keys
-and their descriptions in `here <https://github.com/EVerest/libocpp/tree/main/config/v16/profile_schemas>`_
+and their descriptions in `here <https://github.com/EVerest/libocpp/tree/main/config/v16/profile_schemas>`__
 
 .. note::
 
@@ -239,7 +239,7 @@ Configuring OCPP 1.6 within EVerest
 ===================================
 
 To be able to follow the further explanations, you should be familiar with the configuration of EVerest modules.
-Take a look into :doc:`EVerest Module Concept </explanation/detail-module-concept>` for that.
+Take a look into :doc:`TODO EVerest Module Concept </explanation/detail-module-concept>` for that.
 
 To configure the OCPP module of everest-core, find the available configuration parameters
 in the :doc:`module documentation </explanation/modules/OCPP/index>`, and read through them

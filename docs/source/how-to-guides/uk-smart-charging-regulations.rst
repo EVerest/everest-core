@@ -20,17 +20,17 @@ There are several key requirements in this regulation such as:
 -  secure boot
 -  check / detect unauthorized software change
 -  tamper protection
--  security log (you can use the OCPP security log from BaseCamp)
+-  security log (you can use the OCPP security log from EVerest)
 -  randomized delays
 
 Charger deployment can also impact the requirements. For example,
 randomized delays are disabled when a charger is operating under Demand
 Side Response service.
 
-Most of the requirements are not in the BaseCamp domain and will need to
-be implemented by the hardware or non-BaseCamp software.
+Most of the requirements are not in the EVerest domain and will need to
+be implemented by the hardware or non-EVerest software.
 
-Regarding BaseCamp integration, “Part 2 11 Randomized delays” is
+Regarding EVerest integration, “Part 2 11 Randomized delays” is
 particularly important. EVerest has support for that feature by
 enabling the following config option in the
 :doc:`EvseManager module </reference/modules/EvseManager>`:
