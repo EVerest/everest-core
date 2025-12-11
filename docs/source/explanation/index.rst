@@ -32,7 +32,9 @@ Below that, you will be presented with a categorized list of all articles.
     dev-tools/edm
     dev-tools/ev-cli
     linux-yocto/index
+    partitioning-schemes-for-rauc-ota
     hardware-architecture
     high-level-overview
     adapt-everest/index
     getting-started/index
+    hardware-drivers
