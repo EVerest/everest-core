@@ -130,6 +130,9 @@ include(compatibility/boost)
 set(everest-framework_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/everest/framework)
 set(everest-framework_BINARY_DIR ${CMAKE_BINARY_DIR}/lib/everest/framework)
 set(EVEREST_SCHEMA_DIR ${everest-framework_SOURCE_DIR}/schemas)
+if(NOT DEFINED EVEREST_ENABLE_PY_SUPPORT)
+    set(EVEREST_ENABLE_PY_SUPPORT ON CACHE BOOL "Enable EVerest Python support" FORCE)
+endif()
 
 if(NOT DISABLE_EDM)
     # FIXME (aw): this implicit definition for child projects is hacky
