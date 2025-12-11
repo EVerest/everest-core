@@ -32,11 +32,6 @@ libcbv2g:
   git: https://github.com/EVerest/libcbv2g.git
   git_tag: v0.3.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
-# libiso15118
-libiso15118:
-  git: https://github.com/EVerest/libiso15118.git
-  git_tag: 5c81c928dada6ba9dc931780c4d72aa0f0a16f88
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
 libcurl:
