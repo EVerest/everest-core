@@ -63,7 +63,7 @@ values via MQTT into the
 
 For a better understanding of how the EVerest API works, let us have an
 exemplary closer look at the
-:doc:`Power Supply DC API module </reference/modules/API/power_supply_DC_API>`.
+:doc:`Power Supply DC API module </reference/modules/power_supply_DC_API>`.
 
 The manifest can be reduced to this:
 
@@ -121,7 +121,7 @@ Let's take a look at an example configuration that uses the API module:
            implementation_id: if_power_supply_DC
 
 It loads two modules: 
-The :doc:`power_supply_DC_API </reference/modules/API/power_supply_DC_API>`
+The :doc:`power_supply_DC_API </reference/modules/power_supply_DC_API>`
 and the 
 :doc:`BringUp module for DC power supplies </reference/modules/BUPowerSupplyDC>`.
 Starting EVerest with this  configuration enables the API for DC power

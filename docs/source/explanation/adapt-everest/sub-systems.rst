@@ -379,7 +379,7 @@ energy management distributes energy between charging ports. It is also
 needed if only one charging port exists.
 
 Please refer to the
-:doc:`Energy Management documentation </explanation/modules/EnergyManager>`
+:doc:`Energy Management documentation </explanation/modules/EnergyManager/index>`
 for a detailed explanation of how to set up the energy management
 subsystem.
 
