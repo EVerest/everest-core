@@ -76,7 +76,7 @@ This interface is implemented to provide a command to initiate a **DataTransfer.
 Provides: ocpp_generic
 ^^^^^^^^^^^^^^^^^^^^^^
 
-**Interface**: `ocpp <../../interfaces/ocpp.yaml>`_
+**Interface**: `ocpp <../../interfaces/ocpp.yaml>`__
 
 This interface is implemented to provide an API to control an OCPP service and to set and get OCPP-specific data.
 
@@ -144,7 +144,7 @@ This module makes use of the following commands of this interface:
 Requires: reservation
 ^^^^^^^^^^^^^^^^^^^^^
 
-**Interface**: `reservation <../../interfaces/reservation.yaml>`_
+**Interface**: `reservation <../../interfaces/reservation.yaml>`__
 
 Typically the `Auth <../Auth/>`_ module is used to fulfill this requirement.
 
@@ -159,7 +159,7 @@ This module makes use of the following commands of this interface:
 Requires: auth
 ^^^^^^^^^^^^^^
 
-**Interface**: `auth <../../interfaces/auth.yaml>`_
+**Interface**: `auth <../../interfaces/auth.yaml>`__
 
 Typically the `Auth <../Auth/>`_ module is used to fulfill this requirement.
 
@@ -173,7 +173,7 @@ This module makes use of the following commands of this interface:
 Requires: system
 ^^^^^^^^^^^^^^^^
 
-**Interface**: `system <../../interfaces/system.yaml>`_
+**Interface**: `system <../../interfaces/system.yaml>`__
 
 The `System <../System/>`_ module can be used to fulfill this requirement. Note that this module is not meant to be used in  
 production systems without any modification!

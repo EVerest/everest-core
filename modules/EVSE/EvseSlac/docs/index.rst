@@ -19,9 +19,9 @@ The general flow of operation will be like this:
 
 If not run as root user, this modules requires the capability CAP_NET_RAW.
 
-====
+----
 Todo
-====
+----
 
 - make use of the enable flag in the reset command or drop it, if not needed
 - handle CM_VALIDATE.REQ message

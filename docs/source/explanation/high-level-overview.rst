@@ -53,7 +53,7 @@ Each module runs as an independent process and communicates with other modules v
 This allows module to subscribe to variables published by other modules and to call commands provided by other modules.
 
 A more detailed explanation of the EVerest architecture and module concept can be found in the
-explaination about :doc:`EVerest modules in detail </explanation/detail-module-concept>`.
+explaination about :doc:`TODO EVerest modules in detail </explanation/detail-module-concept>`.
 
 Hardware Requirements
 =============================
@@ -74,4 +74,4 @@ requirements should be met:
 Getting Started
 =====================
 
-Please refer to the :doc:`Quick Start Guides </explanation/quick-start-guides>` to get started with EVerest.
+Please refer to the :doc:`Quick Start Guides </explanation/getting-started/get-started-sw>` to get started with EVerest.

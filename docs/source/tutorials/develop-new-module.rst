@@ -62,7 +62,7 @@ Alternative 1: Setup Workspace via EVerest Dependency Manager
 
 Use the EVerest dependency manager to setup your workspace. This has the
 benefit of allowing your to select a specific snapshot (see the corresponding
-:ref:`docs<edm_main>` for details), as well as it is a single command::
+:ref:`docs <exp_dev_tools_edm>` for details), as well as it is a single command::
 
     edm init --workspace $EVEREST_WORKSPACE
 
