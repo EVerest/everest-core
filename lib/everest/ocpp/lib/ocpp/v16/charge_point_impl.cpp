@@ -2272,6 +2272,7 @@ bool ChargePointImpl::validate_against_cache_entries(CiString<20> id_tag) {
     } catch (const QueryExecutionException& e) {
         EVLOG_warning << "Could not fetch authorization cache entry: " << e.what();
     }
+    return false;
 }
 
 void ChargePointImpl::handleRemoteStopTransactionRequest(ocpp::Call<RemoteStopTransactionRequest> call) {
