@@ -8,6 +8,9 @@
 /.github/ @pietfried @corneliusclaussen
 /.github/workflows/ @pietfried @corneliusclaussen @andistorm
 
+# applications
+/applications/pionix_chargebridge @djchhp @corneliusclaussen
+
 # cmake
 /cmake/ @hikinggrass @a-w50 @corneliusclaussen @andistorm
 
@@ -22,6 +25,7 @@
 /lib/everest/slac/ @a-w50 @corneliusclaussen @SebaLukas
 /lib/everest/tls/ @james-ctc @mlitre @corneliusclaussen @SebaLukas @pietfried
 /lib/everest/everest_api_types/ @hikinggrass @pietfried @corneliusclaussen @djchhp @cburandt @florinmihut
+/lib/everest/io/ @djchhp @corneliusclaussen @hikinggrass @james-ctc @pietfried
 
 # modules
 /modules/API/ @hikinggrass @pietfried @corneliusclaussen @djchhp @SebaLukas @james-ctc @cburandt @florinmihut
@@ -36,7 +40,7 @@
 /modules/EVSE/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas @pietfried @hikinggrass
 /modules/EVSE/EvseV2G/ @corneliusclaussen @SebaLukas @james-ctc @pietfried @hikinggrass @james-ctc @mlitre
 /modules/EVSE/OCPP/ @hikinggrass @pietfried @mlitre
-/modules/HardwareDrivers/ @pietfried @hikinggrass @corneliusclaussen @florinmihut @cburandt
+/modules/HardwareDrivers/ @pietfried @hikinggrass @corneliusclaussen @florinmihut @cburandt @djchhp
 /modules/EVSE/OCPP201/ @hikinggrass @pietfried @mlitre
 /modules/Examples/CppExamples/error-framework/ @corneliusclaussen @hikinggrass @pietfried @andistorm
 /modules/Examples/RustExamples/ @SirVer @dorezyuk
