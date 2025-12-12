@@ -41,13 +41,13 @@ static std::vector<ConnectorBase*> get_connector_bases(Huawei_V100R023C10* mod, 
 static std::string get_everest_error_for_dispenser_alarm(DispenserAlarms alarm) {
     switch (alarm) {
     case DispenserAlarms::DOOR_STATUS_ALARM:
-        return "evse_board_support/DoorOpen";
+        return "evse_board_support/EnclosureOpen";
     case DispenserAlarms::WATER_ALARM:
-        return "evse_board_support/Water";
+        return "evse_board_support/WaterIngressDetected";
     case DispenserAlarms::EPO_ALARM:
         return "evse_board_support/MREC8EmergencyStop";
     case DispenserAlarms::TILT_ALARM:
-        return "evse_board_support/Tilted";
+        return "evse_board_support/TiltDetected";
     default:
         throw std::runtime_error("Unknown DispenserAlarm enum value");
     }
