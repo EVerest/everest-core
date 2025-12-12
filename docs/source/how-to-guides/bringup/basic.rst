@@ -305,8 +305,8 @@ Complete the following checklist:
    multiple PowerOn/PowerOff/PowerOn events being generated because the
    relay is bouncing.
 
-- State A, PWM off, state State B. Then enable PWM 5%, allow *power
-   on*. Relay should not close. Wait a few seconds, then set state C.
+- State A, PWM off, state State B. Then enable PWM 5%, allow *power on*.
+   Relay should not close. Wait a few seconds, then set state C.
    Relay should close immediately after entering state C. Ignore the
    time shown on the “Power On” event. It measures the time from the
    last “Allow power on” command to feedback.
