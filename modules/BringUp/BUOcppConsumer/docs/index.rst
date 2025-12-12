@@ -1,3 +1,5 @@
+:orphan:
+
 .. _everest_modules_handwritten_BUOcppConsumer:
 
 ..  This file is a placeholder for optional multiple files
