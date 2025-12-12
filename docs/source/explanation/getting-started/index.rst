@@ -32,7 +32,7 @@ working with existing hardware, you will find your way here.
       specific use case here.
 
    .. grid-item-card:: 🔌 EVerest APIs
-      :link: /explanation/adapt-everest/index
+      :link: /explanation/adapt-everest/apis
       :link-type: doc
 
       Learn about the APIs provided by EVerest that help you integrating
@@ -44,4 +44,3 @@ working with existing hardware, you will find your way here.
     
     get-started-sw
     get-started-hw
-    /explanation/adapt-everest/index
