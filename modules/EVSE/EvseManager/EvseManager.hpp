@@ -47,6 +47,7 @@
 #include "PersistentStore.hpp"
 #include "SessionLog.hpp"
 #include "VarContainer.hpp"
+#include "over_voltage/OverVoltageMonitor.hpp"
 #include "scoped_lock_timeout.hpp"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -74,6 +75,7 @@ struct Conf {
     bool ac_enforce_hlc;
     bool ac_with_soc;
     int dc_isolation_voltage_V;
+    int internal_over_voltage_duration_ms;
     bool dbg_hlc_auth_after_tstep;
     int hack_sleep_in_cable_check;
     int hack_sleep_in_cable_check_volkswagen;
@@ -324,6 +326,7 @@ private:
     VarContainer<types::isolation_monitor::IsolationMeasurement> isolation_measurement;
     VarContainer<types::power_supply_DC::VoltageCurrent> powersupply_measurement;
     VarContainer<bool> selftest_result;
+    std::unique_ptr<OverVoltageMonitor> internal_over_voltage_monitor;
 
     // Track voltage to earth failures for debouncing
     int voltage_to_earth_failure_count{0};

@@ -51,6 +51,7 @@ target_compile_features(${MODULE_NAME} PUBLIC cxx_std_17)
 
 target_sources(${MODULE_NAME}
     PRIVATE
+        "over_voltage/OverVoltageMonitor.cpp"
         "evse/evse_managerImpl.cpp"
         "energy_grid/energyImpl.cpp"
         "token_provider/auth_token_providerImpl.cpp"
