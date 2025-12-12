@@ -1,0 +1,52 @@
+{% if first %}
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
+#include <ocpp/{{namespace}}/ocpp_enums.hpp>
+
+#include <string>
+
+#include <ocpp/common/types.hpp>
+
+namespace ocpp {
+namespace {{namespace}} {
+{% endif %}
+{%- if enum_types|length %}
+{%- for enum_type in enum_types %}
+
+// from: {{action.class_name}}
+namespace conversions {
+    std::string {{ enum_type.name | snake_case }}_to_string({{ enum_type.name }} e) {
+        switch (e) {
+            {% for enum in enum_type.enums %}
+            case {{ enum_type.name }}::{{ enum.replace('.', '_').replace('-', '_') }}: return "{{enum}}";
+            {% endfor %}
+        }
+
+        throw EnumToStringException{e, "{{ enum_type.name }}"};
+    }
+
+    {{ enum_type.name }} string_to_{{ enum_type.name | snake_case }}(const std::string& s) {
+        {% for enum in enum_type.enums %}
+        if(s == "{{enum}}") {
+            return {{ enum_type.name }}::{{ enum.replace('.', '_').replace('-', '_') }};
+        }
+        {% endfor %}
+
+        throw StringToEnumException{s, "{{ enum_type.name }}"};
+    }
+}
+
+std::ostream& operator<<(std::ostream& os, const {{ enum_type.name }}& {{ enum_type.name | snake_case }}) {
+    os << conversions::{{ enum_type.name | snake_case }}_to_string({{ enum_type.name | snake_case }});
+    return os;
+}
+
+{% endfor %}
+{%- endif %}
+{% if last %}
+} // namespace {{namespace}}
+} // namespace ocpp
+
+{% endif %}

@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for ReservationCtrlr",
+  "name": "ReservationCtrlr",
+  "type": "object",
+  "properties": {
+    "ReservationCtrlrAvailable": {
+      "variable_name": "Available",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Whether reservation is supported.",
+      "default": true,
+      "type": "boolean"
+    },
+    "ReservationCtrlrEnabled": {
+      "variable_name": "Enabled",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Whether reservation is enabled.",
+      "default": true,
+      "type": "boolean"
+    },
+    "ReservationCtrlrNonEvseSpecific": {
+      "variable_name": "NonEvseSpecific",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly",
+          "value": true
+        }
+      ],
+      "description": "If this configuration variable is present and set to true: Charging Station supports Reservation where EVSE id is not specified.",
+      "type": "boolean"
+    }
+  },
+  "required": []
+}
