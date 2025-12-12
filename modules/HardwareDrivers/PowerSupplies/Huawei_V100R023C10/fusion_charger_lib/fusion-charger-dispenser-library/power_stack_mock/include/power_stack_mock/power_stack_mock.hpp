@@ -91,6 +91,10 @@ public:
     void send_max_rated_voltage_of_output_port(float voltage, std::uint16_t local_connector_number);
     void send_min_rated_voltage_of_output_port(float voltage, std::uint16_t local_connector_number);
     void send_rated_power_of_output_port(float power, std::uint16_t local_connector_number);
+    void send_total_historical_ac_input_energy(double energy);
+    void send_ac_input_voltages_currents(float voltage_a, float voltage_b, float voltage_c, float current_a,
+                                         float current_b, float current_c);
+    void send_port_available(bool available, std::uint16_t local_connector_number);
 
     std::optional<fusion_charger::goose::PowerRequirementRequest>
     get_last_power_requirement_request(std::uint16_t global_connector_number);
@@ -108,6 +112,11 @@ public:
     ConnectorCallbackResults get_connector_callback_values(std::uint16_t local_connector_number);
 
     void set_enable_answer_module_placeholder_allocation(bool enable);
+
+    /**
+     * @brief get the global connector number from the local connector number (range 1-4)
+     */
+    int get_global_connector_number_from_local(std::uint16_t local_connector_number);
 
 private:
     PowerStackMockConfig config;
