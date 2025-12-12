@@ -1,11 +1,10 @@
 file(GLOB SOURCES "src/*.cpp")
 
 add_library(fusion_charger_goose_driver STATIC ${SOURCES})
-ev_register_library_target(fusion_charger_goose_driver)
 target_include_directories(fusion_charger_goose_driver PUBLIC include)
 target_link_libraries(fusion_charger_goose_driver PUBLIC goose)
 
-if(BUILD_TESTING)
+if(FUSION_CHARGER_LIB_BUILD_TESTS)
   include(GoogleTest)
 
   file(GLOB TEST_SOURCES "tests/*.cpp")

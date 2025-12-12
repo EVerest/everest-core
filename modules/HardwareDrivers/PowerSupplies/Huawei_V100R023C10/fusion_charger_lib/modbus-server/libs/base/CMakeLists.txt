@@ -7,4 +7,7 @@ add_library(
         ${MODBUS_BASE_SOURCES}
 )
 target_include_directories(modbus-base PUBLIC include)
-ev_register_library_target(modbus-base)
+
+if(FUSION_CHARGER_LIB_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
