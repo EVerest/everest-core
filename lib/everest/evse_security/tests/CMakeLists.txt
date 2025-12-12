@@ -1,4 +1,4 @@
-set(TEST_TARGET_NAME ${PROJECT_NAME}_tests)
+set(TEST_TARGET_NAME ${PROJECT_NAME}_evse_security_tests)
 add_executable(${TEST_TARGET_NAME})
 
 target_sources(${TEST_TARGET_NAME} PRIVATE
@@ -32,20 +32,6 @@ add_compile_definitions(BUILD_TESTING_EVSE_SECURITY)
 add_compile_definitions(DEBUG_MODE_EVSE_SECURITY)
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
-
-setup_target_for_coverage_gcovr_html(
-    NAME ${PROJECT_NAME}_gcovr_coverage
-    EXECUTABLE ctest
-    DEPENDENCIES ${TEST_TARGET_NAME}
-    EXCLUDE "tests/*"
-)
-
-setup_target_for_coverage_gcovr_xml(
-    NAME ${PROJECT_NAME}_gcovr_coverage_xml
-    EXECUTABLE ctest
-    DEPENDENCIES ${TEST_TARGET_NAME}
-    EXCLUDE "tests/*"
-)
 
 file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs.sh"
