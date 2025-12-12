@@ -42,11 +42,6 @@ libocpp:
 libslac:
   git: https://github.com/EVerest/libslac.git
   git_tag: main
-libsunspec:
-  git: https://github.com/EVerest/libsunspec.git
-  git_tag: main
-  options:
-  - BUILD_EXAMPLES OFF
 libtimer:
   git: https://github.com/EVerest/libtimer.git
   git_tag: main
