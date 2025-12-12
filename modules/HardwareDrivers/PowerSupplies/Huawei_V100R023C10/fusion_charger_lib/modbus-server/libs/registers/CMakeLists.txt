@@ -3,7 +3,6 @@ include(GoogleTest)
 file(GLOB SOURCES "src/*.cpp")
 
 add_library(modbus-registers STATIC ${SOURCES})
-ev_register_library_target(modbus-registers)
 target_include_directories(modbus-registers PUBLIC include)
 target_link_libraries(modbus-registers PUBLIC modbus-server)
 

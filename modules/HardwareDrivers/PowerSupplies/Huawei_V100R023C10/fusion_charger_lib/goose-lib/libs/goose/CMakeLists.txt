@@ -3,7 +3,6 @@ file(GLOB_RECURSE GOOSE_SOURCES "src/*.cpp")
 find_package(OpenSSL REQUIRED)
 
 add_library(goose STATIC ${GOOSE_SOURCES})
-ev_register_library_target(goose)
 target_include_directories(goose PUBLIC include)
 target_link_libraries(goose PUBLIC goose-ethernet OpenSSL::SSL OpenSSL::Crypto Huawei::FusionCharger::LogInterface)
 

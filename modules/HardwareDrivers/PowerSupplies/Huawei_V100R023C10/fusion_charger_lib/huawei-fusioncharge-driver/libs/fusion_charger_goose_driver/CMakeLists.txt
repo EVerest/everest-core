@@ -1,7 +1,6 @@
 file(GLOB SOURCES "src/*.cpp")
 
 add_library(fusion_charger_goose_driver STATIC ${SOURCES})
-ev_register_library_target(fusion_charger_goose_driver)
 target_include_directories(fusion_charger_goose_driver PUBLIC include)
 target_link_libraries(fusion_charger_goose_driver PUBLIC goose)
 

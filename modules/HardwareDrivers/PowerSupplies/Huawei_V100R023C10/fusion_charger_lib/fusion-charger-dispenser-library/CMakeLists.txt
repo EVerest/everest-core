@@ -4,7 +4,6 @@ endif()
 
 file(GLOB LIB_SOURCES lib/*.cpp)
 add_library(fusion_charger_dispenser STATIC ${LIB_SOURCES})
-ev_register_library_target(fusion_charger_dispenser)
 target_include_directories(fusion_charger_dispenser PUBLIC include)
 target_link_libraries(fusion_charger_dispenser PUBLIC fusion_charger_goose_driver fusion_charger_modbus_driver fusion_charger_modbus_extensions modbus-ssl Huawei::FusionCharger::LogInterface)
 

@@ -32,6 +32,17 @@ target_sources(${MODULE_NAME}
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
 target_sources(${MODULE_NAME} PRIVATE "connector_base/base.cpp")
 add_subdirectory(fusion_charger_lib)
+ev_register_library_target(fusion_charger_dispenser)
+ev_register_library_target(goose-ethernet)
+ev_register_library_target(goose)
+ev_register_library_target(fusion_charger_modbus_extensions)
+ev_register_library_target(fusion_charger_modbus_driver)
+ev_register_library_target(fusion_charger_goose_driver)
+ev_register_library_target(modbus-base)
+ev_register_library_target(modbus-server)
+ev_register_library_target(modbus-client)
+ev_register_library_target(modbus-ssl)
+ev_register_library_target(modbus-registers)
 
 option(INSTALL_FUSION_CHARGER_MOCK "Install fusion charger mock" OFF)
 if(INSTALL_FUSION_CHARGER_MOCK)

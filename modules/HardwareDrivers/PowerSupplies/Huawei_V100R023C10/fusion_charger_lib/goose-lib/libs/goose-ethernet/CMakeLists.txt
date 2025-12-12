@@ -7,7 +7,6 @@ else()
 endif()
 
 add_library(goose-ethernet STATIC ${GOOSE_ETHERNET_SOURCES})
-ev_register_library_target(goose-ethernet)
 target_include_directories(goose-ethernet PUBLIC include)
 
 if (MACOSX)

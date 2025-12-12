@@ -1,7 +1,6 @@
 file(GLOB SOURCES "src/*.cpp")
 
 add_library(fusion_charger_modbus_driver STATIC ${SOURCES})
-ev_register_library_target(fusion_charger_modbus_driver)
 target_include_directories(fusion_charger_modbus_driver PUBLIC include)
 target_link_libraries(fusion_charger_modbus_driver PUBLIC modbus-server fusion_charger_modbus_extensions)
 
