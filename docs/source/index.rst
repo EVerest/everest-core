@@ -27,6 +27,7 @@ electrification of the mobility sector.
    how-to-guides/index
    explanation/index
    reference/index
+   qa/index
 
 .. grid:: 1 2 2 2
    :gutter: 2
