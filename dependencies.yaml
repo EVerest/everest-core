@@ -14,7 +14,7 @@ pugixml:
   git_tag: v1.15
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_PUGIXML"
 
-# everest-framework, ocpp
+# everest-framework, ocpp, evse_security
 liblog:
   git: https://github.com/EVerest/liblog.git
   git_tag: v0.3.0
