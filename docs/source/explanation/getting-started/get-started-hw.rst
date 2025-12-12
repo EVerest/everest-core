@@ -101,4 +101,4 @@ accordingly.
 
 -----------------------------------
 
-Authors: Cornelius Claussen, Manuel Ziegler
+**Authors**: Cornelius Claussen, Manuel Ziegler

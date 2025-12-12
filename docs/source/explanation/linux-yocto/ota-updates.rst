@@ -245,4 +245,4 @@ user space. Check *CONF_PREEMT* documentation in the Linux kernel.
 
 --------------------------------
 
-Authors: Cornelius Claussen, Manuel Ziegler, Piet Gömpel
+**Authors**: Cornelius Claussen, Manuel Ziegler, Piet Gömpel

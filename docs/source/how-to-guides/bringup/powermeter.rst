@@ -41,4 +41,4 @@ Complete the following steps:
 
 ----
 
-Authors: Cornelius Claussen
+**Authors**: Cornelius Claussen

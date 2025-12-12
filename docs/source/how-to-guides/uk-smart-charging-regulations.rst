@@ -1,7 +1,7 @@
 .. _htg_uk_smart_charging_regulations:
 
 #############################
-UK Smart Charging regulations
+UK Smart Charging Regulations
 #############################
 
 The UK imposes additional requirements that may apply to your product if
@@ -30,7 +30,7 @@ Side Response service.
 Most of the requirements are not in the EVerest domain and will need to
 be implemented by the hardware or non-EVerest software.
 
-Regarding EVerest integration, “Part 2 11 Randomized delays” is
+Regarding EVerest integration, "Part 2 11 Randomized delays" is
 particularly important. EVerest has support for that feature by
 enabling the following config option in the
 :doc:`EvseManager module </reference/modules/EvseManager>`:
@@ -69,7 +69,7 @@ and the EV stops charging. As this is a quite local event, it is already
 random on a bigger scale. The same applies to users plugging in and out.
 
 EVerest does not know about the nature of the power change, if it is
-requested from an external entity (e.g. through OCPP, or a local energy
+requested from an external entity (e.g. through OCPP, or a local energy
 management system) and hence always applies the delay, even if
 unnecessary.
 
@@ -84,3 +84,7 @@ during runtime (e.g. due to user choice).
 no effect on the next delay. This should be used to cancel any delay if
 the external source of the change knows that it is sufficiently
 randomized already.
+
+----
+
+**Authors**: Manuel Ziegler
