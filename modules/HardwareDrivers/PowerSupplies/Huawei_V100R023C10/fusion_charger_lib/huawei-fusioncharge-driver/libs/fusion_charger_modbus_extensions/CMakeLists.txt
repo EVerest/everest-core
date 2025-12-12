@@ -4,7 +4,7 @@ add_library(fusion_charger_modbus_extensions STATIC ${SOURCES})
 target_include_directories(fusion_charger_modbus_extensions PUBLIC include)
 target_link_libraries(fusion_charger_modbus_extensions PUBLIC modbus-server modbus-registers)
 
-if(BUILD_TESTS)
+if(FUSION_CHARGER_LIB_BUILD_TESTS)
   include(GoogleTest)
 
   file(GLOB TEST_SOURCES "tests/*.cpp")

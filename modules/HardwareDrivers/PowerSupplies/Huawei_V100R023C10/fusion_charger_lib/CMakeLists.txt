@@ -8,9 +8,10 @@ else()
 endif()
   
 if(BUILDING_IN_EVEREST)
-  set(BUILD_TESTS ${EVEREST_CORE_BUILD_TESTING})
+  set(FUSION_CHARGER_LIB_BUILD_TESTS ${EVEREST_CORE_BUILD_TESTING})
 else()
   option(BUILD_TESTS "Build tests" OFF)
+  set(FUSION_CHARGER_LIB_BUILD_TESTS ${BUILD_TESTS})
 endif()
 
 if(NOT BUILDING_IN_EVEREST)
@@ -28,7 +29,7 @@ if(NOT BUILDING_IN_EVEREST)
   )
   FetchContent_MakeAvailable(MQTT-C)
 
-  if(BUILD_TESTS)
+  if(FUSION_CHARGER_LIB_BUILD_TESTS)
     FetchContent_Declare(
         googletest
         URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
@@ -36,7 +37,7 @@ if(NOT BUILDING_IN_EVEREST)
     FetchContent_MakeAvailable(googletest)
   endif()
 
-  if(BUILD_TESTS)
+  if(FUSION_CHARGER_LIB_BUILD_TESTS)
     include(CTest)
   endif()
 endif()
