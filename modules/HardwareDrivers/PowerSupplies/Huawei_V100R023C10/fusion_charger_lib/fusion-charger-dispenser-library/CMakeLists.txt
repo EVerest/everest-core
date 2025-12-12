@@ -1,7 +1,3 @@
-if(POLICY CMP0135)
-  cmake_policy(SET CMP0135 NEW)
-endif()
-
 file(GLOB LIB_SOURCES lib/*.cpp)
 add_library(fusion_charger_dispenser STATIC ${LIB_SOURCES})
 target_include_directories(fusion_charger_dispenser PUBLIC include)
