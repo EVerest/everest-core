@@ -22,13 +22,13 @@ Many sections are written like a checklist that you can follow step by step.
 Before we start, we recommend to set up the following development
 environment:
 
--  ☐ Working cross compiler on your PC to do fast updates of your code
+- Working cross compiler on your PC to do fast updates of your code
    (e.g. with *rsync* to the target). On Yocto, use *bitbake -c
    populate_sdk my-image* to generate the SDK.
--  ☐ SSH to the target
--  ☐ Ensure the hardware interfaces to all components are up and running
--  ☐ Include “tmux” in your image
--  ☐ Recommended: Unicode support should work on the target terminal
+- SSH to the target
+- Ensure the hardware interfaces to all components are up and running
+- Include “tmux” in your image
+- Recommended: Unicode support should work on the target terminal
 
 BringUp modules
 ================

@@ -57,31 +57,31 @@ voltage (e.g. 1000 V) and then switch the power supply to export mode
 (rectifier mode, power supply outputs power to the car). Make sure to do
 it in exactly this order:
 
--  ☐ Verify that the reported capabilities are matching the
+- Verify that the reported capabilities are matching the
    manufacturer's specifications for the power supply.
 
--  ☐ Verify that the output voltage is reached within 6 seconds. If it
+- Verify that the output voltage is reached within 6 seconds. If it
    stays on a lower voltage, the power supply driver may “forget” the
    voltage setting when being switched on or off. This needs to be
    fixed. The driver should work independently of the order of setting
    output voltage and switching on/off.
 
--  ☐ Verify the output voltage and current is measured accurately.
+- Verify the output voltage and current is measured accurately.
    Compare against an external voltage meter and a current meter (IEC
    61851-1:2023 CC.6.3 requires +- 10 V for voltage and +-1.5% for
    current or 0.5 A - whichever is more).
 
--  ☐ Verify that there is no overshoot when changing voltage from lowest
+- Verify that there is no overshoot when changing voltage from lowest
    to highest output voltage. This may cause problems in CableCheck
    phase on some EVs.
 
--  ☐ Verify the measured output voltage is correctly reported back to
+- Verify the measured output voltage is correctly reported back to
    EVerest (see measured output voltage in the BringUp module).
 
--  ☐ Verify the measured voltage is reported frequently (e.g. every
+- Verify the measured voltage is reported frequently (e.g. every
    second or more often).
 
--  ☐ Optional: Measure the power factor. Some power supplies have
+- Optional: Measure the power factor. Some power supplies have
    problems with power factor correction under no / light load
    conditions. When charging a real car, no load happens during
    *CableCheck* and *PreCharge* phases.
@@ -92,16 +92,16 @@ choose the minimum voltage that the high mode supports. Otherwise, it
 will take quite long to switch from highest to lowest voltage, since the
 power supply will need to change its mode configuration.
 
--  ☐ Switch the power supply off and verify that the output voltage
+- Switch the power supply off and verify that the output voltage
    drops to 0 V more or less immediately.
 
--  ☐ On power supplies with automatic high/low voltage mode switching:
+- On power supplies with automatic high/low voltage mode switching:
    Switch manually between the highest and lowest voltage setting to
    trigger mode switches. They should be reasonably fast, e.g. < 5
    seconds. Should switching between the modes be necessary during
    charging, it is ok to have a small pause in *CurrentDemand*.
 
--  ☐ Switch on the power supply at e.g. 500 V and exit the bring up
+- Switch on the power supply at e.g. 500 V and exit the bring up
    setup, so EVerest is no longer communicating with the power supply.
    It should switch off after a timeout. (Most power supplies switch off
    within 10-20 seconds after communication loss.)
@@ -129,26 +129,26 @@ An example can be found here:
 Ideally, the BringUp configuration loads both the isolation monitor and
 DC Power supply modules as both are needed to run all tests.
 
--  ☐ Switch on the “Power supply” at 500 V. Click on “Start
+- Switch on the “Power supply” at 500 V. Click on “Start
    measurements”. Verify the isolation monitor sees the 500 V output
    voltage. This is to ensure it is actually connected to the correct
    wires. Verify that new measurements are coming in regularly
    (e.g. every second).
 
--  ☐ Verify that the measured resistance is very high (e.g. 1 MOhm or
+- Verify that the measured resistance is very high (e.g. 1 MOhm or
    so).
 
--  ☐ Connect a 100 kOhm (or other value) resistor from the minus wire to
+- Connect a 100 kOhm (or other value) resistor from the minus wire to
    protective earth. Check how long it takes until the value changes on
    the screen. This should be inline with the specs from the datasheet
    (e.g. <10 seconds for Bender).
 
--  ☐ Test the same with the plus wire.
+- Test the same with the plus wire.
 
--  ☐ Stop the measurements and verify no more measurements are coming
+- Stop the measurements and verify no more measurements are coming
    in.
 
--  ☐ Start the self-test of the IMD and wait for the result (with the
+- Start the self-test of the IMD and wait for the result (with the
    power supply still being on). It should take no more than 10 s or so
    to do the self-testing. Many isolation monitors take a long time to
    complete the self-testing. This may cause time-out problems in
@@ -198,19 +198,19 @@ test with a fresh test setup (relays closed).
 
    There are more requirements in the standard - especially regarding timing.
 
--  ☐ Switch on power supply at 500 V. Set the OVM limit to 550 V and
+- Switch on power supply at 500 V. Set the OVM limit to 550 V and
    start the monitoring. Then, set the power supply to 565 V. The relays
    should open immediately. The point in time when the voltage rises
    above 550 V is t_1 - the time where the coil voltage indicates a
    start of emergency shutdown. Verify with the scope that the time
    between t_1 and t_2 is a maximum of 10 ms (9 ms for detection of
    over-voltage and 1 ms to initate the shutdown.)
--  ☐ Repeat for 825 V (limit) and 840 V (DC output voltage).
--  ☐ Repeat for 935 V (limit) and 950 V (DC output voltage).
--  ☐ Repeat for 1100 V (limit) and 1115 V (DC output voltage). This
+- Repeat for 825 V (limit) and 840 V (DC output voltage).
+- Repeat for 935 V (limit) and 950 V (DC output voltage).
+- Repeat for 1100 V (limit) and 1115 V (DC output voltage). This
    measurement is probably not possible as the power supply is limited
    to 1000 V. It is a test case in table 103 of IEC 61851-23:2023.
--  ☐ Set a limit of 550 V. Switch on the power supply at 500 V. Start
+- Set a limit of 550 V. Switch on the power supply at 500 V. Start
    monitoring. Stop monitoring. Set the DC output voltage to 565 V. The
    relays shall remain closed as the over-voltage monitoring is not
    active.
@@ -225,7 +225,7 @@ complete list) that need to be fulfilled for a real product. Here is the
 list of mandatory functions from IEC 61851-23:2023 6.3.1.1 that should
 be tested early on as they may influence the final design:
 
--  ☐ Verify the timing of the CableCheck phase. EVerest will print some
+- Verify the timing of the CableCheck phase. EVerest will print some
    timing hints on the console. Several cars will timeout and not charge
    if the Cable check takes more than 30 s. Recommendation is to stay
    below 25 s for the complete phase. This may not be achievable with
@@ -233,73 +233,73 @@ be tested early on as they may influence the final design:
    all EVs. Use e.g. BYD EVs to test for the 30 s timeout in
    *CableCheck*.
 
--  ☐ Continuous continuity checking of the protective conductor
+- Continuous continuity checking of the protective conductor
    according to 6.3.1.2: This can be usually fulfilled by opening the
    relays (potentially under load), but you should consider ramping down
    the DC power supply before opening the relays to protect them.
 
--  ☐ Verification that the EV is properly connected to the EV supply
+- Verification that the EV is properly connected to the EV supply
    equipment according to 6.3.1.3: This should be compliant
    automatically if the *evse_board_support* and the safety MCU passed
    the BringUp checks.
 
--  ☐ Energization of the power supply to the EV according to 6.3.1.4:
+- Energization of the power supply to the EV according to 6.3.1.4:
    This should be compliant if the BringUp checks are passed.
 
--  ☐ De-energization of the power supply to the EV according to 6.3.1.5:
+- De-energization of the power supply to the EV according to 6.3.1.5:
    Similar to “Continuous continuity checking of the protective
    conductor”.
 
--  ☐ Maximum allowable current according to 6.3.1.6: This should be
+- Maximum allowable current according to 6.3.1.6: This should be
    compliant if the BringUp checks are passed.
 
--  ☐ DC supply for EV according to 6.3.1.101: This should be compliant
+- DC supply for EV according to 6.3.1.101: This should be compliant
    if the BringUp checks are passed.
 
--  ☐ Measuring current and voltage according to 6.3.1.102: For charging,
+- Measuring current and voltage according to 6.3.1.102: For charging,
    EVerest uses the voltage and current measurements as reported by the
    power supply (not the power meter). This should be compliant if the
    BringUp checks passed for the DC power supply.
 
--  ☐ Latching of the vehicle coupler according to 6.3.1.103: This should
+- Latching of the vehicle coupler according to 6.3.1.103: This should
    be compliant if the BringUp checks are passed.
 
--  ☐ Compatibility check according to 6.3.1.104: This should be
+- Compatibility check according to 6.3.1.104: This should be
    compliant if the BringUp checks are passed.
 
--  ☐ Insulation resistance check before energy transfer according to
+- Insulation resistance check before energy transfer according to
    6.3.1.105: This should be compliant if the BringUp checks are passed.
 
--  ☐ Protection against over-voltage between DC+ and DC– according to
+- Protection against over-voltage between DC+ and DC– according to
    6.3.1.106: This is a quite hard requirement (trigger shut-down in 1
    ms after voltage is above limits for 9 ms). It requires both an
    accurate and fast measurement. This needs to be implemented in the
    safety MCU independently of EVerest.
 
--  ☐ Verification of vehicle connector latching according to 6.3.1.107:
+- Verification of vehicle connector latching according to 6.3.1.107:
    Not applicable for CCS.
 
--  ☐ Control circuit supply integrity according to 6.3.1.108: Hardware
+- Control circuit supply integrity according to 6.3.1.108: Hardware
    requirement.
 
--  ☐ Short-circuit check before energy transfer according to 6.3.1.109:
+- Short-circuit check before energy transfer according to 6.3.1.109:
    Test with a 100 Ohm load resistor connected in *CableCheck* as per
    the norm.
 
--  ☐ User initiated shutdown according to 6.3.1.110: This can be
+- User initiated shutdown according to 6.3.1.110: This can be
    implemented either in the BSP (publish var *request_stop_transaction*
    in interface *evse_board_support*) or use *stop_transaction* command
    in *evse_manager* interface. Both are available via the EVerest API
    modules.
 
--  ☐ Overload protection for parallel conductors (conditional function)
+- Overload protection for parallel conductors (conditional function)
    according to 6.3.1.111: Pure hardware requirement.
 
--  ☐ Voltage limitation between side B live parts (DC+ and DC–) and
+- Voltage limitation between side B live parts (DC+ and DC–) and
    protective conductor according to 6.3.1.112: Hardware requirement -
    choose especially the IMD wisely.
 
--  ☐ Shutdown of EV supply equipment according to 6.3.1.113: This should
+- Shutdown of EV supply equipment according to 6.3.1.113: This should
    be compliant if the BringUp checks are passed.
 
 First milestone: Connect a real car, zero power charging
@@ -363,22 +363,22 @@ Error cases
 There are many error cases that should be tested now. Listing all goes
 beyond the scope of this manual. A few examples that should be tested:
 
--  ☐ Place a 100 kOhm resistor from minus wire to PE. Start a charging
+- Place a 100 kOhm resistor from minus wire to PE. Start a charging
    session. It should also fail in *CableCheck* state.
 
--  ☐ Test short circuit under full load.
+- Test short circuit under full load.
 
--  ☐ Test load dump: Charge at maximum power and open the relays to zero
+- Test load dump: Charge at maximum power and open the relays to zero
    load. Watch the voltage overshoot. The power supplies need to survive
    that multiple times. This does happen in the field with some EVs that
    open their contactors during charging when the onboard controller
    firmware resets.
 
--  ☐ AC under-/over-voltage input
+- AC under-/over-voltage input
 
--  ☐ Over-temperature shutdown
+- Over-temperature shutdown
 
--  ☐ On three-phase AC/DC converters, switch off one phase on the input
+- On three-phase AC/DC converters, switch off one phase on the input
    at full load.
 
 ----
