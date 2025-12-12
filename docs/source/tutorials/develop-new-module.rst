@@ -172,7 +172,7 @@ following content:
 
 ..  code-block:: yaml
 
-    description: The Everest Tutorial Module
+    description: The EVerest Tutorial Module
     config:
       config_tutorial_switch:
         description: A boolean configuration parameter.
@@ -564,7 +564,7 @@ We then run the program (you might need to adjust the line number)::
     break modules/TutorialModule/interface_impl_tutorial_module/interface_tutorial_moduleImpl.cpp:17
     run
 
-After the ``run`` command, you should notify in your Everest terminal that all
+After the ``run`` command, you should notify in your EVerest terminal that all
 modules have now started. You may now again use MQTT Explorer as before and
 send a command call via MQTT, this should hit your set breakpoint with a
 output similar to::
@@ -590,4 +590,4 @@ of our implementation:
 
 --------------------------------
 
-Authors: Valentin Dimov, Manuel Ziegler, Andreas Heinrich, Lukas Mertens, Martin Litre, Piet Gömpel
+**Authors**: Valentin Dimov, Manuel Ziegler, Andreas Heinrich, Lukas Mertens, Martin Litre, Piet Gömpel

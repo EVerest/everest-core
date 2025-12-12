@@ -128,4 +128,4 @@ the EVCC and SECC modules.
 
 ----
 
-Authors: Piet Gömpel
+**Authors**: Piet Gömpel

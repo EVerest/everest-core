@@ -178,4 +178,4 @@ important paths.
 
 ----
 
-Authors: Cornelius Claussen
+**Authors**: Cornelius Claussen

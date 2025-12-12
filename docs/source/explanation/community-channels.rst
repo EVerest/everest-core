@@ -120,4 +120,4 @@ and check out the zoom meetings via
 
 ----
 
-Authors: Manuel Ziegler, Andreas Heinrich
+**Authors**: Manuel Ziegler, Andreas Heinrich

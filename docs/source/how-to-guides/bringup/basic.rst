@@ -393,4 +393,4 @@ the powermeter and the bringup for AC or DC, depending on your use case.
 
 ----
 
-Authors: Cornelius Claussen
+**Authors**: Cornelius Claussen

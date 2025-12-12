@@ -75,6 +75,6 @@ Other debugging tools that may be useful during development phase are:
    The locale should be set to UTF-8 (otherwise BringUp & Qualification tools
    will look weird).
 
---------------------------------
+----
 
-Authors: Cornelius Claussen, Manuel Ziegler
+**Authors**: Cornelius Claussen, Manuel Ziegler

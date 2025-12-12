@@ -15,6 +15,8 @@ Isolation Monitoring Devices
 Bender ISOMETER isoCHA425
 -------------------------
 
+*Hardware Driver Module* :doc:`Bender_isoCHA425HV </reference/modules/Bender_isoCHA425HV>`
+
 You can find more information about the device here:
 
 `<https://www.bender.de/produkte/isolationsueberwachung/isometerr-isocha425hv-mit-agh420-1>`_
@@ -62,6 +64,8 @@ a compatible RFID card.
 NxpNfcFrontendTokenProvider
 ---------------------------
 
+*Hardware Driver Module* :doc:`NxpNfcFrontendTokenProvider </reference/modules/NxpNfcFrontendTokenProvider>`
+
 The variety of hardware supported by the underlying NxpNfcFrontendWrapper
 is limited by the time of writing (only CR663), but can be extended.
 
@@ -72,10 +76,14 @@ accepting the license terms).
 PN532TokenProvider
 ------------------
 
+*Hardware Driver Module* :doc:`PN532TokenProvider </reference/modules/PN532TokenProvider>`
+
 Supports the PN532 integrated tranceiver.
 
 PN7160TokenProvider
 -------------------
+
+*Hardware Driver Module* :doc:`PN7160TokenProvider </reference/modules/PN7160TokenProvider>`
 
 Supports the PNC7160 NFC Controller via the NCI interface.
 No Linux kernel module required.
@@ -88,6 +96,8 @@ TODO: incomplete: Mention DPM1000, InfiPower, Winline?
 
 Huawei R100040Gx
 ----------------
+
+*Hardware Driver Module* :doc:`Huawei_R100040Gx </reference/modules/Huawei_R100040Gx>`
 
 The device is supported by EVerest with the "Huawei_R100040Gx" module.
 
@@ -111,6 +121,8 @@ specify all module addresses in the module configuration.
 Huawei V100R023C10
 ------------------
 
+*Hardware Driver Module* :doc:`TODO Huawei_V100R023C10 </reference/modules/Huawei_V100R023C10>`
+
 This device is supported in EVerest with the Huawei production firmware.
 The setup of this device is complex.
 The development kit with unencrypted firmware is not supported by this driver.
@@ -127,6 +139,8 @@ Most important specs:
 Infypower BEG1K075G
 -------------------
 
+*Hardware Driver Module* :doc:`InfyPower_BEG1K075G </reference/modules/InfyPower_BEG1K075G>`
+
 Supported by EVerest with the "InfyPower_BEG1K075G" module. Stacking of
 multiple modules is not yet supported by the driver.
 
@@ -141,6 +155,8 @@ result in hardware damages. New firmware is available from InfyPower.
 
 UUGreenPower UR1000X0
 ---------------------
+
+*Hardware Driver Module* :doc:`UUGreenPower_UR1000X0 </reference/modules/UUGreenPower_UR1000X0>`
 
 Both the 30 kW and 40 kW uni-directional modules from UUGreenPower are
 fully supported by EVerest with the "UUGreenPower_UR1000X0" module.
@@ -170,6 +186,8 @@ Power meters
 DC: LEM DCBM400/600
 -------------------
 
+*Hardware Driver Module* :doc:`LemDCBM400600 </reference/modules/LemDCBM400600>`
+
 This power meter is fully supported by EVerest a (LemDCBM400600)
 driver.
 
@@ -192,11 +210,15 @@ auto-detects V1 and V2 hardware versions and supports both.
 DC: Acrel DJSF1352
 ------------------
 
+*Hardware Driver Module* :doc:`Acrel_DJSF1352_RN </reference/modules/Acrel_DJSF1352_RN>`
+
 This is a simple DC power meter with no Eichrecht support. It uses
 ModBus/RS485 and requires a SerialCommHub module to work.
 
 DC: AST DC650
 -------------
+
+*Hardware Driver Module* :doc:`AST_DC650 </reference/modules/AST_DC650>`
 
 The driver is implemented in the "AST_DC650" module using the SLIP
 protocol. Eichrecht support is not complete in the driver in the current
@@ -207,6 +229,8 @@ LEM.
 
 DC: DZG GSH01
 -------------
+
+*Hardware Driver Module* :doc:`DZG_GSH01 </reference/modules/DZG_GSH01>`
 
 The driver is implemented in the "DZG GSH01" module using the SLIP
 protocol.
@@ -219,10 +243,14 @@ Eichrecht and OCMF handling are fully implemented.
 DC: Isabellenhütte IEM-DCC
 --------------------------
 
+*Hardware Driver Module* :doc:`IsabellenhuetteIemDcr </reference/modules/IsabellenhuetteIemDcr>`
+
 There is a driver for the Isabellenhütte IEM-DCC meter in EVerest.
 
 AC: GenericPowermeter
 ---------------------
+
+*Hardware Driver Module* :doc:`GenericPowermeter </reference/modules/GenericPowermeter>`
 
 The GenericPowermeter driver has support for most ModBus-based AC power
 meters. It supports a yaml configuration file for register mapping to
@@ -238,6 +266,8 @@ For all non-Eichrecht power metering, this should be easy to adapt.
 AC: Iskra WM3M4 & WM3M4C
 ------------------------
 
+*Hardware Driver Module* :doc:`RsIskraMeter </reference/modules/RsIskraMeter>`
+
 There is a community driver in the "RsIskraMeter" module. Eichrecht
 support is implemented, some fault cases may require additional
 handling.
@@ -246,7 +276,8 @@ handling.
 Power line modems
 -----------------
 
-The following power line modems are supported in the EvseSlac module.
+The following power line modems are supported in the
+:doc:`EvseSlac module </reference/modules/EvseSlac>`.
 The chip is detected automatically, but each chip may require some
 configuration for a real product.
 
@@ -317,6 +348,8 @@ TODO: Incomplete - which BSPs to list here?
 
 PHYTEC phyVERSO controller
 --------------------------
+
+*Hardware Driver Module* :doc:`PhyVersoBSP </reference/modules/PhyVersoBSP>`
 
 phyVERSO is fully supported with all features of the hardware for both
 charging ports (AC and DC).

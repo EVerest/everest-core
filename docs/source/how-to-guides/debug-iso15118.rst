@@ -12,13 +12,13 @@ of EVerest using Wireshark.
 Wireshark plugin
 =================
 
-Using the Wireshark plugin from *dspace*, it is possilbe to decode the
+Using the Wireshark plugin from *dspace*, it is possible to decode the
 EXI messages sent over the interface of the PLC modem. The plugin uses
 the same EXI decoder as EVerest.
 
 It does even decrypt TLS-encrypted communication as EVerest sends the
 keys to decrypt the packages as UDP broadcast, so the plugin can make
-use of it. It is possilbe to live-view traffic between EV and EVSE and
+use of it. It is possible to live-view traffic between EV and EVSE and
 to decrypt captured traffic after the fact.
 
 Install
@@ -135,4 +135,4 @@ You can now view the decoded messages, e.g.
 
 ----
 
-Authors: Cornelius Claussen
+**Authors**: Cornelius Claussen

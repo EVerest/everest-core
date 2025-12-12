@@ -10,8 +10,8 @@ EVerest-related security aspects
 ================================
 
 - Do not expose the main MQTT broker on any interface (e.g. PLC,
-   Ethernet, …). We recommend using a unix domain socket between
-   EVerest and Mosquitto.
+  Ethernet, ...). We recommend using a unix domain socket between
+  EVerest and Mosquitto.
 
 In Mosquitto, config file add the line:
 
@@ -27,22 +27,22 @@ In the EVerest config file, add the following to the settings section:
     mqtt_broker_socket_path: /tmp/mosquitto.socket
 
 - If a part of an MQTT API should be exposed, e.g. to a mobile app on
-   the same wireless LAN, use mutually authenticated TLS for the MQTT
-   connection and run a separate Mosquitto instance. Bridge only those
-   API topics strictly needed (and nothing from the “everest” topic)
-   between the two Mosquitto instances. Shutdown the public Mosquitto
-   whenever it is not needed.
+  the same wireless LAN, use mutually authenticated TLS for the MQTT
+  connection and run a separate Mosquitto instance. Bridge only those
+  API topics strictly needed (and nothing from the “everest” topic)
+  between the two Mosquitto instances. Shutdown the public Mosquitto
+  whenever it is not needed.
 - Use OCPP security level 3 for the CSMS connection.
 - Use a hardware security module, e.g. TPM2 for generating and
-   securing private keys.
+  securing private keys.
 - Don't use the *admin-panel* on the product and ensure EVerest does
-   not listen on port 8849. In the Yocto recipes, this is disabled by
-   default. Take special care if you use another build system. Set
-   “EVEREST_ENABLE_ADMIN_PANEL_BACKEND=OFF” in cmake.
+  not listen on port 8849. In the Yocto recipes, this is disabled by
+  default. Take special care if you use another build system. Set
+  "EVEREST_ENABLE_ADMIN_PANEL_BACKEND=OFF2 in cmake.
 - Do not run EVerest modules as root user. Create a low privilege
-   user, that has access only to what is needed (via filesystem
-   permissions, group memberships, …). In Yocto, you can do this in your
-   image file similar to this:
+  user, that has access only to what is needed (via filesystem
+  permissions, group memberships, ...). In Yocto, you can do this in your
+  image file similar to this:
 
 .. code-block::
 
@@ -100,34 +100,34 @@ Following, we created an unordered and incomplete list of things that
 you should consider during the development process:
 
 - Use secure boot and make sure that you do a full lock-down on
-   production units that prevents any unsigned code to boot.
+  production units that prevents any unsigned code to boot.
 - Disable *bootloader* console on production units.
 - Disable any UART console login.
 - Disable or lock down all programmer interfaces such as SWD or JTAG
-   in production units.
+  in production units.
 - Don't expose USB ports unless you really know what you are doing. A
-   quite common attack vector for charging stations is to plug in a USB
-   dongle and reconfigure / update the firmware - or attach a keyboard …
+  quite common attack vector for charging stations is to plug in a USB
+  dongle and reconfigure / update the firmware - or attach a keyboard …
 - Evaluate if the rootfs or special partitions need encryption.
 - Use a secure vault for all private keys on the device
-   (e.g. TPM2.0).
+  (e.g. TPM2.0).
 - Make sure your PKI for secure boot and OTA is properly maintained.
-   If you loose the private root key, the hardware in the field is lost.
+  If you loose the private root key, the hardware in the field is lost.
 - Use signed updates. Evaluate if encryption is needed.
 - Use signed updates also for all other components, such as the
-   safety MCU.
+  safety MCU.
 - Be able to OTA-update all components in the charger through the
-   normal OTA package - also third party components if they have a
-   firmware update feature.
+  normal OTA package - also third party components if they have a
+  firmware update feature.
 - Network interfaces: Verify that only services being absolutely
-   necessary are accessible on a network interface.
+  necessary are accessible on a network interface.
 - Use mTLS with TPM if you have a custom cloud connection.
 - Lock down all maintenance / service / repair ports.
 - Maintain the complete Linux system and provide regular updates.
 - Don't use default passwords for anything - or better: Don't use
-   passwords at all.
+  passwords at all.
 - Use software and hardware watchdogs.
 
 ----
 
-Authors: Cornelius Claussen
+**Authors**: Cornelius Claussen

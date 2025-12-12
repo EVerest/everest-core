@@ -13,6 +13,7 @@ Linux and Yocto in the following sections:
     setting-up-linux-os
     building-yocto
     ota-updates
+    partitioning-schemes-for-rauc-ota
 
 Make sure to check out the :doc:`How-to-guide on cross-compilation </how-to-guides/yocto-cross-compilation>`
 for a step-by-step guide on how to cross-compile EVerest for a Yocto-based Linux system.

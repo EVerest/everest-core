@@ -435,4 +435,4 @@ You can also use the existing config examples as a guide.
 
 ----
 
-Authors: Piet Gömpel
+**Authors**: Piet Gömpel

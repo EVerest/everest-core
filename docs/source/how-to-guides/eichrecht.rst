@@ -25,7 +25,7 @@ Requirements for power meter hardware and EVerest driver:
    call *stop_transaction(last_uuid)* to try to close the ongoing
    transaction. The power meter driver shall return the signed meter
    value for the transaction and close it. After that, it will call
-   *stop_transction(“”)* with an empty argument. Then, the power meter
+   *stop_transaction("")* with an empty argument. Then, the power meter
    driver shall clear all pending transactions in the power meter, if
    any.
 
@@ -37,3 +37,7 @@ Requirements for power meter hardware and EVerest driver:
 -  EvseManager should be configured to stop the charging session on
    power meter failures (ensure that fail_on_powermeter_errors is set to
    ``true``).
+
+----
+
+**Authors**: Cornelius Claussen, Manuel Ziegler

@@ -262,7 +262,7 @@
 {### Renders a single impl ###}
 {%  macro impl(name, data) %}
 {%      set interface_target = 'everest_interfaces_' + data.interface %}
-**{{ name }}**:{{ ref(interface_target, data.interface) }}
+**{{ name }}**: {{ ref(interface_target, data.interface) }}
  {{ data.description }}
 {%      if 'documentation' in data %}
 {{ documentation(data['documentation']) | indent(1, True) -}}
@@ -302,7 +302,7 @@
 {%          set conns = min_conns|string %}
 {%      endif %}
 {%      set interface_target = 'everest_interfaces_' + data.interface %}
-**{{ name }}**:{{ ref(interface_target, data.interface) }} {{conns}}
+**{{ name }}**: {{ ref(interface_target, data.interface) }} {{conns}}
 {%      set ignore_keys = ['interface'] %}
 {%      set mapping_result = mapping( name, data.items(), ignore_keys, False) %}
 {%      if mapping_result != '' %}

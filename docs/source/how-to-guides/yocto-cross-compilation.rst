@@ -124,11 +124,11 @@ After that, you can start your cross-compiled EVerest via:
 
    LD_LIBRARY_PATH=/var/everest/lib:$LD_LIBRARY_PATH /var/everest/bin/manager --prefix /var/everest/ --config /path/to/your/config
 
-----
-
 .. note::
 
    With ``--prefix`` you specify the path of the EVerest installation. Some modules
    may use this path to find their resources (e.g. certificates, config files, etc.).
 
-Authors: Cornelius Claussen, James Chapman
+----
+
+**Authors**: Cornelius Claussen, James Chapman
