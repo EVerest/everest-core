@@ -3,7 +3,6 @@ find_package(OpenSSL REQUIRED)
 file(GLOB_RECURSE MODBUS_SSL_SOURCES "src/*.cpp")
 
 add_library(modbus-ssl STATIC ${MODBUS_SSL_SOURCES})
-ev_register_library_target(modbus-ssl)
 
 target_link_libraries(
     modbus-ssl PUBLIC modbus-base OpenSSL::SSL OpenSSL::Crypto

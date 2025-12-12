@@ -8,4 +8,7 @@ add_library(
 )
 target_include_directories(modbus-client PUBLIC include)
 target_link_libraries(modbus-client PUBLIC modbus-base)
-ev_register_library_target(modbus-client)
+
+if(FUSION_CHARGER_LIB_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
