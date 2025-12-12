@@ -44,7 +44,7 @@ image you are using.
 .. tip::
 
    You can download an SDK for the phyVERSO board here:
-   [SDK BaseCamp/phyVERSO](http://pionix-update.de/phyverso/1.0.0/phytec-ampliphy-rauc-glibc-x86_64-phyverso-basecamp-image-aarch64-toolchain-BSP-Yocto-Ampliphy-AM62x-PD23.2.1-phyVERSO-EVCS.sh).
+   http://pionix-update.de/phyverso/1.0.0/phytec-ampliphy-rauc-glibc-x86_64-phyverso-basecamp-image-aarch64-toolchain-BSP-Yocto-Ampliphy-AM62x-PD23.2.1-phyVERSO-EVCS.sh
    To install the SDK, follow the steps below.
 
 Whether you have created an SDK by yourself or are supplied with one,
