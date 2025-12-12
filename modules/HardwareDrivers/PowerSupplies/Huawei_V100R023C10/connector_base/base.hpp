@@ -89,6 +89,7 @@ private:
     void init_capabilities();
 
     std::string log_prefix;
+    std::string telemetry_subtopic;
 
     std::atomic<bool> module_placeholder_allocation_failure_raised;
 

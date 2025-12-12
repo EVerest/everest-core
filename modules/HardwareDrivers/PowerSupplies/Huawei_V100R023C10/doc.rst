@@ -22,6 +22,63 @@ For the everest measurements two options are available:
 - Using a carside powermeter (ideally the powermeter that is connected to the EvseManager's ``powermeter_car_side``)
 - Using a carside powermeter but during cable check using an ``OVM`` (see ``HACK_use_ovm_while_cable_check`` config option)
 
+Telemetry
+=========
+
+The module can publish telemetry data on a specified mqtt base topic, set via the config option ``telemetry_topic_prefix``.
+The concrete telemetry data is published only when the data changes to reduce mqtt traffic.
+
+The data published looks like this (example for base topic ``base_topic``):
+
+``base_topic/connector/1``
+
+.. code-block:: json
+
+    {
+      "max_rated_psu_current": 100.0,
+      "max_rated_psu_voltage": 1000.0,
+      "min_rated_psu_current": 1.0,
+      "min_rated_psu_voltage": 100.0,
+      "psu_port_available": "AVAILABLE",
+      "rated_output_power_psu": 60000.0
+    }
+
+``base_topic/connector/1/dispenser_to_psu``
+
+.. code-block:: json
+
+    {
+      "bsp_event": "PowerOn",
+      "everest_mode": "Export",
+      "everest_phase": "Charging",
+      "export_current": 20.0,
+      "export_voltage": 400.0,
+      "output_current": 0.0,
+      "output_voltage": 0.0,
+      "upstream_voltage": 0.0
+    }
+
+``base_topic/psu``
+
+.. code-block:: json
+
+    {
+      "ac_input_current_a": 10.0,
+      "ac_input_current_b": 10.5,
+      "ac_input_current_c": 9.5,
+      "ac_input_voltage_a": 230.0,
+      "ac_input_voltage_b": 231.0,
+      "ac_input_voltage_c": 229.0,
+      "psu_running_mode": "RUNNING",
+      "total_historic_input_energy": 100000.0
+    }
+
+The units are SI units (Amps, Volts, Watts, Watt-hours).
+
+.. note::
+
+    All telemetry values can be null, indicating that no value has been received or sent yet.
+
 Power Supply Mock
 ==================
 
