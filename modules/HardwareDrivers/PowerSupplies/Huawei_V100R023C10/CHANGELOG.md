@@ -7,10 +7,10 @@
 - The module can now publish telemetry data on a specified mqtt base topic, set via the config option `telemetry_topic_prefix`. The concrete telemetry data is published only when the data changes to reduce mqtt traffic. The telemetry data is published as json objects per dispenser and per connector. See the module documentation for details.
 - The module now supports publishing some specific BSP errors to the PSU as dispenser and connector alarms:
   - Per dispenser:
-    - `evse_board_support/DoorOpen` published as Door status alarm to the PSU
-    - `evse_board_support/Water` published as Water alarm
+    - `evse_board_support/EnclosureOpen` published as Door status alarm to the PSU
+    - `evse_board_support/WaterIngressDetected` published as Water alarm
     - `evse_board_support/MREC8EmergencyStop` published as EPO alarm
-    - `evse_board_support/Tilted` published as Tilt alarm
+    - `evse_board_support/TiltDetected` published as Tilt alarm
   - Per connector:
     - `evse_board_support/MREC17EVSEContactorFault` published as DC output contactor fault
 

@@ -99,13 +99,13 @@ This driver supports publishing a few BSP errors to the Power supply unit as Dis
 +-------------------------------------------------+---------------------------+---------------+
 |                Everest BSP Error                | PSU Modbus Register name  |     Scope     |
 +=================================================+===========================+===============+
-| ``evse_board_support/DoorOpen``                 | Door status alarm         | Dispenser     |
+| ``evse_board_support/EnclosureOpen``            | Door status alarm         | Dispenser     |
 +-------------------------------------------------+---------------------------+---------------+
-| ``evse_board_support/Water``                    | Water alarm               | Dispenser     |
+| ``evse_board_support/WaterIngressDetected``     | Water alarm               | Dispenser     |
 +-------------------------------------------------+---------------------------+---------------+
 | ``evse_board_support/MREC8EmergencyStop``       | EPO alarm                 | Dispenser     |
 +-------------------------------------------------+---------------------------+---------------+
-| ``evse_board_support/Tilted``                   | Tilt alarm                | Dispenser     |
+| ``evse_board_support/TiltDetected``             | Tilt alarm                | Dispenser     |
 +-------------------------------------------------+---------------------------+---------------+
 | ``evse_board_support/MREC17EVSEContactorFault`` | DC output contactor fault | Per Connector |
 +-------------------------------------------------+---------------------------+---------------+

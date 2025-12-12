@@ -488,11 +488,11 @@ void Dispenser::init() {
         [](const double& kwh) { return kwh * 1000.0; });
 
     // publish alarms
-    dispenser_config.telemetry_manager->add_subtopic(DISPENSER_TELEMETRY_ALARMS_SUBTOPIC);
+    dispenser_config.telemetry_publisher->add_subtopic(DISPENSER_TELEMETRY_ALARMS_SUBTOPIC);
 
     for (auto alarm : get_all_dispenser_alarms()) {
-        dispenser_config.telemetry_manager->initialize_datapoint(DISPENSER_TELEMETRY_ALARMS_SUBTOPIC,
-                                                                 dispenser_alarm_to_telemetry_datapoint(alarm), false);
+        dispenser_config.telemetry_publisher->initialize_datapoint(
+            DISPENSER_TELEMETRY_ALARMS_SUBTOPIC, dispenser_alarm_to_telemetry_datapoint(alarm), false);
     }
 }
 
@@ -536,8 +536,8 @@ void Dispenser::trigger_unsolicited_report() {
 void Dispenser::set_dispenser_alarm(DispenserAlarms alarm, bool active) {
     dispenser_alarms[alarm] = active;
 
-    dispenser_config.telemetry_manager->datapoint_changed(DISPENSER_TELEMETRY_ALARMS_SUBTOPIC,
-                                                          dispenser_alarm_to_telemetry_datapoint(alarm), active);
+    dispenser_config.telemetry_publisher->datapoint_changed(DISPENSER_TELEMETRY_ALARMS_SUBTOPIC,
+                                                            dispenser_alarm_to_telemetry_datapoint(alarm), active);
 
     trigger_unsolicited_report();
 }
