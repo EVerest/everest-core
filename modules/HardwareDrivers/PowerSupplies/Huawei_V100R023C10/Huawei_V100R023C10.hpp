@@ -21,7 +21,9 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include "telemetry_manager_everest.hpp"
 #include <dispenser.hpp>
+#include <set>
 #include <vector>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -43,12 +45,14 @@ struct Conf {
     bool allow_insecure_goose;
     bool verify_secure_goose;
     std::string upstream_voltage_source;
+    std::string telemetry_topic_prefix;
 };
 
 class Huawei_V100R023C10 : public Everest::ModuleBase {
 public:
     Huawei_V100R023C10() = delete;
-    Huawei_V100R023C10(const ModuleInfo& info, std::unique_ptr<power_supply_DCImplBase> p_connector_1,
+    Huawei_V100R023C10(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
+                       std::unique_ptr<power_supply_DCImplBase> p_connector_1,
                        std::unique_ptr<power_supply_DCImplBase> p_connector_2,
                        std::unique_ptr<power_supply_DCImplBase> p_connector_3,
                        std::unique_ptr<power_supply_DCImplBase> p_connector_4,
@@ -57,6 +61,7 @@ public:
                        std::vector<std::unique_ptr<powermeterIntf>> r_carside_powermeter,
                        std::vector<std::unique_ptr<over_voltage_monitorIntf>> r_over_voltage_monitor, Conf& config) :
         ModuleBase(info),
+        mqtt(mqtt_provider),
         p_connector_1(std::move(p_connector_1)),
         p_connector_2(std::move(p_connector_2)),
         p_connector_3(std::move(p_connector_3)),
@@ -67,6 +72,7 @@ public:
         r_over_voltage_monitor(std::move(r_over_voltage_monitor)),
         config(config){};
 
+    Everest::MqttProvider& mqtt;
     const std::unique_ptr<power_supply_DCImplBase> p_connector_1;
     const std::unique_ptr<power_supply_DCImplBase> p_connector_2;
     const std::unique_ptr<power_supply_DCImplBase> p_connector_3;
@@ -93,12 +99,17 @@ public:
     std::vector<power_supply_DCImplBase*> implementations = {p_connector_1.get(), p_connector_2.get(),
                                                              p_connector_3.get(), p_connector_4.get()};
 
+    // List of sets of active DispenserAlarms for each BSP module
+    std::vector<std::set<DispenserAlarms>> dispenser_alarms_per_bsp;
+
     enum class UpstreamVoltageSource {
         IMD,
         OVM,
     };
     // PSU upstream voltage source
     UpstreamVoltageSource upstream_voltage_source;
+
+    std::shared_ptr<fusion_charger::telemetry::TelemetryManagerBase> telemetry_manager;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:

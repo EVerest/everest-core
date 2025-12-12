@@ -80,6 +80,15 @@ std::tuple<bool, std::optional<ErrorDefinition>> parse_error_type(const std::str
     if (error_type == "MREC26CutCable") {
         return {raise, error_definitions::evse_board_support_MREC26CutCable};
     }
+    if (error_type == "TiltDetected") {
+        return {raise, error_definitions::evse_board_support_TiltDetected};
+    }
+    if (error_type == "WaterIngressDetected") {
+        return {raise, error_definitions::evse_board_support_WaterIngressDetected};
+    }
+    if (error_type == "EnclosureOpen") {
+        return {raise, error_definitions::evse_board_support_EnclosureOpen};
+    }
     if (error_type == "ac_rcd_MREC2GroundFailure") {
         return {raise, error_definitions::ac_rcd_MREC2GroundFailure};
     }

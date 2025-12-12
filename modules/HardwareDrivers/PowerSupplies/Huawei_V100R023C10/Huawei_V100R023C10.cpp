@@ -38,6 +38,21 @@ static std::vector<ConnectorBase*> get_connector_bases(Huawei_V100R023C10* mod, 
     return connector_bases;
 }
 
+static std::string get_everest_error_for_dispenser_alarm(DispenserAlarms alarm) {
+    switch (alarm) {
+    case DispenserAlarms::DOOR_STATUS_ALARM:
+        return "evse_board_support/EnclosureOpen";
+    case DispenserAlarms::WATER_ALARM:
+        return "evse_board_support/WaterIngressDetected";
+    case DispenserAlarms::EPO_ALARM:
+        return "evse_board_support/MREC8EmergencyStop";
+    case DispenserAlarms::TILT_ALARM:
+        return "evse_board_support/TiltDetected";
+    default:
+        throw std::runtime_error("Unknown DispenserAlarm enum value");
+    }
+}
+
 void Huawei_V100R023C10::init() {
     this->communication_fault_raised = false;
     this->psu_not_running_raised = false;
@@ -76,6 +91,14 @@ void Huawei_V100R023C10::init() {
             std::runtime_error("OVMs are necessary but number of OVMs does not match number of connectors in use"));
     }
 
+    if (config.telemetry_topic_prefix.empty()) {
+        this->telemetry_manager = std::make_shared<fusion_charger::telemetry::TelemetryManagerNull>();
+    } else {
+        this->telemetry_manager = std::make_shared<TelementryManagerEverest>(
+            [this](const std::string& topic, const nlohmann::json& data) { mqtt.publish(topic, data.dump()); },
+            config.telemetry_topic_prefix);
+    }
+
     // Initialize all connectors. After that the config was loaded and we can initialize the dispenser
     for (int i = 0; i < number_of_connectors_used; i++) {
         invoke_init(*implementations[i]);
@@ -98,6 +121,8 @@ void Huawei_V100R023C10::init() {
     dispenser_config.module_placeholder_allocation_timeout =
         std::chrono::seconds(config.module_placeholder_allocation_timeout_s);
 
+    dispenser_config.telemetry_manager = this->telemetry_manager;
+
     if (config.tls_enabled) {
         tls_util::MutualTlsClientConfig mutual_tls_config;
         mutual_tls_config.ca_cert = config.psu_ca_cert;
@@ -118,6 +143,47 @@ void Huawei_V100R023C10::init() {
     }
 
     dispenser = std::make_unique<Dispenser>(dispenser_config, connector_configs, log);
+
+    // Subscribe to BSP Dispenser Alarms
+    for (int i = 0; i < number_of_connectors_used; i++) {
+        dispenser_alarms_per_bsp.push_back(std::set<DispenserAlarms>{});
+    }
+    for (int bsp_idx = 0; bsp_idx < number_of_connectors_used; bsp_idx++) {
+        for (auto& alarm : get_all_dispenser_alarms()) {
+            std::string everest_error = get_everest_error_for_dispenser_alarm(alarm);
+
+            r_board_support[bsp_idx]->subscribe_error(
+                everest_error,
+                [this, bsp_idx, alarm, everest_error](const ::Everest::error::Error& e) {
+                    // Error raised
+                    auto& alarms = dispenser_alarms_per_bsp[bsp_idx];
+                    if (alarms.find(alarm) == alarms.end()) {
+                        alarms.insert(alarm);
+                        EVLOG_info << "Raising dispenser alarm due to BSP error " << everest_error;
+                        dispenser->set_dispenser_alarm(alarm, true);
+                    }
+                },
+                [this, bsp_idx, alarm, everest_error](const ::Everest::error::Error& e) {
+                    // Error cleared
+                    auto& alarms = dispenser_alarms_per_bsp[bsp_idx];
+                    if (alarms.find(alarm) != alarms.end()) {
+                        alarms.erase(alarm);
+                        // check if any other BSP raised this alarm
+                        bool alarm_still_raised = false;
+                        for (const auto& other_alarms : dispenser_alarms_per_bsp) {
+                            if (other_alarms.find(alarm) != other_alarms.end()) {
+                                alarm_still_raised = true;
+                                break;
+                            }
+                        }
+                        if (not alarm_still_raised) {
+                            EVLOG_info << "Clearing dispenser alarm as all BSPs cleared error " << everest_error;
+                            dispenser->set_dispenser_alarm(alarm, false);
+                        }
+                    }
+                });
+        }
+    }
 }
 
 void Huawei_V100R023C10::ready() {

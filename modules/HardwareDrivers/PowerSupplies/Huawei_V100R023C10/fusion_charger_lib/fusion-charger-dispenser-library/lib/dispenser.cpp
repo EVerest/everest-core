@@ -12,10 +12,18 @@ using namespace fusion_charger::modbus_driver::raw_registers;
 using namespace fusion_charger::modbus_driver;
 using namespace fusion_charger::modbus_extensions;
 
+const std::string Dispenser::DISPENSER_TELEMETRY_ALARMS_SUBTOPIC = "dispenser/published_alarms";
+
+std::vector<DispenserAlarms> get_all_dispenser_alarms() {
+    return {DispenserAlarms::DOOR_STATUS_ALARM, DispenserAlarms::WATER_ALARM, DispenserAlarms::EPO_ALARM,
+            DispenserAlarms::TILT_ALARM};
+}
+
 void Dispenser::modbus_unsolicitated_event_thread_run() {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     while (psu_communication_is_ok()) {
         try {
+            std::lock_guard<std::mutex> lock(registry_mutex);
             auto req = registry->unsolicitated_report();
             if (req.has_value()) {
                 server->send_unsolicitated_report(req.value(), std::chrono::seconds(3));
@@ -178,8 +186,9 @@ Dispenser::Dispenser(DispenserConfig dispenser_config, std::vector<ConnectorConf
     // number connectors from 1 to n
     for (size_t local_connector_number = 1; local_connector_number <= connector_configs.size();
          local_connector_number++) {
-        std::shared_ptr<Connector> connector = std::make_shared<Connector>(
-            connector_configs[local_connector_number - 1], local_connector_number, dispenser_config, log);
+        std::shared_ptr<Connector> connector =
+            std::make_shared<Connector>(connector_configs[local_connector_number - 1], local_connector_number,
+                                        dispenser_config, log, [this]() { do_unsolicitated_report_now(); });
         connectors.push_back(connector);
     }
 }
@@ -305,6 +314,8 @@ PSURunningMode Dispenser::get_psu_running_mode() {
 }
 
 void Dispenser::init() {
+    std::lock_guard<std::mutex> lock(registry_mutex);
+
     log.info << "Using host, port and interface: " + dispenser_config.psu_host + ":" +
                     std::to_string(dispenser_config.psu_port) + " % " + dispenser_config.eth_interface;
 
@@ -345,6 +356,18 @@ void Dispenser::init() {
     dispenser_registers_config.software_version = dispenser_config.software_version;
     dispenser_registers_config.esn = dispenser_config.esn;
     dispenser_registers_config.connector_count = dispenser_config.charging_connector_count;
+    dispenser_registers_config.get_door_status_alarm = [this]() {
+        return get_dispenser_alarm_state(DispenserAlarms::DOOR_STATUS_ALARM);
+    };
+    dispenser_registers_config.get_water_alarm = [this]() {
+        return get_dispenser_alarm_state(DispenserAlarms::WATER_ALARM);
+    };
+    dispenser_registers_config.get_epo_alarm = [this]() {
+        return get_dispenser_alarm_state(DispenserAlarms::EPO_ALARM);
+    };
+    dispenser_registers_config.get_tilt_alarm = [this]() {
+        return get_dispenser_alarm_state(DispenserAlarms::TILT_ALARM);
+    };
 
     dispenser_registers.emplace(dispenser_registers_config);
 
@@ -436,6 +459,39 @@ void Dispenser::init() {
     modbus_unsolicitated_event_thread = std::thread([this]() { modbus_unsolicitated_event_thread_run(); });
 
     goose_receiver_thread = std::thread([this]() { goose_receiver_thread_run(); });
+
+    // add telemetry callbacks
+    dispenser_config.telemetry_manager->add_subtopic("psu");
+
+    dispenser_config.telemetry_manager->register_complex_register_data_provider("psu", "ac_input_voltage_a",
+                                                                                &psu_registers->ac_input_voltage_a);
+    dispenser_config.telemetry_manager->register_complex_register_data_provider("psu", "ac_input_voltage_b",
+                                                                                &psu_registers->ac_input_voltage_b);
+    dispenser_config.telemetry_manager->register_complex_register_data_provider("psu", "ac_input_voltage_c",
+                                                                                &psu_registers->ac_input_voltage_c);
+
+    dispenser_config.telemetry_manager->register_complex_register_data_provider("psu", "ac_input_current_a",
+                                                                                &psu_registers->ac_input_current_a);
+    dispenser_config.telemetry_manager->register_complex_register_data_provider("psu", "ac_input_current_b",
+                                                                                &psu_registers->ac_input_current_b);
+    dispenser_config.telemetry_manager->register_complex_register_data_provider("psu", "ac_input_current_c",
+                                                                                &psu_registers->ac_input_current_c);
+
+    dispenser_config.telemetry_manager->register_complex_register_data_provider_enum<PSURunningMode>(
+        "psu", "psu_running_mode", &psu_registers->psu_running_mode,
+        [](const PSURunningMode& mode) { return SettingPowerUnitRegisters::psu_running_mode_to_string(mode); });
+
+    dispenser_config.telemetry_manager->register_complex_register_data_provider<double>(
+        "psu", "total_historic_input_energy", &psu_registers->total_historic_input_energy,
+        [](const double& kwh) { return kwh * 1000.0; });
+
+    // publish alarms
+    dispenser_config.telemetry_manager->add_subtopic(DISPENSER_TELEMETRY_ALARMS_SUBTOPIC);
+
+    for (auto alarm : get_all_dispenser_alarms()) {
+        dispenser_config.telemetry_manager->initialize_datapoint(DISPENSER_TELEMETRY_ALARMS_SUBTOPIC,
+                                                                 dispenser_alarm_to_telemetry_datapoint(alarm), false);
+    }
 }
 
 void Dispenser::update_psu_communication_state() {
@@ -468,4 +524,45 @@ bool Dispenser::is_stop_requested() {
 
 Dispenser::~Dispenser() {
     stop();
+}
+
+void Dispenser::do_unsolicitated_report_now() {
+    std::lock_guard<std::mutex> lock(registry_mutex);
+    if (registry.has_value()) {
+        auto req = registry->unsolicitated_report();
+        if (req.has_value() && server.has_value()) {
+            server->send_unsolicitated_report(req.value(), std::chrono::seconds(3));
+        }
+    }
+}
+
+void Dispenser::set_dispenser_alarm(DispenserAlarms alarm, bool active) {
+    dispenser_alarms[alarm] = active;
+
+    dispenser_config.telemetry_manager->datapoint_changed(DISPENSER_TELEMETRY_ALARMS_SUBTOPIC,
+                                                          dispenser_alarm_to_telemetry_datapoint(alarm), active);
+
+    do_unsolicitated_report_now();
+}
+
+bool Dispenser::get_dispenser_alarm_state(DispenserAlarms alarm) {
+    if (this->dispenser_alarms.find(alarm) == this->dispenser_alarms.end()) {
+        this->dispenser_alarms[alarm] = false;
+    }
+    return this->dispenser_alarms[alarm].load();
+}
+
+std::string Dispenser::dispenser_alarm_to_telemetry_datapoint(DispenserAlarms alarm) {
+    switch (alarm) {
+    case DispenserAlarms::DOOR_STATUS_ALARM:
+        return "door_status_alarm";
+    case DispenserAlarms::WATER_ALARM:
+        return "water_alarm";
+    case DispenserAlarms::EPO_ALARM:
+        return "epo_alarm";
+    case DispenserAlarms::TILT_ALARM:
+        return "tilt_alarm";
+    default:
+        throw std::runtime_error("Unknown dispenser alarm");
+    }
 }

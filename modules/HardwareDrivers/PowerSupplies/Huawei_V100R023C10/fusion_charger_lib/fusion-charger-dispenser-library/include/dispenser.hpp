@@ -22,6 +22,7 @@
 #include "connector.hpp"
 #include "connector_goose_sender.hpp"
 #include "state.hpp"
+#include "telemetry.hpp"
 
 using namespace fusion_charger::modbus_driver::raw_registers;
 using namespace fusion_charger::modbus_driver;
@@ -44,6 +45,16 @@ typedef fusion_charger::modbus_driver::raw_registers::SettingPowerUnitRegisters:
 // This is necessary to avoid having several error events with the same
 // category and subcategory
 typedef std::set<ErrorEvent, ErrorEventComparator> ErrorEventSet;
+
+enum class DispenserAlarms {
+    DOOR_STATUS_ALARM,
+    WATER_ALARM,
+    EPO_ALARM,
+    TILT_ALARM,
+};
+
+/// @brief Get a list of all possible DispenserAlarms
+std::vector<DispenserAlarms> get_all_dispenser_alarms();
 
 class Dispenser {
 private:
@@ -76,12 +87,20 @@ private:
     std::optional<PowerUnitRegisters> psu_registers;
     std::optional<ErrorRegisters> error_registers;
 
+    // Raised errors by the PSU
     ErrorEventSet raised_errors = {};
     std::mutex raised_error_mutex;
 
+    std::unordered_map<DispenserAlarms, std::atomic<bool>> dispenser_alarms;
+
     std::optional<SettingPowerUnitRegisters::PSURunningMode> psu_running_mode = std::nullopt;
 
+    // mutex to call functions on the registry from multiple threads
+    std::mutex registry_mutex;
+
     const int MAX_NUMBER_OF_CONNECTORS = 4;
+
+    static const std::string DISPENSER_TELEMETRY_ALARMS_SUBTOPIC;
 
     // true if the psu wrote its mac address via modbus
     bool psu_mac_received = false;
@@ -99,6 +118,11 @@ private:
     void goose_receiver_thread_run();
     bool psu_communication_is_ok();
     bool is_stop_requested();
+
+    bool get_dispenser_alarm_state(DispenserAlarms alarm);
+
+    /// @brief get the telemetry datapoint key for a dispenser alarm
+    std::string dispenser_alarm_to_telemetry_datapoint(DispenserAlarms alarm);
 
 public:
     Dispenser(DispenserConfig dispenser_config, std::vector<ConnectorConfig> connector_configs,
@@ -135,4 +159,13 @@ public:
         // Connector numbers start at 1
         return connectors[local_connector_number - 1];
     }
+
+    /// @brief Trigger an unsolicitated report to be sent now.
+    void do_unsolicitated_report_now();
+
+    /// @brief Set state for a dispenser alarm. Also triggers an immediate
+    /// unsolicitated report.
+    /// @param alarm the alarm to set
+    /// @param active true to set the alarm, false to clear it
+    void set_dispenser_alarm(DispenserAlarms alarm, bool active);
 };
