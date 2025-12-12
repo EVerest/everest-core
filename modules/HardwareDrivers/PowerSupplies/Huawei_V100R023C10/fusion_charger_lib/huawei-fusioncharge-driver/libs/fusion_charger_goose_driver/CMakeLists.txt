@@ -4,7 +4,7 @@ add_library(fusion_charger_goose_driver STATIC ${SOURCES})
 target_include_directories(fusion_charger_goose_driver PUBLIC include)
 target_link_libraries(fusion_charger_goose_driver PUBLIC goose)
 
-if(BUILD_TESTING)
+if(BUILD_TESTS)
   include(GoogleTest)
 
   file(GLOB TEST_SOURCES "tests/*.cpp")

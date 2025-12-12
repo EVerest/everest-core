@@ -7,3 +7,7 @@ add_library(
         ${MODBUS_BASE_SOURCES}
 )
 target_include_directories(modbus-base PUBLIC include)
+
+if(BUILD_TESTS)
+    add_subdirectory(tests)
+endif()

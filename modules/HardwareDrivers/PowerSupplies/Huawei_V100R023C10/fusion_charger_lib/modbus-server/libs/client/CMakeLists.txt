@@ -8,3 +8,7 @@ add_library(
 )
 target_include_directories(modbus-client PUBLIC include)
 target_link_libraries(modbus-client PUBLIC modbus-base)
+
+if(BUILD_TESTS)
+    add_subdirectory(tests)
+endif()

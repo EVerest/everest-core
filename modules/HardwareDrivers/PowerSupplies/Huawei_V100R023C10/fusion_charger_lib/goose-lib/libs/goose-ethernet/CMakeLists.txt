@@ -13,7 +13,6 @@ if (MACOSX)
   target_link_libraries(goose-ethernet PRIVATE pcap)
 endif()
 
-
-if(EVEREST_CORE_BUILD_TESTING)
+if(BUILD_TESTS)
   add_subdirectory(tests)
 endif()
