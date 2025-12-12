@@ -102,4 +102,4 @@ this Yocto on the BelayBox.
 
 --------------------------------
 
-Authors: Cornelius Claussen, Manuel Ziegler
+**Authors**: Cornelius Claussen, Manuel Ziegler

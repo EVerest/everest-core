@@ -413,4 +413,4 @@ two EvseManagers (again removing most other modules for clarity):
 
 ----
 
-Authors: Cornelius Claussen, Piet Gömpel
+**Authors**: Cornelius Claussen, Piet Gömpel

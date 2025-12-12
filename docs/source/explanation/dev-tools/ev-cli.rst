@@ -224,4 +224,4 @@ subcommands:
 
 ----
 
-Authors: Kai-Uwe Hermann, Andreas Heinrich, Manuel Ziegler, Christoph Burandt
+**Authors**: Kai-Uwe Hermann, Andreas Heinrich, Manuel Ziegler, Christoph Burandt

@@ -562,4 +562,4 @@ being a part of the EVerest community!
 
 ----
 
-Authors: Manuel Ziegler, Piet Gömpel, Dominik Kolmann, Andreas Heinrich, Philip Molares, Tobias Marzell
+**Authors**: Manuel Ziegler, Piet Gömpel, Dominik Kolmann, Andreas Heinrich, Philip Molares, Tobias Marzell

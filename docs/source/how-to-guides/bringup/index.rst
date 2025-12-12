@@ -23,8 +23,8 @@ Before we start, we recommend to set up the following development
 environment:
 
 - Working cross compiler on your PC to do fast updates of your code
-   (e.g. with *rsync* to the target). On Yocto, use *bitbake -c
-   populate_sdk my-image* to generate the SDK.
+  (e.g. with *rsync* to the target). On Yocto, use *bitbake -c
+  populate_sdk my-image* to generate the SDK.
 - SSH to the target
 - Ensure the hardware interfaces to all components are up and running
 - Include “tmux” in your image
@@ -144,4 +144,4 @@ bringing up the hardware components one by one.
 
 ----
 
-Authors: Cornelius Claussen
+**Authors**: Cornelius Claussen
