@@ -33,49 +33,54 @@ add_compile_definitions(DEBUG_MODE_EVSE_SECURITY)
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
 
+set(LIBEVSE_SECURITY_TEST_DIR "${CMAKE_BINARY_DIR}")
+if (EVEREST_CORE_BUILD_TESTING)
+    set(LIBEVSE_SECURITY_TEST_DIR "${CMAKE_BINARY_DIR}/lib/everest/evse_security")
+endif()
+
 file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs.sh"
     "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs_root_multi.sh"
     "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs_leaf_multi.sh"
-    DESTINATION "${CMAKE_BINARY_DIR}/tests"
+    DESTINATION "${LIBEVSE_SECURITY_TEST_DIR}/tests"
 )
 
 file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/configs"
-    DESTINATION "${CMAKE_BINARY_DIR}/tests"
+    DESTINATION "${LIBEVSE_SECURITY_TEST_DIR}/tests"
     FILES_MATCHING PATTERN "*.cnf"
 )
 
 file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/future_leaf"
-    DESTINATION "${CMAKE_BINARY_DIR}/tests"
+    DESTINATION "${LIBEVSE_SECURITY_TEST_DIR}/tests"
     FILES_MATCHING PATTERN "*"
 )
 
 file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/csms_certs"
-    DESTINATION "${CMAKE_BINARY_DIR}/tests"
+    DESTINATION "${LIBEVSE_SECURITY_TEST_DIR}/tests"
     FILES_MATCHING PATTERN "*"
 )
 
 file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/expired_leaf"
-        DESTINATION "${CMAKE_BINARY_DIR}/tests"
+        DESTINATION "${LIBEVSE_SECURITY_TEST_DIR}/tests"
         FILES_MATCHING PATTERN "*"
 )
 
 file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/expired_runtime"
-    DESTINATION "${CMAKE_BINARY_DIR}/tests"
+    DESTINATION "${LIBEVSE_SECURITY_TEST_DIR}/tests"
     FILES_MATCHING PATTERN "*"
 )
 
 file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/create-pki.sh"
-    DESTINATION "${CMAKE_BINARY_DIR}/tests"
+    DESTINATION "${LIBEVSE_SECURITY_TEST_DIR}/tests"
 )
 
 file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/openssl-pki.conf"
-    DESTINATION "${CMAKE_BINARY_DIR}/tests"
+    DESTINATION "${LIBEVSE_SECURITY_TEST_DIR}/tests"
 )
