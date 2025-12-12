@@ -33,7 +33,7 @@ public:
     X509Wrapper(const X509Wrapper& other);
     X509Wrapper(X509Wrapper&& other) = default;
 
-    ~X509Wrapper();
+    ~X509Wrapper() = default;
 
     /// @brief Returns true if this certificate is the child of the provided parent
     bool is_child(const X509Wrapper& parent) const;

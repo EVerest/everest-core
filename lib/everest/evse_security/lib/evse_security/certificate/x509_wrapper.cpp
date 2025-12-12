@@ -69,8 +69,6 @@ X509Wrapper::X509Wrapper(const X509Wrapper& other) :
 #endif
 }
 
-X509Wrapper::~X509Wrapper() = default;
-
 bool X509Wrapper::operator==(const X509Wrapper& other) const {
     if (this == &other) {
         return true;
