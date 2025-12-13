@@ -1,0 +1,30 @@
+[ ca ]
+default_ca      = CA_default            # The default ca section
+ 
+[ CA_default ]
+
+dir            = .              	# top dir
+database       = expired_bulk/index.txt        # index file.
+new_certs_dir  = $dir/expired_bulk         # new certs dir
+ 
+certificate    = $dir/cert.pem       	# The CA cert
+serial         = $dir/expired_bulk/serial           	# serial no file
+private_key    = $dir/cert.key		# CA private key
+RANDFILE       = $dir/private/.rand    	# random number file
+ 
+default_days   = 365                   # how long to certify for
+default_md     = md5                   # md to use
+
+policy         = policy_any            # default policy
+email_in_dn    = no                    # Don't add the email into cert DN
+
+name_opt       = ca_default            # Subject name display option
+cert_opt       = ca_default            # Certificate display option
+copy_extensions = none                 # Don't copy extensions from request
+
+[ policy_any ]
+countryName            = supplied
+stateOrProvinceName    = optional
+organizationName       = optional
+organizationalUnitName = optional
+commonName             = supplied

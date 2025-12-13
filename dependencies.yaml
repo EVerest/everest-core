@@ -14,7 +14,7 @@ pugixml:
   git_tag: v1.15
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_PUGIXML"
 
-# everest-framework, ocpp
+# everest-framework, ocpp, evse_security
 liblog:
   git: https://github.com/EVerest/liblog.git
   git_tag: v0.3.0
@@ -44,14 +44,6 @@ libcurl:
     "ENABLE_CURL_MANUAL OFF",
     "USE_NGHTTP2 OFF",
   ]
-
-# EvseSecurity
-# This has to appear before libocpp in this file since it is also a direct dependency
-# of libocpp and would otherwise be overwritten by the version used there
-libevse-security:
-  git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.10.0
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # Josev
 Josev:
