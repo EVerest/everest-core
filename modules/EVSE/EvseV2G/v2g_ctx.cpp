@@ -285,7 +285,7 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
         return NULL;
 
     ctx->r_security = r_security;
-    ctx->r_vas = std::move(r_vas);
+    ctx->r_vas = r_vas;
     ctx->p_charger = p_chargerImplBase;
     ctx->p_extensions = p_extensions;
 
