@@ -1,8 +1,4 @@
 ---
-liblog:
-  git: https://github.com/EVerest/liblog.git
-  git_tag: v0.3.0
-  options: ["BUILD_EXAMPLES OFF"]
 gtest:
   # GoogleTest now follows the Abseil Live at Head philosophy. We recommend updating to the latest commit in the main branch as often as possible.
   git: https://github.com/google/googletest.git
