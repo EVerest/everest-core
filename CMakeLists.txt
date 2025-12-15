@@ -151,8 +151,6 @@ if(NOT DISABLE_EDM)
     # ev-cli and everest-testing
     add_subdirectory(applications/utils)
 else()
-    find_package(cbv2g REQUIRED)
-
     find_package(PalSigslot REQUIRED)
 
     find_package(libnfc-nci REQUIRED)
