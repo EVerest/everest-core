@@ -44,12 +44,9 @@ def _deps_impl(module_ctx):
         build_file = "@everest-core//third-party/bazel:BUILD.libocpp.bazel",
     )
 
-    maybe(
-        http_archive,
+    new_local_repository(
         name = "everest_sqlite",
-        url = "https://github.com/EVerest/everest-sqlite/archive/85b31859f20255e1b96992ab35d40ebdb15d9c55.tar.gz",
-        sha256 = "e1beb67c314d52036a8e65f3d00516c2f2f610264390866dedf87cf18a26bb02",
-        strip_prefix = "everest-sqlite-85b31859f20255e1b96992ab35d40ebdb15d9c55",
+        path = "lib/everest/sqlite",
         build_file = "@everest-core//third-party/bazel:BUILD.everest-sqlite.bazel",
     )
 

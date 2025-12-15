@@ -85,6 +85,7 @@ if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TEST
     set(ocpp_BUILD_TESTING ON)
     set(LIBEVSE_SECURITY_BUILD_TESTING ON)
     set(everest-evse_security_BUILD_TESTING ON)
+    set(everest-sqlite_BUILD_TESTING ON)
 endif()
 # This is a flag for building development tests, but not necessarily to run them, for expample in case
 # tests requires hardware.
@@ -133,6 +134,7 @@ include(compatibility/boost)
 set(everest-framework_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/everest/framework)
 set(everest-framework_BINARY_DIR ${CMAKE_BINARY_DIR}/lib/everest/framework)
 set(EVEREST_SCHEMA_DIR ${everest-framework_SOURCE_DIR}/schemas)
+set(everest-sqlite_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/everest/sqlite)
 if(NOT DEFINED EVEREST_ENABLE_PY_SUPPORT)
     set(EVEREST_ENABLE_PY_SUPPORT ON CACHE BOOL "Enable EVerest Python support" FORCE)
 endif()
@@ -155,7 +157,6 @@ if(NOT DISABLE_EDM)
 else()
     find_package(everest-timer REQUIRED)
     find_package(everest-log REQUIRED)
-    find_package(everest-sqlite REQUIRED)
 
     find_package(PalSigslot REQUIRED)
 
