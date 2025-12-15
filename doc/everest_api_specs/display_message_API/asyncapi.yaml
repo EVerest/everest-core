@@ -123,7 +123,7 @@ operations:
 
 
   receive_heartbeat:
-    title: 'Receive heatbeat'
+    title: 'Receive heartbeat'
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'

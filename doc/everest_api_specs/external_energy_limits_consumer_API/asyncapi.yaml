@@ -53,7 +53,7 @@ operations:
       $ref: '#/channels/send_set_external_limits'
 
   receive_heartbeat:
-    title: 'Receive heatbeat'
+    title: 'Receive heartbeat'
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
