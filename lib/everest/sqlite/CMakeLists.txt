@@ -5,9 +5,7 @@ project(everest-sqlite VERSION 0.1.5
         LANGUAGES CXX C
 )
 
-find_package(everest-cmake 0.5 REQUIRED
-    PATHS ../everest-cmake
-)
+find_package(everest-cmake 0.5 REQUIRED)
 
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
