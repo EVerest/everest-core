@@ -151,6 +151,11 @@ if(NOT DISABLE_EDM)
     # ev-cli and everest-testing
     add_subdirectory(applications/utils)
 else()
+    find_package(everest-timer REQUIRED)
+    find_package(everest-log REQUIRED)
+    find_package(everest-evse_security REQUIRED)
+    find_package(everest-sqlite REQUIRED)
+
     find_package(PalSigslot REQUIRED)
 
     find_package(libnfc-nci REQUIRED)
