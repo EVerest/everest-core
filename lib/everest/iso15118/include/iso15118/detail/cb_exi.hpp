@@ -97,3 +97,22 @@ size_t serialize_helper(const MessageType& in, const io::StreamOutputView& strea
 }
 
 } // namespace iso15118::message_20
+
+namespace iso15118::d2::msg {
+
+template <typename MessageType> int serialize_to_exi(const MessageType& in, exi_bitstream_t& out);
+
+template <typename MessageType>
+size_t serialize_helper(const MessageType& in, const io::StreamOutputView& stream_view) {
+    auto out = get_exi_output_stream(stream_view);
+
+    const auto error = serialize_to_exi(in, out);
+
+    if (error != 0) {
+        throw std::runtime_error("Could not encode exi: " + std::to_string(error));
+    }
+
+    return exi_bitstream_get_length(&out);
+}
+
+} // namespace iso15118::d2::msg
