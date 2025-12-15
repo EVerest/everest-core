@@ -233,6 +233,10 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
         remove_service_from_service_list_if_exists(v2g_ctx, V2G_SERVICE_ID_CERTIFICATE);
     }
 
+    // Reset authorization that may have been provided after the TCP was closed, potentially causing
+    // authorization to be reused in the next session. Resetting it here prevents that.
+    v2g_ctx->evse_v2g_data.evse_processing[PHASE_AUTH] = (uint8_t)iso2_EVSEProcessingType_Ongoing;
+
     v2g_ctx->evse_v2g_data.central_contract_validation_allowed = central_contract_validation_allowed;
 }
 
