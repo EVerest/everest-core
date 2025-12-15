@@ -185,7 +185,6 @@ if (FRAMEWORK_INSTALL)
         ADDITIONAL_CONTENT
             "find_dependency(nlohmann_json)"
             "find_dependency(nlohmann_json_schema_validator)"
-            "find_dependency(everest-timer)"
             "find_dependency(everest-log)"
             "find_dependency(everest-sqlite)"
             "find_dependency(fmt)"
