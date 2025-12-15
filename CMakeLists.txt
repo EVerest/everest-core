@@ -171,6 +171,8 @@ else()
 
     find_package(fmt REQUIRED)
     find_package(date REQUIRED)
+
+    find_package(OpenSSL 3 REQUIRED)
 endif()
 
 
