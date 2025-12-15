@@ -75,31 +75,3 @@ if (TIMER_INSTALL)
             "find_dependency(Boost COMPONENTS system)"
     )
 endif()
-
-# build doxygen documentation if doxygen is available
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-    set( DOXYGEN_OUTPUT_DIRECTORY dist/docs )
-    doxygen_add_docs(doxygen-${PROJECT_NAME} include lib src)
-else()
-    message("Doxygen is needed to generate documentation")
-endif()
-
-# configure clang-tidy if requested
-if(CMAKE_RUN_CLANG_TIDY)
-    message("Running clang-tidy")
-    string(CONCAT CLANG_TIDY_CHECKS "*,"
-                                    "-llvmlibc*,"
-                                    "-fuchsia-default-arguments-calls,"
-                                    "-fuchsia-overloaded-operator,"
-                                    "-fuchsia-statically-constructed-objects,"
-                                    "-readability-function-cognitive-complexity,"
-                                    "-modernize-use-trailing-return-type,"
-                                    "-abseil-string-find-startswith,"
-                                    "-abseil-string-find-str-contains,"
-                                    ";")
-    set(CMAKE_CXX_CLANG_TIDY 
-    clang-tidy;
-    -header-filter='.*'
-    -checks=${CLANG_TIDY_CHECKS})
-endif()
