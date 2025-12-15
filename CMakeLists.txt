@@ -153,7 +153,10 @@ if(NOT DISABLE_EDM)
     # ev-cli and everest-testing
     add_subdirectory(applications/utils)
 else()
-    find_package(cbv2g REQUIRED)
+    find_package(everest-timer REQUIRED)
+    find_package(everest-log REQUIRED)
+    find_package(everest-evse_security REQUIRED)
+    find_package(everest-sqlite REQUIRED)
 
     find_package(PalSigslot REQUIRED)
 
@@ -170,6 +173,8 @@ else()
 
     find_package(fmt REQUIRED)
     find_package(date REQUIRED)
+
+    find_package(OpenSSL 3 REQUIRED)
 endif()
 
 
