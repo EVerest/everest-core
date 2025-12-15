@@ -7,14 +7,12 @@ else()
 endif()
 
 add_library(goose-ethernet STATIC ${GOOSE_ETHERNET_SOURCES})
-ev_register_library_target(goose-ethernet)
 target_include_directories(goose-ethernet PUBLIC include)
 
 if (MACOSX)
   target_link_libraries(goose-ethernet PRIVATE pcap)
 endif()
 
-
-if(EVEREST_CORE_BUILD_TESTING)
+if(FUSION_CHARGER_LIB_BUILD_TESTS)
   add_subdirectory(tests)
 endif()

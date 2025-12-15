@@ -1,11 +1,10 @@
 file(GLOB SOURCES "src/*.cpp")
 
 add_library(fusion_charger_modbus_extensions STATIC ${SOURCES})
-ev_register_library_target(fusion_charger_modbus_extensions)
 target_include_directories(fusion_charger_modbus_extensions PUBLIC include)
 target_link_libraries(fusion_charger_modbus_extensions PUBLIC modbus-server modbus-registers)
 
-if(BUILD_TESTING)
+if(FUSION_CHARGER_LIB_BUILD_TESTS)
   include(GoogleTest)
 
   file(GLOB TEST_SOURCES "tests/*.cpp")
