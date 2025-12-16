@@ -45,6 +45,8 @@ void handle_v2g(VariantAccess& va) {
 
     if (doc.V2G_Message.Body.SessionSetupReq_isUsed) {
         insert_type(va, doc.V2G_Message.Body.SessionSetupReq, doc.V2G_Message.Header);
+    } else if (doc.V2G_Message.Body.AuthorizationReq_isUsed) {
+        insert_type(va, doc.V2G_Message.Body.AuthorizationReq, doc.V2G_Message.Header);
     } else {
         va.error = "chosen message type unhandled";
     }

@@ -12,6 +12,8 @@ enum class Type {
     SupportedAppProtocolRes,
     SessionSetupReq,
     SessionSetupRes,
+    AuthorizationReq,
+    AuthorizationRes,
 };
 
 template <typename T> struct TypeTrait {
@@ -39,6 +41,8 @@ CREATE_TYPE_TRAIT(SupportedAppProtocolRequest, SupportedAppProtocolReq);
 CREATE_TYPE_TRAIT(SupportedAppProtocolResponse, SupportedAppProtocolRes);
 CREATE_TYPE_TRAIT(SessionSetupRequest, SessionSetupReq);
 CREATE_TYPE_TRAIT(SessionSetupResponse, SessionSetupRes);
+CREATE_TYPE_TRAIT(AuthorizationRequest, AuthorizationReq);
+CREATE_TYPE_TRAIT(AuthorizationResponse, AuthorizationRes);
 
 #ifdef CREATE_TYPE_TRAIT_PUSHED
 #define CREATE_TYPE_TRAIT CREATE_TYPE_TRAIT_PUSHED
