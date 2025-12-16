@@ -205,6 +205,7 @@ void BUPowermeter::ready() {
         types::units::Voltage vd = {};
         types::units_signed::SignedMeterValue svd = {};
         types::units::Current cd = {};
+        types::units::Frequency fd = {};
 
         optional_add(table_content, "Transaction start response: status",
                      types::powermeter::transaction_request_status_to_string(tr_start.status));
@@ -256,6 +257,9 @@ void BUPowermeter::ready() {
         optional_add(table_content, "Powermeter: current in A: L1", powermeter.current_A.value_or(cd).L1);
         optional_add(table_content, "Powermeter: current in A: L2", powermeter.current_A.value_or(cd).L2);
         optional_add(table_content, "Powermeter: current in A: L3", powermeter.current_A.value_or(cd).L3);
+        optional_add(table_content, "Powermeter: frequency in Hz: L1", powermeter.frequency_Hz.value_or(fd).L1);
+        optional_add(table_content, "Powermeter: frequency in Hz: L2", powermeter.frequency_Hz.value_or(fd).L2);
+        optional_add(table_content, "Powermeter: frequency in Hz: L3", powermeter.frequency_Hz.value_or(fd).L3);
         optional_add(table_content, "Public key", public_key);
 
         size_t max_width = 120;
