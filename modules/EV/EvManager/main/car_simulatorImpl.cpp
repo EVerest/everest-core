@@ -189,6 +189,20 @@ void car_simulatorImpl::register_all_commands() {
         EVLOG_error << "plugin command called but \"plugin_commands\" config key not set";
         return true;
     });
+    command_registry->register_command("set_soc", 1, [this](const CmdArguments& arguments) {
+        try {
+            double soc = std::stod(arguments.at(0));
+            this->car_simulation->set_soc(soc);
+        } catch (const std::invalid_argument& e) {
+            EVLOG_error << "set_soc command called with invalid argument: " << arguments.at(0);
+            return true;
+        } catch (const std::out_of_range& e) {
+            EVLOG_error << "set_soc command called with out of range argument: " << arguments.at(0);
+            return true;
+        }
+
+        return true;
+    });
 
     if (!mod->r_slac.empty()) {
         command_registry->register_command("iso_wait_slac_matched", 0, [this](const CmdArguments& arguments) {
