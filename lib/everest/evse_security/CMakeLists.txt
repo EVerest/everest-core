@@ -49,7 +49,6 @@ if (NOT DISABLE_EDM)
 else()
     find_package(date REQUIRED)
     find_package(everest-log REQUIRED)
-    find_package(everest-timer REQUIRED)
 endif()
 
 option(LIBEVSE_SECURITY_USE_BOOST_FILESYSTEM "Usage of boost/filesystem.hpp instead of std::filesystem" OFF)

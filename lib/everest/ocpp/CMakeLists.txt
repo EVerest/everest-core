@@ -56,7 +56,6 @@ else()
     find_package(nlohmann_json REQUIRED)
     find_package(nlohmann_json_schema_validator REQUIRED)
     find_package(libwebsockets REQUIRED)
-    find_package(everest-timer REQUIRED)
     find_package(everest-log REQUIRED)
 endif()
 
@@ -92,8 +91,6 @@ if (OCPP_INSTALL)
             "find_dependency(OpenSSL)"
             "find_dependency(SQLite3)"
             "find_dependency(libwebsockets)"
-            "find_dependency(everest-timer)"
-            "find_dependency(everest-evse_security)"
     )
 endif()
 
