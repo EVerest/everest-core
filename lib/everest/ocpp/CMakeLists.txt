@@ -56,7 +56,6 @@ else()
     find_package(nlohmann_json REQUIRED)
     find_package(nlohmann_json_schema_validator REQUIRED)
     find_package(libwebsockets REQUIRED)
-    find_package(everest-log REQUIRED)
 endif()
 
 # config and auxillary files

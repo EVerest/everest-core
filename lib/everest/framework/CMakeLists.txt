@@ -113,7 +113,6 @@ else()
     find_package(nlohmann_json REQUIRED)
     find_package(nlohmann_json_schema_validator REQUIRED)
     find_package(fmt REQUIRED)
-    find_package(everest-log REQUIRED)
 
     if (EVEREST_ENABLE_ADMIN_PANEL_BACKEND)
         find_package(libwebsockets REQUIRED)
@@ -184,7 +183,6 @@ if (FRAMEWORK_INSTALL)
         ADDITIONAL_CONTENT
             "find_dependency(nlohmann_json)"
             "find_dependency(nlohmann_json_schema_validator)"
-            "find_dependency(everest-log)"
             "find_dependency(fmt)"
             "find_dependency(date)"
             "set(EVEREST_SCHEMA_DIR \"@PACKAGE_EVEREST_SCHEMA_DIR@\")"

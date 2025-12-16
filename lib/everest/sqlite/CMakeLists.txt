@@ -27,7 +27,6 @@ if (NOT DISABLE_EDM)
     # In EDM mode, we can't install exports (because the dependencies usually do not install their exports)
     set(EVEREST_SQLITE_INSTALL OFF)
 else()
-    find_package(everest-log REQUIRED)
     if (EVEREST_SQLITE_BUILD_TESTING)
         include(FetchContent)
         FetchContent_Declare(
@@ -68,7 +67,6 @@ if (EVEREST_SQLITE_INSTALL)
         NAMESPACE everest
         EXPORT everest_sqlite-targets
         ADDITIONAL_CONTENT
-            "find_dependency(everest-log)"
             "find_dependency(SQLite3)"
             "include($\{CMAKE_CURRENT_LIST_DIR\}/cmake/CollectMigrationFiles.cmake)"
     )

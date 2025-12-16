@@ -56,12 +56,9 @@ def _deps_impl(module_ctx):
         build_file = "@everest-core//third-party/bazel:BUILD.date.bazel",
     )
 
-    maybe(
-        http_archive,
+    new_local_repository(
         name = "com_github_everest_liblog",
-        url = "https://github.com/EVerest/liblog/archive/08ff519b647beaa51f8f25ab04b88c079ca253a7.tar.gz",
-        sha256 = "32c5e419e63bffd094dcdf13adf9da7db1942029d575e7ace7559a434da967f5",
-        strip_prefix = "liblog-08ff519b647beaa51f8f25ab04b88c079ca253a7",
+        path = "lib/everest/log",
         build_file = "@everest-core//third-party/bazel:BUILD.liblog.bazel",
     )
 

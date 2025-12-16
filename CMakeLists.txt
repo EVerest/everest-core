@@ -87,6 +87,7 @@ if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TEST
     set(everest-evse_security_BUILD_TESTING ON)
     set(everest-sqlite_BUILD_TESTING ON)
     set(everest-timer_BUILD_TESTING ON)
+    set(everest-log_BUILD_TESTING ON)
 endif()
 # This is a flag for building development tests, but not necessarily to run them, for expample in case
 # tests requires hardware.
@@ -156,8 +157,6 @@ if(NOT DISABLE_EDM)
     # ev-cli and everest-testing
     add_subdirectory(applications/utils)
 else()
-    find_package(everest-log REQUIRED)
-
     find_package(PalSigslot REQUIRED)
 
     find_package(libnfc-nci REQUIRED)
