@@ -19,6 +19,9 @@ namespace data_types {
 constexpr auto SESSION_ID_LENGTH = 8;
 using SESSION_ID = std::array<uint8_t, SESSION_ID_LENGTH>; // hexBinary, max length 8
 
+using ServiceID = uint16_t;
+using ParameterSetID = int16_t;
+
 constexpr auto GEN_CHALLENGE_LENGTH = 16;
 using GenChallenge = std::array<uint8_t, GEN_CHALLENGE_LENGTH>; // base64 binary
 using PercentValue = uint8_t;                                   // [0 - 100]
@@ -63,6 +66,11 @@ enum class FaultCode {
     ParsingError,
     NoTLSRootCertificatAvailable,
     UnknownError,
+};
+
+enum class PaymentOption {
+    Contract,
+    ExternalPayment
 };
 
 enum class EvseProcessing {

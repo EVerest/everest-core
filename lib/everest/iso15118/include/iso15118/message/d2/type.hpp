@@ -12,6 +12,8 @@ enum class Type {
     SupportedAppProtocolRes,
     SessionSetupReq,
     SessionSetupRes,
+    ServiceDiscoveryReq,
+    ServiceDiscoveryRes,
     AuthorizationReq,
     AuthorizationRes,
     CableCheckReq,
@@ -49,6 +51,8 @@ CREATE_TYPE_TRAIT(SupportedAppProtocolRequest, SupportedAppProtocolReq);
 CREATE_TYPE_TRAIT(SupportedAppProtocolResponse, SupportedAppProtocolRes);
 CREATE_TYPE_TRAIT(SessionSetupRequest, SessionSetupReq);
 CREATE_TYPE_TRAIT(SessionSetupResponse, SessionSetupRes);
+CREATE_TYPE_TRAIT(ServiceDiscoveryRequest, ServiceDiscoveryReq);
+CREATE_TYPE_TRAIT(ServiceDiscoveryResponse, ServiceDiscoveryRes);
 CREATE_TYPE_TRAIT(AuthorizationRequest, AuthorizationReq);
 CREATE_TYPE_TRAIT(AuthorizationResponse, AuthorizationRes);
 CREATE_TYPE_TRAIT(DC_CableCheckRequest, CableCheckReq);
