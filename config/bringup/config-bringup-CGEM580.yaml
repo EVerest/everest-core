@@ -1,0 +1,42 @@
+settings:
+  telemetry_enabled: false
+  # mqtt_broker_socket_path: /run/mosquitto/mosquitto.sock
+active_modules:
+  cgem580:
+    module: CarloGavazzi_EM580
+    config_implementation:
+      main:
+        powermeter_device_id: 1
+        communication_retry_count: 3
+        communication_retry_delay_ms: 500
+        communication_error_pause_delay_s: 10   # pause 10 seconds on communication error before retry
+        initial_connection_retry_count: 10
+        initial_connection_retry_delay_ms: 2000
+        timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000      # once per second
+        device_state_read_interval_ms: 10000    # once per 10 seconds
+    connections:
+      modbus:                         # required interface: serial_communication_hub
+        - module_id: comm_hub
+          implementation_id: main
+
+  comm_hub:
+    module: SerialCommHub
+    config_implementation:
+      main:
+        serial_port: /dev/ttyUSB0     # adjust to your device path
+        baudrate: 115200
+        parity: 0                    # 0=None,1=Odd,2=Even (match your device)
+        within_message_timeout_ms: 10
+
+  cli:
+    config_module:
+      evse_id: "DE*ENBW*BER001*EVSE01"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
+      identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: cgem580
+          implementation_id: main

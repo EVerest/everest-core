@@ -1,0 +1,69 @@
+description: Carlo Gavazzi EM580 powermeter
+provides:
+  main:
+    description: Implementation of the driver functionality
+    interface: powermeter
+    config:
+      powermeter_device_id:
+        description: The powermeter's address on the serial bus
+        type: integer
+        minimum: 0
+        maximum: 255
+        default: 1
+      communication_retry_count:
+        description: Number of retries for communication operations before giving up.
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 3
+      communication_retry_delay_ms:
+        description: Delay in milliseconds between retry attempts.
+        type: integer
+        minimum: 10
+        maximum: 10000
+        default: 500
+      communication_error_pause_delay_s:
+        description: Delay in seconds before retrying communication in the live measurement thread after a failure. Default 10 seconds. Applies to initial communication too.
+        type: integer
+        minimum: 1
+        maximum: 600
+        default: 10
+      initial_connection_retry_count:
+        description: Number of retries for initial connection/signature config read during module initialization. 0 means infinite retries.
+        type: integer
+        minimum: 0
+        maximum: 100
+        default: 10
+      initial_connection_retry_delay_ms:
+        description: Delay in milliseconds between retry attempts during initialization.
+        type: integer
+        minimum: 100
+        maximum: 60000
+        default: 2000
+      timezone_offset_minutes:
+        description: Timezone offset from UTC in minutes (e.g., 60 for UTC+1, -300 for UTC-5). Range -1440 to +1440 minutes. Default is 0 (UTC).
+        type: integer
+        minimum: -1440
+        maximum: 1440
+        default: 0
+      live_measurement_interval_ms:
+        description: Interval in milliseconds between live powermeter reads and publishes. Default 1000 ms (once per second). Allowed range 500-60000 ms (twice per second to once per minute).
+        type: integer
+        minimum: 500
+        maximum: 60000
+        default: 1000
+      device_state_read_interval_ms:
+        description: Interval in milliseconds between reading the device state bitfield (used for VendorError reporting). Default 10000 ms (once per 10 seconds). Allowed range 500-60000 ms.
+        type: integer
+        minimum: 500
+        maximum: 60000
+        default: 10000
+requires:
+  modbus:
+    interface: serial_communication_hub
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - florin.mihut@pionix.com
+enable_external_mqtt: false
+
