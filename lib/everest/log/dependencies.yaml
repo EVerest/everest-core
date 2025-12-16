@@ -1,0 +1,5 @@
+---
+gtest:
+  git: https://github.com/google/googletest.git
+  git_tag: release-1.12.1
+  cmake_condition: "EVEREST_LIBLOG_BUILD_TESTING"
