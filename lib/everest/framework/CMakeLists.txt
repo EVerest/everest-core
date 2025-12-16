@@ -107,8 +107,6 @@ if(NOT DISABLE_EDM)
     if (BUILD_TESTING)
         list(APPEND CMAKE_MODULE_PATH "${Catch2_SOURCE_DIR}/contrib")
     endif()
-
-    include(${everest-sqlite_SOURCE_DIR}/cmake/CollectMigrationFiles.cmake)
 else()
     find_package(date REQUIRED)
     find_package(ryml REQUIRED)
@@ -127,6 +125,8 @@ else()
 
     include(find-mqttc)
 endif()
+
+include(${everest-sqlite_SOURCE_DIR}/cmake/CollectMigrationFiles.cmake)
 
 set(EVEREST_FRAMEWORK_GENERATED_INC_DIR ${PROJECT_BINARY_DIR}/generated)
 configure_file(
