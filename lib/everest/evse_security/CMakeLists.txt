@@ -48,7 +48,6 @@ if (NOT DISABLE_EDM)
     set(EVSE_SECURITY_INSTALL OFF)
 else()
     find_package(date REQUIRED)
-    find_package(everest-log REQUIRED)
 endif()
 
 option(LIBEVSE_SECURITY_USE_BOOST_FILESYSTEM "Usage of boost/filesystem.hpp instead of std::filesystem" OFF)
@@ -85,8 +84,6 @@ if (EVSE_SECURITY_INSTALL)
         NAME everest-evse_security
         NAMESPACE everest
         EXPORT evse_security-targets
-        ADDITIONAL_CONTENT
-            "find_dependency(everest-log)"
     )
 endif()
 

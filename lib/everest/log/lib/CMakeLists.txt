@@ -13,6 +13,11 @@ target_include_directories(everest_log
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+set_target_properties(everest_log
+    PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
+)
+
 target_link_libraries(everest_log
     PUBLIC
         Boost::log
