@@ -52,7 +52,7 @@ public:
     void set_is_ac_transfer_mode(bool is_ac);
     bool get_is_ac_transfer_mode() const;
     int32_t get_index();
-    std::vector<types::json_rpc_api::ConnectorInfoObj> get_available_connectors();
+    std::vector<types::json_rpc_api::ConnectorInfoObj> get_available_connectors() const;
 
 private:
     std::atomic<bool> is_ac_transfer_mode;
