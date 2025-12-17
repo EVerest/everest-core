@@ -99,7 +99,7 @@ void EVSEInfoStore::set_is_ac_transfer_mode(bool is_ac) {
     this->is_ac_transfer_mode = is_ac;
 }
 
-std::vector<types::json_rpc_api::ConnectorInfoObj> EVSEInfoStore::get_available_connectors() {
+std::vector<types::json_rpc_api::ConnectorInfoObj> EVSEInfoStore::get_available_connectors() const {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     return this->dataobj.available_connectors;
 }
