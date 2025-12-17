@@ -10,6 +10,7 @@ function(create_exi_test_target NAME)
     catch_discover_tests(test_exi_d2_${NAME})
 endfunction()
 
+create_exi_test_target(cable_check)
 create_exi_test_target(session_setup)
 create_exi_test_target(authorization)
 
