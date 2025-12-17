@@ -28,4 +28,28 @@ void convert(const Header& in, struct iso2_MessageHeaderType& out) {
     CPP2CB_CONVERT_IF_USED(in.notification, out.Notification);
 }
 
+void convert(const iso2_DC_EVStatusType& in, data_types::DC_EVStatus& out) {
+    out.ev_ready = in.EVReady;
+    cb_convert_enum(in.EVErrorCode, out.ev_error_code);
+    out.ev_ress_soc = in.EVRESSSOC;
+}
+
+void convert(const data_types::AC_EVSEStatus& in, iso2_AC_EVSEStatusType& out) {
+    init_iso2_AC_EVSEStatusType(&out);
+    cb_convert_enum(in.evse_notification, out.EVSENotification);
+    out.NotificationMaxDelay = in.notification_max_delay;
+    out.RCD = in.rcd;
+}
+
+void convert(const data_types::DC_EVSEStatus& in, iso2_DC_EVSEStatusType& out) {
+    init_iso2_DC_EVSEStatusType(&out);
+    cb_convert_enum(in.evse_notification, out.EVSENotification);
+    out.NotificationMaxDelay = in.notification_max_delay;
+    if (in.evse_isolation_status) {
+        cb_convert_enum(in.evse_isolation_status.value(), out.EVSEIsolationStatus);
+        CB_SET_USED(out.EVSEIsolationStatus);
+    }
+    cb_convert_enum(in.evse_status_code, out.EVSEStatusCode);
+}
+
 } // namespace iso15118::d2::msg
