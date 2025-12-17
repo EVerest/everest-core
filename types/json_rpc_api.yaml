@@ -123,8 +123,9 @@ types:
 
   # data type sub-objects
   ChargerInfoObj:
-    description: Information about the charger
+    description: General well-known information about the charger
     type: object
+    additionalProperties: false
     required:
       - vendor
       - model
@@ -371,49 +372,6 @@ types:
       inlet_hot:
         description: inlet_hot
         type: boolean
-  ChargerInfoObj:
-    description: Well-known general charger information
-    type: object
-    additionalProperties: false
-    required:
-      - vendor
-      - model
-      - serial
-      - firmware_version
-    properties:
-      vendor:
-        description: vendor
-        type: string
-      model:
-        description: model
-        type: string
-      serial:
-        description: serial
-        type: string
-      friendly_name:
-        description: friendly_name
-        type: string
-      manufacturer:
-        description: manufacturer
-        type: string
-      manufacturer_url:
-        description: manufacturer_url
-        type: string
-      model_url:
-        description: model_url
-        type: string
-      model_no:
-        description: model_no
-        type: string
-      revision:
-        description: revision
-        type: string
-      board_revision:
-        description: board_revision
-        type: string
-      firmware_version:
-        description: firmware_version
-        type: string
   HardwareCapabilitiesObj:
     description: Hardware capabilities
     type: object
