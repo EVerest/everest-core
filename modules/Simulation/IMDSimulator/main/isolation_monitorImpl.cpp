@@ -5,6 +5,7 @@
 #include <chrono>
 #include <thread>
 namespace module {
+
 namespace main {
 
 void isolation_monitorImpl::init() {
@@ -13,6 +14,17 @@ void isolation_monitorImpl::init() {
     this->config_interval = this->config.interval;
 
     this->isolation_measurement_thread_handle = std::thread(&isolation_monitorImpl::isolation_measurement_worker, this);
+
+    const std::string RESISTANCE_TOPIC = "everest_api/" + this->mod->info.id + "/cmd/set_resistance";
+    this->mod->mqtt.subscribe(RESISTANCE_TOPIC, [this](const std::string& resistance_ohm) {
+        try {
+            int32_t _resistance_ohm = std::stoi(resistance_ohm);
+            EVLOG_info << "Setting simulated isolation resistance to " << _resistance_ohm << " Ohm via MQTT";
+            this->isolation_measurement.resistance_F_Ohm = _resistance_ohm;
+        } catch (const std::invalid_argument& e) {
+            EVLOG_error << "Failed to set isolation resistance via MQTT, invalid value: " << resistance_ohm;
+        }
+    });
 }
 
 void isolation_monitorImpl::ready() {

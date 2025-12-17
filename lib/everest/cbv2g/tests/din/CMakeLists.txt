@@ -1,0 +1,2 @@
+add_codec_test(session_setup)
+add_codec_test(service_discovery)

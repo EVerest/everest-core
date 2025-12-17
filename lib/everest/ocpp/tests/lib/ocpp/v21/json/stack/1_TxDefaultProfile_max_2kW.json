@@ -1,0 +1,21 @@
+{
+    "id": 10,
+    "stackLevel": 1,
+    "chargingProfilePurpose": "TxDefaultProfile",
+    "chargingProfileKind": "Recurring",
+    "recurrencyKind": "Daily",
+    "chargingSchedule": [
+        {
+            "id": 1,
+            "startSchedule": "2020-01-09T17:00:00",
+            "duration": 10800,
+            "chargingRateUnit": "W",
+            "chargingSchedulePeriod": [
+                {
+                    "startPeriod": 0,
+                    "limit": 2000
+                }
+            ]
+        }
+    ]
+}

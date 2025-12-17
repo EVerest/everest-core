@@ -21,8 +21,12 @@ inline void remove_start_and_stop_frame(std::vector<std::uint8_t>& vec) {
     vec.pop_back();
 }
 
+// TODO: this is a duplicate of the implementation in AST_DC650, refactor into common library
 inline bool is_message_crc_correct(std::vector<std::uint8_t>& vec) {
-    auto crc_check = static_cast<std::uint16_t>((vec[vec.size() - 1] << 8) | vec[vec.size() - 2]);
+    if (vec.size() < 2) {
+        return false;
+    }
+    const auto crc_check = static_cast<std::uint16_t>((vec.at(vec.size() - 1) << 8) | vec.at(vec.size() - 2));
     // remove CRC tail from vector
     for (std::uint8_t i = 0; i < 2; i++) {
         vec.pop_back();

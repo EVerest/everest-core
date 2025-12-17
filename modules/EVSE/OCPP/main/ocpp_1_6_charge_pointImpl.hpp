@@ -36,8 +36,8 @@ protected:
     virtual bool handle_stop() override;
     virtual bool handle_restart() override;
     virtual types::ocpp::GetConfigurationResponse handle_get_configuration_key(Array& keys) override;
-    virtual types::ocpp::ConfigurationStatus handle_set_custom_configuration_key(std::string& key,
-                                                                                 std::string& value) override;
+    virtual types::ocpp::ConfigurationStatus handle_set_configuration_key(std::string& key,
+                                                                          std::string& value) override;
     virtual void handle_monitor_configuration_keys(Array& keys) override;
     virtual void handle_security_event(std::string& type, std::string& info) override;
 

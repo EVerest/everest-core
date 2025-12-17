@@ -29,8 +29,11 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <everest/util/async/monitor.hpp>
 #include <everest_api_types/utilities/CommCheckHandler.hpp>
 #include <everest_api_types/utilities/Topics.hpp>
+
+#include "session_info.hpp"
 
 namespace ev_API = everest::lib::API;
 
@@ -104,30 +107,22 @@ private:
 
     void generate_api_cmd_get_evse();
     void generate_api_cmd_enable_disable();
-    void generate_api_cmd_authorize_response();
-    void generate_api_cmd_withdraw_authorization();
-    void generate_api_cmd_reserve();
-    void generate_api_cmd_cancel_reservation();
     void generate_api_cmd_pause_charging();
     void generate_api_cmd_resume_charging();
     void generate_api_cmd_stop_transaction();
     void generate_api_cmd_force_unlock();
-    void generate_api_cmd_external_ready_to_start_charging();
     void generate_api_cmd_random_delay_enable();
     void generate_api_cmd_random_delay_disable();
     void generate_api_cmd_random_delay_cancel();
     void generate_api_cmd_random_delay_set_duration_s();
 
     void generate_api_var_session_event();
-    void generate_api_var_limits();
+    void generate_api_var_session_info();
     void generate_api_var_ev_info();
-    void generate_api_var_car_manufacturer();
     void generate_api_var_powermeter();
     void generate_api_var_evse_id();
     void generate_api_var_hw_capabilities();
     void generate_api_var_enforced_limits();
-    void generate_api_var_waiting_for_external_ready();
-    void generate_api_var_ready();
     void generate_api_var_selected_protocol();
     void generate_api_var_powermeter_public_key_ocmf();
     void generate_api_var_supported_energy_transfer_modes();
@@ -148,6 +143,8 @@ private:
     ev_API::Topics topics;
     ev_API::CommCheckHandler<generic_errorImplBase> comm_check;
     size_t hb_id{0};
+    everest::lib::util::monitor<SessionInfo> session_info;
+
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

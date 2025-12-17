@@ -1,0 +1,35 @@
+module(
+    name = "everest-utils",
+    version = "0.7.3",
+)
+
+###############################################################################
+# B A Z E L  C E N T R A L  R E G I S T R Y # https://registry.bazel.build/
+###############################################################################
+
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+
+bazel_dep(name = "rules_python", version = "1.3.0")
+
+###############################################################################
+# T O O L C H A I N S
+###############################################################################
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    configure_coverage_tool = True,
+    python_version = "3.10",
+)
+
+###############################################################################
+# P Y T H O N  W O R K S P A C E
+###############################################################################
+
+pip_deps = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip_deps.parse(
+    python_version = "3.10",
+    hub_name = "everest-testing_pip_deps",
+    requirements_lock = "@everest-utils//:requirements-bazel.txt",
+)
+
+use_repo(pip_deps, "everest-testing_pip_deps")

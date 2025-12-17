@@ -524,22 +524,15 @@ static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx
 static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
     struct iso2_SessionSetupReqType* req = &conn->exi_in.iso2EXIDocument->V2G_Message.Body.SessionSetupReq;
     struct iso2_SessionSetupResType* res = &conn->exi_out.iso2EXIDocument->V2G_Message.Body.SessionSetupRes;
-    char buffer[iso2_evccIDType_BYTES_SIZE * 3 - 1 + 1]; /* format: (%02x:) * n - (1x ':') + (1x NULL) */
-    int i;
     enum v2g_event next_event = V2G_EVENT_NO_EVENT;
 
     /* format EVCC ID */
-    for (i = 0; i < req->EVCCID.bytesLen; i++) {
-        sprintf(&buffer[i * 3], "%02" PRIX8 ":", req->EVCCID.bytes[i]);
-    }
-    if (i)
-        buffer[i * 3 - 1] = '\0';
-    else
-        buffer[0] = '\0';
+    const auto mac_addr = to_mac_address_str(&req->EVCCID.bytes[0], req->EVCCID.bytesLen);
 
-    conn->ctx->p_charger->publish_evcc_id(buffer); // publish EVCC ID
+    conn->ctx->p_charger->publish_evcc_id(mac_addr); // publish EVCC ID
 
-    dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s", std::string(buffer).size() ? buffer : "(zero length provided)");
+    dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s",
+         (mac_addr.empty()) ? "(zero length provided)" : mac_addr.c_str());
 
     /* [V2G2-756]: If the SECC receives a SessionSetupReq including a SessionID value which is not
      * equal to zero (0) and not equal to the SessionID value stored from the preceding V2G
@@ -559,14 +552,15 @@ static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
     srand((unsigned int)time(NULL));
     if (conn->ctx->evse_v2g_data.session_id == (uint64_t)0 ||
         conn->ctx->evse_v2g_data.session_id != conn->ctx->ev_v2g_data.received_session_id) {
-        generate_random_data(&conn->ctx->evse_v2g_data.session_id, 4);
+        generate_random_data(&conn->ctx->evse_v2g_data.session_id, 8);
         dlog(
             DLOG_LEVEL_INFO,
             "No session_id found or not equal to the id from the preceding v2g session. Generating random session id.");
-        dlog(DLOG_LEVEL_INFO, "Created new session with id 0x%08" PRIu64, conn->ctx->evse_v2g_data.session_id);
+        dlog(DLOG_LEVEL_INFO, "Created new session with id 0x%016" PRIx64,
+             be64toh(conn->ctx->evse_v2g_data.session_id));
     } else {
-        dlog(DLOG_LEVEL_INFO, "Found Session_id from the old session: 0x%08" PRIu64,
-             conn->ctx->evse_v2g_data.session_id);
+        dlog(DLOG_LEVEL_INFO, "Found Session_id from the old session: 0x%016" PRIx64,
+             be64toh(conn->ctx->evse_v2g_data.session_id));
         res->ResponseCode = iso2_responseCodeType_OK_OldSessionJoined;
     }
 
@@ -588,7 +582,7 @@ static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
 }
 
 /*!
- * \brief handle_iso_service_discovery This function handles the din service discovery msg pair. It analyzes the request
+ * \brief handle_iso_service_discovery This function handles the iso service discovery msg pair. It analyzes the request
  * msg and fills the response msg. The request and response msg based on the open V2G structures. This structures must
  * be provided within the \c conn structure.
  * \param conn holds the structure with the V2G msg pair.
@@ -598,7 +592,6 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     struct iso2_ServiceDiscoveryReqType* req = &conn->exi_in.iso2EXIDocument->V2G_Message.Body.ServiceDiscoveryReq;
     struct iso2_ServiceDiscoveryResType* res = &conn->exi_out.iso2EXIDocument->V2G_Message.Body.ServiceDiscoveryRes;
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
-    int8_t scope_idx = -1; // To find a list entry within the evse service list */
 
     /* At first, publish the received ev request message to the MQTT interface */
     publish_iso_service_discovery_req(req);
@@ -635,33 +628,27 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
            conn->ctx->evse_v2g_data.payment_option_list_len * sizeof(iso2_paymentOptionType));
     res->PaymentOptionList.PaymentOption.arrayLen = conn->ctx->evse_v2g_data.payment_option_list_len;
 
-    /* Find requested scope id within evse service list */
-    if (req->ServiceScope_isUsed) {
-        /* Check if ServiceScope is in evse ServiceList */
-        for (uint8_t idx = 0; idx < conn->ctx->evse_v2g_data.evse_service_list.size(); idx++) {
-            if ((conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope_isUsed == (unsigned int)1) &&
-                (strcmp(conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope.characters,
-                        req->ServiceScope.characters) == 0)) {
-                scope_idx = idx;
-                break;
-            }
-        }
+    // ensure a "clean" service list
+    res->ServiceList.Service.arrayLen = 0;
+
+    // consider all services by default, but...
+    for (const auto& service : conn->ctx->evse_v2g_data.evse_service_list) {
+        // ...skip the service if the (possibly set) scope does not match a (possibly) requested one
+        if (req->ServiceScope_isUsed and service.ServiceScope_isUsed and
+            strncmp(req->ServiceScope.characters, service.ServiceScope.characters,
+                    sizeof(req->ServiceScope.characters)) != 0)
+            continue;
+        // ...skip if a possibly requested service category does not match the category of the service
+        if (req->ServiceCategory_isUsed and req->ServiceCategory != service.ServiceCategory)
+            continue;
+        // copy otherwise
+        res->ServiceList.Service.array[res->ServiceList.Service.arrayLen] = service;
+        // update the new size
+        res->ServiceList.Service.arrayLen++;
     }
 
-    /*  The SECC always returns all supported services for all scopes if no specific ServiceScope has been
-        indicated in request message. */
-    if (scope_idx == (int8_t)-1) {
-        std::copy(conn->ctx->evse_v2g_data.evse_service_list.begin(), conn->ctx->evse_v2g_data.evse_service_list.end(),
-                  res->ServiceList.Service.array);
-        res->ServiceList.Service.arrayLen = conn->ctx->evse_v2g_data.evse_service_list.size();
-    } else {
-        /* Offer only the requested ServiceScope entry */
-        res->ServiceList.Service.array[0] = conn->ctx->evse_v2g_data.evse_service_list[scope_idx];
-        res->ServiceList.Service.arrayLen = 1;
-    }
-
-    res->ServiceList_isUsed =
-        ((uint16_t)0 < conn->ctx->evse_v2g_data.evse_service_list.size()) ? (unsigned int)1 : (unsigned int)0;
+    // tell the EXI encoder that we want to use the filled list
+    res->ServiceList_isUsed = res->ServiceList.Service.arrayLen ? 1 : 0;
 
     /* Check the current response code and check if no external error has occurred */
     nextEvent = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);
@@ -721,9 +708,10 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
 
                     iso2_ServiceParameterListType vas_parameter_list{};
                     init_iso2_ServiceParameterListType(&vas_parameter_list);
-                    vas_parameter_list.ParameterSet.arrayLen = vas_parameters.size() <= 5 ? vas_parameters.size() : 5;
+                    size_t maxParameterSetArrayLen = ARRAY_SIZE(vas_parameter_list.ParameterSet.array);
+                    vas_parameter_list.ParameterSet.arrayLen = std::min(maxParameterSetArrayLen, vas_parameters.size());
 
-                    for (size_t j = 0; j < vas_parameters.size() and j <= 5; j++) {
+                    for (size_t j = 0; j < vas_parameters.size() and j < maxParameterSetArrayLen; j++) {
                         const auto& vas_parameter = vas_parameters.at(j);
 
                         vas_parameter_list.ParameterSet.array[j].ParameterSetID =
@@ -731,24 +719,30 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
 
                         size_t t{0};
                         for (const auto& parameter : vas_parameter.parameters) {
+                            // quit loop when the maximum count of elements our encoder can handle is reached
+                            if (t == ARRAY_SIZE(vas_parameter_list.ParameterSet.array[j].Parameter.array))
+                                break;
                             auto& out_parameter = vas_parameter_list.ParameterSet.array[j].Parameter.array[t++];
 
                             init_iso2_ParameterType(&out_parameter);
 
-                            parameter.name.copy(out_parameter.Name.characters, parameter.name.length());
-                            out_parameter.Name.charactersLen = parameter.name.length();
+                            strncpy_to_v2g(out_parameter.Name.characters, sizeof(out_parameter.Name.characters),
+                                           &out_parameter.Name.charactersLen, parameter.name);
 
                             if (parameter.value.int_value.has_value()) {
                                 out_parameter.intValue = parameter.value.int_value.value();
                                 out_parameter.intValue_isUsed = true;
                             } else if (parameter.value.finite_string.has_value()) {
-                                // TODO(SL): Check if string is too big to copy char array
                                 const auto& temp = parameter.value.finite_string.value();
-                                if (temp.length() > sizeof(out_parameter)) {
-                                    dlog(DLOG_LEVEL_WARNING, "Paramater String is too long to copy into char array");
+                                if (temp.length() > sizeof(out_parameter.stringValue.characters)) {
+                                    EVLOG_warning << fmt::format("The value of parameter string '{}' is too long and "
+                                                                 "was truncated from '{}' to '{:.{}}'",
+                                                                 parameter.name, temp, temp,
+                                                                 sizeof(out_parameter.stringValue.characters));
                                 }
-                                temp.copy(out_parameter.stringValue.characters, temp.length());
-                                out_parameter.stringValue.charactersLen = temp.length();
+                                strncpy_to_v2g(out_parameter.stringValue.characters,
+                                               sizeof(out_parameter.stringValue.characters),
+                                               &out_parameter.stringValue.charactersLen, temp);
                                 out_parameter.stringValue_isUsed = true;
                             } else if (parameter.value.bool_value.has_value()) {
                                 out_parameter.boolValue = static_cast<int>(parameter.value.bool_value.value());
@@ -768,7 +762,7 @@ static enum v2g_event handle_iso_service_detail(struct v2g_connection* conn) {
                             }
                         }
 
-                        vas_parameter_list.ParameterSet.array[j].Parameter.arrayLen = vas_parameter.parameters.size();
+                        vas_parameter_list.ParameterSet.array[j].Parameter.arrayLen = t;
                     }
 
                     res->ServiceParameterList.ParameterSet = vas_parameter_list.ParameterSet;
@@ -1193,6 +1187,8 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
         } else {
             res->ResponseCode = iso2_responseCodeType_FAILED;
         }
+    } else if (conn->ctx->session.authorization_rejected == true) {
+        res->ResponseCode = iso2_responseCodeType_FAILED;
     }
 
 error_out:
@@ -2153,7 +2149,7 @@ static enum v2g_event handle_iso_session_stop(struct v2g_connection* conn) {
     /* Set the next charging state */
     switch (req->ChargingSession) {
     case iso2_chargingSessionType_Terminate:
-        conn->dlink_action = MQTT_DLINK_ACTION_TERMINATE;
+        conn->d_link_action = dLinkAction::D_LINK_ACTION_TERMINATE;
         conn->ctx->hlc_pause_active = false;
         /* Set next expected req msg */
         conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_TERMINATED_SESSION;
@@ -2164,13 +2160,13 @@ static enum v2g_event handle_iso_session_stop(struct v2g_connection* conn) {
         /* Check if the EV is allowed to request the sleep mode. TODO: Remove "true" if sleep mode is supported */
         if (((conn->ctx->last_v2g_msg != V2G_POWER_DELIVERY_MSG) &&
              (conn->ctx->last_v2g_msg != V2G_WELDING_DETECTION_MSG))) {
-            conn->dlink_action = MQTT_DLINK_ACTION_TERMINATE;
+            conn->d_link_action = dLinkAction::D_LINK_ACTION_TERMINATE;
             res->ResponseCode = iso2_responseCodeType_FAILED;
             conn->ctx->hlc_pause_active = false;
             conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_TERMINATED_SESSION;
         } else {
             /* Init sleep mode for the EV */
-            conn->dlink_action = MQTT_DLINK_ACTION_PAUSE;
+            conn->d_link_action = dLinkAction::D_LINK_ACTION_PAUSE;
             conn->ctx->hlc_pause_active = true;
             conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_SESSIONSETUP;
         }
@@ -2178,7 +2174,7 @@ static enum v2g_event handle_iso_session_stop(struct v2g_connection* conn) {
 
     default:
         /* Set next expected req msg */
-        conn->dlink_action = MQTT_DLINK_ACTION_TERMINATE;
+        conn->d_link_action = dLinkAction::D_LINK_ACTION_TERMINATE;
         conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_TERMINATED_SESSION;
     }
 

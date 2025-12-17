@@ -1,0 +1,61 @@
+set(ENV{EVEREST_EDM_WORKSPACE} {{ workspace["workspace"] }})
+set(CPM_USE_NAMED_CACHE_DIRECTORIES ON)
+{% for dep in checkout %}
+set(CPM_{{ dep["name"] }}_SOURCE "{{ dep["path"] }}")
+{% endfor %}
+{% for name, value in dependencies.items() %}
+if("{{name}}" IN_LIST EVEREST_EXCLUDE_DEPENDENCIES)
+    message(STATUS "Excluding dependency {{name}}")
+{% if "cmake_condition" in value and value["cmake_condition"]|length > 0 %}
+elseif({{ value["cmake_condition"] }})
+{% else %}
+else()
+{% endif %}
+{% if value and "git" in value %}
+CPMAddPackage(
+    NAME {{ name }}
+    GIT_REPOSITORY {{ value["git"] }}
+{% if "git_tag" in value %}
+    GIT_TAG {{ value["git_tag"] }}
+{% endif %}
+{% if "options" in value and value["options"]|length > 0 %}
+    OPTIONS
+        {{value["options"]|quote|join(" ")}}
+{% endif %}
+{% if "prevent_install" in value and value["prevent_install"] %}
+    EXCLUDE_FROM_ALL YES
+{% endif %}
+)
+{% else %}
+find_package(
+    {{ name }}
+{% if value and "components" in value and value["components"]|length > 0 %}
+    COMPONENTS
+        {{value["components"]|quote|join(" ")}}
+{% endif %}
+{% if not value or "optional" not in value or not value["optional"] %}
+    REQUIRED
+{% endif %}
+)
+{% endif %}
+{% if value and "alias" in value %}
+if({{name}}_ADDED)
+  add_library({{value["alias"]["name"]}} ALIAS {{value["alias"]["target"]}})
+endif()
+{% endif %}
+{% if "cmake_condition" in value and value["cmake_condition"]|length > 0 %}
+else()
+    message(STATUS "Excluding dependency {{name}} based on cmake_condition")
+{% endif %}
+endif()
+
+{% endfor %}
+
+execute_process(
+    COMMAND "${EVEREST_DEPENDENCY_MANAGER}" release --everest-core-dir ${PROJECT_SOURCE_DIR} --build-dir ${CMAKE_BINARY_DIR} --out ${CMAKE_BINARY_DIR}/release.json
+)
+
+install(
+    FILES "${CMAKE_BINARY_DIR}/release.json"
+    DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/everest"
+)

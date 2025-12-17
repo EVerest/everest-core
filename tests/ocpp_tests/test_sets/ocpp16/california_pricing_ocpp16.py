@@ -1020,6 +1020,15 @@ class TestOcpp16CostAndPrice:
         response = await charge_point_v16.change_configuration_req(key="DefaultPriceText,de", value=json.dumps(price_text))
         assert response.status == "Accepted"
 
+        # Set price text for specific language.
+        price_text = {
+            "priceText": "€0.15 / kWh, Leerlaufgebühr nach dem Aufladen: 2 $/hr",
+            "priceTextOffline": "Die Station ist offline. Laden ist für €0,15/kWh möglich"
+        }
+
+        response = await charge_point_v16.change_configuration_req(key="DefaultPriceText,de", value=json.dumps(price_text))
+        assert response.status == "Accepted"
+
         # Get price text for specific language to check if it is set.
         response = await charge_point_v16.get_configuration_req(key=['DefaultPriceText,de'])
 

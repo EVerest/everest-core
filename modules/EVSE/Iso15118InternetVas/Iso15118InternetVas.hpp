@@ -27,6 +27,7 @@ struct Conf {
     std::string modem_interface;
     bool http_support;
     bool https_support;
+    std::string vas_setup_script;
 };
 
 class Iso15118InternetVas : public Everest::ModuleBase {

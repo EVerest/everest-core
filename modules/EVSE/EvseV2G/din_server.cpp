@@ -309,22 +309,14 @@ enum v2g_event handle_din_session_setup(struct v2g_connection* conn) {
     struct din_SessionSetupReqType* req = &conn->exi_in.dinEXIDocument->V2G_Message.Body.SessionSetupReq;
     struct din_SessionSetupResType* res = &conn->exi_out.dinEXIDocument->V2G_Message.Body.SessionSetupRes;
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
-    char buffer[din_evccIDType_BYTES_SIZE * 2 + din_evccIDType_BYTES_SIZE - 1 +
-                1]; /* format: (%02x:) * n - 1x ':' + 1x NUL */
-    int idx;
 
     /* format EVCC ID */
-    for (idx = 0; idx < req->EVCCID.bytesLen; idx++) {
-        sprintf(&buffer[idx * 3], "%02" PRIX8 ":", req->EVCCID.bytes[idx]);
-    }
-    if (idx)
-        buffer[idx * 3 - 1] = '\0';
-    else
-        buffer[0] = '\0';
+    const auto mac_addr = to_mac_address_str(&req->EVCCID.bytes[0], req->EVCCID.bytesLen);
 
-    conn->ctx->p_charger->publish_evcc_id(buffer); // publish EVCC ID
+    conn->ctx->p_charger->publish_evcc_id(mac_addr); // publish EVCC ID
 
-    dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s", std::string(buffer).size() ? buffer : "(zero length provided)");
+    dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s",
+         (mac_addr.empty()) ? "(zero length provided)" : mac_addr.c_str());
 
     /* Now fill the evse response message */
     res->ResponseCode = din_responseCodeType_OK_NewSessionEstablished; // [V2G-DC-393]
@@ -333,12 +325,11 @@ enum v2g_event handle_din_session_setup(struct v2g_connection* conn) {
     /* If the customer doesen't select a session id, generate one */
     srand((unsigned int)time(NULL));
     if (conn->ctx->evse_v2g_data.session_id == (uint64_t)0) {
-        conn->ctx->evse_v2g_data.session_id =
-            ((uint64_t)rand() << 48) | ((uint64_t)rand() << 32) | ((uint64_t)rand() << 16) | (uint64_t)rand();
+        generate_random_data(&conn->ctx->evse_v2g_data.session_id, 8);
         dlog(DLOG_LEVEL_INFO, "No session_id found. Generating random session id.");
     }
 
-    dlog(DLOG_LEVEL_INFO, "Created new session with id 0x%08" PRIu64, conn->ctx->evse_v2g_data.session_id);
+    dlog(DLOG_LEVEL_INFO, "Created new session with id 0x%016" PRIx64, be64toh(conn->ctx->evse_v2g_data.session_id));
 
     res->EVSEID.bytesLen = std::min((int)conn->ctx->evse_v2g_data.evse_id.bytesLen, iso2_EVSEID_CHARACTER_SIZE);
     memcpy(res->EVSEID.bytes, conn->ctx->evse_v2g_data.evse_id.bytes, res->EVSEID.bytesLen);
@@ -463,7 +454,11 @@ enum v2g_event states::handle_din_contract_authentication(struct v2g_connection*
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
 
     /* Fill the EVSE response message */
-    res->ResponseCode = din_responseCodeType_OK; // [V2G-DC-388]
+    if (conn->ctx->session.authorization_rejected == true) {
+        res->ResponseCode = din_responseCodeType_FAILED;
+    } else {
+        res->ResponseCode = din_responseCodeType_OK; // [V2G-DC-388]
+    }
     res->EVSEProcessing = (conn->ctx->evse_v2g_data.evse_processing[PHASE_AUTH] == (uint8_t)0)
                               ? din_EVSEProcessingType_Finished
                               : din_EVSEProcessingType_Ongoing;
@@ -928,7 +923,7 @@ static enum v2g_event handle_din_session_stop(struct v2g_connection* conn) {
     utils::din_validate_response_code(&res->ResponseCode, conn);
 
     /* Setuo dlink action */
-    conn->dlink_action = MQTT_DLINK_ACTION_TERMINATE;
+    conn->d_link_action = dLinkAction::D_LINK_ACTION_TERMINATE;
 
     /* Set next expected req msg */
     conn->ctx->state = WAIT_FOR_TERMINATED_SESSION; // [V2G-DC-451]

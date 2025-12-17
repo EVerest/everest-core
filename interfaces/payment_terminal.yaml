@@ -2,14 +2,15 @@ description: Interface that provides functionality for a Payment Terminal
 cmds:
   enable_card_reading:
     description: >-
-      Enables or disables card reading for given connector
+      Enables or disables card reading for given connector. An empty vector
+      disables every card type.
     arguments:
       supported_cards:
         description: Supported card types array
         type: array
         items:
           type: string
-          $ref: /payment_terminal#/CardType
+          $ref: /authorization#/AuthorizationType
       connector_id:
         description: Which connector
         type: integer
@@ -25,10 +26,5 @@ vars:
       it's mostly opaque data at the moment.
     type: object
     $ref: /payment_terminal#/BankTransactionSummary
-  rejection_reason:
-    description: >-
-      Provides a rejection reason for the rejected credit card read.
-    type: string
-    $ref: /payment_terminal#/RejectionReason
 errors:
   - reference: /errors/payment_terminal

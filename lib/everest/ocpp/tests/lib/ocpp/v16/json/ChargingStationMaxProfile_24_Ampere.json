@@ -1,0 +1,36 @@
+{
+    "chargingProfileId": 24,
+    "chargingProfileKind": "Recurring",
+    "chargingProfilePurpose": "ChargePointMaxProfile",
+    "chargingSchedule": {
+        "id": 0,
+        "chargingRateUnit": "A",
+        "chargingSchedulePeriod": [
+            {
+                "limit": 16.0,
+                "numberPhases": 1,
+                "startPeriod": 0
+            },
+            {
+                "limit": 16.0,
+                "numberPhases": 3,
+                "startPeriod": 3600
+            },
+            {
+                "limit": 10.0,
+                "numberPhases": 1,
+                "startPeriod": 7200
+            },
+            {
+                "limit": 10.0,
+                "numberPhases": 3,
+                "startPeriod": 10800
+            }
+        ],
+        "duration": 86400,
+        "minChargingRate": 0.0,
+        "startSchedule": "2024-01-17T00:00:00.000Z"
+    },
+    "recurrencyKind": "Daily",
+    "stackLevel": 0
+}

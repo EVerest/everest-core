@@ -235,33 +235,57 @@ void InfyCanDevice::rx_handler(uint32_t can_id, const std::vector<uint8_t>& payl
 }
 
 void InfyCanDevice::txThread() {
+
     while (!exitTxThread) {
+        const int delay_us = 50000;
+
         // request current system DC voltage. Answer will be processed by RX thread.
         request_rx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::SystemDCVoltage());
+        usleep(delay_us);
 
         // request current system DC current. Answer will be processed by RX thread.
         request_rx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::SystemDCCurrent());
+        usleep(delay_us);
 
         // request state. Answer will be processed by RX thread.
         request_rx(can_packet_acdc::ADDR_MODULE, can_packet_acdc::PowerModuleStatus());
+        usleep(delay_us);
 
         // request inverter state. Answer will be processed by RX thread.
         request_rx(can_packet_acdc::ADDR_MODULE, can_packet_acdc::InverterStatus());
+        usleep(delay_us);
 
-        usleep(100000);
+        tx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::OnOff(on));
+        usleep(delay_us);
+
+        if (setpoint_voltage > 150.) {
+            tx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::SystemDCVoltage(setpoint_voltage));
+            usleep(delay_us);
+            tx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::SystemDCCurrent(setpoint_current));
+            usleep(delay_us);
+        }
+
+        tx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::WalkInEnable(walkin_enable));
+        usleep(delay_us);
+
+        tx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::WorkingMode(inverter_mode));
+        usleep(delay_us);
     }
 }
 
-bool InfyCanDevice::switch_on_off(bool on) {
-    return tx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::OnOff(on));
+bool InfyCanDevice::switch_on_off(bool _on) {
+    on = _on;
+    return true;
 }
 
 bool InfyCanDevice::set_walkin_enabled(bool on) {
-    return tx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::WalkInEnable(on));
+    walkin_enable = on;
+    return true;
 }
 
 bool InfyCanDevice::set_inverter_mode(bool i) {
-    return tx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::WorkingMode(i));
+    inverter_mode = i;
+    return true;
 }
 
 bool InfyCanDevice::adjust_power_factor(float pf) {
@@ -269,8 +293,9 @@ bool InfyCanDevice::adjust_power_factor(float pf) {
 }
 
 bool InfyCanDevice::set_voltage_current(float voltage, float current) {
-    return tx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::SystemDCVoltage(voltage)) &&
-           tx(can_packet_acdc::ADDR_BROADCAST, can_packet_acdc::SystemDCCurrent(current));
+    setpoint_current = current;
+    setpoint_voltage = voltage;
+    return true;
 }
 
 bool InfyCanDevice::set_generic_setting(uint8_t byte0, uint8_t byte1, uint32_t value) {
@@ -290,7 +315,6 @@ bool InfyCanDevice::tx(const uint8_t destination_address, const std::vector<uint
 bool InfyCanDevice::request_rx(const uint8_t destination_address, const std::vector<uint8_t>& payload) {
     uint32_t can_id = can_packet_acdc::encode_can_id(destination_address, can_packet_acdc::CMD_READ);
     can_id |= 0x80000000U; // Extended frame format
-    usleep(10000);
     return _tx(can_id, payload);
 }
 

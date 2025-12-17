@@ -1,0 +1,10 @@
+description: More errors.
+errors:
+  - name: ExampleErrorA
+    description: >-
+      The same error as in example_errors.yaml. The error names are placed in a
+      namespace
+  - name: MoreError
+    description: additinal error
+  - name: snake_case_error
+    description: We will correct snake cases

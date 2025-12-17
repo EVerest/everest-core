@@ -2,14 +2,6 @@
 # For the sake of unambiguity the `git_tag` field is treated as a hash
 # only if it is 40 characters long hexadecimal string.
 ---
-everest-framework:
-  git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.24.0
-  options: [
-    "BUILD_TESTING OFF",
-    "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
-    "everest-framework_USE_PYTHON_VENV_PATH ${PROJECT_NAME}_USE_PYTHON_VENV_PATH",
-  ]
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.3
@@ -21,23 +13,6 @@ pugixml:
   git: https://github.com/zeux/pugixml
   git_tag: v1.15
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_PUGIXML"
-
-# Auth module
-libtimer:
-  git: https://github.com/EVerest/libtimer.git
-  git_tag: v0.1.3
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBTIMER"
-  options: ["BUILD_EXAMPLES OFF"]
-
-# Slac module
-libslac:
-  git: https://github.com/EVerest/libslac.git
-  git_tag: v0.3.1
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBSLAC"
-libfsm:
-  git: https://github.com/EVerest/libfsm.git
-  git_tag: v0.2.0
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBFSM"
 
 # RpcApi module
 libwebsockets:
@@ -74,17 +49,6 @@ json-rpc-cxx:
     - COMPILE_EXAMPLES OFF
     - CODE_COVERAGE OFF
 
-# libcbv2g
-libcbv2g:
-  git: https://github.com/EVerest/libcbv2g.git
-  git_tag: v0.3.1
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
-# libiso15118
-libiso15118:
-  git: https://github.com/EVerest/libiso15118.git
-  git_tag: v0.9.0
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
-
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
 libcurl:
   git: https://github.com/curl/curl.git
@@ -103,28 +67,11 @@ libcurl:
     "USE_NGHTTP2 OFF",
   ]
 
-# EvseSecurity
-# This has to appear before libocpp in this file since it is also a direct dependency
-# of libocpp and would otherwise be overwritten by the version used there
-libevse-security:
-  git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.10.0
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
-
-# OCPP
-libocpp:
-  git: https://github.com/EVerest/libocpp.git
-  git_tag: v0.30.3
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: c31c4e7f8004dc63cec28ad113bd059cbabbe321
+  git_tag: 89db9d27db551801d45627f802e4c3a029ed29c2
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
-# everest-testing and ev-dev-tools
-everest-utils:
-  git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.7.3
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git
@@ -152,9 +99,6 @@ gtest:
   git: https://github.com/google/googletest.git
   git_tag: release-1.12.1
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
-everest-sqlite:
-  git: https://github.com/EVerest/everest-sqlite.git
-  git_tag: v0.1.4
 catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.9.0

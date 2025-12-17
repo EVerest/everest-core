@@ -1,0 +1,56 @@
+{% if first %}
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
+#ifndef OCPP_{{namespace | upper}}_OCPP_TYPES_HPP
+#define OCPP_{{namespace | upper}}_OCPP_TYPES_HPP
+
+#include <string>
+
+#include <optional>
+#include <nlohmann/json_fwd.hpp>
+
+#include <ocpp/{{namespace}}/ocpp_enums.hpp>
+#include <ocpp/common/types.hpp>
+
+namespace ocpp {
+namespace {{namespace}} {
+{% endif %}
+{%- if parsed_types|length %}
+{%- for type in parsed_types %}
+{% if not type.name.endswith('Request') and not type.name.endswith('Response') %}
+
+{% if type.name == "CustomData" and namespace == "v2" %}
+    using CustomData = nlohmann::json;
+{% else %}
+struct {{type.name}} {
+{% for property in type.properties %}
+    {{ 'std::optional<' if not property.required -}}
+    {{ property.type -}}
+    {{ '>' if not property.required -}}
+    {{ ' ' + property.name + ';' }}
+{% endfor %}
+};
+{% endif %}
+{% if not (type.name == "CustomData" and namespace == "v2") %}
+    /// \brief Conversion from a given {{ type.name }} \p k to a given json object \p j
+    void to_json(json& j, const {{ type.name }}& k);
+
+    /// \brief Conversion from a given json object \p j to a given {{ type.name }} \p k
+    void from_json(const json& j, {{ type.name }}& k);
+
+    /// \brief Writes the string representation of the given {{ type.name }} \p k to the given output stream \p os
+    /// \returns an output stream with the {{ type.name }} written to
+    std::ostream& operator<<(std::ostream& os, const {{ type.name }}& k);
+
+{% endif %}
+{% endif %}
+{% endfor %}
+{%- endif %}
+{% if last %}
+} // namespace {{namespace}}
+} // namespace ocpp
+
+#endif // OCPP_{{namespace | upper}}_OCPP_TYPES_HPP
+{% endif %}

@@ -17,6 +17,15 @@ config:
     description: >-
       Boolean dictating whether we should let the EV know we support HTTPS
     type: boolean
+  vas_setup_script:
+    description: >-
+       Filepath of the script, which is executed to setup the VaS network.
+       A relative filepath is appended to the module directory:
+       /usr/libexec/everest/modules/Iso15118InternetVas/.
+       That means in the default case, it expands to: /usr/libexec/everest/modules/Iso15118InternetVas/vas-internet-setup.sh.
+       An absolute filepath is directly executed.
+    type: string
+    default: "vas-internet-setup.sh"
 provides:
   iso15118_vas:
     interface: ISO15118_vas

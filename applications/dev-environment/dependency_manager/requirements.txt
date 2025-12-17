@@ -1,0 +1,3 @@
+Jinja2>=2.11
+PyYAML>=5.3
+requests>=2

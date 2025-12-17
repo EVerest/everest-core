@@ -366,10 +366,9 @@ struct v2g_context {
     bool connection_initiated;
 };
 
-enum mqtt_dlink_action {
-    MQTT_DLINK_ACTION_ERROR,
-    MQTT_DLINK_ACTION_TERMINATE,
-    MQTT_DLINK_ACTION_PAUSE,
+enum class dLinkAction {
+    D_LINK_ACTION_TERMINATE,
+    D_LINK_ACTION_PAUSE
 };
 
 /**
@@ -410,7 +409,7 @@ struct v2g_connection {
         struct iso2_exiDocument* iso2EXIDocument;
     } exi_out;
 
-    enum mqtt_dlink_action dlink_action; /* signaled action after connection is closed */
+    dLinkAction d_link_action; /* signaled data-link action after connection is closed */
 };
 
 #endif /* V2G_H */

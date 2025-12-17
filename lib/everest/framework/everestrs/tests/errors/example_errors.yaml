@@ -1,0 +1,10 @@
+description: Example errors
+errors:
+  - name: ExampleErrorA
+    description: Example error A
+  - name: ExampleErrorB
+    description: Example error B
+  - name: ExampleErrorC
+    description: Example error C
+  - name: ExampleErrorD
+    description: Example error D

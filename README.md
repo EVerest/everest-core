@@ -71,7 +71,7 @@ sudo dnf install make automake gcc gcc-c++ kernel-devel python3-pip \
   python3-devel git rsync wget cmake doxygen graphviz clang-tools-extra \
   cppcheck java-21-openjdk java-21-openjdk-devel boost-devel nodejs \
   nodejs-devel npm openssl openssl-devel libsqlite3x-devel curl rfkill \
-  libpcap-devel libevent-devel libcap-devel systemd-devel
+  libpcap-devel libevent-devel libcap-devel systemd-devel openssl-devel-engine
 ```
 
 ## Build & Install

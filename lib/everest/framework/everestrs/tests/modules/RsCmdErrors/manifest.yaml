@@ -1,0 +1,18 @@
+description: Tests if we can raise errors from commands
+provides:
+  example:
+    interface: example
+    description: An example interface.
+requires:
+  other:
+    interface: example
+    # We don't care about everything which is non-cmd.
+    ignore:
+      vars:
+        - max_current
+      errors: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Everest authors
+enable_external_mqtt: false

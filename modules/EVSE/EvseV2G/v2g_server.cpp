@@ -373,7 +373,7 @@ int v2g_handle_connection(struct v2g_connection* conn) {
 
     /* Here is a good point to wait until the customer is ready for a resumed session,
      * because we are waiting for the incoming message of the ev */
-    if (conn->dlink_action == MQTT_DLINK_ACTION_PAUSE) {
+    if (conn->d_link_action == dLinkAction::D_LINK_ACTION_PAUSE) {
         // TODO: D_LINK pause
     }
 

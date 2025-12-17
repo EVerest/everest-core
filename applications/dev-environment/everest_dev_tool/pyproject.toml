@@ -1,0 +1,9 @@
+[project]
+name = "everest_dev_tool"
+version = "0.1.0"
+description = "This tool provides helpful commands to setup/control your dev environment"
+license = { text="Apache-2.0" }
+dependencies = []
+
+[project.scripts]
+everest = "everest_dev_tool:main"

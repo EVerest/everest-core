@@ -1,0 +1,141 @@
+#!/bin/bash
+
+set -e
+
+# Function to install devcontainer template
+install_devcontainer() {
+    echo "🚀 Installing EVerest DevContainer Template"
+    echo "=========================================="
+
+    read -p "Enter the workspace directory (default is the current directory): " WORKSPACE_DIR
+    if [ -z "$WORKSPACE_DIR" ]; then
+        WORKSPACE_DIR="./"
+    fi
+    WORKSPACE_DIR=$(realpath -m "$WORKSPACE_DIR")
+
+    read -p "Enter the version of the everest-dev-environment (default is 'main'): " VERSION
+    if [ -z "$VERSION" ]; then
+        VERSION="main"
+    fi
+
+    echo "Create the workspace directory '$WORKSPACE_DIR' if it does not exist"
+    mkdir -p $WORKSPACE_DIR
+
+    # Check if workspace directory has files other than everest-dev-environment
+    WORKSPACE_CONTENTS=$(ls -A $WORKSPACE_DIR 2>/dev/null | grep -v "^everest-dev-environment$" || true)
+    if [ -n "$WORKSPACE_CONTENTS" ]; then
+        # The workspace directory is not empty (excluding everest-dev-environment), warning do you want to continue?
+        read -p "The workspace directory is not empty, do you want to continue? (y/N): " -r
+        case "$REPLY" in
+            [Nn]|"")
+                echo "Exiting.."
+                exit 1
+                ;;
+            [Yy])
+                ;;
+            *)
+                echo "Invalid input. Exiting.."
+                exit 1
+                ;;
+        esac
+    fi
+
+    # Check if everest-dev-environment exists locally
+    if [ -d "everest-dev-environment" ]; then
+        echo "Found local everest-dev-environment directory, using it instead of cloning..."
+        SOURCE_DIR="everest-dev-environment"
+    else
+        echo "No local everest-dev-environment found, cloning from GitHub..."
+        TMP_DIR=$(mktemp --directory)
+        git clone --quiet --depth 1 --single-branch --branch "$VERSION" https://github.com/EVerest/everest-dev-environment.git "$TMP_DIR"
+        SOURCE_DIR="$TMP_DIR"
+    fi
+
+    echo "Copy the template devcontainer configuration files to the workspace directory"
+    cp -n -r $SOURCE_DIR/devcontainer/template/. $WORKSPACE_DIR/
+
+    # Ensure devrd script is executable
+    if [ -f "$WORKSPACE_DIR/devrd" ]; then
+        chmod +x "$WORKSPACE_DIR/devrd"
+        echo "✓ DevRD script installed and made executable"
+    else
+        echo "✖ Warning: DevRD script not found after installation"
+    fi
+
+    # Only remove temporary directory if we cloned it
+    if [ "$SOURCE_DIR" != "everest-dev-environment" ]; then
+        echo "Remove the temporary everest-dev-environment repository"
+        rm -rf "$SOURCE_DIR"
+    fi
+
+    echo "DevContainer template installation complete!"
+    echo "Files installed to: $WORKSPACE_DIR"
+    echo ""
+    echo "Installed components:"
+    echo "  ✓ Dev Yard script (./devrd)"
+    echo "  ✓ DevContainer configuration (.devcontainer/)"
+    echo "  ✓ Shell completion (devrd-completion.bash/.zsh)"
+    echo ""
+    echo "Next steps:"
+    echo "   cd $WORKSPACE_DIR"
+    echo "   ./devrd env"
+    echo "   ./devrd build"
+    echo "   ./devrd start"
+    echo "   ./devrd prompt"
+    echo ""
+    echo "Optional - Enable command completion:"
+    echo "   Add to your shell configuration file:"
+    echo "   • For bash: Add 'source .devcontainer/devrd-completion.bash' to ~/.bashrc"
+    echo "   • For zsh:  Add 'source .devcontainer/devrd-completion.zsh' to ~/.zshrc"
+    echo "   • For zsh:  Also ensure completion is enabled: 'autoload -U compinit && compinit'"
+}
+
+# Function to display help
+show_help() {
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "This script installs the EVerest DevContainer template to a workspace."
+    echo ""
+    echo "Installed components:"
+    echo "  • DevRD script (./devrd) - Main development environment manager"
+    echo "  • DevContainer configuration (.devcontainer/) - VS Code container config"
+    echo "  • Shell completion (devrd-completion.bash/.zsh) - Command completion for bash/zsh"
+    echo ""
+    echo "After installation:"
+    echo "  1. cd to your workspace directory"
+    echo "  2. Run './devrd env' to generate .env file"
+    echo "  3. Run './devrd build' to build containers"
+    echo "  4. Run './devrd start' to start services"
+    echo "  5. Run './devrd prompt' to get shell access"
+    echo ""
+    echo "Optional - Enable command completion:"
+    echo "  Add to your shell configuration file:"
+    echo "  • For bash: Add 'source .devcontainer/devrd-completion.bash' to ~/.bashrc"
+    echo "  • For zsh:  Add 'source .devcontainer/devrd-completion.zsh' to ~/.zshrc"
+    echo "  • For zsh:  Also ensure completion is enabled: 'autoload -U compinit && compinit'"
+    echo ""
+    echo "Options:"
+    echo "  --help                  Display this help message"
+    echo ""
+    echo "Examples:"
+    echo "  $0                      # Install DevContainer template to workspace"
+    echo ""
+    echo "After installation, use './devrd' to manage the development environment."
+    exit 0
+}
+
+# Parse command line arguments
+while [ $# -gt 0 ]; do
+    case $1 in
+        --help)
+            show_help
+            ;;
+        *)
+            echo "Unknown option: $1"
+            show_help
+            ;;
+    esac
+done
+
+# Execute the installation
+install_devcontainer

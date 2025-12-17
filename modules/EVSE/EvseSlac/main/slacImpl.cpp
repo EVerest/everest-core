@@ -92,6 +92,8 @@ void slacImpl::run() {
 
     fsm_ctx.slac_config.generate_nmk();
 
+    memcpy(fsm_ctx.evse_mac, slac_io.get_mac_addr(), ETH_ALEN);
+
     fsm_ctrl = std::make_unique<FSMController>(fsm_ctx);
 
     slac_io.run([](slac::messages::HomeplugMessage& msg) { fsm_ctrl->signal_new_slac_message(msg); });

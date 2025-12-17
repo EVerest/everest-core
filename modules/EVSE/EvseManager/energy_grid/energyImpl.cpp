@@ -505,6 +505,8 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
         if (limit > 1e-5 || limit < -1e-5)
             mod->charger->resume_charging_power_available();
 
+        mod->signalNrOfPhasesAvailable(mod->ac_nr_phases_active);
+
         if (mod->config.charge_mode == "DC") {
             // DC mode apply limit at the leave side, we get root side limits here from EnergyManager on ACDC!
             // FIXME: multiply by conversion_efficiency here!

@@ -1,0 +1,65 @@
+volumes:
+  ocpp-db-data:
+    external: false
+  node-red-data:
+    external: false
+
+services:
+  mqtt-server:
+    image: ghcr.io/everest/everest-dev-environment/mosquitto:docker-images-v0.2.0
+    ports:
+      - 1883:1883
+      - 9001:9001
+    profiles:
+      - all
+      - mqtt
+      - ocpp
+      - sil
+
+  ocpp-db:
+    image: mariadb:10.4.30 # pinned to patch-version because https://github.com/steve-community/steve/pull/1213
+    volumes:
+      - ocpp-db-data:/var/lib/mysql
+    ports:
+      - 13306:3306
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: ocpp-db
+      MYSQL_USER: ocpp
+      MYSQL_PASSWORD: ocpp
+    profiles:
+      - all
+      - ocpp
+  steve:
+    image: ghcr.io/everest/everest-dev-environment/steve:docker-images-v0.2.0
+    ports:
+      - 8180:8180
+      - 8443:8443
+    depends_on:
+      - ocpp-db
+    profiles:
+      - all
+      - ocpp
+  mqtt-explorer:
+    image: ghcr.io/everest/everest-dev-environment/mqtt-explorer:docker-images-v0.2.0
+    depends_on:
+      - mqtt-server
+    ports:
+      - 4000:4000
+    profiles:
+      - all
+      - sil
+  nodered:
+    image: ghcr.io/everest/everest-dev-environment/nodered:docker-images-v0.2.0
+    ports:
+      - 1880:1880
+    volumes:
+      - node-red-data:/data
+      - ./nodered-settings.js:/data/settings.js
+    environment:
+      - NODE_RED_ENABLE_PROJECTS=false
+      - MQTT_BROKER=mqtt-server
+      - MQTT_PORT=1883
+    profiles:
+      - all
+      - sil

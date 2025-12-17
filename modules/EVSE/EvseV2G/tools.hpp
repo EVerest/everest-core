@@ -19,6 +19,10 @@
 #define MAX_FILE_NAME_LENGTH 100
 #define MAX_PKI_CA_LENGTH    4 /* leaf up to root certificate */
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#endif
+
 #ifndef ROUND_UP
 #define ROUND_UP(N, S) ((((N) + (S)-1) / (S)) * (S))
 #endif
@@ -67,4 +71,23 @@ types::iso15118::HashAlgorithm convert_to_hash_algorithm(const types::evse_secur
  */
 std::vector<types::iso15118::CertificateHashDataInfo>
 convert_to_certificate_hash_data_info_vector(const types::evse_security::OCSPRequestDataList& ocsp_request_data_list);
+
+/**
+ * \brief convert bytes into a colon delimited string
+ * \param[in] ptr - a pointer to the byte array
+ * \param[in] len - the length of the byte array
+ * \returns a string of hex digits separated by : or empty on error
+ */
+
+std::string to_mac_address_str(const uint8_t* ptr, size_t len);
+
+/**
+ * \brief Copy the content of \p src to the character array pointed by \p characters.
+ * \param characters The destination buffer (array)
+ * \param size_of_characters The size of the destination (must not be zero)
+ * \param characters_len Pointer to the corresponding string length field in the destination struct.
+ * \param src The source string to use.
+ */
+void strncpy_to_v2g(char* characters, size_t size_of_characters, uint16_t* characters_len, const std::string& src);
+
 #endif /* TOOLS_H */
