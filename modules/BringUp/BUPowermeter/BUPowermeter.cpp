@@ -237,17 +237,17 @@ void BUPowermeter::ready() {
         optional_add(table_content, "Powermeter: imported energy in Wh (from grid): L3",
                      powermeter.energy_Wh_import.L3);
 
+        optional_add(table_content, "Powermeter: exported energy in Wh (to grid), total",
+                    std::to_string(powermeter.energy_Wh_export.value_or(ed).total));
+        optional_add(table_content, "Powermeter: exported energy in Wh (to grid): L1",
+                    powermeter.energy_Wh_export.value_or(ed).L1);
+        optional_add(table_content, "Powermeter: exported energy in Wh (to grid): L2",
+                    powermeter.energy_Wh_export.value_or(ed).L2);
+        optional_add(table_content, "Powermeter: exported energy in Wh (to grid): L3",
+                    powermeter.energy_Wh_export.value_or(ed).L3);
+
         optional_add(table_content, "Powermeter: user defined meter ID", powermeter.meter_id);
         optional_add(table_content, "Powermeter: 3 phase rotation error (ccw)", powermeter.phase_seq_error);
-
-        optional_add(table_content, "Powermeter: exported energy in Wh (to grid), total",
-                     std::to_string(powermeter.energy_Wh_export.value_or(ed).total));
-        optional_add(table_content, "Powermeter: exported energy in Wh (to grid): L1",
-                     powermeter.energy_Wh_export.value_or(ed).L1);
-        optional_add(table_content, "Powermeter: exported energy in Wh (to grid): L2",
-                     powermeter.energy_Wh_export.value_or(ed).L2);
-        optional_add(table_content, "Powermeter: exported energy in Wh (to grid): L3",
-                     powermeter.energy_Wh_export.value_or(ed).L3);
 
         optional_add(table_content, "Powermeter: voltage in V, DC", powermeter.voltage_V.value_or(vd).DC);
         optional_add(table_content, "Powermeter: voltage in V: L1", powermeter.voltage_V.value_or(vd).L1);

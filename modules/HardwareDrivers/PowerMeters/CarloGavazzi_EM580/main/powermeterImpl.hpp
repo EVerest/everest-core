@@ -82,6 +82,8 @@ private:
     void time_sync_thread();
     [[nodiscard]] bool is_transaction_active() const;
     void write_transaction_registers(const types::powermeter::TransactionReq& transaction_req);
+    void read_device_state();
+    std::vector<uint16_t> string_to_modbus_char_array(const std::string& str, size_t word_count);
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "transport.hpp"
+#include <string>
 
 const int MAX_REGISTER_PER_MESSAGE = 125;
 
@@ -22,6 +23,16 @@ transport::DataVector SerialCommHubTransport::fetch(int address, int register_co
 
             types::serial_comm_hub_requests::Result serial_com_hub_result =
                 m_serial_hub.call_modbus_read_input_registers(m_device_id, read_address, register_to_read);
+
+            // Check for communication errors
+            if (serial_com_hub_result.status_code == types::serial_comm_hub_requests::StatusCodeEnum::Timeout) {
+                throw transport::ModbusTimeoutException("Modbus read timeout: Packet receive timeout");
+            } else if (serial_com_hub_result.status_code != types::serial_comm_hub_requests::StatusCodeEnum::Success) {
+                std::string error_msg = "Modbus read failed with status: " +
+                                        types::serial_comm_hub_requests::status_code_enum_to_string(
+                                            serial_com_hub_result.status_code);
+                throw std::runtime_error(error_msg);
+            }
 
             if (not serial_com_hub_result.value.has_value())
                 throw std::runtime_error("no result from serial com hub!");
@@ -71,8 +82,12 @@ void SerialCommHubTransport::write_multiple_registers(int address, const std::ve
         types::serial_comm_hub_requests::StatusCodeEnum status =
             m_serial_hub.call_modbus_write_multiple_registers(m_device_id, write_address, data_raw);
 
-        if (status != types::serial_comm_hub_requests::StatusCodeEnum::Success) {
-            throw std::runtime_error("Failed to write Modbus registers: " + std::to_string(static_cast<int>(status)));
+        if (status == types::serial_comm_hub_requests::StatusCodeEnum::Timeout) {
+            throw transport::ModbusTimeoutException("Modbus write timeout: Packet receive timeout");
+        } else if (status != types::serial_comm_hub_requests::StatusCodeEnum::Success) {
+            std::string error_msg = "Failed to write Modbus registers: " +
+                                    types::serial_comm_hub_requests::status_code_enum_to_string(status);
+            throw std::runtime_error(error_msg);
         }
     });
 }
