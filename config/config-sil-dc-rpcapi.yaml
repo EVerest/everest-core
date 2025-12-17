@@ -16,6 +16,9 @@ active_modules:
       supported_ISO15118_2: true
   evse_manager:
     module: EvseManager
+    mapping:
+      module:
+        evse: 1
     config_module:
       connector_id: 1
       evse_id: DE*PNX*E12345*1
@@ -132,6 +135,9 @@ active_modules:
           implementation_id: energy_grid
   grid_connection_point:
     module: EnergyNode
+    mapping:
+      module:
+        evse: 0
     config_module:
       fuse_limit_A: 40.0
       phase_count: 3
