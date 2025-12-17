@@ -22,7 +22,7 @@ std::map<ModuleId, ModuleConfig> get_example_module_configs() {
     ModuleConfig module_config;
     module_config.module_name = "example_module";
     module_config.standalone = true;
-    module_config.capabilities = "capability1,capability2";
+    module_config.capabilities = {"capability1,capability2"};
     module_config.telemetry_enabled = true;
     module_config.telemetry_config = TelemetryConfig(1);
 

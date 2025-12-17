@@ -209,7 +209,7 @@ struct ModuleConfig {
     bool standalone = false;
     std::string module_name;
     std::string module_id;
-    std::optional<std::string> capabilities;
+    std::optional<std::vector<std::string>> capabilities;
     ModuleConfigurationParameters configuration_parameters; // contains: config_module and config_implementations
                                                             // as well as the upcoming "config" key
     bool telemetry_enabled = false;
