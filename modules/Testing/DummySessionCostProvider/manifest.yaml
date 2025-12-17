@@ -1,0 +1,17 @@
+description: >-
+  Dummy session cost provider to simplify testing of modules which require session_cost
+provides:
+  main:
+    description: Implementation of session_cost which periodically publishes new tariffs and session_costs
+    interface: session_cost
+    config:
+      period_s:
+        description: Period in which to publish (in s)
+        type: integer
+        minimum: 1
+        maximum: 3600
+        default: 5
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Christoph Burandt

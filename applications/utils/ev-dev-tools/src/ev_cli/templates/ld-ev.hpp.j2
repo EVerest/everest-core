@@ -1,0 +1,37 @@
+{% from "helper_macros.j2" import print_template_info, print_spdx_line %}
+{{ print_spdx_line('Apache-2.0') }}
+#ifndef {{ info.hpp_guard }}
+#define {{ info.hpp_guard }}
+
+{{ print_template_info('3') }}
+
+#include <framework/ModuleAdapter.hpp>
+#include <framework/everest.hpp>
+
+#include <everest/logging.hpp>
+
+namespace module {
+
+// helper class for invoking private functions on module
+struct LdEverest {
+    static void init(ModuleConfigs module_configs, const ModuleInfo& info);
+    static void ready();
+};
+
+void register_module_adapter(Everest::ModuleAdapter module_adapter);
+
+std::vector<Everest::cmd> everest_register(const RequirementInitialization& requirement_init);
+
+{% if info.enable_global_errors %}
+void subscribe_global_all_errors(
+    const Everest::error::ErrorCallback& callback,
+    const Everest::error::ErrorCallback& clear_callback
+);
+std::shared_ptr<Everest::error::ErrorStateMonitor> get_global_error_state_monitor();
+{% endif %}
+
+std::shared_ptr<Everest::config::ConfigServiceClient> get_config_service_client();
+
+} // namespace module
+
+#endif // {{ info.hpp_guard }}

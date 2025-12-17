@@ -63,6 +63,8 @@ class PyEVJosevModule():
             enable_tls_1_3()
 
         self._es.internet_service_needed = self._setup.configs.module['is_internet_service_needed']
+        self._es.all_service_details = self._setup.configs.module['request_all_service_details']
+        self._es.all_vas_services = self._setup.configs.module['select_all_vas_services']
 
         # setup publishing callback
         def publish_callback(variable_name: str, value: any):

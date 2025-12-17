@@ -61,7 +61,7 @@ class StructHelper(Helper):
     @staticmethod
     def get_regex_find_in_file():
         w = Helper.regex_whitespaces
-        return r"(struct" + w + r"[A-z]*" + w + r"\{" + StructHelper.regex_fields + r"\};)"
+        return r"(struct" + w + r"[A-z_][A-z0-9_]*" + w + r"\{" + StructHelper.regex_fields + r"\};)"
 
     def get_helper_namespace(self):
         return "helper_" + self.get_type()

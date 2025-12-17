@@ -35,6 +35,8 @@ std::string serialize(EnableDisableSource const& val) noexcept;
 std::string serialize(EnableDisableRequest const& val) noexcept;
 std::string serialize(AuthorizeResponseArgs const& val) noexcept;
 std::string serialize(PlugAndChargeConfiguration const& val) noexcept;
+std::string serialize(EvseStateEnum const& val) noexcept;
+std::string serialize(SessionInfo const& val) noexcept;
 
 std::ostream& operator<<(std::ostream& os, StopTransactionReason const& val);
 std::ostream& operator<<(std::ostream& os, StopTransactionRequest const& val);
@@ -63,6 +65,8 @@ std::ostream& operator<<(std::ostream& os, EnableDisableSource const& val);
 std::ostream& operator<<(std::ostream& os, EnableDisableRequest const& val);
 std::ostream& operator<<(std::ostream& os, AuthorizeResponseArgs const& val);
 std::ostream& operator<<(std::ostream& os, PlugAndChargeConfiguration const& val);
+std::ostream& operator<<(std::ostream& os, EvseStateEnum const& val);
+std::ostream& operator<<(std::ostream& os, SessionInfo const& val);
 
 template <class T> T deserialize(std::string const& val);
 template <class T> std::optional<T> try_deserialize(std::string const& val) noexcept {

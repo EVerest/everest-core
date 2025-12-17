@@ -37,6 +37,7 @@ struct Conf {
     std::string master_pass_group_id;
     bool prioritize_authorization_over_stopping_transaction;
     bool ignore_connector_faults;
+    bool plug_in_timeout_enabled;
 };
 
 class Auth : public Everest::ModuleBase {
@@ -55,8 +56,7 @@ public:
         r_token_validator(std::move(r_token_validator)),
         r_evse_manager(std::move(r_evse_manager)),
         r_kvs(std::move(r_kvs)),
-        config(config) {
-    }
+        config(config){};
 
     const std::unique_ptr<authImplBase> p_main;
     const std::unique_ptr<reservationImplBase> p_reservation;

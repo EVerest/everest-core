@@ -10,6 +10,7 @@
 #include <unistd.h> // sleep
 
 #include "log.hpp"
+#include "tools.hpp"
 #include "v2g_ctx.hpp"
 
 #include <cbv2g/iso_2/iso2_msgDefDatatypes.h>
@@ -123,8 +124,6 @@ void v2g_ctx_init_charging_state(struct v2g_context* const ctx, bool is_connecti
 
 void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     static bool initialize_once = false;
-    // Conform to table 105 [V2G2-417]
-    const char init_service_name[] = {"AC_DC_Charging"};
 
     if (ctx->hlc_pause_active != true) {
         ctx->evse_v2g_data.session_id =
@@ -148,8 +147,11 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     if (ctx->hlc_pause_active != true) {
         ctx->evse_v2g_data.charge_service.ServiceCategory = iso2_serviceCategoryType_EVCharging;
         ctx->evse_v2g_data.charge_service.ServiceID = (uint16_t)1;
-        memcpy(ctx->evse_v2g_data.charge_service.ServiceName.characters, init_service_name, sizeof(init_service_name));
-        ctx->evse_v2g_data.charge_service.ServiceName.charactersLen = sizeof(init_service_name);
+        strncpy_to_v2g(ctx->evse_v2g_data.charge_service.ServiceName.characters,
+                       sizeof(ctx->evse_v2g_data.charge_service.ServiceName.characters),
+                       &ctx->evse_v2g_data.charge_service.ServiceName.charactersLen,
+                       // Conform to table 105 [V2G2-417]
+                       "AC_DC_Charging");
         ctx->evse_v2g_data.charge_service.ServiceName_isUsed = 0;
         // ctx->evse_v2g_data.chargeService.ServiceScope.characters
         // ctx->evse_v2g_data.chargeService.ServiceScope.charactersLen
@@ -283,7 +285,7 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
         return NULL;
 
     ctx->r_security = r_security;
-    ctx->r_vas = std::move(r_vas);
+    ctx->r_vas = r_vas;
     ctx->p_charger = p_chargerImplBase;
     ctx->p_extensions = p_extensions;
 
@@ -532,28 +534,30 @@ void configure_parameter_set(iso2_ServiceParameterListType& parameterSetList, in
          * ServiceParameterList for certificate service) */
         if (parameterSet.ParameterSetID == 1) {
             /* Configure parameter name */
-            strcpy(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.characters, "Service");
-            parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.charactersLen =
-                std::string(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.characters).size();
+            strncpy_to_v2g(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.characters,
+                           sizeof(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.characters),
+                           &parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.charactersLen,
+                           "Service");
             /* Configure parameter value */
-            strcpy(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.characters,
-                   "Installation");
-            parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.charactersLen =
-                std::string(parameterSet.Parameter.array[write_idx].stringValue.characters).size();
+            strncpy_to_v2g(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.characters,
+                           sizeof(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.characters),
+                           &parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.charactersLen,
+                           "Installation");
             parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue_isUsed = 1;
             parameterSet.Parameter.arrayLen = 1;
         }
         /* Service to update a Contract Certificate */
         else if (parameterSet.ParameterSetID == 2) {
             /* Configure parameter name */
-            strcpy(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.characters, "Service");
-            parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.charactersLen =
-                std::string(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.characters).size();
+            strncpy_to_v2g(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.characters,
+                           sizeof(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.characters),
+                           &parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].Name.charactersLen,
+                           "Service");
             /* Configure parameter value */
-            strcpy(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.characters, "Update");
-            parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.charactersLen =
-                std::string(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.characters)
-                    .size();
+            strncpy_to_v2g(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.characters,
+                           sizeof(parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.characters),
+                           &parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue.charactersLen,
+                           "Update");
             parameterSet.Parameter.array[parameterSet.Parameter.arrayLen].stringValue_isUsed = 1;
             parameterSet.Parameter.arrayLen = 1;
         }

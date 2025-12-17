@@ -7,15 +7,18 @@ module(
 # B A Z E L  C E N T R A L  R E G I S T R Y # https://registry.bazel.build/
 ###############################################################################
 
+
 bazel_dep(name = "everest-framework", version = "0.24.0")
-git_override(
+local_path_override(
     module_name="everest-framework",
-    commit="059e95ca6cdd23f318259a87480c0b1f48d0cf72",
-    remote="https://github.com/EVerest/everest-framework",
+    path="lib/everest/framework",
 )
 
-bazel_dep(name = "everest-utils", version = "0.7.2")
-git_override(module_name="everest-utils", commit="0b917bfea879549fd7b793d172c06f99625f0788", remote="https://github.com/EVerest/everest-utils")
+bazel_dep(name = "everest-utils", version = "0.7.3")
+local_path_override(
+    module_name="everest-utils",
+    path="applications/utils"
+)
 
 bazel_dep(name = "bazel_features", version = "1.21.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
@@ -32,7 +35,12 @@ bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "rules_foreign_cc", version = "0.14.0")
 bazel_dep(name = "rules_license", version = "0.0.7")
 bazel_dep(name = "rules_python", version = "1.3.0")
-bazel_dep(name = "rules_rust", version = "0.59.2")
+bazel_dep(name = "rules_rust", version = "0.67.0")
+bazel_dep(name = "pybind11_bazel", version = "2.13.6")
+bazel_dep(name = "boost.exception", version = BOOST_VERSION)
+bazel_dep(name = "boost.log", version = BOOST_VERSION)
+bazel_dep(name = "boost.utility", version = BOOST_VERSION)
+bazel_dep(name = "sqlite3", version = "3.49.1")
 
 ###############################################################################
 # N O N   M O D U L E
@@ -60,6 +68,15 @@ python.toolchain(
 )
 
 use_repo(python, "python_3_10")
+
+pip_deps = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip_deps.parse(
+    python_version = "3.10",
+    hub_name = "everest-core_everest-testing_pip_deps",
+    requirements_lock = "@everest-utils//:requirements-bazel.txt",
+)
+
+use_repo(pip_deps, "everest-testing_pip_deps")
 
 ###############################################################################
 # R U S T
@@ -97,6 +114,10 @@ everest_core_crate_index.from_cargo(
 everest_core_crate_index.annotation(
     crate = "everestrs",
     crate_features = ["build_bazel"],
+    deps = [
+        "@everest-framework//everestrs/everestrs-build",
+        "@everest-framework//everestrs/everestrs",
+    ],
 )
 
 use_repo(

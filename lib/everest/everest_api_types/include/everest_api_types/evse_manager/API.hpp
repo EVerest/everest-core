@@ -258,4 +258,35 @@ struct PlugAndChargeConfiguration {
     std::optional<bool> contract_certificate_installation_enabled;
 };
 
+enum class EvseStateEnum {
+    Unknown,
+    Unplugged,
+    Disabled,
+    Preparing,
+    AuthRequired,
+    WaitingForEnergy,
+    ChargingPausedEV,
+    ChargingPausedEVSE,
+    Charging,
+    AuthTimeout,
+    Finished,
+    FinishedEVSE,
+    FinishedEV
+};
+
+struct SessionInfo {
+    EvseStateEnum state;
+    int32_t charged_energy_wh;
+    int32_t discharged_energy_wh;
+    int32_t latest_total_w;
+    int64_t session_duration_s;
+    std::string timestamp;
+    std::optional<std::string> selected_protocol;
+    std::optional<int64_t> transaction_duration_s;
+    std::optional<std::string> session_start_time;
+    std::optional<std::string> transaction_start_time;
+    std::optional<std::string> session_end_time;
+    std::optional<std::string> transaction_end_time;
+};
+
 } // namespace everest::lib::API::V1_0::types::evse_manager

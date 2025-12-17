@@ -28,6 +28,8 @@ services:
             type: bool
             value: true
   - id: 34568
+    name: Service 2
+    scope: test-scope
     description: Test service 2
     parameter_sets:
       - id: 0

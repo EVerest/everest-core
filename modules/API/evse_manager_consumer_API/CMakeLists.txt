@@ -17,6 +17,7 @@ target_link_libraries(${MODULE_NAME}
   PRIVATE
     atomic
     everest::everest_api_types
+    everest::util
 )
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
@@ -24,6 +25,8 @@ target_link_libraries(${MODULE_NAME}
 target_sources(${MODULE_NAME}
   PRIVATE
     "main/generic_errorImpl.cpp"
+    "evse_manager_consumer_API.cpp"
+    "session_info.cpp"
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

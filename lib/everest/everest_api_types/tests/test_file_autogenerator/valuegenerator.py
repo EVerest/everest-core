@@ -105,7 +105,7 @@ def get_vector_variable_name(variable_name_suffix=""):
 
 class ValueGenerator:
     manual_generator = ManualGenerator()
-    base_types = ["int32_t", "float", "std::string", "bool"]
+    base_types = ["int32_t", "int64_t", "float", "std::string", "bool"]
 
     def __init__(self, struct_name, struct_namespace, enum_map, across_file_struct_generator=None):
         if (across_file_struct_generator is None):
@@ -168,6 +168,10 @@ class ValueGenerator:
         match type_string_cleaned:
             case "int32_t":
                 s = ((2 ** 32) - 1) / 2
+                value_string = random.randint(
+                    math.floor(-s), math.floor(s)).__str__()
+            case "int64_t":
+                s = ((2 ** 64) - 1) / 2
                 value_string = random.randint(
                     math.floor(-s), math.floor(s)).__str__()
             case "float":

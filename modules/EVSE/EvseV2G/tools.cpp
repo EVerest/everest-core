@@ -3,6 +3,7 @@
 // Copyright (C) 2022-2023 Contributors to EVerest
 #include "tools.hpp"
 #include "log.hpp"
+#include <algorithm>
 #include <arpa/inet.h>
 #include <dirent.h>
 #include <errno.h>
@@ -18,6 +19,8 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+
+#include <array>
 
 ssize_t safe_read(int fd, void* buf, size_t count) {
     for (;;) {
@@ -209,4 +212,33 @@ convert_to_certificate_hash_data_info_vector(const types::evse_security::OCSPReq
         }
     }
     return certificate_hash_data_info_vec;
+}
+
+std::string to_mac_address_str(const uint8_t* const ptr, size_t len) {
+    std::string result;
+    if ((ptr != nullptr) && (len > 0) && (len <= 16)) {
+        for (uint8_t i = 0; i < len; i++) {
+            std::array<char, 4> buffer{};
+            const auto res = snprintf(&buffer[0], sizeof(buffer), "%02X:", ptr[i]);
+            if (res == 3) {
+                result += std::string{buffer.data(), 3};
+            }
+        }
+        if (!result.empty()) {
+            result.pop_back();
+        }
+    }
+    return result;
+}
+
+void strncpy_to_v2g(char* characters, size_t size_of_characters, uint16_t* characters_len, const std::string& src) {
+    // copy at max the size of the destination array but reserve one byte for trailing NUL byte;
+    // this should not be needed, but just in case someone wants to access the field again
+    // using standard string functions, then we are safe
+    auto len = std::min(src.length(), size_of_characters - 1);
+
+    memcpy(characters, src.c_str(), len);
+    characters[len] = '\0';
+
+    *characters_len = len;
 }

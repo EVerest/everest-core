@@ -145,6 +145,16 @@ std::string serialize(PlugAndChargeConfiguration const& val) noexcept {
     return result.dump(json_indent);
 }
 
+std::string serialize(EvseStateEnum const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
+std::string serialize(SessionInfo const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
 std::ostream& operator<<(std::ostream& os, StopTransactionReason const& val) {
     os << serialize(val);
     return os;
@@ -275,6 +285,16 @@ std::ostream& operator<<(std::ostream& os, AuthorizeResponseArgs const& val) {
     return os;
 }
 std::ostream& operator<<(std::ostream& os, PlugAndChargeConfiguration const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, EvseStateEnum const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, SessionInfo const& val) {
     os << serialize(val);
     return os;
 }
@@ -438,6 +458,18 @@ template <> AuthorizeResponseArgs deserialize(std::string const& s) {
 template <> PlugAndChargeConfiguration deserialize(std::string const& s) {
     auto data = json::parse(s);
     PlugAndChargeConfiguration result = data;
+    return result;
+}
+
+template <> EvseStateEnum deserialize(std::string const& s) {
+    auto data = json::parse(s);
+    EvseStateEnum result = data;
+    return result;
+}
+
+template <> SessionInfo deserialize(std::string const& s) {
+    auto data = json::parse(s);
+    SessionInfo result = data;
     return result;
 }
 

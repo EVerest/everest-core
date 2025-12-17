@@ -119,7 +119,7 @@ operations:
 
 
   receive_heartbeat:
-    title: 'Receive heatbeat'
+    title: 'Receive heartbeat'
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
@@ -172,7 +172,7 @@ components:
         - summary: "Request active errors"
           payload:
             headers:
-              replyTo: everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
+              replyTo: everest_api/1/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
     receive_reply_active_errors:
       name: receive_reply_active_errors
       title: 'The list of active errors'

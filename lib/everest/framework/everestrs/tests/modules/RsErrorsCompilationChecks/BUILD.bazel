@@ -1,0 +1,42 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
+load("@rules_rust//cargo:defs.bzl", "cargo_build_script")
+
+cargo_build_script(
+    name = "build_script",
+    srcs = ["build.rs"],
+    edition="2021",
+    build_script_env = {
+        "EVEREST_CORE_ROOT": "../..",
+    },
+    deps = [
+        "@everest-framework//everestrs/everestrs-build",
+    ],
+    data= [
+        "//everestrs/tests/types",
+        "//everestrs/tests/interfaces",
+        "//everestrs/tests/errors",
+        "manifest.yaml",
+    ],
+)
+
+rust_binary(
+    name = "RsErrorsCompilation",
+    srcs = glob(["src/**/*.rs"]),
+    visibility = ["//visibility:public"],
+    edition = "2021",
+    deps = [
+        "@everest_framework_crate_index//:log",
+        "@everest-framework//everestrs/everestrs",
+        "@everest-framework//everestrs/everestrs:everestrs_sys",
+        "@everest-framework//everestrs/everestrs:everestrs_bridge",
+        ":build_script",
+    ],
+)
+
+rust_test(
+    name = "RsErrorsCompilationTest",
+    deps = ["@everest_framework_crate_index//:serde_yaml"],
+    edition="2021",
+    srcs = [],
+    crate = ":RsErrorsCompilation",
+)

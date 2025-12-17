@@ -37,10 +37,13 @@ void ocpp_consumer_API::ready() {
     generate_api_cmd_data_transfer();
     generate_api_cmd_get_variables();
     generate_api_cmd_set_variables();
+    generate_api_cmd_monitor_variables();
     generate_api_var_security_event();
     generate_api_var_is_connected();
     generate_api_var_boot_notification_response();
     generate_api_var_ocpp_transaction_event();
+    generate_api_var_event_data();
+    generate_api_var_charging_schedules();
 
     generate_api_var_communication_check();
 
@@ -116,6 +119,18 @@ void ocpp_consumer_API::generate_api_cmd_set_variables() {
     });
 }
 
+void ocpp_consumer_API::generate_api_cmd_monitor_variables() {
+    using namespace API_types_ext;
+    subscribe_api_topic("monitor_variables", [=](std::string const& data) {
+        MonitorVariableRequestList request;
+        if (deserialize(data, request)) {
+            r_ocpp->call_monitor_variables(to_internal_api(request));
+            return true;
+        }
+        return false;
+    });
+}
+
 void ocpp_consumer_API::generate_api_var_security_event() {
     r_ocpp->subscribe_security_event(forward_api_var("security_event"));
 }
@@ -130,6 +145,14 @@ void ocpp_consumer_API::generate_api_var_boot_notification_response() {
 
 void ocpp_consumer_API::generate_api_var_ocpp_transaction_event() {
     r_ocpp->subscribe_ocpp_transaction_event(forward_api_var("ocpp_transaction_event"));
+}
+
+void ocpp_consumer_API::generate_api_var_event_data() {
+    r_ocpp->subscribe_event_data(forward_api_var("event_data"));
+}
+
+void ocpp_consumer_API::generate_api_var_charging_schedules() {
+    r_ocpp->subscribe_charging_schedules(forward_api_var("charging_schedules"));
 }
 
 void ocpp_consumer_API::generate_api_var_communication_check() {

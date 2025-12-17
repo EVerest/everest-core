@@ -1,0 +1,60 @@
+RISE-V2G:
+  git: git@github.com:EVerest/ext-RISE-V2G.git
+  git_tag: master
+  options:
+  - THIRD_PARTY_APP_DST rise_v2g
+Josev:
+  git: git@github.com:EVerest/ext-switchev-iso15118.git
+  git_tag: everest
+  options:
+  - THIRD_PARTY_APP_DST josev
+everest-cmake:
+  git: git@github.com:EVerest/everest-cmake.git
+  git_tag: main
+everest-core:
+  git: git@github.com:EVerest/everest-core.git
+  git_tag: main
+everest-dev-environment:
+  git: git@github.com:EVerest/everest-dev-environment.git
+  git_tag: main
+everest-framework:
+  git: git@github.com:EVerest/everest-framework.git
+  git_tag: main
+everest-utils:
+  git: git@github.com:EVerest/everest-utils.git
+  git_tag: main
+libfsm:
+  git: git@github.com:EVerest/libfsm.git
+  git_tag: main
+liblog:
+  git: git@github.com:EVerest/liblog.git
+  git_tag: main
+  options:
+  - BUILD_EXAMPLES OFF
+libmodbus:
+  git: git@github.com:EVerest/libmodbus.git
+  git_tag: main
+  options:
+  - BUILD_EXAMPLES OFF
+libocpp:
+  git: git@github.com:EVerest/libocpp.git
+  git_tag: main
+libslac:
+  git: git@github.com:EVerest/libslac.git
+  git_tag: main
+libsunspec:
+  git: git@github.com:EVerest/libsunspec.git
+  git_tag: main
+  options:
+  - BUILD_EXAMPLES OFF
+libtimer:
+  git: git@github.com:EVerest/libtimer.git
+  git_tag: main
+  options:
+  - BUILD_EXAMPLES OFF
+ext-mbedtls:
+  git: git@github.com:EVerest/ext-mbedtls.git
+  git_tag: mbedtls-2.28.0-trustedCAKey
+ext-openv2g:
+  git: git@github.com:EVerest/ext-openv2g.git
+  git_tag: everest

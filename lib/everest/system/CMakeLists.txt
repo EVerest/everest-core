@@ -50,7 +50,6 @@ if (DISABLE_EDM)
         NAMESPACE everest
         EXPORT everest_system-targets
         ADDITIONAL_CONTENT
-            "find_dependency(everest-log)"
             "find_dependency(sdbus-c++)"
     )
 endif()

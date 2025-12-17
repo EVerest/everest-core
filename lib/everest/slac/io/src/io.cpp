@@ -42,3 +42,7 @@ void SlacIO::send(slac::messages::HomeplugMessage& msg) {
     // FIXME (aw): handle errors
     slac_channel.write(msg, 1);
 }
+
+const uint8_t* SlacIO::get_mac_addr() /* const */ {
+    return slac_channel.get_mac_addr();
+}

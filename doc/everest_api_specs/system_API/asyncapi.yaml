@@ -225,7 +225,7 @@ operations:
 
 
   receive_heartbeat:
-    title: 'Receive heatbeat'
+    title: 'Receive heartbeat'
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
@@ -297,7 +297,9 @@ components:
     receive_request_is_reset_allowed:
       name: receive_request_is_reset_allowed
       title: 'Request if reset is allowed'
-      summary: 'Request if is reset allowed.'
+      summary: >-
+        Request if is reset allowed. This is usually called prior to a reset
+        request.
       contentType: application/json
       payload:
         type: object
@@ -375,7 +377,14 @@ components:
     receive_allow_firmware_installation:
       name: receive_allow_firmware_installation
       title: 'Receive Allow firmware installation'
-      summary:  Call to allow a firmware installation to proceed
+      summary: Call to allow firmware installation to proceed
+      description: >-
+        Call to allow a firmware installation to proceed. This is
+        usually called after a firmware update has been downloaded.
+        OCPP requires to move all EVSE to an unavailable state prior to
+        installing new firmware. EVerest will take care of this and call
+        this function when all EVSE are in unavailable state to signal
+        that installation can proceed.
     receive_reset:
       name: receive_reset
       title: 'Receive reset command'
@@ -463,7 +472,10 @@ components:
           description: The interval in seconds after which a retry may be attempted
           type: integer
         request_id:
-          description: The Id of this request
+          description: >-
+            The Id of this request. If the originating firmware request (e.g. from
+            the OCPP CSMS) did not include a request_id (e.g. classic UpdateFirmware.req),
+            a request_id of -1 is used.
           type: integer
         location:
           description: URI defining the origin of the firmware
@@ -499,7 +511,9 @@ components:
           type: string
           $ref: '#/components/schemas/FirmwareUpdateStatusEnum'
         request_id:
-          description: Id of the request
+          description: >-
+            Id of the request. Use the request_id from the corresponding
+            FirmwareUpdateRequest.
           type: integer
     FirmwareUpdateStatusEnum:
       description: >-
@@ -568,7 +582,11 @@ components:
           type: string
           $ref: '#/components/schemas/LogStatusEnum'
         request_id:
-          description: Id of the request
+          description: >-
+            Id of the request. Use the request_id from the corresponding
+            UploadLogsRequest. If the originating log request did not include a
+            request_id (e.g. classic GetDiagnostics), a request_id of -1 shall be
+            used.
           type: integer
     ResetAllowed:
       description: 'true if reset is allowed'
@@ -652,7 +670,10 @@ components:
             the DiagnosticsLog
           type: string
         request_id:
-          description: The id of the request
+          description: >-
+            The Id of this request. If the originating log request did not
+            include a request_id (e.g. classic GetDiagnostics), the request_id
+            is omitted.
           type: integer
     UploadLogsResponse:
       description: Response to a upload logs request
