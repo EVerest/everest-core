@@ -69,6 +69,12 @@ enum class DC_EVErrorCode {
     NoData,
 };
 
+enum class EVSEProcessing {
+    Finished,
+    Ongoing,
+    Ongoing_WaitingForCustomerInteraction
+};
+
 enum class EVSENotification {
     None,
     StopCharging,
