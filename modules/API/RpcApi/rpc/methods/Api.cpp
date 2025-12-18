@@ -38,7 +38,7 @@ void Api::set_api_version(const std::string& version) {
     m_api_version = version;
 }
 
-std::string Api::get_api_version() const {
+const std::string& Api::get_api_version() const {
     return m_api_version;
 }
 
