@@ -89,6 +89,16 @@ enum class EVSENotification {
     ReNegotiation,
 };
 
+enum class UnitSymbol {
+    h,
+    m,
+    s,
+    A,
+    V,
+    W,
+    Wh
+};
+
 enum class DC_EVSEStatusCode {
     EVSE_NotReady,
     EVSE_Ready,
@@ -110,6 +120,12 @@ enum class isolationLevel {
     Warning,
     Fault,
     No_IMD
+};
+
+struct PhysicalValue {
+    int16_t value{0};
+    int8_t multiplier{0}; // [-3 - 3]
+    UnitSymbol unit;
 };
 
 struct Notification {
@@ -137,6 +153,9 @@ struct DC_EVStatus {
     PercentValue ev_ress_soc;
 };
 
+float from_PhysicalValue(const PhysicalValue& in);
+PhysicalValue from_float(const float in, const data_types::UnitSymbol unit);
+
 } // namespace data_types
 
 struct Header {
@@ -151,5 +170,7 @@ void convert(const Header& in, struct iso2_MessageHeaderType& out);
 void convert(const iso2_DC_EVStatusType& in, data_types::DC_EVStatus& out);
 void convert(const data_types::AC_EVSEStatus& in, iso2_AC_EVSEStatusType& out);
 void convert(const data_types::DC_EVSEStatus& in, iso2_DC_EVSEStatusType& out);
+void convert(const iso2_PhysicalValueType& in, data_types::PhysicalValue& out);
+void convert(const data_types::PhysicalValue& in, iso2_PhysicalValueType& out);
 
 } // namespace iso15118::d2::msg
