@@ -28,9 +28,9 @@ transport::DataVector SerialCommHubTransport::fetch(int address, int register_co
             if (serial_com_hub_result.status_code == types::serial_comm_hub_requests::StatusCodeEnum::Timeout) {
                 throw transport::ModbusTimeoutException("Modbus read timeout: Packet receive timeout");
             } else if (serial_com_hub_result.status_code != types::serial_comm_hub_requests::StatusCodeEnum::Success) {
-                std::string error_msg = "Modbus read failed with status: " +
-                                        types::serial_comm_hub_requests::status_code_enum_to_string(
-                                            serial_com_hub_result.status_code);
+                std::string error_msg =
+                    "Modbus read failed with status: " +
+                    types::serial_comm_hub_requests::status_code_enum_to_string(serial_com_hub_result.status_code);
                 throw std::runtime_error(error_msg);
             }
 
@@ -38,8 +38,9 @@ transport::DataVector SerialCommHubTransport::fetch(int address, int register_co
                 throw std::runtime_error("no result from serial com hub!");
 
             // make sure that returned vector is a int32 vector
-            static_assert(std::is_same_v<int32_t,
-                                         decltype(types::serial_comm_hub_requests::Result::value)::value_type::value_type>);
+            static_assert(
+                std::is_same_v<int32_t,
+                               decltype(types::serial_comm_hub_requests::Result::value)::value_type::value_type>);
 
             union {
                 int32_t val_32;

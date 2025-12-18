@@ -150,7 +150,7 @@ void powermeterImpl::init() {
         if (!this->error_state_monitor->is_error_active("powermeter/CommunicationFault", "CommunicationError")) {
             EVLOG_error << "Raising CommunicationFault: " << error_message;
             auto error = this->error_factory->create_error("powermeter/CommunicationFault", "CommunicationError",
-                                                            error_message, Everest::error::Severity::High);
+                                                           error_message, Everest::error::Severity::High);
             raise_error(error);
         }
     };
@@ -166,8 +166,8 @@ void powermeterImpl::init() {
 
     p_modbus_transport = move(std::make_unique<transport::SerialCommHubTransport>(
         *(mod->r_modbus.get()), config.powermeter_device_id, MODBUS_BASE_ADDRESS, config.initial_connection_retry_count,
-        config.initial_connection_retry_delay_ms, config.communication_retry_count,
-        config.communication_retry_delay_ms, error_handler, clear_error_handler));
+        config.initial_connection_retry_delay_ms, config.communication_retry_count, config.communication_retry_delay_ms,
+        error_handler, clear_error_handler));
 }
 
 void powermeterImpl::read_signature_config() {
@@ -590,10 +590,13 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& treq
         std::string tariff_text = treq.tariff_text.value_or("") + "<=>" + treq.transaction_id;
         if (!validate_string_for_em580(tariff_text)) {
             EVLOG_error << "String contains invalid characters for EM580 device: '" << tariff_text << "'";
-            return {types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, {}, "Invalid tariff text (device supports only an subset of ASCII characters)"};
+            return {types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR,
+                    {},
+                    {},
+                    "Invalid tariff text (device supports only an subset of ASCII characters)"};
         } else {
             std::vector<uint16_t> tariff_text_data =
-            string_to_modbus_char_array(tariff_text, MODBUS_OCMF_TARIFF_TEXT_WORD_COUNT);
+                string_to_modbus_char_array(tariff_text, MODBUS_OCMF_TARIFF_TEXT_WORD_COUNT);
             p_modbus_transport->write_multiple_registers(MODBUS_OCMF_TARIFF_TEXT_ADDRESS, tariff_text_data);
         }
 

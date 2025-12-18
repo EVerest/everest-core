@@ -10,12 +10,12 @@
 #include <string>
 #include <vector>
 
-#include "base64.hpp"
+// #include "base64.hpp"
 #include "transport.hpp"
 
 /**
  * @brief Utility functions for converting Modbus data to various types
- * 
+ *
  * These functions handle byte order conversion from Modbus (big-endian) format
  * to native integer types. Modbus transmits data in big-endian format where
  * the most significant byte comes first.
@@ -25,16 +25,22 @@ namespace modbus_utils {
 
 // Strong type wrappers to prevent parameter swapping
 struct ByteOffset {
-    explicit ByteOffset(transport::DataVector::size_type v) : value(v) {}
-    operator transport::DataVector::size_type() const { return value; }
+    explicit ByteOffset(transport::DataVector::size_type v) : value(v) {
+    }
+    operator transport::DataVector::size_type() const {
+        return value;
+    }
 
 private:
     transport::DataVector::size_type value;
 };
 
 struct ByteLength {
-    explicit ByteLength(transport::DataVector::size_type v) : value(v) {}
-    operator transport::DataVector::size_type() const { return value; }
+    explicit ByteLength(transport::DataVector::size_type v) : value(v) {
+    }
+    operator transport::DataVector::size_type() const {
+        return value;
+    }
 
 private:
     transport::DataVector::size_type value;
@@ -96,22 +102,6 @@ inline std::string to_hex_string(const transport::DataVector& data, ByteOffset o
     return ss.str();
 }
 
-/**
- * @brief Convert a range of bytes to a Base64-encoded string
- * @param data The Modbus data vector
- * @param offset Byte offset into the data vector
- * @param length Number of bytes to convert
- * @return Base64-encoded string
- */
-inline std::string to_base64_string(const transport::DataVector& data, ByteOffset offset, ByteLength length) {
-    const auto off = static_cast<transport::DataVector::size_type>(offset);
-    const auto len = static_cast<transport::DataVector::size_type>(length);
-    auto begin = std::begin(data) + off;
-    auto end = begin + len;
-    return base64::encode_into<std::string>(begin, end);
-}
-
 } // namespace modbus_utils
 
 #endif // POWERMETER_UTILS_HPP
-

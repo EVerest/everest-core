@@ -28,7 +28,8 @@ using DataVector = std::vector<std::uint8_t>;
 // Custom exception to distinguish timeout errors from other Modbus errors
 class ModbusTimeoutException : public std::runtime_error {
 public:
-    explicit ModbusTimeoutException(const std::string& message) : std::runtime_error(message) {}
+    explicit ModbusTimeoutException(const std::string& message) : std::runtime_error(message) {
+    }
 };
 
 // Error handler callback type: void(error_message)
@@ -81,7 +82,8 @@ protected:
                 // First successful call - switch to normal mode
                 bool was_initial = m_initial_connection_mode.exchange(false);
                 // Clear CommunicationFault error if communication is restored
-                // Only clear if we're not in initial connection mode (i.e., we've had at least one successful operation)
+                // Only clear if we're not in initial connection mode (i.e., we've had at least one successful
+                // operation)
                 if (m_clear_error_handler && !was_initial) {
                     m_clear_error_handler();
                 }
@@ -135,7 +137,8 @@ protected:
                 // First successful call - switch to normal mode
                 bool was_initial = m_initial_connection_mode.exchange(false);
                 // Clear CommunicationFault error if communication is restored
-                // Only clear if we're not in initial connection mode (i.e., we've had at least one successful operation)
+                // Only clear if we're not in initial connection mode (i.e., we've had at least one successful
+                // operation)
                 if (m_clear_error_handler && !was_initial) {
                     m_clear_error_handler();
                 }
