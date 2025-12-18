@@ -63,6 +63,7 @@ In addition, on the DC side the following hardware modules can be connected:
 * DC power supply: This is the AC/DC converter that actually charges the car.
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 Software over-voltage supervision is always active during DC charging. The configuration option
 ``internal_over_voltage_duration_ms`` defines for how long the measured DC voltage
 must exceed the negotiated limit before EvseManager raises ``MREC5OverVoltage``.
@@ -71,6 +72,11 @@ Set it to ``0`` to trigger immediately once the threshold is crossed.
 ||||||| parent of afc3ead44 (feat(over_voltage): Internal over-voltage monitor implementation in EVSEManager)
 =======
 Software over-voltage supervision is always active. The configuration option
+||||||| parent of 7d60e60da (Update modules/EVSE/EvseManager/doc.rst)
+Software over-voltage supervision is always active. The configuration option
+=======
+Software over-voltage supervision is always active during DC charging. The configuration option
+>>>>>>> 7d60e60da (Update modules/EVSE/EvseManager/doc.rst)
 ``internal_over_voltage_duration_ms`` defines for how long the measured DC voltage
 must exceed the negotiated limit before EvseManager raises ``MREC5OverVoltage``.
 Set it to ``0`` to trigger immediately once the threshold is crossed.
