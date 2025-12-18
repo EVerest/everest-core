@@ -3,6 +3,7 @@
 
 #include "WebsocketServer.hpp"
 
+#include <algorithm>
 #include <everest/helpers/helpers.hpp>
 #include <everest/logging.hpp>
 #include <iostream>
@@ -58,28 +59,28 @@ int WebSocketServer::callback_ws(struct lws* wsi, enum lws_callback_reasons reas
         break;
     }
     case LWS_CALLBACK_CLOSED: {
-        for (auto it = server->m_clients.begin(); it != server->m_clients.end(); ++it) {
-            if (it->second == wsi) {
-                lock.unlock(); // Unlock before calling the callback
-                EVLOG_info << "Client " << it->first << " disconnected";
-                server->on_client_disconnected(it->first); // Call the on_client_disconnected callback
-                lock.lock();                               // Lock again after the callback
-                server->m_clients.erase(it);
-                break;
-            }
+        auto it = std::find_if(server->m_clients.begin(), server->m_clients.end(),
+                               [wsi](const auto& client) { return client.second == wsi; });
+        if (it != server->m_clients.end()) {
+            const auto client_id = it->first;
+            lock.unlock(); // Unlock before calling the callback
+            EVLOG_info << "Client " << client_id << " disconnected";
+            server->on_client_disconnected(client_id); // Call the on_client_disconnected callback
+            lock.lock();                               // Lock again after the callback
+            server->m_clients.erase(it);
         }
         break;
     }
     case LWS_CALLBACK_RECEIVE: {
-        for (auto it = server->m_clients.begin(); it != server->m_clients.end(); ++it) {
-            if (it->second == wsi) {
-                auto* data = static_cast<unsigned char*>(in);
-                std::vector<uint8_t> received_data(data, data + len);
-                lock.unlock();                                       // Unlock before calling the callback
-                server->on_data_available(it->first, received_data); // Call the on_data_available callback
-                lock.lock();                                         // Lock again after the callback
-                break;
-            }
+        auto it = std::find_if(server->m_clients.begin(), server->m_clients.end(),
+                               [wsi](const auto& client) { return client.second == wsi; });
+        if (it != server->m_clients.end()) {
+            const auto client_id = it->first;
+            auto* data = static_cast<unsigned char*>(in);
+            std::vector<uint8_t> received_data(data, data + len);
+            lock.unlock();                                       // Unlock before calling the callback
+            server->on_data_available(client_id, received_data); // Call the on_data_available callback
+            lock.lock();                                         // Lock again after the callback
         }
         break;
     }
