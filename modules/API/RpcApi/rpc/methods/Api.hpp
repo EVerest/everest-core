@@ -31,7 +31,7 @@ public:
     void set_authentication_required(bool required);
     bool is_authentication_required() const;
     void set_api_version(const std::string& version);
-    std::string get_api_version() const;
+    const std::string& get_api_version() const;
     void set_authenticated(bool authenticated);
     bool is_authenticated() const;
 

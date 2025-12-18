@@ -23,7 +23,7 @@ public:
     bool is_connected();
     void send(const std::string& message);
     void send_api_hello_req();
-    std::string receive();
+    const std::string& receive() const;
     void close();
     std::string get_received_data() {
         std::string data;

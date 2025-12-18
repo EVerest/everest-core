@@ -22,7 +22,7 @@ public:
     explicit TransportInterface() = default;
     virtual ~TransportInterface() = default;
 
-    std::string server_name() const;
+    const std::string& server_name() const;
 
     virtual void send_data(const Data& data) = 0;
     virtual void send_data(const ClientId& clientId, const Data& data) = 0;
@@ -33,7 +33,7 @@ public:
 
     virtual uint32_t connections_count() const = 0;
 
-    std::string server_url() const;
+    const std::string& server_url() const;
     void set_server_url(const std::string& serverUrl);
 
     virtual bool running() const = 0;

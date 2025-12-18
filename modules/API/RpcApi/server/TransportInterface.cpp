@@ -5,11 +5,11 @@
 
 namespace server {
 
-std::string TransportInterface::server_name() const {
+const std::string& TransportInterface::server_name() const {
     return m_server_name;
 }
 
-std::string TransportInterface::server_url() const {
+const std::string& TransportInterface::server_url() const {
     return m_server_url;
 }
 

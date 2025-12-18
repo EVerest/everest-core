@@ -141,7 +141,7 @@ void WebSocketTestClient::send(const std::string& message) {
     }
 }
 
-std::string WebSocketTestClient::receive() {
+const std::string& WebSocketTestClient::receive() const {
     return m_received_data;
 }
 
