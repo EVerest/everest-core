@@ -94,7 +94,7 @@ The units are SI units (Amps, Volts, Watts, Watt-hours).
 BSP Errors
 ==========
 
-This driver supports publishing a few BSP errors to the Power supply unit as Dispenser and Conenctor Alarms:
+This driver supports setting specific errors to the Power supply unit as Dispenser and Connector Alarms as a reaction to EVerest BSP errors:
 
 +-------------------------------------------------+---------------------------+---------------+
 |                Everest BSP Error                | PSU Modbus Register name  |     Scope     |
