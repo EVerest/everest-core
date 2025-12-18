@@ -14,9 +14,12 @@ using namespace fusion_charger::modbus_extensions;
 
 const std::string Dispenser::DISPENSER_TELEMETRY_ALARMS_SUBTOPIC = "dispenser/published_alarms";
 
-std::vector<DispenserAlarms> get_all_dispenser_alarms() {
-    return {DispenserAlarms::DOOR_STATUS_ALARM, DispenserAlarms::WATER_ALARM, DispenserAlarms::EPO_ALARM,
-            DispenserAlarms::TILT_ALARM};
+const std::vector<DispenserAlarms>& get_all_dispenser_alarms() {
+    static const std::vector<DispenserAlarms> alarms = {
+        DispenserAlarms::DOOR_STATUS_ALARM, DispenserAlarms::WATER_ALARM,
+        DispenserAlarms::EPO_ALARM, DispenserAlarms::TILT_ALARM
+    };
+    return alarms;
 }
 
 void Dispenser::modbus_unsolicitated_event_thread_run() {
