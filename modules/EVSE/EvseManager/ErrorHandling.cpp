@@ -128,7 +128,7 @@ void ErrorHandling::clear_overcurrent_error() {
 
 void ErrorHandling::raise_over_voltage_error(Everest::error::Severity severity, const std::string& description) {
     Everest::error::Error error_object =
-        p_evse->error_factory->create_error("evse_manager/MREC50OverVoltage", "", description, severity);
+        p_evse->error_factory->create_error("evse_manager/MREC5OverVoltage", "", description, severity);
     p_evse->raise_error(error_object);
     process_error();
 }
