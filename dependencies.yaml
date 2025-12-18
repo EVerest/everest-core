@@ -17,7 +17,7 @@ pugixml:
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
 libcurl:
   git: https://github.com/curl/curl.git
-  git_tag: curl-8_16_0
+  git_tag: curl-8_17_0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
   options: [
     "BUILD_EXAMPLES OFF",
@@ -35,7 +35,7 @@ libcurl:
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 89db9d27db551801d45627f802e4c3a029ed29c2
+  git_tag: 2025.12.0
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # linux_libnfc-nci for RFID
 libnfc-nci:
@@ -55,7 +55,7 @@ mqttc:
 # Linux_Systemd_Rauc module
 sdbus-cpp:
   git:  https://github.com/Kistler-Group/sdbus-cpp.git
-  git_tag: v2.1.0
+  git_tag: v2.2.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SDBUS_CPP"
   options: ["CMAKE_POSITION_INDEPENDENT_CODE ON"]
 # unit testing
@@ -70,7 +70,7 @@ catch2:
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 mosquitto:
   git: https://github.com/eclipse-mosquitto/mosquitto
-  git_tag: v2.0.21
+  git_tag: v2.0.22
   options:
   - DOCUMENTATION OFF
   - WITH_BROKER OFF
