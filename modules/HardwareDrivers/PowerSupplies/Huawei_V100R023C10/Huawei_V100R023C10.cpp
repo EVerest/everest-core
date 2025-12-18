@@ -48,9 +48,9 @@ static std::string get_everest_error_for_dispenser_alarm(DispenserAlarms alarm) 
         return "evse_board_support/MREC8EmergencyStop";
     case DispenserAlarms::TILT_ALARM:
         return "evse_board_support/TiltDetected";
-    default:
-        throw std::runtime_error("Unknown DispenserAlarm enum value");
     }
+
+    throw std::runtime_error("Unknown DispenserAlarm enum value");
 }
 
 void Huawei_V100R023C10::init() {

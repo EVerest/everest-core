@@ -557,7 +557,7 @@ std::string Dispenser::dispenser_alarm_to_telemetry_datapoint(DispenserAlarms al
         return "epo_alarm";
     case DispenserAlarms::TILT_ALARM:
         return "tilt_alarm";
-    default:
-        throw std::runtime_error("Unknown dispenser alarm");
     }
+
+    throw std::runtime_error("Unknown dispenser alarm");
 }
