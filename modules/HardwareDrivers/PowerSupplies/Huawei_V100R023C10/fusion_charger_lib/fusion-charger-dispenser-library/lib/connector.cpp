@@ -202,7 +202,8 @@ Connector::Connector(ConnectorConfig connector_config, uint16_t local_connector_
             return callbacks;
         }(),
         log, log_prefix),
-    trigger_unsolicited_report_cb(trigger_unsolicited_report_cb) {
+    trigger_unsolicited_report_cb(trigger_unsolicited_report_cb),
+    dc_output_contactor_fault_alarm_active(false) {
 }
 
 Connector::~Connector() {
