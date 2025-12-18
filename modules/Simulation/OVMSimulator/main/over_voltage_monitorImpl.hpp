@@ -64,7 +64,7 @@ private:
     std::atomic<bool> over_voltage_monitoring_active;
     float voltage_measurement_V{0.0f};
     Everest::Thread over_voltage_monitorImpl_thread_handle;
-    void over_voltage_monitorImpl_worker(void);
+    void over_voltage_monitorImpl_worker();
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
