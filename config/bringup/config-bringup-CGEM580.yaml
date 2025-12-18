@@ -1,5 +1,6 @@
 settings:
   telemetry_enabled: false
+  mqtt_broker_socket_path: /run/mosquitto/mosquitto.sock
 active_modules:
   cgem580:
     module: CarloGavazzi_EM580
@@ -7,6 +8,8 @@ active_modules:
       main:
         powermeter_device_id: 1
         timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000      # once per second
+        communication_error_pause_delay_s: 10   # pause 10 seconds on communication error before retry
     connections:
       modbus:                         # required interface: serial_communication_hub
         - module_id: comm_hub
@@ -19,6 +22,7 @@ active_modules:
         serial_port: /dev/ttyUSB0     # adjust to your device path
         baudrate: 115200
         parity: 0                    # 0=None,1=Odd,2=Even (match your device)
+        within_message_timeout_ms: 10
 
   cli:
     config_module:

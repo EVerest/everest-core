@@ -301,6 +301,7 @@ void powermeterImpl::ready() {
     std::thread live_measure_publisher_thread([this] {
         std::atomic_bool device_not_configured = true;
         while (true) {
+            const auto measurement_interval = std::chrono::milliseconds{config.live_measurement_interval_ms};
             try {
                 if (device_not_configured.load()) {
                     configure_device();
@@ -309,11 +310,12 @@ void powermeterImpl::ready() {
                 read_powermeter_values();
                 read_device_state();
             } catch (const std::exception& e) {
-                EVLOG_error << "Failed to communicate with the device, try again in 10 seconds: " << e.what();
+                EVLOG_error << "Failed to communicate with the device, try again in "
+                            << config.communication_error_pause_delay_s << " seconds: " << e.what();
                 device_not_configured = true;
-                std::this_thread::sleep_for(std::chrono::seconds(10));
+                std::this_thread::sleep_for(std::chrono::seconds{config.communication_error_pause_delay_s});
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(measurement_interval);
         }
     });
     live_measure_publisher_thread.detach();

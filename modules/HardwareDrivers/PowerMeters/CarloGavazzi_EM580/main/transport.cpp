@@ -11,7 +11,7 @@ namespace transport {
 transport::DataVector SerialCommHubTransport::fetch(int address, int register_count) {
     return retry_with_config([this, address, register_count]() {
         transport::DataVector response;
-        response.reserve(register_count * 2); // this is a uint 8 vector
+        response.reserve(register_count * 2); // this is a uint8_t vector
 
         int remaining_register_to_read{register_count};
         int read_address{address - m_base_address};

@@ -22,6 +22,12 @@ provides:
         minimum: 10
         maximum: 10000
         default: 500
+      communication_error_pause_delay_s:
+        description: Delay in seconds before retrying communication in the live measurement thread after a failure. Default 10 seconds. Applies to initial communication too.
+        type: integer
+        minimum: 1
+        maximum: 600
+        default: 10
       initial_connection_retry_count:
         description: Number of retries for initial connection/signature config read during module initialization. 0 means no infinite retries.
         type: integer
@@ -40,6 +46,12 @@ provides:
         minimum: -1440
         maximum: 1440
         default: 0
+      live_measurement_interval_ms:
+        description: Interval in milliseconds between live powermeter reads and publishes. Default 1000 ms (once per second). Allowed range 500-60000 ms (twice per second to once per minute).
+        type: integer
+        minimum: 500
+        maximum: 60000
+        default: 1000
 requires:
   modbus:
     interface: serial_communication_hub

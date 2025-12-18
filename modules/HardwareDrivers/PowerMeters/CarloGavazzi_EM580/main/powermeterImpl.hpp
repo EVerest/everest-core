@@ -27,6 +27,8 @@ struct Conf {
     int initial_connection_retry_count;
     int initial_connection_retry_delay_ms;
     int timezone_offset_minutes;
+    int live_measurement_interval_ms;
+    int communication_error_pause_delay_s;
 };
 
 class powermeterImpl : public powermeterImplBase {
