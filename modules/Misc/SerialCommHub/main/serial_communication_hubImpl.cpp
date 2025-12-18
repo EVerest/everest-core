@@ -121,19 +121,21 @@ serial_communication_hubImpl::perform_modbus_request(uint8_t device_address, tin
                                       tiny_modbus::FunctionCode_to_string_with_hex(function), device_address,
                                       first_register_address, first_register_address, e.what());
 
-            if (retry_counter != 1)
+            if (retry_counter != 1) {
                 EVLOG_debug << logmsg;
-            else
+            } else {
                 EVLOG_warning << logmsg;
+            }
         } catch (const tiny_modbus::TinyModbusException& e) {
             auto logmsg = fmt::format("Modbus call {} for device id {} addr {}({:#06x}) failed: {}",
                                       tiny_modbus::FunctionCode_to_string_with_hex(function), device_address,
                                       first_register_address, first_register_address, e.what());
 
-            if (retry_counter != 1)
+            if (retry_counter != 1) {
                 EVLOG_debug << logmsg;
-            else
+            } else {
                 EVLOG_warning << logmsg;
+            }
         } catch (const std::logic_error& e) {
             EVLOG_warning << "Logic error in Modbus implementation: " << e.what();
         } catch (const std::system_error& e) {
