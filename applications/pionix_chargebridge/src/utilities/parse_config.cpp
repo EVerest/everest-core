@@ -89,7 +89,10 @@ std::pair<std::string, c4::yml::ConstNodeRef> find_node(c4::yml::NodeRef& config
     if (not sub.empty()) {
         node_str = node_str + "::" + sub;
         auto sub_str = ryml::to_csubstr(sub);
-        node = config.find_child(main_str).find_child(sub_str);
+        node = config.find_child(main_str);
+        if (not node.invalid()) {
+            node = config.find_child(main_str).find_child(sub_str);
+        }
     } else {
         node = config[main_str];
     }
@@ -206,19 +209,47 @@ void parse_config_impl(c4::yml::NodeRef& config, charge_bridge_config& c, std::f
         cfg.cb_remote = c.cb_remote;
     });
 
-    get_block("evse_bsp", c.evse, [&](auto& cfg, auto const& main) {
+    {
+        bool wants_ev = false;
+        bool wants_evse = false;
+        get_node_or_default(wants_ev, "ev_bsp", "enable", false);
+        get_node_or_default(wants_evse, "evse_bsp", "enable", false);
+        if (wants_ev && wants_evse) {
+            std::cerr << "Configuration error: Cannot enable EVSE and EV BSP at the same time" << std::endl;
+            throw std::exception();
+        }
+    }
+
+    get_block("evse_bsp", c.bsp, [&](auto& cfg, auto const& main) {
         cfg.cb_port = g_cb_port_evse_bsp;
-        get_node(cfg.api.bsp.module_id, main, "module_id");
+        cfg.api.evse.enabled = true;
+        get_node(cfg.api.evse.module_id, main, "module_id");
         get_node(cfg.api.mqtt_remote, main, "mqtt_remote");
         get_node_or_default(cfg.api.mqtt_bind, main, "mqtt_bind", "");
         get_node(cfg.api.mqtt_port, main, "mqtt_port");
         get_node_or_default(cfg.api.mqtt_ping_interval_ms, main, "mqtt_ping_interval_ms",
                             default_mqtt_ping_interval_ms);
         cfg.cb_remote = c.cb_remote;
-        get_node(cfg.api.bsp.capabilities, main, "capabilities");
+        get_node(cfg.api.evse.capabilities, main, "capabilities");
         get_node(cfg.api.ovm.enabled, main, "ovm_enabled");
         get_node(cfg.api.ovm.module_id, main, "ovm_module_id");
     });
+
+    if (not c.bsp.has_value()) {
+        get_block("ev_bsp", c.bsp, [&](auto& cfg, auto const& main) {
+            cfg.cb_port = g_cb_port_evse_bsp;
+            cfg.api.ev.enabled = true;
+            get_node(cfg.api.ev.module_id, main, "module_id");
+            get_node(cfg.api.mqtt_remote, main, "mqtt_remote");
+            get_node_or_default(cfg.api.mqtt_bind, main, "mqtt_bind", "");
+            get_node(cfg.api.mqtt_port, main, "mqtt_port");
+            get_node_or_default(cfg.api.mqtt_ping_interval_ms, main, "mqtt_ping_interval_ms",
+                                default_mqtt_ping_interval_ms);
+            cfg.cb_remote = c.cb_remote;
+            get_node(cfg.api.ovm.enabled, main, "ovm_enabled");
+            get_node(cfg.api.ovm.module_id, main, "ovm_module_id");
+        });
+    }
 
     get_block("gpio", c.gpio, [&](auto& cfg, auto const& main) {
         get_node(cfg.interval_s, main, "interval_s");
@@ -311,10 +342,10 @@ charge_bridge_config set_config_placeholders(charge_bridge_config const& src, ch
         result.plc->cb = result.cb_name;
         replace(result.plc->plc_tap);
     }
-    if (result.evse.has_value()) {
-        result.evse->cb_remote = ip;
-        result.evse->cb = result.cb_name;
-        replace(result.evse->api.bsp.module_id);
+    if (result.bsp.has_value()) {
+        result.bsp->cb_remote = ip;
+        result.bsp->cb = result.cb_name;
+        replace(result.bsp->api.evse.module_id);
     }
     if (result.heartbeat.has_value()) {
         result.heartbeat->cb = result.cb_name;

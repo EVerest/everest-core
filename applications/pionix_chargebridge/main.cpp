@@ -71,7 +71,7 @@ void signal_handler(int signum) {
 }
 
 int main(int argc, char* argv[]) {
-    std::cout << "PIONIX ChargeBridge (c) 2025\n" << std::endl;
+    std::cout << "PIONIX ChargeBridge (C) 2025-2026\n" << std::endl;
 
     std::signal(SIGINT, signal_handler);
     std::signal(SIGHUP, signal_handler);

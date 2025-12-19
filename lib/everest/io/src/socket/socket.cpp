@@ -1,19 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
-#include <algorithm> // For std::min
+#include <algorithm>
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
 #include <chrono>
+#include <cstring>
 #include <fcntl.h>
-#include <fcntl.h> // For O_RDWR and fcntl
+#include <ifaddrs.h>
 #include <iostream>
+#include <linux/if_packet.h>
 #include <linux/if_tun.h>
+#include <net/ethernet.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <poll.h>
+#include <sstream>
 #include <stdexcept>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -56,6 +60,12 @@ void set_ifr_name(struct ifreq& ifr, std::string const& dev_name) {
     ifr.ifr_name[IFNAMSIZ - 1] = '\0';
 }
 
+std::string build_errno_string(std::string const& msg) {
+    std::stringstream str;
+    str << msg << ": " << strerror(errno) << " (" << errno << ")";
+    return str.str();
+}
+
 } // namespace
 
 namespace everest::lib::io {
@@ -83,9 +93,10 @@ event::unique_fd open_udp_server_socket(std::uint16_t port) {
     // open the first possible socket
     for (auto* p = servinfo; p != NULL; p = p->ai_next) {
         const auto socket_fd = ::socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-
-        if (socket_fd == -1)
+        set_reuse_address(socket_fd);
+        if (socket_fd == -1) {
             continue;
+        }
 
         if (bind(socket_fd, p->ai_addr, p->ai_addrlen) == -1) {
             close(socket_fd);
@@ -192,6 +203,51 @@ event::unique_fd open_tcp_socket(const std::string& host, std::uint16_t port) {
     }
 
     throw std::runtime_error(std::string("Could not open a socket for ") + host + ":" + std::to_string(port));
+}
+
+event::unique_fd open_raw_promiscuous_socket(std::string const& if_name) {
+    auto const socket_fd = ::socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+    if (socket_fd == -1) {
+        auto msg = build_errno_string("Could not open raw socket");
+        throw std::runtime_error(msg);
+    }
+
+    int const if_index = if_nametoindex(if_name.c_str());
+    if (if_index == 0) {
+        close(socket_fd);
+        throw std::runtime_error("Invalid interface name: " + if_name);
+    }
+
+    int ignore_out = 1;
+    if (setsockopt(socket_fd, SOL_PACKET, PACKET_IGNORE_OUTGOING, &ignore_out, sizeof(ignore_out)) == -1) {
+        auto msg = build_errno_string("Could not set PACKET_IGNORE_OUTGOIG for " + if_name);
+        close(socket_fd);
+        throw std::runtime_error(msg);
+    }
+
+    struct sockaddr_ll sll;
+    std::memset(&sll, 0, sizeof(sll));
+    sll.sll_family = AF_PACKET;
+    sll.sll_ifindex = if_index;
+    sll.sll_protocol = htons(ETH_P_ALL);
+
+    if (::bind(socket_fd, (struct sockaddr*)&sll, sizeof(sll)) == -1) {
+        auto msg = build_errno_string("Could not bind socket to " + if_name);
+        close(socket_fd);
+        throw std::runtime_error(msg);
+    }
+
+    struct packet_mreq mreq;
+    std::memset(&mreq, 0, sizeof(mreq));
+    mreq.mr_ifindex = if_nametoindex(if_name.c_str());
+    mreq.mr_type = PACKET_MR_PROMISC;
+    auto error = setsockopt(socket_fd, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
+    if (error) {
+        auto msg = build_errno_string("Cannot set 'PROMISCUOUS MODE' for '" + if_name + "'");
+        close(socket_fd);
+        throw std::runtime_error(msg);
+    }
+    return event::unique_fd(socket_fd);
 }
 
 void enable_tcp_no_delay(int fd) {
@@ -455,6 +511,134 @@ int connect_with_timeout(int fd, const struct sockaddr* addr, uint32_t addrlen, 
         result = -1;
     }
     return result;
+}
+
+std::string get_interface_address(std::string const& name) {
+    if (name.empty()) {
+        return "";
+    }
+
+    struct ifaddrs* ifaddr{nullptr};
+    struct ifaddrs* ifa{nullptr};
+    if (getifaddrs(&ifaddr) == -1) {
+        throw std::runtime_error("Cannot get interfaces: " + std::string(strerror(errno)));
+    }
+
+    handle_disposer<ifaddrs, freeifaddrs> ifaddr_disposer(ifaddr);
+
+    for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == nullptr || ifa->ifa_addr->sa_family != AF_INET)
+            continue;
+        if (name == ifa->ifa_name) {
+            char host[NI_MAXHOST];
+            getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+            return host;
+            break;
+        }
+    }
+
+    throw std::runtime_error("Interface: " + name + " not found or has no IPv4");
+}
+
+std::vector<if_info> get_all_interaces() {
+    struct ifaddrs* ifaddr{nullptr};
+    struct ifaddrs* ifa{nullptr};
+    if (getifaddrs(&ifaddr) == -1) {
+        throw std::runtime_error("Cannot get interfaces: " + std::string(strerror(errno)));
+    }
+
+    handle_disposer<ifaddrs, freeifaddrs> ifaddr_disposer(ifaddr);
+
+    std::vector<if_info> interfaces;
+
+    for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == nullptr || ifa->ifa_addr->sa_family != AF_INET)
+            continue;
+        interfaces.push_back({ifa->ifa_name, get_interface_address(ifa->ifa_name)});
+    }
+    return interfaces;
+}
+
+event::unique_fd open_udp_multicast_socket(std::string const& multicast_group, std::uint16_t port,
+                                           std::string interface_address, std::string listen_address,
+                                           bool reuse_address, bool reuse_port) {
+    auto sock = event::unique_fd(::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP));
+    set_non_blocking(sock);
+    if (reuse_address) {
+        set_reuse_address(sock);
+    }
+    if (reuse_port) {
+        set_reuse_port(sock);
+    }
+
+    bind_socket_ip4(sock, listen_address, port);
+    set_udp_multicast(sock, multicast_group, interface_address);
+    return sock;
+}
+
+event::unique_fd open_mdns_socket(std::string const& interface_name) {
+    auto ip = get_interface_address(interface_name);
+    return open_udp_multicast_socket("224.0.0.251", 5353, ip, "0.0.0.0", true, true);
+}
+
+void set_reuse_address(int fd) {
+    socklen_t enable = 1;
+    auto err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable));
+    if (err) {
+        throw std::runtime_error("Failed to setsockopt(SO_REUSEADDRE)");
+    }
+}
+
+void set_reuse_port(int fd) {
+#ifdef SO_REUSEPORT
+    socklen_t enable = 1;
+    auto err = setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(enable));
+    if (err) {
+        throw std::runtime_error("Failed to setsockopt(SO_REUSEADDRE)");
+    }
+#endif
+}
+
+void bind_socket_ip4(int fd, std::string const& ip, std::uint16_t port) {
+    sockaddr_in local_bind_addr{};
+    int result = inet_pton(AF_INET, ip.c_str(), &local_bind_addr.sin_addr.s_addr);
+    if (result not_eq 1) {
+        throw std::runtime_error("Invalid IP address: " + ip);
+    }
+
+    local_bind_addr.sin_family = AF_INET;
+    local_bind_addr.sin_port = htons(port);
+    local_bind_addr.sin_addr.s_addr = ip_to_s_addr(ip);
+    if (bind(fd, (struct sockaddr*)&local_bind_addr, sizeof(local_bind_addr)) < 0) {
+        throw std::runtime_error("Cannot bind socket to " + ip + ":" + std::to_string(port) + " -> " + strerror(errno));
+    }
+}
+
+void set_udp_multicast(int fd, std::string const& multicast_ip, std::string const& interface_ip) {
+    struct in_addr out_addr;
+    out_addr.s_addr = inet_addr(interface_ip.c_str());
+
+    auto err = setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, (char*)&out_addr, sizeof(out_addr));
+    if (err) {
+        throw std::runtime_error("Failed to setsockopt(IP_MULTICAST_IF)");
+    }
+
+    ip_mreq mreq;
+    mreq.imr_multiaddr.s_addr = ip_to_s_addr(multicast_ip);
+    mreq.imr_interface.s_addr = ip_to_s_addr(interface_ip);
+    err = setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
+    if (err) {
+        throw std::runtime_error("Failed to setsockopt(IP_ADD_MEMBERSHIP)");
+    }
+}
+
+std::uint32_t ip_to_s_addr(std::string const& ip) {
+    std::uint32_t s_addr;
+    int result = inet_pton(AF_INET, ip.c_str(), &s_addr);
+    if (result not_eq 1) {
+        throw std::runtime_error("Invalid IP address: " + ip);
+    }
+    return s_addr;
 }
 
 } // namespace socket
