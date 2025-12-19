@@ -183,7 +183,7 @@ void ev_bsp_api::dispatch(std::string const& operation, std::string const& paylo
     } else if (operation == "set_rcd_error") {
         receive_set_rcd_error(payload);
     } else {
-        std::cerr << "ovm_api: RECEIVE invalid operation: " << operation << std::endl;
+        std::cerr << "ev_bsp_api: RECEIVE invalid operation: " << operation << std::endl;
     }
 }
 
@@ -296,9 +296,9 @@ void ev_bsp_api::handle_everest_connection_state() {
     auto current = check_everest_heartbeat();
     auto handle_status = [this](bool status) {
         if (status) {
-            utilities::print_error(m_cb_identifier, "OVM/EVEREST", 0) << "EVerest connected" << std::endl;
+            utilities::print_error(m_cb_identifier, "EV/EVEREST", 0) << "EVerest connected" << std::endl;
         } else {
-            utilities::print_error(m_cb_identifier, "OVM/EVEREST", 1) << "Waiting for EVerest...." << std::endl;
+            utilities::print_error(m_cb_identifier, "EV/EVEREST", 1) << "Waiting for EVerest...." << std::endl;
         }
     };
 
