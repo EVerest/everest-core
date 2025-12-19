@@ -63,6 +63,7 @@ Have a look at this categorized list of all guides:
 
 .. toctree::
     :maxdepth: 1
+    :hidden:
 
     configure-pnc
     debug-iso15118
