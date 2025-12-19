@@ -17,4 +17,4 @@ fi
 
 echo "Running $PARALLEL_TESTS tests in parallel"
 # run all tests in parallel
-python3 -m pytest -d --tx "$PARALLEL_TESTS"*popen//python=python3 -rA --junitxml=result.xml --html=report.html --self-contained-html --max-worker-restart=0 --everest-prefix "$EVEREST_CORE_DIR/build/dist" core_tests/*.py framework_tests/*.py
+python3 -m pytest -d --tx "$PARALLEL_TESTS"*popen//python=python3 -rA --junitxml=result.xml --html=report.html --self-contained-html --max-worker-restart=0 --everest-prefix "$EVEREST_CORE_DIR/build/dist" core_tests/*.py framework_tests/*.py async_api_tests/*.py

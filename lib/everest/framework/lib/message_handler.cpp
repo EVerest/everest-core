@@ -64,6 +64,7 @@ bool check_topic_matches(const std::string& full_topic, const std::string& wildc
 MessageHandler::MessageHandler() {
     operation_worker_thread = std::thread([this] { run_operation_message_worker(); });
     result_worker_thread = std::thread([this] { run_result_message_worker(); });
+    external_mqtt_worker_thread = std::thread([this] { run_external_mqtt_worker(); });
 }
 
 MessageHandler::~MessageHandler() {
@@ -92,6 +93,12 @@ void MessageHandler::add(const ParsedMessage& message) {
 
         ready_thread =
             std::thread([this, topic_copy, data_copy] { (*global_ready_handler->handler)(topic_copy, data_copy); });
+    } else if (msg_type == MqttMessageType::ExternalMQTT) {
+        {
+            std::lock_guard<std::mutex> lock(external_mqtt_queue_mutex);
+            external_mqtt_message_queue.push(message);
+        }
+        external_mqtt_cv.notify_all();
     } else {
         {
             std::lock_guard<std::mutex> lock(operation_queue_mutex);
@@ -105,17 +112,22 @@ void MessageHandler::stop() {
     {
         std::lock_guard<std::mutex> lock1(operation_queue_mutex);
         std::lock_guard<std::mutex> lock2(result_queue_mutex);
+        std::lock_guard<std::mutex> lock3(external_mqtt_queue_mutex);
         running = false;
     }
 
     operation_cv.notify_all();
     result_cv.notify_all();
+    external_mqtt_cv.notify_all();
 
     if (operation_worker_thread.joinable()) {
         operation_worker_thread.join();
     }
     if (result_worker_thread.joinable()) {
         result_worker_thread.join();
+    }
+    if (external_mqtt_worker_thread.joinable()) {
+        external_mqtt_worker_thread.join();
     }
     if (ready_thread.joinable()) {
         ready_thread.join();
@@ -153,6 +165,23 @@ void MessageHandler::run_result_message_worker() {
         handle_result_message(message.topic, message.data);
     }
     EVLOG_info << "Cmd result worker thread stopped";
+}
+
+void MessageHandler::run_external_mqtt_worker() {
+    while (true) {
+        std::unique_lock<std::mutex> lock(external_mqtt_queue_mutex);
+        external_mqtt_cv.wait(lock, [this] { return !external_mqtt_message_queue.empty() || !running; });
+        if (!running) {
+            return;
+        }
+
+        ParsedMessage message = std::move(external_mqtt_message_queue.front());
+        external_mqtt_message_queue.pop();
+        lock.unlock();
+
+        handle_external_mqtt_message(message.topic, message.data);
+    }
+    EVLOG_info << "External MQTT worker thread stopped";
 }
 
 void MessageHandler::handle_operation_message(const std::string& topic, const json& payload) {
