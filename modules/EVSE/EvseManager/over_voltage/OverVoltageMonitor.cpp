@@ -4,14 +4,28 @@
 #include "over_voltage/OverVoltageMonitor.hpp"
 
 #include <algorithm>
+#include <chrono>
+#include <condition_variable>
 #include <fmt/core.h>
-
 #include <thread>
 
 namespace module {
 
 OverVoltageMonitor::OverVoltageMonitor(ErrorCallback callback, std::chrono::milliseconds duration) :
     error_callback_(std::move(callback)), duration_(duration) {
+    timer_thread_ = std::thread(&OverVoltageMonitor::timer_thread_func, this);
+}
+
+OverVoltageMonitor::~OverVoltageMonitor() {
+    {
+        std::lock_guard<std::mutex> lock(timer_mutex_);
+        timer_thread_exit_ = true;
+        timer_armed_ = false;
+    }
+    timer_cv_.notify_one();
+    if (timer_thread_.joinable()) {
+        timer_thread_.join();
+    }
 }
 
 void OverVoltageMonitor::set_limits(double emergency_limit, double error_limit) {
@@ -37,7 +51,6 @@ void OverVoltageMonitor::reset() {
 }
 
 void OverVoltageMonitor::update_voltage(double voltage_v) {
-    last_voltage_ = voltage_v;
     if (!running_ || fault_latched_ || !limits_valid_) {
         return;
     }
@@ -72,43 +85,70 @@ void OverVoltageMonitor::arm_error_timer(double voltage_v) {
         return;
     }
 
-    uint64_t token;
     {
         std::lock_guard<std::mutex> lock(timer_mutex_);
-        if (error_timer_active_) {
+        if (timer_armed_) {
             timer_voltage_snapshot_ = std::max(timer_voltage_snapshot_, voltage_v);
             return;
         }
-        error_timer_active_ = true;
+        timer_armed_ = true;
         timer_voltage_snapshot_ = voltage_v;
-        token = ++timer_sequence_;
-        current_timer_sequence_ = token;
+        timer_deadline_ = std::chrono::steady_clock::now() + duration_;
     }
-
-    std::thread([this, token]() {
-        std::this_thread::sleep_for(duration_);
-        double voltage = 0.0;
-        {
-            std::lock_guard<std::mutex> lock(timer_mutex_);
-            if (!error_timer_active_ || current_timer_sequence_ != token) {
-                return;
-            }
-            error_timer_active_ = false;
-            voltage = timer_voltage_snapshot_;
-        }
-        trigger_fault(FaultType::Error, fmt::format("Voltage {:.2f} V exceeded limit {:.2f} V for at least {} ms.",
-                                                    voltage, error_limit_, duration_.count()));
-    }).detach();
+    timer_cv_.notify_one();
 }
 
 void OverVoltageMonitor::cancel_error_timer() {
-    std::lock_guard<std::mutex> lock(timer_mutex_);
-    if (!error_timer_active_) {
-        return;
+    {
+        std::lock_guard<std::mutex> lock(timer_mutex_);
+        if (!timer_armed_) {
+            return;
+        }
+        timer_armed_ = false;
     }
-    error_timer_active_ = false;
-    ++timer_sequence_;
-    current_timer_sequence_ = timer_sequence_;
+    timer_cv_.notify_one();
+}
+
+void OverVoltageMonitor::timer_thread_func() {
+    std::unique_lock<std::mutex> lock(timer_mutex_);
+
+    while (!timer_thread_exit_) {
+        // Wait until a timer is armed or exit is requested
+        timer_cv_.wait(lock, [this] { return timer_thread_exit_ || timer_armed_; });
+        if (timer_thread_exit_) {
+            break;
+        }
+
+        // Capture the current deadline and wait until it expires or is cancelled/updated
+        auto deadline = timer_deadline_;
+        while (!timer_thread_exit_ && timer_armed_) {
+            if (timer_cv_.wait_until(lock, deadline) == std::cv_status::timeout) {
+                break;
+            }
+            // Woken up: check for exit, cancellation or re-arming with a new deadline
+            if (timer_thread_exit_ || !timer_armed_ || timer_deadline_ != deadline) {
+                break;
+            }
+        }
+
+        if (timer_thread_exit_) {
+            break;
+        }
+        if (!timer_armed_ || timer_deadline_ != deadline) {
+            // Timer was cancelled or re-armed; go back to waiting
+            continue;
+        }
+
+        // Timer expired with this deadline and is still armed
+        const double voltage = timer_voltage_snapshot_;
+        timer_armed_ = false;
+
+        // Release the lock while invoking the callback path
+        lock.unlock();
+        trigger_fault(FaultType::Error, fmt::format("Voltage {:.2f} V exceeded limit {:.2f} V for at least {} ms.",
+                                                    voltage, error_limit_, duration_.count()));
+        lock.lock();
+    }
 }
 
 } // namespace module
