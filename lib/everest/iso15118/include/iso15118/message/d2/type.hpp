@@ -12,6 +12,14 @@ enum class Type {
     SupportedAppProtocolRes,
     SessionSetupReq,
     SessionSetupRes,
+    CableCheckReq,
+    CableCheckRes,
+    PreChargeReq,
+    PreChargeRes,
+    CurrentDemandReq,
+    CurrentDemandRes,
+    WeldingDetectionReq,
+    WeldingDetectionRes
 };
 
 template <typename T> struct TypeTrait {
@@ -39,6 +47,14 @@ CREATE_TYPE_TRAIT(SupportedAppProtocolRequest, SupportedAppProtocolReq);
 CREATE_TYPE_TRAIT(SupportedAppProtocolResponse, SupportedAppProtocolRes);
 CREATE_TYPE_TRAIT(SessionSetupRequest, SessionSetupReq);
 CREATE_TYPE_TRAIT(SessionSetupResponse, SessionSetupRes);
+CREATE_TYPE_TRAIT(CableCheckRequest, CableCheckReq);
+CREATE_TYPE_TRAIT(CableCheckResponse, CableCheckRes);
+CREATE_TYPE_TRAIT(PreChargeRequest, PreChargeReq);
+CREATE_TYPE_TRAIT(PreChargeResponse, PreChargeRes);
+CREATE_TYPE_TRAIT(CurrentDemandRequest, CurrentDemandReq);
+CREATE_TYPE_TRAIT(CurrentDemandResponse, CurrentDemandRes);
+CREATE_TYPE_TRAIT(WeldingDetectionRequest, WeldingDetectionReq);
+CREATE_TYPE_TRAIT(WeldingDetectionResponse, WeldingDetectionRes);
 
 #ifdef CREATE_TYPE_TRAIT_PUSHED
 #define CREATE_TYPE_TRAIT CREATE_TYPE_TRAIT_PUSHED

@@ -68,9 +68,13 @@ target_sources(iso15118
         message/dc_welding_detection.cpp
         message/session_stop.cpp
 
+        message/d2/cable_check.cpp
+        message/d2/current_demand.cpp
         message/d2/variant.cpp
         message/d2/msg_data_types.cpp
+        message/d2/pre_charge.cpp
         message/d2/session_setup.cpp
+        message/d2/welding_detection.cpp
 
         tbd_controller.cpp    
 )
