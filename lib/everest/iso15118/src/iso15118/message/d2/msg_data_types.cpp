@@ -51,6 +51,27 @@ void convert(const Header& in, struct iso2_MessageHeaderType& out) {
     CPP2CB_CONVERT_IF_USED(in.notification, out.Notification);
 }
 
+void convert(const iso2_MeterInfoType& in, data_types::MeterInfo& out) {
+    out.meter_id = CB2CPP_STRING(in.MeterID);
+    CB2CPP_ASSIGN_IF_USED(in.MeterReading, out.meter_reading);
+    CB2CPP_BYTES_IF_USED(in.SigMeterReading, out.sig_meter_reading);
+    CB2CPP_ASSIGN_IF_USED(in.MeterStatus, out.meter_status);
+    CB2CPP_ASSIGN_IF_USED(in.TMeter, out.t_meter);
+}
+
+void convert(const data_types::MeterInfo& in, iso2_MeterInfoType& out) {
+    init_iso2_MeterInfoType(&out);
+
+    CPP2CB_STRING(in.meter_id, out.MeterID);
+    CPP2CB_ASSIGN_IF_USED(in.meter_reading, out.MeterReading);
+    if (in.sig_meter_reading) {
+        CPP2CB_BYTES(in.sig_meter_reading.value(), out.SigMeterReading);
+        CB_SET_USED(out.SigMeterReading);
+    }
+    CPP2CB_ASSIGN_IF_USED(in.meter_status, out.MeterStatus);
+    CPP2CB_ASSIGN_IF_USED(in.t_meter, out.TMeter);
+}
+
 void convert(const iso2_DC_EVStatusType& in, data_types::DC_EVStatus& out) {
     out.ev_ready = in.EVReady;
     cb_convert_enum(in.EVErrorCode, out.ev_error_code);
