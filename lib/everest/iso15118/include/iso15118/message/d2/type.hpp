@@ -16,6 +16,8 @@ enum class Type {
     AuthorizationRes,
     CableCheckReq,
     CableCheckRes,
+    PreChargeReq,
+    PreChargeRes,
     WeldingDetectionReq,
     WeldingDetectionRes
 };
@@ -49,6 +51,8 @@ CREATE_TYPE_TRAIT(AuthorizationRequest, AuthorizationReq);
 CREATE_TYPE_TRAIT(AuthorizationResponse, AuthorizationRes);
 CREATE_TYPE_TRAIT(CableCheckRequest, CableCheckReq);
 CREATE_TYPE_TRAIT(CableCheckResponse, CableCheckRes);
+CREATE_TYPE_TRAIT(PreChargeRequest, PreChargeReq);
+CREATE_TYPE_TRAIT(PreChargeResponse, PreChargeRes);
 CREATE_TYPE_TRAIT(WeldingDetectionRequest, WeldingDetectionReq);
 CREATE_TYPE_TRAIT(WeldingDetectionResponse, WeldingDetectionRes);
 
