@@ -134,7 +134,14 @@ everybody to find their best way of learning:
    how-to-guides/index
    explanation/index
    reference/index
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+   :caption: Getting Help
+
    qa/index
+   community-channels
 
 ***************
 Important links
