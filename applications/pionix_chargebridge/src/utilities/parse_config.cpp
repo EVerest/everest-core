@@ -218,6 +218,8 @@ void parse_config_impl(c4::yml::NodeRef& config, charge_bridge_config& c, std::f
         get_node(cfg.api.bsp.capabilities, main, "capabilities");
         get_node(cfg.api.ovm.enabled, main, "ovm_enabled");
         get_node(cfg.api.ovm.module_id, main, "ovm_module_id");
+        get_node(cfg.api.ev_bsp.enabled, main, "ev_bsp_enabled");
+        get_node(cfg.api.ev_bsp.module_id, main, "ev_bsp_module_id");
     });
 
     get_block("gpio", c.gpio, [&](auto& cfg, auto const& main) {

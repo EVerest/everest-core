@@ -20,7 +20,8 @@ api_connector::api_connector(everest_api_config const& config, std::string const
     m_cb_identifier(cb_identifier),
     m_mqtt(mqtt_reconnect_to_ms),
     m_bsp(config.bsp, cb_identifier, m_host_status),
-    m_ovm(config.ovm, cb_identifier, m_host_status) {
+    m_ovm(config.ovm, cb_identifier, m_host_status),
+    m_ev_bsp(config.ev_bsp, cb_identifier, m_host_status) {
 
     everest::lib::API::Topics api_topics;
     api_topics.setup(config.bsp.module_id, "evse_board_support", 1);
@@ -36,6 +37,15 @@ api_connector::api_connector(everest_api_config const& config, std::string const
         m_ovm_send_topic = api_topics.extern_to_everest("");
         m_ovm.set_mqtt_tx(
             [this](auto const& topic, auto const& payload) { m_mqtt.publish(m_ovm_send_topic + topic, payload); });
+    }
+
+    m_ev_bsp_enabled = config.ev_bsp.enabled;
+    if (m_ev_bsp_enabled) {
+        api_topics.setup(config.ev_bsp.module_id, "ev_board_support", 1);
+        m_ev_bsp_receive_topic = api_topics.everest_to_extern("");
+        m_ev_bsp_send_topic = api_topics.extern_to_everest("");
+        m_ev_bsp.set_mqtt_tx(
+            [this](auto const& topic, auto const& payload) { m_mqtt.publish(m_ev_bsp_send_topic + topic, payload); });
     }
 
     m_mqtt.set_error_handler([this](int code, std::string const& msg) {
@@ -63,6 +73,9 @@ bool api_connector::register_events(everest::lib::io::event::fd_event_handler& h
         if (m_ovm_enabled) {
             m_ovm.sync(m_cb_connected);
         }
+        if (m_ev_bsp_enabled) {
+            m_ev_bsp.sync(m_cb_connected);
+        }
         handle_cb_connection_state();
     }) && result;
     return result;
@@ -72,6 +85,9 @@ bool api_connector::unregister_events(everest::lib::io::event::fd_event_handler&
     auto result = handler.unregister_event_handler(&m_bsp);
     if (m_ovm_enabled) {
         result = handler.unregister_event_handler(&m_ovm) && result;
+    }
+    if (m_ev_bsp_enabled) {
+        result = handler.unregister_event_handler(&m_ev_bsp) && result;
     }
     result = handler.unregister_event_handler(&m_mqtt) && result;
     result = handler.unregister_event_handler(&m_sync_timer) && result;
@@ -87,6 +103,7 @@ void api_connector::set_cb_message(evse_bsp_cb_to_host const& msg) {
     m_last_cb_heartbeat = std::chrono::steady_clock::now();
     m_bsp.set_cb_message(msg);
     m_ovm.set_cb_message(msg);
+    m_ev_bsp.set_cb_message(msg);
 }
 
 bool api_connector::check_cb_heartbeat() {
@@ -126,11 +143,17 @@ void api_connector::handle_cb_connection_state() {
             if (m_ovm_enabled) {
                 m_ovm.clear_comm_fault();
             }
+            if (m_ev_bsp_enabled) {
+                m_ev_bsp.clear_comm_fault();
+            }
 
         } else {
             m_bsp.raise_comm_fault();
             if (m_ovm_enabled) {
                 m_ovm.raise_comm_fault();
+            }
+            if (m_ev_bsp_enabled) {
+                m_ev_bsp.raise_comm_fault();
             }
 
             utilities::print_error(m_cb_identifier, "EVSE/CB", 1) << "Waiting for ChargeBridge...." << std::endl;

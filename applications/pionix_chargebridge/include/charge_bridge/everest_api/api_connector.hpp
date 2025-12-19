@@ -4,6 +4,7 @@
 
 #include <charge_bridge/everest_api/evse_bsp_api.hpp>
 #include <charge_bridge/everest_api/ovm_api.hpp>
+#include <charge_bridge/everest_api/ev_bsp_api.hpp>
 #include <chrono>
 #include <cstdint>
 #include <everest/io/event/fd_event_register_interface.hpp>
@@ -29,6 +30,7 @@ struct everest_api_config {
     uint32_t mqtt_ping_interval_ms;
     evse_bsp_config bsp;
     evse_ovm_config ovm;
+    evse_ev_bsp_config ev_bsp;
 };
 
 class api_connector : public everest::lib::io::event::fd_event_register_interface {
@@ -58,12 +60,16 @@ private:
     std::string m_bsp_send_topic;
     std::string m_ovm_receive_topic;
     std::string m_ovm_send_topic;
+    std::string m_ev_bsp_receive_topic;
+    std::string m_ev_bsp_send_topic;
     bool m_ovm_enabled{false};
+    bool m_ev_bsp_enabled{false};
     bool m_cb_initial_comm_check{true};
     bool m_cb_connected{false};
     evse_bsp_host_to_cb m_host_status;
 
     evse_bsp_api m_bsp;
     ovm_api m_ovm;
+    ev_bsp_api m_ev_bsp;
 };
 } // namespace charge_bridge::evse_bsp
