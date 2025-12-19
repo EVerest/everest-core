@@ -42,6 +42,7 @@ Have a look at this categorized list of all EVerest tutorials:
 
 .. toctree::
     :maxdepth: 1
+    :hidden:
 
     develop-new-module
     ocpp16

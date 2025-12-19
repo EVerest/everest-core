@@ -8,7 +8,7 @@ EVerest.
 Let us have a look at the most important topics first.
 Below that, you will be presented with a categorized list of all articles.
 
-.. grid:: 1 2 2 4
+.. grid:: 1 2 2 3
    :gutter: 2
 
    .. grid-item-card:: Framework Overview
@@ -92,6 +92,7 @@ Below that, you will be presented with a categorized list of all articles.
       Handwritten documentation for EVerest modules.
 
 .. toctree::
+    :hidden:
     :maxdepth: 1
 
     high-level-overview

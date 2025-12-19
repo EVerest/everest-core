@@ -62,12 +62,18 @@ exclude_patterns = [
 html_theme = 'furo'
 
 # A shorter title for the navigation bar.
-html_short_title = f"EVerest Manual {release}"
+html_title = f"EVerest Manual {release}"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+html_logo = '_static/everest_icon-color.png'
+
+html_theme_options = {
+    "sidebar_hide_name": False,
+}
 
 metadata_yaml_path = os.getenv('EVEREST_METADATA_YAML_PATH', "metadata_everest.yaml")
 with open(metadata_yaml_path, 'r') as f:
