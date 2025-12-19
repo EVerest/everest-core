@@ -1,0 +1,11 @@
+active_modules:
+  system_api:
+    module: system_API
+    config_module:
+      cfg_communication_check_to_s: 0
+  probe:
+    module: ProbeModule
+    connections:
+      system:
+        - module_id: system_api
+          implementation_id: main
