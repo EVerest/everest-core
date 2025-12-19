@@ -97,7 +97,7 @@ inline std::string to_hex_string(const transport::DataVector& data, ByteOffset o
     const auto len = static_cast<transport::DataVector::size_type>(length);
     std::stringstream ss;
     for (std::size_t index = 0; index < len; ++index) {
-        ss << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(data[index + off]);
+        ss << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(data[off + index]);
     }
     return ss.str();
 }
