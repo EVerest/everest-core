@@ -1,6 +1,9 @@
 active_modules:
   valid_module:
     module: TESTValidManifest
+    capabilities:
+      - "capability1"
+      - "capability2"
     config_module:
       valid_config_entry: "hello there"
       unknown_config_entry: 42 # this just logs an error nowadays

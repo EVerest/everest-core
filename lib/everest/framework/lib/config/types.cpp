@@ -198,7 +198,7 @@ ModuleConfig parse_module_config(const std::string& module_id, const json& modul
     module_config.standalone = module_json.value("standalone", false);
 
     if (module_json.contains("capabilities")) {
-        module_config.capabilities = module_json["capabilities"].get<std::string>();
+        module_config.capabilities = module_json["capabilities"].get<std::vector<std::string>>();
     }
 
     if (module_json.contains("connections")) {
@@ -466,7 +466,7 @@ void adl_serializer<everest::config::ModuleConfig>::from_json(const nlohmann::js
     m.module_name = j.at("module_name").get<std::string>();
     m.module_id = j.at("module_id").get<std::string>();
     if (j.contains("capabilities")) {
-        m.capabilities = j.at("capabilities").get<std::string>();
+        m.capabilities = j.at("capabilities").get<std::vector<std::string>>();
     }
     if (j.contains("telemetry_config")) {
         m.telemetry_config = j.at("telemetry_config").get<TelemetryConfig>();
