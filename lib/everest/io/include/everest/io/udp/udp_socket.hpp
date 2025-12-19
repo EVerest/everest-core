@@ -187,4 +187,55 @@ private:
     std::array<uint8_t, udp_payload::max_size> rx_buffer;
 };
 
+/////////////////////////////////////////////////
+
+/**
+ * A basic <a href="https://man7.org/linux/man-pages/man7/udp.7.html">UDP</a> server.
+ * Although this class can be used on its own, the main purpose is to be used as base class for
+ * implementation the \p ClientPolicy of \ref event::fd_event_client
+ */
+class udp_server_socket : public udp_socket_base {
+public:
+    /**
+     * @var PayloadT
+     * @brief Type of the payload for TX and RX operations
+     */
+    using PayloadT = udp_payload;
+
+    /**
+     * @brief The class is default constructed
+     */
+    udp_server_socket() = default;
+    ~udp_server_socket() = default;
+
+    /**
+     * @brief Open a UDP server socket.
+     * @details Sets the socket non blocking. <br>
+     * Implementation for \p ClientPolicy
+     * @param[in] port The port on host
+     * @return True on success, false otherwise.
+     */
+    bool open(uint16_t port);
+
+    /**
+     * @brief Write a \ref udp_payload to the socket
+     * @details Implementation for \p ClientPolicy
+     * @param[in] payload Payload
+     * @return True on success, False otherwise
+     */
+    bool tx(udp_payload const& payload);
+
+    /**
+     * @brief Read a \ref udp_payload from the socket
+     * @details Implementation for \p ClientPolicy
+     * @param[out] payload Payload
+     * @return True on success, False otherwise
+     */
+    bool rx(udp_payload& payload);
+
+private:
+    std::optional<udp_info> m_last_source;
+    std::array<uint8_t, udp_payload::max_size> rx_buffer;
+};
+
 } // namespace everest::lib::io::udp

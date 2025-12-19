@@ -1,6 +1,6 @@
 charge_bridge:
   name: cb_sat_ac
-  ip: chargebridge-44b7d0c98ace.local
+  ip: ANY_EVSE
   fw_file: ./firmware/charge-bridge-fw_complete.cbfw
   fw_update_on_start: true
   mdns_name: ""
@@ -12,7 +12,7 @@ heartbeat:
 safety:
   pp_mode: "disabled"
   cp_avg_ms: 10
-  inverted_emergency_input: 1
+  inverted_emergency_input: 0
   relay_1:
     relay_mode: "PowerRelay"
     # Auxilary contact is connected from the OMRON relay
@@ -76,6 +76,7 @@ evse_bsp:
   module_id: "cb_bsp"
   mqtt_remote: "localhost"
   mqtt_port: 1883
+  mqtt_bind: 127.0.0.1
   mqtt_ping_interval_ms: 1000
   capabilities:
     max_current_A_import: 16
@@ -96,6 +97,7 @@ gpio:
   interval_s: 1
   mqtt_remote: "localhost"
   mqtt_port: 1883
+  mqtt_bind: 127.0.0.1
   mqtt_ping_interval_ms: 1000
   gpio_0:
     # RCD.TEST

@@ -1,0 +1,154 @@
+charge_bridge:
+  name: cb_eval_ev
+  ip: ANY_EV
+  #ip: chargebridge-44b7d0c99629.local
+  fw_file: ./firmware/charge-bridge-fw_complete.cbfw
+  fw_update_on_start: true
+  mdns_name: ""
+
+heartbeat:
+  interval_s: 1
+  connection_to_s: 10
+
+safety:
+  pp_mode: "disabled"
+  cp_avg_ms: 10
+  inverted_emergency_input: 0
+  relay_1:
+    relay_mode: "PowerRelay"
+    feedback_enabled: false
+    feedback_delay_ms: 200
+    feedback_inverted: true
+    # PWM not supported yet
+    pwm_dc: 100
+    pwm_delay_ms: 0
+    switchoff_delay_ms: 10
+  relay_2:
+    relay_mode: "PowerRelay"
+    feedback_enabled: false
+    feedback_delay_ms: 200
+    feedback_inverted: true
+    pwm_dc: 100
+    pwm_delay_ms: 0
+    switchoff_delay_ms: 10
+  relay_3:
+    relay_mode: "UserRelay"
+    feedback_enabled: false
+    feedback_delay_ms: 10
+    feedback_inverted: false
+    pwm_dc: 100
+    pwm_delay_ms: 0
+    switchoff_delay_ms: 10
+
+can_0:
+  enable: true
+  local: "cb_ev_can"
+  baudrate: 125000
+
+serial_1:
+  enable: true
+  local: "/dev/cb_ev_uart"
+  baudrate: 115200
+  stopbits: OneStopBit
+  parity: None
+
+serial_2:
+  enable: true
+  local: "/dev/cb_ev_rs485"
+  baudrate: 19200
+  stopbits: OneStopBit
+  parity: Even
+
+plc:
+  enable: true
+  tap: "cb_ev_plc"
+  ip: 172.25.6.1
+  netmask: 255.255.255.0
+  mtu: 1518
+  powersaving_mode: 1
+
+ev_bsp:
+  enable: true
+  module_id: "ev_bsp_1"
+  mqtt_remote: 127.0.0.1
+  mqtt_port: 1883
+  mqtt_bind: 127.0.0.1
+  ovm_enabled: false
+  ovm_module_id: "ovm_1"
+
+evse_bsp:
+  enable: false
+  module_id: "bsp_1"
+  mqtt_remote: 127.0.0.1
+  mqtt_port: 1883
+  mqtt_bind: 127.0.0.1
+  capabilities:
+    max_current_A_import: 16
+    min_current_A_import: 6
+    max_phase_count_import: 3
+    min_phase_count_import: 3
+    max_current_A_export: 16
+    min_current_A_export: 6
+    max_phase_count_export: 3
+    min_phase_count_export: 3
+    supports_changing_phases_during_charging: false
+    connector_type: "IEC62196Type2Cable"
+    max_plug_temperature_C: 250
+  ovm_enabled: true
+  ovm_module_id: "ovm_1"
+
+gpio:
+  enable: true
+  interval_s: 1
+  mqtt_remote: "localhost"
+  mqtt_port: 1883
+  mqtt_ping_interval_ms: 5000
+  gpio_0:
+    mode: "Input"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_1:
+    mode: "Input"
+    pulls: "NoPull"
+    config: 32767
+  gpio_2:
+    mode: "Input"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_3:
+    mode: "Input"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_4:
+    mode: "Output"
+    pulls: "PullUp"
+    mdns: false
+    config: 1000
+  gpio_5:
+    mode: "Output"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_6:
+    mode: "Output"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_7:
+    mode: "Output"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_8:
+    mode: "Output"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
+  gpio_9:
+    mode: "Input"
+    pulls: "PullUp"
+    mdns: false
+    config: 32767
