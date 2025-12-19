@@ -16,6 +16,7 @@ provides:
         description: Simulate over voltage error N seconds after start of charging
         type: integer
         default: 5
+enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
