@@ -67,9 +67,9 @@ private:
     // Threads
     std::thread
         operation_worker_thread; // processes vars, commands, external MQTT, errors, GetConfig and ModuleReady messages
-    std::thread result_worker_thread; // processes cmd results and GetConfig responses
+    std::thread result_worker_thread;        // processes cmd results and GetConfig responses
     std::thread external_mqtt_worker_thread; // processes external MQTT messages
-    std::thread ready_thread;         // runs the modules ready function
+    std::thread ready_thread;                // runs the modules ready function
 
     // Queues and sync primitives
     std::queue<ParsedMessage> operation_message_queue;
