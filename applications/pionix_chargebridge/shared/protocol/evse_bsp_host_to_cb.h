@@ -16,6 +16,8 @@ struct CB_COMPILER_ATTR_PACK evse_bsp_host_to_cb {
     uint8_t ovm_reset_errors;   /* 0 leave errors untouched, 1: clear error bits for OVM */
     uint32_t ovm_limit_emergency_mV;  /* 9ms limit in mV */
     uint32_t ovm_limit_error_mV;  /* 400ms limit in mV */
+    CpState ev_set_cp_state;  /* Set CP state (EV side only) */
+    uint8_t ev_set_diodefault; /* Set/Clear DF state (EV side only) */
 };
 
 #include "test/evse_bsp_host_to_cb_test.h"

@@ -3,8 +3,8 @@
 #pragma once
 
 #include <atomic>
+#include <charge_bridge/bsp_bridge.hpp>
 #include <charge_bridge/can_bridge.hpp>
-#include <charge_bridge/evse_bridge.hpp>
 #include <charge_bridge/firmware_update/sync_fw_updater.hpp>
 #include <charge_bridge/gpio_bridge.hpp>
 #include <charge_bridge/heartbeat_service.hpp>
@@ -30,7 +30,7 @@ struct charge_bridge_config {
     std::optional<serial_bridge_config> serial2;
     std::optional<serial_bridge_config> serial3;
     std::optional<plc_bridge_config> plc;
-    std::optional<evse_bridge_config> evse;
+    std::optional<bsp_bridge_config> bsp;
     std::optional<heartbeat_config> heartbeat;
     std::optional<gpio_config> gpio;
     firmware_update::fw_update_config firmware;
@@ -61,7 +61,7 @@ private:
     std::unique_ptr<serial_bridge> m_pty_1;
     std::unique_ptr<serial_bridge> m_pty_2;
     std::unique_ptr<serial_bridge> m_pty_3;
-    std::unique_ptr<evse_bridge> m_bsp;
+    std::unique_ptr<bsp_bridge> m_bsp;
     std::unique_ptr<plc_bridge> m_plc;
     std::unique_ptr<heartbeat_service> m_heartbeat;
     std::unique_ptr<gpio_bridge> m_gpio;
