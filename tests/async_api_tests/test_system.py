@@ -1,8 +1,6 @@
 import pytest
 import pytest_asyncio
 import json
-import time
-import logging
 import asyncio
 from typing import Callable, Dict
 import paho.mqtt.client as mqtt
