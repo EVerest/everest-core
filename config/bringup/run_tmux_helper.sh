@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /usr/bin/env bash
 
 PREFIX=$2
 EVEREST_CONFIG_FILE=$1

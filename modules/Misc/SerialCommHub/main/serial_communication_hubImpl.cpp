@@ -101,6 +101,7 @@ serial_communication_hubImpl::perform_modbus_request(uint8_t device_address, tin
     types::serial_comm_hub_requests::Result result;
     std::vector<uint16_t> response;
     auto retry_counter = config.retries + 1;
+    bool last_error_was_timeout = false;
 
     while (retry_counter > 0) {
         auto current_trial = config.retries + 1 - retry_counter + 1;
@@ -109,9 +110,21 @@ serial_communication_hubImpl::perform_modbus_request(uint8_t device_address, tin
                                    config.retries + 1, tiny_modbus::FunctionCode_to_string_with_hex(function),
                                    device_address, first_register_address, first_register_address, register_quantity);
 
+        last_error_was_timeout = false;
         try {
             response = modbus.txrx(device_address, function, first_register_address, register_quantity,
                                    config.max_packet_size, wait_for_reply, request);
+        } catch (const tiny_modbus::TimeoutException& e) {
+            // TimeoutException is a specific type of communication error
+            last_error_was_timeout = true;
+            auto logmsg = fmt::format("Modbus call {} for device id {} addr {}({:#06x}) failed: {}",
+                                      tiny_modbus::FunctionCode_to_string_with_hex(function), device_address,
+                                      first_register_address, first_register_address, e.what());
+
+            if (retry_counter != 1)
+                EVLOG_debug << logmsg;
+            else
+                EVLOG_warning << logmsg;
         } catch (const tiny_modbus::TinyModbusException& e) {
             auto logmsg = fmt::format("Modbus call {} for device id {} addr {}({:#06x}) failed: {}",
                                       tiny_modbus::FunctionCode_to_string_with_hex(function), device_address,
@@ -144,7 +157,12 @@ serial_communication_hubImpl::perform_modbus_request(uint8_t device_address, tin
         result.value = vector_to_int(response);
         system_error_logged = false; // reset after success
     } else {
-        result.status_code = types::serial_comm_hub_requests::StatusCodeEnum::Error;
+        // If the last error was a timeout, return Timeout status, otherwise Error
+        if (last_error_was_timeout) {
+            result.status_code = types::serial_comm_hub_requests::StatusCodeEnum::Timeout;
+        } else {
+            result.status_code = types::serial_comm_hub_requests::StatusCodeEnum::Error;
+        }
     }
     return result;
 }

@@ -6,6 +6,7 @@ types:
     enum:
       - Success
       - Error
+      - Timeout
   Result:
     description: Return type for IO transfer functions with 16 bit return values
     type: object
