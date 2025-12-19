@@ -63,6 +63,7 @@ private:
     void reset_car_simulation_defaults();
     void update_command_queue(std::string& value);
     void set_execution_active(bool value);
+    void cancel_charging_session();
 
     std::unique_ptr<CommandRegistry> command_registry;
 
@@ -71,6 +72,7 @@ private:
 
     bool enabled{false};
     std::atomic<bool> execution_active{false};
+    std::atomic<bool> cancel_charging_session_flag{false};
     std::atomic<bool> plugged_in{false};
     size_t loop_interval_ms{};
 
