@@ -11,6 +11,7 @@ add_executable(pionix_chargebridge
   src/everest_api/api_connector.cpp
   src/everest_api/evse_bsp_api.cpp
   src/everest_api/ovm_api.cpp
+  src/everest_api/ev_bsp_api.cpp
 
   src/firmware_update/sync_fw_updater.cpp
 
