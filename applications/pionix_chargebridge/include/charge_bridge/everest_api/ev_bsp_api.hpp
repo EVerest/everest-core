@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <everest/io/event/fd_event_register_interface.hpp>
 #include <everest/io/event/timer_fd.hpp>
-//#include <everest_api_types/ev_board_support/API.hpp>
+#include <everest_api_types/ev_board_support/API.hpp>
 #include <everest_api_types/evse_board_support/API.hpp>
 #include <everest_api_types/generic/API.hpp>
 #include <everest_api_types/evse_manager/API.hpp>
@@ -19,6 +19,7 @@
 
 namespace charge_bridge::evse_bsp {
 namespace API_EVSE_BSP = everest::lib::API::V1_0::types::evse_board_support;
+namespace API_EV_BSP = everest::lib::API::V1_0::types::ev_board_support;
 namespace API_EVM = everest::lib::API::V1_0::types::evse_manager;
 namespace API_GENERIC = everest::lib::API::V1_0::types::generic;
 // namespace API_OVM = everest::lib::API::V1_0::types::over_voltage_monitor;
@@ -53,6 +54,9 @@ private:
     void send_bsp_event(API_EVSE_BSP::Event data);
     void send_bsp_measurement(API_EV_BSP::BspMeasurement data);
     void send_ev_info(API_EVM::EVInfo data);
+
+    void send_raise_error(API_GENERIC::ErrorEnum error, std::string const& subtype, std::string const& msg);
+    void send_clear_error(API_GENERIC::ErrorEnum error, std::string const& subtype);
 
     void send_communication_check();
 

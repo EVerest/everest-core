@@ -9,7 +9,8 @@
 #include <chrono>
 #include <cstring>
 #include <everest_api_types/generic/codec.hpp>
-#include <everest_api_types/over_voltage_monitor/codec.hpp>
+#include <everest_api_types/evse_board_support/codec.hpp>
+#include <everest_api_types/ev_board_support/codec.hpp>
 #include <everest_api_types/utilities/codec.hpp>
 
 #include <cstring>
@@ -123,13 +124,13 @@ void ev_bsp_api::handle_event_cp(std::uint8_t cp) {
     }
 }
 
-void ev_bsp_api::handle_bsp_measurement(uint16_t cp, uint8_t pp_1, uint8_t pp2) {
+void ev_bsp_api::handle_bsp_measurement(uint16_t cp, [[maybe_unused]] uint8_t pp_1, [[maybe_unused]] uint8_t pp2) {
     // FIXME implement PP correctly
     API_EV_BSP::BspMeasurement data;
     data.cp_pwm_duty_cycle = cp / 65536. * 100.;
-    EVSE_BSP_API::ProximityPilot pp;
-    EVSE_BSP_API::Ampacity amp;
-    amp = EVSE_BSP_API::Ampacity::None;
+    API_EVSE_BSP::ProximityPilot pp;
+    API_EVSE_BSP::Ampacity amp;
+    amp = API_EVSE_BSP::Ampacity::None;
     pp.ampacity = amp;
     data.proximity_pilot = pp;
     send_bsp_measurement(data);
@@ -187,8 +188,7 @@ void ev_bsp_api::dispatch(std::string const& operation, std::string const& paylo
 }
 
 void ev_bsp_api::raise_comm_fault() {
-    send_raise_error(API_GENERIC::ErrorEnum::CommunicationFault, "ChargeBridge not available", "",
-                     API_GENERIC::ErrorSeverityEnum::High);
+    send_raise_error(API_GENERIC::ErrorEnum::CommunicationFault, "ChargeBridge not available", "");
 }
 
 void ev_bsp_api::clear_comm_fault() {
@@ -199,11 +199,28 @@ void ev_bsp_api::receive_enable([[maybe_unused]] std::string const& payload) {
     // Not implemented
 }
 
+static CpState evcpstate_to_cpstate(API_EV_BSP::EvCpState s) {
+    switch (s) {
+    case API_EV_BSP::EvCpState::A:
+        return CpState::CpState_A;
+    case API_EV_BSP::EvCpState::B:
+        return CpState::CpState_B;
+    case API_EV_BSP::EvCpState::C:
+        return CpState::CpState_C;
+    case API_EV_BSP::EvCpState::D:
+        return CpState::CpState_D;
+    case API_EV_BSP::EvCpState::E:
+        return CpState::CpState_E;
+    default:
+        return CpState::CpState_INVALID;
+    }
+}
+
 void ev_bsp_api::receive_set_cp_state(std::string const& payload) {
-    EV_BSP_API::EvCpState cp; // Is this a string or an enum?
+    API_EV_BSP::EvCpState cp; // Is this a string or an enum?
 
     if (everest::lib::API::deserialize(payload, cp)) {
-        host_status.ev_set_cp_state = static_cast<std::uint8_t>(cp.EvCpState);
+        host_status.ev_set_cp_state = evcpstate_to_cpstate(cp);
         tx(host_status);
     } else {
         std::cerr << "ev_bsp_api::receive_set_cp_state: payload invalid -> " << payload << std::endl;
@@ -292,6 +309,21 @@ void ev_bsp_api::handle_everest_connection_state() {
         handle_status(not m_everest_connected);
     }
     m_everest_connected = current;
+}
+
+void ev_bsp_api::send_raise_error(API_GENERIC::ErrorEnum error, std::string const& subtype, std::string const& msg) {
+    API_GENERIC::Error error_msg;
+    error_msg.type = error;
+    error_msg.sub_type = subtype;
+    error_msg.message = msg;
+    send_mqtt("raise_error", serialize(error_msg));
+}
+
+void ev_bsp_api::send_clear_error(API_GENERIC::ErrorEnum error, std::string const& subtype) {
+    API_GENERIC::Error error_msg;
+    error_msg.type = error;
+    error_msg.sub_type = subtype;
+    send_mqtt("clear_error", serialize(error_msg));
 }
 
 } // namespace charge_bridge::evse_bsp
