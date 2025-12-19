@@ -12,5 +12,6 @@ endfunction()
 
 create_exi_test_target(cable_check)
 create_exi_test_target(session_setup)
+create_exi_test_target(welding_detection)
 create_exi_test_target(authorization)
 

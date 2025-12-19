@@ -49,6 +49,8 @@ void handle_v2g(VariantAccess& va) {
         insert_type(va, doc.V2G_Message.Body.AuthorizationReq, doc.V2G_Message.Header);
     } else if (doc.V2G_Message.Body.CableCheckReq_isUsed) {
         insert_type(va, doc.V2G_Message.Body.CableCheckReq, doc.V2G_Message.Header);
+    } else if (doc.V2G_Message.Body.WeldingDetectionReq_isUsed) {
+        insert_type(va, doc.V2G_Message.Body.WeldingDetectionReq, doc.V2G_Message.Header);
     } else {
         va.error = "chosen message type unhandled";
     }

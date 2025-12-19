@@ -73,6 +73,7 @@ target_sources(iso15118
         message/d2/variant.cpp
         message/d2/msg_data_types.cpp
         message/d2/session_setup.cpp
+        message/d2/welding_detection.cpp
 
         tbd_controller.cpp    
 )
