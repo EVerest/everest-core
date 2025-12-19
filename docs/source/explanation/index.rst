@@ -20,7 +20,7 @@ Below that, you will be presented with a categorized list of all articles.
 
    .. grid-item-card:: The EVerest Community
       :columns: 12
-      :link: high-level-overview
+      :link: ../community-channels
       :link-type: doc
 
       Different options exist to get involved in the EVerest community.
@@ -96,7 +96,6 @@ Below that, you will be presented with a categorized list of all articles.
     :maxdepth: 1
 
     high-level-overview
-    community-channels
     getting-started/index
     detail-module-concept
     module-configurations
