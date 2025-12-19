@@ -1,6 +1,6 @@
 charge_bridge:
   name: cb_eval
-  ip: 10.10.10.194
+  ip: ANY_EVSE
   #ip: chargebridge-44b7d0c9bcc0.local^
   #ip: chargebridge-44b7d0c99629.local
   fw_file: ./firmware/charge-bridge-fw_complete.cbfw
@@ -63,7 +63,7 @@ serial_2:
 plc:
   enable: true
   tap: "cb_plc"
-  ip: 172.25.6.1
+  ip: 172.25.6.2
   netmask: 255.255.255.0
   mtu: 1518
   powersaving_mode: 1
@@ -73,6 +73,7 @@ evse_bsp:
   module_id: "cb_bsp"
   mqtt_remote: "localhost"
   mqtt_port: 1883
+  mqtt_bind: 127.0.0.1
   mqtt_ping_interval_ms: 5000
   ovm_enabled: true
   ovm_module_id: "cb_ovm"
@@ -93,6 +94,7 @@ gpio:
   interval_s: 1
   mqtt_remote: "localhost"
   mqtt_port: 1883
+  mqtt_bind: 127.0.0.1
   mqtt_ping_interval_ms: 5000
   gpio_0:
     mode: "Input"

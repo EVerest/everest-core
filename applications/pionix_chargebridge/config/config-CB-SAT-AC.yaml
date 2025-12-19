@@ -1,7 +1,6 @@
 charge_bridge:
   name: cb_sat_ac
-  ip: 10.10.10.88
-  #ip: 10.10.10.20
+  ip: ANY_EVSE
   fw_file: ./firmware/charge-bridge-fw_complete.cbfw
   fw_update_on_start: true
   mdns_name: ""
@@ -77,6 +76,7 @@ evse_bsp:
   module_id: "cb_bsp"
   mqtt_remote: "localhost"
   mqtt_port: 1883
+  mqtt_bind: 127.0.0.1
   mqtt_ping_interval_ms: 1000
   capabilities:
     max_current_A_import: 16
@@ -97,6 +97,7 @@ gpio:
   interval_s: 1
   mqtt_remote: "localhost"
   mqtt_port: 1883
+  mqtt_bind: 127.0.0.1
   mqtt_ping_interval_ms: 1000
   gpio_0:
     # RCD.TEST

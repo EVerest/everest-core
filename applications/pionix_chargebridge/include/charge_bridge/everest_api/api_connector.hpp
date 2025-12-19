@@ -5,6 +5,7 @@
 #include <charge_bridge/everest_api/ev_bsp_api.hpp>
 #include <charge_bridge/everest_api/evse_bsp_api.hpp>
 #include <charge_bridge/everest_api/ovm_api.hpp>
+#include <charge_bridge/everest_api/ev_bsp_api.hpp>
 #include <chrono>
 #include <cstdint>
 #include <everest/io/event/fd_event_register_interface.hpp>
