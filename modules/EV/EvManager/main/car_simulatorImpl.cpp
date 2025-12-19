@@ -110,7 +110,12 @@ void car_simulatorImpl::run() {
     while (true) {
         if (enabled && execution_active) {
 
-            const auto finished = run_simulation_loop();
+            bool finished = run_simulation_loop();
+
+            if (cancel_charging_session_flag) {
+                cancel_charging_session_flag = false;
+                finished = true;
+            }
 
             auto& modify_session_cmds = car_simulation->get_modify_charging_session_cmds();
             if (modify_session_cmds.has_value()) {
@@ -316,8 +321,7 @@ void car_simulatorImpl::subscribe_to_variables_on_init() {
         car_simulation->set_bsp_event(bsp_event.event);
         if (bsp_event.event == types::board_support_common::Event::Disconnected &&
             car_simulation->get_state() != SimState::UNPLUGGED) {
-            set_execution_active(false);
-            car_simulation->set_state(SimState::UNPLUGGED);
+            cancel_charging_session();
         }
         mod->p_ev_manager->publish_bsp_event(bsp_event);
     });
@@ -426,6 +430,10 @@ void car_simulatorImpl::update_command_queue(std::string& value) {
 
 void car_simulatorImpl::set_execution_active(bool value) {
     execution_active = value;
+}
+
+void car_simulatorImpl::cancel_charging_session() {
+    cancel_charging_session_flag = true;
 }
 
 } // namespace module::main
