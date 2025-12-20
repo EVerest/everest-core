@@ -160,6 +160,7 @@ impl From<StatusCodeEnum> for Result<()> {
         match value {
             StatusCodeEnum::Success => Ok(()),
             StatusCodeEnum::Error => anyhow::bail!("StatusCodeEnum::Error"),
+            StatusCodeEnum::Timeout => anyhow::bail!("StatusCodeEnum::Timeout"),
         }
     }
 }
@@ -180,6 +181,7 @@ impl generated::types::serial_comm_hub_requests::Result {
                 }
             },
             StatusCodeEnum::Error => anyhow::bail!("StatusCodeEnum::Error"),
+            StatusCodeEnum::Timeout => anyhow::bail!("StatusCodeEnum::Timeout"),
         }
     }
 }
@@ -205,6 +207,7 @@ impl<const N: usize> From<generated::types::serial_comm_hub_requests::Result> fo
                 }
             },
             StatusCodeEnum::Error => anyhow::bail!("StatusCodeEnum::Error"),
+            StatusCodeEnum::Timeout => anyhow::bail!("StatusCodeEnum::Timeout"),
         }
     }
 }
