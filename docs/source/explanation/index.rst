@@ -91,6 +91,12 @@ Below that, you will be presented with a categorized list of all articles.
 
       Handwritten documentation for EVerest modules.
 
+   .. grid-item-card:: Structure of the EVerest Documentation
+      :link: the-everest-documentation
+      :link-type: doc
+
+      How this documentation is structured.
+
 .. toctree::
     :hidden:
     :maxdepth: 1
@@ -108,3 +114,4 @@ Below that, you will be presented with a categorized list of all articles.
     hardware-architecture
     hardware-drivers
     modules/index
+    the-everest-documentation

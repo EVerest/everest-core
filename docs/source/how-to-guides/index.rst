@@ -13,6 +13,12 @@ Have a look at this categorized list of all guides:
 .. grid:: 1 2 2 3
    :gutter: 2
 
+   .. grid-item-card:: Documenting EVerest
+      :link: documenting-everest/index
+      :link-type: doc
+
+      How to write documentation for EVerest.
+
    .. grid-item-card:: Configure Plug&Charge
       :link: configure-pnc
       :link-type: doc
@@ -65,6 +71,7 @@ Have a look at this categorized list of all guides:
     :maxdepth: 1
     :hidden:
 
+    documenting-everest/index
     configure-pnc
     debug-iso15118
     yocto-cross-compilation
