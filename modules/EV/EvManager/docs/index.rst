@@ -34,11 +34,13 @@ The module listens to the following MQTT topics:
 
         "sleep 1;iso_wait_slac_matched;iso_start_v2g_session DC;iso_wait_pwr_ready;sleep 36000"
 
-    | (For all available commands see: `Simulator Commands`_)
+    | (For all available commands see: :ref:`Simulator Commands <everest_modules_handwritten_EvManager_simulator_commands>`)
 
 ``everest_external/nodered/{connector_id}/carsim/cmd/modify_charging_session``
     | Used to modify the current charging session.
     | Follows the same format as ``execute_charging_session``.
+
+.. _everest_modules_handwritten_EvManager_simulator_commands:
 
 Simulator Commands
 ------------------

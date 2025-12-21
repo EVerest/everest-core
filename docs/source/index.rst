@@ -65,14 +65,14 @@ If you are **just getting started**, we recommend beginning with these essential
       The *everest-core* repository is the center of activity.
 
    .. grid-item-card:: Discuss and Collaborate
-      :link: explanation/community-channels
+      :link: community-channels
       :link-type: doc
 
       Meet the EVerest community on different channels like Zulip, live calls
       and others.
       Learn how to contribute, submit bugs or feature ideas.
 
-.. idx_all_everest_documentation:
+.. _idx_all_everest_documentation:
 
 *************************
 All EVerest Documentation
