@@ -1,3 +1,5 @@
+.. _everest_reference:
+
 #########
 Reference
 #########
