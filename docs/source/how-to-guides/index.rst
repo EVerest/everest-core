@@ -20,7 +20,7 @@ Have a look at this categorized list of all guides:
       How to enable Plug&Charge in a EVerest configuration.
 
    .. grid-item-card:: Debug ISO 15118
-      :link: iso15118
+      :link: debug-iso15118
       :link-type: doc
 
       How to debug ISO15118 communication of EVerest using Wireshark.
