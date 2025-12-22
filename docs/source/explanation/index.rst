@@ -100,6 +100,7 @@ Below that, you will be presented with a categorized list of all articles.
     detail-module-concept
     module-configurations
     adapt-everest/index
+    energymanagement/index
     dev-tools/edm
     dev-tools/ev-cli
     pnc-process
