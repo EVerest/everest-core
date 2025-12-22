@@ -10,10 +10,11 @@
 #include <functional>
 #include <future>
 #include <optional>
+
 namespace ocpp {
 namespace v2 {
-
 class DeviceModelAbstract;
+}
 
 /// \brief The result of a configuration of a network profile.
 struct ConfigNetworkResult {
@@ -22,15 +23,24 @@ struct ConfigNetworkResult {
 };
 
 using WebsocketConnectionCallback =
-    std::function<void(int configuration_slot, const NetworkConnectionProfile& network_connection_profile,
+    std::function<void(int configuration_slot, const ocpp::v2::NetworkConnectionProfile& network_connection_profile,
                        const OcppProtocolVersion version)>;
 using WebsocketConnectionFailedCallback = std::function<void(ConnectionFailedReason reason)>;
 using ConfigureNetworkConnectionProfileCallback = std::function<std::future<ConfigNetworkResult>(
-    const std::int32_t configuration_slot, const NetworkConnectionProfile& network_connection_profile)>;
+    const std::int32_t configuration_slot, const ocpp::v2::NetworkConnectionProfile& network_connection_profile)>;
 
 class ConnectivityManagerInterface {
 public:
     virtual ~ConnectivityManagerInterface() = default;
+
+    /// \brief Set the \p callback that is called when a message is received from the websocket
+    ///
+    virtual void set_message_callback(const std::function<void(const std::string& message)>& callback) = 0;
+
+    /// \brief Set the logger \p logging
+    ///
+    virtual void set_logging(std::shared_ptr<MessageLogging> logging) = 0;
+
     /// \brief Set the websocket \p authorization_key
     ///
     virtual void set_websocket_authorization_key(const std::string& authorization_key) = 0;
@@ -63,7 +73,7 @@ public:
     /// \brief Gets the cached NetworkConnectionProfile based on the given \p configuration_slot.
     /// This returns the value from the cached network connection profiles.
     /// \return Returns a profile if the slot is found
-    virtual std::optional<NetworkConnectionProfile>
+    virtual std::optional<ocpp::v2::NetworkConnectionProfile>
     get_network_connection_profile(const std::int32_t configuration_slot) const = 0;
 
     /// \brief Get the priority of the given configuration slot.
@@ -107,7 +117,7 @@ public:
     ///
     /// \param ocpp_interface The interface that is disconnected.
     ///
-    virtual void on_network_disconnected(OCPPInterfaceEnum ocpp_interface) = 0;
+    virtual void on_network_disconnected(ocpp::v2::OCPPInterfaceEnum ocpp_interface) = 0;
 
     /// \brief Called when the charging station certificate is changed
     ///
@@ -120,7 +130,7 @@ public:
 class ConnectivityManager : public ConnectivityManagerInterface {
 private:
     /// \brief Reference to the device model
-    DeviceModelAbstract& device_model;
+    ocpp::v2::DeviceModelAbstract& device_model;
     /// \brief Pointer to the evse security class
     std::shared_ptr<EvseSecurity> evse_security;
     /// \brief Pointer to the logger
@@ -146,16 +156,16 @@ private:
     std::int32_t active_network_configuration_priority;
     int last_known_security_level;
     /// @brief Local cached network connection profiles
-    std::vector<SetNetworkProfileRequest> cached_network_connection_profiles;
+    std::vector<ocpp::v2::SetNetworkProfileRequest> cached_network_connection_profiles;
     /// @brief local cached network connection priorities
     std::vector<std::int32_t> network_connection_slots;
     OcppProtocolVersion connected_ocpp_version;
 
 public:
-    ConnectivityManager(DeviceModelAbstract& device_model, std::shared_ptr<EvseSecurity> evse_security,
-                        std::shared_ptr<MessageLogging> logging, const fs::path& share_path,
-                        const std::function<void(const std::string& message)>& message_callback);
+    ConnectivityManager(ocpp::v2::DeviceModelAbstract& device_model, std::shared_ptr<EvseSecurity> evse_security);
 
+    void set_message_callback(const std::function<void(const std::string& message)>& callback) override;
+    void set_logging(std::shared_ptr<MessageLogging> logging) override;
     void set_websocket_authorization_key(const std::string& authorization_key) override;
     void set_websocket_connection_options(const WebsocketConnectionOptions& connection_options) override;
     void set_websocket_connection_options_without_reconnect() override;
@@ -163,15 +173,16 @@ public:
     void set_websocket_disconnected_callback(WebsocketConnectionCallback callback) override;
     void set_websocket_connection_failed_callback(WebsocketConnectionFailedCallback callback) override;
     void set_configure_network_connection_profile_callback(ConfigureNetworkConnectionProfileCallback callback) override;
-    std::optional<NetworkConnectionProfile>
+    std::optional<ocpp::v2::NetworkConnectionProfile>
     get_network_connection_profile(const std::int32_t configuration_slot) const override;
-    std::optional<std::int32_t> get_priority_from_configuration_slot(const int configuration_slot) const override;
+    std::optional<std::int32_t>
+    get_priority_from_configuration_slot(const std::int32_t configuration_slot) const override;
     const std::vector<int>& get_network_connection_slots() const override;
     bool is_websocket_connected() override;
     void connect(std::optional<std::int32_t> network_profile_slot = std::nullopt) override;
     void disconnect() override;
     bool send_to_websocket(const std::string& message) override;
-    void on_network_disconnected(OCPPInterfaceEnum ocpp_interface) override;
+    void on_network_disconnected(ocpp::v2::OCPPInterfaceEnum ocpp_interface) override;
     void on_charging_station_certificate_changed() override;
     void confirm_successful_connection() override;
 
@@ -192,7 +203,7 @@ private:
     /// \return The network configuration containing the network interface to use, nullptr if the request failed or the
     /// callback is not configured
     std::optional<ConfigNetworkResult>
-    handle_configure_network_connection_profile_callback(int slot, const NetworkConnectionProfile& profile);
+    handle_configure_network_connection_profile_callback(int slot, const ocpp::v2::NetworkConnectionProfile& profile);
 
     /// \brief Function invoked when the web socket connected with the \p security_profile
     ///
@@ -239,5 +250,4 @@ private:
     void remove_network_connection_profiles_below_actual_security_profile();
 };
 
-} // namespace v2
 } // namespace ocpp
