@@ -31,6 +31,12 @@ Have a look at this categorized list of all guides:
 
       How to debug ISO15118 communication of EVerest using Wireshark.
 
+   .. grid-item-card:: Debug Modules
+      :link: debug-modules
+      :link-type: doc
+
+      How to debug a single EVerest module.
+
    .. grid-item-card:: Cross-compile of EVerest
       :link: yocto-cross-compilation
       :link-type: doc
@@ -74,6 +80,7 @@ Have a look at this categorized list of all guides:
     documenting-everest/index
     configure-pnc
     debug-iso15118
+    debug-modules
     yocto-cross-compilation
     eichrecht
     uk-smart-charging-regulations
