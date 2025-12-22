@@ -2,12 +2,12 @@
 // Copyright chargebyte GmbH and Contributors to EVerest
 
 #include "Conversions.hpp"
+#include <stdexcept>
 
-namespace types {
-namespace json_rpc_api {
+namespace everest::lib::API::V1_0::types::json_rpc_api {
 
-EVSEStateEnum evse_manager_session_event_to_evse_state(types::evse_manager::SessionEvent state) {
-    using Event = types::evse_manager::SessionEventEnum;
+EVSEStateEnum evse_manager_session_event_to_evse_state(::types::evse_manager::SessionEvent state) {
+    using Event = ::types::evse_manager::SessionEventEnum;
 
     switch (state.event) {
     case Event::Enabled:
@@ -40,7 +40,7 @@ EVSEStateEnum evse_manager_session_event_to_evse_state(types::evse_manager::Sess
         return EVSEStateEnum::FinishedEV;
     case Event::TransactionFinished: {
         if (state.transaction_finished.has_value() &&
-            state.transaction_finished->reason == types::evse_manager::StopTransactionReason::Local) {
+            state.transaction_finished->reason == ::types::evse_manager::StopTransactionReason::Local) {
             return EVSEStateEnum::FinishedEVSE;
         } else {
             return EVSEStateEnum::Finished;
@@ -127,62 +127,62 @@ ErrorObj everest_error_to_rpc_error(const Everest::error::Error& error_object) {
 }
 
 std::vector<EnergyTransferModeEnum> iso15118_energy_transfer_modes_to_json_rpc_api(
-    const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes,
+    const std::vector<::types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes,
     bool& is_ac_transfer_mode) {
     std::vector<EnergyTransferModeEnum> tmp{};
     is_ac_transfer_mode = false;
 
     for (const auto& mode : supported_energy_transfer_modes) {
         switch (mode) {
-        case types::iso15118::EnergyTransferMode::AC_single_phase_core:
+        case ::types::iso15118::EnergyTransferMode::AC_single_phase_core:
             tmp.push_back(EnergyTransferModeEnum::AC_single_phase_core);
             is_ac_transfer_mode = true;
             break;
-        case types::iso15118::EnergyTransferMode::AC_two_phase:
+        case ::types::iso15118::EnergyTransferMode::AC_two_phase:
             tmp.push_back(EnergyTransferModeEnum::AC_two_phase);
             is_ac_transfer_mode = true;
             break;
-        case types::iso15118::EnergyTransferMode::AC_three_phase_core:
+        case ::types::iso15118::EnergyTransferMode::AC_three_phase_core:
             tmp.push_back(EnergyTransferModeEnum::AC_three_phase_core);
             is_ac_transfer_mode = true;
             break;
-        case types::iso15118::EnergyTransferMode::DC_core:
+        case ::types::iso15118::EnergyTransferMode::DC_core:
             tmp.push_back(EnergyTransferModeEnum::DC_core);
             break;
-        case types::iso15118::EnergyTransferMode::DC_extended:
+        case ::types::iso15118::EnergyTransferMode::DC_extended:
             tmp.push_back(EnergyTransferModeEnum::DC_extended);
             break;
-        case types::iso15118::EnergyTransferMode::DC_combo_core:
+        case ::types::iso15118::EnergyTransferMode::DC_combo_core:
             tmp.push_back(EnergyTransferModeEnum::DC_combo_core);
             break;
-        case types::iso15118::EnergyTransferMode::DC_unique:
+        case ::types::iso15118::EnergyTransferMode::DC_unique:
             tmp.push_back(EnergyTransferModeEnum::DC_unique);
             break;
-        case types::iso15118::EnergyTransferMode::DC:
+        case ::types::iso15118::EnergyTransferMode::DC:
             tmp.push_back(EnergyTransferModeEnum::DC);
             break;
-        case types::iso15118::EnergyTransferMode::AC_BPT:
+        case ::types::iso15118::EnergyTransferMode::AC_BPT:
             tmp.push_back(EnergyTransferModeEnum::AC_BPT);
             is_ac_transfer_mode = true;
             break;
-        case types::iso15118::EnergyTransferMode::AC_BPT_DER:
+        case ::types::iso15118::EnergyTransferMode::AC_BPT_DER:
             tmp.push_back(EnergyTransferModeEnum::AC_BPT_DER);
             is_ac_transfer_mode = true;
             break;
-        case types::iso15118::EnergyTransferMode::AC_DER:
+        case ::types::iso15118::EnergyTransferMode::AC_DER:
             tmp.push_back(EnergyTransferModeEnum::AC_DER);
             is_ac_transfer_mode = true;
             break;
-        case types::iso15118::EnergyTransferMode::DC_BPT:
+        case ::types::iso15118::EnergyTransferMode::DC_BPT:
             tmp.push_back(EnergyTransferModeEnum::DC_BPT);
             break;
-        case types::iso15118::EnergyTransferMode::DC_ACDP:
+        case ::types::iso15118::EnergyTransferMode::DC_ACDP:
             tmp.push_back(EnergyTransferModeEnum::DC_ACDP);
             break;
-        case types::iso15118::EnergyTransferMode::DC_ACDP_BPT:
+        case ::types::iso15118::EnergyTransferMode::DC_ACDP_BPT:
             tmp.push_back(EnergyTransferModeEnum::DC_ACDP_BPT);
             break;
-        case types::iso15118::EnergyTransferMode::WPT:
+        case ::types::iso15118::EnergyTransferMode::WPT:
             tmp.push_back(EnergyTransferModeEnum::WPT);
             is_ac_transfer_mode = true; // TBD
             break;
@@ -194,10 +194,4 @@ std::vector<EnergyTransferModeEnum> iso15118_energy_transfer_modes_to_json_rpc_a
     return tmp;
 }
 
-void to_json(json& j, const EnergyTransferModeEnum& k) {
-    // the required parts of the type
-    j = energy_transfer_mode_enum_to_string(k);
-}
-
-} // namespace json_rpc_api
-} // namespace types
+} // namespace everest::lib::API::V1_0::types::json_rpc_api

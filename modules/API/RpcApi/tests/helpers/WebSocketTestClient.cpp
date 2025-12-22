@@ -4,6 +4,7 @@
 #include "WebSocketTestClient.hpp"
 
 #include <nlohmann/json.hpp>
+#include <stdexcept>
 
 #include "JsonRpcUtils.hpp"
 

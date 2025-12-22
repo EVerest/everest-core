@@ -66,6 +66,7 @@ target_link_libraries(${TEST_TARGET_NAME}
         GTest::gtest_main
         date::date
         date::date-tz
+        everest::everest_api_types
         everest::framework
         everest::log
         everest::helpers

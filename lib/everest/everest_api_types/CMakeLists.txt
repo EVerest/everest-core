@@ -82,6 +82,9 @@ target_sources(everest_api_types
   src/everest_api_types/powermeter/json_codec.cpp
   src/everest_api_types/powermeter/wrapper.cpp
 
+  src/everest_api_types/json_rpc_api/codec.cpp
+  src/everest_api_types/json_rpc_api/json_codec.cpp
+
   src/everest_api_types/session_cost/codec.cpp
   src/everest_api_types/session_cost/json_codec.cpp
   src/everest_api_types/session_cost/wrapper.cpp
@@ -132,5 +135,4 @@ evc_setup_package(
 if(${BUILD_TESTING})
     add_subdirectory(tests)
 endif()
-
 

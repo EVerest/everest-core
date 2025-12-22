@@ -7,6 +7,7 @@
 #include <everest/helpers/helpers.hpp>
 #include <everest/logging.hpp>
 #include <iostream>
+#include <stdexcept>
 #include <unordered_map>
 
 namespace server {
