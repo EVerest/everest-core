@@ -75,7 +75,15 @@ Here are the steps required:
    2. **Version**: Press Enter to use 'main' (recommended)
    3. **Continue if directory not empty**: Type 'y' and press Enter (since you downloaded the setup-container script)
 
-3. **Open in VS Code:**
+3. **Create .env file**
+
+    Make sure your ssh agent is running and a key is added
+
+    ```bash
+    ./devrd env
+    ```
+
+4. **Open in VS Code:**
   Then open the workspace in Visual Studio Code:
 
     ```bash
