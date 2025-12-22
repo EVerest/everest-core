@@ -6,7 +6,10 @@
 #include "helpers/ErrorHandler.hpp"
 
 #include <cmath>
+#include <stdexcept>
 
+namespace everest_api_types = everest::lib::API::V1_0::types;
+namespace RPCDataTypes = everest_api_types::json_rpc_api;
 namespace module {
 
 void RpcApi::init() {
@@ -50,7 +53,7 @@ void RpcApi::init() {
 void RpcApi::ready() {
     // get charger information (cmd not available during init())
     if (r_charger_information.size() > 0) {
-        types::json_rpc_api::ChargerInfoObj charger_info;
+        RPCDataTypes::ChargerInfoObj charger_info;
         const auto info = r_charger_information[0]->call_get_charger_information();
         // mandatory members
         charger_info.vendor = info.vendor;
@@ -90,12 +93,12 @@ void RpcApi::ready() {
 void RpcApi::check_evse_session_event(data::DataStoreEvse& evse_data,
                                       const types::evse_manager::SessionEvent& session_event) {
     // store the session info in the data store
-    types::json_rpc_api::EVSEStateEnum evse_state =
-        types::json_rpc_api::evse_manager_session_event_to_evse_state(session_event);
+    RPCDataTypes::EVSEStateEnum evse_state =
+        RPCDataTypes::evse_manager_session_event_to_evse_state(session_event);
     evse_data.evsestatus.set_state(evse_state);
     evse_data.sessioninfo.update_state(session_event);
 
-    if (evse_state == types::json_rpc_api::EVSEStateEnum::Charging) {
+    if (evse_state == RPCDataTypes::EVSEStateEnum::Charging) {
         evse_data.evsestatus.set_charging_allowed(true);
     }
 
@@ -180,7 +183,7 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
 
     evse_manager->subscribe_selected_protocol([this, &evse_data](const std::string& selected_protocol) {
         const auto var_selected_protocol =
-            types::json_rpc_api::evse_manager_protocol_to_charge_protocol(selected_protocol);
+            RPCDataTypes::evse_manager_protocol_to_charge_protocol(selected_protocol);
         evse_data.evsestatus.set_charge_protocol(var_selected_protocol);
     });
 
@@ -244,11 +247,11 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
 void RpcApi::subscribe_global_errors() {
     // Subscribe to global error events
     const auto error_handler = [this](const Everest::error::Error& error) {
-        const auto tmp_error = types::json_rpc_api::everest_error_to_rpc_error(error);
+        const auto tmp_error = RPCDataTypes::everest_error_to_rpc_error(error);
         helpers::handle_error_raised(this->data, tmp_error);
     };
     const auto error_cleared_handler = [this](const Everest::error::Error& error) {
-        const auto tmp_error = types::json_rpc_api::everest_error_to_rpc_error(error);
+        const auto tmp_error = RPCDataTypes::everest_error_to_rpc_error(error);
         helpers::handle_error_cleared(this->data, tmp_error);
     };
     subscribe_global_all_errors(error_handler, error_cleared_handler);
@@ -256,7 +259,7 @@ void RpcApi::subscribe_global_errors() {
 
 void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& powermeter,
                                         data::MeterDataStore& meter_data) {
-    types::json_rpc_api::MeterDataObj meter_data_new; // default initialized
+    RPCDataTypes::MeterDataObj meter_data_new; // default initialized
     if (meter_data.get_data().has_value()) {
         // initialize with existing values
         meter_data_new = meter_data.get_data().value();
@@ -298,7 +301,7 @@ void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& pow
         // a shortcut reference to the output data sub-object optional
         auto& export_opt = meter_data_new.energy_Wh_export;
         // keep original (copied) optional value, or emplace empty if non exist
-        auto& newobj = export_opt.emplace(export_opt.value_or(types::json_rpc_api::Energy_Wh_export{}));
+        auto& newobj = export_opt.emplace(export_opt.value_or(RPCDataTypes::Energy_Wh_export{}));
         if (inobj.L1.has_value()) {
             newobj.L1 = inobj.L1.value();
         }
@@ -316,7 +319,7 @@ void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& pow
         // a shortcut reference to the output data sub-object optional
         auto& frequency_optional = meter_data_new.frequency_Hz;
         // keep original (copied) optional value, or emplace empty if non exist
-        auto& newobj = frequency_optional.emplace(frequency_optional.value_or(types::json_rpc_api::Frequency_Hz{}));
+        auto& newobj = frequency_optional.emplace(frequency_optional.value_or(RPCDataTypes::Frequency_Hz{}));
         newobj.L1 = inobj.L1;
         if (inobj.L2.has_value()) {
             newobj.L2 = inobj.L2.value();
@@ -338,7 +341,7 @@ void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& pow
         // a shortcut reference to the output data sub-object optional
         auto& export_opt = meter_data_new.power_W;
         // keep original (copied) optional value, or emplace empty if non exist
-        auto& newobj = export_opt.emplace(export_opt.value_or(types::json_rpc_api::Power_W{}));
+        auto& newobj = export_opt.emplace(export_opt.value_or(RPCDataTypes::Power_W{}));
         if (inobj.L1.has_value()) {
             newobj.L1 = inobj.L1.value();
         }
@@ -356,7 +359,7 @@ void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& pow
         // a shortcut reference to the output data sub-object optional
         auto& export_opt = meter_data_new.voltage_V;
         // keep original (copied) optional value, or emplace empty if non exist
-        auto& newobj = export_opt.emplace(export_opt.value_or(types::json_rpc_api::Voltage_V{}));
+        auto& newobj = export_opt.emplace(export_opt.value_or(RPCDataTypes::Voltage_V{}));
         if (inobj.L1.has_value()) {
             newobj.L1 = inobj.L1.value();
         }
@@ -376,7 +379,7 @@ void RpcApi::meterdata_var_to_datastore(const types::powermeter::Powermeter& pow
 
 void RpcApi::hwcaps_var_to_datastore(const types::evse_board_support::HardwareCapabilities& hwcaps,
                                      data::HardwareCapabilitiesStore& hw_caps_data) {
-    types::json_rpc_api::HardwareCapabilitiesObj hw_caps_data_new; // default initialized
+    RPCDataTypes::HardwareCapabilitiesObj hw_caps_data_new; // default initialized
     if (hw_caps_data.get_data().has_value()) {
         // initialize with existing values
         hw_caps_data_new = hw_caps_data.get_data().value();
@@ -409,9 +412,9 @@ bool RpcApi::check_evse_mapping() {
         const auto& evse_manager = r_evse_manager[idx];
         const auto& evse_data = this->data.evses[idx];
         // Initialize connector index for the case of no mapping information
-        types::json_rpc_api::ConnectorInfoObj connector;
+        RPCDataTypes::ConnectorInfoObj connector;
         connector.index = 1;                                              // default connector id
-        connector.type = types::json_rpc_api::ConnectorTypeEnum::Unknown; // default type
+        connector.type = RPCDataTypes::ConnectorTypeEnum::Unknown; // default type
         evse_data->evseinfo.set_available_connector(connector);
         evse_data->evsestatus.set_active_connector_index(connector.index); // TODO: support multiple connectors
         // create one DataStore object per EVSE sink
@@ -424,7 +427,7 @@ bool RpcApi::check_evse_mapping() {
                 types::evse_manager::Evse evse = evse_manager->call_get_evse();
                 if (!evse.connectors.empty() && evse.connectors[0].type.has_value()) {
                     try {
-                        connector.type = types::json_rpc_api::string_to_connector_type_enum(
+                        connector.type = RPCDataTypes::string_to_connector_type_enum(
                             types::evse_manager::connector_type_enum_to_string(
                                 evse.connectors[0]
                                     .type.value())); // evse.connectors[0].type; // use the first connector type

@@ -5,6 +5,8 @@
 
 #include "ChargePoint.hpp"
 
+namespace everest_api_types = everest::lib::API::V1_0::types;
+namespace RPCDataTypes = everest_api_types::json_rpc_api;
 namespace methods {
 
 RPCDataTypes::ChargePointGetEVSEInfosResObj ChargePoint::getEVSEInfos() {
@@ -29,7 +31,7 @@ RPCDataTypes::ChargePointGetEVSEInfosResObj ChargePoint::getEVSEInfos() {
 RPCDataTypes::ChargePointGetActiveErrorsResObj ChargePoint::getActiveErrors() {
     RPCDataTypes::ChargePointGetActiveErrorsResObj res{};
 
-    res.active_errors = m_dataobj.chargererrors.get_data().value_or(std::vector<types::json_rpc_api::ErrorObj>{});
+    res.active_errors = m_dataobj.chargererrors.get_data().value_or(std::vector<RPCDataTypes::ErrorObj>{});
     res.error = RPCDataTypes::ResponseErrorEnum::NoError;
 
     return res;
