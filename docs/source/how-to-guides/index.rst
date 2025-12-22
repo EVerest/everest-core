@@ -19,6 +19,12 @@ Have a look at this categorized list of all guides:
 
       How to write documentation for EVerest.
 
+   .. grid-item-card:: Use the Error Framework
+      :link: error-framework-howto
+      :link-type: doc
+
+      How to use the error framework to raise/clear errors and listen to these events.
+
    .. grid-item-card:: Configure Plug&Charge
       :link: configure-pnc
       :link-type: doc
@@ -78,6 +84,7 @@ Have a look at this categorized list of all guides:
     :hidden:
 
     documenting-everest/index
+    error-framework-howto
     configure-pnc
     debug-iso15118
     debug-modules

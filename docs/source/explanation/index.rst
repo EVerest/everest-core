@@ -12,14 +12,18 @@ Below that, you will be presented with a categorized list of all articles.
    :gutter: 2
 
    .. grid-item-card:: Framework Overview
-      :columns: 12
       :link: high-level-overview
       :link-type: doc
 
       Get a high-level overview of the EVerest framework.
 
+   .. grid-item-card:: Error Framework
+      :link: error-framework
+      :link-type: doc
+
+      How to communicate error states between modules.
+
    .. grid-item-card:: The EVerest Community
-      :columns: 12
       :link: ../community-channels
       :link-type: doc
 
@@ -102,6 +106,7 @@ Below that, you will be presented with a categorized list of all articles.
     :maxdepth: 1
 
     high-level-overview
+    error-framework
     getting-started/index
     detail-module-concept
     module-configurations
