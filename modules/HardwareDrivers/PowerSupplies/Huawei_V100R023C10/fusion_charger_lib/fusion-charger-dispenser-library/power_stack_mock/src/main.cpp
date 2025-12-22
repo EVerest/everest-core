@@ -87,6 +87,47 @@ private:
 
     int not_sending_capabilities_counter = 0; // used to test "capabilities not received" error
 
+    double mock_total_historical_ac_input_energy = 0.0;
+
+    /**
+     * @brief generate voltage, current and total historic power values and send them to the dispenser
+     */
+    void generate_and_send_voltage_current_power(int seconds_since_last_call) {
+        double used_power = 0.0; // power in W that is being drawn by the EV(s)
+
+        for (int i = 1; i <= used_connectors; i++) {
+            auto working_status = mock->get_working_status(i);
+            if (not working_status.has_value() || working_status.value() != WorkingStatus::CHARGING) {
+                continue;
+            }
+
+            auto global_connector_number = mock->get_global_connector_number_from_local(i);
+            if (!global_connector_number.has_value()) {
+                continue;
+            }
+
+            auto req_opt = mock->get_last_power_requirement_request(i);
+            if (req_opt.has_value()) {
+                auto req = req_opt.value();
+                used_power += req.voltage * req.current;
+            }
+        }
+
+        // add to total historical power
+        mock_total_historical_ac_input_energy += (used_power * seconds_since_last_call) / 3600.0 / 1000.0; // kWh
+        mock_total_historical_ac_input_energy += 0.00001; // add a bit more to simulate standby consumption
+
+        double ac_base_voltage = 230.0;
+        ac_base_voltage +=
+            static_cast<double>((std::rand() % 256) / 10.0 - 12.8); // add noise between -12.8V and +12.7V
+
+        double ac_base_current = used_power / ac_base_voltage / 3.0; // 3 phases
+
+        mock->send_total_historical_ac_input_energy(mock_total_historical_ac_input_energy);
+        mock->send_ac_input_voltages_currents(ac_base_voltage, ac_base_voltage, ac_base_voltage, ac_base_current,
+                                              ac_base_current, ac_base_current);
+    }
+
     void periodic_update() {
         auto now = std::chrono::steady_clock::now();
         if (now < periodic_update_deadline) {
@@ -112,10 +153,14 @@ private:
                 mock->send_max_rated_voltage_of_output_port(1000.0, i);
                 mock->send_min_rated_voltage_of_output_port(100.0, i);
                 mock->send_rated_power_of_output_port(60.0, i);
+
+                mock->send_port_available(true, i);
             }
         } else {
             not_sending_capabilities_counter++;
         }
+
+        generate_and_send_voltage_current_power(5); // called every 5 seconds, the approximation is good enough
     }
 
     std::array<bool, 4> car_plugged_in = {false, false, false, false};

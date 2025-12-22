@@ -91,6 +91,12 @@ config:
       - IMD
       - OVM
     default: IMD
+  telemetry_topic_prefix:
+    description: |
+      MQTT Topic prefix for telemetry data published by this module.
+      Set to an empty string (default) to disable telemetry publishing.
+    type: string
+    default: ""
 provides:
   connector_1:
     description: Power supply interface for the first connector.
@@ -188,6 +194,7 @@ requires:
     interface: over_voltage_monitor
     min_connections: 0
     max_connections: 4
+enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:

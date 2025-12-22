@@ -436,6 +436,31 @@ void Dispenser::init() {
     modbus_unsolicitated_event_thread = std::thread([this]() { modbus_unsolicitated_event_thread_run(); });
 
     goose_receiver_thread = std::thread([this]() { goose_receiver_thread_run(); });
+
+    // add telemetry callbacks
+    dispenser_config.telemetry_publisher->add_subtopic("psu");
+
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider("psu", "ac_input_voltage_a",
+                                                                                  &psu_registers->ac_input_voltage_a);
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider("psu", "ac_input_voltage_b",
+                                                                                  &psu_registers->ac_input_voltage_b);
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider("psu", "ac_input_voltage_c",
+                                                                                  &psu_registers->ac_input_voltage_c);
+
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider("psu", "ac_input_current_a",
+                                                                                  &psu_registers->ac_input_current_a);
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider("psu", "ac_input_current_b",
+                                                                                  &psu_registers->ac_input_current_b);
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider("psu", "ac_input_current_c",
+                                                                                  &psu_registers->ac_input_current_c);
+
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider_enum<PSURunningMode>(
+        "psu", "psu_running_mode", &psu_registers->psu_running_mode,
+        [](const PSURunningMode& mode) { return SettingPowerUnitRegisters::psu_running_mode_to_string(mode); });
+
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider<double>(
+        "psu", "total_historic_input_energy", &psu_registers->total_historic_input_energy,
+        [](const double& kwh) { return kwh * 1000.0; });
 }
 
 void Dispenser::update_psu_communication_state() {
