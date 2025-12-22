@@ -10,7 +10,6 @@ Have a look at this categorized list of all EVerest tutorials:
    :gutter: 2
 
    .. grid-item-card:: Develop New EVerest Modules
-      :columns: 12
       :link: develop-new-module
       :link-type: doc
 
