@@ -3,7 +3,7 @@
 
 #include <ocpp/v2/functional_blocks/transaction.hpp>
 
-#include <ocpp/v2/connectivity_manager.hpp>
+#include <ocpp/common/connectivity_manager.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
 #include <ocpp/v2/evse_manager.hpp>
