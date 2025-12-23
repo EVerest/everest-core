@@ -229,6 +229,22 @@
 {%      endfor %}
 {%  endmacro %}
 
+
+{### Renders a list of errors ###}
+{% macro errors(errs, definitions) %}
+{%      for err in errs %}
+**{{ err }}** : {{ definitions[err] }}
+{%      endfor %}
+{% endmacro %}
+
+{### Renders a list of error_categories ###}
+{% macro error_categories(categories, error_definitions) %}
+{%      for cat in categories %}
+**{{ cat }}** :
+{{ errors(categories[cat], error_definitions[cat]) | indent(1, True) -}}
+{%      endfor %}
+{% endmacro %}
+
 {#################################}
 {### types.json macros         ###}
 {#################################}
