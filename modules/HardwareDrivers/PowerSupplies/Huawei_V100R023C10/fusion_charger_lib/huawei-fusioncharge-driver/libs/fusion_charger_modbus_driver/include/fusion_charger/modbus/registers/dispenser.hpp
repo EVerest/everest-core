@@ -18,6 +18,10 @@ struct DispenserRegistersConfig {
     std::string software_version;
     std::string esn;
     std::uint32_t connector_count;
+    std::function<bool()> get_door_status_alarm;
+    std::function<bool()> get_water_alarm;
+    std::function<bool()> get_epo_alarm;
+    std::function<bool()> get_tilt_alarm;
 };
 
 struct DispenserRegisters {
@@ -30,10 +34,10 @@ struct DispenserRegisters {
     DataProviderHolding<std::uint16_t> charging_connectors_count;
     DataProviderStringHolding<22> esn_dispenser;
     DataProviderCallbacksUnsolicitated<std::uint32_t> time_sync;
-    DataProviderHoldingUnsolicitatedReportCallback<std::uint16_t> door_status_alarm;
-    DataProviderHoldingUnsolicitatedReportCallback<std::uint16_t> water_alarm;
-    DataProviderHoldingUnsolicitatedReportCallback<std::uint16_t> epo_alarm;
-    DataProviderHoldingUnsolicitatedReportCallback<std::uint16_t> tilt_alarm;
+    DataProviderCallbacksUnsolicitated<std::uint16_t> door_status_alarm;
+    DataProviderCallbacksUnsolicitated<std::uint16_t> water_alarm;
+    DataProviderCallbacksUnsolicitated<std::uint16_t> epo_alarm;
+    DataProviderCallbacksUnsolicitated<std::uint16_t> tilt_alarm;
 
     DispenserRegisters(DispenserRegistersConfig config) :
         manufacturer(config.manufacturer),
@@ -44,13 +48,16 @@ struct DispenserRegisters {
 
         charging_connectors_count(config.connector_count),
         esn_dispenser(config.esn.c_str()),
-        time_sync([]() { return std::time(NULL); }, [](std::uint32_t) {}, utils::always_report),
-        door_status_alarm(0, utils::always_report),
-        water_alarm(0, utils::always_report),
-        epo_alarm(0, utils::always_report),
-        tilt_alarm(0, utils::always_report) {
+        time_sync([]() { return std::time(NULL); }, utils::ignore_write<std::uint32_t>, utils::always_report),
+        door_status_alarm(utils::wrap_alarm_register_func(config.get_door_status_alarm),
+                          utils::ignore_write<std::uint16_t>, utils::always_report),
+        water_alarm(utils::wrap_alarm_register_func(config.get_water_alarm), utils::ignore_write<std::uint16_t>,
+                    utils::always_report),
+        epo_alarm(utils::wrap_alarm_register_func(config.get_epo_alarm), utils::ignore_write<std::uint16_t>,
+                  utils::always_report),
+        tilt_alarm(utils::wrap_alarm_register_func(config.get_tilt_alarm), utils::ignore_write<std::uint16_t>,
+                   utils::always_report) {
     }
-
     void add_to_registry(modbus::registers::registry::ComplexRegisterRegistry& registry) {
         raw_registers::CommonDispenserRegisters::DataProviders common_data_providers{
             manufacturer, model, protocol_version, hardware_version, software_version};
