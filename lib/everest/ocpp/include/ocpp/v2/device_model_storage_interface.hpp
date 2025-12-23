@@ -6,52 +6,14 @@
 #include <map>
 #include <memory>
 #include <ocpp/common/support_older_cpp_versions.hpp>
-#include <ocpp/v2/comparators.hpp>
 #include <optional>
 
+#include <ocpp/v2/device_model_abstract.hpp>
 #include <ocpp/v2/enums.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
 namespace v2 {
-
-/// \brief Helper struct that holds database only values that don't have spec coverage
-struct VariableMonitoringMeta {
-    VariableMonitoring monitor;
-    VariableMonitorType type;
-    std::optional<std::string> reference_value;
-};
-
-/// \brief Helper struct that contains all monitors related to a variable that are of a periodic type
-struct VariableMonitoringPeriodic {
-    Component component;
-    Variable variable;
-    std::vector<VariableMonitoringMeta> monitors;
-};
-
-/// \brief Helper struct that combines VariableCharacteristics and VariableMonitoring
-struct VariableMetaData {
-    VariableCharacteristics characteristics;
-    std::unordered_map<std::int64_t, VariableMonitoringMeta> monitors;
-    std::optional<std::string> source;
-};
-
-using VariableMap = std::map<Variable, VariableMetaData>;
-using DeviceModelMap = std::map<Component, VariableMap>;
-
-class DeviceModelError : public std::exception {
-public:
-    [[nodiscard]] const char* what() const noexcept override {
-        return this->reason.c_str();
-    }
-    explicit DeviceModelError(std::string msg) : reason(std::move(msg)) {
-    }
-    explicit DeviceModelError(const char* msg) : reason(std::string(msg)) {
-    }
-
-private:
-    std::string reason;
-};
 
 /// \brief Abstract base class for device model interface. This class provides an interface for accessing and modifying
 /// device model data. Implementations of this class should provide concrete implementations for the virtual methods

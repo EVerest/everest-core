@@ -11,7 +11,7 @@
 #include <ocpp/v2/component_state_manager.hpp>
 #include <ocpp/v2/connector.hpp>
 #include <ocpp/v2/database_handler.hpp>
-#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/device_model_abstract.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 #include <ocpp/v2/transaction.hpp>
 
@@ -171,7 +171,7 @@ class Evse : public EvseInterface {
 
 private:
     std::int32_t evse_id;
-    DeviceModel& device_model;
+    DeviceModelAbstract& device_model;
     std::map<std::int32_t, std::unique_ptr<Connector>> id_connector_map;
     std::function<void(const MeterValue& meter_value, EnhancedTransaction& transaction)> transaction_meter_value_req;
     std::function<void(std::int32_t evse_id)> pause_charging_callback;
@@ -240,7 +240,7 @@ public:
     /// \param transaction_meter_value_req that is called to transmit a meter value request related to a transaction
     /// \param pause_charging_callback that is called when the charging should be paused due to max energy on
     /// invalid id being exceeded
-    Evse(const std::int32_t evse_id, const std::int32_t number_of_connectors, DeviceModel& device_model,
+    Evse(const std::int32_t evse_id, const std::int32_t number_of_connectors, DeviceModelAbstract& device_model,
          std::shared_ptr<DatabaseHandler> database_handler,
          std::shared_ptr<ComponentStateManagerInterface> component_state_manager,
          const std::function<void(const MeterValue& meter_value, EnhancedTransaction& transaction)>&

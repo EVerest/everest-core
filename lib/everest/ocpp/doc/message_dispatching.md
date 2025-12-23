@@ -17,7 +17,7 @@ class v16_MessageDispatcher {
 
 class v2_MessageDispatcher {
     - MessageQueue& message_queue
-    - DeviceModel& device_model
+    - DeviceModelAbstract& device_model
     - ConnectivityManager& connectivity_manager
     - RegistrationStatusEnum& registration_status
 }

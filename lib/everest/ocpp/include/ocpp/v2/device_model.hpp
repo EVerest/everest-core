@@ -9,79 +9,11 @@
 #include <everest/logging.hpp>
 
 #include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/device_model_abstract.hpp>
 #include <ocpp/v2/device_model_storage_interface.hpp>
 
 namespace ocpp {
 namespace v2 {
-
-/// \brief Response to requesting a value from the device model
-/// \tparam T
-template <typename T> struct RequestDeviceModelResponse {
-    GetVariableStatusEnum status;
-    std::optional<T> value;
-};
-
-/// \brief Converts the given \p value to the specific type based on the template parameter
-/// \tparam T
-/// \param value
-/// \return
-template <typename T> T to_specific_type(const std::string& value) {
-    static_assert(std::is_same_v<T, std::string> || std::is_same_v<T, int> || std::is_same_v<T, double> ||
-                      std::is_same_v<T, size_t> || std::is_same_v<T, DateTime> || std::is_same_v<T, bool> ||
-                      std::is_same_v<T, std::uint64_t>,
-                  "Requested unknown datatype");
-
-    if constexpr (std::is_same_v<T, std::string>) {
-        return value;
-    } else if constexpr (std::is_same_v<T, int>) {
-        return std::stoi(value);
-    } else if constexpr (std::is_same_v<T, double>) {
-        return std::stod(value);
-    } else if constexpr (std::is_same_v<T, std::size_t>) {
-        const std::size_t res = std::stoul(value);
-        return res;
-    } else if constexpr (std::is_same_v<T, DateTime>) {
-        return DateTime(value);
-    } else if constexpr (std::is_same_v<T, bool>) {
-        return ocpp::conversions::string_to_bool(value);
-    } else if constexpr (std::is_same_v<T, std::uint64_t>) {
-        return std::stoull(value);
-    }
-}
-
-template <DataEnum T> auto to_specific_type_auto(const std::string& value) {
-    static_assert(T == DataEnum::string || T == DataEnum::integer || T == DataEnum::decimal ||
-                      T == DataEnum::dateTime || T == DataEnum::boolean,
-                  "Requested unknown datatype");
-
-    if constexpr (T == DataEnum::string) {
-        return to_specific_type<std::string>(value);
-    } else if constexpr (T == DataEnum::integer) {
-        return to_specific_type<int>(value);
-    } else if constexpr (T == DataEnum::decimal) {
-        return to_specific_type<double>(value);
-    } else if constexpr (T == DataEnum::dateTime) {
-        return to_specific_type<DateTime>(value);
-    } else if constexpr (T == DataEnum::boolean) {
-        return to_specific_type<bool>(value);
-    }
-}
-
-template <DataEnum T> bool is_type_numeric() {
-    static_assert(T == DataEnum::string || T == DataEnum::integer || T == DataEnum::decimal ||
-                      T == DataEnum::dateTime || T == DataEnum::boolean || T == DataEnum::OptionList ||
-                      T == DataEnum::SequenceList || T == DataEnum::MemberList,
-                  "Requested unknown datatype");
-
-    if constexpr (T == DataEnum::integer || T == DataEnum::decimal) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-void filter_criteria_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
-                              std::vector<VariableMonitoringMeta>& monitors);
 
 using on_variable_changed = std::function<void(
     const std::unordered_map<std::int64_t, VariableMonitoringMeta>& monitors, const Component& component,
@@ -94,7 +26,7 @@ using on_monitor_updated = std::function<void(const VariableMonitoringMeta& upda
 
 /// \brief This class manages access to the device model representation and to the device model interface and provides
 /// functionality to support the use cases defined in the functional block Provisioning
-class DeviceModel {
+class DeviceModel : public DeviceModelAbstract {
 
 private:
     DeviceModelMap device_model_map;
@@ -163,171 +95,55 @@ public:
     /// \param device_model_storage_interface pointer to a device model interface class
     explicit DeviceModel(std::unique_ptr<DeviceModelStorageInterface> device_model_storage_interface);
 
-    /// \brief Direct access to value of a VariableAttribute for the given component, variable and attribute_enum. This
-    /// should only be called for variables that have a role standardized in the OCPP2.0.1 specification.
-    /// \tparam T datatype of the value that is requested
-    /// \param component_variable Combination of Component and Variable that identifies the Variable
-    /// \param attribute_enum defaults to AttributeEnum::Actual
-    /// \return the requested value from the device model interface
-    template <typename T>
-    T get_value(const RequiredComponentVariable& component_variable,
-                const AttributeEnum& attribute_enum = AttributeEnum::Actual) const {
-        std::string value;
-        auto response = GetVariableStatusEnum::UnknownVariable;
-        if (component_variable.variable.has_value()) {
-            response = this->request_value_internal(component_variable.component, component_variable.variable.value(),
-                                                    attribute_enum, value, true);
-        }
-        if (response == GetVariableStatusEnum::Accepted) {
-            return to_specific_type<T>(value);
-        }
-        EVLOG_critical << "Directly requested value for ComponentVariable that doesn't exist in the device model: "
-                       << component_variable;
-        EVLOG_AND_THROW(std::runtime_error(
-            "Directly requested value for ComponentVariable that doesn't exist in the device model."));
-    }
+    GetVariableStatusEnum get_variable(const Component& component_id, const Variable& variable_id,
+                                       const AttributeEnum& attribute_enum, std::string& value,
+                                       bool allow_write_only = false) const override;
 
-    /// \brief  Access to std::optional of a VariableAttribute for the given component, variable and attribute_enum.
-    /// \tparam T Type of the value that is requested
-    /// \param component_variable Combination of Component and Variable that identifies the Variable
-    /// \param attribute_enum
-    /// \return std::optional<T> if the combination of \p component_variable and \p attribute_enum could successfully
-    /// requested from the storage and a value is present for this combination, else std::nullopt .
-    template <typename T>
-    std::optional<T> get_optional_value(const ComponentVariable& component_variable,
-                                        const AttributeEnum& attribute_enum = AttributeEnum::Actual) const {
-        std::string value;
-        auto response = GetVariableStatusEnum::UnknownVariable;
-        if (component_variable.variable.has_value()) {
-            response = this->request_value_internal(component_variable.component, component_variable.variable.value(),
-                                                    attribute_enum, value, true);
-        }
-        if (response == GetVariableStatusEnum::Accepted) {
-            return to_specific_type<T>(value);
-        }
-        return std::nullopt;
-    }
-
-    /// \brief Requests a value of a VariableAttribute specified by combination of \p component_id and \p variable_id
-    /// from the device model
-    /// \tparam T datatype of the value that is requested
-    /// \param component_id
-    /// \param variable_id
-    /// \param attribute_enum
-    /// \return Response to request that contains status of the request and the requested value as std::optional<T> .
-    /// The value is present if the status is GetVariableStatusEnum::Accepted
-    template <typename T>
-    RequestDeviceModelResponse<T> request_value(const Component& component_id, const Variable& variable_id,
-                                                const AttributeEnum& attribute_enum) {
-        std::string value;
-        const auto req_status = this->request_value_internal(component_id, variable_id, attribute_enum, value, false);
-
-        if (req_status == GetVariableStatusEnum::Accepted) {
-            return {GetVariableStatusEnum::Accepted, to_specific_type<T>(value)};
-        }
-        return {req_status};
-    }
-
-    /// \brief Get the mutability for the given component, variable and attribute_enum
-    /// \param component_id
-    /// \param variable_id
-    /// \param attribute_enum
-    /// \return The mutability of the given component variable, else std::nullopt
-    std::optional<MutabilityEnum> get_mutability(const Component& component_id, const Variable& variable,
-                                                 const AttributeEnum& attribute_enum);
-
-    /// \brief Sets the variable_id attribute \p value specified by \p component_id , \p variable_id and \p
-    /// attribute_enum
-    /// \param component_id
-    /// \param variable_id
-    /// \param attribute_enum
-    /// \param value
-    /// \param source           The source of the value (for example 'csms' or 'default').
-    /// \param allow_read_only If this is true, read-only variables can be changed,
-    ///                        otherwise only non read-only variables can be changed. Defaults to false
-    /// \return Result of the requested operation
     SetVariableStatusEnum set_value(const Component& component_id, const Variable& variable_id,
                                     const AttributeEnum& attribute_enum, const std::string& value,
-                                    const std::string& source, const bool allow_read_only = false);
-    /// \brief Sets the variable_id attribute \p value specified by \p component_id , \p variable_id and \p
-    /// attribute_enum for read only variables only. Only works on certain allowed components.
-    /// \param component_id
-    /// \param variable_id
-    /// \param attribute_enum
-    /// \param value
-    /// \param source           The source of the value (for example 'csms' or 'default').
-    /// \return Result of the requested operation
+                                    const std::string& source, bool allow_read_only = false) override;
+
     SetVariableStatusEnum set_read_only_value(const Component& component_id, const Variable& variable_id,
                                               const AttributeEnum& attribute_enum, const std::string& value,
-                                              const std::string& source);
+                                              const std::string& source) override;
 
-    /// \brief Gets the VariableMetaData for the given \p component_id and \p variable_id
-    /// \param component_id
-    /// \param variable_id
-    /// \return VariableMetaData or std::nullopt if \p component_id or \p variable_id not present
-    std::optional<VariableMetaData> get_variable_meta_data(const Component& component_id, const Variable& variable_id);
+    std::optional<MutabilityEnum> get_mutability(const Component& component_id, const Variable& variable_id,
+                                                 const AttributeEnum& attribute_enum) override;
 
-    /// \brief Gets the ReportData for the specifed filter \p report_base \p component_variables and \p
-    /// component_criteria
-    /// \param report_base
-    /// \param component_variables
-    /// \param component_criteria
-    /// \return
-    std::vector<ReportData> get_base_report_data(const ReportBaseEnum& report_base);
+    std::optional<VariableMetaData> get_variable_meta_data(const Component& component_id,
+                                                           const Variable& variable_id) override;
 
-    /// \brief Gets the ReportData for the specifed filter \p component_variables and \p
-    /// component_criteria
-    /// \param report_base
-    /// \param component_variables
-    /// \param component_criteria
-    /// \return
-    std::vector<ReportData>
-    get_custom_report_data(const std::optional<std::vector<ComponentVariable>>& component_variables = std::nullopt,
-                           const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria = std::nullopt);
+    std::vector<ReportData> get_base_report_data(const ReportBaseEnum& report_base) override;
 
-    void register_variable_listener(on_variable_changed&& listener) {
+    std::vector<ReportData> get_custom_report_data(
+        const std::optional<std::vector<ComponentVariable>>& component_variables = std::nullopt,
+        const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria = std::nullopt) override;
+
+    std::vector<SetMonitoringResult>
+    set_monitors(const std::vector<SetMonitoringData>& requests,
+                 const VariableMonitorType type = VariableMonitorType::CustomMonitor) override;
+
+    bool update_monitor_reference(std::int32_t monitor_id, const std::string& reference_value) override;
+
+    std::vector<VariableMonitoringPeriodic> get_periodic_monitors() override;
+
+    std::vector<MonitoringData> get_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
+                                             const std::vector<ComponentVariable>& component_variables) override;
+
+    std::vector<ClearMonitoringResult> clear_monitors(const std::vector<int>& request_ids,
+                                                      bool allow_protected = false) override;
+
+    std::int32_t clear_custom_monitors() override;
+
+    void register_variable_listener(on_variable_changed&& listener) override {
         variable_listener = std::move(listener);
     }
 
-    void register_monitor_listener(on_monitor_updated&& listener) {
+    void register_monitor_listener(on_monitor_updated&& listener) override {
         monitor_update_listener = std::move(listener);
     }
 
-    /// \brief Sets the given monitor \p requests in the device model
-    /// \param request
-    /// \param type The type of the set monitors. HardWiredMonitor - used for OEM specific monitors,
-    /// PreconfiguredMonitor - monitors that were manually defined in the component config,
-    /// CustomMonitor - used for monitors that are set by the CSMS,
-    /// \return List of results of the requested operation
-    std::vector<SetMonitoringResult> set_monitors(const std::vector<SetMonitoringData>& requests,
-                                                  const VariableMonitorType type = VariableMonitorType::CustomMonitor);
-
-    bool update_monitor_reference(std::int32_t monitor_id, const std::string& reference_value);
-
-    std::vector<VariableMonitoringPeriodic> get_periodic_monitors();
-
-    /// \brief Gets the Monitoring data for the request \p criteria and \p component_variables
-    /// \param criteria
-    /// \param component_variables
-    /// \return List of results of the requested monitors
-    std::vector<MonitoringData> get_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
-                                             const std::vector<ComponentVariable>& component_variables);
-
-    /// \brief Clears the given \p request_ids from the registered monitors if request_id is present
-    /// \param request_ids
-    /// \param allow_protected if we should delete the non-custom monitors, defaults to false when
-    /// this operation is requested by the CSMS
-    /// \return List of results of the requested operation
-    std::vector<ClearMonitoringResult> clear_monitors(const std::vector<int>& request_ids,
-                                                      bool allow_protected = false);
-
-    /// \brief Clears all the custom monitors (set by the CSMS) present in the database
-    /// \return count of monitors deleted, can be 0 if no custom monitors were present in the db
-    std::int32_t clear_custom_monitors();
-
-    /// \brief Check data integrity of the device model provided by the device model data storage:
-    /// For "required" variables, assert values exist. Checks might be extended in the future.
-    void check_integrity(const std::map<std::int32_t, std::int32_t>& evse_connector_structure);
+    void check_integrity(const std::map<std::int32_t, std::int32_t>& evse_connector_structure) override;
 };
 
 } // namespace v2

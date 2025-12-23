@@ -9,7 +9,7 @@ namespace v2 {
 using EvseIteratorImpl = VectorOfUniquePtrIterator<EvseInterface>;
 
 EvseManager::EvseManager(const std::map<std::int32_t, std::int32_t>& evse_connector_structure,
-                         DeviceModel& device_model, std::shared_ptr<DatabaseHandler> database_handler,
+                         DeviceModelAbstract& device_model, std::shared_ptr<DatabaseHandler> database_handler,
                          std::shared_ptr<ComponentStateManagerInterface> component_state_manager,
                          const std::function<void(const MeterValue& meter_value, EnhancedTransaction& transaction)>&
                              transaction_meter_value_req,

@@ -16,6 +16,7 @@
 
 #include <memory>
 
+#include <ocpp/v2/device_model.hpp>
 #include <ocpp/v2/init_device_model_db.hpp>
 
 const static std::string MIGRATION_FILES_PATH = "./resources/v2/device_model_migration_files";
@@ -28,7 +29,6 @@ class Connection;
 }
 
 namespace v2 {
-class DeviceModel;
 
 class DeviceModelTestHelper {
 public:

@@ -11,11 +11,9 @@
 #include <ocpp/v2/ocpp_enums.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 
-#include <ocpp/v2/device_model_storage_interface.hpp>
+#include <ocpp/v2/device_model_abstract.hpp>
 
 namespace ocpp::v2 {
-
-class DeviceModel;
 
 enum class UpdateMonitorMetaType {
     TRIGGER,
@@ -106,7 +104,8 @@ public:
     /// \param notify_csms_events Function that can be invoked with a number of alert events
     /// \param is_chargepoint_offline Function that can be invoked in order to retrieve the
     /// status of the charging station connection to the CSMS
-    MonitoringUpdater(DeviceModel& device_model, notify_events notify_csms_events, is_offline is_chargepoint_offline);
+    MonitoringUpdater(DeviceModelAbstract& device_model, notify_events notify_csms_events,
+                      is_offline is_chargepoint_offline);
     ~MonitoringUpdater();
 
     /// \brief Starts monitoring the variables, kicking the timer
@@ -167,7 +166,7 @@ private:
 
     bool is_monitoring_enabled();
 
-    DeviceModel& device_model;
+    DeviceModelAbstract& device_model;
     Everest::SteadyTimer monitors_timer;
 
     // Charger to CSMS message unique ID for EventData

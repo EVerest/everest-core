@@ -36,7 +36,7 @@ struct Callbacks {
     ///
     /// \retval false if any of the normal callbacks are nullptr or any of the optional ones are filled with a nullptr
     ///        true otherwise
-    bool all_callbacks_valid(std::shared_ptr<DeviceModel> device_model,
+    bool all_callbacks_valid(std::shared_ptr<DeviceModelAbstract> device_model,
                              const std::map<std::int32_t, std::int32_t>& evse_connector_structure) const;
 
     ///
