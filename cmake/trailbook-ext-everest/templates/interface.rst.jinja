@@ -17,3 +17,8 @@
 {{ funcs.h2('Commands') -}}
 {{ funcs.cmds(data.cmds.items()) | rst_indent() -}}
 {% endif %}
+
+{% if data.errors %}
+{{ funcs.h2('Errors') -}}
+{{ funcs.error_categories(data.errors_sanitized, data.error_definitions) | rst_indent() -}}
+{% endif %}

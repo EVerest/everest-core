@@ -159,9 +159,6 @@
 {%      if var_data.type == 'array' and 'items' in var_data %}
 {{          var('array_item', var_data['items'], False, True) | indent(1, True) }}
 {%      endif %}
-{%      if '$ref' in var_data %}
- **There is an extended definition for this object** {{ ref(var_data['$ref'], 'here') }}.
-{%      endif %}
 {%  endmacro %}
 
 {### Renders a list of vars ###}
@@ -224,6 +221,22 @@
 {{ cmd(cmd_name, cmd_data) -}}
 {%      endfor %}
 {%  endmacro %}
+
+
+{### Renders a list of errors ###}
+{% macro errors(errs, definitions) %}
+{%      for err in errs %}
+**{{ err }}** : {{ definitions[err] }}
+{%      endfor %}
+{% endmacro %}
+
+{### Renders a list of error_categories ###}
+{% macro error_categories(categories, error_definitions) %}
+{%      for cat in categories %}
+**{{ cat }}** :
+{{ errors(categories[cat], error_definitions[cat]) | indent(1, True) -}}
+{%      endfor %}
+{% endmacro %}
 
 {#################################}
 {### types.json macros         ###}
