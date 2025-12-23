@@ -230,7 +230,7 @@ and their descriptions in `here <https://github.com/EVerest/libocpp/tree/main/co
 
   For TLS, it might be required to prepare the required certificates and
   private keys. Please see the documentation of the
-  :doc:`EvseSecurity module </reference/modules/EvseSecurity>`
+  :ref:`EvseSecurity module <everest_modules_EvseSecurity>`
   for more information on how to set up the TLS connection for OCPP.
 
 .. _tutorial_ocpp16_configure_ocpp_everest:
@@ -284,7 +284,7 @@ EVerest configuration file:
      complete charging station.
 
      *Module typically used to fulfill this requirement:*  
-     :doc:`EnergyNode </reference/modules/EnergyNode>`
+     :ref:`EnergyNode <everest_modules_EnergyNode>`
 
      More information about the energy management setup can be found in the
      :doc:`EnergyManager module documentation </explanation/modules/EnergyManager/index>`.
@@ -295,14 +295,14 @@ EVerest configuration file:
      if configured and/or changed by the CSMS.
 
      *Module typically used to fulfill this requirement:*  
-     :doc:`Auth module </reference/modules/Auth>`, ``implementation_id: main``
+     :ref:`Auth module <everest_modules_Auth>`, ``implementation_id: main``
 
    - **reservation** (interface: ``reservation``, 1):
 
      This connection is used to apply reservation requests from the CSMS.
 
      *Module typically used to fulfill this requirement:*  
-     :doc:`Auth module </reference/modules/Auth>`, ``implementation_id: reservation``
+     :ref:`Auth module <everest_modules_Auth>`, ``implementation_id: reservation``
 
    - **system** (interface: ``system``, 1):
 
@@ -311,8 +311,8 @@ EVerest configuration file:
 
      *Modules fulfilling this requirement:*
 
-     - :doc:`Linux_Systemd_Rauc module </reference/modules/Linux_Systemd_Rauc>` (``implementation_id: main``)
-     - For simulation purposes: :doc:`System module </reference/modules/System>` (``implementation_id: main``)
+     - :ref:`Linux_Systemd_Rauc module <everest_modules_Linux_Systemd_Rauc>` (``implementation_id: main``)
+     - For simulation purposes: :ref:`System module <everest_modules_System>` (``implementation_id: main``)
 
      .. note::
         The System module is **not meant to be used in production systems**.
@@ -323,7 +323,7 @@ EVerest configuration file:
      certificates and private keys.
 
      *Module typically used to fulfill this requirement:*  
-     :doc:`EvseSecurity module </reference/modules/EvseSecurity>`, ``implementation_id: main``
+     :ref:`EvseSecurity module <everest_modules_EvseSecurity>`, ``implementation_id: main``
 
    - **data_transfer** (interface: ``ocpp_data_transfer``, 0 to 1):
 
@@ -348,7 +348,7 @@ EVerest configuration file:
    (``implementation_id: auth_provider``) and ``token_validator``
    (``implementation_id: auth_validator``) connections of the Auth module (if you use it).
 
-   Please see the documentation of the :doc:`Auth module </reference/modules/Auth>` for more information.
+   Please see the documentation of the :ref:`Auth module <everest_modules_Auth>` for more information.
 
 4. **Enable Plug & Charge (optional):**
 
