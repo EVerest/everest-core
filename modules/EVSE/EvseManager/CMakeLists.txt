@@ -19,6 +19,7 @@ target_sources(${MODULE_NAME}
         ErrorHandling.cpp
         backtrace.cpp
         PersistentStore.cpp
+        over_voltage/OverVoltageMonitor.cpp
 )
 
 target_link_libraries(${MODULE_NAME}

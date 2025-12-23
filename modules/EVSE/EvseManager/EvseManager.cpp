@@ -204,6 +204,17 @@ void EvseManager::ready() {
                           config.fail_on_powermeter_errors ? r_powermeter_billing() : EMPTY_POWERMETER_VECTOR,
                           r_over_voltage_monitor, config.inoperative_error_use_vendor_id));
 
+    internal_over_voltage_monitor = std::make_unique<OverVoltageMonitor>(
+        [this](OverVoltageMonitor::FaultType type, const std::string& description) {
+            if (this->error_handling) {
+                const auto severity = type == OverVoltageMonitor::FaultType::Emergency
+                                          ? Everest::error::Severity::High
+                                          : Everest::error::Severity::Medium;
+                this->error_handling->raise_over_voltage_error(severity, description);
+            }
+        },
+        std::chrono::milliseconds(config.internal_over_voltage_duration_ms));
+
     if (not config.lock_connector_in_state_b) {
         EVLOG_warning << "Unlock connector in CP state B. This violates IEC61851-1:2019 D.6.5 Table D.9 line 4 and "
                          "should not be used in public environments!";
@@ -456,6 +467,10 @@ void EvseManager::ready() {
                 if (not r_over_voltage_monitor.empty()) {
                     r_over_voltage_monitor[0]->call_start();
                 }
+                if (internal_over_voltage_monitor) {
+                    internal_over_voltage_monitor->reset();
+                    internal_over_voltage_monitor->start_monitor();
+                }
             });
 
             r_hlc[0]->subscribe_current_demand_finished([this] {
@@ -464,7 +479,20 @@ void EvseManager::ready() {
                 if (not r_over_voltage_monitor.empty()) {
                     r_over_voltage_monitor[0]->call_stop();
                 }
+                if (internal_over_voltage_monitor) {
+                    internal_over_voltage_monitor->stop_monitor();
+                }
             });
+
+            // Subscribe to voltage measurements from over_voltage_monitor interface
+            // The internal monitor acts as a software watchdog following the hardware OVM values
+            if (not r_over_voltage_monitor.empty()) {
+                r_over_voltage_monitor[0]->subscribe_voltage_measurement_V([this](float voltage_V) {
+                    if (internal_over_voltage_monitor) {
+                        internal_over_voltage_monitor->update_voltage(voltage_V);
+                    }
+                });
+            }
 
             // Isolation monitoring for DC charging handler
             if (not r_imd.empty()) {
@@ -767,6 +795,10 @@ void EvseManager::ready() {
                     r_over_voltage_monitor[0]->call_set_limits(get_emergency_over_voltage_threshold(),
                                                                get_error_over_voltage_threshold());
                 }
+                if (internal_over_voltage_monitor) {
+                    internal_over_voltage_monitor->set_limits(get_emergency_over_voltage_threshold(),
+                                                              get_error_over_voltage_threshold());
+                }
             });
 
             r_hlc[0]->subscribe_departure_time([this](const std::string& t) {
@@ -999,6 +1031,10 @@ void EvseManager::ready() {
 
         if (not r_over_voltage_monitor.empty() and event == CPEvent::CarUnplugged) {
             r_over_voltage_monitor[0]->call_reset_over_voltage_error();
+        }
+        if (internal_over_voltage_monitor and event == CPEvent::CarUnplugged) {
+            internal_over_voltage_monitor->stop_monitor();
+            internal_over_voltage_monitor->reset();
         }
 
         charger->bsp_event_queue.push(event);
