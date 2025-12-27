@@ -45,7 +45,7 @@ using namespace std::chrono_literals;
 namespace ocpp {
 namespace v2 {
 
-const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 2E5;
+const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 1000;
 
 ChargePoint::ChargePoint(const std::map<std::int32_t, std::int32_t>& evse_connector_structure,
                          std::shared_ptr<DeviceModel> device_model, std::shared_ptr<DatabaseHandler> database_handler,
