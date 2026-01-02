@@ -60,6 +60,17 @@ using is_to_json_serializable = decltype(to_json(std::declval<nlohmann::json&>()
 
 template <typename T> constexpr bool is_to_json_serializable_v = is_detected<is_to_json_serializable, T>::value;
 
+template <typename T, typename MethodT, typename... ParamTypes, std::size_t... I>
+auto invoke_with_params_impl(T& instance, MethodT method, const json& params, std::index_sequence<I...>) {
+    return (instance.*method)((extract_param<std::remove_reference_t<ParamTypes>>(params.at(I)))...);
+}
+
+template <typename T, typename MethodT, typename... ParamTypes>
+auto invoke_with_params(T& instance, MethodT method, const json& params) {
+    return invoke_with_params_impl<T, MethodT, ParamTypes...>(instance, method, params,
+                                                             std::index_sequence_for<ParamTypes...>{});
+}
+
 template <typename T, typename ReturnType, typename... ParamTypes>
 MethodHandle get_handle(ReturnType (T::*method)(ParamTypes...), T& instance, int precision = 3) {
     return [&instance, method, precision](const json& params) -> json {
@@ -72,10 +83,7 @@ MethodHandle get_handle(ReturnType (T::*method)(ParamTypes...), T& instance, int
             throw std::runtime_error("invalid number of parameters");
         }
 
-        auto result = [&]<std::size_t... I>(std::index_sequence<I...>) {
-            return (instance.*method)((extract_param<std::remove_reference_t<ParamTypes>>(params.at(I)))...);
-        }
-        (std::index_sequence_for<ParamTypes...>{});
+        auto result = invoke_with_params<T, decltype(method), ParamTypes...>(instance, method, params);
 
         if constexpr (std::is_same_v<ReturnType, void>) {
             return json(); // no return value
