@@ -29,7 +29,8 @@ static void log_callback(int level, const char* line) {
     }
 }
 
-int WebSocketServer::callback_ws(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len) {
+int WebSocketServer::callback_ws(struct lws* wsi, enum lws_callback_reasons reason, [[maybe_unused]] void* user,
+                                 void* in, size_t len) {
     struct lws_context* context = lws_get_context(wsi);
     WebSocketServer* server = static_cast<WebSocketServer*>(lws_context_user(context));
 
@@ -113,7 +114,7 @@ WebSocketServer::WebSocketServer(bool ssl_enabled, int port, const std::string& 
 
         m_info.iface = m_iface.get();
     }
-    m_lws_protocols[0] = {"EVerestRpcApi", callback_ws, PER_SESSION_DATA_SIZE, 0};
+    m_lws_protocols[0] = {"EVerestRpcApi", callback_ws, PER_SESSION_DATA_SIZE, 0, 0, NULL, 0};
     m_lws_protocols[1] = LWS_PROTOCOL_LIST_TERM;
 
     m_info.protocols = m_lws_protocols;

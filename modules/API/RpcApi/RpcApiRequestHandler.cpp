@@ -25,8 +25,8 @@ types::energy::ExternalLimits get_external_limits(int32_t phases) {
     zero_entry.timestamp = timestamp;
     zero_entry.limits_to_leaves.total_power_W = {0, RPCAPI_MODULE_SOURCE};
 
-    target_entry.limits_to_leaves.ac_max_phase_count = {phases};
-    target_entry.limits_to_leaves.ac_min_phase_count = {phases};
+    target_entry.limits_to_leaves.ac_max_phase_count = {phases, RPCAPI_MODULE_SOURCE};
+    target_entry.limits_to_leaves.ac_min_phase_count = {phases, RPCAPI_MODULE_SOURCE};
 
     external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
     external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
@@ -71,8 +71,8 @@ types::energy::ExternalLimits get_external_limits(float phy_value, bool is_power
     zero_entry.timestamp = timestamp;
     zero_entry.limits_to_leaves.total_power_W = {0, RPCAPI_MODULE_SOURCE};
 
-    target_entry.limits_to_leaves.ac_max_phase_count = {phases};
-    target_entry.limits_to_leaves.ac_min_phase_count = {phases};
+    target_entry.limits_to_leaves.ac_max_phase_count = {phases, RPCAPI_MODULE_SOURCE};
+    target_entry.limits_to_leaves.ac_min_phase_count = {phases, RPCAPI_MODULE_SOURCE};
 
     if (is_power) {
         target_entry.limits_to_leaves.total_power_W = {phy_value, RPCAPI_MODULE_SOURCE};
@@ -203,6 +203,11 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
 
 ErrorResObj RpcApiRequestHandler::set_ac_charging(const int32_t evse_index, bool charging_allowed, bool max_current,
                                                   std::optional<int> phase_count) {
+    (void)evse_index;
+    (void)charging_allowed;
+    (void)max_current;
+    (void)phase_count;
+
     ErrorResObj res{};
     res.error = ResponseErrorEnum::ErrorValuesNotApplied;
     // TODO: Currently not implemented.
@@ -293,6 +298,10 @@ ErrorResObj RpcApiRequestHandler::set_ac_charging_phase_count(const int32_t evse
 }
 
 ErrorResObj RpcApiRequestHandler::set_dc_charging(const int32_t evse_index, bool charging_allowed, float max_power) {
+    (void)evse_index;
+    (void)charging_allowed;
+    (void)max_power;
+
     ErrorResObj res{};
     res.error = ResponseErrorEnum::ErrorValuesNotApplied;
     // TODO: Currently not implemented.
