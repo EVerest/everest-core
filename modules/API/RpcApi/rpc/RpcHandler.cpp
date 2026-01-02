@@ -68,7 +68,7 @@ auto invoke_with_params_impl(T& instance, MethodT method, const json& params, st
 template <typename T, typename MethodT, typename... ParamTypes>
 auto invoke_with_params(T& instance, MethodT method, const json& params) {
     return invoke_with_params_impl<T, MethodT, ParamTypes...>(instance, method, params,
-                                                             std::index_sequence_for<ParamTypes...>{});
+                                                              std::index_sequence_for<ParamTypes...>{});
 }
 
 template <typename T, typename ReturnType, typename... ParamTypes>
@@ -186,7 +186,7 @@ void RpcHandler::init_transport_interfaces() {
 
 void RpcHandler::client_connected(const std::shared_ptr<server::TransportInterface>& transport_interface,
                                   const server::TransportInterface::ClientId& client_id,
-                                  const server::TransportInterface::Address& address) {
+                                  [[maybe_unused]] const server::TransportInterface::Address& address) {
     // In case of a new client, we expect that the client will send an API.Hello request within 5 seconds.
     // The API.Hello request is a handshake message sent by the client to establish a connection and verify
     // compatibility. If the API.Hello request is not received within the timeout period, the connection will be
