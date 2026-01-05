@@ -78,6 +78,12 @@ Have a look at this categorized list of all guides:
       :link-type: doc
 
       How to bring up all hard and software components of a charger in isolated test cases.
+   
+   .. grid-item-card:: Use the EVerest Development Container
+      :link: devcontainer-usage/index
+      :link-type: doc
+
+      How to use a development container for EVerest development and sil testing.
 
 .. toctree::
     :maxdepth: 1
@@ -94,3 +100,4 @@ Have a look at this categorized list of all guides:
     renesas-mpu/index
     security-best-practices
     bringup/index
+    devcontainer-usage/index
