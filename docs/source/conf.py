@@ -37,6 +37,7 @@ extensions = [
     'sphinx_copybutton',       # Add a "copy" button to code blocks
     'sphinx_design',           # For advanced design elements like cards, grids
     'sphinx.ext.mathjax',      # For rendering math equations
+    'sphinxcontrib.mermaid',   # For rendering Mermaid diagrams
     'staticpages.extension',   # For static pages like versions_index.html
 ]
 

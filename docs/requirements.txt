@@ -10,5 +10,8 @@ sphinx-design
 # Adds a "copy" button to code blocks for a better user experience
 sphinx-copybutton
 
+# For rendering mermaid diagrams
+sphinxcontrib-mermaid
+
 # Required for processing templates
 PyYAML
