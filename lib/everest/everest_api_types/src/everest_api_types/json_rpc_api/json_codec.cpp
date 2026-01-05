@@ -83,8 +83,7 @@ void from_json(json const& j, ResponseErrorEnum& k) {
         return;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type ResponseErrorEnum");
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ResponseErrorEnum");
 }
 
 void to_json(json& j, ChargeProtocolEnum const& k) noexcept {
@@ -132,8 +131,7 @@ void from_json(json const& j, ChargeProtocolEnum& k) {
         return;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type ChargeProtocolEnum");
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ChargeProtocolEnum");
 }
 
 void to_json(json& j, EVSEStateEnum const& k) noexcept {
@@ -418,8 +416,7 @@ void from_json(json const& j, ConnectorTypeEnum& k) {
         return;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type ConnectorTypeEnum");
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ConnectorTypeEnum");
 }
 
 void to_json(json& j, EnergyTransferModeEnum const& k) noexcept {
@@ -537,8 +534,7 @@ void from_json(json const& j, EnergyTransferModeEnum& k) {
         return;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type EnergyTransferModeEnum");
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type EnergyTransferModeEnum");
 }
 
 void to_json(json& j, Severity const& k) noexcept {
@@ -598,10 +594,7 @@ void from_json(const json& j, ImplementationIdentifier& k) {
 }
 
 void to_json(json& j, ChargerInfoObj const& k) noexcept {
-    j = json{{"vendor", k.vendor},
-             {"model", k.model},
-             {"serial", k.serial},
-             {"firmware_version", k.firmware_version}};
+    j = json{{"vendor", k.vendor}, {"model", k.model}, {"serial", k.serial}, {"firmware_version", k.firmware_version}};
     if (k.friendly_name) {
         j["friendly_name"] = k.friendly_name.value();
     }
@@ -655,13 +648,8 @@ void from_json(const json& j, ChargerInfoObj& k) {
 }
 
 void to_json(json& j, ErrorObj const& k) noexcept {
-    j = json{{"type", k.type},
-             {"description", k.description},
-             {"message", k.message},
-             {"severity", k.severity},
-             {"origin", k.origin},
-             {"timestamp", k.timestamp},
-             {"uuid", k.uuid}};
+    j = json{{"type", k.type},     {"description", k.description}, {"message", k.message}, {"severity", k.severity},
+             {"origin", k.origin}, {"timestamp", k.timestamp},     {"uuid", k.uuid}};
     if (k.sub_type) {
         j["sub_type"] = k.sub_type.value();
     }
