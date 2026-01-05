@@ -9,7 +9,7 @@
 
 namespace charge_bridge {
 
-struct evse_bridge_config {
+struct bsp_bridge_config {
     std::string cb;
     std::string item;
     std::uint16_t cb_port;
@@ -17,10 +17,10 @@ struct evse_bridge_config {
     evse_bsp::everest_api_config api;
 };
 
-class evse_bridge : public everest::lib::io::event::fd_event_register_interface {
+class bsp_bridge : public everest::lib::io::event::fd_event_register_interface {
 public:
-    evse_bridge(evse_bridge_config const& config);
-    ~evse_bridge() = default;
+    bsp_bridge(bsp_bridge_config const& config);
+    ~bsp_bridge() = default;
 
     bool register_events(everest::lib::io::event::fd_event_handler& handler) override;
     bool unregister_events(everest::lib::io::event::fd_event_handler& handler) override;

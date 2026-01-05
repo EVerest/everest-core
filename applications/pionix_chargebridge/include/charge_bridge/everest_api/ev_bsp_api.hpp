@@ -25,7 +25,7 @@ namespace API_GENERIC = everest::lib::API::V1_0::types::generic;
 // namespace API_OVM = everest::lib::API::V1_0::types::over_voltage_monitor;
 
 struct evse_ev_bsp_config {
-    bool enabled;
+    bool enabled{false};
     std::string module_id;
 };
 

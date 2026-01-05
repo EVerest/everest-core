@@ -26,7 +26,7 @@ add_executable(pionix_chargebridge
 
   src/can_bridge.cpp
   src/charge_bridge.cpp
-  src/evse_bridge.cpp
+  src/bsp_bridge.cpp
   src/gpio_bridge.cpp
   src/heartbeat_service.cpp
   src/plc_bridge.cpp
