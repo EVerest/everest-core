@@ -1,5 +1,5 @@
 *build
-*build-cross
+*build-*
 .cache/
 workspace.yaml
 .vscode/
@@ -9,3 +9,7 @@ CMakeLists.txt.user
 .idea/
 MODULE.bazel.lock
 __pycache__/
+*.patch
+*.diff
+*.orig
+*.rej
