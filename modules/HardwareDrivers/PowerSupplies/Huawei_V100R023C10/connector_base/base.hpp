@@ -27,6 +27,17 @@ struct EverestConnectorConfig {
     }
 };
 
+namespace telemetry_datapoint_keys {
+static const std::string UPSTREAM_VOLTAGE = "upstream_voltage";
+static const std::string OUTPUT_VOLTAGE = "output_voltage";
+static const std::string OUTPUT_CURRENT = "output_current";
+static const std::string EXPORT_VOLTAGE = "export_voltage";
+static const std::string EXPORT_CURRENT = "export_current";
+static const std::string BSP_EVENT = "bsp_event";
+static const std::string EVEREST_MODE = "everest_mode";
+static const std::string EVEREST_PHASE = "everest_phase";
+}; // namespace telemetry_datapoint_keys
+
 class ConnectorBase {
 public:
     /**
@@ -89,6 +100,7 @@ private:
     void init_capabilities();
 
     std::string log_prefix;
+    std::string telemetry_subtopic;
 
     std::atomic<bool> module_placeholder_allocation_failure_raised;
 

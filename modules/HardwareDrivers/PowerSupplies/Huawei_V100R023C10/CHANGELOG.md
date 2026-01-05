@@ -1,5 +1,11 @@
 # Changelog
 
+## December 2025
+
+### Module
+
+- The module can now publish telemetry data on a specified mqtt base topic, set via the config option `telemetry_topic_prefix`. The concrete telemetry data is published only when the data changes to reduce mqtt traffic. The telemetry data is published as json objects per dispenser and per connector. See the module documentation for details.
+
 ## June 2025
 
 - Module

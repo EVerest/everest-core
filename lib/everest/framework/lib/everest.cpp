@@ -1187,7 +1187,7 @@ UnsubscribeToken Everest::create_external_handler(const std::string& topic, cons
     const auto token =
         std::make_shared<TypedHandler>(topic, HandlerType::ExternalMQTT, std::make_shared<Handler>(handler));
     mqtt_abstraction->register_handler(external_topic, token, QOS::QOS0);
-    return [this, topic, token]() { this->mqtt_abstraction->unregister_handler(topic, token); };
+    return [this, external_topic, token]() { this->mqtt_abstraction->unregister_handler(external_topic, token); };
 }
 
 std::optional<Mapping> get_impl_mapping(std::optional<ModuleTierMappings> module_tier_mappings,

@@ -96,6 +96,18 @@ double uint16_vec_to_double(std::vector<std::uint16_t> vec) {
     return *((double*)v0);
 }
 
+std::vector<std::uint16_t> double_to_uint16_vec(double value) {
+    std::uint8_t* v = reinterpret_cast<std::uint8_t*>(&value);
+
+    std::vector<std::uint16_t> out;
+    out.push_back(static_cast<std::uint16_t>(v[7] << 8 | v[6]));
+    out.push_back(static_cast<std::uint16_t>(v[5] << 8 | v[4]));
+    out.push_back(static_cast<std::uint16_t>(v[3] << 8 | v[2]));
+    out.push_back(static_cast<std::uint16_t>(v[1] << 8 | v[0]));
+
+    return out;
+}
+
 std::uint32_t uint16_vec_to_uint32(std::vector<std::uint16_t> vec) {
     std::uint16_t v0[2] = {
         static_cast<std::uint16_t>(vec[1]),

@@ -14,6 +14,8 @@
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
+#include <atomic>
+#include <utils/thread.hpp>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -57,6 +59,12 @@ private:
     // insert your private definitions here
     double error_threshold{0.};
     double emergency_threshold{0.};
+
+    static constexpr int LOOP_SLEEP_MS{20};
+    std::atomic<bool> over_voltage_monitoring_active;
+    float voltage_measurement_V{0.0f};
+    Everest::Thread over_voltage_monitorImpl_thread_handle;
+    void over_voltage_monitorImpl_worker();
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

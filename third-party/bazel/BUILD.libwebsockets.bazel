@@ -42,6 +42,8 @@ cmake(
         "CMAKE_VERBOSE_MAKEFILE": "ON",
         "LWS_WITH_SSL": "ON",
         "LWS_OPENSSL_LIBRARIES": "ssl;crypto",
+        "DISABLE_WERROR": "ON",
+        "CMAKE_INSTALL_LIBDIR": "lib"
     },
     lib_source = ":all_srcs",
     out_static_libs = ["libwebsockets.a"],

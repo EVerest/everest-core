@@ -26,7 +26,7 @@ struct ModuleData {
     std::string module_id;
     std::string module_name;
     bool standalone = false;
-    std::optional<std::string> capabilities;
+    std::optional<std::vector<std::string>> capabilities;
 };
 
 struct GetConfigurationParameterResponse {

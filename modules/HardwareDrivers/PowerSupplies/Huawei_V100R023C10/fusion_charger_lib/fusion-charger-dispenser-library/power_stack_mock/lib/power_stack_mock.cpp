@@ -385,6 +385,25 @@ void PowerStackMock::send_rated_power_of_output_port(float power, std::uint16_t 
         float_to_uint16_vec(power));
 }
 
+void PowerStackMock::send_total_historical_ac_input_energy(double energy) {
+    client.write_multiple_registers(0x2013, double_to_uint16_vec(energy));
+}
+
+void PowerStackMock::send_ac_input_voltages_currents(float voltage_a, float voltage_b, float voltage_c, float current_a,
+                                                     float current_b, float current_c) {
+    client.write_multiple_registers(0x2007, float_to_uint16_vec(voltage_a));
+    client.write_multiple_registers(0x2009, float_to_uint16_vec(voltage_b));
+    client.write_multiple_registers(0x200B, float_to_uint16_vec(voltage_c));
+    client.write_multiple_registers(0x200D, float_to_uint16_vec(current_a));
+    client.write_multiple_registers(0x200F, float_to_uint16_vec(current_b));
+    client.write_multiple_registers(0x2011, float_to_uint16_vec(current_c));
+}
+
+void PowerStackMock::send_port_available(bool available, std::uint16_t local_connector_number) {
+    client.write_single_register(
+        0x212F + static_cast<std::uint16_t>(offset_from_connector_number(local_connector_number)), available ? 1 : 0);
+}
+
 int PowerStackMock::open_socket(std::uint16_t port) {
     psu_printf("Waiting for modbus connection\n");
 
@@ -472,6 +491,18 @@ float PowerStackMock::get_maximum_rated_charge_current(std::uint16_t local_conne
     return registers_to_float(read_result);
 }
 
+std::optional<fusion_charger::modbus_driver::raw_registers::WorkingStatus>
+PowerStackMock::get_working_status(std::uint16_t local_connector_number) {
+    auto read_result = client.read_holding_registers(
+        0x110B + static_cast<std::uint16_t>(offset_from_connector_number(local_connector_number)), 1);
+
+    if (read_result.size() != 1) {
+        return std::nullopt;
+    }
+
+    return static_cast<fusion_charger::modbus_driver::raw_registers::WorkingStatus>(read_result[0]);
+}
+
 DispenserInformation PowerStackMock::get_dispenser_information() {
     auto read_result = client.read_holding_registers(0x0000, 3);
     auto hardware_version = client.read_holding_registers(0x0004, 1)[0];
@@ -552,4 +583,15 @@ int PowerStackMock::client_socket() {
 
 void PowerStackMock::set_enable_answer_module_placeholder_allocation(bool enable) {
     answer_module_placeholder_allocation = enable;
+}
+
+std::optional<int> PowerStackMock::get_global_connector_number_from_local(std::uint16_t local_connector_number) {
+    auto read_result = client.read_holding_registers(
+        0x110E + static_cast<std::uint16_t>(offset_from_connector_number(local_connector_number)), 1);
+
+    if (read_result.size() != 1) {
+        return std::nullopt;
+    }
+
+    return static_cast<int>(read_result[0]);
 }
