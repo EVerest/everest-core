@@ -42,6 +42,7 @@ public:
 private:
     void run_operation_message_worker();
     void run_result_message_worker();
+    void run_external_mqtt_worker();
 
     void handle_operation_message(const std::string& topic, const json& payload);
     void handle_result_message(const std::string& topic, const json& payload);
@@ -66,18 +67,23 @@ private:
     // Threads
     std::thread
         operation_worker_thread; // processes vars, commands, external MQTT, errors, GetConfig and ModuleReady messages
-    std::thread result_worker_thread; // processes cmd results and GetConfig responses
-    std::thread ready_thread;         // runs the modules ready function
+    std::thread result_worker_thread;        // processes cmd results and GetConfig responses
+    std::thread external_mqtt_worker_thread; // processes external MQTT messages
+    std::thread ready_thread;                // runs the modules ready function
 
     // Queues and sync primitives
     std::queue<ParsedMessage> operation_message_queue;
     std::queue<ParsedMessage> result_message_queue;
+    std::queue<ParsedMessage> external_mqtt_message_queue;
 
     std::mutex operation_queue_mutex;
     std::condition_variable operation_cv;
 
     std::mutex result_queue_mutex;
     std::condition_variable result_cv;
+
+    std::mutex external_mqtt_queue_mutex;
+    std::condition_variable external_mqtt_cv;
 
     std::mutex cmd_result_handler_mutex;
     std::mutex handler_mutex;

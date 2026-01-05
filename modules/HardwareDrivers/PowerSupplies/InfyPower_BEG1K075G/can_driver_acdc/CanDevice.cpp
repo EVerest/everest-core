@@ -113,5 +113,6 @@ bool CanDevice::_tx(uint32_t can_id, const std::vector<uint8_t>& payload) {
         throw std::runtime_error(std::string("Failed to send can packet :") + strerror(errno));
         return false;
     }
+
     return true;
 }

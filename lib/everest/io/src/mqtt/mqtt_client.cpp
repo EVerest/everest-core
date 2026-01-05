@@ -131,8 +131,9 @@ everest::lib::io::event::sync_status mqtt_client::sync() {
 
 ///// mosquitto_cpp override
 
-ErrorCode mqtt_client::connect_impl(const std::string_view& host, std::uint16_t port, std::uint16_t keepalive_seconds) {
-    auto result = mosquitto_cpp::connect_impl(host, port, keepalive_seconds);
+ErrorCode mqtt_client::connect_impl(std::string_view const& bind_address, std::string_view const& host,
+                                    std::uint16_t port, std::uint16_t keepalive_seconds) {
+    auto result = mosquitto_cpp::connect_impl(bind_address, host, port, keepalive_seconds);
     if (result == ErrorCode::Success) {
         m_last_socket = socket();
         m_handler.register_event_handler(

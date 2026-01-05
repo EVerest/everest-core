@@ -529,7 +529,7 @@ GenericResponseStatus SqliteStorage::write_module_data(const ModuleData& module_
     stmt->bind_int(3, module_data.standalone);
 
     if (module_data.capabilities.has_value()) {
-        stmt->bind_text(4, module_data.capabilities.value());
+        stmt->bind_text(4, json(module_data.capabilities.value()).dump(), SQLiteString::Transient);
     } else {
         stmt->bind_null(4);
     }
@@ -780,7 +780,10 @@ GetModuleDataResponse SqliteStorage::get_module_data(const std::string& module_i
         module_data.module_id = module_id;
         module_data.module_name = stmt->column_text(0);
         module_data.standalone = stmt->column_int(1);
-        module_data.capabilities = stmt->column_text_nullable(2);
+        const auto capabilities_str = stmt->column_text_nullable(2);
+        if (capabilities_str.has_value()) {
+            module_data.capabilities = json::parse(capabilities_str.value()).get<std::vector<std::string>>();
+        }
         response.module_data = module_data;
         response.status = GenericResponseStatus::OK;
     }

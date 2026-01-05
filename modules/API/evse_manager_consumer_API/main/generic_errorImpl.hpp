@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
-#ifndef MAIN_EMPTY_IMPL_HPP
-#define MAIN_EMPTY_IMPL_HPP
+#ifndef MAIN_GENERIC_ERROR_IMPL_HPP
+#define MAIN_GENERIC_ERROR_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -63,4 +63,4 @@ private:
 } // namespace main
 } // namespace module
 
-#endif // MAIN_EMPTY_IMPL_HPP
+#endif // MAIN_GENERIC_ERROR_IMPL_HPP

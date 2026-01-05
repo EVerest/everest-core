@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(everest-core
-    VERSION 2025.10.0
+    VERSION 2025.12.0
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
@@ -71,6 +71,7 @@ option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(EVEREST_ENABLE_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag" OFF)
 option(EVEREST_ENABLE_GLOBAL_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag globally" OFF)
 option(EVEREST_ENABLE_DEBUG_BUILD "Enable debug build" OFF)
+option(EVEREST_BUILD_APPLICATIONS "Build applications like drivers for the EVerest stable API" ON)
 # list of compile options that are passed to modules if EVEREST_ENABLE_COMPILE_WARNINGS=ON
 # generated code has functions often not used
 set(EVEREST_COMPILE_OPTIONS "-Wall;-Wno-unused-function" CACHE STRING "A list of compile options used for building modules")
@@ -80,6 +81,13 @@ endif()
 if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     set(EVEREST_CORE_BUILD_TESTING ON)
     set(everest-framework_BUILD_TESTING ON)
+    set(ISO15118_BUILD_TESTING ON)
+    set(ocpp_BUILD_TESTING ON)
+    set(LIBEVSE_SECURITY_BUILD_TESTING ON)
+    set(everest-evse_security_BUILD_TESTING ON)
+    set(everest-sqlite_BUILD_TESTING ON)
+    set(everest-timer_BUILD_TESTING ON)
+    set(everest-log_BUILD_TESTING ON)
 endif()
 # This is a flag for building development tests, but not necessarily to run them, for expample in case
 # tests requires hardware.
@@ -128,6 +136,10 @@ include(compatibility/boost)
 set(everest-framework_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/everest/framework)
 set(everest-framework_BINARY_DIR ${CMAKE_BINARY_DIR}/lib/everest/framework)
 set(EVEREST_SCHEMA_DIR ${everest-framework_SOURCE_DIR}/schemas)
+set(everest-sqlite_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/everest/sqlite)
+if(NOT DEFINED EVEREST_ENABLE_PY_SUPPORT)
+    set(EVEREST_ENABLE_PY_SUPPORT ON CACHE BOOL "Enable EVerest Python support" FORCE)
+endif()
 
 if(NOT DISABLE_EDM)
     # FIXME (aw): this implicit definition for child projects is hacky
@@ -145,10 +157,6 @@ if(NOT DISABLE_EDM)
     # ev-cli and everest-testing
     add_subdirectory(applications/utils)
 else()
-    find_package(everest-ocpp REQUIRED)
-    find_package(cbv2g REQUIRED)
-    find_package(iso15118 REQUIRED)
-
     find_package(PalSigslot REQUIRED)
 
     find_package(libnfc-nci REQUIRED)
@@ -164,6 +172,8 @@ else()
 
     find_package(fmt REQUIRED)
     find_package(date REQUIRED)
+
+    find_package(OpenSSL 3 REQUIRED)
 endif()
 
 
@@ -183,6 +193,10 @@ add_subdirectory(lib)
 add_subdirectory(config)
 
 add_subdirectory(doc)
+
+if(EVEREST_BUILD_APPLICATIONS)
+  add_subdirectory(applications)
+endif()
 
 ev_install_project()
 

@@ -1,0 +1,177 @@
+{% if first %}
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
+#include <ocpp/{{namespace}}/ocpp_types.hpp>
+
+#include <string>
+#include <optional>
+
+#include <nlohmann/json.hpp>
+
+#include <ocpp/{{namespace}}/ocpp_enums.hpp>
+#include <ocpp/common/types.hpp>
+
+namespace ocpp {
+namespace {{namespace}} {
+{% endif %}
+{%- if parsed_types|length %}
+{%- for type in parsed_types %}
+{% if not type.name.endswith('Request') and not type.name.endswith('Response') and not (type.name == "CustomData" and namespace == "v2") %}
+
+    /// \brief Conversion from a given {{ type.name }} \p k to a given json object \p j
+    void to_json(json& j, const {{ type.name }}& k) {
+        // the required parts of the message
+{% if type.properties|selectattr('required')|list|length %}
+        j = json{
+{%- endif %}
+{%- for property in type.properties %}
+{%- if property.required %}{"{{property.name}}",
+    {%- if property.enum %}
+ conversions::{{- property.type | snake_case}}_to_string(k.{{property.name}})
+    {%- else %}
+        {%- if property.type == 'ocpp::DateTime' %}
+k.{{property.name}}.to_rfc3339()
+        {%- else %}
+k.{{property.name}}
+        {%- endif %}
+    {%- endif %}},
+{%- endif %}
+{%- endfor %}
+{% if not type.properties|selectattr('required')|list|length %}
+        j = json ({}, true);
+{%- else %}
+};
+{%- endif %}
+
+        // the optional parts of the message
+{% for property in type.properties %}
+{% if not property.required %}
+        if (k.{{property.name}}) {
+            {% if property.type.startswith('std::vector<') %}
+            {%- if type.properties|selectattr('required')|list|length %}
+j["{{property.name}}"] = json::array();
+            {%- else %}
+{#only optional keys in json#}
+{#TODO: add key to json when there are no required keys but multiple optional keys#}
+if (j.empty()) {
+                j = json{{'{{"'+property.name+'", json::array()}};'}}
+            } else {
+                j["{{property.name}}"] = json::array();
+            }
+{% endif %}
+            for (const auto& val : k.{{property.name}}.value()) {
+                {%- if property.type.endswith('Enum>') %}
+                j["{{property.name}}"].push_back(conversions::{{- property.type.replace('std::vector<','').replace('>','') | snake_case}}_to_string(val));
+                {%- else%}
+                j["{{property.name}}"].push_back(val);
+                {%- endif%}
+            }
+{% else %}
+{%- if property.enum %}
+j["{{property.name}}"] = conversions::{{- property.type | snake_case}}_to_string(k.{{property.name}}.value());
+    {%- else %}
+        {%- if property.type == 'ocpp::DateTime' %}
+j["{{property.name}}"] = k.{{property.name}}.value().to_rfc3339();
+        {%- else %}
+j["{{property.name}}"] = k.{{property.name}}.value();
+        {%- endif %}
+    {%- endif %}
+{% endif %}
+
+        }
+{% endif %}
+{% endfor %}
+    }
+
+    /// \brief Conversion from a given json object \p j to a given {{ type.name }} \p k
+    void from_json(const json& j, {{ type.name }}& k) {
+        // the required parts of the message
+{% for property in type.properties %}
+{% if property.required %}
+{% if property.type.startswith('std::vector<') %}
+        for (const auto& val : j.at("{{property.name}}")) {
+            k.{{property.name}}.push_back(val);
+        }
+{% else %}
+        k.{{property.name}} =
+    {%- if property.enum %}
+ conversions::string_to_{{- property.type | snake_case}}(j.at("{{property.name}}"))
+    {%- else %}
+        {%- if property.type == 'ocpp::DateTime' %}
+ ocpp::DateTime(std::string(j.at("{{property.name}}")))
+        {%- else %}
+ j.at("{{property.name}}")
+        {%- endif %}
+    {%- endif %};
+{% endif %}
+{% endif %}
+{%- endfor %}
+
+        // the optional parts of the message
+{% for property in type.properties %}
+{% if not property.required %}
+        if (j.contains("{{property.name}}")) {
+{% if property.type.startswith('std::vector<') %}
+            const json& arr = j.at("{{property.name}}");
+            {{property.type}} vec;
+            for (const auto& val : arr) {
+                {%- if property.type.endswith('Enum>') %}
+                vec.push_back(conversions::string_to_{{- property.type.replace('std::vector<','').replace('>','') | snake_case}}(val));
+                {%- else %}
+                vec.push_back(val);
+                {%- endif %}
+            }
+            k.{{property.name}}.emplace(vec);
+{% else %}
+{% if property.enum %}
+            k.{{property.name}}.emplace(conversions::string_to_{{- property.type | snake_case}}(j.at("{{property.name}}")));
+{% else %}
+        {%- if property.type == 'ocpp::DateTime' %}
+            k.{{property.name}}.emplace(j.at("{{property.name}}").get<std::string>());
+        {%- else %}
+{% if type.name == "VariableAttribute" and property.name == "value"%}
+        const json& value = j.at("value");
+        if (value.is_string()) {
+            k.value = value;
+        } else if (value.is_boolean()) {
+            if (value.get<bool>()) {
+                // Convert to lower case if that is not the case currently.
+                k.value = "true";
+            } else {
+                // Convert to lower case if that is not the case currently.
+                k.value = "false";
+            }
+        } else if (value.is_array() || value.is_object()) {
+            // Maybe this is correct and is just a string (json value string), so just return the string.
+            k.value = value.dump();
+        } else {
+            k.value = value.dump();
+        }
+{% else %}
+            k.{{property.name}}.emplace(j.at("{{property.name}}"));
+{% endif %}
+        {%- endif %}
+{% endif %}
+{% endif %}
+        }
+{% endif %}
+{% endfor %}
+    }
+
+    // \brief Writes the string representation of the given {{ type.name }} \p k to the given output stream \p os
+    /// \returns an output stream with the {{ type.name }} written to
+    std::ostream& operator<<(std::ostream& os, const {{ type.name }}& k) {
+        os << json(k).dump(4);
+        return os;
+    }
+
+{% endif %}
+{% endfor %}
+{%- endif %}
+{% if last %}
+} // namespace {{namespace}}
+} // namespace ocpp
+
+{% endif %}

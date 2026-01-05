@@ -89,6 +89,11 @@ private:
 
     bool tx(const uint8_t destination_address, const std::vector<uint8_t>& payload);
 
+    std::atomic<float> setpoint_voltage{0}, setpoint_current{0};
+    std::atomic_bool on;
+    std::atomic_bool walkin_enable;
+    std::atomic_bool inverter_mode;
+
     std::mutex settingsMutex;
 };
 

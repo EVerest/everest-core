@@ -27,13 +27,10 @@ void power_supply_DCImpl::init() {
     caps.conversion_efficiency_import = 0.95;
 
     mod->acdc.signalVoltageCurrent.connect([this](float voltage, float current) {
-        static uint8_t throttle_cnt = 0;
-        if (throttle_cnt++ % 10 == 0) {
-            types::power_supply_DC::VoltageCurrent vc;
-            vc.current_A = current;
-            vc.voltage_V = voltage;
-            publish_voltage_current(vc);
-        }
+        types::power_supply_DC::VoltageCurrent vc;
+        vc.current_A = current;
+        vc.voltage_V = voltage;
+        publish_voltage_current(vc);
     });
 
     mod->acdc.signalModuleStatus.connect(

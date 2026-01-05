@@ -44,7 +44,7 @@ active_modules:
   yeti_driver_2:
     module: YetiSimulator
     config_module:
-      connector_id: 1
+      connector_id: 2
   car_simulator_1:
     module: EvManager
     config_module:

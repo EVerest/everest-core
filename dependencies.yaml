@@ -14,34 +14,10 @@ pugixml:
   git_tag: v1.15
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_PUGIXML"
 
-# everest-framework
-liblog:
-  git: https://github.com/EVerest/liblog.git
-  git_tag: v0.3.0
-  options: ["BUILD_EXAMPLES OFF", "CMAKE_POSITION_INDEPENDENT_CODE ON"]
-
-# Auth module
-libtimer:
-  git: https://github.com/EVerest/libtimer.git
-  git_tag: v0.1.3
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBTIMER"
-  options: ["BUILD_EXAMPLES OFF"]
-
-# libcbv2g
-libcbv2g:
-  git: https://github.com/EVerest/libcbv2g.git
-  git_tag: v0.3.1
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
-# libiso15118
-libiso15118:
-  git: https://github.com/EVerest/libiso15118.git
-  git_tag: 5c81c928dada6ba9dc931780c4d72aa0f0a16f88
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
-
 # LEM DCBM 400/600, IsabellenhuetteIemDcr modules
 libcurl:
   git: https://github.com/curl/curl.git
-  git_tag: curl-8_16_0
+  git_tag: curl-8_17_0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
   options: [
     "BUILD_EXAMPLES OFF",
@@ -56,23 +32,10 @@ libcurl:
     "USE_NGHTTP2 OFF",
   ]
 
-# EvseSecurity
-# This has to appear before libocpp in this file since it is also a direct dependency
-# of libocpp and would otherwise be overwritten by the version used there
-libevse-security:
-  git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.10.0
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
-
-# OCPP
-libocpp:
-  git: https://github.com/EVerest/libocpp.git
-  git_tag: 2c727f86e9ff988bdf13fcf5b049f0d5c3650384
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 89db9d27db551801d45627f802e4c3a029ed29c2
+  git_tag: 2025.12.0
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # linux_libnfc-nci for RFID
 libnfc-nci:
@@ -92,7 +55,7 @@ mqttc:
 # Linux_Systemd_Rauc module
 sdbus-cpp:
   git:  https://github.com/Kistler-Group/sdbus-cpp.git
-  git_tag: v2.1.0
+  git_tag: v2.2.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SDBUS_CPP"
   options: ["CMAKE_POSITION_INDEPENDENT_CODE ON"]
 # unit testing
@@ -101,16 +64,13 @@ gtest:
   git: https://github.com/google/googletest.git
   git_tag: release-1.12.1
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
-everest-sqlite:
-  git: https://github.com/EVerest/everest-sqlite.git
-  git_tag: v0.1.4
 catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.9.0
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 mosquitto:
   git: https://github.com/eclipse-mosquitto/mosquitto
-  git_tag: v2.0.21
+  git_tag: v2.0.22
   options:
   - DOCUMENTATION OFF
   - WITH_BROKER OFF

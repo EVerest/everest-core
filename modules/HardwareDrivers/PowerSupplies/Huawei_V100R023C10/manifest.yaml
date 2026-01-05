@@ -1,0 +1,201 @@
+description: >-
+  Driver for the Huawei FusionCharge V100R023C10 DC Power Unit.
+  Currently the driver only supports a single connector per dispenser (per host).
+config:
+  ethernet_interface:
+    description: Ethernet interface name to use for communication with the power supply.
+    type: string
+    default: eth0
+  psu_ip:
+    description: IP address of the power supply.
+    type: string
+    default: "192.168.11.1"
+  psu_port:
+    description: Modbus port of the power supply.
+    type: integer
+    default: 502
+  tls_enabled:
+    description: |
+      Enable TLS encryption for the connection to the power supply.
+      If set to true, the psu_ca, the client_cert and client_key must be provided.
+    type: boolean
+    default: false
+  psu_ca_cert:
+    description: |
+      Path to the CA certificate file for the power supply.
+      If not provided, the connection will not be encrypted.
+    type: string
+    default: ""
+  client_cert:
+    description: |
+      Path to the client certificate file for the power supply.
+      If not provided, the connection will not be encrypted.
+    type: string
+    default: ""
+  client_key:
+    description: |
+      Path to the client key file for the power supply.
+      If not provided, the connection will not be encrypted.
+    type: string
+    default: ""
+  module_placeholder_allocation_timeout_s:
+    description: |
+      Timeout in seconds for the allocation of a module placeholder.
+    type: integer
+    default: 5
+  esn:
+    description: |
+      Electronic Serial Number of the dispenser.
+      Required to identify the dispenser in case there are multiple dispensers.
+    type: string
+    default: "0000000000000000"
+  HACK_publish_requested_voltage_current:
+    description: |
+      Just publish the requested voltage and current to the power supply.
+      This is a hack useful for testing in a SIL environment.
+    type: boolean
+    default: false
+  HACK_use_ovm_while_cable_check:
+    description: |
+      Use the over voltage monitor while the cable check is running instead of the powermeter, e.g. when the powermeter is too slow.
+    type: boolean
+    default: false
+  send_secure_goose:
+    description: |
+      Send secure GOOSE frames to the power supply.
+      If set to false, the GOOSE frames are sent without a signature. If set to true, the outgoing GOOSE frames are signed.
+      Note: This does not affect receiving GOOSE frames.
+    type: boolean
+    default: true
+  allow_insecure_goose:
+    description: |
+      Allow receiving insecure GOOSE frames from the power supply.
+      If set to false, the received GOOSE frames must be signed (the signature is only checked if verify_secure_goose is set to true).
+      If set to true, the received GOOSE frames are not checked for a signature.
+      Note: If verify_secure_goose is set to true, this setting is ignored.
+    type: boolean
+    default: false
+  verify_secure_goose:
+    description: |
+      Verify the received GOOSE frames.
+      If set to false, the received GOOSE frames are not verified.
+      If set to true, the received GOOSE frames must be secure and the signature must be valid.
+      Note: If this is set to true the allow_insecure_goose setting is ignored
+    type: boolean
+    default: true
+  upstream_voltage_source:
+    description: |
+      The PSU upstream voltage source to use
+    type: string
+    enum:
+      - IMD
+      - OVM
+    default: IMD
+  telemetry_topic_prefix:
+    description: |
+      MQTT Topic prefix for telemetry data published by this module.
+      Set to an empty string (default) to disable telemetry publishing.
+    type: string
+    default: ""
+provides:
+  connector_1:
+    description: Power supply interface for the first connector.
+    interface: power_supply_DC
+    config:
+      global_connector_number:
+        description: |
+          Number of the connector.
+          Required to identify the connector.
+        type: integer
+      max_export_current_A:
+        description: >-
+          Maximum current that the connector can deliver.
+        type: number
+        default: 0
+      max_export_power_W:
+        description: >-
+          Maximum power that the connector can deliver.
+        type: number
+        default: 0
+  connector_2:
+    description: Power supply interface for the second connector.
+    interface: power_supply_DC
+    config:
+      global_connector_number:
+        description: |
+          Number of the connector.
+          Required to identify the connector.
+        type: integer
+        default: -1
+      max_export_current_A:
+        description: >-
+          Maximum current that the connector can deliver.
+        type: number
+        default: 0
+      max_export_power_W:
+        description: >-
+          Maximum power that the connector can deliver.
+        type: number
+        default: 0
+  connector_3:
+    description: Power supply interface for the third connector.
+    interface: power_supply_DC
+    config:
+      global_connector_number:
+        description: |
+          Number of the connector.
+          Required to identify the connector.
+        type: integer
+        default: -1
+      max_export_current_A:
+        description: >-
+          Maximum current that the connector can deliver.
+        type: number
+        default: 0
+      max_export_power_W:
+        description: >-
+          Maximum power that the connector can deliver.
+        type: number
+        default: 0
+  connector_4:
+    description: Power supply interface for the fourth connector.
+    interface: power_supply_DC
+    config:
+      global_connector_number:
+        description: |
+          Number of the connector.
+          Required to identify the connector.
+        type: integer
+        default: -1
+      max_export_current_A:
+        description: >-
+          Maximum current that the connector can deliver.
+        type: number
+        default: 0
+      max_export_power_W:
+        description: >-
+          Maximum power that the connector can deliver.
+        type: number
+        default: 0
+requires:
+  board_support:
+    interface: evse_board_support
+    min_connections: 1
+    max_connections: 4
+  isolation_monitor:
+    interface: isolation_monitor
+    min_connections: 0
+    max_connections: 4
+  carside_powermeter:
+    interface: powermeter
+    min_connections: 0
+    max_connections: 4
+  over_voltage_monitor:
+    interface: over_voltage_monitor
+    min_connections: 0
+    max_connections: 4
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Frickly Systems GmbH
