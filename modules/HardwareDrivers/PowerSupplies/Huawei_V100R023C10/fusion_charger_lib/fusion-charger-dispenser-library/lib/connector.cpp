@@ -314,6 +314,26 @@ void Connector::start() {
     // todo: reset fsm?
 
     goose_sender.start();
+
+    std::string connector_telemetry_subtopic = "connector/" + std::to_string(connector_config.global_connector_number);
+    dispenser_config.telemetry_publisher->add_subtopic(connector_telemetry_subtopic);
+
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider(
+        connector_telemetry_subtopic, "max_rated_psu_current", &connector_registers.max_rated_psu_current);
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider(
+        connector_telemetry_subtopic, "min_rated_psu_current", &connector_registers.min_rated_psu_current);
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider(
+        connector_telemetry_subtopic, "max_rated_psu_voltage", &connector_registers.max_rated_psu_voltage);
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider(
+        connector_telemetry_subtopic, "min_rated_psu_voltage", &connector_registers.min_rated_psu_voltage);
+
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider<float>(
+        connector_telemetry_subtopic, "rated_output_power_psu", &connector_registers.rated_output_power_psu,
+        [](const float& kw) { return kw * 1000.0; });
+
+    dispenser_config.telemetry_publisher->register_complex_register_data_provider_enum<PsuOutputPortAvailability>(
+        connector_telemetry_subtopic, "psu_port_available", &connector_registers.psu_port_available,
+        psu_output_port_availability_to_string);
 }
 
 void Connector::stop() {

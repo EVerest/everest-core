@@ -5,7 +5,7 @@ ryml:
   options: ["CMAKE_POSITION_INDEPENDENT_CODE ON"]
 libwebsockets:
   git: https://github.com/warmcat/libwebsockets.git
-  git_tag: v4.4.1
+  git_tag: v4.5.2
   cmake_condition: "EVEREST_ENABLE_ADMIN_PANEL_BACKEND"
   options:
     - CMAKE_POLICY_VERSION_MINIMUM 3.5
@@ -30,13 +30,14 @@ libwebsockets:
     - LWS_WITHOUT_TEST_PING ON
     - LWS_WITHOUT_TEST_CLIENT ON
     - LWS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR}
+    - DISABLE_WERROR ON
 nlohmann_json:
   git: https://github.com/nlohmann/json
   git_tag: v3.12.0
   options: ["JSON_BuildTests OFF", "JSON_MultipleHeaders ON"]
 nlohmann_json_schema_validator:
   git: https://github.com/pboettch/json-schema-validator
-  git_tag: 2.3.0
+  git_tag: 2.4.0
   options:
     [
       "JSON_VALIDATOR_INSTALL OFF",

@@ -56,18 +56,18 @@ Here are the steps required:
    **One-liner:**
 
    ```bash
-   curl -s https://raw.githubusercontent.com/EVerest/everest-dev-environment/main/devcontainer/template/setup-container > setup-container && chmod +x setup-container && ./setup-container
+   curl -s https://raw.githubusercontent.com/EVerest/everest-core/refs/heads/main/applications/dev-environment/devcontainer/setup-container > setup-container && chmod +x setup-container && ./setup-container
    ```
 
    **Manual clone (if curl fails):**
 
    ```bash
-   git clone git@github.com:EVerest/everest-dev-environment.git
-   cp everest-dev-environment/devcontainer/template/setup-container setup-container
+   git clone git@github.com:EVerest/everest-core.git
+   cp everest-core/applications/dev-environment/devcontainer/setup-container setup-container
    chmod +x setup-container
    ./setup-container
-   # you can delete the everest-dev-environment folder, it is not needed anymore
-   rm -rf everest-dev-environment
+   # you can delete the everest-core folder, it is not needed anymore
+   rm -rf everest-core
    ```
 
    The script will ask you for:

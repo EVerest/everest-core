@@ -377,11 +377,8 @@ std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbstractio
         // FIXME (aw): implicitly adding ModuleReadyInfo and setting its ready member
         auto module_it = modules_ready.emplace(module_id, ModuleReadyInfo{false, nullptr, nullptr}).first;
 
-        std::vector<std::string> capabilities;
-        const auto& module_capabilities = module_configurations.at(module_id).capabilities;
-        if (module_capabilities.has_value()) {
-            capabilities.push_back(module_capabilities.value());
-        }
+        std::vector<std::string> capabilities =
+            module_configurations.at(module_id).capabilities.value_or(std::vector<std::string>{});
 
         if (not capabilities.empty()) {
             EVLOG_info << fmt::format("Module {} wants to acquire the following capabilities: {}", module_name,

@@ -8,6 +8,7 @@
 
 #include "callbacks.hpp"
 #include "fusion_charger/modbus/registers/raw.hpp"
+#include "telemetry.hpp"
 #include "tls_util.hpp"
 
 typedef fusion_charger::modbus_driver::raw_registers::ConnectorType ConnectorType;
@@ -40,6 +41,9 @@ struct DispenserConfig {
     std::optional<tls_util::MutualTlsClientConfig> tls_config;
 
     std::chrono::milliseconds module_placeholder_allocation_timeout;
+
+    std::shared_ptr<fusion_charger::telemetry::TelemetryPublisherBase> telemetry_publisher =
+        std::make_shared<fusion_charger::telemetry::TelemetryPublisherNull>();
 };
 
 struct ConnectorConfig {
