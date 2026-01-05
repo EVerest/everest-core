@@ -9,79 +9,86 @@ Let us have a look at the most important topics first.
 Below that, you will be presented with a categorized list of all articles.
 
 .. grid:: 1 2 2 3
-   :gutter: 2
+    :gutter: 2
 
-   .. grid-item-card:: Framework Overview
-      :link: high-level-overview
-      :link-type: doc
+    .. grid-item-card:: Framework Overview
+        :link: high-level-overview
+        :link-type: doc
 
-      Get a high-level overview of the EVerest framework.
+        Get a high-level overview of the EVerest framework.
 
-   .. grid-item-card:: Error Framework
-      :link: error-framework
-      :link-type: doc
+    .. grid-item-card:: Error Framework
+        :link: error-framework
+        :link-type: doc
 
-      How to communicate error states between modules.
+        How to communicate error states between modules.
 
-   .. grid-item-card:: EVerest Modules in Detail
+    .. grid-item-card:: EVerest Modules in Detail
       :link: detail-module-concept
       :link-type: doc
 
-      Learn about the module concept of EVerest.
+        Learn about the module concept of EVerest.
 
-   .. grid-item-card:: Tier Module Mapping
+    .. grid-item-card:: Tier Module Mapping
       :link: tier-module-mappings
       :link-type: doc
 
       EVerest's 3-tier module mapping explained.
 
-   .. grid-item-card:: Adapt EVerest
-      :link: adapt-everest/index
-      :link-type: doc
+    .. grid-item-card:: Adapt EVerest
+        :link: adapt-everest/index
+        :link-type: doc
 
-      Learn how EVerest can be adapted to your use-case.
+        Learn how EVerest can be adapted to your use-case.
 
-   .. grid-item-card:: The EVerest Dependency Manager
-      :link: dev-tools/edm
-      :link-type: doc
+    .. grid-item-card:: The EVerest Dependency Manager
+        :link: dev-tools/edm
+        :link-type: doc
 
-      Tool helping to orchestrate dependencies between the different EVerest repositories.
+        Tool helping to orchestrate dependencies between the different EVerest repositories.
 
-   .. grid-item-card:: The ev-cli Development Tool
-      :link: dev-tools/edm
-      :link-type: doc
+    .. grid-item-card:: The ev-cli Development Tool
+        :link: dev-tools/edm
+        :link-type: doc
 
-      Command line tool to generate C++ code from interface and manifest definitions.
+        Command line tool to generate C++ code from interface and manifest definitions.
 
-   .. grid-item-card:: The Plug&Charge Process in EVerest
-      :link: dev-tools/edm
-      :link-type: doc
+    .. grid-item-card:: The Plug&Charge Process in EVerest
+        :link: dev-tools/edm
+        :link-type: doc
 
-      Learn how Plug&Charge is implemented in EVerest.
+        Learn how Plug&Charge is implemented in EVerest.
 
-   .. grid-item-card:: Linux / Yocto and EVerest
-      :link: linux-yocto/index
-      :link-type: doc
+    .. grid-item-card:: Linux / Yocto and EVerest
+        :link: linux-yocto/index
+        :link-type: doc
 
-      Learn how to integrate EVerest in your embedded application via Yocto and allow for secure OTA updates.
+        Learn how to integrate EVerest in your embedded application via Yocto and allow for secure OTA updates.
 
-   .. grid-item-card:: Hardware Architecture
-      :link: hardware-architecture
-      :link-type: doc
+    .. grid-item-card:: Hardware Architecture
+        :link: hardware-architecture
+        :link-type: doc
 
-      Some ideas and guidance on the general architecture of AC or DC chargers.
+        Some ideas and guidance on the general architecture of AC or DC chargers.
 
-   .. grid-item-card:: A Selection of included Hardware Drivers
-      :link: hardware-drivers
-      :link-type: doc
+    .. grid-item-card:: A Selection of included Hardware Drivers
+        :link: hardware-drivers
+        :link-type: doc
 
-      Description of natively supported hardware driver modules included in EVerest.
+        Description of natively supported hardware driver modules included in EVerest.
 
-   .. grid-item-card:: Structure of the EVerest Documentation
+    .. grid-item-card:: Structure of the EVerest Documentation
       :link: the-everest-documentation
       :link-type: doc
 
-      How this documentation is structured.
+        How this documentation is structured.
+   
+    .. grid-item-card:: Use the EVerest Development Container
+        :link: devcontainer-internal/index
+        :link-type: doc
+
+        Internal working of the EVerest development container
+        for different setup variants and how things are connected.
 
 .. toctree::
     :hidden:
@@ -101,3 +108,4 @@ Below that, you will be presented with a categorized list of all articles.
     hardware-drivers
     the-everest-documentation
     powermeter-ocmf
+    devcontainer-internal/index
