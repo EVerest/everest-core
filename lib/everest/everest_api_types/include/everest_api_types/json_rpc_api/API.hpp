@@ -99,9 +99,9 @@ enum class Severity {
 };
 
 struct ImplementationIdentifier {
-    std::string module_id; ///< TODO: description
-    std::string implementation_id; ///< TODO: description
-    std::optional<int32_t> evse_index; ///< TODO: description
+    std::string module_id;                  ///< TODO: description
+    std::string implementation_id;          ///< TODO: description
+    std::optional<int32_t> evse_index;      ///< TODO: description
     std::optional<int32_t> connector_index; ///< TODO: description
 
     friend constexpr bool operator==(const ImplementationIdentifier& k, const ImplementationIdentifier& l) {
@@ -116,25 +116,25 @@ struct ImplementationIdentifier {
 };
 
 struct ChargerInfoObj {
-    std::string vendor; ///< EVSE vendor
-    std::string model; ///< EVSE model
-    std::string serial; ///< EVSE serial number
-    std::string firmware_version; ///< EVSE firmware version
-    std::optional<std::string> friendly_name; ///< EVSE friendly name
-    std::optional<std::string> manufacturer; ///< EVSE manufacturer
+    std::string vendor;                          ///< EVSE vendor
+    std::string model;                           ///< EVSE model
+    std::string serial;                          ///< EVSE serial number
+    std::string firmware_version;                ///< EVSE firmware version
+    std::optional<std::string> friendly_name;    ///< EVSE friendly name
+    std::optional<std::string> manufacturer;     ///< EVSE manufacturer
     std::optional<std::string> manufacturer_url; ///< Manufacturer's URL
-    std::optional<std::string> model_url; ///< EVSE model's URL
-    std::optional<std::string> model_no; ///< EVSE model number
-    std::optional<std::string> revision; ///< EVSE model revision
-    std::optional<std::string> board_revision; ///< EVSE board revision
+    std::optional<std::string> model_url;        ///< EVSE model's URL
+    std::optional<std::string> model_no;         ///< EVSE model number
+    std::optional<std::string> revision;         ///< EVSE model revision
+    std::optional<std::string> board_revision;   ///< EVSE board revision
 
     friend constexpr bool operator==(const ChargerInfoObj& k, const ChargerInfoObj& l) {
-        const auto& lhs_tuple = std::tie(k.vendor, k.model, k.serial, k.firmware_version, k.friendly_name,
-                                         k.manufacturer, k.manufacturer_url, k.model_url, k.model_no, k.revision,
-                                         k.board_revision);
-        const auto& rhs_tuple = std::tie(l.vendor, l.model, l.serial, l.firmware_version, l.friendly_name,
-                                         l.manufacturer, l.manufacturer_url, l.model_url, l.model_no, l.revision,
-                                         l.board_revision);
+        const auto& lhs_tuple =
+            std::tie(k.vendor, k.model, k.serial, k.firmware_version, k.friendly_name, k.manufacturer,
+                     k.manufacturer_url, k.model_url, k.model_no, k.revision, k.board_revision);
+        const auto& rhs_tuple =
+            std::tie(l.vendor, l.model, l.serial, l.firmware_version, l.friendly_name, l.manufacturer,
+                     l.manufacturer_url, l.model_url, l.model_no, l.revision, l.board_revision);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -144,13 +144,13 @@ struct ChargerInfoObj {
 };
 
 struct ErrorObj {
-    std::string type; ///< TODO: description
-    std::string description; ///< TODO: description
-    std::string message; ///< TODO: description
-    Severity severity; ///< TODO: description
-    ImplementationIdentifier origin; ///< TODO: description
-    std::string timestamp; ///< TODO: description
-    std::string uuid; ///< TODO: description
+    std::string type;                    ///< TODO: description
+    std::string description;             ///< TODO: description
+    std::string message;                 ///< TODO: description
+    Severity severity;                   ///< TODO: description
+    ImplementationIdentifier origin;     ///< TODO: description
+    std::string timestamp;               ///< TODO: description
+    std::string uuid;                    ///< TODO: description
     std::optional<std::string> sub_type; ///< TODO: description
 
     friend constexpr bool operator==(const ErrorObj& k, const ErrorObj& l) {
@@ -167,8 +167,8 @@ struct ErrorObj {
 };
 
 struct ConnectorInfoObj {
-    int32_t index; ///< Unique identifier
-    ConnectorTypeEnum type; ///< Connector type
+    int32_t index;                          ///< Unique identifier
+    ConnectorTypeEnum type;                 ///< Connector type
     std::optional<std::string> description; ///< Description
 
     friend constexpr bool operator==(const ConnectorInfoObj& k, const ConnectorInfoObj& l) {
@@ -183,24 +183,22 @@ struct ConnectorInfoObj {
 };
 
 struct ACChargeParametersObj {
-    float evse_max_current; ///< evse_max_current
-    int32_t evse_max_phase_count; ///< evse_max_phase_count
-    float evse_maximum_charge_power; ///< evse_maximum_charge_power
-    float evse_minimum_charge_power; ///< evse_minimum_charge_power
-    float evse_nominal_frequency; ///< evse_nominal_frequency
-    std::optional<float> evse_nominal_voltage; ///< evse_nominal_voltage
+    float evse_max_current;                            ///< evse_max_current
+    int32_t evse_max_phase_count;                      ///< evse_max_phase_count
+    float evse_maximum_charge_power;                   ///< evse_maximum_charge_power
+    float evse_minimum_charge_power;                   ///< evse_minimum_charge_power
+    float evse_nominal_frequency;                      ///< evse_nominal_frequency
+    std::optional<float> evse_nominal_voltage;         ///< evse_nominal_voltage
     std::optional<float> evse_maximum_discharge_power; ///< evse_maximum_discharge_power
     std::optional<float> evse_minimum_discharge_power; ///< evse_minimum_discharge_power
 
     friend constexpr bool operator==(const ACChargeParametersObj& k, const ACChargeParametersObj& l) {
-        const auto& lhs_tuple =
-            std::tie(k.evse_max_current, k.evse_max_phase_count, k.evse_maximum_charge_power,
-                     k.evse_minimum_charge_power, k.evse_nominal_frequency, k.evse_nominal_voltage,
-                     k.evse_maximum_discharge_power, k.evse_minimum_discharge_power);
-        const auto& rhs_tuple =
-            std::tie(l.evse_max_current, l.evse_max_phase_count, l.evse_maximum_charge_power,
-                     l.evse_minimum_charge_power, l.evse_nominal_frequency, l.evse_nominal_voltage,
-                     l.evse_maximum_discharge_power, l.evse_minimum_discharge_power);
+        const auto& lhs_tuple = std::tie(k.evse_max_current, k.evse_max_phase_count, k.evse_maximum_charge_power,
+                                         k.evse_minimum_charge_power, k.evse_nominal_frequency, k.evse_nominal_voltage,
+                                         k.evse_maximum_discharge_power, k.evse_minimum_discharge_power);
+        const auto& rhs_tuple = std::tie(l.evse_max_current, l.evse_max_phase_count, l.evse_maximum_charge_power,
+                                         l.evse_minimum_charge_power, l.evse_nominal_frequency, l.evse_nominal_voltage,
+                                         l.evse_maximum_discharge_power, l.evse_minimum_discharge_power);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -210,17 +208,17 @@ struct ACChargeParametersObj {
 };
 
 struct DCChargeParametersObj {
-    float evse_maximum_charge_current; ///< evse_maximum_charge_current
-    float evse_maximum_charge_power; ///< evse_maximum_charge_power
-    float evse_maximum_voltage; ///< evse_maximum_voltage
-    float evse_minimum_charge_current; ///< evse_minimum_charge_current
-    float evse_minimum_charge_power; ///< evse_minimum_charge_power
-    float evse_minimum_voltage; ///< evse_minimum_voltage
-    std::optional<float> evse_energy_to_be_delivered; ///< evse_energy_to_be_delivered
+    float evse_maximum_charge_current;                   ///< evse_maximum_charge_current
+    float evse_maximum_charge_power;                     ///< evse_maximum_charge_power
+    float evse_maximum_voltage;                          ///< evse_maximum_voltage
+    float evse_minimum_charge_current;                   ///< evse_minimum_charge_current
+    float evse_minimum_charge_power;                     ///< evse_minimum_charge_power
+    float evse_minimum_voltage;                          ///< evse_minimum_voltage
+    std::optional<float> evse_energy_to_be_delivered;    ///< evse_energy_to_be_delivered
     std::optional<float> evse_maximum_discharge_current; ///< evse_maximum_discharge_current
-    std::optional<float> evse_maximum_discharge_power; ///< evse_maximum_discharge_power
+    std::optional<float> evse_maximum_discharge_power;   ///< evse_maximum_discharge_power
     std::optional<float> evse_minimum_discharge_current; ///< evse_minimum_discharge_current
-    std::optional<float> evse_minimum_discharge_power; ///< evse_minimum_discharge_power
+    std::optional<float> evse_minimum_discharge_power;   ///< evse_minimum_discharge_power
 
     friend constexpr bool operator==(const DCChargeParametersObj& k, const DCChargeParametersObj& l) {
         const auto& lhs_tuple =
@@ -256,9 +254,9 @@ struct ACChargeStatusObj {
 };
 
 struct DCChargeStatusObj {
-    float evse_present_current; ///< evse_present_current
-    float evse_present_voltage; ///< evse_present_voltage
-    bool evse_power_limit_achieved; ///< evse_power_limit_achieved
+    float evse_present_current;       ///< evse_present_current
+    float evse_present_voltage;       ///< evse_present_voltage
+    bool evse_power_limit_achieved;   ///< evse_power_limit_achieved
     bool evse_current_limit_achieved; ///< evse_current_limit_achieved
     bool evse_voltage_limit_achieved; ///< evse_voltage_limit_achieved
 
@@ -276,27 +274,27 @@ struct DCChargeStatusObj {
 };
 
 struct DisplayParametersObj {
-    std::optional<int32_t> start_soc; ///< start_soc
-    std::optional<int32_t> present_soc; ///< present_soc
-    std::optional<int32_t> minimum_soc; ///< minimum_soc
-    std::optional<int32_t> target_soc; ///< target_soc
-    std::optional<int32_t> maximum_soc; ///< maximum_soc
+    std::optional<int32_t> start_soc;                     ///< start_soc
+    std::optional<int32_t> present_soc;                   ///< present_soc
+    std::optional<int32_t> minimum_soc;                   ///< minimum_soc
+    std::optional<int32_t> target_soc;                    ///< target_soc
+    std::optional<int32_t> maximum_soc;                   ///< maximum_soc
     std::optional<int32_t> remaining_time_to_minimum_soc; ///< remaining_time_to_minimum_soc
-    std::optional<int32_t> remaining_time_to_target_soc; ///< remaining_time_to_target_soc
+    std::optional<int32_t> remaining_time_to_target_soc;  ///< remaining_time_to_target_soc
     std::optional<int32_t> remaining_time_to_maximum_soc; ///< remaining_time_to_maximum_soc
-    std::optional<bool> charging_complete; ///< charging_complete
-    std::optional<float> battery_energy_capacity; ///< battery_energy_capacity
-    std::optional<bool> inlet_hot; ///< inlet_hot
+    std::optional<bool> charging_complete;                ///< charging_complete
+    std::optional<float> battery_energy_capacity;         ///< battery_energy_capacity
+    std::optional<bool> inlet_hot;                        ///< inlet_hot
 
     friend constexpr bool operator==(const DisplayParametersObj& k, const DisplayParametersObj& l) {
-        const auto& lhs_tuple = std::tie(k.start_soc, k.present_soc, k.minimum_soc, k.target_soc, k.maximum_soc,
-                                         k.remaining_time_to_minimum_soc, k.remaining_time_to_target_soc,
-                                         k.remaining_time_to_maximum_soc, k.charging_complete, k.battery_energy_capacity,
-                                         k.inlet_hot);
-        const auto& rhs_tuple = std::tie(l.start_soc, l.present_soc, l.minimum_soc, l.target_soc, l.maximum_soc,
-                                         l.remaining_time_to_minimum_soc, l.remaining_time_to_target_soc,
-                                         l.remaining_time_to_maximum_soc, l.charging_complete, l.battery_energy_capacity,
-                                         l.inlet_hot);
+        const auto& lhs_tuple =
+            std::tie(k.start_soc, k.present_soc, k.minimum_soc, k.target_soc, k.maximum_soc,
+                     k.remaining_time_to_minimum_soc, k.remaining_time_to_target_soc, k.remaining_time_to_maximum_soc,
+                     k.charging_complete, k.battery_energy_capacity, k.inlet_hot);
+        const auto& rhs_tuple =
+            std::tie(l.start_soc, l.present_soc, l.minimum_soc, l.target_soc, l.maximum_soc,
+                     l.remaining_time_to_minimum_soc, l.remaining_time_to_target_soc, l.remaining_time_to_maximum_soc,
+                     l.charging_complete, l.battery_energy_capacity, l.inlet_hot);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -306,25 +304,25 @@ struct DisplayParametersObj {
 };
 
 struct HardwareCapabilitiesObj {
-    float max_current_A_export; ///< TODO: description
-    float max_current_A_import; ///< TODO: description
-    int32_t max_phase_count_export; ///< TODO: description
-    int32_t max_phase_count_import; ///< TODO: description
-    float min_current_A_export; ///< TODO: description
-    float min_current_A_import; ///< TODO: description
-    int32_t min_phase_count_export; ///< TODO: description
-    int32_t min_phase_count_import; ///< TODO: description
+    float max_current_A_export;        ///< TODO: description
+    float max_current_A_import;        ///< TODO: description
+    int32_t max_phase_count_export;    ///< TODO: description
+    int32_t max_phase_count_import;    ///< TODO: description
+    float min_current_A_export;        ///< TODO: description
+    float min_current_A_import;        ///< TODO: description
+    int32_t min_phase_count_export;    ///< TODO: description
+    int32_t min_phase_count_import;    ///< TODO: description
     bool phase_switch_during_charging; ///< TODO: description
 
     friend constexpr bool operator==(const HardwareCapabilitiesObj& k, const HardwareCapabilitiesObj& l) {
-        const auto& lhs_tuple = std::tie(k.max_current_A_export, k.max_current_A_import, k.max_phase_count_export,
-                                         k.max_phase_count_import, k.min_current_A_export, k.min_current_A_import,
-                                         k.min_phase_count_export, k.min_phase_count_import,
-                                         k.phase_switch_during_charging);
-        const auto& rhs_tuple = std::tie(l.max_current_A_export, l.max_current_A_import, l.max_phase_count_export,
-                                         l.max_phase_count_import, l.min_current_A_export, l.min_current_A_import,
-                                         l.min_phase_count_export, l.min_phase_count_import,
-                                         l.phase_switch_during_charging);
+        const auto& lhs_tuple =
+            std::tie(k.max_current_A_export, k.max_current_A_import, k.max_phase_count_export, k.max_phase_count_import,
+                     k.min_current_A_export, k.min_current_A_import, k.min_phase_count_export, k.min_phase_count_import,
+                     k.phase_switch_during_charging);
+        const auto& rhs_tuple =
+            std::tie(l.max_current_A_export, l.max_current_A_import, l.max_phase_count_export, l.max_phase_count_import,
+                     l.min_current_A_export, l.min_current_A_import, l.min_phase_count_export, l.min_phase_count_import,
+                     l.phase_switch_during_charging);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -334,17 +332,18 @@ struct HardwareCapabilitiesObj {
 };
 
 struct EVSEInfoObj {
-    int32_t index; ///< Unique index of the EVSE, used for identifying it
-    std::string id; ///< Unique identifier string, as used in V2G communication
+    int32_t index;                                      ///< Unique index of the EVSE, used for identifying it
+    std::string id;                                     ///< Unique identifier string, as used in V2G communication
     std::vector<ConnectorInfoObj> available_connectors; ///< Available connectors
-    std::vector<EnergyTransferModeEnum> supported_energy_transfer_modes; ///< Supported energy transfer modes of the EVSE
+    std::vector<EnergyTransferModeEnum>
+        supported_energy_transfer_modes;    ///< Supported energy transfer modes of the EVSE
     std::optional<std::string> description; ///< Description
 
     friend constexpr bool operator==(const EVSEInfoObj& k, const EVSEInfoObj& l) {
-        const auto& lhs_tuple = std::tie(k.index, k.id, k.available_connectors, k.supported_energy_transfer_modes,
-                                         k.description);
-        const auto& rhs_tuple = std::tie(l.index, l.id, l.available_connectors, l.supported_energy_transfer_modes,
-                                         l.description);
+        const auto& lhs_tuple =
+            std::tie(k.index, k.id, k.available_connectors, k.supported_energy_transfer_modes, k.description);
+        const auto& rhs_tuple =
+            std::tie(l.index, l.id, l.available_connectors, l.supported_energy_transfer_modes, l.description);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -354,19 +353,19 @@ struct EVSEInfoObj {
 };
 
 struct EVSEStatusObj {
-    float charged_energy_wh; ///< charged_energy_wh
-    float discharged_energy_wh; ///< discharged_energy_wh
-    int32_t charging_duration_s; ///< charging_duration_s
-    bool charging_allowed; ///< charging_allowed
-    bool available; ///< available
-    int32_t active_connector_index; ///< active_connector_index
-    bool error_present; ///< error_present
-    ChargeProtocolEnum charge_protocol; ///< charge_protocol
-    EVSEStateEnum state; ///< state
-    std::optional<ACChargeParametersObj> ac_charge_param; ///< ac_charge_param
-    std::optional<DCChargeParametersObj> dc_charge_param; ///< dc_charge_param
-    std::optional<ACChargeStatusObj> ac_charge_status; ///< ac_charge_status
-    std::optional<DCChargeStatusObj> dc_charge_status; ///< dc_charge_status
+    float charged_energy_wh;                                ///< charged_energy_wh
+    float discharged_energy_wh;                             ///< discharged_energy_wh
+    int32_t charging_duration_s;                            ///< charging_duration_s
+    bool charging_allowed;                                  ///< charging_allowed
+    bool available;                                         ///< available
+    int32_t active_connector_index;                         ///< active_connector_index
+    bool error_present;                                     ///< error_present
+    ChargeProtocolEnum charge_protocol;                     ///< charge_protocol
+    EVSEStateEnum state;                                    ///< state
+    std::optional<ACChargeParametersObj> ac_charge_param;   ///< ac_charge_param
+    std::optional<DCChargeParametersObj> dc_charge_param;   ///< dc_charge_param
+    std::optional<ACChargeStatusObj> ac_charge_status;      ///< ac_charge_status
+    std::optional<DCChargeStatusObj> dc_charge_status;      ///< dc_charge_status
     std::optional<DisplayParametersObj> display_parameters; ///< display_parameters
 
     friend constexpr bool operator==(const EVSEStatusObj& k, const EVSEStatusObj& l) {
@@ -390,7 +389,7 @@ struct Current_A {
     std::optional<float> L1; ///< AC L1 value only
     std::optional<float> L2; ///< AC L2 value only
     std::optional<float> L3; ///< AC L3 value only
-    std::optional<float> N; ///< AC Neutral value only
+    std::optional<float> N;  ///< AC Neutral value only
 
     friend constexpr bool operator==(const Current_A& k, const Current_A& l) {
         const auto& lhs_tuple = std::tie(k.L1, k.L2, k.L3, k.N);
@@ -404,7 +403,7 @@ struct Current_A {
 };
 
 struct Energy_Wh_import {
-    float total; ///< DC / AC Sum value (which is relevant for billing)
+    float total;             ///< DC / AC Sum value (which is relevant for billing)
     std::optional<float> L1; ///< AC L1 value only
     std::optional<float> L2; ///< AC L2 value only
     std::optional<float> L3; ///< AC L3 value only
@@ -421,7 +420,7 @@ struct Energy_Wh_import {
 };
 
 struct Energy_Wh_export {
-    float total; ///< DC / AC Sum value (which is relevant for billing)
+    float total;             ///< DC / AC Sum value (which is relevant for billing)
     std::optional<float> L1; ///< AC L1 value only
     std::optional<float> L2; ///< AC L2 value only
     std::optional<float> L3; ///< AC L3 value only
@@ -438,7 +437,7 @@ struct Energy_Wh_export {
 };
 
 struct Frequency_Hz {
-    float L1; ///< AC L1 value
+    float L1;                ///< AC L1 value
     std::optional<float> L2; ///< AC L2 value
     std::optional<float> L3; ///< AC L3 value
 
@@ -454,7 +453,7 @@ struct Frequency_Hz {
 };
 
 struct Power_W {
-    float total; ///< DC / AC Sum value
+    float total;             ///< DC / AC Sum value
     std::optional<float> L1; ///< AC L1 value only
     std::optional<float> L2; ///< AC L2 value only
     std::optional<float> L3; ///< AC L3 value only
@@ -487,15 +486,16 @@ struct Voltage_V {
 };
 
 struct MeterDataObj {
-    Energy_Wh_import energy_Wh_import; ///< Imported energy in Wh (from grid)
-    std::string timestamp; ///< Timestamp of the meter values, as RFC3339 string
-    std::optional<Current_A> current_A; ///< Current in Ampere
+    Energy_Wh_import energy_Wh_import;                ///< Imported energy in Wh (from grid)
+    std::string timestamp;                            ///< Timestamp of the meter values, as RFC3339 string
+    std::optional<Current_A> current_A;               ///< Current in Ampere
     std::optional<Energy_Wh_export> energy_Wh_export; ///< Exported energy in Wh (to grid)
-    std::optional<Frequency_Hz> frequency_Hz; ///< Grid frequency in Hertz
-    std::optional<std::string> meter_id; ///< TODO: description
-    std::optional<std::string> serial_number; ///< TODO: description
-    std::optional<bool> phase_seq_error; ///< TODO: description
-    std::optional<Power_W> power_W; ///< Instantaneous power in Watt. Negative values are exported, positive values imported energy.
+    std::optional<Frequency_Hz> frequency_Hz;         ///< Grid frequency in Hertz
+    std::optional<std::string> meter_id;              ///< TODO: description
+    std::optional<std::string> serial_number;         ///< TODO: description
+    std::optional<bool> phase_seq_error;              ///< TODO: description
+    std::optional<Power_W>
+        power_W; ///< Instantaneous power in Watt. Negative values are exported, positive values imported energy.
     std::optional<Voltage_V> voltage_V; ///< Voltage in Volts
 
     friend constexpr bool operator==(const MeterDataObj& k, const MeterDataObj& l) {
@@ -514,10 +514,10 @@ struct MeterDataObj {
 };
 
 struct HelloResObj {
-    bool authentication_required; ///< Whether authentication is required
-    std::string api_version; ///< Version of the JSON RPC API
-    std::string everest_version; ///< The version of the running EVerest instance
-    ChargerInfoObj charger_info; ///< Charger information
+    bool authentication_required;      ///< Whether authentication is required
+    std::string api_version;           ///< Version of the JSON RPC API
+    std::string everest_version;       ///< The version of the running EVerest instance
+    ChargerInfoObj charger_info;       ///< Charger information
     std::optional<bool> authenticated; ///< Whether the client is properly authenticated
 
     friend constexpr bool operator==(const HelloResObj& k, const HelloResObj& l) {
@@ -535,7 +535,7 @@ struct HelloResObj {
 
 struct ChargePointGetEVSEInfosResObj {
     std::vector<EVSEInfoObj> infos; ///< Array of EVSE infos
-    ResponseErrorEnum error; ///< Response error
+    ResponseErrorEnum error;        ///< Response error
 
     friend constexpr bool operator==(const ChargePointGetEVSEInfosResObj& k, const ChargePointGetEVSEInfosResObj& l) {
         const auto& lhs_tuple = std::tie(k.infos, k.error);
@@ -550,7 +550,7 @@ struct ChargePointGetEVSEInfosResObj {
 
 struct ChargePointGetActiveErrorsResObj {
     std::vector<ErrorObj> active_errors; ///< Array of active charge point errors
-    ResponseErrorEnum error; ///< Response error
+    ResponseErrorEnum error;             ///< Response error
 
     friend constexpr bool operator==(const ChargePointGetActiveErrorsResObj& k,
                                      const ChargePointGetActiveErrorsResObj& l) {
@@ -566,7 +566,7 @@ struct ChargePointGetActiveErrorsResObj {
 };
 
 struct EVSEGetInfoResObj {
-    EVSEInfoObj info; ///< TODO: description
+    EVSEInfoObj info;        ///< TODO: description
     ResponseErrorEnum error; ///< Response error
 
     friend constexpr bool operator==(const EVSEGetInfoResObj& k, const EVSEGetInfoResObj& l) {
@@ -581,7 +581,7 @@ struct EVSEGetInfoResObj {
 };
 
 struct EVSEGetStatusResObj {
-    EVSEStatusObj status; ///< TODO: description
+    EVSEStatusObj status;    ///< TODO: description
     ResponseErrorEnum error; ///< Response error
 
     friend constexpr bool operator==(const EVSEGetStatusResObj& k, const EVSEGetStatusResObj& l) {
@@ -597,7 +597,7 @@ struct EVSEGetStatusResObj {
 
 struct EVSEGetHardwareCapabilitiesResObj {
     HardwareCapabilitiesObj hardware_capabilities; ///< TODO: description
-    ResponseErrorEnum error; ///< Response error
+    ResponseErrorEnum error;                       ///< Response error
 
     friend constexpr bool operator==(const EVSEGetHardwareCapabilitiesResObj& k,
                                      const EVSEGetHardwareCapabilitiesResObj& l) {
@@ -658,7 +658,7 @@ struct ChargePointActiveErrorsChangedObj {
 };
 
 struct EVSEHardwareCapabilitiesChangedObj {
-    int32_t evse_index; ///< Index of the EVSE
+    int32_t evse_index;                            ///< Index of the EVSE
     HardwareCapabilitiesObj hardware_capabilities; ///< TODO: description
 
     friend constexpr bool operator==(const EVSEHardwareCapabilitiesChangedObj& k,
@@ -675,7 +675,7 @@ struct EVSEHardwareCapabilitiesChangedObj {
 };
 
 struct EVSEStatusChangedObj {
-    int32_t evse_index; ///< Index of the EVSE
+    int32_t evse_index;        ///< Index of the EVSE
     EVSEStatusObj evse_status; ///< TODO: description
 
     friend constexpr bool operator==(const EVSEStatusChangedObj& k, const EVSEStatusChangedObj& l) {
@@ -690,7 +690,7 @@ struct EVSEStatusChangedObj {
 };
 
 struct EVSEMeterDataChangedObj {
-    int32_t evse_index; ///< Index of the EVSE
+    int32_t evse_index;      ///< Index of the EVSE
     MeterDataObj meter_data; ///< TODO: description
 
     friend constexpr bool operator==(const EVSEMeterDataChangedObj& k, const EVSEMeterDataChangedObj& l) {

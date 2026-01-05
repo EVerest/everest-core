@@ -65,8 +65,7 @@ ResponseErrorEnum string_to_response_error_enum(const std::string& s) {
         return ResponseErrorEnum::ErrorUnknownError;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type ResponseErrorEnum");
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ResponseErrorEnum");
 }
 
 std::string charge_protocol_enum_to_string(ChargeProtocolEnum e) {
@@ -103,8 +102,7 @@ ChargeProtocolEnum string_to_charge_protocol_enum(const std::string& s) {
         return ChargeProtocolEnum::ISO15118_20;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type ChargeProtocolEnum");
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ChargeProtocolEnum");
 }
 
 std::string evsestate_enum_to_string(EVSEStateEnum e) {
@@ -313,8 +311,7 @@ ConnectorTypeEnum string_to_connector_type_enum(const std::string& s) {
         return ConnectorTypeEnum::Unknown;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type ConnectorTypeEnum");
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ConnectorTypeEnum");
 }
 
 std::string energy_transfer_mode_enum_to_string(EnergyTransferModeEnum e) {
@@ -401,8 +398,7 @@ EnergyTransferModeEnum string_to_energy_transfer_mode_enum(const std::string& s)
         return EnergyTransferModeEnum::WPT;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type EnergyTransferModeEnum");
+    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type EnergyTransferModeEnum");
 }
 
 std::string severity_to_string(Severity e) {
