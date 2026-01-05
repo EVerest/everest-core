@@ -85,6 +85,12 @@ Have a look at this categorized list of all guides:
 
       How to bring up all hard and software components of a charger in isolated test cases.
 
+   .. grid-item-card:: Choosing EVerest Version and Upgrading
+      :link: choosing-version-and-upgrading
+      :link-type: doc
+
+      How to choose the right EVerest version and plan upgrades.
+
 .. toctree::
     :maxdepth: 1
     :hidden:
@@ -101,3 +107,4 @@ Have a look at this categorized list of all guides:
     renesas-mpu/index
     security-best-practices
     bringup/index
+    choosing-version-and-upgrading
