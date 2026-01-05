@@ -93,8 +93,7 @@ void RpcApi::ready() {
 void RpcApi::check_evse_session_event(data::DataStoreEvse& evse_data,
                                       const types::evse_manager::SessionEvent& session_event) {
     // store the session info in the data store
-    RPCDataTypes::EVSEStateEnum evse_state =
-        RPCDataTypes::evse_manager_session_event_to_evse_state(session_event);
+    RPCDataTypes::EVSEStateEnum evse_state = RPCDataTypes::evse_manager_session_event_to_evse_state(session_event);
     evse_data.evsestatus.set_state(evse_state);
     evse_data.sessioninfo.update_state(session_event);
 
@@ -182,8 +181,7 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     });
 
     evse_manager->subscribe_selected_protocol([this, &evse_data](const std::string& selected_protocol) {
-        const auto var_selected_protocol =
-            RPCDataTypes::evse_manager_protocol_to_charge_protocol(selected_protocol);
+        const auto var_selected_protocol = RPCDataTypes::evse_manager_protocol_to_charge_protocol(selected_protocol);
         evse_data.evsestatus.set_charge_protocol(var_selected_protocol);
     });
 
@@ -413,7 +411,7 @@ bool RpcApi::check_evse_mapping() {
         const auto& evse_data = this->data.evses[idx];
         // Initialize connector index for the case of no mapping information
         RPCDataTypes::ConnectorInfoObj connector;
-        connector.index = 1;                                              // default connector id
+        connector.index = 1;                                       // default connector id
         connector.type = RPCDataTypes::ConnectorTypeEnum::Unknown; // default type
         evse_data->evseinfo.set_available_connector(connector);
         evse_data->evsestatus.set_active_connector_index(connector.index); // TODO: support multiple connectors

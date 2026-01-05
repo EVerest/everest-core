@@ -3,8 +3,8 @@
 
 #include <everest/external_energy_limits/external_energy_limits.hpp>
 #include <everest/logging.hpp>
-#include <utils/date.hpp>
 #include <stdexcept>
+#include <utils/date.hpp>
 
 #include "RpcApiRequestHandler.hpp"
 
@@ -354,8 +354,8 @@ ErrorResObj RpcApiRequestHandler::enable_connector(const int32_t evse_index, int
 }
 
 RPCDataTypes::ErrorResObj RpcApiRequestHandler::check_active_phases_and_set_limits(const int32_t evse_index,
-                                                                                          const float phy_value,
-                                                                                          const bool is_power) {
+                                                                                   const float phy_value,
+                                                                                   const bool is_power) {
     ErrorResObj res{};
     int phases{0};
     auto evse_store = data_store.get_evse_store(evse_index);

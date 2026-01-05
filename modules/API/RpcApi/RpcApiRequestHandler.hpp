@@ -22,23 +22,23 @@ public:
 
     RPCDataTypes::ErrorResObj set_charging_allowed(const int32_t evse_index, bool charging_allowed) override;
     RPCDataTypes::ErrorResObj set_ac_charging(const int32_t evse_index, bool charging_allowed, bool max_current,
-                                                     std::optional<int> phase_count) override;
+                                              std::optional<int> phase_count) override;
     RPCDataTypes::ErrorResObj set_ac_charging_current(const int32_t evse_index, float max_current) override;
     RPCDataTypes::ErrorResObj set_ac_charging_phase_count(const int32_t evse_index, int phase_count) override;
     RPCDataTypes::ErrorResObj set_dc_charging(const int32_t evse_index, bool charging_allowed,
-                                                     float max_power) override;
+                                              float max_power) override;
     RPCDataTypes::ErrorResObj set_dc_charging_power(const int32_t evse_index, float max_power) override;
     RPCDataTypes::ErrorResObj enable_connector(const int32_t evse_index, int connector_id, bool enable,
-                                                      int priority) override;
+                                               int priority) override;
 
 private:
     // Add any private member variables or methods here
     data::DataStoreCharger& data_store;
     RPCDataTypes::ErrorResObj check_active_phases_and_set_limits(const int32_t evse_index, const float phy_value,
-                                                                        const bool is_power);
+                                                                 const bool is_power);
     template <typename T>
     RPCDataTypes::ErrorResObj set_external_limit(int32_t evse_index, T value,
-                                                        std::function<types::energy::ExternalLimits(T)> make_limits);
+                                                 std::function<types::energy::ExternalLimits(T)> make_limits);
 
     const std::vector<std::unique_ptr<evse_managerIntf>>& evse_managers;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>>& evse_energy_sink;

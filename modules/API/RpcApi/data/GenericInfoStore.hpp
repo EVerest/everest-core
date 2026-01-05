@@ -4,8 +4,8 @@
 #define GENERICINFOSTORE_HPP
 
 #include <atomic>
-#include <functional> // for std::function
 #include <everest_api_types/json_rpc_api/API.hpp>
+#include <functional> // for std::function
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <optional>
