@@ -197,7 +197,7 @@ add_subdirectory(lib)
 add_subdirectory(config)
 
 if(EVEREST_BUILD_APPLICATIONS)
-  add_subdirectory(applications)
+#   add_subdirectory(applications)
 endif()
 
 ev_install_project()
