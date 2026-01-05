@@ -10,19 +10,16 @@ using namespace RPCDataTypes;
 RequestHandlerDummy::RequestHandlerDummy(data::DataStoreCharger& dataobj) : data_store(dataobj) {
 }
 
-RPCDataTypes::ErrorResObj RequestHandlerDummy::set_charging_allowed(const int32_t evse_index,
-                                                                           bool charging_allowed) {
+RPCDataTypes::ErrorResObj RequestHandlerDummy::set_charging_allowed(const int32_t evse_index, bool charging_allowed) {
     RPCDataTypes::ErrorResObj res{RPCDataTypes::ResponseErrorEnum::NoError};
     return res;
 }
 RPCDataTypes::ErrorResObj RequestHandlerDummy::set_ac_charging(const int32_t evse_index, bool charging_allowed,
-                                                                      bool max_current,
-                                                                      std::optional<int> phase_count) {
+                                                               bool max_current, std::optional<int> phase_count) {
     RPCDataTypes::ErrorResObj res{RPCDataTypes::ResponseErrorEnum::NoError};
     return res;
 }
-RPCDataTypes::ErrorResObj RequestHandlerDummy::set_ac_charging_current(const int32_t evse_index,
-                                                                              float max_current) {
+RPCDataTypes::ErrorResObj RequestHandlerDummy::set_ac_charging_current(const int32_t evse_index, float max_current) {
     ErrorResObj res{};
 
     auto evse_store = data_store.get_evse_store(evse_index);
@@ -45,13 +42,12 @@ RPCDataTypes::ErrorResObj RequestHandlerDummy::set_ac_charging_current(const int
 
     return res;
 }
-RPCDataTypes::ErrorResObj RequestHandlerDummy::set_ac_charging_phase_count(const int32_t evse_index,
-                                                                                  int phase_count) {
+RPCDataTypes::ErrorResObj RequestHandlerDummy::set_ac_charging_phase_count(const int32_t evse_index, int phase_count) {
     RPCDataTypes::ErrorResObj res{RPCDataTypes::ResponseErrorEnum::NoError};
     return res;
 }
 RPCDataTypes::ErrorResObj RequestHandlerDummy::set_dc_charging(const int32_t evse_index, bool charging_allowed,
-                                                                      float max_power) {
+                                                               float max_power) {
     RPCDataTypes::ErrorResObj res{RPCDataTypes::ResponseErrorEnum::NoError};
     return res;
 }
@@ -59,8 +55,8 @@ RPCDataTypes::ErrorResObj RequestHandlerDummy::set_dc_charging_power(const int32
     RPCDataTypes::ErrorResObj res{RPCDataTypes::ResponseErrorEnum::NoError};
     return res;
 }
-RPCDataTypes::ErrorResObj RequestHandlerDummy::enable_connector(const int32_t evse_index, int connector_id,
-                                                                       bool enable, int priority) {
+RPCDataTypes::ErrorResObj RequestHandlerDummy::enable_connector(const int32_t evse_index, int connector_id, bool enable,
+                                                                int priority) {
     RPCDataTypes::ErrorResObj res{RPCDataTypes::ResponseErrorEnum::NoError};
     return res;
 }
