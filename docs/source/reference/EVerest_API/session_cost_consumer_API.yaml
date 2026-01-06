@@ -85,14 +85,14 @@ components:
       summary: Message to show tariff information
       contentType: application/json
       payload:
-        $ref: '../session_cost_API/asyncapi.yaml#/components/schemas/TariffMessage'
+        $ref: 'session_cost_API.yaml#/components/schemas/TariffMessage'
     receive_session_cost:
       name: receive_session_cost
       title: 'Receive session cost'
       summary: Message to show session cost
       contentType: application/json
       payload:
-        $ref: '../session_cost_API/asyncapi.yaml#/components/schemas/SessionCost'
+        $ref: 'session_cost_API.yaml#/components/schemas/SessionCost'
 
 
     receive_heartbeat:
