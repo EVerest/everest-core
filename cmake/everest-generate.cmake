@@ -492,10 +492,10 @@ function (ev_add_module)
             PATHS "${CMAKE_SOURCE_DIR}/cmake"
         )
         if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/docs/")
-            trailbook_ev_add_module_explanation(
+            trailbook_ev_add_module_handwritten_doc(
                 TRAILBOOK_NAME "everest"
                 MODULE_NAME "${MODULE_NAME}"
-                EXPLANATION_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/docs"
+                HANDWRITTEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/docs"
             )
         endif()
         if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc.rst")
