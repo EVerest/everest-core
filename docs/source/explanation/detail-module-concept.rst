@@ -9,8 +9,8 @@ concept.
 
 Other ways to approach the concepts of EVerest module development are:
 
-1. 1. For a very first glance and understanding of EVerest modules, try to check
-   the :ref:`Module section <exp_getting_started_sw_understand_modules>` in the Quick
+1. For a very first glance and understanding of EVerest modules, try to check
+   the :ref:`Understanding EVerest Modules section <exp_getting_started_sw_understand_modules>` in the Quick
    Start Guide.
 2. A more hands-on intro to EVerest module development:
    :doc:`Develop New EVerest Modules </tutorials/develop-new-module>`.

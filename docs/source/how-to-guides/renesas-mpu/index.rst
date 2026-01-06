@@ -56,7 +56,7 @@ Here is how to set it up and run an EVerest simulation:
       /usr/bin/manager --conf /etc/everest/config-sil.yaml
 
 If everything has been set up correctly, you will now be able to run simulation
-steps with EVerest. See the :ref:`Quick Start Guide <exp_getting_started_sw>`
+steps with EVerest. See the :ref:`Quick Start Guide <htg_getting_started_sw>`
 for more information.
 
 To go further and implement your own customized EVerest modules, have a look at

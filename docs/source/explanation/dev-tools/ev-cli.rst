@@ -27,7 +27,7 @@ you can install the python package manually.
 Use automatically installed `ev-dev-tools` from python venv
 ===========================================================
 
-Build ``everest-core`` as explained in the :ref:`Quick Start Guide <exp_getting_started_sw>`.
+Build ``everest-core`` as explained in the :ref:`Quick Start Guide <htg_getting_started_sw>`.
 This will create a python venv in your build directory.
 You can activate it with:
 

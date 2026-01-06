@@ -18,5 +18,5 @@ Session Info
 =============
 
 This API module additionally provides a ``SessionInfo`` class to represent information about EVSE sessions.
-The data for ``SessionInfo`` is not simply forwared from the internal EVerest representation. The internal
+The data for ``SessionInfo`` is not simply forwarded from the internal EVerest representation. The internal
 represenation is processed and converted to the external API representation.

@@ -50,7 +50,7 @@ If you are **just getting started**, we recommend beginning with these essential
       the development work.
 
    .. grid-item-card:: Quick Start Guides
-      :link: explanation/getting-started/index
+      :link: how-to-guides/getting-started/index
       :link-type: doc
 
       We provide several entry points for a fast first experience with EVerest.
@@ -124,6 +124,14 @@ everybody to find their best way of learning:
       :link-type: doc
 
       There might be some questions open - here is the place to look for answers.
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+   :caption: Getting Started
+
+   how-to-guides/getting-started/get-started-sw
+   how-to-guides/getting-started/get-started-hw
 
 .. toctree::
    :hidden:

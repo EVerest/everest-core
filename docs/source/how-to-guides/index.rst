@@ -19,6 +19,12 @@ Have a look at this categorized list of all guides:
 
       How to write documentation for EVerest.
 
+   .. grid-item-card:: Getting started with EVerest
+      :link: getting-started/index
+      :link-type: doc
+
+      Hands-on getting started with or without hardware.
+
    .. grid-item-card:: Use the Error Framework
       :link: error-framework-howto
       :link-type: doc
@@ -84,6 +90,7 @@ Have a look at this categorized list of all guides:
     :hidden:
 
     documenting-everest/index
+    getting-started/index
     error-framework-howto
     configure-pnc
     debug-iso15118

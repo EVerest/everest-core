@@ -74,4 +74,4 @@ requirements should be met:
 Getting Started
 =====================
 
-Please refer to the :doc:`Quick Start Guides </explanation/getting-started/get-started-sw>` to get started with EVerest.
+Please refer to the :doc:`Quick Start Guides </how-to-guides/getting-started/get-started-sw>` to get started with EVerest.
