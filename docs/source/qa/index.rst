@@ -5,7 +5,7 @@ Q & A
 This page will grow with questions from the mailing list and topics that
 come up regularly in our EVerest development life. It is always a good idea
 to have a look here when running into problems before asking for help via
-the :ref:`mailing list <index_mailinglist>`.
+the :ref:`mailing list <exp_community_mailinglist>`.
 
 Errors, warnings and Troubleshooting
 ====================================

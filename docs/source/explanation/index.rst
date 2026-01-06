@@ -41,12 +41,6 @@ Below that, you will be presented with a categorized list of all articles.
 
       Learn about the module concept of EVerest.
 
-   .. grid-item-card:: EVerest Module Configurations
-      :link: module-configurations
-      :link-type: doc
-
-      Learn how to modules interact with each other in different configurations.
-
    .. grid-item-card:: Adapt EVerest
       :link: adapt-everest/index
       :link-type: doc
@@ -109,7 +103,6 @@ Below that, you will be presented with a categorized list of all articles.
     error-framework
     getting-started/index
     detail-module-concept
-    module-configurations
     adapt-everest/index
     energymanagement/index
     dev-tools/edm

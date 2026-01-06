@@ -75,6 +75,8 @@ the continued growth of the project.
 You can find more resources about the TSC here:
 https://github.com/EVerest/EVerest/tree/main/tsc
 
+.. _exp_community_mailinglist:
+
 Tech discussion for email lovers
 ********************************
 

@@ -2,11 +2,9 @@
 Hardware Drivers
 ================
 
-TODO: Wording of the following three lines?
-
-This chapter describes the HW Driver modules that are supported
-natively by EVerest. The components here are prequalified by Pionix to
-work with EVerest to ensure the quickest path to production.
+This chapter describes Hardware Driver modules that are supported
+natively by EVerest. The presented components have been prequalified
+by Pionix to work with EVerest to ensure a quick path to production.
 
 ----------------------------
 Isolation Monitoring Devices
@@ -46,7 +44,7 @@ Here are the most important specifications:
 
 The error output relays should be wired directly to the DC output relay
 of the charger to enable a low-level emergency shutdown functionality
-which works independently of EVerest, see TODO architecture chapter.
+which works independently of EVerest.
 
 EVerest will read the isolation resistance values and switch off if
 they fall below 100 kOhm as well, but safety certification should not

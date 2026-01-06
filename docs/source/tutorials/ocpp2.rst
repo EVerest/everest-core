@@ -346,7 +346,7 @@ Configuring the OCPP201 module within EVerest
 =============================================
 
 To be able to follow the further explanations, you should be familiar with the configuration of EVerest modules.
-Take a look into :doc:`TODO EVerest Module Concept </explanation/detail-module-concept>` for that.
+Take a look into :doc:`EVerest Module Concept </explanation/detail-module-concept>` for that.
 
 To configure the OCPP201 module of everest-core, find the available configuration parameters
 :doc:`OCPP201 module manifest </reference/modules/OCPP201>`
