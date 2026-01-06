@@ -35,7 +35,7 @@ for your board that installs EVerest as well as all other tools you may
 want to have on your base system. This image can be based e.g. on
 *core-image-minimal*. Here is an an example from the BelayBox:
 
-.. code-block:: bitbake
+.. code-block:: bash
 
    require recipes-core/images/core-image-minimal.bb
 
@@ -62,7 +62,7 @@ The minimal required packages are ``everest-core`` and ``mosquitto``. The
 package ``tmux`` is only needed for the BringUp & Qualification tools.
 Other debugging tools that may be useful during development phase are:
 
-.. code-block:: bitbake
+.. code-block:: bash
 
    tcpdump
    canutils

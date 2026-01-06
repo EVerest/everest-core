@@ -9,12 +9,11 @@ concept.
 
 Other ways to approach the concepts of EVerest module development are:
 
-1. For a very first glance and understanding of EVerest modules, try to check
-   the :ref:`TODO fix: Module Setup section <quickstartguide_modulesetup>` in the Quick
+1. 1. For a very first glance and understanding of EVerest modules, try to check
+   the :ref:`Module section <exp_getting_started_sw_understand_modules>` in the Quick
    Start Guide.
-2. A more hands-on intro to EVerest module development is the
-   :ref:`TODO fix: Tutorial About Developing EVerest Modules
-   <tutorial_create_modules_main>`.
+2. A more hands-on intro to EVerest module development:
+   :doc:`Develop New EVerest Modules </tutorials/develop-new-module>`.
 
 
 ********
@@ -273,8 +272,7 @@ Graphically, this would look as follows:
   :align: center
 
 For a tutorial where you implement and experiment a similar example,
-refer to
-:ref:`TODO: this EVerest module development tutorial <tutorial_create_modules_main>`.
+refer to :doc:`Develop New EVerest Modules </tutorials/develop-new-module>`
 
 ********************************
 Explaining the generated sources

@@ -60,7 +60,7 @@ steps with EVerest. See the :ref:`Quick Start Guide <exp_getting_started_sw>`
 for more information.
 
 To go further and implement your own customized EVerest modules, have a look at
-the :ref:`TODO EVerest module concept documentation <exp_detail_module_concept>`.
+the :doc:`EVerest module concept documentation </explanation/detail-module-concept>`.
 
 ----
 

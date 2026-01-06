@@ -239,7 +239,7 @@ Configuring OCPP 1.6 within EVerest
 ===================================
 
 To be able to follow the further explanations, you should be familiar with the configuration of EVerest modules.
-Take a look into :doc:`TODO EVerest Module Concept </explanation/detail-module-concept>` for that.
+Take a look into :doc:`EVerest Module Concept </explanation/detail-module-concept>` for that.
 
 To configure the OCPP module of everest-core, find the available configuration parameters
 in the :doc:`module documentation </explanation/modules/OCPP/index>`, and read through them

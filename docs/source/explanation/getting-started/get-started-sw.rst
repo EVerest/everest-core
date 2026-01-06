@@ -290,13 +290,9 @@ flows here. For a first intro, you may want to take a look at *config-sil*.
 After opening it, you can see a diagram representation of some modules with
 connections between them.
 
-The role of each module in this system and how to configure an EVerest module
-environment with the Admin Panel will be explained on page
-:doc:`TODO EVerest Modules </explanation/module-configurations>`.
-
 Next, let's see how fast we can create a new module in EVerest.
 
-.. _ref:_exp_getting_started_sw_understand_modules:
+.. _exp_getting_started_sw_understand_modules:
 
 Understanding EVerest Modules
 =============================
@@ -539,8 +535,8 @@ have a look at the prepared classes.
 Please see the documentation about :ref:`exp_dev_tools_evcli` for further documentation.
 
 Or - if you rather would like to have more theoretical input about EVerest
-modules - continue
-:ref:`TODO with the EVerest Module Concept page <exp_detail_module_concept>`.
+modules - continue with the
+:doc:`EVerest Module Concept page </explanation/detail-module-concept>`.
 
 One Deep Breath And Next Steps
 ===============================
