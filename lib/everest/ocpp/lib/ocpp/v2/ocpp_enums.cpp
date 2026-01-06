@@ -272,6 +272,10 @@ std::string energy_transfer_mode_enum_to_string(EnergyTransferModeEnum e) {
         return "DC_ACDP_BPT";
     case EnergyTransferModeEnum::WPT:
         return "WPT";
+    case EnergyTransferModeEnum::MCS:
+        return "MCS";
+    case EnergyTransferModeEnum::MCS_BPT:
+        return "MCS_BPT";
     }
 
     throw EnumToStringException{e, "EnergyTransferModeEnum"};
@@ -310,6 +314,12 @@ EnergyTransferModeEnum string_to_energy_transfer_mode_enum(const std::string& s)
     }
     if (s == "WPT") {
         return EnergyTransferModeEnum::WPT;
+    }
+    if (s == "MCS") {
+        return EnergyTransferModeEnum::MCS;
+    }
+    if (s == "MCS_BPT") {
+        return EnergyTransferModeEnum::MCS_BPT;
     }
 
     throw StringToEnumException{s, "EnergyTransferModeEnum"};
