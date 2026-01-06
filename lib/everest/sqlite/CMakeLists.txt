@@ -62,6 +62,12 @@ if (EVEREST_SQLITE_INSTALL)
         TYPE INCLUDE
     )
 
+    install(
+        FILES cmake/CollectMigrationFiles.cmake
+        DESTINATION
+            ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/cmake
+    )
+
     evc_setup_package(
         NAME everest-sqlite
         NAMESPACE everest

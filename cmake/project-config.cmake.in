@@ -2,6 +2,12 @@ set(@LIBRARY_PACKAGE_NAME@_VERSION @PROJECT_VERSION@)
 
 @PACKAGE_INIT@
 
+set(EVEREST_SCHEMA_DIR "@PACKAGE_EVEREST_DATADIR@/schemas")
+find_package(everest-log REQUIRED)
+find_package(everest-sqlite REQUIRED)
+find_package(everest-timer REQUIRED)
+find_package(everest-evse_security REQUIRED)
+find_package(everest-ocpp REQUIRED)
 find_package(everest-framework REQUIRED)
 
 include(${CMAKE_CURRENT_LIST_DIR}/ev-project-bootstrap.cmake)
