@@ -100,6 +100,14 @@ void from_json(json const& j, EnergyTransferMode& k) {
         k = EnergyTransferMode::WPT;
         return;
     }
+    if (s == "MCS") {
+        k = EnergyTransferMode::MCS;
+        return;
+    }
+    if (s == "MCS_BPT") {
+        k = EnergyTransferMode::MCS_BPT;
+        return;
+    }
 
     throw std::out_of_range(
         "Provided string " + s +
@@ -152,6 +160,12 @@ void to_json(json& j, EnergyTransferMode const& k) noexcept {
         return;
     case EnergyTransferMode::WPT:
         j = "WPT";
+        return;
+    case EnergyTransferMode::MCS:
+        j = "MCS";
+        return;
+    case EnergyTransferMode::MCS_BPT:
+        j = "MCS_BPT";
         return;
     }
     j = "INVALID_VALUE__everest::lib::API::V1_0::types::iso15118_charger::EnergyTransferMode";

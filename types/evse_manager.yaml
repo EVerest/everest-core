@@ -497,6 +497,7 @@ types:
       cCCS1: Combined Charging System 1 a.k.a. Combo 1
       cCCS2: Combined Charging System 2 a.k.a. Combo 2
       cG105: JARI G105-1993 a.k.a. CHAdeMO
+      cMCS: Megawatt Charging System (captive cabled) (IEC 63379 Configuration HH)
       cTesla: Tesla Connector
       cType1: IEC62196-2 Type 1 connector a.k.a. J1772
       cType2: IEC62196-2 Type 2 connector a.k.a. Mennekes connector
@@ -522,6 +523,7 @@ types:
       - cCCS1
       - cCCS2
       - cG105
+      - cMCS
       - cTesla
       - cType1
       - cType2
