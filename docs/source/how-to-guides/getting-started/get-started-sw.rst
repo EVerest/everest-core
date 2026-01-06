@@ -1,8 +1,8 @@
-.. _exp_getting_started_sw:
+.. _htg_getting_started_sw:
 
-################################
-A Kind Of Quick Guide To EVerest
-################################
+#######################
+Get started in Software
+#######################
 
 Prepare Your Development Environment
 ====================================
@@ -86,7 +86,7 @@ Tested with Fedora 40, 41 and 42. Here is how to get your needed libraries with
    java-21-openjdk-devel boost-devel nodejs nodejs-devel npm openssl openssl-devel \
    libsqlite3x-devel curl rfkill libpcap-devel libevent-devel libcap-devel
 
-.. _exp_getting_started_sw_download_install:
+.. _htg_getting_started_sw_download_install:
 
 Download And Install EVerest
 =============================
@@ -140,14 +140,14 @@ We can now continue to build ``everest-core``.
   cmake ..
   make -j$(nproc) install
 
-.. _exp_getting_started_sw_simulate:
+.. _htg_getting_started_sw_simulate:
 
 Simulating EVerest
 ==================
 
 The following sections explains how to get EVerest running in a software-in-the-loop.
 
-.. _exp_getting_started_sw_helpers:
+.. _htg_getting_started_sw_helpers:
 
 Prepare The Helpers
 -------------------
@@ -236,7 +236,7 @@ e.g. `CAR PLUGIN`, `PAUSE`, `RESUME` and so on:
 Having a very first basic feeling for that will be enough for now. We are
 preparing a module tutorial, in which we will dig deeper into things.
 
-.. _exp_getting_started_sw_admin_panel:
+.. _htg_getting_started_sw_admin_panel:
 
 Admin panel and simulations
 ===========================
@@ -292,7 +292,7 @@ connections between them.
 
 Next, let's see how fast we can create a new module in EVerest.
 
-.. _exp_getting_started_sw_understand_modules:
+.. _htg_getting_started_sw_understand_modules:
 
 Understanding EVerest Modules
 =============================
@@ -332,7 +332,7 @@ by the restrictions you set in the manifest.
 
 How does all that look like? Read the next section!
 
-.. _exp_getting_started_sw_basic_elements:
+.. _htg_getting_started_sw_basic_elements:
 
 Basic elements of a module
 ---------------------------

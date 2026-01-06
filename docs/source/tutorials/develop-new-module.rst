@@ -13,7 +13,7 @@ Develop New EVerest Modules
 
 This tutorial is meant to show how to develop your own module for the EVerest
 framework. This tutorial builds on knowledge that is explained in the
-:ref:`Quick Start Guide <exp_getting_started_sw>`, which is a good starting
+:ref:`Quick Start Guide <htg_getting_started_sw>`, which is a good starting
 point for understanding the central concepts of modules.
 
 Goal Of This Tutorial
@@ -32,7 +32,7 @@ learn the following:
 Install Prerequisites
 =====================
 
-Please follow the :ref:`Quick Start Guide <exp_getting_started_sw>` to install
+Please follow the :ref:`Quick Start Guide <htg_getting_started_sw>` to install
 all prerequisites into your environment.
 
 After that, you should in particular have:

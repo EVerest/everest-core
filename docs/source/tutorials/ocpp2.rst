@@ -48,7 +48,7 @@ Prerequisites
 =============
 
 If you're new to EVerest, start with our
-:ref:`Quick Start Guide <exp_getting_started_sw>`
+:ref:`Quick Start Guide <htg_getting_started_sw>`
 to get a simulation in EVerest running for the first time.
 If you have done that successfully, you can move on with this tutorial.
 

@@ -31,7 +31,7 @@ This tutorial includes:
 Prerequisites
 =============
 
-If you're new to EVerest start with our :ref:`Quick Start Guide <exp_getting_started_sw>`
+If you're new to EVerest start with our :ref:`Quick Start Guide <htg_getting_started_sw>`
 to get a simulation in EVerest running for the first time.
 It is important that you have set up the required docker containers for
 Mosquitto and SteVe, which we will use as an example CSMS.

@@ -29,12 +29,6 @@ Below that, you will be presented with a categorized list of all articles.
 
       Different options exist to get involved in the EVerest community.
 
-   .. grid-item-card:: Getting started with EVerest
-      :link: getting-started/index
-      :link-type: doc
-
-      Hands-on getting started with or without hardware.
-
    .. grid-item-card:: EVerest Modules in Detail
       :link: detail-module-concept
       :link-type: doc
@@ -101,7 +95,6 @@ Below that, you will be presented with a categorized list of all articles.
 
     high-level-overview
     error-framework
-    getting-started/index
     detail-module-concept
     adapt-everest/index
     energymanagement/index
