@@ -33,6 +33,14 @@ void evse_managerImpl::init() {
         }
     });
 
+    if (!this->mod->config.connector_type.empty()) {
+        try {
+            connector_type = types::evse_manager::string_to_connector_type_enum(this->mod->config.connector_type);
+        } catch (const std::out_of_range& e) {
+            EVLOG_warning << "Unknown/invalid connector type: " << this->mod->config.connector_type;
+        }
+    }
+
     // Interface to Node-RED debug UI
 
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/enable", mod->config.connector_id),
@@ -323,13 +331,7 @@ types::evse_manager::Evse evse_managerImpl::handle_get_evse() {
     types::evse_manager::Connector connector;
     // EvseManager currently only supports a single connector with id: 1;
     connector.id = 1;
-    if (!this->mod->config.connector_type.empty()) {
-        try {
-            connector.type = types::evse_manager::string_to_connector_type_enum(this->mod->config.connector_type);
-        } catch (const std::out_of_range& e) {
-            EVLOG_warning << "Evse with id " << evse.id << ": connector type invalid: " << e.what();
-        }
-    }
+    connector.type = connector_type;
 
     connectors.push_back(connector);
     evse.connectors = connectors;
@@ -446,12 +448,41 @@ void evse_managerImpl::handle_set_plug_and_charge_configuration(
 types::evse_manager::UpdateAllowedEnergyTransferModesResult
 evse_managerImpl::handle_update_allowed_energy_transfer_modes(
     std::vector<types::iso15118::EnergyTransferMode>& allowed_energy_transfer_modes) {
-    // TODO(mlitre): Add check for incompatible type
-    if (!mod->r_hlc.empty() && mod->r_hlc[0]) {
-        mod->r_hlc[0]->call_update_energy_transfer_modes(allowed_energy_transfer_modes);
-        return types::evse_manager::UpdateAllowedEnergyTransferModesResult::Accepted;
+    std::vector<types::iso15118::EnergyTransferMode> filtered_energy_transfer_modes;
+
+    if (mod->r_hlc.empty() or !mod->r_hlc[0]) {
+        return types::evse_manager::UpdateAllowedEnergyTransferModesResult::NoHlc;
     }
-    return types::evse_manager::UpdateAllowedEnergyTransferModesResult::NoHlc;
+
+    filtered_energy_transfer_modes.reserve(allowed_energy_transfer_modes.size());
+
+    // TODO(mlitre): Add check for incompatible type(s), for now we just filter out
+    // MCS related stuff and only if a connector type was configured at all;
+    // also TODO: for DC we can check whether BPT can be supported in case DC supply supports it
+    std::copy_if(allowed_energy_transfer_modes.begin(), allowed_energy_transfer_modes.end(),
+                 std::back_inserter(filtered_energy_transfer_modes), [&](types::iso15118::EnergyTransferMode m) {
+                     if (!connector_type.has_value()) {
+                         return true;
+                     }
+
+                     // for MCS we only allow MCS types
+                     if (connector_type == types::evse_manager::ConnectorTypeEnum::cMCS) {
+                         return m == types::iso15118::EnergyTransferMode::MCS or
+                                m == types::iso15118::EnergyTransferMode::MCS_BPT;
+                     }
+
+                     // for everything else, we disallow MCS
+                     return m != types::iso15118::EnergyTransferMode::MCS and
+                            m != types::iso15118::EnergyTransferMode::MCS_BPT;
+                 });
+
+    // check whether at least one mode has survived our filtering
+    if (!filtered_energy_transfer_modes.size()) {
+        return types::evse_manager::UpdateAllowedEnergyTransferModesResult::IncompatibleEnergyTransfer;
+    }
+
+    mod->r_hlc[0]->call_update_energy_transfer_modes(filtered_energy_transfer_modes);
+    return types::evse_manager::UpdateAllowedEnergyTransferModesResult::Accepted;
 }
 
 } // namespace evse

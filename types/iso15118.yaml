@@ -27,6 +27,8 @@ types:
       - DC_ACDP
       - DC_ACDP_BPT
       - WPT
+      - MCS
+      - MCS_BPT
   IsolationStatus:
     description: The different charger isolation status
     type: string
@@ -708,6 +710,8 @@ types:
       - AC_BPT
       - DC_BPT
       - DC_ACDP_BPT
+      - MCS
+      - MCS_BPT
       - Internet
       - ParkingStatus
   Connector:

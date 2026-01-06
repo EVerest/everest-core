@@ -837,6 +837,12 @@ ocpp::v2::EnergyTransferModeEnum to_ocpp_energy_transfer_mode(const types::iso15
         return ocpp::v2::EnergyTransferModeEnum::DC_ACDP_BPT;
     case types::iso15118::EnergyTransferMode::WPT:
         return ocpp::v2::EnergyTransferModeEnum::WPT;
+
+    // revisit: OCPP does not yet know about MCS
+    case types::iso15118::EnergyTransferMode::MCS:
+        return ocpp::v2::EnergyTransferModeEnum::DC;
+    case types::iso15118::EnergyTransferMode::MCS_BPT:
+        return ocpp::v2::EnergyTransferModeEnum::DC_BPT;
     }
 
     throw std::out_of_range("Could not convert EnergyTransferMode");
@@ -1810,6 +1816,14 @@ std::vector<types::iso15118::EnergyTransferMode> to_everest_allowed_energy_trans
     value.reserve(allowed_energy_transfer_modes.size());
     for (const auto& mode : allowed_energy_transfer_modes) {
         value.push_back(to_everest_allowed_energy_transfer_mode(mode));
+        // revisit: at the moment, OCPP does not yet know about MCS types
+        // so in case of DC we allow also the corresponding MCS modes
+        if (mode == ocpp::v2::EnergyTransferModeEnum::DC) {
+            value.push_back(types::iso15118::EnergyTransferMode::MCS);
+        }
+        if (mode == ocpp::v2::EnergyTransferModeEnum::DC_BPT) {
+            value.push_back(types::iso15118::EnergyTransferMode::MCS_BPT);
+        }
     }
     return value;
 }

@@ -105,6 +105,10 @@ types::iso15118::EnergyTransferMode get_energy_transfer_mode(const dt::ServiceCa
         requested_energy_transfer = EnergyTransferMode::DC_BPT;
     } else if (service_category == dt::ServiceCategory::DC_ACDP_BPT) {
         requested_energy_transfer = EnergyTransferMode::DC_ACDP_BPT;
+    } else if (service_category == dt::ServiceCategory::MCS) {
+        requested_energy_transfer = EnergyTransferMode::MCS;
+    } else if (service_category == dt::ServiceCategory::MCS_BPT) {
+        requested_energy_transfer = EnergyTransferMode::MCS_BPT;
     }
 
     return requested_energy_transfer;
@@ -545,6 +549,10 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
             selected_parameters.energy_transfer = types::iso15118::ServiceCategory::DC_BPT;
         } else if (parameters.selected_energy_service == dt::ServiceCategory::DC_ACDP_BPT) {
             selected_parameters.energy_transfer = types::iso15118::ServiceCategory::DC_ACDP_BPT;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::MCS) {
+            selected_parameters.energy_transfer = types::iso15118::ServiceCategory::MCS;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::MCS_BPT) {
+            selected_parameters.energy_transfer = types::iso15118::ServiceCategory::MCS_BPT;
         } else {
             EVLOG_critical << "Energy service is apparently no energy service!";
         }
@@ -855,6 +863,12 @@ void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
             break;
         case types::iso15118::EnergyTransferMode::WPT:
             services.push_back(dt::ServiceCategory::WPT);
+            break;
+        case types::iso15118::EnergyTransferMode::MCS:
+            services.push_back(dt::ServiceCategory::MCS);
+            break;
+        case types::iso15118::EnergyTransferMode::MCS_BPT:
+            services.push_back(dt::ServiceCategory::MCS_BPT);
             break;
         }
     }
