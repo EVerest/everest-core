@@ -35,6 +35,12 @@ Below that, you will be presented with a categorized list of all articles.
 
       Learn about the module concept of EVerest.
 
+   .. grid-item-card:: Tier Module Mapping
+      :link: tier-module-mappings
+      :link-type: doc
+
+      EVerest's 3-tier module mapping explained.
+
    .. grid-item-card:: Adapt EVerest
       :link: adapt-everest/index
       :link-type: doc
@@ -96,6 +102,7 @@ Below that, you will be presented with a categorized list of all articles.
     high-level-overview
     error-framework
     detail-module-concept
+    tier-module-mappings
     adapt-everest/index
     energymanagement/index
     dev-tools/edm

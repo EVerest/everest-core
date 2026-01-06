@@ -364,7 +364,7 @@ two representing your actual EVSEs.
 
 📌 **Note:** You have to configure an evse mapping for each module connected via the evse_energy_sink connection. This allows the module to identify
 which requirement to use when communicating the limits for the EVSEs. For more information about the module mapping please see 
-`3-tier module mappings <https://everest.github.io/nightly/general/05_existing_modules.html#tier-module-mappings>`_.
+:doc:`3-tier module mappings </explanation/tier-module-mappings>`.
 
 This module defines a callback that gets executed every time charging profiles are changed, added or removed by the CSMS. The callback retrieves
 the composite schedules for all EVSEs (including evse id 0) and calls the `set_external_limits` command of the respective requirement that implements

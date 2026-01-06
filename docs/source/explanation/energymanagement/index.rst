@@ -552,7 +552,7 @@ We have now added all the required modules and connections to represent the
 energy tree example :ref:`shown above <energy_tree_complex_label>`.
 One important detail is still missing, which is the module mapping.
 For detailed information about the module mapping please see 
-:doc:`3-tier module mappings <TODO>`.
+:doc:`3-tier module mappings </explanation/tier-module-mappings>`.
 
 Since the connections of a module in the EVerest config does not automatically
 map to a specific EVSE (or the whole charging station, represented by EVSE#0),
