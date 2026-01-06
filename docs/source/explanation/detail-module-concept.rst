@@ -1,4 +1,4 @@
-.. exp_detail_module_concept:
+.. _exp_detail_module_concept:
 
 #########################
 EVerest Modules in Detail
@@ -10,11 +10,10 @@ concept.
 Other ways to approach the concepts of EVerest module development are:
 
 1. For a very first glance and understanding of EVerest modules, try to check
-   the :ref:`Understanding EVerest Modules section <exp_getting_started_sw_understand_modules>` in the Quick
+   the :ref:`Understanding EVerest Modules section <htg_getting_started_sw_understand_modules>` in the Quick
    Start Guide.
 2. A more hands-on intro to EVerest module development:
    :doc:`Develop New EVerest Modules </tutorials/develop-new-module>`.
-
 
 ********
 Overview

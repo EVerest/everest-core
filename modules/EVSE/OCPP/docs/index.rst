@@ -20,7 +20,7 @@ is a little special though. The OCPP1.6 protocol defines a lot of standardized c
 requirements of the specification. These configuration keys mainly influence the control flow of libocpp and are managed by a separate  
 JSON configuration file. The module uses the configuration parameter **ChargePointConfigPath** to point to this file.
 
-`This EVerest OCPP tutorial <https://everest.github.io/nightly/tutorials/how_to_ocpp/index.html>`_, the OCPP specification, and  
+:doc:`This EVerest OCPP tutorial </tutorials/ocpp16>`, the OCPP specification, and  
 `libocpp's documentation <https://github.com/EVerest/libocpp>`_ are great resources to learn about the different configuration options.
 
 Integration in EVerest
