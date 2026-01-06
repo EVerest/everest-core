@@ -1,10 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_System:
 
-===================
-System
-===================
+.. ===================
+.. System
+.. ===================
 
 See also module's :ref:`auto-generated reference <everest_modules_System>`.
 
@@ -18,8 +16,7 @@ Currently this includes the following commands:
 
 Corresponding variables signal the state of Log Uploads and Firmware Updates.
 
-----------------------
 Integration in EVerest
-----------------------
+======================
 
 This module provides implementation for the system interface. It does not require any other modules.

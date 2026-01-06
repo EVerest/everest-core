@@ -503,7 +503,7 @@ function (ev_add_module)
                 FATAL_ERROR
                 "Module ${MODULE_NAME} contains a doc.rst file"
                 " this is not supported anymore, please move to"
-                " docs/index.rst, then it will be picked up automatically."
+                " docs/index.rst.inc, then it will be picked up automatically."
                 " For now this file will be ignored."
             )
         endif()

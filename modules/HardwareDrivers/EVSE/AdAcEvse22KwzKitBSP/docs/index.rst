@@ -1,10 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_AdAcEvse22KwzKitBSP:
 
-************************
-AdAcEvse22KwzKitBSP
-************************
+.. ************************
+.. AdAcEvse22KwzKitBSP
+.. ************************
 
 See also module's :ref:`auto-generated reference <everest_modules_AdAcEvse22KwzKitBSP>`.
 The module ``AdAcEvse22KwzKitBSP`` is a board support driver for the Analog Devices 

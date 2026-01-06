@@ -1,5 +1,3 @@
-:orphan:
-
 .. _everest_modules_handwritten_DummyTokenProvider:
 
 ..  This file is a placeholder for an optional multiple files handwritten documentation for 

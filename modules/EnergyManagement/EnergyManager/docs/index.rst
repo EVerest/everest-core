@@ -1,5 +1,3 @@
-:orphan:
-
 .. _everest_modules_handwritten_EnergyManager:
 
 EnergyManager

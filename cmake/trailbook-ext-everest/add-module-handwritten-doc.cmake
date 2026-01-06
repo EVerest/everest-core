@@ -6,36 +6,122 @@ macro(_trailbook_ev_add_module_reference_copy_handwritten_command)
     file(
         GLOB_RECURSE
         MODULE_HANDWRITTEN_SOURCE_FILES
-        CMAKE_CONFIGURE_DEPENDS
+        RELATIVE "${args_HANDWRITTEN_DIR}"
+        CONFIGURE_DEPENDS
         "${args_HANDWRITTEN_DIR}/*"
     )
 
-    set(MODULE_HANDWRITTEN_TARGET_FILES "")
-    foreach(source_file IN LISTS MODULE_HANDWRITTEN_SOURCE_FILES)
-        file(RELATIVE_PATH rel_path "${args_HANDWRITTEN_DIR}" "${source_file}")
-        set(target_file "${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}/${rel_path}")
-        list(APPEND MODULE_HANDWRITTEN_TARGET_FILES "${target_file}")
+    set(EXPECTED_DEST_FILES "")
+    set(COPY_DEPENDENCIES "")
+
+    foreach(SOURCE_FILE IN LISTS MODULE_HANDWRITTEN_SOURCE_FILES)
+        set(SRC_FILE_PATH "${args_HANDWRITTEN_DIR}/${SOURCE_FILE}")
+
+        if(IS_DIRECTORY "${SRC_FILE_PATH}")
+            continue()
+        endif()
+
+        get_filename_component(RELATIVE_SUBDIR "${SOURCE_FILE}" DIRECTORY)
+        get_filename_component(FILE_NAME "${SOURCE_FILE}" NAME)
+
+        # when copying 'index.rst' then rename it
+        if("${FILE_NAME}" STREQUAL "index.rst")
+            set(DEST_FILENAME "index.inc")
+        else()
+            set(DEST_FILENAME "${FILE_NAME}")
+        endif()
+
+        if("${RELATIVE_SUBDIR}" STREQUAL "")
+            set(DEST_FILE_PATH "${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}/${DEST_FILENAME}")
+            set(DEST_DIR "${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}")
+        else()
+            set(DEST_FILE_PATH "${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}/${RELATIVE_SUBDIR}/${DEST_FILENAME}")
+            set(DEST_DIR "${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}/${RELATIVE_SUBDIR}")
+        endif()
+
+        list(APPEND EXPECTED_DEST_FILES "${DEST_FILE_PATH}")
+
+        # One command per file
+        add_custom_command(
+            OUTPUT "${DEST_FILE_PATH}"
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${DEST_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy "${SRC_FILE_PATH}" "${DEST_FILE_PATH}"
+            DEPENDS "${SRC_FILE_PATH}"
+            COMMENT "Processing doc file: ${SOURCE_FILE} -> ${RELATIVE_SUBDIR}/${DEST_FILENAME}"
+            VERBATIM
+        )
+        
+        list(APPEND COPY_DEPENDENCIES "${DEST_FILE_PATH}")
     endforeach()
 
-    add_custom_command(
-        OUTPUT
-            ${MODULE_HANDWRITTEN_TARGET_FILES}
-        DEPENDS
-            ${MODULE_HANDWRITTEN_SOURCE_FILES}
-            ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
-        COMMENT
-            "Copying handwritten documentation files of module ${args_MODULE_NAME} to: ${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}/"
-        COMMAND
-            ${CMAKE_COMMAND} -E rm -rf
-            ${MODULE_HANDWRITTEN_TARGET_FILES}
-        COMMAND
-            ${CMAKE_COMMAND} -E make_directory
-            ${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}/
-        COMMAND
-            ${CMAKE_COMMAND} -E copy_directory
-            ${args_HANDWRITTEN_DIR}
-            ${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}/
-    )
+    # Remove files if they were deleted in the source tree
+    if(EXISTS "${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}")
+        file(GLOB_RECURSE EXISTING_DEST_FILES "${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}/*")
+        
+        foreach(EXISTING_FILE IN LISTS EXISTING_DEST_FILES)
+            if(IS_DIRECTORY "${EXISTING_FILE}")
+                continue()
+            endif()
+
+            list(FIND EXPECTED_DEST_FILES "${EXISTING_FILE}" FILE_INDEX)
+            if(FILE_INDEX EQUAL -1)
+                message(STATUS "  Removing orphaned doc file: ${EXISTING_FILE}")
+                file(REMOVE "${EXISTING_FILE}")
+            endif()
+        endforeach()
+    endif()
+
+    if(COPY_DEPENDENCIES)
+        set(ASSET_TARGET "${TARGET_NAME_PREFIX}_assets")
+        
+        # Guard against multiple definitions
+        if(NOT TARGET trailbook_${args_TRAILBOOK_NAME}_handwritten_doc_module_${args_MODULE_NAME})
+            add_custom_target(
+                trailbook_${args_TRAILBOOK_NAME}_handwritten_doc_module_${args_MODULE_NAME}
+                DEPENDS            
+                    ${COPY_DEPENDENCIES}
+                COMMENT
+                    "Handwritten documentation of module ${args_MODULE_NAME} for trailbook ${args_TRAILBOOK_NAME} is available."
+            )
+
+            set_property(
+                TARGET
+                    trailbook_${args_TRAILBOOK_NAME}
+                APPEND
+                PROPERTY
+                    ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE
+                        ${COPY_DEPENDENCIES}
+                        trailbook_${args_TRAILBOOK_NAME}_handwritten_doc_module_${args_MODULE_NAME}
+            )
+        endif()
+    endif()
+
+    # set(MODULE_HANDWRITTEN_TARGET_FILES "")
+    # foreach(source_file IN LISTS MODULE_HANDWRITTEN_SOURCE_FILES)
+    #     file(RELATIVE_PATH rel_path "${args_HANDWRITTEN_DIR}" "${source_file}")
+    #     set(target_file "${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}/${rel_path}")
+    #     list(APPEND MODULE_HANDWRITTEN_TARGET_FILES "${target_file}")
+    # endforeach()
+
+    # add_custom_command(
+    #     OUTPUT
+    #         ${MODULE_HANDWRITTEN_TARGET_FILES}
+    #     DEPENDS
+    #         ${MODULE_HANDWRITTEN_SOURCE_FILES}
+    #         ${DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER}
+    #     COMMENT
+    #         "Copying handwritten documentation files of module ${args_MODULE_NAME} to: ${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}/"
+    #     COMMAND
+    #         ${CMAKE_COMMAND} -E rm -rf
+    #         ${MODULE_HANDWRITTEN_TARGET_FILES}
+    #     COMMAND
+    #         ${CMAKE_COMMAND} -E make_directory
+    #         ${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}/
+    #     COMMAND
+    #         ${CMAKE_COMMAND} -E copy_directory
+    #         ${args_HANDWRITTEN_DIR}
+    #         ${TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY}/
+    # )
 endmacro()
 
 # This function adds a handwritten module documentation to a trailbook.
@@ -118,21 +204,4 @@ function(trailbook_ev_add_module_handwritten_doc)
     set(TRAILBOOK_EV_HANDWRITTEN_MODULE_DOC_DIRECTORY "${TRAILBOOK_EV_REFERENCE_DIRECTORY}/modules/${args_MODULE_NAME}")
 
     _trailbook_ev_add_module_reference_copy_handwritten_command()
-
-    add_custom_target(
-        trailbook_${args_TRAILBOOK_NAME}_handwritten_doc_module_${args_MODULE_NAME}
-        DEPENDS            
-            ${MODULE_HANDWRITTEN_TARGET_FILES}
-        COMMENT
-            "Handwritten documentation of module ${args_MODULE_NAME} for trailbook ${args_TRAILBOOK_NAME} is available."
-    )
-    set_property(
-        TARGET
-            trailbook_${args_TRAILBOOK_NAME}
-        APPEND
-        PROPERTY
-            ADDITIONAL_DEPS_STAGE_BUILD_SPHINX_BEFORE
-                ${MODULE_HANDWRITTEN_TARGET_FILES}
-                trailbook_${args_TRAILBOOK_NAME}_handwritten_doc_module_${args_MODULE_NAME}
-    )
 endfunction()

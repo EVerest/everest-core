@@ -1,10 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_error_history_consumer_API:
 
-*******************************************
-error_history_consumer_API
-*******************************************
+.. *******************************************
+.. error_history_consumer_API
+.. *******************************************
 
 :ref:`Link <everest_modules_error_history_consumer_API>` to the module's reference.
 

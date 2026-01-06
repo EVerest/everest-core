@@ -1,10 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_EvseManager:
 
-************************
-EvseManager
-************************
+.. ************************
+.. EvseManager
+.. ************************
 
 See also module's :ref:`auto-generated reference <everest_modules_EvseManager>`.
 
