@@ -1,8 +1,8 @@
 .. _everest_modules_handwritten_IMDSimulator:
 
-############
-IMDSimulator
-############
+.. ############
+.. IMDSimulator
+.. ############
 
 External MQTT Control
 =====================

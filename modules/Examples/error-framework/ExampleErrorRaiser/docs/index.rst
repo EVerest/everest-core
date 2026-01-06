@@ -1,5 +1,3 @@
-:orphan:
-
 .. _everest_modules_handwritten_ExampleErrorRaiser:
 
 ..  This file is a placeholder for an optional single file

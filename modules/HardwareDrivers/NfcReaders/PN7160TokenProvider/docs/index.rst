@@ -1,10 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_PN7160TokenProvider:
 
-*******************
-PN7160TokenProvider
-*******************
+.. *******************
+.. PN7160TokenProvider
+.. *******************
 
 This module provides authentication tokens obtained from RFID cards via the NXP PN7160 NFC chip.
 

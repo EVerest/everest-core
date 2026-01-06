@@ -1,10 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_GenericPowermeter:
 
-************************
-GenericPowermeter
-************************
+.. ************************
+.. GenericPowermeter
+.. ************************
 
 See also module's :ref:`auto-generated reference <everest_modules_GenericPowermeter>`.
 

@@ -1,5 +1,3 @@
-:orphan:
-
 .. _everest_modules_handwritten_TerminalCostAndPriceMessage:
 
 ..  This file is a placeholder for optional multiple files

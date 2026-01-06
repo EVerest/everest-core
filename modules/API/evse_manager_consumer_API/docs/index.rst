@@ -1,10 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_evse_manager_consumer_API:
 
-*******************************************
-evse_manager_consumer_API
-*******************************************
+.. *******************************************
+.. evse_manager_consumer_API
+.. *******************************************
 
 :ref:`Link <everest_modules_evse_manager_consumer_API>` to the module's reference.
 

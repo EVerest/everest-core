@@ -1,10 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_EvseSecurity:
 
-============
-EvseSecurity
-============
+.. ============
+.. EvseSecurity
+.. ============
 
 This module implements the
 :ref:`evse_security interface <everest_interfaces_evse_security>`.

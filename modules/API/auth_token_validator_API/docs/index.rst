@@ -1,10 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_auth_token_validator_API:
 
-*******************************************
-auth_token_validator_API
-*******************************************
+.. *******************************************
+.. auth_token_validator_API
+.. *******************************************
 
 :ref:`Link <everest_modules_auth_token_validator_API>` to the module's reference.
 

@@ -1,10 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_EnergyNode:
 
-===================
-EnergyNode
-===================
+.. ===================
+.. EnergyNode
+.. ===================
 
 See also module's :ref:`auto-generated reference <everest_modules_EnergyNode>`.
 
