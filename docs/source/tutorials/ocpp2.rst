@@ -349,10 +349,9 @@ To be able to follow the further explanations, you should be familiar with the c
 Take a look into :doc:`EVerest Module Concept </explanation/detail-module-concept>` for that.
 
 To configure the OCPP201 module of everest-core, find the available configuration parameters
-:ref:`OCPP201 module manifest <everest_modules_OCPP201>`
-and read the
-:doc:`OCPP201 module documentation </explanation/modules/OCPP201/index>`
-carefully in order to configure it according to your needs.
+and carefully read the further explanations in the
+:ref:`OCPP201 module documentation <everest_modules_OCPP201>`
+in order to configure it according to your needs.
 
 In order to enable OCPP2.x in EVerest, you need to load the module in the EVerest configuration file and set up the module connections. The interfaces
 provided and required by the OCPP module and its purposes are described in the :ref:`OCPP201 module documentation <everest_modules_OCPP201>`.
@@ -385,7 +384,7 @@ Here is a quick list of things you should remember when adding OCPP201 to your E
      Module typically used to fullfill this requirement:
      :ref:`EnergyNode <everest_modules_EnergyNode>`, implementation_id: external_limits
      More information about the energy management setup can be found in the
-     :doc:`EnergyManager module documentation </explanation/modules/EnergyManager/index>`.
+     :ref:`EnergyManager module documentation <everest_modules_EnergyManager>`.
    - auth (interface: auth, 1): This connection is used to set the standardized
      ``ConnectionTimeout`` configuration key if configured and/or changed by the
      CSMS.

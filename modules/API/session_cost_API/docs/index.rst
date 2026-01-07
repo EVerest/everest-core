@@ -4,8 +4,6 @@
 .. session_cost_API
 .. *******************************************
 
-:ref:`Link <everest_modules_session_cost_API>` to the module's reference.
-
 The complete API specification can be found in the
 
 ``docs/source/reference/EVerest_API/session_cost_API.yaml``

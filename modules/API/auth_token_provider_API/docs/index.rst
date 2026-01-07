@@ -4,8 +4,6 @@
 .. auth_token_provider_API
 .. *******************************************
 
-:ref:`Link <everest_modules_auth_token_provider_API>` to the module's reference.
-
 The complete API specification can be found in the
 
 ``docs/source/reference/EVerest_API/auth_token_provider_API.yaml``

@@ -1,10 +1,9 @@
 .. _everest_modules_handwritten_YetiDriver:
 
-.. ************************
+.. **********
 .. YetiDriver
-.. ************************
+.. **********
 
-See also module's :ref:`auto-generated reference <everest_modules_YetiDriver>`.
 The module ``YetiDriver`` is a board support driver for Pionix Yeti Power
 Board.
 

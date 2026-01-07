@@ -4,8 +4,6 @@
 .. evse_manager_consumer_API
 .. *******************************************
 
-:ref:`Link <everest_modules_evse_manager_consumer_API>` to the module's reference.
-
 The complete API specification can be found in the
 
 ``docs/source/reference/EVerest_API/evse_manager_consumer_API.yaml``

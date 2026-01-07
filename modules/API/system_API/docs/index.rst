@@ -4,8 +4,6 @@
 .. system_API
 .. *******************************************
 
-:ref:`Link <everest_modules_system_API>` to the module's reference.
-
 The complete API specification can be found in the
 
 ``docs/source/reference/EVerest_API/system_API.yaml``

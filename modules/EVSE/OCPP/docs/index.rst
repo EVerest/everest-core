@@ -1,7 +1,8 @@
 .. _everest_modules_handwritten_OCPP:
 
-OCPP1.6 Module
-==============
+.. **************
+.. OCPP1.6 Module
+.. **************
 
 This module implements and integrates OCPP1.6 within EVerest, including all feature profiles defined by the specification. A connection  
 to a Charging Station Management System (CSMS) can be established by loading this module as part of the EVerest configuration. This module  
@@ -11,7 +12,7 @@ The EVerest config `config-sil-ocpp.yaml <../../config/config-sil-ocpp.yaml>`_ s
 your EVerest config.
 
 Module configuration
---------------------
+====================
 
 Like for every EVerest module, the configuration parameters are defined as part of the module `manifest <manifest.yaml>`_. This module  
 is a little special though. The OCPP1.6 protocol defines a lot of standardized configuration keys that are used as part of the functional  
@@ -22,7 +23,7 @@ JSON configuration file. The module uses the configuration parameter **ChargePoi
 `libocpp's documentation <https://github.com/EVerest/libocpp>`_ are great resources to learn about the different configuration options.
 
 Integration in EVerest
-----------------------
+======================
 
 This module leverages `libocpp <https://github.com/EVerest/libocpp>`_, EVerest's OCPP library. Libocpp's approach to implementing the  
 OCPP protocol is to do as much work as possible as part of the library. It therefore fulfills a large amount of protocol requirements  
@@ -277,7 +278,7 @@ The interface is used to receive the following variables:
 * **iso15118_certificate_request** to trigger a **DataTransfer.req(Get15118EVCertificateRequest)** as part of the Plug&Charge process
 
 Global Errors and Error Reporting
----------------------------------
+=================================
 
 The **enable_global_errors** flag for this module is enabled in its manifest. This module is therefore able to retrieve and process all reported errors  
 from other modules loaded in the same EVerest configuration.
@@ -348,7 +349,7 @@ This module currently deviates from the MREC specification in the following poin
   (Inoperative)." This module, therefore, only reports **Faulted** when the Charge Point is not available for energy delivery.
 
 Energy Management and Smart Charging Integration
-------------------------------------------------
+================================================
 
 OCPP1.6 defines the SmartCharging feature profile to allow the CSMS to control or influence the power consumption of the charging station. 
 This module integrates the composite schedule(s) within EVerest's energy management. For further information about smart charging and the
@@ -373,7 +374,7 @@ than the value configured for `PublishChargingScheduleIntervalS` because otherwi
 
 
 Certificate Management
-----------------------
+======================
 
 Two leaf certificates are managed by the OCPP communication enabled by this module:
 

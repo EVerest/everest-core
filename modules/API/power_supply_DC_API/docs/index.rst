@@ -4,8 +4,6 @@
 .. power_supply_DC_API
 .. *******************************************
 
-:ref:`Link <everest_modules_power_supply_DC_API>` to the module's reference.
-
 The complete API specification can be found in the
 
 ``docs/source/reference/EVerest_API/power_supply_DC_API.yaml``

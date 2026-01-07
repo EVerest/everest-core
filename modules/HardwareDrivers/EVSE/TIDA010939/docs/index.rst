@@ -1,10 +1,9 @@
 .. _everest_modules_handwritten_TIDA010939:
 
-.. ************************
+.. **********
 .. TIDA010939
-.. ************************
+.. **********
 
-See also module's :ref:`auto-generated reference <everest_modules_TIDA010939>`.
 The module ``TIDA010939`` is a board support driver for Texas Instruments
 TIDA-010939 reference design. It is based on the Yeti driver with similar structure
 and functionality.

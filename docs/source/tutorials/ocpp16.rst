@@ -242,14 +242,14 @@ To be able to follow the further explanations, you should be familiar with the c
 Take a look into :doc:`EVerest Module Concept </explanation/detail-module-concept>` for that.
 
 To configure the OCPP module of everest-core, find the available configuration parameters
-in the :doc:`module documentation </explanation/modules/OCPP/index>`, and read through them
+in the :ref:`module documentation <everest_modules_OCPP>`, and read through them
 carefully in order to configure it according to your needs.
 
 In order to enable OCPP 1.6 in EVerest, you need to load the module in the
 EVerest configuration file and set up the module connections.
 The interfaces provided and required by the OCPP module and its purposes are
 described in the
-:doc:`module documentation </explanation/modules/OCPP/index>`.
+:ref:`module documentation <everest_modules_OCPP>`.
 
 The EVerest configuration file
 `config-sil-ocpp.yaml <https://github.com/EVerest/everest-core/blob/main/config/config-sil-ocpp.yaml>`_
@@ -287,7 +287,7 @@ EVerest configuration file:
      :ref:`EnergyNode <everest_modules_EnergyNode>`
 
      More information about the energy management setup can be found in the
-     :doc:`EnergyManager module documentation </explanation/modules/EnergyManager/index>`.
+     :doc:`EnergyManager module documentation </explanation/energymanagement/index>`.
 
    - **auth** (interface: ``auth``, 1):
 

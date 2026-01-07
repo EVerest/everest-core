@@ -4,8 +4,6 @@
 .. isolation_monitor_API
 .. *******************************************
 
-:ref:`Link <everest_modules_isolation_monitor_API>` to the module's reference.
-
 The complete API specification can be found in the
 
 ``docs/source/reference/EVerest_API/isolation_monitor_API.yaml``

@@ -1,10 +1,8 @@
 .. _everest_modules_handwritten_System:
 
-.. ===================
+.. ******
 .. System
-.. ===================
-
-See also module's :ref:`auto-generated reference <everest_modules_System>`.
+.. ******
 
 This module implements system wide operations.
 

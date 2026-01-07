@@ -4,8 +4,6 @@
 .. over_voltage_monitor_API
 .. *******************************************
 
-:ref:`Link <everest_modules_over_voltage_monitor_API>` to the module's reference.
-
 The complete API specification can be found in the
 
 ``docs/source/reference/EVerest_API/over_voltage_monitor_API.yaml``

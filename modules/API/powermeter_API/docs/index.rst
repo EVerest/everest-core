@@ -4,8 +4,6 @@
 .. powermeter_API
 .. *******************************************
 
-:ref:`Link <everest_modules_powermeter_API>` to the module's reference.
-
 The complete API specification can be found in the
 
 ``docs/source/reference/EVerest_API/powermeter_API.yaml``

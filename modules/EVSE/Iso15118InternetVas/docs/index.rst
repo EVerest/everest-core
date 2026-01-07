@@ -4,8 +4,6 @@
 .. Iso15118InternetVas
 .. *******************************************
 
-:ref:`Link <everest_modules_Iso15118InternetVas>` to the module's reference.
-
 .. warning::
    This module and its helper scripts are **examples** and not intended for
    production use without modification. The provided ``vas-internet-setup.sh``

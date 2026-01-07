@@ -1,7 +1,8 @@
 .. _everest_modules_handwritten_OCPP201:
 
-OCPP 2.1 and 2.0.1 Module
-=========================
+.. *************************
+.. OCPP 2.1 and 2.0.1 Module
+.. *************************
 
 This module implements and integrates OCPP 2.0.1 and OCPP 2.1 within EVerest. A connection to a Charging Station Management System (CSMS) can be
 established by loading this module as part of the EVerest configuration. This module leverages `libocpp <https://github.com/EVerest/libocpp>`_,
@@ -15,7 +16,7 @@ compatability with existing EVerest configurations. It will likely be renamed in
 OCPP2.0.1 and OCPP2.1, referred by using the term **OCPP2**.
 
 Module configuration
---------------------
+====================
 
 Like for every EVerest module, the configuration parameters are defined as part of the module `manifest <../manifest.yaml>`_. OCPP2 defines
 a device model structure and a lot of standardized variables that are used within the functional requirements of the protocol. Please see 
@@ -40,7 +41,7 @@ characteristics, attributes, and monitors. Please see `the documentation for the
 To add a custom component, you can simply add another JSON configuration file for it, and it will automatically be applied and reported.
 
 Configuring the OCPP2 version
------------------------------
+=============================
 
 This module supports OCPP2.0.1 and OCPP2.1. The charging station and the CSMS agree on the protocol version to be used during the websocket
 handshake. The charging station indicates which versions it supports in the Sec-WebSocket-Protocol header. This header is set based on 
@@ -49,7 +50,7 @@ it in the handshake response. Note that **SupportedOcppVersions** is a comma sep
 in the order of preference.
 
 Integration in EVerest
-----------------------
+======================
 
 This module leverages **libocpp** `<https://github.com/EVerest/libocpp>`_, EVerest's OCPP library. Libocpp's approach to implementing the OCPP
 protocol is to do as much work as possible as part of the library. It therefore fulfills a large amount of protocol requirements internally.
@@ -274,7 +275,7 @@ The interface is used to receive the following variables:
 * **iso15118_certificate_request** to trigger a **DataTransfer.req(Get15118EVCertificateRequest)** as part of the Plug&Charge process
 
 Error Handling
---------------
+==============
 
 The **enable_global_errors** flag for this module is true in its manifest. This module is
 therefore able to retrieve and process all reported errors from other
@@ -315,7 +316,7 @@ The Variable used as part of the NotifyEventRequest is constantly defined to **P
 The goal is to have a more advanced mapping of reported errors to the respective component-variable combinations in the future.
 
 Certificate Management
-----------------------
+======================
 
 Two leaf certificates are managed by the OCPP communication enabled by this module:
 
@@ -339,7 +340,7 @@ every seven days. The timestamp of the last update is stored persistently, so th
 at every start up.
 
 Energy Management and Smart Charging Integration
-------------------------------------------------
+================================================
 
 OCPP2 defines the SmartCharging feature profile to allow the CSMS to control or influence the power consumption of the charging station. 
 This module integrates the composite schedule(s) within EVerest's energy management. For further information about smart charging and the
@@ -363,7 +364,7 @@ the duration in seconds of the requested composite schedules starting now. The v
 than the value configured for `CompositeScheduleIntervalS` because otherwise time periods could be missed by the application.
 
 Device model implementation details
------------------------------------
+===================================
 
 For managing configuration and telemetry data of a charging station, the OCPP2 specification introduces
 a device model that is very different to the design of OCPP1.6. 
