@@ -146,7 +146,7 @@ if(NOT DISABLE_EDM)
     set(THIRD_PARTY_APP_DST "${CMAKE_INSTALL_LIBEXECDIR}/everest/3rd_party")
 
     # edm
-    add_subdirectory(applications/dev-environment)
+    add_subdirectory(applications/)
 
     evc_setup_edm()
 
@@ -195,7 +195,7 @@ add_subdirectory(config)
 add_subdirectory(doc)
 
 if(EVEREST_BUILD_APPLICATIONS)
-  add_subdirectory(applications)
+#   add_subdirectory(applications)
 endif()
 
 ev_install_project()
