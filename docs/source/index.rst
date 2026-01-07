@@ -65,7 +65,7 @@ If you are **just getting started**, we recommend beginning with these essential
       The *everest-core* repository is the center of activity.
 
    .. grid-item-card:: Discuss and Collaborate
-      :link: community-channels
+      :link: project/community
       :link-type: doc
 
       Meet the EVerest community on different channels like Zulip, live calls
@@ -149,7 +149,7 @@ everybody to find their best way of learning:
    :caption: Getting Help
 
    qa/index
-   community-channels
+   project/index
 
 ***************
 Important links

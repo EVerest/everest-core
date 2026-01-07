@@ -14,7 +14,6 @@ If you only want to modify existing documents, this may well be sufficient.
 Practical instructions on working on the documentation are located in the
 :ref:`How-to section <documenting_everest>`.
 
-
 .. _exp_the_everest_documentation_structure_of_doc:
 
 ******************************

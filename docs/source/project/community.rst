@@ -1,4 +1,4 @@
-.. _exp_communicity_channels:
+.. _project-community:
 
 ##########################
 Meet the EVerest Community
@@ -7,9 +7,8 @@ Meet the EVerest Community
 There are quite some options to get involved in the EVerest community.
 The following sections will guide your way.
 
-
 Deep tech discussions: Zulip
-****************************
+============================
 
 The main area for tech talk and discussing questions is Zulip:
 
@@ -25,7 +24,7 @@ channels.
 
 
 Live calls by core developers: Working groups
-*********************************************
+=============================================
 
 We also have online video meetings for a more personal way of exchange.
 
@@ -66,7 +65,7 @@ You might want to join the working group chat channels in Zulip.
 See the “Zulip chat” section above to see how to get there!
 
 Technical Steering Committee (TSC)
-**********************************
+==================================
 
 The Technical Steering Committee (TSC) is the governing body of the EVerest Project It is responsible for the overall
 project health and direction, coordination of activities, and working with other projects and committees as needed for
@@ -78,7 +77,7 @@ https://github.com/EVerest/EVerest/tree/main/tsc
 .. _exp_community_mailinglist:
 
 Tech discussion for email lovers
-********************************
+================================
 
 Another way to connect to the steadily growing EVerest community is
 the mailing list.
@@ -99,7 +98,7 @@ Optionally, you can subscribe to the mailing list with more tech focus:
 
 
 Beyond EVerest: Special Interest Group
-**************************************
+======================================
 
 Linux Foundation Energy (LFE) is growing.
 As the EVerest project (and all other LFE projects) have several connecting
