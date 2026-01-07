@@ -18,14 +18,14 @@ add_trailbook(
     DEPLOYED_DOCS_REPO_BRANCH "main"
 )
 
-# get_target_property(
-#     TRAILBOOK_INSTANCE_SOURCE_DIRECTORY
-#     trailbook_everest
-#     TRAILBOOK_INSTANCE_SOURCE_DIRECTORY
-# )
-# get_filename_component(EVEREST_WORKSPACE_DIRECTORY ${CMAKE_SOURCE_DIR} DIRECTORY)
-# trailbook_ev_create_snapshot(
-#     EVEREST_WORKSPACE_DIRECTORY "${EVEREST_WORKSPACE_DIRECTORY}"
-#     TRAILBOOK_NAME "everest"
-#     OUTPUT_FILE "${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}/reference/assets/snapshot.yaml"
-# )
+get_target_property(
+    TRAILBOOK_INSTANCE_SOURCE_DIRECTORY
+    trailbook_everest
+    TRAILBOOK_INSTANCE_SOURCE_DIRECTORY
+)
+get_filename_component(EVEREST_WORKSPACE_DIRECTORY ${CMAKE_SOURCE_DIR} DIRECTORY)
+trailbook_ev_create_snapshot(
+    EVEREST_WORKSPACE_DIRECTORY "${EVEREST_WORKSPACE_DIRECTORY}"
+    TRAILBOOK_NAME "everest"
+    OUTPUT_FILE "${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}/reference/assets/snapshot.yaml"
+)
