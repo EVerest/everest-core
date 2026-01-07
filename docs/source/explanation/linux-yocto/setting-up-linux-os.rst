@@ -95,7 +95,7 @@ Building the BelayBox Yocto image
 
 An example can be found here for the BelayBox:
 
-https://github.com/PionixPublic/dev-hardware-yocto
+https://github.com/PionixPublic/belaybox-yocto\
 
 Check out the *README* in this repository on how to build and install
 this Yocto on the BelayBox.

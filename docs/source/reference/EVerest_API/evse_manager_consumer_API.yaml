@@ -857,6 +857,29 @@ components:
           description: Exported meter value
           type: object
           $ref: 'powermeter_API.yaml#/components/schemas/Powermeter'
+    AuthorizeResponseArgs:
+      description: Arguments for authorize response
+      type: object
+      additionalProperties: true
+      required:
+        - token
+        - result
+      properties:
+        token:
+          type: object
+          $ref: 'auth_consumer_API.yaml#/components/schemas/ProvidedIdToken'
+        result:
+          type: object
+          $ref: 'auth_token_validator_API.yaml#/components/schemas/ValidationResult'
+    CarManufacturer:
+      description: >-
+        Enum type for car manufacturers derived from MAC address.
+        May be different from actual brand, so e.g. Skoda falls under Volkswagen_Group.
+      type: string
+      enum:
+        - VolkswagenGroup
+        - Tesla
+        - Unknown
     EvseStateEnum:
         description: |
           State of the EVSE: 
@@ -1558,6 +1581,14 @@ components:
           description: Id tag that was used to stop the transaction. Only present if transaction was stopped locally.
           type: object
           $ref: 'auth_consumer_API.yaml#/components/schemas/ProvidedIdToken'
+<<<<<<< HEAD
+=======
+    WaitingForExternalReady:
+      description: >-
+        Signals that the EVSE Manager is in principle ready to start charging,
+        but delays sending its ready signal waiting for the external_ready_to_start_charging command.
+      type: boolean
+>>>>>>> feature/docs-migration
 
     CommunicationCheck:
       type: boolean
