@@ -116,12 +116,38 @@ If upgrading across major releases, integrators should review the release notes 
 Maintenance Policy
 ==================
 
-The **latest stable release branch** receives ongoing community maintenance. This includes:
+Infrastructure for Maintenance
+-------------------------------
 
-- Bug fixes backported from ``main``
-- Security patches
-- Critical compatibility updates
-- Documentation corrections
+The EVerest project **provides infrastructure** for stable release maintenance:
 
-Older stable branches may receive security patches at the discretion of the community and maintainers, but active maintenance focuses on the current stable
-release.
+* Each stable release creates a dedicated branch (``stable/yyyy.mm``)
+* Stable branches remain open for community contributions
+* Critical security patches and bug fixes can be backported by project maintainers
+or community contributions
+
+**Important:** The existence of a stable branch does not guarantee ongoing 
+maintenance activity. Actual maintenance depends on community involvement and 
+the availability of contributors and maintainers.
+
+Active Maintenance Focus
+-------------------------
+
+Project maintainers focus their efforts on:
+
+* The **current stable release branch** - Active bug fixes and updates
+* The **main development branch** - New features and next release
+* **Security patches** - Backported to the current stable release on a best-effort basis
+
+Older Stable Branches
+---------------------
+
+Older stable release branches:
+
+* Remain available for community-driven maintenance
+* May receive security patches at maintainer's discretion
+* Are supported by the community on a **best-effort basis**
+* Have no guaranteed response times or fix schedules
+
+If your deployment relies on an older stable branch, we encourage you to 
+contribute maintenance work back to the project.
