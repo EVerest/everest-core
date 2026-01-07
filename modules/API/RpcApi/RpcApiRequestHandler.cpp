@@ -15,7 +15,7 @@ using namespace RPCDataTypes;
 static const std::string RPCAPI_MODULE_SOURCE = "RpcApi_module";
 static const std::chrono::seconds CURRENT_LIMIT_APPLY_TIMEOUT{5};
 
-types::energy::ExternalLimits get_external_limits(int32_t phases) {
+static types::energy::ExternalLimits get_external_limits(int32_t phases) {
     const auto timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
     types::energy::ExternalLimits external_limits;
     types::energy::ScheduleReqEntry target_entry;
@@ -35,7 +35,7 @@ types::energy::ExternalLimits get_external_limits(int32_t phases) {
 }
 
 // This function is used to get the external limits for AC charging based on the current or power value.
-types::energy::ExternalLimits get_external_limits(float phy_value, bool is_power = false) {
+static types::energy::ExternalLimits get_external_limits(float phy_value, bool is_power = false) {
     const auto timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
     types::energy::ExternalLimits external_limits;
     types::energy::ScheduleReqEntry target_entry;
@@ -61,7 +61,7 @@ types::energy::ExternalLimits get_external_limits(float phy_value, bool is_power
     return external_limits;
 }
 
-types::energy::ExternalLimits get_external_limits(float phy_value, bool is_power, int32_t phases) {
+static types::energy::ExternalLimits get_external_limits(float phy_value, bool is_power, int32_t phases) {
     const auto timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
     types::energy::ExternalLimits external_limits;
     types::energy::ScheduleReqEntry target_entry;
