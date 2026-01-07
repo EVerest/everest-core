@@ -89,11 +89,29 @@ Below that, you will be presented with a categorized list of all articles.
 
       Handwritten documentation for EVerest modules.
 
+   .. grid-item-card:: Powermeter OCMF Explanation
+      :link: powermeter-ocmf
+      :link-type: doc
+
+      Explanation of the OCMF functionality for powermeters in EVerest.
+
+   .. grid-item-card:: EVerest Releases and Versioning
+      :link: releases-and-versioning
+      :link-type: doc
+
+      Explanation of the EVerest versioning scheme and release process.
+
    .. grid-item-card:: Structure of the EVerest Documentation
       :link: the-everest-documentation
       :link-type: doc
 
       How this documentation is structured.
+
+   .. grid-item-card:: Breaking Changes in EVerest
+      :link: breaking-changes
+      :link-type: doc
+
+      Explanation of what constitutes a breaking change in EVerest.
 
 .. toctree::
     :hidden:
@@ -112,5 +130,7 @@ Below that, you will be presented with a categorized list of all articles.
     hardware-architecture
     hardware-drivers
     modules/index
-    the-everest-documentation
     powermeter-ocmf
+    releases-and-versioning
+    breaking-changes
+    the-everest-documentation
