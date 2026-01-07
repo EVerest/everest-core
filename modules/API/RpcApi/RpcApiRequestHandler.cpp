@@ -171,10 +171,11 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
             // starting
             float max_power{0.0f};
 
-            ErrorResObj res_limit = set_external_limit(
-                evse_index, max_power,
-                std::function<types::energy::ExternalLimits(float)>(
-                    [this, is_power_limit](float value) { return get_external_limits(value, is_power_limit); }));
+            ErrorResObj res_limit =
+                set_external_limit(evse_index, max_power,
+                                   std::function<types::energy::ExternalLimits(float)>([is_power_limit](float value) {
+                                       return get_external_limits(value, is_power_limit);
+                                   }));
 
             if (res_limit.error != ResponseErrorEnum::NoError) {
                 EVLOG_warning << "Failed to set external limits for EVSE index: " << evse_index
@@ -285,14 +286,14 @@ ErrorResObj RpcApiRequestHandler::set_ac_charging_phase_count(const int32_t evse
         bool is_power = !configured_limits.is_current_set;
         res = set_external_limit(
             evse_index, configured_limits.evse_limit.value(),
-            std::function<types::energy::ExternalLimits(float)>([this, is_power, phase_count](float phy_value) {
+            std::function<types::energy::ExternalLimits(float)>([is_power, phase_count](float phy_value) {
                 return get_external_limits(phy_value, is_power, phase_count);
             }));
     } else {
         // If no current or power limit is set, we can just apply the phase count
         res = set_external_limit(evse_index, phase_count,
                                  std::function<types::energy::ExternalLimits(int)>(
-                                     [this](int value) { return get_external_limits(static_cast<int32_t>(value)); }));
+                                     [](int value) { return get_external_limits(static_cast<int32_t>(value)); }));
     }
     return res;
 }
@@ -311,9 +312,10 @@ ErrorResObj RpcApiRequestHandler::set_dc_charging(const int32_t evse_index, bool
 ErrorResObj RpcApiRequestHandler::set_dc_charging_power(const int32_t evse_index, float max_power) {
     configured_limits.is_current_set = false;
     configured_limits.evse_limit = max_power;
-    ErrorResObj res = set_external_limit(evse_index, max_power,
-                                         std::function<types::energy::ExternalLimits(float)>(
-                                             [this](float value) { return get_external_limits(value, true); }));
+    ErrorResObj res =
+        set_external_limit(evse_index, max_power, std::function<types::energy::ExternalLimits(float)>([](float value) {
+                               return get_external_limits(value, true);
+                           }));
     return res;
 }
 
@@ -368,15 +370,14 @@ RPCDataTypes::ErrorResObj RpcApiRequestHandler::check_active_phases_and_set_limi
 
     if (phases == 0) {
         res = set_external_limit(evse_index, phy_value,
-                                 std::function<types::energy::ExternalLimits(float)>([this, is_power](float phy_value) {
-                                     return get_external_limits(phy_value, is_power);
-                                 }));
+                                 std::function<types::energy::ExternalLimits(float)>(
+                                     [is_power](float phy_value) { return get_external_limits(phy_value, is_power); }));
     } else {
-        res = set_external_limit(
-            evse_index, phy_value,
-            std::function<types::energy::ExternalLimits(float)>([this, is_power, phases](float phy_value) {
-                return get_external_limits(phy_value, is_power, phases);
-            }));
+        res =
+            set_external_limit(evse_index, phy_value,
+                               std::function<types::energy::ExternalLimits(float)>([is_power, phases](float phy_value) {
+                                   return get_external_limits(phy_value, is_power, phases);
+                               }));
     }
 
     return res;
