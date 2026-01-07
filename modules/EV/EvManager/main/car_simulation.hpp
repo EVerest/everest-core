@@ -35,6 +35,13 @@ public:
         sim_data.battery_charge_wh = config.dc_energy_capacity * (soc / 100.0);
     }
 
+    void set_soc(double soc) {
+        if (soc < 0 || soc > 100) {
+            throw std::out_of_range("SoC value " + std::to_string(soc) + " is out of range (0-100)");
+        }
+        sim_data.battery_charge_wh = config.dc_energy_capacity * (soc / 100.0);
+    }
+
     const SimState& get_state() const {
         return sim_data.state;
     }
