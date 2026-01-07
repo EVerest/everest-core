@@ -103,10 +103,10 @@ your new page in the same location.
 In general, you can decide where to put your documentation pages:
 
 * The repository for the main documentation:
-  https://github.com/EVerest/everest-core in directory ``docs``
+  https://github.com/EVerest/everest-core in directory ``docs/sources/``
 * Directly inside of the ``docs`` directory in your modules directory structure.
-  This will generate documentation pages in the ``references`` section of the
-  main documentation.
+  The ``index.rst`` in this location will be included into the auto-generated
+  ``reference`` documentation page of this module.
 * Near the source code which implements the feature that is to be documented.
 
 .. note::

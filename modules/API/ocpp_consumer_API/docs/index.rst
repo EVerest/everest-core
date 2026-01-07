@@ -1,12 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_ocpp_consumer_API:
 
-*******************************************
-ocpp_consumer_API
-*******************************************
-
-:ref:`Link <everest_modules_ocpp_consumer_API>` to the module's reference.
+.. *******************************************
+.. ocpp_consumer_API
+.. *******************************************
 
 The complete API specification can be found in the
 

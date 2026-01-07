@@ -1,9 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_EnergyManager:
 
-EnergyManager
-=============
+.. *************
+.. EnergyManager
+.. *************
 
 This module implements logic to distribute power to energy nodes based on
 energy requests.

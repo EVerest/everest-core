@@ -55,7 +55,7 @@ that talks to the power meter hardware to fetch the measurements can now
 be implemented in a process running outside of EVerest (and is started
 e.g. by a separate *systemd* unit). It just needs to feed the measured
 values via MQTT into the 
-:doc:`Powermeter API module </reference/modules/powermeter_API>`.
+:ref:`Powermeter API module <everest_modules_powermeter_API>`.
 
 .. figure:: images/everest-api-1.png
    :alt: EVerest API - Image 1
@@ -63,7 +63,7 @@ values via MQTT into the
 
 For a better understanding of how the EVerest API works, let us have an
 exemplary closer look at the
-:doc:`Power Supply DC API module </reference/modules/power_supply_DC_API>`.
+:ref:`Power Supply DC API module <everest_modules_power_supply_DC_API>`.
 
 The manifest can be reduced to this:
 
@@ -90,7 +90,7 @@ module *is* a :doc:`DC power supply </reference/interfaces/power_supply_DC>`.
 This implies that it can be used in the configuration file for EVerest
 wherever a DC power supply is expected.
 
-In a product, this would be the :doc:`EvseManager </reference/modules/EvseManager>`
+In a product, this would be the :ref:`EvseManager <everest_modules_EvseManager>`
 requiring a DC power supply. During development or validation it could also be a
 BringUp module.
 
@@ -121,9 +121,9 @@ Let's take a look at an example configuration that uses the API module:
            implementation_id: if_power_supply_DC
 
 It loads two modules: 
-The :doc:`power_supply_DC_API </reference/modules/power_supply_DC_API>`
+The :ref:`power_supply_DC_API <everest_modules_power_supply_DC_API>`
 and the 
-:doc:`BringUp module for DC power supplies </reference/modules/BUPowerSupplyDC>`.
+:ref:`BringUp module for DC power supplies <everest_modules_BUPowerSupplyDC>`.
 Starting EVerest with this  configuration enables the API for DC power
 supplies and a BringUp module, that can send to and receive messages from the
 API. The actual topics on the MQTT will be available under 

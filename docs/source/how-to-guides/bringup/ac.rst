@@ -20,7 +20,7 @@ done. Let's verify the AC-specific components:
 
 You can continue to use your bringup config you used for the bring up
 of CP, PP and relays, which includes the 
-:doc:`BSP BringUp module </reference/modules/BUEvseBoardSupport>`.
+:ref:`BSP BringUp module <everest_modules_BUEvseBoardSupport>`.
 
 RCD
 ===
@@ -154,8 +154,8 @@ You could use a real car for this.
 As with basic charging, we first create a new configuration file by
 extending the one we just used for basic charging.
 
-We add an :doc:`ISO 15118 stack </reference/modules/EvseV2G>` as well as a
-:doc:`SLAC module </reference/modules/EvseSlac>`:
+We add an :ref:`ISO 15118 stack <everest_modules_EvseV2G>` as well as a
+:ref:`SLAC module <everest_modules_EvseSlac>`:
 
 .. image:: images/iso-15118-stack.png
    :alt: ISO 15118 Stack

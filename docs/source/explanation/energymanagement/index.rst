@@ -10,8 +10,8 @@ implemented in EVerest.
 It covers the representation of energy systems as energy trees, the handling of
 energy requests and distribution, and the configuration of energy trees within
 EVerest. The central modules involved in this concept are the
-:doc:`EnergyManager </reference/modules/EnergyManager>` and 
-:doc:`EnergyNode </reference/modules/EnergyNode>` modules.
+:ref:`EnergyManager <everest_modules_EnergyManager>` and 
+:ref:`EnergyNode <everest_modules_EnergyNode>` modules.
 
 One of its central ideas of EVerest's energymanagement to represent the energy 
 system for which power is distributed as an energy tree containing energy nodes.

@@ -317,4 +317,4 @@ example.
 
 ----
 
-Authors: Cornelius Claussen
+**Authors**: Cornelius Claussen

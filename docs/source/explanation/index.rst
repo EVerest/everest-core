@@ -83,12 +83,6 @@ Below that, you will be presented with a categorized list of all articles.
 
       Description of natively supported hardware driver modules included in EVerest.
 
-   .. grid-item-card:: EVerest Modules
-      :link: modules/index
-      :link-type: doc
-
-      Handwritten documentation for EVerest modules.
-
    .. grid-item-card:: Structure of the EVerest Documentation
       :link: the-everest-documentation
       :link-type: doc
@@ -111,6 +105,5 @@ Below that, you will be presented with a categorized list of all articles.
     linux-yocto/index
     hardware-architecture
     hardware-drivers
-    modules/index
     the-everest-documentation
     powermeter-ocmf

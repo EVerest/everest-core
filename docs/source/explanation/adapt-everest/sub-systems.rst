@@ -26,7 +26,7 @@ sessions and on the Energy management subsystem to allocate the energy
 budget for the charging process.
 
 The main module of this subsystem is the 
-:doc:`EvseManager </reference/modules/EvseManager>`.
+:ref:`EvseManager <everest_modules_EvseManager>`.
 It contains all the logic and state machines for one CCS AC or DC charging
 port.
 
@@ -42,7 +42,7 @@ is sufficient.
 First, we add a board support module. This is the most important
 hardware driver.
 
-In this example, we use the :doc:`YetiDriver </reference/modules/YetiDriver>`
+In this example, we use the :ref:`YetiDriver <everest_modules_YetiDriver>`
 module which is the BSP driver for the BelayBox. Check the configuration of
 the module; it should be correct for the BelayBox. Click on the (i) button
 to learn more about each configuration setting.
@@ -89,22 +89,22 @@ implementation. For the BelayBox, we could have used the
 *powermeter* implementation of the YetiDriver (which uses the Yeti
 onboard metering). In most configurations, an external DIN-rail power
 meter is used with an RS485/ModBus connection, so we use the
-:doc:`GenericPowermeter </reference/modules/GenericPowermeter>` 
+:ref:`GenericPowermeter <everest_modules_GenericPowermeter>` 
 module here:
 
 .. figure:: images/powermeter-connection.png
    :alt: Power meter connection
    :width: 420px
 
-:doc:`GenericPowermeter </reference/modules/GenericPowermeter>` 
+:ref:`GenericPowermeter <everest_modules_GenericPowermeter>` 
 is a module that can easily be adapted to most ModBus-based
 AC power meters by specifying the register mappings in the
 configuration of that module. It requires a
-:doc:`SerialCommHub </reference/modules/SerialCommHub>`
+:ref:`SerialCommHub <everest_modules_SerialCommHub>`
 module to do the actual read/write to the serial RS485 port of the system.
 This is a separate module as multiple device drivers may use the same
 serial bus, so they can all be connected to the same 
-:doc:`SerialCommHub </reference/modules/SerialCommHub>` module. 
+:ref:`SerialCommHub <everest_modules_SerialCommHub>` module. 
 Make sure to configure the correct serial device and baud rate.
 
 Note that there are two optional requirements for power meters in the
@@ -124,17 +124,17 @@ desired:
 
 Three modules have been added:
 
-:doc:`EvseV2G </reference/modules/EvseV2G>`:
+:ref:`EvseV2G <everest_modules_EvseV2G>`:
 Implementation of ISO15118-2(AC/DC) and DIN SPEC70121(DC).
 Connects to the *hlc/ISO15118_charger* requirement of EvseV2G. Make sure
 to set the “device” config option to the ethernet device of the PLC
 modem. Leave the other options on default for now.
 
-:doc:`EvseSecurity </reference/modules/EvseSecurity>`: 
+:ref:`EvseSecurity <everest_modules_EvseSecurity>`: 
 Handles certificates and private keys for TLS/PnC. We
 will connect it here even though PnC is not enabled yet.
 
-:doc:`EvseSlac </reference/modules/EvseSlac>`:
+:ref:`EvseSlac <everest_modules_EvseSlac>`:
 Implementation of ISO15118-3 (SLAC) to pair the PLC modems
 of the EV and the EVSE at the start of the session. Make sure to
 configure the same “device” as used for the EvseV2G. The two must point
@@ -177,9 +177,9 @@ the 5% PWM will be used throughout the complete charging session as it
 is done for DC. This is not allowed according to the standard though.
 
 For completeness, we’ll also add a
-:doc:`PersistentStore </reference/modules/PersistentStore>` 
+:ref:`PersistentStore <everest_modules_PersistentStore>` 
 module to the *kvs/persistent_store* requirement of the
-:doc:`EvseManager </reference/modules/EvseManager>`.
+:ref:`EvseManager <everest_modules_EvseManager>`.
 This is needed to persistently store charging session information e.g- 
 for German Eichrecht requirements. It may not be needed in simple
 configurations.
@@ -196,7 +196,7 @@ DC charging port
 ------------------
 
 Let's build a DC charging port using the phyVERSO board. Start with the
-:doc:`EvseManager </reference/modules/EvseManager>` again and adjust 
+:ref:`EvseManager <everest_modules_EvseManager>` again and adjust 
 one setting to switch it to DC mode:
 
 .. figure:: images/switch-to-dc-mode.png
@@ -204,8 +204,8 @@ one setting to switch it to DC mode:
    :width: 320px
 
 The basic configuration looks similar to the AC one. We just exchanged
-the :doc:`YetiDriver </reference/modules/YetiDriver>` with the 
-:doc:`PhyVersoBSP </reference/modules/PhyVersoBSP>` driver and connected the
+the :ref:`YetiDriver <everest_modules_YetiDriver>` with the 
+:ref:`PhyVersoBSP <everest_modules_PhyVersoBSP>` driver and connected the
 *connector_1* interface for *evse_board_support* to EvseManager. Note
 that *connector_lock* and *ac_rcd* are no longer needed on DC.
 
@@ -219,7 +219,7 @@ They should be correct on the default phyVERSO Board.
    :width: 700px
 
 The power meter has been replaced by a
-:doc:`LEM driver </reference/modules/LemDCBM400600>` , which is a power
+:ref:`LEM driver <everest_modules_LemDCBM400600>` , which is a power
 meter often used for public DC charging. It is connected via ethernet,
 so no SerialCommHub is needed. Verify the correct target IP is set.
 
@@ -231,10 +231,10 @@ DC charging:
    :width: 750px
 
 For the DC power supply, a 
-:doc:`Huawei driver </reference/modules/Huawei_R100040Gx>` was added here
+:ref:`Huawei driver <everest_modules_Huawei_R100040Gx>` was added here
 to the *power_supply_DC* requirement of EvseManager. Set the correct CAN
 device. As isolation monitor, the 
-:doc:`Bender isoCHA driver </reference/modules/Bender_isoCHA425HV>` was added.
+:ref:`Bender isoCHA driver <everest_modules_Bender_isoCHA425HV>` was added.
 As it is a modbus device, it requires a SerialCommHub again - the same way
 as the GenericPowermeter in the AC configuration. Make sure the settings
 for the serial port are correct.
@@ -251,7 +251,7 @@ Authentication subsystem
 ========================
 
 Let's add a simple authentication subsystem to the charging part we just
-created. Start by adding the :doc:`Auth module </reference/modules/Auth>` . 
+created. Start by adding the :ref:`Auth module <everest_modules_Auth>` . 
 It is the central logic core of this subsystem and manages all incoming
 tokens, validations and reservations. Connect it to the *evse/evse_manager*
 implementation on EvseManager. Through this interface, it will authorize
@@ -306,7 +306,7 @@ Now, let's add a very simple token validator:
 
 --------------
 
-The  :doc:`LocalAllowlistTokenValidator </reference/modules/LocalAllowlistTokenValidator>` 
+The  :ref:`LocalAllowlistTokenValidator <everest_modules_LocalAllowlistTokenValidator>` 
 module takes a simple ASCII file (see config) with one line per token.
 All tokens listed in this file are considered valid, all others are invalid.
 With this Auth system, we already have a very simple version that can be
@@ -346,23 +346,23 @@ OCPP requires several connections. Let's go through them step by step:
 -  :doc:`reservation interface </reference/interfaces/reservation>` is used to
    reserve/cancel reservations of connectors via OCPP from the CSMS.
 -  OCPP also requires a connection to the
-   :doc:`EvseSecurity </reference/modules/EvseSecurity>` module, which
+   :ref:`EvseSecurity <everest_modules_EvseSecurity>` module, which
    is now shared between OCPP and EvseV2G. OCPP requires it to load the
    certificate / keys for TLS to the CSMS. OCPP can also update/install
    certificates for both OCPP and ISO 15118 from the CSMS.
 -  OCPP requires a helper module for system-specific implementations
    (OTA update, logfile collection and upload). Here, we use
-   :doc:`Linux_Systemd_Rauc </reference/modules/Linux_Systemd_Rauc>` 
+   :ref:`Linux_Systemd_Rauc <everest_modules_Linux_Systemd_Rauc>` 
    from EVerest, which is the default implementation using systemd for
    log collection and RAUC for OTA updates. This in turn requires a
-   :doc:`PersistentStore </reference/modules/PersistentStore>` module, 
+   :ref:`PersistentStore <everest_modules_PersistentStore>` module, 
    which is shared here with the EvseManager.
 
 For more detailed information about the OCPP configuration, check out the 
 following resources:
 
-- :doc:`OCPP1.6 module documentation </reference/modules/OCPP>`
-- :doc:`OCPP2.0.1 module documentation </reference/modules/OCPP201>`
+- :ref:`OCPP1.6 module documentation <everest_modules_OCPP>`
+- :ref:`OCPP2.0.1 module documentation <everest_modules_OCPP201>`
 - :doc:`OCPP1.6 tutorial </tutorials/ocpp16>`
 - :doc:`OCPP2.0.1 tutorial </tutorials/ocpp2>`
 
@@ -379,7 +379,7 @@ energy management distributes energy between charging ports. It is also
 needed if only one charging port exists.
 
 Please refer to the
-:doc:`Energy Management documentation </explanation/modules/EnergyManager/index>`
+:doc:`Energy Management documentation </explanation/energymanagement/index>`
 for a detailed explanation of how to set up the energy management
 subsystem.
 

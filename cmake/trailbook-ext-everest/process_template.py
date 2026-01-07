@@ -79,10 +79,11 @@ def main():
         help='YAML file containing data for the template'
     )
     parser.add_argument(
-        '--has-module-explanation',
-        dest='has_module_explanation',
-        action='store_true',
-        help='Flag indicating if the module explanation should be referenced'
+        '--module-handwritten-doc',
+        type=Path,
+        dest='module_handwritten_doc',
+        action='store',
+        help='Path to the handwritten module documentation if it exists'
     )
     parser.add_argument(
         '--target-file',
@@ -91,9 +92,6 @@ def main():
         action='store',
         required=True,
         help='Output file for the processed template'
-    )
-    parser.set_defaults(
-        has_module_explanation=False,
     )
     args = parser.parse_args()
 
@@ -144,7 +142,7 @@ def main():
     output = template.render(
         name=args.name,
         data=yaml.safe_load(args.data_file.read_text()),
-        has_module_explanation=args.has_module_explanation,
+        handwritten_module_doc=args.module_handwritten_doc,
     )
     args.target_file.write_text(output)
 

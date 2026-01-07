@@ -1,12 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_power_supply_DC_API:
 
-*******************************************
-power_supply_DC_API
-*******************************************
-
-:ref:`Link <everest_modules_power_supply_DC_API>` to the module's reference.
+.. *******************************************
+.. power_supply_DC_API
+.. *******************************************
 
 The complete API specification can be found in the
 
