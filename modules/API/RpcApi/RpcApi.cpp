@@ -171,21 +171,21 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
             evse_data.evsestatus.set_ac_charge_param_evse_max_phase_count(hwcaps.max_phase_count_import);
         });
 
-    evse_manager->subscribe_evse_id([this, &evse_data](const std::string& evse_id) {
+    evse_manager->subscribe_evse_id([&evse_data](const std::string& evse_id) {
         // set the EVSE id in the data store
         evse_data.evseinfo.set_id(evse_id);
     });
 
     evse_manager->subscribe_session_event([this, &evse_data](types::evse_manager::SessionEvent session_event) {
-        check_evse_session_event(evse_data, session_event);
+        this->check_evse_session_event(evse_data, session_event);
     });
 
-    evse_manager->subscribe_selected_protocol([this, &evse_data](const std::string& selected_protocol) {
+    evse_manager->subscribe_selected_protocol([&evse_data](const std::string& selected_protocol) {
         const auto var_selected_protocol = RPCDataTypes::evse_manager_protocol_to_charge_protocol(selected_protocol);
         evse_data.evsestatus.set_charge_protocol(var_selected_protocol);
     });
 
-    evse_manager->subscribe_enforced_limits([this, &evse_data](const types::energy::EnforcedLimits& enforced_limits) {
+    evse_manager->subscribe_enforced_limits([&evse_data](const types::energy::EnforcedLimits& enforced_limits) {
         // set the external limits in the data store
         if (evse_data.evseinfo.get_is_ac_transfer_mode()) {
             const auto& max_current = enforced_limits.limits_root_side.ac_max_current_A;
@@ -203,7 +203,7 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
     });
 
     evse_manager->subscribe_supported_energy_transfer_modes(
-        [this, &evse_data](const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
+        [&evse_data](const std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) {
             // convert to rpc type
             bool is_ac_transfer_mode = false;
             const auto rpc_supported_energy_transfer_modes =
@@ -213,7 +213,7 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
             evse_data.evseinfo.set_is_ac_transfer_mode(is_ac_transfer_mode);
         });
 
-    evse_manager->subscribe_ev_info([this, &evse_data](types::evse_manager::EVInfo ev_info) {
+    evse_manager->subscribe_ev_info([&evse_data](types::evse_manager::EVInfo ev_info) {
         RPCDataTypes::DisplayParametersObj display_parameters;
 
         if (ev_info.soc.has_value()) {
