@@ -12,6 +12,8 @@
   // Workspace inside the container
   "workspaceFolder": "/workspace",
 
+  "initializeCommand": "./applications/devrd/devrd env",
+
   // Prevent generation of broken override compose files
   "overrideFeatureInstallCommand": false,
   "updateRemoteUserUID": false,
