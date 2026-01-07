@@ -112,6 +112,8 @@ function(trailbook_ev_create_snapshot)
             --exclude-dir build/
             --exclude-dir .vscode/
             --exclude-dir dist/
+            --exclude-dir cache/
+            --exclude-dir scripts/
         COMMAND
             ${CMAKE_COMMAND} -E copy
             ${CREATE_SNAPSHOT_TEMP_DIR}/snapshot.yaml

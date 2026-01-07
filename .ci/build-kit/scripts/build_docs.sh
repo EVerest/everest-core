@@ -4,6 +4,10 @@ TRAILBOOK_everest_IS_RELEASE=${TRAILBOOK_everest_IS_RELEASE:-"OFF"}
 TRAILBOOK_everest_INSTANCE_NAME=${TRAILBOOK_everest_INSTANCE_NAME:-"nightly"}
 TRAILBOOK_everest_OVERWRITE_EXISTING_INSTANCE=${TRAILBOOK_everest_OVERWRITE_EXISTING_INSTANCE:-"OFF"}
 
+mkdir -p ~/.ssh
+ssh-keyscan github.com >> ~/.ssh/known_hosts
+chmod 600 ~/.ssh/known_hosts
+
 cmake \
     -B "$EXT_MOUNT/build" \
     -S "$EXT_MOUNT/source" \

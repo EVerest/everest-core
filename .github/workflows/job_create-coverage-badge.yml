@@ -1,0 +1,92 @@
+name: Create Coverage Badge
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'Which runner to use'
+        required: false
+        default: 'ubuntu-24.04'
+        type: string
+      ref_everest_ci:
+        description: 'The ref of the everest-ci repository to checkout'
+        required: true
+        type: string
+      is_fork:
+        description: 'Whether the current repository is a fork'
+        required: true
+        type: string
+      artifact_deploy_target_repo:
+        description: 'Repository to deploy artifacts to'
+        required: true
+        type: string
+      coverage_report_artifact_name:
+        description: 'The name of the coverage report artifact to download'
+        required: true
+        type: string
+      coverage_xml_artifact_name:
+        description: 'The name of the coverage xml artifact to download'
+        required: true
+        type: string
+    secrets:
+      coverage_deploy_token:
+        description: 'The token to use to deploy the coverage report'
+        required: true
+jobs:
+  create-coverage-badge:
+    name: Create Coverage Badge
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Checkout local github actions
+        uses: actions/checkout@v4
+        with:
+          repository: everest/everest-ci
+          ref: ${{ inputs.ref_everest_ci }}
+          path: everest-ci
+      - name: Download xml coverage report
+        uses: actions/download-artifact@v5.0.0
+        with:
+          if-no-files-found: error
+          name: ${{ inputs.coverage_xml_artifact_name }}
+          path: coverage-xml
+      - name: Parse coverage report
+        id: parse_coverage_report
+        shell: python3 {0}
+        run: |
+          import xml.etree.ElementTree
+          import os
+          tree = xml.etree.ElementTree.parse("${{ github.workspace }}/coverage-xml/gcovr-coverage-xml.xml")
+          line_coverage = tree.getroot().get("line-rate")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"line_coverage={line_coverage}\n")
+              f.write(f"line_coverage_percentage={float(line_coverage) * 100}\n")
+      - name: Generate coverage badge
+        run: |
+          pip install anybadge
+          mkdir -p ${{ github.workspace }}/coverage-badge/
+          anybadge -o --label Coverage --value ${{ steps.parse_coverage_report.outputs.line_coverage_percentage }} -s "%" --file ${{ github.workspace }}/coverage-badge/coverage-badge.svg 20=red 40=orange 60=yellow 80=yellowgreen 100=green
+      - name: Deploy coverage badge
+        uses: ./everest-ci/github-actions/deploy-ci-artifact
+        if: ${{ inputs.is_fork == 'false' }}
+        with:
+          target_repo: ${{ inputs.artifact_deploy_target_repo }}
+          github_token: ${{ secrets.coverage_deploy_token }}
+          artifact_name: coverage-badge
+          artifact_directory: ${{ github.workspace }}/coverage-badge/
+          deploy_global_artifact: true
+      - name: Download html coverage report
+        uses: actions/download-artifact@v5.0.0
+        with:
+          if-no-files-found: error
+          name: ${{ inputs.coverage_report_artifact_name }}
+          path: coverage-report
+      - name: Deploy html coverage report
+        uses: ./everest-ci/github-actions/deploy-ci-artifact
+        if: ${{ inputs.is_fork == 'false' }}
+        with:
+          target_repo: ${{ inputs.artifact_deploy_target_repo }}
+          github_token: ${{ secrets.coverage_deploy_token }}
+          artifact_name: ${{ inputs.coverage_report_artifact_name }}
+          artifact_directory: ${{ github.workspace }}/coverage-report/
+          deploy_global_artifact: true
