@@ -22,6 +22,10 @@ on:
         required: false
         default: false
         type: boolean
+    secrets:
+      SA_GITHUB_SSH_KEY:
+        description: 'SSH key for the service account used to deploy the documentation'
+        required: false
 
 
 jobs:
