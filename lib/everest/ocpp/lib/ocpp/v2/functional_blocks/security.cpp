@@ -3,9 +3,9 @@
 
 #include <ocpp/v2/functional_blocks/security.hpp>
 
+#include <ocpp/common/connectivity_manager.hpp>
 #include <ocpp/common/constants.hpp>
 #include <ocpp/common/ocpp_logging.hpp>
-#include <ocpp/v2/connectivity_manager.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
 #include <ocpp/v2/functional_blocks/functional_block_context.hpp>

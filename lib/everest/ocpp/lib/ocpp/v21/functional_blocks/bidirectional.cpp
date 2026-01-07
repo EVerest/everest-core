@@ -5,9 +5,9 @@
 
 #include <ocpp/v21/functional_blocks/bidirectional.hpp>
 
+#include <ocpp/common/connectivity_manager.hpp>
 #include <ocpp/common/constants.hpp>
 #include <ocpp/common/evse_security.hpp>
-#include <ocpp/v2/connectivity_manager.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/database_handler.hpp>
 #include <ocpp/v2/device_model.hpp>
