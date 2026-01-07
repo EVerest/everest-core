@@ -144,7 +144,7 @@ active_modules:
     connections:
       price_information: []
       energy_consumer:
-        - module_id: evse_manager
+        - module_id: api_sink_evsemgr
           implementation_id: energy_grid
       powermeter:
         - module_id: yeti_driver
