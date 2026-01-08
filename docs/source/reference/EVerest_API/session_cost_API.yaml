@@ -66,7 +66,7 @@ operations:
 
 
   receive_heartbeat:
-    title: 'Receive heatbeat'
+    title: 'Receive heartbeat'
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
@@ -74,7 +74,7 @@ operations:
     title: 'Send communication check'
     action: send
     channel:
-      $ref : '#/channels/send_communication_check'
+      $ref: '#/channels/send_communication_check'
 
 
 
@@ -141,7 +141,7 @@ components:
         - Energy
         - Time
         - FlatFee
-        - Other 
+        - Other
     CurrencyCode:
       description: >-
         Currency in 3 alphabetical characters according to ISO 4217.
@@ -768,11 +768,11 @@ components:
           format: date-time
         metervalue_from:
           description: >-
-            Metervalue (energie Wh import) for the start of this chunk
+            Metervalue (energy Wh import) for the start of this chunk
           type: integer
         metervalue_to:
           description: >-
-            Metervalue (energie Wh import) for the end of this chunk
+            Metervalue (energy Wh import) for the end of this chunk
           type: integer
         cost:
           description: >-

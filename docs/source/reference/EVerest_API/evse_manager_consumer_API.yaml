@@ -228,7 +228,7 @@ channels:
 operations:
   ########## evse_manager
   send_request_get_evse:
-    title: 'Send request to get informationavout thee EVSE including its connectors'
+    title: 'Send request to get information about the EVSE including its connectors'
     action: send
     channel:
       $ref: '#/channels/send_request_get_evse'
@@ -450,7 +450,7 @@ operations:
 
 
   receive_heartbeat:
-    title: 'Receive heatbeat'
+    title: 'Receive heartbeat'
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
@@ -694,7 +694,7 @@ components:
     receive_evse_id:
       name: receive_evse_id
       title: 'Receive EVSE ID'
-      summary: 'EVSE ID '
+      summary: 'EVSE ID'
       contentType: application/json
       payload:
          $ref: '#/components/schemas/EvseId'
@@ -722,7 +722,7 @@ components:
     receive_supported_energy_transfer_modes:
       name: receive_supported_energy_transfer_modes
       title: 'Receive supported energy transfer modes'
-      summary: 'The list of supported energy transfers e.g. AC mono/tri, DC, DC_BPT, etc.''
+      summary: 'The list of supported energy transfers e.g. AC mono/tri, DC, DC_BPT, etc.'
       contentType: application/json
       payload:
          $ref: '#/components/schemas/SupportedEnergyTransferModeList'
@@ -782,7 +782,7 @@ components:
         $ref: 'power_supply_DC_API.yaml#/components/schemas/Mode'
     receive_dc_capabilities:
       name: receive_dc_capabilities
-      title: 'Receive the capabilities of the DC power cupply'
+      title: 'Receive the capabilities of the DC power supply'
       summary: Receive the capabilities of the DC power supply
       contentType: application/json
       payload:
@@ -1581,14 +1581,6 @@ components:
           description: Id tag that was used to stop the transaction. Only present if transaction was stopped locally.
           type: object
           $ref: 'auth_consumer_API.yaml#/components/schemas/ProvidedIdToken'
-<<<<<<< HEAD
-=======
-    WaitingForExternalReady:
-      description: >-
-        Signals that the EVSE Manager is in principle ready to start charging,
-        but delays sending its ready signal waiting for the external_ready_to_start_charging command.
-      type: boolean
->>>>>>> feature/docs-migration
 
     CommunicationCheck:
       type: boolean
