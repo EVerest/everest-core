@@ -89,14 +89,14 @@ operations:
   receive_stop:
     title: 'Receive stop command'
     summary: 'Direction: EVerest to Module'
-    description:  By receiving the stop command the monitoring of the isolation status should be stoped. Measurement data must not be sent until the next start command is received.
+    description:  By receiving the stop command the monitoring of the isolation status should be stopped. Measurement data must not be sent until the next start command is received.
     action: receive
     channel:
       $ref: '#/channels/receive_stop'
   receive_start_self_test:
     title: 'Receive start self test command'
     summary: 'Direction: EVerest to Module'
-    description: The EvseManager will enable a DC voltage to support the testing, but will not enable output relais such that there is no high voltage on the external plug. The "self_test_result" variable must be published once the self testing is done.
+    description: The EvseManager will enable a DC voltage to support the testing, but will not enable output relays such that there is no high voltage on the external plug. The "self_test_result" variable must be published once the self testing is done.
     action: receive
     channel:
       $ref: '#/channels/receive_start_self_test'
@@ -127,10 +127,10 @@ operations:
     title: 'Send clear error'
     action: send
     channel:
-      $ref : '#/channels/send_clear_error'
+      $ref: '#/channels/send_clear_error'
 
   receive_heartbeat:
-    title: 'Receive heatbeat'
+    title: 'Receive heartbeat'
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
@@ -138,7 +138,7 @@ operations:
     title: 'Send communication check'
     action: send
     channel:
-      $ref : '#/channels/send_communication_check'
+      $ref: '#/channels/send_communication_check'
 
 
 

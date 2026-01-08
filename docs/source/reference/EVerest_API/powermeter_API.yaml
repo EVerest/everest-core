@@ -126,11 +126,11 @@ operations:
     title: 'Send the public key'
     action: send
     channel:
-      $ref : '#/channels/send_public_key_ocmf'
+      $ref: '#/channels/send_public_key_ocmf'
 
 
   receive_heartbeat:
-    title: 'Receive heatbeat'
+    title: 'Receive heartbeat'
     action: receive
     channel:
       $ref: '#/channels/receive_heartbeat'
@@ -138,7 +138,7 @@ operations:
     title: 'Send communication check'
     action: send
     channel:
-      $ref : '#/channels/send_communication_check'
+      $ref: '#/channels/send_communication_check'
 
 
 components:
@@ -211,7 +211,7 @@ components:
     send_reply_stop_transaction:
       name: stop_transaction_reply
       title: 'Stop transaction reply message'
-      summary: The stop transaction reply message contains the request status. It indicates whether the transaction could be stoped successfully or not. If successful the signed meter value report must be provided in this message too.
+      summary: The stop transaction reply message contains the request status. It indicates whether the transaction could be stopped successfully or not. If successful the signed meter value report must be provided in this message too.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/StopTransactionReply'
