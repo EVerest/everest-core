@@ -1,5 +1,5 @@
 charge_bridge:
-  name: cb_eval
+  name: cb_eval_ev
   ip: 10.10.10.240
   #ip: chargebridge-44b7d0c9bcc0.local^
   #ip: chargebridge-44b7d0c99629.local
@@ -48,21 +48,21 @@ can_0:
 
 serial_1:
   enable: true
-  local: "/dev/cb_uart"
+  local: "/dev/cb_ev__uart"
   baudrate: 115200
   stopbits: OneStopBit
   parity: None
 
 serial_2:
   enable: true
-  local: "/dev/cb_rs485"
+  local: "/dev/cb_ev_rs485"
   baudrate: 19200
   stopbits: OneStopBit
   parity: Even
 
 plc:
   enable: true
-  tap: "cb_plc"
+  tap: "cb_ev_plc"
   ip: 172.25.6.1
   netmask: 255.255.255.0
   mtu: 1518
@@ -74,7 +74,7 @@ ev_bsp:
   mqtt_remote: 127.0.0.1
   mqtt_port: 1883
   mqtt_bind: 127.0.0.1
-  ovm_enabled: true
+  ovm_enabled: false
   ovm_module_id: "ovm_1"
 
 gpio:
