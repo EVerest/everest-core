@@ -29,39 +29,43 @@ CanDevice::~CanDevice() {
 }
 
 bool CanDevice::open_device(const char* dev) {
+    if (!dev || std::strlen(dev) >= IFNAMSIZ) {
+        fprintf(stderr, "Interface name is invalid or too long: %s\n", dev ? dev : "NULL");
+        return false;
+    }
+
     if ((can_fd = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
         perror("Socket");
         return false;
-
-    } else {
-
-        // retrieve interface index from interface name
-        struct ifreq ifr;
-        strcpy(ifr.ifr_name, dev);
-        if (ioctl(can_fd, SIOCGIFINDEX, &ifr) < 0) {
-            perror(dev);
-            close(can_fd);
-            return false;
-        }
-
-        // bind to the interface
-        struct sockaddr_can addr;
-        memset(&addr, 0, sizeof(addr));
-        addr.can_family = AF_CAN;
-        addr.can_ifindex = ifr.ifr_ifindex;
-
-        if (bind(can_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-            perror("Bind");
-            close(can_fd);
-            return false;
-        }
-
-        // spawn read thread
-        exit_rx_thread = false;
-        rx_thread_handle = std::thread(&CanDevice::rx_thread, this);
-
-        return true;
     }
+
+    // retrieve interface index from interface name
+    struct ifreq ifr;
+    std::memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, dev, IFNAMSIZ - 1);
+    if (ioctl(can_fd, SIOCGIFINDEX, &ifr) < 0) {
+        perror(dev);
+        close(can_fd);
+        return false;
+    }
+
+    // bind to the interface
+    struct sockaddr_can addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.can_family = AF_CAN;
+    addr.can_ifindex = ifr.ifr_ifindex;
+
+    if (bind(can_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        perror("Bind");
+        close(can_fd);
+        return false;
+    }
+
+    // spawn read thread
+    exit_rx_thread = false;
+    rx_thread_handle = std::thread(&CanDevice::rx_thread, this);
+
+    return true;
 }
 
 bool CanDevice::close_device() {
