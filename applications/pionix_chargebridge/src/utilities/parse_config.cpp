@@ -89,7 +89,10 @@ std::pair<std::string, c4::yml::ConstNodeRef> find_node(c4::yml::NodeRef& config
     if (not sub.empty()) {
         node_str = node_str + "::" + sub;
         auto sub_str = ryml::to_csubstr(sub);
-        node = config.find_child(main_str).find_child(sub_str);
+        node = config.find_child(main_str);
+        if (not node.invalid()) {
+            node = config.find_child(main_str).find_child(sub_str);
+        }
     } else {
         node = config[main_str];
     }
@@ -211,7 +214,7 @@ void parse_config_impl(c4::yml::NodeRef& config, charge_bridge_config& c, std::f
         bool wants_evse = false;
         get_node_or_default(wants_ev, "ev_bsp", "enable", false);
         get_node_or_default(wants_evse, "evse_bsp", "enable", false);
-        if(wants_ev && wants_evse){
+        if (wants_ev && wants_evse) {
             std::cerr << "Configuration error: Cannot enable EVSE and EV BSP at the same time" << std::endl;
             throw std::exception();
         }
@@ -245,7 +248,6 @@ void parse_config_impl(c4::yml::NodeRef& config, charge_bridge_config& c, std::f
             cfg.cb_remote = c.cb_remote;
             get_node(cfg.api.ovm.enabled, main, "ovm_enabled");
             get_node(cfg.api.ovm.module_id, main, "ovm_module_id");
-
         });
     }
 
