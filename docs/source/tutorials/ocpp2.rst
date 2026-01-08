@@ -19,7 +19,7 @@ is mostly backwards compatible, the implementation of OCPP 2.1 is based on the
 2.0.1 implementation. Every functionality that is provided as part of OCPP 2.0.1
 is also available in OCPP 2.1.
 
-In EVerest, the :doc:`OCPP201 module </reference/modules/OCPP>`
+In EVerest, the :ref:`OCPP201 module <everest_modules_OCPP>`
 provides the OCPP 2.0.1 and 2.1 functionality.
 
 Where applicable the following documentation uses "2.x" to refer to both versions.
@@ -329,7 +329,7 @@ Modify these parameters according to the connection requirements of the CSMS.
 
   For TLS, it might be required to prepare the required certificates and private keys.
   Please see the documentation of the
-  :doc:`EvseSecurity module </reference/modules/EvseSecurity>` for more information 
+  :ref:`EvseSecurity module <everest_modules_EvseSecurity>` for more information 
   on how to set up the TLS connection for OCPP.
 
 .. _tutorial-ocpp2-enable-pnc:
@@ -349,13 +349,12 @@ To be able to follow the further explanations, you should be familiar with the c
 Take a look into :doc:`EVerest Module Concept </explanation/detail-module-concept>` for that.
 
 To configure the OCPP201 module of everest-core, find the available configuration parameters
-:doc:`OCPP201 module manifest </reference/modules/OCPP201>`
-and read the
-:doc:`OCPP201 module documentation </explanation/modules/OCPP201/index>`
-carefully in order to configure it according to your needs.
+and carefully read the further explanations in the
+:ref:`OCPP201 module documentation <everest_modules_OCPP201>`
+in order to configure it according to your needs.
 
 In order to enable OCPP2.x in EVerest, you need to load the module in the EVerest configuration file and set up the module connections. The interfaces
-provided and required by the OCPP module and its purposes are described in the :doc:`OCPP201 module documentation </reference/modules/OCPP201>`.
+provided and required by the OCPP module and its purposes are described in the :ref:`OCPP201 module documentation <everest_modules_OCPP201>`.
 
 The EVerest configuration file `config-sil-ocpp201.yaml <https://github.com/EVerest/everest-core/blob/main/config/config-sil-ocpp201.yaml>`_
 which was used previously serves as a good example
@@ -374,7 +373,7 @@ Here is a quick list of things you should remember when adding OCPP201 to your E
      In order to manage multiple EVSEs via one OCPP connection, multiple
      connections need to be configured in the EVerest config file.
      Module implementation typically used to fullfill this requirement:
-     :doc:`EvseManager </reference/modules/EvseManager>`, implementation_id: evse
+     :ref:`EvseManager <everest_modules_EvseManager>`, implementation_id: evse
    - evse_energy_sink (interface: external_energy_limits, 0 to 128):
      OCPP optionally requires this connection to communicate smart charging
      limits received from the CSMS within EVerest.
@@ -383,31 +382,31 @@ Here is a quick list of things you should remember when adding OCPP201 to your E
      The EnergyNode for *evse id* zero represents the energy sink for the
      complete charging station.
      Module typically used to fullfill this requirement:
-     :doc:`EnergyNode </reference/modules/EnergyNode>`, implementation_id: external_limits
+     :ref:`EnergyNode <everest_modules_EnergyNode>`, implementation_id: external_limits
      More information about the energy management setup can be found in the
-     :doc:`EnergyManager module documentation </explanation/modules/EnergyManager/index>`.
+     :ref:`EnergyManager module documentation <everest_modules_EnergyManager>`.
    - auth (interface: auth, 1): This connection is used to set the standardized
      ``ConnectionTimeout`` configuration key if configured and/or changed by the
      CSMS.
      Module typically used to fullfill this requirement:
-     :doc:`Auth </reference/modules/Auth>`, implementation_id: main
+     :ref:`Auth <everest_modules_Auth>`, implementation_id: main
    - reservation (interface: reservation, 1):
      This connection is used to apply reservation requests from the CSMS.
      Module typically used to fullfill this requirement:
-     :doc:`Auth </reference/modules/Auth>`, implementation_id: reservation
+     :ref:`Auth <everest_modules_Auth>`, implementation_id: reservation
    - system (interface: system, 1):
      This connection is used to execute and control system-wide operations that
      can be triggered by the CSMS, like log uploads, firmware updates, and
      resets.
-     The :doc:`Linux_Systemd_Rauc module </reference/modules/Linux_Systemd_Rauc>` (implementation_id: main)
+     The :ref:`Linux_Systemd_Rauc module <everest_modules_Linux_Systemd_Rauc>` (implementation_id: main)
      can be used to fullfill this requirement.
-     For simulation purposes, the :doc:`System module </reference/modules/System>` (implementation_id: main)
+     For simulation purposes, the :ref:`System module <everest_modules_System>` (implementation_id: main)
      can be used. Note that the latter is not meant to be used in production systems!
    - security (interface: evse_security, 1):
      This connection is used to execute security-related operations and to
      manage certificates and private keys.
      Module typically used to fullfill this requirement:
-     :doc:`EvseSecurity </reference/modules/EvseSecurity>`, implementation_id: main
+     :ref:`EvseSecurity <everest_modules_EvseSecurity>`, implementation_id: main
    - data_transfer (interface: ocpp_data_transfer, 0 to 1):
      This connection  is used to handle **DataTransfer.req** messages from the
      CSMS.

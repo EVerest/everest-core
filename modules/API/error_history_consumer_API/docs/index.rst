@@ -1,12 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_error_history_consumer_API:
 
-*******************************************
-error_history_consumer_API
-*******************************************
-
-:ref:`Link <everest_modules_error_history_consumer_API>` to the module's reference.
+.. *******************************************
+.. error_history_consumer_API
+.. *******************************************
 
 The complete API specification can be found in the
 

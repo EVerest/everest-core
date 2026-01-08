@@ -1,8 +1,8 @@
 .. _everest_modules_handwritten_Huawei_V100R023C10:
 
-######################
-Huawei V100R023C10 PSU
-######################
+.. ######################
+.. Huawei V100R023C10 PSU
+.. ######################
 
 Voltage measurements
 ====================

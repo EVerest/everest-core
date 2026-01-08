@@ -1,12 +1,9 @@
-:orphan:
-
 .. _everest_modules_handwritten_AdAcEvse22KwzKitBSP:
 
-************************
-AdAcEvse22KwzKitBSP
-************************
+.. ************************
+.. AdAcEvse22KwzKitBSP
+.. ************************
 
-See also module's :ref:`auto-generated reference <everest_modules_AdAcEvse22KwzKitBSP>`.
 The module ``AdAcEvse22KwzKitBSP`` is a board support driver for the Analog Devices 
 `AD-ACEVSE22KWZ-KIT <https://www.analog.com/en/resources/evaluation-hardware-and-software/evaluation-boards-kits/ad-acevse22kwz-kit.html#eb-overview>`_
 EVSE reference design.

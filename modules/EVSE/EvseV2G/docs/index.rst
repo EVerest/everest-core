@@ -1,12 +1,9 @@
-:orphan:
-
 .. _everest_modules_handwritten_EvseV2G:
 
-*******************************************
-EvseV2G
-*******************************************
+.. *******************************************
+.. EvseV2G
+.. *******************************************
 
-:ref:`Link <everest_modules_EvseV2G>` to the module's reference.
 This module includes a DIN70121 and ISO15118-2 implementation provided by chargebyte GmbH
 
 Feature List

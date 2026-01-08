@@ -1,10 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_EvseSlac:
 
-===================
-EvseSlac
-===================
+.. ===================
+.. EvseSlac
+.. ===================
 
 This is an implementation of the ISO 15118-3 EVSE side SLAC protocol.
 The general flow of operation will be like this:
@@ -19,9 +17,8 @@ The general flow of operation will be like this:
 
 If not run as root user, this modules requires the capability CAP_NET_RAW.
 
-----
 Todo
-----
+====
 
 - make use of the enable flag in the reset command or drop it, if not needed
 - handle CM_VALIDATE.REQ message

@@ -1,10 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_NxpNfcFrontendTokenProvider:
 
-***************************
-NxpNfcFrontendTokenProvider
-***************************
+.. ***************************
+.. NxpNfcFrontendTokenProvider
+.. ***************************
 
 The module ``NxpNfcFrontendTokenProvider`` implements the ``auth_token_provider`` interface.
 It reads data from NXP NFC frontend chips like CLRC663.

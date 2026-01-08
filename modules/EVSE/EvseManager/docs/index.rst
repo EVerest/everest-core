@@ -1,12 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_EvseManager:
 
-************************
-EvseManager
-************************
-
-See also module's :ref:`auto-generated reference <everest_modules_EvseManager>`.
+.. ************************
+.. EvseManager
+.. ************************
 
 The module ``EvseManager`` is a central module that manages one EVSE
 (i.e. one connector to charge a car).

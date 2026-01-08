@@ -1,12 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_Bender_isoCHA425HV:
 
-*******************************************
-Bender_isoCHA425HV
-*******************************************
-
-:ref:`Link <everest_modules_Bender_isoCHA425HV>` to the module's reference.
+.. ******************
+.. Bender_isoCHA425HV
+.. ******************
 
 IMD driver for Bender isoCHA IMD devices
 
