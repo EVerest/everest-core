@@ -1,0 +1,362 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright chargebyte GmbH and Contributors to EVerest
+
+#include "RpcHandler.hpp"
+
+#include <jsonrpccxx/client.hpp>
+#include <jsonrpccxx/common.hpp>
+#include <jsonrpccxx/server.hpp>
+#include <jsonrpccxx/typemapper.hpp>
+
+#include <everest/logging.hpp>
+
+#include "../helpers/Conversions.hpp"
+#include "../helpers/LimitDecimalPlaces.hpp"
+
+namespace rpc {
+
+template <typename T> struct is_optional : std::false_type {};
+
+static const std::chrono::milliseconds REQ_COLLECTION_TIMEOUT(
+    10); // Timeout for collecting client requests. After this timeout, the requests will be processed.
+static const std::chrono::milliseconds
+    REQ_PROCESSING_TIMEOUT(50); // Timeout for processing requests. After this timeout, the request will be processed.
+
+// Helper functions
+template <typename T> struct is_optional<std::optional<T>> : std::true_type {};
+
+template <typename T> auto extract_param(const nlohmann::json& j) {
+    if constexpr (is_optional<T>::value) {
+        using InnerT = typename T::value_type;
+        if (j.is_null()) {
+            return std::optional<InnerT>{};
+        } else {
+            return std::optional<InnerT>{j.get<InnerT>()};
+        }
+    } else {
+        return j.get<T>();
+    }
+}
+
+// json-rpc-cpp does not support optional parameters in method signatures
+// so we need to create our own get_handle function to handle methods with optional parameters correctly
+template <typename...> using void_t = void;
+
+template <typename Default, template <typename...> class Op, typename... Args> struct detector {
+    using value_t = std::false_type;
+    using type = Default;
+};
+
+template <template <typename...> class Op, typename... Args> struct detector<void_t<Op<Args...>>, Op, Args...> {
+    using value_t = std::true_type;
+    using type = Op<Args...>;
+};
+
+template <template <typename...> class Op, typename... Args>
+using is_detected = typename detector<void, Op, Args...>::value_t;
+
+template <typename T>
+using is_to_json_serializable = decltype(to_json(std::declval<nlohmann::json&>(), std::declval<T>()));
+
+template <typename T> constexpr bool is_to_json_serializable_v = is_detected<is_to_json_serializable, T>::value;
+
+template <typename T, typename MethodT, typename... ParamTypes, std::size_t... I>
+auto invoke_with_params_impl(T& instance, MethodT method, const json& params, std::index_sequence<I...>) {
+    return (instance.*method)((extract_param<std::remove_reference_t<ParamTypes>>(params.at(I)))...);
+}
+
+template <typename T, typename MethodT, typename... ParamTypes>
+auto invoke_with_params(T& instance, MethodT method, const json& params) {
+    return invoke_with_params_impl<T, MethodT, ParamTypes...>(instance, method, params,
+                                                              std::index_sequence_for<ParamTypes...>{});
+}
+
+template <typename T, typename ReturnType, typename... ParamTypes>
+MethodHandle get_handle(ReturnType (T::*method)(ParamTypes...), T& instance, int precision = 3) {
+    return [&instance, method, precision](const json& params) -> json {
+        if (!params.is_array()) {
+            throw std::runtime_error("params must be array");
+        }
+
+        constexpr size_t expected = sizeof...(ParamTypes);
+        if (params.size() != expected) {
+            throw std::runtime_error("invalid number of parameters");
+        }
+
+        auto result = invoke_with_params<T, decltype(method), ParamTypes...>(instance, method, params);
+
+        if constexpr (std::is_same_v<ReturnType, void>) {
+            return json(); // no return value
+        } else if constexpr (std::is_same_v<ReturnType, nlohmann::json>) {
+            return result; // return json directly
+        } else if constexpr (is_to_json_serializable_v<ReturnType>) {
+            nlohmann::json j;
+            to_json(j, result);
+            helpers::roundFloatsInJson(j, precision);
+            return j; // convert to json and round floats
+        } else {
+            return result; // fallback: no conversion to json possible, return as is
+        }
+    };
+}
+
+RpcHandler::RpcHandler(std::vector<std::shared_ptr<server::TransportInterface>> transport_interfaces,
+                       DataStoreCharger& dataobj,
+                       std::unique_ptr<request_interface::RequestHandlerInterface> request_handler, int precision) :
+    m_transport_interfaces(std::move(transport_interfaces)),
+    m_data_store(dataobj),
+    m_methods_api(dataobj),
+    m_methods_chargepoint(dataobj),
+    m_methods_evse(dataobj, std::move(request_handler)),
+    m_conn(m_transport_interfaces, m_api_hello_received),
+    m_precision(precision) {
+    init_rpc_api();
+    init_transport_interfaces();
+    m_notifications_evse = std::make_unique<notifications::Evse>(m_rpc_server, dataobj, m_precision);
+    m_notifications_chargepoint = std::make_unique<notifications::ChargePoint>(m_rpc_server, dataobj, m_precision);
+}
+
+void RpcHandler::init_rpc_api() {
+    // Initialize the RPC API here
+    m_methods_api.set_authentication_required(false);
+    m_methods_api.set_api_version(API_VERSION);
+    m_rpc_server = std::make_shared<JsonRpc2ServerWithClient>(m_conn);
+    m_rpc_server->Add(methods::METHOD_API_HELLO, get_handle(&methods::Api::hello, m_methods_api, m_precision), {});
+    m_rpc_server->Add(methods::METHOD_CHARGEPOINT_GET_EVSE_INFOS,
+                      get_handle(&methods::ChargePoint::getEVSEInfos, m_methods_chargepoint, m_precision), {});
+    m_rpc_server->Add(methods::METHOD_CHARGEPOINT_GET_ACTIVE_ERRORS,
+                      get_handle(&methods::ChargePoint::getActiveErrors, m_methods_chargepoint, m_precision), {});
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_INFO, get_handle(&methods::Evse::get_info, m_methods_evse, m_precision),
+                      {"evse_index"});
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_STATUS,
+                      get_handle(&methods::Evse::get_status, m_methods_evse, m_precision), {"evse_index"});
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_HARDWARE_CAPABILITIES,
+                      get_handle(&methods::Evse::get_hardware_capabilities, m_methods_evse, m_precision),
+                      {"evse_index"});
+    m_rpc_server->Add(methods::METHOD_EVSE_SET_CHARGING_ALLOWED,
+                      get_handle(&methods::Evse::set_charging_allowed, m_methods_evse, m_precision),
+                      {"evse_index", "charging_allowed"});
+    m_rpc_server->Add(methods::METHOD_EVSE_GET_METER_DATA,
+                      get_handle(&methods::Evse::get_meter_data, m_methods_evse, m_precision), {"evse_index"});
+    // TODO: m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING,  (get_handle(&methods::Evse::set_ac_charging,
+    // m_methods_evse, m_precision)),
+    //                  {"evse_index", "charging_allowed", "max_current", "phase_count"});
+    m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING_CURRENT,
+                      get_handle(&methods::Evse::set_ac_charging_current, m_methods_evse, m_precision),
+                      {"evse_index", "max_current"});
+    m_rpc_server->Add(methods::METHOD_EVSE_SET_AC_CHARGING_PHASE_COUNT,
+                      get_handle(&methods::Evse::set_ac_charging_phase_count, m_methods_evse, m_precision),
+                      {"evse_index", "phase_count"});
+    // TODO: m_rpc_server->Add(methods::METHOD_EVSE_SET_DC_CHARGING, (get_handle(&methods::Evse::set_dc_charging,
+    // m_methods_evse, m_precision)),
+    //                  {"evse_index", "charging_allowed", "max_power"});
+    m_rpc_server->Add(methods::METHOD_EVSE_SET_DC_CHARGING_POWER,
+                      get_handle(&methods::Evse::set_dc_charging_power, m_methods_evse, m_precision),
+                      {"evse_index", "max_power"});
+    m_rpc_server->Add(methods::METHOD_EVSE_ENABLE_CONNECTOR,
+                      get_handle(&methods::Evse::enable_connector, m_methods_evse, m_precision),
+                      {"evse_index", "connector_index", "enable", "priority"});
+}
+
+void RpcHandler::init_transport_interfaces() {
+    for (const auto& transport_interface : m_transport_interfaces) {
+        if (!transport_interface) {
+            throw std::runtime_error("Transport interface is null");
+        }
+        m_last_req_notification = std::chrono::steady_clock::now();
+
+        transport_interface->on_client_connected =
+            [this, transport_interface](const server::TransportInterface::ClientId& client_id,
+                                        const server::TransportInterface::Address& address) {
+                this->client_connected(transport_interface, client_id, address);
+            };
+
+        transport_interface->on_client_disconnected =
+            [this, transport_interface](const server::TransportInterface::ClientId& client_id) {
+                this->client_disconnected(transport_interface, client_id);
+            };
+
+        transport_interface->on_data_available =
+            [this, transport_interface](const server::TransportInterface::ClientId& client_id,
+                                        const server::TransportInterface::Data& data) {
+                this->data_available(transport_interface, client_id, data);
+            };
+    }
+}
+
+void RpcHandler::client_connected(const std::shared_ptr<server::TransportInterface>& transport_interface,
+                                  const server::TransportInterface::ClientId& client_id,
+                                  [[maybe_unused]] const server::TransportInterface::Address& address) {
+    // In case of a new client, we expect that the client will send an API.Hello request within 5 seconds.
+    // The API.Hello request is a handshake message sent by the client to establish a connection and verify
+    // compatibility. If the API.Hello request is not received within the timeout period, the connection will be
+    // terminated.
+
+    // Launch a detached thread to wait for the client hello message
+    std::thread([this, client_id, transport_interface]() {
+        std::unique_lock<std::mutex> lock(m_mtx);
+        if (m_cv_api_hello.wait_for(lock, CLIENT_HELLO_TIMEOUT, [this, client_id] {
+                return m_api_hello_received.find(client_id) != m_api_hello_received.end();
+            }) == false) {
+            // Client did not send hello, close connection
+            if (transport_interface) {
+                transport_interface->kill_client_connection(client_id, "Disconnected due to timeout");
+            } else {
+                // Log the error instead of throwing an exception in a detached thread
+                // to avoid undefined behavior.
+                EVLOG_error << "Transport interface is null during client connection timeout handling";
+            }
+        }
+    }).detach();
+}
+
+void RpcHandler::client_disconnected(const std::shared_ptr<server::TransportInterface>& transport_interface,
+                                     const server::TransportInterface::ClientId& client_id) {
+    if (transport_interface) {
+        std::lock_guard<std::mutex> lock(m_mtx);
+        m_api_hello_received.erase(client_id);
+    } else {
+        // Log the error instead of throwing an exception in a detached thread
+        // to avoid undefined behavior.
+        EVLOG_error << "Transport interface is null during client disconnection handling";
+    }
+    // Clean up the client data
+    std::lock_guard<std::mutex> lock(m_mtx);
+    auto it = messages.find(client_id);
+    if (it != messages.end()) {
+        messages.erase(it);
+    }
+}
+
+void RpcHandler::data_available(const std::shared_ptr<server::TransportInterface>& transport_interface,
+                                const server::TransportInterface::ClientId& client_id,
+                                const server::TransportInterface::Data& data) {
+    // Handle request
+    using namespace std::chrono;
+
+    try {
+        auto now = steady_clock::now();
+
+        nlohmann::json request = nlohmann::json::parse(data);
+        if (request.is_null()) {
+            EVLOG_error << "Received null request from client " << client_id;
+            return;
+        }
+        // Store message in a map with client_id as key
+        std::lock_guard<std::mutex> lock(m_mtx);
+        messages[client_id].data.push_back(request);
+        messages[client_id].transport_interface = transport_interface;
+        EVLOG_debug << "Received message from client " << client_id << ": " << request.dump();
+
+        auto elapsed = duration_cast<milliseconds>(now - m_last_req_notification);
+        if (elapsed >= REQ_COLLECTION_TIMEOUT) {
+            m_last_req_notification = now; // restart timer
+            m_cv_data_available.notify_all();
+        }
+    } catch (const nlohmann::json::parse_error& e) {
+        EVLOG_error << "Failed to parse JSON request from client " << client_id << ": " << e.what();
+    } catch (const std::exception& e) {
+        EVLOG_error << "Exception occurred while handling data available: " << e.what();
+    }
+}
+
+void RpcHandler::process_client_requests() {
+    while (m_is_running) {
+        std::unique_lock<std::mutex> lock(m_mtx);
+        // Wait for data to be available or timeout
+        m_cv_data_available.wait_for(lock, REQ_PROCESSING_TIMEOUT, [this]() {
+            // Interate over all clients and check if data is available
+            for (const auto& [client_id, client_req] : messages) {
+                if (!client_req.data.empty()) {
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        // Process requests for each client
+        bool all_requests_processed; // Flag to check if all requests are processed
+        do {
+            all_requests_processed = true;
+            for (auto& [client_id, client_req] : messages) {
+                if (client_req.data.empty()) {
+                    continue; // Skip if no data available
+                }
+                // Process the data for this client
+                auto transport_interface = client_req.transport_interface;
+
+                if (!transport_interface) {
+                    EVLOG_error << "Skip data. Transport interface is null for client " << client_id;
+                    continue; // Skip if transport interface is null
+                }
+
+                // Get the first request from the client
+                nlohmann::json request = client_req.data.front();
+                client_req.data.pop_front(); // Remove the processed request
+
+                // Check if next request is available
+                if (client_req.data.empty()) {
+                    all_requests_processed = false;
+                }
+
+                // Check if the request is an API.Hello request
+                if (is_api_hello_req(client_id, request)) {
+                    // Notify condition variable to unblock the waiting thread
+                    m_cv_api_hello.notify_all();
+                    EVLOG_info << "API.Hello request received from client " << client_id;
+                } else {
+                    // If it is not an API.Hello request, we need to check if the client has already sent an API.Hello
+                    // request, if not, close the connection
+                    if (m_api_hello_received.find(client_id) == m_api_hello_received.end()) {
+                        EVLOG_debug << "Client " << client_id << " did not send API.Hello request. Closing connection.";
+                        transport_interface->kill_client_connection(client_id,
+                                                                    "Disconnected due to missing API.Hello request");
+                        continue; // Skip processing this request
+                    }
+                }
+
+                // Process the request in a detached thread, because HandleRequest is blocking until the response is
+                // received
+                std::thread([this, transport_interface, client_id, request]() {
+                    // Call the RPC server with the request
+                    std::string res = m_rpc_server->HandleRequest(request.dump());
+                    // Send the response back to the client
+                    transport_interface->send_data(client_id, res);
+                    EVLOG_debug << "Sent response to client " << client_id << ": " << res;
+                }).detach();
+            }
+        } while (!all_requests_processed && m_is_running);
+    }
+}
+
+void RpcHandler::start_server() {
+    m_is_running = true;
+    // Start all transport interfaces
+    for (const auto& transport_interface : m_transport_interfaces) {
+        if (!transport_interface->start_server()) {
+            throw std::runtime_error("Failed to start transport interface server");
+        }
+    }
+
+    // Start RPC receiver thread
+    m_rpc_recv_thread = std::thread([this]() { this->process_client_requests(); });
+}
+
+void RpcHandler::stop_server() {
+    m_is_running = false;
+    // Notify all threads to stop
+    m_cv_data_available.notify_all();
+    m_cv_api_hello.notify_all();
+
+    // Wait for the RPC receiver thread to finish
+    if (m_rpc_recv_thread.joinable()) {
+        m_rpc_recv_thread.join();
+    }
+
+    for (const auto& transport_interface : m_transport_interfaces) {
+        if (!transport_interface->stop_server()) {
+            throw std::runtime_error("Failed to stop transport interface server");
+        }
+    }
+}
+} // namespace rpc

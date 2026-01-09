@@ -1,5 +1,6 @@
 ev_add_module(API)
 ev_add_module(EvAPI)
+ev_add_module(RpcApi)
 ev_add_module(auth_consumer_API)
 ev_add_module(auth_token_provider_API)
 ev_add_module(auth_token_validator_API)
