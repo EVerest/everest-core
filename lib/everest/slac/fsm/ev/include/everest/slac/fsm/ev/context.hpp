@@ -63,6 +63,9 @@ struct Context {
     // MAC address of our PLC modem (EV side)
     uint8_t plc_mac[ETH_ALEN] = {0x00, 0xB0, 0x52, 0x00, 0x00, 0x01};
 
+    // MAC address to use for SET KEY req
+    uint8_t plc_mac_chip_commands[ETH_ALEN] = {0x00, 0xB0, 0x52, 0x00, 0x00, 0x01};
+
     // event specific payloads
     // FIXME (aw): due to the synchroneous nature of the fsm, this could be even a ptr/ref
     slac::messages::HomeplugMessage slac_message;
