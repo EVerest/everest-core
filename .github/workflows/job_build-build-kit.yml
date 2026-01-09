@@ -1,0 +1,85 @@
+name: Build the build-kit
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'Which runner to use'
+        required: false
+        default: 'ubuntu-24.04'
+        type: string
+      build_kit_docker_directory:
+        description: 'Directory in the repository where the build kit Dockerfile is located'
+        required: false
+        default: '.ci/build-kit/docker'
+        type: string
+      base_image_tag_everest_ci:
+        description: 'The tag of the everest-ci base image to use for building the build-kit'
+        required: true
+        type: string
+    outputs:
+      build_kit_artifact_name:
+        description: 'The name of the build-kit artifact'
+        value: ${{ jobs.build-build-kit.outputs.build_kit_artifact_name }}
+      build_kit_image_tag:
+        description: 'The tag of the built build-kit image'
+        value: ${{ jobs.build-build-kit.outputs.build_kit_image_tag }}
+
+jobs:
+  build-build-kit:
+    name: Build the build-kit
+    runs-on: ${{ inputs.runner }}
+    env:
+      BUILD_KIT_ARTIFACT_NAME: build-kit
+      BUILD_KIT_IMAGE_NAME: local/build-kit-${{ github.event.repository.name }}
+      BUILD_ARGS: |
+        BASE_IMAGE_TAG=${{ inputs.base_image_tag_everest_ci }}
+    outputs:
+      build_kit_image_tag: ${{ steps.set-outputs.outputs.tag }}
+      build_kit_artifact_name: ${{ env.BUILD_KIT_ARTIFACT_NAME }}
+    steps:
+      - name: Checkout Dockerfile
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          path: source
+          ref: ${{ github.ref }}
+          token: ${{ github.token}}
+          fetch-depth: 0
+      - name: Docker Meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.BUILD_KIT_IMAGE_NAME }}
+          sep-tags: ","
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: source/${{ inputs.build_kit_docker_directory }}
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: ${{ env.BUILD_ARGS }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=docker,dest=build-kit.tar
+      - name: Upload build-kit image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BUILD_KIT_ARTIFACT_NAME }}
+          path: build-kit.tar
+      - name: Set output tag
+        id: set-outputs
+        shell: python3 {0}
+        run: |
+          import os
+          tags = "${{ steps.meta.outputs.tags }}".split(",")
+          if len(tags) == 0:
+            print("No tags found!❌")
+            exit(1)
+          tag = tags[0]
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            f.write(f"tag={tag}\n")
+            print(f"Set tag={tag}")

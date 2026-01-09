@@ -1,0 +1,81 @@
+name: Setup Environment
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'Which runner to use'
+        required: false
+        default: 'ubuntu-24.04'
+        type: string
+      ref_everest_ci:
+        description: 'The reference of the everest-ci repository to checkout'
+        required: true
+        type: string
+    outputs:
+      ref_everest_ci:
+        description: 'The reference of the everest-ci repository to checkout'
+        value: ${{ inputs.ref_everest_ci }}
+      closest_tag_everest_ci:
+        description: 'The closest tag of the everest-ci repository to use'
+        value: ${{ jobs.setup-env.outputs.closest_tag_everest_ci }}
+      is_fork:
+        description: 'Whether the current repository is a fork'
+        value: ${{ jobs.setup-env.outputs.is_fork }}
+
+
+jobs:
+  setup-env:
+    name: Setup Environment
+    runs-on: ${{ inputs.runner }}
+    outputs:
+      is_fork: ${{ steps.is_fork.outputs.is_fork }}
+      closest_tag_everest_ci: ${{ steps.set_tag_everest_ci.outputs.closest_tag }}
+    steps:
+      - name: Determine closest tag of everest-ci
+        id: set_tag_everest_ci
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TARGET_SHA="${{ steps.set_sha_everest_ci.outputs.sha }}"
+          OWNER="everest"
+          REPO="everest-ci"
+
+          COMMITS=$(gh api repos/$OWNER/$REPO/commits?sha=$TARGET_SHA\&per_page=100 --jq '.[].sha')
+          for COMMIT in $COMMITS; do
+            TAG=$(gh api repos/$OWNER/$REPO/tags --jq '.[] | select(.commit.sha == "'$COMMIT'") | .name')
+            if [ -n "$TAG" ]; then
+              break
+            fi
+          done
+
+          if [ -z "$TAG" ]; then
+            echo "No tag found for commit $TARGET_SHA (only last 100 commits were checked)"
+            exit 1
+          fi
+
+          # if inputs.build_kit_base_image_tag is != "", use it as the tag
+          if [ -n "${{ inputs.build_kit_base_image_tag }}" ]; then
+            echo "Using inputs.build_kit_base_image_tag as tag"
+            TAG="${{ inputs.build_kit_base_image_tag }}"
+          fi
+
+          echo "closest_tag=$TAG" >> $GITHUB_OUTPUT
+      - name: Determine whether the PR comes from fork
+        id: is_fork
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+              is_fork=true
+            else
+              is_fork=false
+            fi
+          else
+            is_fork=false
+          fi
+          echo "is_fork=${is_fork}" >> $GITHUB_OUTPUT
+          if [ "${is_fork}" == "true" ]; then
+            echo "This is a forked PR"
+          else
+            echo "This is not a forked PR"
+          fi

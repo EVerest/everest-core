@@ -1,11 +1,16 @@
-name: Bazel Build
+name: Bazel Build And Test
 run-name: ${{ github.actor }} is building with bazel
 on:
-  pull_request: {}
-  merge_group: {}
+  workflow_call:
+    inputs:
+      runner:
+        description: 'Which runner to use'
+        required: false
+        default: 'ubuntu-24.04'
+        type: string
 jobs:
   bazel-build-and-test:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.runner }}
     steps:
       - run: echo branch name is ${{ github.ref }}
       - name: Checkout

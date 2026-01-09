@@ -109,6 +109,11 @@ function(trailbook_ev_create_snapshot)
             --working-dir ${args_EVEREST_WORKSPACE_DIRECTORY}
             --temp-dir ${CREATE_SNAPSHOT_TEMP_DIR}
             --allow-relative-to-working-dir
+            --exclude-dir build/
+            --exclude-dir .vscode/
+            --exclude-dir dist/
+            --exclude-dir cache/
+            --exclude-dir scripts/
         COMMAND
             ${CMAKE_COMMAND} -E copy
             ${CREATE_SNAPSHOT_TEMP_DIR}/snapshot.yaml

@@ -1,0 +1,245 @@
+name: Build with CMake and GCC
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'Which runner to use'
+        required: false
+        default: 'ubuntu-24.04'
+        type: string
+      ref_everest_ci:
+        description: 'The reference of the everest-ci repository to checkout'
+        required: true
+        type: string
+      is_fork:
+        description: 'Whether the current repository is a fork'
+        required: true
+        type: string
+      build-kit-artifact-name:
+        description: 'The name of the build-kit artifact to download'
+        required: true
+        type: string
+      build_kit_image_tag:
+        description: 'The tag of the build-kit image to use for building the project'
+        required: true
+        type: string
+      build_kit_scripts_directory:
+        description: 'Directory in the repository where the build kit scripts are located'
+        required: false
+        default: '.ci/build-kit/scripts'
+        type: string
+      ctest_report_path:
+        description: 'The path to the ctest report, relative to the github workspace'
+        required: false
+        default: 'build/Testing/Temporary/LastTest.log'
+        type: string
+      coverage_report_path:
+        description: 'The path to the coverage report, relative to the github workspace'
+        required: false
+        default: 'build/gcovr-coverage'
+        type: string
+      coverage_xml_path:
+        description: 'The path to the coverage xml, relative to the github workspace'
+        required: false
+        default: 'build/coverage.xml'
+        type: string
+      artifact_deploy_target_repo:
+        description: 'Repository to deploy artifacts to'
+        required: true
+        type: string
+      wheels_path:
+        description: 'The path to the wheels directory, relative to the github workspace'
+        required: false
+        default: 'wheels'
+        type: string
+    secrets:
+      coverage_deploy_token:
+        description: 'The token to use to deploy the coverage report'
+        required: true
+      SA_GITHUB_SSH_KEY:
+        description: 'The ssh key to use for git operations'
+        required: false
+    outputs:
+      ctest_report_artifact_name:
+        description: 'The name of the ctest report artifact uploaded'
+        value: ${{ jobs.build-cmake-gcc.outputs.ctest_report_artifact_name }}
+      coverage_report_artifact_name:
+        description: 'The name of the coverage report artifact uploaded'
+        value: ${{ jobs.build-cmake-gcc.outputs.coverage_report_artifact_name }}
+      coverage_xml_artifact_name:
+        description: 'The name of the coverage xml artifact uploaded'
+        value: ${{ jobs.build-cmake-gcc.outputs.coverage_xml_artifact_name }}
+      dist_artifact_name:
+        description: 'The name of the dist artifact uploaded'
+        value: ${{ jobs.build-cmake-gcc.outputs.dist_artifact_name }}
+      wheels_artifact_name:
+        description: 'The name of the wheels artifact uploaded'
+        value: ${{ jobs.build-cmake-gcc.outputs.wheels_artifact_name }}
+
+jobs:
+  build-cmake-gcc:
+    name: Build with CMake and GCC, Unit Tests and Install
+    runs-on: ${{ inputs.runner }}
+    env:
+      CTEST_REPORT_ARTIFACT_NAME: ctest-report
+      COVERAGE_REPORT_ARTIFACT_NAME: coverage-report
+      COVERAGE_XML_ARTIFACT_NAME: coverage-xml
+      DIST_ARTIFACT_NAME: dist
+      WHEELS_ARTIFACT_NAME: wheels
+      BUILD_KIT_IMAGE: ${{ inputs.build_kit_image_tag }}
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+    outputs:
+      ctest_report_artifact_name: ${{ env.CTEST_REPORT_ARTIFACT_NAME }}
+      coverage_report_artifact_name: ${{ env.COVERAGE_REPORT_ARTIFACT_NAME }}
+      coverage_xml_artifact_name: ${{ env.COVERAGE_XML_ARTIFACT_NAME }}
+      dist_artifact_name: ${{ env.DIST_ARTIFACT_NAME }}
+      wheels_artifact_name: ${{ env.WHEELS_ARTIFACT_NAME }}
+    steps:
+      - name: Setup SSH Agent, optional with SSH key
+        env:
+          SSH_KEY: ${{ secrets.SA_GITHUB_SSH_KEY }}
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          if [ -z "${{ env.SSH_KEY }}" ]; then
+            echo "No SSH key provided, skipping SSH key setup"
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          echo "${{ env.SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          # Check if github.com is already in known_hosts, if not, add it
+          if ! grep -q "^github.com " ~/.ssh/known_hosts; then
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+          fi
+          ssh-add ~/.ssh/id_ed25519
+      - name: Checkout local github actions
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/everest-ci
+          ref: ${{ inputs.ref_everest_ci }}
+          path: everest-ci
+      - name: Format branch name for cache key
+        run: |
+          BRANCH_NAME_FOR_CACHE="${GITHUB_REF_NAME//-/_}"
+          echo "branch_name_for_cache=${BRANCH_NAME_FOR_CACHE}" >> "$GITHUB_ENV"
+      - name: Setup cache
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: compile-${{ env.branch_name_for_cache }}-${{ github.sha }}
+          restore-keys: |
+            compile-${{ env.branch_name_for_cache }}-
+            compile-
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: source
+      - name: Setup run scripts
+        run: |
+          mkdir scripts
+          rsync -a source/${{ inputs.build_kit_scripts_directory }}/ scripts
+      - name: Download build-kit image
+        uses: actions/download-artifact@v5
+        with:
+          name: ${{ inputs.build-kit-artifact-name }}
+      - name: Load build-kit image
+        run: |
+          docker load -i build-kit.tar
+          docker image tag ${{ env.BUILD_KIT_IMAGE }} build-kit
+      - name: Compile
+        run: |
+          docker run \
+          --mount type=bind,source=$SSH_AUTH_SOCK,target=/ssh-agent \
+          --env SSH_AUTH_SOCK=/ssh-agent \
+          --volume "${{ github.workspace }}:/ext" \
+          --name compile-container \
+          build-kit run-script compile
+      - name: Run unit tests
+        id: run_unit_tests
+        run: |
+          docker run \
+          --mount type=bind,source=$SSH_AUTH_SOCK,target=/ssh-agent \
+          --env SSH_AUTH_SOCK=/ssh-agent \
+          --volume "${{ github.workspace }}:/ext" \
+          --name unit-test-container \
+          build-kit run-script run_unit_tests
+      - name: Archive test results
+        if: ${{ always() && (steps.run_unit_tests.outcome == 'success' || steps.run_unit_tests.outcome == 'failure') }}
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: ${{ env.CTEST_REPORT_ARTIFACT_NAME }}
+          path: ${{ inputs.ctest_report_path }}
+      # - name: Run coverage
+      #   id: run_coverage
+      #   run: |
+      #     docker run \
+      #     --mount type=bind,source=$SSH_AUTH_SOCK,target=/ssh-agent \
+      #     --env SSH_AUTH_SOCK=/ssh-agent \
+      #     --volume "${{ github.workspace }}:/ext" \
+      #     --name coverage-container \
+      #     build-kit run-script run_coverage
+      # - name: Archive coverage report
+      #   if: ${{ always() && (steps.run_coverage.outcome == 'success' || steps.run_coverage.outcome == 'failure') }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     if-no-files-found: error
+      #     name: ${{ env.COVERAGE_REPORT_ARTIFACT_NAME }}
+      #     path: ${{ inputs.coverage_report_path }}
+      # - name: Archive coverage xml
+      #   if: ${{ always() && (steps.run_coverage.outcome == 'success' || steps.run_coverage.outcome == 'failure') }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     if-no-files-found: error
+      #     name: ${{ env.COVERAGE_XML_ARTIFACT_NAME }}
+      #     path: ${{ inputs.coverage_xml_path}}
+      # - name: Deploy html coverage report
+      #   id: deploy_coverage_report
+      #   if: ${{ always() && ( steps.run_coverage.outcome == 'success' || steps.run_coverage.outcome == 'failure' ) && inputs.is_fork == 'false' }}
+      #   uses: ./everest-ci/github-actions/deploy-ci-artifact
+      #   with:
+      #     target_repo: ${{ inputs.artifact_deploy_target_repo }}
+      #     github_token: ${{ secrets.coverage_deploy_token }}
+      #     artifact_name: coverage-report
+      #     artifact_directory: ${{ inputs.coverage_report_path }}
+      # - name: Write summary coverage
+      #   if: ${{ always() && (steps.run_coverage.outcome == 'success' || steps.run_coverage.outcome == 'failure') }}
+      #   run: |
+      #     echo "Coverage report deployed to: [everest.github.io](https://everest.github.io/${{ steps.deploy_coverage_report.outputs.deployed_path }})" >> $GITHUB_STEP_SUMMARY
+      - name: Create dist
+        id: create_dist
+        run: |
+          docker run \
+          --mount type=bind,source=$SSH_AUTH_SOCK,target=/ssh-agent \
+          --env SSH_AUTH_SOCK=/ssh-agent \
+          --volume "${{ github.workspace }}:/ext" \
+          --name dist-container \
+          build-kit run-script install
+      - name: Tar dist dir and keep permissions
+        if: ${{ always() && (steps.create_dist.outcome == 'success' || steps.create_dist.outcome == 'failure') }}
+        run: |
+          tar -czf dist.tar.gz dist
+      - name: Upload dist artifact
+        if: ${{ always() && (steps.create_dist.outcome == 'success' || steps.create_dist.outcome == 'failure') }}
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          if-no-files-found: error
+          path: dist.tar.gz
+          name: ${{ env.DIST_ARTIFACT_NAME }}
+      - name: Create wheels
+        id: create_wheels
+        run: |
+          docker run \
+          --mount type=bind,source=$SSH_AUTH_SOCK,target=/ssh-agent \
+          --env SSH_AUTH_SOCK=/ssh-agent \
+          --volume "${{ github.workspace }}:/ext" \
+          --name wheels-container \
+          build-kit run-script install_wheels
+      - name: Upload wheels artifact
+        if: ${{ always() && (steps.create_wheels.outcome == 'success' || steps.create_wheels.outcome == 'failure') }}
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          if-no-files-found: error
+          path: ${{ inputs.wheels_path }}
+          name: ${{ env.WHEELS_ARTIFACT_NAME }}
