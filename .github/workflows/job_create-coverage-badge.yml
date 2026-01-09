@@ -40,7 +40,7 @@ jobs:
       - name: Checkout local github actions
         uses: actions/checkout@v4
         with:
-          repository: everest/everest-ci
+          repository: ${{ github.repository_owner }}/everest-ci
           ref: ${{ inputs.ref_everest_ci }}
           path: everest-ci
       - name: Download xml coverage report

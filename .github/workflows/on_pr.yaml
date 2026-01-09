@@ -7,10 +7,10 @@ on:
       runner:
         description: Which runner to use
         type: choice
-        default: 'ubuntu-22.04'
+        default: 'ubuntu-24.04'
         required: true
         options:
-          - 'ubuntu-22.04'
+          - 'ubuntu-24.04'
           - 'large-ubuntu-22.04-xxl'
   schedule:
     - cron: '37 13,1 * * *'
@@ -51,7 +51,7 @@ jobs:
       is_fork: ${{ needs.setup-env.outputs.is_fork }}
       build-kit-artifact-name: ${{ needs.build-build-kit.outputs.build_kit_artifact_name }}
       build_kit_image_tag: ${{ needs.build-build-kit.outputs.build_kit_image_tag }}
-      artifact_deploy_target_repo: EVerest/everest.github.io
+      artifact_deploy_target_repo: ${{ github.repository_owner }}/everest.github.io
 
 
   integration-tests:
