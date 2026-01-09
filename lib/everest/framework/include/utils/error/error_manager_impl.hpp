@@ -6,6 +6,7 @@
 
 #include <list>
 #include <memory>
+#include <mutex>
 
 #include <utils/error.hpp>
 
@@ -67,6 +68,8 @@ private:
     std::shared_ptr<ErrorTypeMap> error_type_map;
     std::shared_ptr<ErrorDatabase> database;
     std::list<ErrorType> allowed_error_types;
+
+    std::mutex mutex;
 
     PublishErrorFunc publish_raised_error;
     PublishErrorFunc publish_cleared_error;
