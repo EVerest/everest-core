@@ -201,6 +201,8 @@ private:
             return "Minutes";
         case UnitType::Hours:
             return "Hours";
+        case UnitType::Days:
+            return "Days";
         case UnitType::Months:
             return "Months";
         }
