@@ -4,9 +4,9 @@
 #include <everest/database/sqlite/statement.hpp>
 #include <everest/logging.hpp>
 #include <limits>
-#include <ocpp/v2/charge_point.hpp>
 #include <ocpp/v2/device_model_storage_sqlite.hpp>
 #include <ocpp/v2/init_device_model_db.hpp>
+#include <ocpp/v2/utils.hpp>
 
 using namespace everest::db;
 using namespace everest::db::sqlite;
@@ -405,7 +405,7 @@ DeviceModelStorageSqlite::get_monitoring_data(const std::vector<MonitoringCriter
         monitors.push_back(monitor_meta);
 
         // Filter only required monitors
-        filter_criteria_monitors(criteria, monitors);
+        ocpp::v2::utils::filter_criteria_monitors(criteria, monitors);
     }
 
     return monitors;

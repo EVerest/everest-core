@@ -3,6 +3,7 @@
 #ifndef V2_UTILS_HPP
 #define V2_UTILS_HPP
 
+#include <ocpp/v2/device_model_abstract.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 #include <ocpp/v2/types.hpp>
 namespace ocpp {
@@ -79,6 +80,19 @@ std::vector<ChargingProfilePurposeEnum> get_purposes_to_ignore(const std::string
 
 /// \brief Converts the given \p csl of OcppProtocolVersion strings into a std::vector<OcppProtocolVersion>
 std::vector<OcppProtocolVersion> get_ocpp_protocol_versions(const std::string& csl);
+
+/// \brief Filters a single monitor based on the given criteria
+/// \param criteria applied criteria
+/// \param monitor  monitor to filter
+/// \return true if the monitor matches any of the criteria, false otherwise
+bool filter_criteria_monitor(const std::vector<MonitoringCriterionEnum>& criteria,
+                             const VariableMonitoringMeta& monitor);
+
+/// \brief Filters the given monitors based on the given criteria
+/// \param criteria applied criteria
+/// \param monitors monitors to filter, will be modified in place
+void filter_criteria_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
+                              std::vector<VariableMonitoringMeta>& monitors);
 
 } // namespace utils
 } // namespace v2

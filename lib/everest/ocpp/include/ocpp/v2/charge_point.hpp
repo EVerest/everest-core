@@ -47,7 +47,7 @@ class TransactionInterface;
 class BidirectionalInterface;
 
 class DatabaseHandler;
-class DeviceModel;
+class DeviceModelAbstract;
 class DeviceModelStorageInterface;
 class EvseManager;
 
@@ -343,7 +343,7 @@ public:
 class ChargePoint : public ChargePointInterface, private ocpp::ChargingStationBase {
 
 private:
-    std::shared_ptr<DeviceModel> device_model;
+    std::shared_ptr<DeviceModelAbstract> device_model;
     std::unique_ptr<EvseManager> evse_manager;
     std::unique_ptr<ConnectivityManager> connectivity_manager;
 
@@ -474,7 +474,7 @@ public:
     /// \param evse_security Pointer to evse_security that manages security related operations
     /// \param callbacks Callbacks that will be registered for ChargePoint
     ChargePoint(const std::map<std::int32_t, std::int32_t>& evse_connector_structure,
-                std::shared_ptr<DeviceModel> device_model, std::shared_ptr<DatabaseHandler> database_handler,
+                std::shared_ptr<DeviceModelAbstract> device_model, std::shared_ptr<DatabaseHandler> database_handler,
                 std::shared_ptr<MessageQueue<v2::MessageType>> message_queue, const std::string& message_log_path,
                 const std::shared_ptr<EvseSecurity> evse_security, const Callbacks& callbacks);
 

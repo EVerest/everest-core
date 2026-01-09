@@ -491,7 +491,7 @@ struct CompositeScheduleConfig {
     std::int32_t default_number_phases{};
     float supply_voltage{};
 
-    CompositeScheduleConfig(DeviceModel& device_model, bool is_offline) :
+    CompositeScheduleConfig(DeviceModelAbstract& device_model, bool is_offline) :
         purposes_to_ignore{utils::get_purposes_to_ignore(
             device_model.get_optional_value<std::string>(ControllerComponentVariables::IgnoredProfilePurposesOffline)
                 .value_or(""),

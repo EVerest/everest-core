@@ -81,7 +81,7 @@ private:
     std::vector<std::unique_ptr<EvseInterface>> evses;
 
 public:
-    EvseManager(const std::map<std::int32_t, std::int32_t>& evse_connector_structure, DeviceModel& device_model,
+    EvseManager(const std::map<std::int32_t, std::int32_t>& evse_connector_structure, DeviceModelAbstract& device_model,
                 std::shared_ptr<DatabaseHandler> database_handler,
                 std::shared_ptr<ComponentStateManagerInterface> component_state_manager,
                 const std::function<void(const MeterValue& meter_value, EnhancedTransaction& transaction)>&

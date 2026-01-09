@@ -245,6 +245,55 @@ std::vector<OcppProtocolVersion> get_ocpp_protocol_versions(const std::string& c
     return ocpp_versions;
 }
 
+bool filter_criteria_monitor(const std::vector<MonitoringCriterionEnum>& criteria,
+                             const VariableMonitoringMeta& monitor) {
+    // N02.FR.11 - if no criteria is provided we have a match
+    if (criteria.empty()) {
+        return true;
+    }
+
+    auto type = monitor.monitor.type;
+    bool any_filter_match = false;
+
+    for (auto& criterion : criteria) {
+        switch (criterion) {
+        case MonitoringCriterionEnum::DeltaMonitoring:
+            any_filter_match = (type == MonitorEnum::Delta);
+            break;
+        case MonitoringCriterionEnum::ThresholdMonitoring:
+            any_filter_match = (type == MonitorEnum::LowerThreshold || type == MonitorEnum::UpperThreshold);
+            break;
+        case MonitoringCriterionEnum::PeriodicMonitoring:
+            any_filter_match = (type == MonitorEnum::Periodic || type == MonitorEnum::PeriodicClockAligned);
+            break;
+        }
+
+        if (any_filter_match) {
+            break;
+        }
+    }
+
+    return any_filter_match;
+}
+
+void filter_criteria_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
+                              std::vector<VariableMonitoringMeta>& monitors) {
+    // N02.FR.11 - if no criteria is provided, all monitors are left
+    if (criteria.empty()) {
+        return;
+    }
+
+    for (auto it = std::begin(monitors); it != std::end(monitors);) {
+        const bool any_filter_match = filter_criteria_monitor(criteria, *it);
+
+        if (any_filter_match == false) {
+            it = monitors.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 } // namespace utils
 } // namespace v2
 } // namespace ocpp

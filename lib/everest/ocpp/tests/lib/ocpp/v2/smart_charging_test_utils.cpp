@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
+#include <ocpp/v2/device_model.hpp>
 #include <smart_charging_test_utils.hpp>
 
 #include "ocpp/v2/ctrlr_component_variables.hpp"

@@ -35,55 +35,7 @@ bool allow_set_read_only_value(const Component& component, const Variable& varia
            variable == ConnectorComponentVariables::AvailabilityState;
 }
 
-bool filter_criteria_monitor(const std::vector<MonitoringCriterionEnum>& criteria,
-                             const VariableMonitoringMeta& monitor) {
-    // N02.FR.11 - if no criteria is provided we have a match
-    if (criteria.empty()) {
-        return true;
-    }
-
-    auto type = monitor.monitor.type;
-    bool any_filter_match = false;
-
-    for (auto& criterion : criteria) {
-        switch (criterion) {
-        case MonitoringCriterionEnum::DeltaMonitoring:
-            any_filter_match = (type == MonitorEnum::Delta);
-            break;
-        case MonitoringCriterionEnum::ThresholdMonitoring:
-            any_filter_match = (type == MonitorEnum::LowerThreshold || type == MonitorEnum::UpperThreshold);
-            break;
-        case MonitoringCriterionEnum::PeriodicMonitoring:
-            any_filter_match = (type == MonitorEnum::Periodic || type == MonitorEnum::PeriodicClockAligned);
-            break;
-        }
-
-        if (any_filter_match) {
-            break;
-        }
-    }
-
-    return any_filter_match;
-}
 } // namespace
-
-void filter_criteria_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
-                              std::vector<VariableMonitoringMeta>& monitors) {
-    // N02.FR.11 - if no criteria is provided, all monitors are left
-    if (criteria.empty()) {
-        return;
-    }
-
-    for (auto it = std::begin(monitors); it != std::end(monitors);) {
-        const bool any_filter_match = filter_criteria_monitor(criteria, *it);
-
-        if (any_filter_match == false) {
-            it = monitors.erase(it);
-        } else {
-            ++it;
-        }
-    }
-}
 
 bool DeviceModel::component_criteria_match(const Component& component,
                                            const std::vector<ComponentCriterionEnum>& component_criteria) {
@@ -326,6 +278,12 @@ bool include_in_summary_inventory(const ComponentVariable& cv, const VariableAtt
     return false;
 }
 } // namespace
+
+GetVariableStatusEnum DeviceModel::get_variable(const Component& component_id, const Variable& variable_id,
+                                                const AttributeEnum& attribute_enum, std::string& value,
+                                                bool allow_write_only) const {
+    return this->request_value_internal(component_id, variable_id, attribute_enum, value, allow_write_only);
+}
 
 GetVariableStatusEnum DeviceModel::request_value_internal(const Component& component_id, const Variable& variable_id,
                                                           const AttributeEnum& attribute_enum, std::string& value,
@@ -912,7 +870,7 @@ std::vector<MonitoringData> DeviceModel::get_monitors(const std::vector<Monitori
                     monitor_data.variable = variable;
 
                     for (const auto& [id, monitor_meta] : variable_meta.monitors) {
-                        if (filter_criteria_monitor(criteria, monitor_meta)) {
+                        if (ocpp::v2::utils::filter_criteria_monitor(criteria, monitor_meta)) {
                             monitor_data.variableMonitoring.push_back(monitor_meta.monitor);
                         }
                     }
@@ -937,7 +895,7 @@ std::vector<MonitoringData> DeviceModel::get_monitors(const std::vector<Monitori
                 auto& variable_meta = variable_it->second;
 
                 for (const auto& [id, monitor_meta] : variable_meta.monitors) {
-                    if (filter_criteria_monitor(criteria, monitor_meta)) {
+                    if (ocpp::v2::utils::filter_criteria_monitor(criteria, monitor_meta)) {
                         monitor_data.variableMonitoring.push_back(monitor_meta.monitor);
                     }
                 }
@@ -956,7 +914,7 @@ std::vector<MonitoringData> DeviceModel::get_monitors(const std::vector<Monitori
                 for (const auto& [id, monitor_meta] : variable_metadata.monitors) {
                     // Also handles the case when the criteria is empty,
                     // since in that case N02.FR.11 applies (all monitors pass)
-                    if (filter_criteria_monitor(criteria, monitor_meta)) {
+                    if (ocpp::v2::utils::filter_criteria_monitor(criteria, monitor_meta)) {
                         monitors.push_back(monitor_meta.monitor);
                     }
                 }

@@ -5,7 +5,7 @@
 
 #include <ocpp/common/message_dispatcher.hpp>
 #include <ocpp/v2/connectivity_manager.hpp>
-#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/device_model_abstract.hpp>
 
 namespace ocpp {
 namespace v2 {
@@ -13,7 +13,7 @@ namespace v2 {
 class MessageDispatcher : public MessageDispatcherInterface<MessageType> {
 
 public:
-    MessageDispatcher(ocpp::MessageQueue<MessageType>& message_queue, DeviceModel& device_model,
+    MessageDispatcher(ocpp::MessageQueue<MessageType>& message_queue, DeviceModelAbstract& device_model,
                       std::atomic<RegistrationStatusEnum>& registration_status) :
         message_queue(message_queue), device_model(device_model), registration_status(registration_status){};
     void dispatch_call(const json& call, bool triggered = false) override;
@@ -23,7 +23,7 @@ public:
 
 private:
     ocpp::MessageQueue<MessageType>& message_queue;
-    DeviceModel& device_model;
+    DeviceModelAbstract& device_model;
     std::atomic<RegistrationStatusEnum>& registration_status;
 };
 

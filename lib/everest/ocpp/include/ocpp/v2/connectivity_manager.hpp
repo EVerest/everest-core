@@ -13,7 +13,7 @@
 namespace ocpp {
 namespace v2 {
 
-class DeviceModel;
+class DeviceModelAbstract;
 
 /// \brief The result of a configuration of a network profile.
 struct ConfigNetworkResult {
@@ -120,7 +120,7 @@ public:
 class ConnectivityManager : public ConnectivityManagerInterface {
 private:
     /// \brief Reference to the device model
-    DeviceModel& device_model;
+    DeviceModelAbstract& device_model;
     /// \brief Pointer to the evse security class
     std::shared_ptr<EvseSecurity> evse_security;
     /// \brief Pointer to the logger
@@ -150,7 +150,7 @@ private:
     OcppProtocolVersion connected_ocpp_version;
 
 public:
-    ConnectivityManager(DeviceModel& device_model, std::shared_ptr<EvseSecurity> evse_security,
+    ConnectivityManager(DeviceModelAbstract& device_model, std::shared_ptr<EvseSecurity> evse_security,
                         std::shared_ptr<MessageLogging> logging,
                         const std::function<void(const std::string& message)>& message_callback);
 

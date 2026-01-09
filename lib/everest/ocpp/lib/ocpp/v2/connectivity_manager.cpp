@@ -19,7 +19,7 @@ constexpr std::int32_t default_network_config_timeout_seconds = 60;
 namespace ocpp {
 namespace v2 {
 
-ConnectivityManager::ConnectivityManager(DeviceModel& device_model, std::shared_ptr<EvseSecurity> evse_security,
+ConnectivityManager::ConnectivityManager(DeviceModelAbstract& device_model, std::shared_ptr<EvseSecurity> evse_security,
                                          std::shared_ptr<MessageLogging> logging,
                                          const std::function<void(const std::string& message)>& message_callback) :
     device_model{device_model},

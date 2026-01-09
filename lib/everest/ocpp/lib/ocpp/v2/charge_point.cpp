@@ -48,7 +48,8 @@ namespace v2 {
 const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 1000;
 
 ChargePoint::ChargePoint(const std::map<std::int32_t, std::int32_t>& evse_connector_structure,
-                         std::shared_ptr<DeviceModel> device_model, std::shared_ptr<DatabaseHandler> database_handler,
+                         std::shared_ptr<DeviceModelAbstract> device_model,
+                         std::shared_ptr<DatabaseHandler> database_handler,
                          std::shared_ptr<MessageQueue<v2::MessageType>> message_queue,
                          const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
                          const Callbacks& callbacks) :
