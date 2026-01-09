@@ -59,6 +59,21 @@ function(_ev_add_project)
             ${TYPES_DIR}/*.yaml
         )
 
+        if(EVEREST_BUILD_DOCS)
+            find_package(
+                trailbook-ext-everest
+                0.1.0
+                REQUIRED
+                PATHS "${CMAKE_SOURCE_DIR}/cmake"
+            )
+            foreach(TYPES_FILE ${TYPES_FILES})
+                trailbook_ev_generate_rst_from_types(
+                    TRAILBOOK_NAME "everest"
+                    TYPES_FILE "${TYPES_FILE}"
+                )
+            endforeach()
+        endif()
+
         _ev_add_types(${TYPES_FILES})
 
         if (CALLED_FROM_WITHIN_PROJECT)
@@ -67,6 +82,40 @@ function(_ev_add_project)
                 DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
                 FILES_MATCHING PATTERN "*.yaml"
             )
+        endif ()
+    endif ()
+
+    # check for API
+    set(API_DIR "${EVEREST_PROJECT_DIR}/docs/source/reference/EVerest_API")
+    if (EXISTS ${API_DIR})
+        if (${EVEREST_SKIP_BUILD_API_DOC})
+            message(WARNING "Skipping the generation of the EVerest API AsyncAPI html documentation")
+        else()
+            message(STATUS "Adding API definitions from ${API_DIR}")
+            file(GLOB API_FILES
+                ${API_DIR}/*.yaml
+            )
+
+            if(EVEREST_BUILD_DOCS)
+                find_package(
+                    trailbook-ext-everest
+                    0.1.0
+                    REQUIRED
+                    PATHS "${CMAKE_SOURCE_DIR}/cmake"
+                )
+                trailbook_ev_generate_api_doc(
+                    TRAILBOOK_NAME "everest"
+                    API_FILES ${API_FILES}
+                )
+            endif()
+
+            if (CALLED_FROM_WITHIN_PROJECT)
+                install(
+                    DIRECTORY ${API_DIR}
+                    DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
+                    FILES_MATCHING PATTERN "*.yaml"
+                )
+            endif ()
         endif ()
     endif ()
 
@@ -90,6 +139,21 @@ function(_ev_add_project)
         file(GLOB INTERFACE_FILES
             ${INTERFACES_DIR}/*.yaml
         )
+
+        if(EVEREST_BUILD_DOCS)
+            find_package(
+                trailbook-ext-everest
+                0.1.0
+                REQUIRED
+                PATHS "${CMAKE_SOURCE_DIR}/cmake"
+            )
+            foreach(INTERFACE_FILE ${INTERFACE_FILES})
+                trailbook_ev_generate_rst_from_interface(
+                    TRAILBOOK_NAME "everest"
+                    INTERFACE_FILE "${INTERFACE_FILE}"
+                )
+            endforeach()
+        endif()
 
         _ev_add_interfaces(${INTERFACE_FILES})
 
@@ -419,6 +483,36 @@ function (ev_add_module)
             endif()
         endforeach()
     endif()
+
+    if (EVEREST_BUILD_DOCS)
+        find_package(
+            trailbook-ext-everest
+            0.1.0
+            REQUIRED
+            PATHS "${CMAKE_SOURCE_DIR}/cmake"
+        )
+        if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/docs/")
+            trailbook_ev_add_module_explanation(
+                TRAILBOOK_NAME "everest"
+                MODULE_NAME "${MODULE_NAME}"
+                EXPLANATION_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/docs"
+            )
+        endif()
+        if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/doc.rst")
+            message(
+                FATAL_ERROR
+                "Module ${MODULE_NAME} contains a doc.rst file"
+                " this is not supported anymore, please move to"
+                " docs/index.rst, then it will be picked up automatically."
+                " For now this file will be ignored."
+            )
+        endif()
+        trailbook_ev_generate_rst_from_manifest(
+            TRAILBOOK_NAME "everest"
+            MANIFEST_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${MODULE_NAME}/manifest.yaml"
+        )
+    endif()
+
 
     # check if python module
     string(FIND ${MODULE_NAME} "Py" MODULE_PREFIX_POS)

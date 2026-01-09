@@ -1,3 +1,5 @@
+:orphan:
+
 .. _everest_modules_handwritten_TerminalDisplayMessage:
 
 ..  This file is a placeholder for optional multiple files
@@ -20,4 +22,4 @@ TerminalDisplayMessage
 *******************************************
 
 :ref:`Link <everest_modules_TerminalDisplayMessage>` to the module's reference.
-Example display message module
+Example implementation of a display message module
