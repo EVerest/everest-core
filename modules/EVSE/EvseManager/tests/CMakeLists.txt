@@ -18,9 +18,11 @@ target_sources(${TEST_TARGET_NAME} PRIVATE
     EventQueueTest.cpp
     ErrorHandlingTest.cpp
     IECStateMachineTest.cpp
+    OverVoltageMonitorTest.cpp
     ../ErrorHandling.cpp
     ../IECStateMachine.cpp
     ../backtrace.cpp
+    ../over_voltage/OverVoltageMonitor.cpp
 )
 
 target_compile_definitions(${TEST_TARGET_NAME} PRIVATE
