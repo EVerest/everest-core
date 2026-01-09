@@ -23,6 +23,7 @@
 // insert your custom include headers here
 #include "telemetry_publisher_everest.hpp"
 #include <dispenser.hpp>
+#include <set>
 #include <vector>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -97,6 +98,9 @@ public:
 
     std::vector<power_supply_DCImplBase*> implementations = {p_connector_1.get(), p_connector_2.get(),
                                                              p_connector_3.get(), p_connector_4.get()};
+
+    // List of sets of active DispenserAlarms for each BSP module
+    std::vector<std::set<DispenserAlarms>> dispenser_alarms_per_bsp;
 
     enum class UpstreamVoltageSource {
         IMD,
