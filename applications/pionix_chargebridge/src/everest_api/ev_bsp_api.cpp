@@ -182,6 +182,8 @@ void ev_bsp_api::dispatch(std::string const& operation, std::string const& paylo
         receive_set_three_phases(payload);
     } else if (operation == "set_rcd_error") {
         receive_set_rcd_error(payload);
+    } else if (operation == "heartbeat") {
+        receive_heartbeat(payload);
     } else {
         std::cerr << "ev_bsp_api: RECEIVE invalid operation: " << operation << std::endl;
     }
