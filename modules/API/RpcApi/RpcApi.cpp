@@ -237,8 +237,12 @@ void RpcApi::subscribe_evse_manager(const std::unique_ptr<evse_managerIntf>& evs
                 display_parameters.remaining_time_to_maximum_soc = secs;
             }
         }
-
-        evse_data.evsestatus.set_display_parameters(display_parameters);
+        // pass an empty optional object if no member was set
+        std::optional<RPCDataTypes::DisplayParametersObj> result{};
+        if (display_parameters != RPCDataTypes::DisplayParametersObj()) {
+            result = display_parameters;
+        }
+        evse_data.evsestatus.set_display_parameters(result);
     });
 }
 
