@@ -10,6 +10,7 @@
 #include <endian.h>
 
 #include <everest/tls/openssl_util.hpp>
+#include <stdexcept>
 
 namespace slac {
 namespace utils {
@@ -68,8 +69,9 @@ static constexpr auto effective_payload_length(const defs::MMV mmv) {
 }
 
 void HomeplugMessage::setup_payload(void const* payload, int len, uint16_t mmtype, const defs::MMV mmv) {
-    // FIXME (aw): shouldn't this assert test for "<="? Furthermore it will just crash the client code ...
-    assert(("Homeplug Payload length too long", len < effective_payload_length(mmv)));
+    if (len > effective_payload_length(mmv)) {
+        throw std::runtime_error("Homeplug Payload length too long");
+    }
     raw_msg.homeplug_header.mmv = static_cast<std::underlying_type_t<defs::MMV>>(mmv);
     raw_msg.homeplug_header.mmtype = htole16(mmtype);
 

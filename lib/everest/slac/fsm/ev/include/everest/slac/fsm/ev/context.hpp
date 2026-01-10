@@ -4,6 +4,7 @@
 #define EV_SLAC_CONTEXT_HPP
 
 #include <functional>
+#include <stdexcept>
 #include <string>
 
 #include <slac/slac.hpp>
@@ -71,8 +72,13 @@ struct Context {
     void send_slac_message(const uint8_t* dest_mac, SlacMessageType const& message) {
         slac::messages::HomeplugMessage hp_message;
         hp_message.setup_ethernet_header(dest_mac);
-        hp_message.setup_payload(&message, sizeof(message), _context_detail::MMTYPE<SlacMessageType>::value,
-                                 _context_detail::MMV<SlacMessageType>::value);
+        try {
+            hp_message.setup_payload(&message, sizeof(message), _context_detail::MMTYPE<SlacMessageType>::value,
+                                     _context_detail::MMV<SlacMessageType>::value);
+        } catch (const std::runtime_error& e) {
+            const auto error_message = std::string("Could not setup SLAC payload: ") + std::string(e.what());
+            log_error(error_message);
+        }
         callbacks.send_raw_slac(hp_message);
     }
 

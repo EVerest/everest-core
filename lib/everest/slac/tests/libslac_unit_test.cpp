@@ -4,6 +4,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <slac/slac.hpp>
+#include <stdexcept>
 
 namespace libslac {
 class LibSLACUnitTest : public ::testing::Test {
@@ -42,4 +43,12 @@ TEST_F(LibSLACUnitTest, test_generate_nid_from_nmk_check_security_bits) {
     ASSERT_TRUE((nid[6] >> 4) == 0x00);
 }
 
+TEST_F(LibSLACUnitTest, test_setup_payload) {
+    slac::messages::cm_set_key_cnf set_key_cnf;
+    slac::messages::HomeplugMessage message;
+    ASSERT_THROW(message.setup_payload(&set_key_cnf, 2000, // this is way too large
+                                       (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_CNF),
+                                       slac::defs::MMV::AV_1_1),
+                 std::runtime_error);
+}
 } // namespace libslac
