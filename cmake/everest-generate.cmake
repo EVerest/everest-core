@@ -27,22 +27,33 @@ set_target_properties(generate_cpp_files
 # out-of-tree interfaces/types/modules support
 #
 function(_ev_add_project)
-    # FIXME (aw): resort to proper argument handling!
-    if (ARGC EQUAL 2)
-        set (EVEREST_PROJECT_DIR ${ARGV0})
-        set (EVEREST_PROJECT_NAME ${ARGV1})
-    endif ()
+    set(options SKIP_DOC_GENERATION)
+    set(oneValueArgs EV_PROJECT_DIRECTORY EV_PROJECT_NAME)
+    set(multiValueArgs "")
+    cmake_parse_arguments(args "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (NOT EVEREST_PROJECT_DIR)
+    if (args_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "ev_add_project macro got unknown argument(s): ${args_UNPARSED_ARGUMENTS}")
+    endif()
+
+    if(args_KEYWORDS_MISSING_VALUES)
+        message(FATAL_ERROR "ev_add_project() keyword(s) missing values: ${args_KEYWORDS_MISSING_VALUES}")
+    endif()
+
+    if(args_EV_PROJECT_DIRECTORY AND args_EV_PROJECT_NAME)
+        set (EVEREST_PROJECT_DIR ${args_EV_PROJECT_DIRECTORY})
+        set (EVEREST_PROJECT_NAME ${args_EV_PROJECT_NAME})
+    elseif(NOT args_PROJECT_NAME AND NOT args_PROJECT_DIRECTORY)
         # if we don't get a directory, we're assuming project directory
         set (EVEREST_PROJECT_DIR ${PROJECT_SOURCE_DIR})
         set (CALLED_FROM_WITHIN_PROJECT TRUE)
-    elseif (NOT EXISTS ${EVEREST_PROJECT_DIR})
-        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION} got non-existing project path: ${EVEREST_PROJECT_DIR}")
-    endif ()
-
-    if (NOT EVEREST_PROJECT_NAME)
         set (EVEREST_PROJECT_NAME ${PROJECT_NAME})
+    else()
+        message(FATAL_ERROR "ev_add_project() can only be called with ALL or NONE of: 'EV_PROJECT_DIRECTORY', 'EV_PROJECT_NAME'")
+    endif()
+
+    if (NOT EXISTS ${EVEREST_PROJECT_DIR})
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION} got non-existing project path: ${EVEREST_PROJECT_DIR}")
     endif ()
 
     message(STATUS "APPENDING ${EVEREST_PROJECT_DIR} to EVEREST_PROJECT_DIRS")
@@ -59,7 +70,7 @@ function(_ev_add_project)
             ${TYPES_DIR}/*.yaml
         )
 
-        if(EVEREST_BUILD_DOCS)
+        if(EVEREST_BUILD_DOCS AND NOT args_SKIP_DOC_GENERATION)
             find_package(
                 trailbook-ext-everest
                 0.1.0
@@ -96,7 +107,7 @@ function(_ev_add_project)
                 ${API_DIR}/*.yaml
             )
 
-            if(EVEREST_BUILD_DOCS)
+            if(EVEREST_BUILD_DOCS AND NOT args_SKIP_DOC_GENERATION)
                 find_package(
                     trailbook-ext-everest
                     0.1.0
@@ -140,7 +151,7 @@ function(_ev_add_project)
             ${INTERFACES_DIR}/*.yaml
         )
 
-        if(EVEREST_BUILD_DOCS)
+        if(EVEREST_BUILD_DOCS AND NOT args_SKIP_DOC_GENERATION)
             find_package(
                 trailbook-ext-everest
                 0.1.0
@@ -190,6 +201,25 @@ function(_ev_add_project)
 endfunction()
 
 macro(ev_add_project)
+    set(options SKIP_DOC_GENERATION)
+    set(oneValueArgs EV_PROJECT_DIRECTORY EV_PROJECT_NAME)
+    set(multiValueArgs "")
+    cmake_parse_arguments(args "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if (args_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "ev_add_project macro got unknown argument(s): ${args_UNPARSED_ARGUMENTS}")
+    endif()
+
+    if(args_KEYWORDS_MISSING_VALUES)
+        message(FATAL_ERROR "ev_add_project() keyword(s) missing values: ${args_KEYWORDS_MISSING_VALUES}")
+    endif()
+
+    if(args_EV_PROJECT_DIRECTORY AND NOT args_EV_PROJECT_NAME)
+        message(FATAL_ERROR "ev_add_project() was called with EV_PROJECT_DIRECTORY but is missing EV_PROJECT_NAME.")
+    elseif(NOT args_EV_PROJECT_DIRECTORY AND args_EV_PROJECT_NAME)
+        message(FATAL_ERROR "ev_add_project() was called with EV_PROJECT_NAME but is missing EV_PROJECT_DIRECTORY.")
+    endif()
+
     ev_setup_cmake_variables_python_wheel()
     set(${PROJECT_NAME}_PYTHON_VENV_PATH "${CMAKE_BINARY_DIR}/venv" CACHE PATH "Path to python venv")
 
@@ -200,11 +230,14 @@ macro(ev_add_project)
 
     setup_ev_cli()
 
-    # FIXME (aw): resort to proper argument handling!
-    if (${ARGC} EQUAL 2)
-        _ev_add_project(${ARGV0} ${ARGV1})
+    if (${args_SKIP_DOC_GENERATION})
+        set (fwd_OPTION "SKIP_DOC_GENERATION")
+    endif()
+
+    if (${args_EV_PROJECT_DIRECTORY} and ${args_EV_PROJECT_NAME})
+        _ev_add_project(${fwd_OPTION} ${args_EV_PROJECT_DIRECTORY} ${args_EV_PROJECT_NAME})
     else()
-        _ev_add_project()
+        _ev_add_project(${fwd_OPTION})
     endif ()
 endmacro()
 
@@ -456,7 +489,7 @@ function (ev_add_module)
     #
     # handle passed arguments
     #
-    set(options "")
+    set(options SKIP_DOC_GENERATION)
     set(one_value_args "")
     set(multi_value_args
         DEPENDENCIES
@@ -484,7 +517,7 @@ function (ev_add_module)
         endforeach()
     endif()
 
-    if (EVEREST_BUILD_DOCS)
+    if (EVEREST_BUILD_DOCS AND NOT OPTNS_SKIP_DOC_GENERATION)
         find_package(
             trailbook-ext-everest
             0.1.0
