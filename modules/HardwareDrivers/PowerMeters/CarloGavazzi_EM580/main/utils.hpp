@@ -12,6 +12,7 @@
 
 // #include "base64.hpp"
 #include "transport.hpp"
+#include <generated/interfaces/powermeter/Implementation.hpp>
 
 /**
  * @brief Utility functions for converting Modbus data to various types
@@ -103,5 +104,135 @@ inline std::string to_hex_string(const transport::DataVector& data, ByteOffset o
 }
 
 } // namespace modbus_utils
+
+/**
+ * @brief Utility functions for converting OCMF enum types to Modbus register values
+ */
+namespace ocmf_utils {
+
+/**
+ * @brief Convert OCMFIdentificationFlags enum to numeric value for Modbus register
+ * @param flag The OCMF identification flag enum value
+ * @return The numeric value to write to the Modbus register
+ */
+inline uint16_t flag_to_value(types::powermeter::OCMFIdentificationFlags flag) {
+    switch (flag) {
+    case types::powermeter::OCMFIdentificationFlags::RFID_NONE:
+        return 0;
+    case types::powermeter::OCMFIdentificationFlags::RFID_PLAIN:
+        return 1;
+    case types::powermeter::OCMFIdentificationFlags::RFID_RELATED:
+        return 2;
+    case types::powermeter::OCMFIdentificationFlags::RFID_PSK:
+        return 3;
+    case types::powermeter::OCMFIdentificationFlags::OCPP_NONE:
+        return 0;
+    case types::powermeter::OCMFIdentificationFlags::OCPP_RS:
+        return 1;
+    case types::powermeter::OCMFIdentificationFlags::OCPP_AUTH:
+        return 2;
+    case types::powermeter::OCMFIdentificationFlags::OCPP_RS_TLS:
+        return 3;
+    case types::powermeter::OCMFIdentificationFlags::OCPP_AUTH_TLS:
+        return 4;
+    case types::powermeter::OCMFIdentificationFlags::OCPP_CACHE:
+        return 5;
+    case types::powermeter::OCMFIdentificationFlags::OCPP_WHITELIST:
+        return 6;
+    case types::powermeter::OCMFIdentificationFlags::OCPP_CERTIFIED:
+        return 7;
+    case types::powermeter::OCMFIdentificationFlags::ISO15118_NONE:
+        return 0;
+    case types::powermeter::OCMFIdentificationFlags::ISO15118_PNC:
+        return 1;
+    case types::powermeter::OCMFIdentificationFlags::PLMN_NONE:
+        return 0;
+    case types::powermeter::OCMFIdentificationFlags::PLMN_RING:
+        return 1;
+    case types::powermeter::OCMFIdentificationFlags::PLMN_SMS:
+        return 2;
+    }
+    return 0;
+}
+
+/**
+ * @brief Convert OCMFIdentificationLevel enum to numeric value for Modbus register
+ * @param level The OCMF identification level enum value
+ * @return The numeric value to write to the Modbus register
+ */
+inline uint16_t level_to_value(types::powermeter::OCMFIdentificationLevel level) {
+    switch (level) {
+    case types::powermeter::OCMFIdentificationLevel::NONE:
+        return 0;
+    case types::powermeter::OCMFIdentificationLevel::HEARSAY:
+        return 1;
+    case types::powermeter::OCMFIdentificationLevel::TRUSTED:
+        return 2;
+    case types::powermeter::OCMFIdentificationLevel::VERIFIED:
+        return 3;
+    case types::powermeter::OCMFIdentificationLevel::CERTIFIED:
+        return 4;
+    case types::powermeter::OCMFIdentificationLevel::SECURE:
+        return 5;
+    case types::powermeter::OCMFIdentificationLevel::MISMATCH:
+        return 6;
+    case types::powermeter::OCMFIdentificationLevel::INVALID:
+        return 7;
+    case types::powermeter::OCMFIdentificationLevel::OUTDATED:
+        return 8;
+    case types::powermeter::OCMFIdentificationLevel::UNKNOWN:
+        return 9;
+    }
+    return 0;
+}
+
+/**
+ * @brief Convert OCMFIdentificationType enum to numeric value for Modbus register
+ * @param type The OCMF identification type enum value
+ * @return The numeric value to write to the Modbus register
+ */
+inline uint16_t type_to_value(types::powermeter::OCMFIdentificationType type) {
+    switch (type) {
+    case types::powermeter::OCMFIdentificationType::NONE:
+        return 0;
+    case types::powermeter::OCMFIdentificationType::DENIED:
+        return 1;
+    case types::powermeter::OCMFIdentificationType::UNDEFINED:
+        return 2;
+    case types::powermeter::OCMFIdentificationType::ISO14443:
+        return 10;
+    case types::powermeter::OCMFIdentificationType::ISO15693:
+        return 11;
+    case types::powermeter::OCMFIdentificationType::EMAID:
+        return 20;
+    case types::powermeter::OCMFIdentificationType::EVCCID:
+        return 21;
+    case types::powermeter::OCMFIdentificationType::EVCOID:
+        return 30;
+    case types::powermeter::OCMFIdentificationType::ISO7812:
+        return 40;
+    case types::powermeter::OCMFIdentificationType::CARD_TXN_NR:
+        return 50;
+    case types::powermeter::OCMFIdentificationType::CENTRAL:
+        return 60;
+    case types::powermeter::OCMFIdentificationType::CENTRAL_1:
+        return 61;
+    case types::powermeter::OCMFIdentificationType::CENTRAL_2:
+        return 62;
+    case types::powermeter::OCMFIdentificationType::LOCAL:
+        return 70;
+    case types::powermeter::OCMFIdentificationType::LOCAL_1:
+        return 71;
+    case types::powermeter::OCMFIdentificationType::LOCAL_2:
+        return 72;
+    case types::powermeter::OCMFIdentificationType::PHONE_NUMBER:
+        return 80;
+    case types::powermeter::OCMFIdentificationType::KEY_CODE:
+        return 90;
+    }
+    return 0;
+}
+
+} // namespace ocmf_utils
 
 #endif // POWERMETER_UTILS_HPP

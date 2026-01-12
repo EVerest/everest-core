@@ -350,47 +350,6 @@ std::vector<uint16_t> powermeterImpl::string_to_modbus_char_array(const std::str
 
 void powermeterImpl::write_transaction_registers(const types::powermeter::TransactionReq& transaction_req) {
 
-    // Helper function to convert OCMFIdentificationFlags enum to numeric value
-    auto flag_to_value = [](types::powermeter::OCMFIdentificationFlags flag) -> uint16_t {
-        switch (flag) {
-        case types::powermeter::OCMFIdentificationFlags::RFID_NONE:
-            return 0;
-        case types::powermeter::OCMFIdentificationFlags::RFID_PLAIN:
-            return 1;
-        case types::powermeter::OCMFIdentificationFlags::RFID_RELATED:
-            return 2;
-        case types::powermeter::OCMFIdentificationFlags::RFID_PSK:
-            return 3;
-        case types::powermeter::OCMFIdentificationFlags::OCPP_NONE:
-            return 0;
-        case types::powermeter::OCMFIdentificationFlags::OCPP_RS:
-            return 1;
-        case types::powermeter::OCMFIdentificationFlags::OCPP_AUTH:
-            return 2;
-        case types::powermeter::OCMFIdentificationFlags::OCPP_RS_TLS:
-            return 3;
-        case types::powermeter::OCMFIdentificationFlags::OCPP_AUTH_TLS:
-            return 4;
-        case types::powermeter::OCMFIdentificationFlags::OCPP_CACHE:
-            return 5;
-        case types::powermeter::OCMFIdentificationFlags::OCPP_WHITELIST:
-            return 6;
-        case types::powermeter::OCMFIdentificationFlags::OCPP_CERTIFIED:
-            return 7;
-        case types::powermeter::OCMFIdentificationFlags::ISO15118_NONE:
-            return 0;
-        case types::powermeter::OCMFIdentificationFlags::ISO15118_PNC:
-            return 1;
-        case types::powermeter::OCMFIdentificationFlags::PLMN_NONE:
-            return 0;
-        case types::powermeter::OCMFIdentificationFlags::PLMN_RING:
-            return 1;
-        case types::powermeter::OCMFIdentificationFlags::PLMN_SMS:
-            return 2;
-        }
-        return 0;
-    };
-
     // 1. Write OCMF Identification Status (register 328673, 7000h)
     // 0 = NOT_ASSIGNED (False), 1 = ASSIGNED (True)
     uint16_t identification_status_value =
@@ -401,38 +360,7 @@ void powermeterImpl::write_transaction_registers(const types::powermeter::Transa
     // 2. Write OCMF Identification Level (register 328674, 7001h) - optional
     uint16_t identification_level_value = 0; // Default: NONE
     if (transaction_req.identification_level.has_value()) {
-        switch (transaction_req.identification_level.value()) {
-        case types::powermeter::OCMFIdentificationLevel::NONE:
-            identification_level_value = 0;
-            break;
-        case types::powermeter::OCMFIdentificationLevel::HEARSAY:
-            identification_level_value = 1;
-            break;
-        case types::powermeter::OCMFIdentificationLevel::TRUSTED:
-            identification_level_value = 2;
-            break;
-        case types::powermeter::OCMFIdentificationLevel::VERIFIED:
-            identification_level_value = 3;
-            break;
-        case types::powermeter::OCMFIdentificationLevel::CERTIFIED:
-            identification_level_value = 4;
-            break;
-        case types::powermeter::OCMFIdentificationLevel::SECURE:
-            identification_level_value = 5;
-            break;
-        case types::powermeter::OCMFIdentificationLevel::MISMATCH:
-            identification_level_value = 6;
-            break;
-        case types::powermeter::OCMFIdentificationLevel::INVALID:
-            identification_level_value = 7;
-            break;
-        case types::powermeter::OCMFIdentificationLevel::OUTDATED:
-            identification_level_value = 8;
-            break;
-        case types::powermeter::OCMFIdentificationLevel::UNKNOWN:
-            identification_level_value = 9;
-            break;
-        }
+        identification_level_value = ocmf_utils::level_to_value(transaction_req.identification_level.value());
     }
     std::vector<uint16_t> level_data = {identification_level_value};
     p_modbus_transport->write_multiple_registers(MODBUS_OCMF_IDENTIFICATION_LEVEL_ADDRESS, level_data);
@@ -441,68 +369,12 @@ void powermeterImpl::write_transaction_registers(const types::powermeter::Transa
     std::vector<uint16_t> flags_data(MODBUS_OCMF_IDENTIFICATION_FLAGS_COUNT, 0);
     for (size_t i = 0; i < transaction_req.identification_flags.size() && i < MODBUS_OCMF_IDENTIFICATION_FLAGS_COUNT;
          ++i) {
-        flags_data[i] = flag_to_value(transaction_req.identification_flags[i]);
+        flags_data[i] = ocmf_utils::flag_to_value(transaction_req.identification_flags[i]);
     }
     p_modbus_transport->write_multiple_registers(MODBUS_OCMF_IDENTIFICATION_FLAGS_START_ADDRESS, flags_data);
 
     // 4. Write OCMF Identification Type (register 328679, 7006h)
-    uint16_t identification_type_value = 0; // Default: NONE
-    switch (transaction_req.identification_type) {
-    case types::powermeter::OCMFIdentificationType::NONE:
-        identification_type_value = 0;
-        break;
-    case types::powermeter::OCMFIdentificationType::DENIED:
-        identification_type_value = 1;
-        break;
-    case types::powermeter::OCMFIdentificationType::UNDEFINED:
-        identification_type_value = 2;
-        break;
-    case types::powermeter::OCMFIdentificationType::ISO14443:
-        identification_type_value = 10;
-        break;
-    case types::powermeter::OCMFIdentificationType::ISO15693:
-        identification_type_value = 11;
-        break;
-    case types::powermeter::OCMFIdentificationType::EMAID:
-        identification_type_value = 20;
-        break;
-    case types::powermeter::OCMFIdentificationType::EVCCID:
-        identification_type_value = 21;
-        break;
-    case types::powermeter::OCMFIdentificationType::EVCOID:
-        identification_type_value = 30;
-        break;
-    case types::powermeter::OCMFIdentificationType::ISO7812:
-        identification_type_value = 40;
-        break;
-    case types::powermeter::OCMFIdentificationType::CARD_TXN_NR:
-        identification_type_value = 50;
-        break;
-    case types::powermeter::OCMFIdentificationType::CENTRAL:
-        identification_type_value = 60;
-        break;
-    case types::powermeter::OCMFIdentificationType::CENTRAL_1:
-        identification_type_value = 61;
-        break;
-    case types::powermeter::OCMFIdentificationType::CENTRAL_2:
-        identification_type_value = 62;
-        break;
-    case types::powermeter::OCMFIdentificationType::LOCAL:
-        identification_type_value = 70;
-        break;
-    case types::powermeter::OCMFIdentificationType::LOCAL_1:
-        identification_type_value = 71;
-        break;
-    case types::powermeter::OCMFIdentificationType::LOCAL_2:
-        identification_type_value = 72;
-        break;
-    case types::powermeter::OCMFIdentificationType::PHONE_NUMBER:
-        identification_type_value = 80;
-        break;
-    case types::powermeter::OCMFIdentificationType::KEY_CODE:
-        identification_type_value = 90;
-        break;
-    }
+    uint16_t identification_type_value = ocmf_utils::type_to_value(transaction_req.identification_type);
     std::vector<uint16_t> type_data = {identification_type_value};
     p_modbus_transport->write_multiple_registers(MODBUS_OCMF_IDENTIFICATION_TYPE_ADDRESS, type_data);
 
@@ -578,6 +450,13 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& treq
                           treq.identification_level.value_or(types::powermeter::OCMFIdentificationLevel::NONE))
                    << " and identification data: " << treq.identification_data.value_or("")
                    << " and tariff text: " << treq.tariff_text.value_or("none");
+
+        // write 0 to the OCMF state to confirm the reading of the OCMF file
+        std::vector<uint16_t> ocmf_confirmation_data_not_ready = {MODBUS_OCMF_STATE_NOT_READY};
+        p_modbus_transport->write_multiple_registers(MODBUS_OCMF_STATE_ADDRESS, ocmf_confirmation_data_not_ready);
+        
+        std::vector<uint16_t> ocmf_confirmation_data_ready = {MODBUS_OCMF_STATE_READY};
+        p_modbus_transport->write_multiple_registers(MODBUS_OCMF_STATE_ADDRESS, ocmf_confirmation_data_ready);
         // Write transaction registers first
         EVLOG_info << "Write transaction registers...";
         write_transaction_registers(treq);
@@ -590,17 +469,17 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& treq
         //
         EVLOG_info << "Write tariff text...";
         std::string tariff_text = treq.tariff_text.value_or("") + "<=>" + treq.transaction_id;
-        if (!validate_string_for_em580(tariff_text)) {
-            EVLOG_error << "String contains invalid characters for EM580 device: '" << tariff_text << "'";
-            return {types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR,
-                    {},
-                    {},
-                    "Invalid tariff text (device supports only an subset of ASCII characters)"};
-        } else {
+        // if (!validate_string_for_em580(tariff_text)) {
+        //     EVLOG_error << "String contains invalid characters for EM580 device: '" << tariff_text << "'";
+        //     return {types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR,
+        //             {},
+        //             {},
+        //             "Invalid tariff text (device supports only an subset of ASCII characters)"};
+        // } else {
             std::vector<uint16_t> tariff_text_data =
                 string_to_modbus_char_array(tariff_text, MODBUS_OCMF_TARIFF_TEXT_WORD_COUNT);
             p_modbus_transport->write_multiple_registers(MODBUS_OCMF_TARIFF_TEXT_ADDRESS, tariff_text_data);
-        }
+        // }
 
         EVLOG_info << "Write session modality ... to charging vehicle";
         std::vector<uint16_t> session_modality_data = {MODBUS_OCMF_SESSION_MODALITY_CHARGING_VEHICLE};

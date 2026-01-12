@@ -1,6 +1,6 @@
 settings:
   telemetry_enabled: false
-  mqtt_broker_socket_path: /run/mosquitto/mosquitto.sock
+  # mqtt_broker_socket_path: /run/mosquitto/mosquitto.sock
 active_modules:
   cgem580:
     module: CarloGavazzi_EM580
