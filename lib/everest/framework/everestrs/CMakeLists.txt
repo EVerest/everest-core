@@ -120,4 +120,12 @@ target_link_libraries(everestrs_sys
         everest::log
 )
 
-install(TARGETS everestrs_sys LIBRARY)
+set_property(
+    TARGET
+        everestrs_sys
+    PROPERTY
+        EVERESTRS_LINK_DEPENDENCIES
+            $<TARGET_FILE:everest::everestrs_sys>
+            $<TARGET_FILE:everest::framework>
+            $<TARGET_FILE:everest::log>
+)
