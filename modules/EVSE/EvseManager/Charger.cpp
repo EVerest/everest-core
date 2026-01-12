@@ -398,7 +398,7 @@ void Charger::run_state_machine() {
                                     // Figure 4 of ISO15118-3: X1 start, PnC and EIM
                                     // This figure requires a T_step_F for X1->Nominal. This does not really make sense.
                                     // Also this is basically the same case as auth before plugin (which here in Everest
-                                    // technically is auth very shortly after plugin as the auch module assigns auth
+                                    // technically is auth very shortly after plugin as the auth module assigns auth
                                     // only on plug events) For auth before plugin -3 requires no T_step_EF. Also normal
                                     // BC does X1>nomainal without F. We deviate from the standard here and perform no
                                     // T_step_EF.
