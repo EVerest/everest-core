@@ -193,7 +193,7 @@ def finalize_media(app, pagename, templatename, context, doctree):
         # NOTE: not used on ``singlehtml`` builder for RTD Sphinx theme
         context['toctree'] = toctree
 
-        if sphinx.version_info < (4, 0) or sphinx.version_info >= (8, 0):
+        if sphinx.version_info < (4, 0) or sphinx.version_info >= (7, 0):
             context['css_tag'] = css_tag
 
 
@@ -309,7 +309,7 @@ def setup(app):
     # ``pathto``. The ``js_tag`` uses ``pathto`` internally to resolve these
     # paths, we call again the setup function for this tag *after* the context
     # was overridden by our extension with the patched ``pathto`` function.
-    if sphinx.version_info < (8, 0):
+    if sphinx.version_info < (7, 0):
         if sphinx.version_info >= (1, 8):
             from sphinx.builders.html import setup_js_tag_helper
             app.connect('html-page-context', setup_js_tag_helper)
