@@ -6,8 +6,8 @@
 #include "../../data/DataStore.hpp"
 #include <jsonrpccxx/client.hpp>
 
-namespace everest_api_types = everest::lib::API::V1_0::types;
-namespace RPCDataTypes = everest_api_types::json_rpc_api;
+namespace RPCDataTypes = types::json_rpc_api;
+
 // forward declaration
 namespace rpc {
 class JsonRpc2ServerWithClient;

@@ -10,7 +10,7 @@
 
 #include <everest/logging.hpp>
 
-#include "../helpers/Conversions.hpp"
+#include "../helpers/Conversions.hpp" // For to_json() for nlohmann::json
 #include "../helpers/LimitDecimalPlaces.hpp"
 
 namespace rpc {

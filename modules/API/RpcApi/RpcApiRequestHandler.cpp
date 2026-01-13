@@ -3,14 +3,11 @@
 
 #include <everest/external_energy_limits/external_energy_limits.hpp>
 #include <everest/logging.hpp>
-#include <stdexcept>
 #include <utils/date.hpp>
 
 #include "RpcApiRequestHandler.hpp"
 
-namespace everest_api_types = everest::lib::API::V1_0::types;
-namespace RPCDataTypes = everest_api_types::json_rpc_api;
-using namespace RPCDataTypes;
+using namespace types::json_rpc_api;
 
 static const std::string RPCAPI_MODULE_SOURCE = "RpcApi_module";
 static const std::chrono::seconds CURRENT_LIMIT_APPLY_TIMEOUT{5};
@@ -125,9 +122,9 @@ ErrorResObj RpcApiRequestHandler::set_charging_allowed(const int32_t evse_index,
     // Determine the current state of the EVSE. In case the EVSE is currently charging, we can use
     // the resume-pause methods to control the charging process.
     auto evse_state = evse_store->evsestatus.get_state();
-    bool is_charging = (evse_state == RPCDataTypes::EVSEStateEnum::Charging);
-    bool is_charging_paused = (evse_state == RPCDataTypes::EVSEStateEnum::ChargingPausedEVSE ||
-                               evse_state == RPCDataTypes::EVSEStateEnum::ChargingPausedEV);
+    bool is_charging = (evse_state == types::json_rpc_api::EVSEStateEnum::Charging);
+    bool is_charging_paused = (evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEVSE ||
+                               evse_state == types::json_rpc_api::EVSEStateEnum::ChargingPausedEV);
     bool is_power_limit = !configured_limits.is_current_set;
 
     if (charging_allowed) {
@@ -257,7 +254,7 @@ ErrorResObj RpcApiRequestHandler::set_ac_charging_current(const int32_t evse_ind
 
     // Skipping applying limits if the EVSE is in WaitingForEnergy state and charging is not allowed.
     // In this case, the zero limit is already applied to prevent charging. This value should not be overridden.
-    if ((evse_state == RPCDataTypes::EVSEStateEnum::WaitingForEnergy) &&
+    if ((evse_state == types::json_rpc_api::EVSEStateEnum::WaitingForEnergy) &&
         (evse_store->evsestatus.get_data()->charging_allowed == false)) {
         res.error = ResponseErrorEnum::NoError;
         return res;
@@ -355,9 +352,9 @@ ErrorResObj RpcApiRequestHandler::enable_connector(const int32_t evse_index, int
     return res;
 }
 
-RPCDataTypes::ErrorResObj RpcApiRequestHandler::check_active_phases_and_set_limits(const int32_t evse_index,
-                                                                                   const float phy_value,
-                                                                                   const bool is_power) {
+types::json_rpc_api::ErrorResObj RpcApiRequestHandler::check_active_phases_and_set_limits(const int32_t evse_index,
+                                                                                          const float phy_value,
+                                                                                          const bool is_power) {
     ErrorResObj res{};
     int phases{0};
     auto evse_store = data_store.get_evse_store(evse_index);

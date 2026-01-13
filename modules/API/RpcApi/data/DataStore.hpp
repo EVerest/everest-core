@@ -10,8 +10,6 @@
 #include <condition_variable>
 #include <everest/logging.hpp>
 
-namespace everest_api_types = everest::lib::API::V1_0::types;
-namespace RPCDataTypes = everest_api_types::json_rpc_api;
 namespace data {
 
 enum class EVSEStatusField {
@@ -37,24 +35,24 @@ public:
     void set_unknown();
 };
 
-class ChargerErrorsStore : public GenericInfoStore<std::vector<RPCDataTypes::ErrorObj>> {
+class ChargerErrorsStore : public GenericInfoStore<std::vector<types::json_rpc_api::ErrorObj>> {
 public:
-    void add_error(const RPCDataTypes::ErrorObj& error);
-    void clear_error(const RPCDataTypes::ErrorObj& error);
+    void add_error(const types::json_rpc_api::ErrorObj& error);
+    void clear_error(const types::json_rpc_api::ErrorObj& error);
 };
 
 class EVSEInfoStore : public GenericInfoStore<RPCDataTypes::EVSEInfoObj> {
 public:
     void set_supported_energy_transfer_modes(
-        const std::vector<RPCDataTypes::EnergyTransferModeEnum>& supported_energy_transfer_modes);
+        const std::vector<types::json_rpc_api::EnergyTransferModeEnum>& supported_energy_transfer_modes);
     void set_index(int32_t index);
     void set_id(const std::string& id);
     void set_available_connectors(const std::vector<RPCDataTypes::ConnectorInfoObj>& connectors);
-    void set_available_connector(RPCDataTypes::ConnectorInfoObj& available_connector);
+    void set_available_connector(types::json_rpc_api::ConnectorInfoObj& available_connector);
     void set_is_ac_transfer_mode(bool is_ac);
     bool get_is_ac_transfer_mode() const;
     int32_t get_index();
-    std::vector<RPCDataTypes::ConnectorInfoObj> get_available_connectors() const;
+    std::vector<types::json_rpc_api::ConnectorInfoObj> get_available_connectors() const;
 
 private:
     std::atomic<bool> is_ac_transfer_mode;
@@ -81,12 +79,12 @@ public:
     // set the charging allowed flag
     void set_charging_allowed(bool charging_allowed);
     // set the EVSE state
-    void set_state(RPCDataTypes::EVSEStateEnum state);
+    void set_state(types::json_rpc_api::EVSEStateEnum state);
 
     // set EVSE errors
     void set_error_present(const bool error_present);
     // set the charge protocol
-    void set_charge_protocol(RPCDataTypes::ChargeProtocolEnum charge_protocol);
+    void set_charge_protocol(types::json_rpc_api::ChargeProtocolEnum charge_protocol);
     // set the charging duration in seconds
     void set_charging_duration_s(int32_t charging_duration_s);
     // set the charged energy in Wh
@@ -112,7 +110,7 @@ public:
     // wait until the current limit is applied or timeout occurs
     bool wait_until_current_limit_applied(float current_limit, std::chrono::milliseconds timeout_ms);
 
-    RPCDataTypes::EVSEStateEnum get_state() const;
+    types::json_rpc_api::EVSEStateEnum get_state() const;
     std::optional<RPCDataTypes::ACChargeParametersObj>& get_ac_charge_param();
     std::optional<RPCDataTypes::DCChargeParametersObj>& get_dc_charge_param();
 };

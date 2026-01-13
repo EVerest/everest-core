@@ -4,18 +4,18 @@
 #define GENERICINFOSTORE_HPP
 
 #include <atomic>
-#include <everest_api_types/json_rpc_api/API.hpp>
 #include <functional> // for std::function
+#include <generated/types/json_rpc_api.hpp>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <vector>
 
-namespace everest_api_types = everest::lib::API::V1_0::types;
-namespace RPCDataTypes = everest_api_types::json_rpc_api;
 // This contains types for all the data objects
 
 namespace data {
+
+namespace RPCDataTypes = types::json_rpc_api;
 
 template <typename T> class GenericInfoStore {
 protected:

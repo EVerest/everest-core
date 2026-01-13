@@ -37,7 +37,6 @@ target_link_libraries(${MODULE_NAME}
     PRIVATE
         date::date
         date::date-tz
-        everest::everest_api_types
         everest::external_energy_limits
         everest::helpers
         nlohmann_json::nlohmann_json
