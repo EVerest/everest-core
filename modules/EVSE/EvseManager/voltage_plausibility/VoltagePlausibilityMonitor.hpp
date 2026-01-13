@@ -43,8 +43,7 @@ public:
     /// \param measurement_max_age  Maximum age of a voltage measurement before it is considered
     ///                               stale and excluded from standard deviation calculation.
     VoltagePlausibilityMonitor(ErrorCallback callback, double std_deviation_threshold_V,
-                                std::chrono::milliseconds fault_duration,
-                                std::chrono::milliseconds measurement_max_age);
+                               std::chrono::milliseconds fault_duration, std::chrono::milliseconds measurement_max_age);
 
     /// \brief Destructor joins the internal timer thread before destroying the object.
     ~VoltagePlausibilityMonitor();
@@ -123,4 +122,3 @@ private:
 };
 
 } // namespace module
-

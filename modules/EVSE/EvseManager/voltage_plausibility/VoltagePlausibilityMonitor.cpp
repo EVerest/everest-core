@@ -5,16 +5,16 @@
 
 #include <algorithm>
 #include <chrono>
-#include <condition_variable>
 #include <cmath>
+#include <condition_variable>
 #include <fmt/core.h>
 #include <thread>
 
 namespace module {
 
-VoltagePlausibilityMonitor::VoltagePlausibilityMonitor(
-    ErrorCallback callback, double std_deviation_threshold_V, std::chrono::milliseconds fault_duration,
-    std::chrono::milliseconds measurement_max_age) :
+VoltagePlausibilityMonitor::VoltagePlausibilityMonitor(ErrorCallback callback, double std_deviation_threshold_V,
+                                                       std::chrono::milliseconds fault_duration,
+                                                       std::chrono::milliseconds measurement_max_age) :
     error_callback_(std::move(callback)),
     std_deviation_threshold_V_(std_deviation_threshold_V),
     fault_duration_(fault_duration),
@@ -91,32 +91,30 @@ void VoltagePlausibilityMonitor::evaluate_voltages() {
     // Collect valid voltage samples (not older than max_age)
     // A timestamp of zero (default-initialized) means we've never received a value
     if (power_supply_sample_.timestamp != zero_time) {
-        const auto age = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - power_supply_sample_.timestamp);
+        const auto age = std::chrono::duration_cast<std::chrono::milliseconds>(now - power_supply_sample_.timestamp);
         if (age <= measurement_max_age_) {
             valid_voltages.push_back(power_supply_sample_.voltage_V);
         }
     }
 
     if (powermeter_sample_.timestamp != zero_time) {
-        const auto age = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - powermeter_sample_.timestamp);
+        const auto age = std::chrono::duration_cast<std::chrono::milliseconds>(now - powermeter_sample_.timestamp);
         if (age <= measurement_max_age_) {
             valid_voltages.push_back(powermeter_sample_.voltage_V);
         }
     }
 
     if (isolation_monitor_sample_.timestamp != zero_time) {
-        const auto age = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - isolation_monitor_sample_.timestamp);
+        const auto age =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - isolation_monitor_sample_.timestamp);
         if (age <= measurement_max_age_) {
             valid_voltages.push_back(isolation_monitor_sample_.voltage_V);
         }
     }
 
     if (over_voltage_monitor_sample_.timestamp != zero_time) {
-        const auto age = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - over_voltage_monitor_sample_.timestamp);
+        const auto age =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - over_voltage_monitor_sample_.timestamp);
         if (age <= measurement_max_age_) {
             valid_voltages.push_back(over_voltage_monitor_sample_.voltage_V);
         }
@@ -174,8 +172,8 @@ void VoltagePlausibilityMonitor::trigger_fault(const std::string& reason) {
 
 void VoltagePlausibilityMonitor::arm_fault_timer(double std_deviation_V) {
     if (fault_duration_.count() == 0) {
-        trigger_fault(fmt::format("Voltage standard deviation {:.2f} V exceeded threshold {:.2f} V.",
-                                  std_deviation_V, std_deviation_threshold_V_));
+        trigger_fault(fmt::format("Voltage standard deviation {:.2f} V exceeded threshold {:.2f} V.", std_deviation_V,
+                                  std_deviation_threshold_V_));
         return;
     }
 
@@ -246,4 +244,3 @@ void VoltagePlausibilityMonitor::timer_thread_func() {
 }
 
 } // namespace module
-
