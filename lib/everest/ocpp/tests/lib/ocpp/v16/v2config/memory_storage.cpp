@@ -3,8 +3,12 @@
 
 #include "memory_storage.hpp"
 
-#include "ocpp/v2/ocpp_enums.hpp"
-#include "ocpp/v2/ocpp_types.hpp"
+#include <ocpp/v16/known_keys.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
+
+#include <optional>
+#include <string>
 
 namespace {
 
@@ -143,18 +147,30 @@ std::map<std::string, std::string> vars_custom;
 const ocpp::v2::VariableCharacteristics characteristics = {ocpp::v2::DataEnum::string, false, {}, {}, {}, {}, {}, {}};
 const ocpp::v2::VariableMetaData meta_data = {characteristics, {}, {}};
 
-ocpp::v2::DeviceModelMap device_model;
-
-void add_to_device_model(const std::string_view& name, const std::map<std::string, std::string>& vars) {
+void add_to_report(std::vector<ocpp::v2::ReportData>& report, const std::string_view& name,
+                   const std::map<std::string, std::string>& vars) {
     ocpp::v2::Component component{std::string{name}, {}, {}, {}};
-    ocpp::v2::VariableMap variable_map;
 
     for (const auto& i : vars) {
         ocpp::v2::Variable variable{i.first, {}, {}};
-        variable_map.insert({std::move(variable), meta_data});
+        ocpp::v2::ReportData data;
+        data.component = component;
+        data.variable = variable;
+        report.push_back(std::move(data));
     }
+}
 
-    device_model.insert({std::move(component), std::move(variable_map)});
+void generate_report(std::vector<ocpp::v2::ReportData>& report) {
+    report.clear();
+    add_to_report(report, "Internal", vars_internal);
+    add_to_report(report, "Core", vars_core);
+    add_to_report(report, "FirmwareManagement", vars_firmware_management);
+    add_to_report(report, "SmartCharging", vars_smart_charging);
+    add_to_report(report, "Security", vars_security);
+    add_to_report(report, "LocalAuthListManagement", vars_local_auth_list);
+    add_to_report(report, "PnC", vars_pnc);
+    add_to_report(report, "CostAndPrice", vars_california_pricing);
+    add_to_report(report, "Custom", vars_custom);
 }
 
 } // namespace
@@ -172,16 +188,11 @@ MemoryStorage::MemoryStorage() {
     vars_california_pricing = required_vars_california_pricing;
     vars_custom = required_vars_custom;
 
-    device_model.clear();
-    add_to_device_model("Internal", vars_internal);
-    add_to_device_model("Core", vars_core);
-    add_to_device_model("FirmwareManagement", vars_firmware_management);
-    add_to_device_model("SmartCharging", vars_smart_charging);
-    add_to_device_model("Security", vars_security);
-    add_to_device_model("LocalAuthListManagement", vars_local_auth_list);
-    add_to_device_model("PnC", vars_pnc);
-    add_to_device_model("CostAndPrice", vars_california_pricing);
-    add_to_device_model("Custom", vars_custom);
+    read_only.clear();
+}
+
+void MemoryStorage::set_readonly(const std::string& key) {
+    read_only.insert(key);
 }
 
 void MemoryStorage::set(const std::string_view& component, const std::string_view& variable,
@@ -191,21 +202,18 @@ void MemoryStorage::set(const std::string_view& component, const std::string_vie
 
     component_id.name = std::string{component};
     variable_id.name = std::string{variable};
-    (void)set_variable_attribute_value(component_id, variable_id, AttributeEnum::Actual, std::string{value},
-                                       "TestCase");
+    (void)set_value(component_id, variable_id, AttributeEnum::Actual, std::string{value}, "TestCase");
 }
 
 std::string MemoryStorage::get(const std::string_view& component, const std::string_view& variable) {
     Component component_id;
     Variable variable_id;
+    std::string result;
 
     component_id.name = std::string{component};
     variable_id.name = std::string{variable};
-    const auto res = get_variable_attribute(component_id, variable_id, AttributeEnum::Actual);
-    if (res.has_value() && res.value().value.has_value()) {
-        return res.value().value.value();
-    }
-    return {};
+    (void)get_variable(component_id, variable_id, AttributeEnum::Actual, result, false);
+    return result;
 }
 
 void MemoryStorage::clear(const std::string_view& component, const std::string_view& variable) {
@@ -234,78 +242,76 @@ void MemoryStorage::clear(const std::string_view& component, const std::string_v
     }
 }
 
-MemoryStorage::DeviceModelMap MemoryStorage::get_device_model() {
-    return device_model;
-}
-
-std::optional<MemoryStorage::VariableAttribute>
-MemoryStorage::get_variable_attribute(const Component& component_id, const Variable& variable_id,
-                                      const AttributeEnum& attribute_enum) {
-    std::optional<MemoryStorage::VariableAttribute> result;
+MemoryStorage::GetVariableStatusEnum MemoryStorage::get_variable(const Component& component_id,
+                                                                 const Variable& variable_id,
+                                                                 const AttributeEnum& attribute_enum,
+                                                                 std::string& value, bool allow_write_only) const {
+    auto result = GetVariableStatusEnum::UnknownVariable;
     if (component_id.name == "Internal") {
         if (const auto it = vars_internal.find(variable_id.name); it != vars_internal.end()) {
             MemoryStorage::VariableAttribute va;
             // std::cout << "Internal[" << it->first << "]==" << it->second << '\n';
-            va.value = it->second;
-            result = std::move(va);
+            value = it->second;
+            result = GetVariableStatusEnum::Accepted;
         }
     } else if (component_id.name == "Core") {
         if (const auto it = vars_core.find(variable_id.name); it != vars_core.end()) {
             MemoryStorage::VariableAttribute va;
             // std::cout << "Core[" << it->first << "]==" << it->second << '\n';
-            va.value = it->second;
-            result = std::move(va);
+            value = it->second;
+            result = GetVariableStatusEnum::Accepted;
         }
     } else if (component_id.name == "FirmwareManagement") {
         if (const auto it = vars_firmware_management.find(variable_id.name); it != vars_firmware_management.end()) {
             MemoryStorage::VariableAttribute va;
             // std::cout << "FirmwareManagement[" << it->first << "]==" << it->second << '\n';
-            va.value = it->second;
-            result = std::move(va);
+            value = it->second;
+            result = GetVariableStatusEnum::Accepted;
         }
     } else if (component_id.name == "SmartCharging") {
         if (const auto it = vars_smart_charging.find(variable_id.name); it != vars_smart_charging.end()) {
             MemoryStorage::VariableAttribute va;
             // std::cout << "SmartCharging[" << it->first << "]==" << it->second << '\n';
-            va.value = it->second;
-            result = std::move(va);
+            value = it->second;
+            result = GetVariableStatusEnum::Accepted;
         }
     } else if (component_id.name == "Security") {
         if (const auto it = vars_security.find(variable_id.name); it != vars_security.end()) {
             MemoryStorage::VariableAttribute va;
             // std::cout << "Security[" << it->first << "]==" << it->second << '\n';
-            va.value = it->second;
-            result = std::move(va);
+            value = it->second;
+            result = GetVariableStatusEnum::Accepted;
         }
     } else if (component_id.name == "LocalAuthListManagement") {
         if (const auto it = vars_local_auth_list.find(variable_id.name); it != vars_local_auth_list.end()) {
             MemoryStorage::VariableAttribute va;
             // std::cout << "LocalAuthListManagement[" << it->first << "]==" << it->second << '\n';
-            va.value = it->second;
-            result = std::move(va);
+            value = it->second;
+            result = GetVariableStatusEnum::Accepted;
         }
     } else if (component_id.name == "Pnc") {
         if (const auto it = vars_pnc.find(variable_id.name); it != vars_pnc.end()) {
             MemoryStorage::VariableAttribute va;
             // std::cout << "Pnc[" << it->first << "]==" << it->second << '\n';
-            va.value = it->second;
-            result = std::move(va);
+            value = it->second;
+            result = GetVariableStatusEnum::Accepted;
         }
     } else if (component_id.name == "CostAndPrice") {
         if (const auto it = vars_california_pricing.find(variable_id.name); it != vars_california_pricing.end()) {
             MemoryStorage::VariableAttribute va;
             // std::cout << "CostAndPrice[" << it->first << "]==" << it->second << '\n';
-            va.value = it->second;
-            result = std::move(va);
+            value = it->second;
+            result = GetVariableStatusEnum::Accepted;
         }
     } else if (component_id.name == "Custom") {
         if (const auto it = vars_custom.find(variable_id.name); it != vars_custom.end()) {
             MemoryStorage::VariableAttribute va;
             // std::cout << "Custom[" << it->first << "]==" << it->second << '\n';
-            va.value = it->second;
-            result = std::move(va);
+            value = it->second;
+            result = GetVariableStatusEnum::Accepted;
         }
     } else {
+        result = GetVariableStatusEnum::Rejected;
         std::cerr << "get_variable_attribute not implemented for: " << component_id.name << '\n';
     }
 
@@ -313,18 +319,12 @@ MemoryStorage::get_variable_attribute(const Component& component_id, const Varia
     return result;
 }
 
-std::vector<MemoryStorage::VariableAttribute>
-MemoryStorage::get_variable_attributes(const Component& component_id, const Variable& variable_id,
-                                       const std::optional<AttributeEnum>& attribute_enum) {
-    return {};
-}
-
-MemoryStorage::SetVariableStatusEnum MemoryStorage::set_variable_attribute_value(const Component& component_id,
-                                                                                 const Variable& variable_id,
-                                                                                 const AttributeEnum& attribute_enum,
-                                                                                 const std::string& value,
-                                                                                 const std::string& source) {
-    auto result = SetVariableStatusEnum::UnknownComponent;
+MemoryStorage::SetVariableStatusEnum MemoryStorage::set_value(const Component& component_id,
+                                                              const Variable& variable_id,
+                                                              const AttributeEnum& attribute_enum,
+                                                              const std::string& value, const std::string& source,
+                                                              bool allow_read_only) {
+    auto result = SetVariableStatusEnum::Accepted;
     if (component_id.name == "Internal") {
         // std::cout << "Internal[" << variable_id.name << "]=" << value << '\n';
         vars_internal[variable_id.name] = value;
@@ -362,35 +362,118 @@ MemoryStorage::SetVariableStatusEnum MemoryStorage::set_variable_attribute_value
         vars_custom[variable_id.name] = value;
         result = SetVariableStatusEnum::Accepted;
     } else {
+        result = SetVariableStatusEnum::Rejected;
         std::cerr << "set_variable_attribute not implemented for: " << component_id.name << '\n';
+    }
+
+    return result;
+}
+
+MemoryStorage::SetVariableStatusEnum MemoryStorage::set_read_only_value(const Component& component_id,
+                                                                        const Variable& variable_id,
+                                                                        const AttributeEnum& attribute_enum,
+                                                                        const std::string& value,
+                                                                        const std::string& source) {
+    return set_value(component_id, variable_id, attribute_enum, value, source);
+}
+
+std::optional<MemoryStorage::MutabilityEnum> MemoryStorage::get_mutability(const Component& component_id,
+                                                                           const Variable& variable_id,
+                                                                           const AttributeEnum& attribute_enum) {
+    std::optional<MemoryStorage::MutabilityEnum> result;
+    const auto key_str = std::string{variable_id.name};
+    std::string value;
+    if (get_variable(component_id, variable_id, attribute_enum, value) == v2::GetVariableStatusEnum::Accepted) {
+        const auto sv_key_opt = keys::convert(key_str);
+        if (sv_key_opt) {
+            const auto sv_key = sv_key_opt.value();
+            if (sv_key == keys::valid_keys::AuthorizationKey) {
+                result = MemoryStorage::MutabilityEnum::WriteOnly;
+            } else {
+                result = (keys::is_readonly(sv_key)) ? MemoryStorage::MutabilityEnum::ReadOnly
+                                                     : MemoryStorage::MutabilityEnum::ReadWrite;
+            }
+        } else {
+            if (const auto it = read_only.find(key_str); it == read_only.end()) {
+                result = MemoryStorage::MutabilityEnum::ReadWrite;
+            } else {
+                result = MemoryStorage::MutabilityEnum::ReadOnly;
+            }
+        }
     }
     return result;
 }
 
-std::optional<MemoryStorage::VariableMonitoringMeta>
-MemoryStorage::set_monitoring_data(const SetMonitoringData& data, const VariableMonitorType type) {
-    return std::nullopt;
+std::optional<MemoryStorage::VariableMetaData> MemoryStorage::get_variable_meta_data(const Component& component_id,
+                                                                                     const Variable& variable_id) {
+    std::optional<MemoryStorage::VariableMetaData> result;
+    std::string value;
+    if (get_variable(component_id, variable_id, AttributeEnum::Actual, value) == GetVariableStatusEnum::Accepted) {
+        MemoryStorage::VariableMetaData md;
+        md.characteristics.dataType = v2::DataEnum::string;
+        md.characteristics.supportsMonitoring = false;
+        result = std::move(md);
+    }
+    return result;
 }
 
-bool MemoryStorage::update_monitoring_reference(const int32_t monitor_id, const std::string& reference_value) {
-    return false;
-}
-
-std::vector<MemoryStorage::VariableMonitoringMeta>
-MemoryStorage::get_monitoring_data(const std::vector<MonitoringCriterionEnum>& criteria, const Component& component_id,
-                                   const Variable& variable_id) {
+std::vector<MemoryStorage::ReportData> MemoryStorage::get_base_report_data(const ReportBaseEnum& report_base) {
+    if (report_base == v2::ReportBaseEnum::ConfigurationInventory) {
+        std::vector<MemoryStorage::ReportData> result;
+        generate_report(result);
+        return result;
+    }
     return {};
 }
 
-MemoryStorage::ClearMonitoringStatusEnum MemoryStorage::clear_variable_monitor(int monitor_id, bool allow_protected) {
-    return ClearMonitoringStatusEnum::Rejected;
+std::vector<MemoryStorage::ReportData>
+MemoryStorage::get_custom_report_data(const std::optional<std::vector<ComponentVariable>>& component_variables,
+                                      const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria) {
+    return {};
 }
 
-std::int32_t MemoryStorage::clear_custom_variable_monitors() {
+std::vector<MemoryStorage::SetMonitoringResult>
+MemoryStorage::set_monitors(const std::vector<SetMonitoringData>& requests, const VariableMonitorType type) {
+    return {};
+}
+
+bool MemoryStorage::update_monitor_reference(std::int32_t monitor_id, const std::string& reference_value) {
+    return false;
+}
+
+std::vector<MemoryStorage::VariableMonitoringPeriodic> MemoryStorage::get_periodic_monitors() {
+    return {};
+}
+
+std::vector<MemoryStorage::MonitoringData>
+MemoryStorage::get_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
+                            const std::vector<ComponentVariable>& component_variables) {
+    return {};
+}
+
+std::vector<MemoryStorage::ClearMonitoringResult> MemoryStorage::clear_monitors(const std::vector<int>& request_ids,
+                                                                                bool allow_protected) {
+    return {};
+}
+
+std::int32_t MemoryStorage::clear_custom_monitors() {
     return -1;
 }
 
-void MemoryStorage::check_integrity() {
+void MemoryStorage::register_variable_listener(
+    std::function<void(const std::unordered_map<std::int64_t, VariableMonitoringMeta>& monitors,
+                       const Component& component, const Variable& variable,
+                       const VariableCharacteristics& characteristics, const VariableAttribute& attribute,
+                       const std::string& value_previous, const std::string& value_current)>&& listener) {
+}
+
+void MemoryStorage::register_monitor_listener(
+    std::function<void(const VariableMonitoringMeta& updated_monitor, const Component& component,
+                       const Variable& variable, const VariableCharacteristics& characteristics,
+                       const VariableAttribute& attribute, const std::string& current_value)>&& listener) {
+}
+
+void MemoryStorage::check_integrity(const std::map<std::int32_t, std::int32_t>& evse_connector_structure) {
 }
 
 } // namespace ocpp::v16::stubs

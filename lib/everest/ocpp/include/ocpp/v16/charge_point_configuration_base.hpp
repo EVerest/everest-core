@@ -6,19 +6,20 @@
 
 #include <ocpp/v16/types.hpp>
 
+#include <cstddef>
 #include <map>
 #include <optional>
 #include <set>
 
 namespace ocpp::v16 {
 
-constexpr size_t AUTHORIZATION_KEY_MIN_LENGTH = 8;
-constexpr size_t OCSP_REQUEST_INTERVAL_MIN = 86400;
-constexpr size_t SECC_LEAF_SUBJECT_COMMON_NAME_MIN_LENGTH = 7;
-constexpr size_t SECC_LEAF_SUBJECT_COMMON_NAME_MAX_LENGTH = 64;
-constexpr size_t SECC_LEAF_SUBJECT_COUNTRY_LENGTH = 2;
-constexpr size_t SECC_LEAF_SUBJECT_ORGANIZATION_MAX_LENGTH = 64;
-constexpr size_t CONNECTOR_EVSE_IDS_MAX_LENGTH = 1000;
+constexpr std::size_t AUTHORIZATION_KEY_MIN_LENGTH = 8;
+constexpr std::size_t OCSP_REQUEST_INTERVAL_MIN = 86400;
+constexpr std::size_t SECC_LEAF_SUBJECT_COMMON_NAME_MIN_LENGTH = 7;
+constexpr std::size_t SECC_LEAF_SUBJECT_COMMON_NAME_MAX_LENGTH = 64;
+constexpr std::size_t SECC_LEAF_SUBJECT_COUNTRY_LENGTH = 2;
+constexpr std::size_t SECC_LEAF_SUBJECT_ORGANIZATION_MAX_LENGTH = 64;
+constexpr std::size_t CONNECTOR_EVSE_IDS_MAX_LENGTH = 1000;
 constexpr std::int32_t MAX_WAIT_FOR_SET_USER_PRICE_TIMEOUT_MS = 30000;
 
 /// \brief contains the configuration of the charge point
