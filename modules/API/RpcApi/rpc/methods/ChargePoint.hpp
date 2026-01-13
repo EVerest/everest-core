@@ -5,9 +5,9 @@
 
 #include "../../data/DataStore.hpp"
 
-namespace everest_api_types = everest::lib::API::V1_0::types;
-namespace RPCDataTypes = everest_api_types::json_rpc_api;
 using namespace data;
+
+namespace RPCDataTypes = types::json_rpc_api;
 
 namespace methods {
 

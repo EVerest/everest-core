@@ -3,13 +3,10 @@
 
 #include "ErrorHandler.hpp"
 #include <everest/logging.hpp>
-#include <stdexcept>
 
-namespace everest_api_types = everest::lib::API::V1_0::types;
-namespace RPCDataTypes = everest_api_types::json_rpc_api;
 namespace helpers {
 
-void handle_error_raised(data::DataStoreCharger& data, const RPCDataTypes::ErrorObj& error) {
+void handle_error_raised(data::DataStoreCharger& data, const types::json_rpc_api::ErrorObj& error) {
     try {
         data.chargererrors.add_error(error);
     } catch (const std::runtime_error& e) {
@@ -29,7 +26,7 @@ void handle_error_raised(data::DataStoreCharger& data, const RPCDataTypes::Error
     }
 }
 
-void handle_error_cleared(data::DataStoreCharger& data, const RPCDataTypes::ErrorObj& error) {
+void handle_error_cleared(data::DataStoreCharger& data, const types::json_rpc_api::ErrorObj& error) {
     try {
         data.chargererrors.clear_error(error);
     } catch (const std::runtime_error& e) {

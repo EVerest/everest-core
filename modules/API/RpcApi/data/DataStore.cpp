@@ -5,10 +5,7 @@
 #include "GenericInfoStore.hpp"
 #include "SessionInfo.hpp"
 #include <everest/logging.hpp>
-#include <stdexcept>
 
-namespace everest_api_types = everest::lib::API::V1_0::types;
-namespace RPCDataTypes = everest_api_types::json_rpc_api;
 namespace data {
 
 static bool almost_equal(float a, float b, float epsilon = std::numeric_limits<float>::epsilon() * 100) {
@@ -25,7 +22,7 @@ void ChargerInfoStore::set_unknown() {
     this->data_is_valid = true;
 }
 
-void ChargerErrorsStore::add_error(const RPCDataTypes::ErrorObj& error) {
+void ChargerErrorsStore::add_error(const types::json_rpc_api::ErrorObj& error) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     // Check if the error already exists in the vector
     for (const auto& existing_error : this->dataobj) {
@@ -41,7 +38,7 @@ void ChargerErrorsStore::add_error(const RPCDataTypes::ErrorObj& error) {
     this->notify_data_changed();
 }
 
-void ChargerErrorsStore::clear_error(const RPCDataTypes::ErrorObj& error) {
+void ChargerErrorsStore::clear_error(const types::json_rpc_api::ErrorObj& error) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     // Find and remove the error from the vector
     for (auto it = this->dataobj.begin(); it != this->dataobj.end(); ++it) {
@@ -57,7 +54,7 @@ void ChargerErrorsStore::clear_error(const RPCDataTypes::ErrorObj& error) {
 }
 
 void EVSEInfoStore::set_supported_energy_transfer_modes(
-    const std::vector<RPCDataTypes::EnergyTransferModeEnum>& supported_energy_transfer_modes) {
+    const std::vector<types::json_rpc_api::EnergyTransferModeEnum>& supported_energy_transfer_modes) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     this->dataobj.supported_energy_transfer_modes = supported_energy_transfer_modes;
 }
@@ -75,7 +72,7 @@ void EVSEInfoStore::set_available_connectors(const std::vector<RPCDataTypes::Con
     this->dataobj.available_connectors = connectors;
 }
 
-void EVSEInfoStore::set_available_connector(RPCDataTypes::ConnectorInfoObj& available_connector) {
+void EVSEInfoStore::set_available_connector(types::json_rpc_api::ConnectorInfoObj& available_connector) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     // Interate through the vector and set the connector with the given index
     for (auto& connector : this->dataobj.available_connectors) {
@@ -102,7 +99,7 @@ void EVSEInfoStore::set_is_ac_transfer_mode(bool is_ac) {
     this->is_ac_transfer_mode = is_ac;
 }
 
-std::vector<RPCDataTypes::ConnectorInfoObj> EVSEInfoStore::get_available_connectors() const {
+std::vector<types::json_rpc_api::ConnectorInfoObj> EVSEInfoStore::get_available_connectors() const {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     return this->dataobj.available_connectors;
 }
@@ -247,7 +244,7 @@ void EVSEStatusStore::set_charging_allowed(bool charging_allowed) {
     }
 }
 // set the EVSE state
-void EVSEStatusStore::set_state(RPCDataTypes::EVSEStateEnum state) {
+void EVSEStatusStore::set_state(types::json_rpc_api::EVSEStateEnum state) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     field_status[EVSEStatusField::State] = true; // Mark field as set
     update_data_is_valid();
@@ -272,7 +269,7 @@ void EVSEStatusStore::set_error_present(const bool error_present) {
     }
 }
 // set the charge protocol
-void EVSEStatusStore::set_charge_protocol(RPCDataTypes::ChargeProtocolEnum charge_protocol) {
+void EVSEStatusStore::set_charge_protocol(types::json_rpc_api::ChargeProtocolEnum charge_protocol) {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     field_status[EVSEStatusField::ChargeProtocol] = true; // Mark field as set
     update_data_is_valid();
@@ -383,7 +380,7 @@ void EVSEStatusStore::set_display_parameters(
     }
 }
 
-RPCDataTypes::EVSEStateEnum EVSEStatusStore::get_state() const {
+types::json_rpc_api::EVSEStateEnum EVSEStatusStore::get_state() const {
     std::unique_lock<std::mutex> data_lock(this->data_mutex);
     return this->dataobj.state;
 }

@@ -12,8 +12,6 @@
 #include "../rpc/RpcHandler.hpp"
 #include "../server/WebsocketServer.hpp"
 
-namespace everest_api_types = everest::lib::API::V1_0::types;
-namespace RPCDataTypes = everest_api_types::json_rpc_api;
 using namespace server;
 using namespace rpc;
 using namespace json_rpc_utils;
@@ -148,10 +146,10 @@ TEST_F(RpcHandlerTest, ChargePointGetEVSEInfosReq) {
     evse_info.index = 1;
     evse_info.available_connectors.emplace_back();
     evse_info.available_connectors[0].index = 1;
-    evse_info.available_connectors[0].type = RPCDataTypes::ConnectorTypeEnum::cCCS2;
+    evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
     evse_info.available_connectors.emplace_back();
     evse_info.available_connectors[1].index = 2;
-    evse_info.available_connectors[1].type = RPCDataTypes::ConnectorTypeEnum::cCCS1;
+    evse_info.available_connectors[1].type = types::json_rpc_api::ConnectorTypeEnum::cCCS1;
     evse_info.description = "Test EVSE 1";
 
     result.error = RPCDataTypes::ResponseErrorEnum::NoError; ///< No error
@@ -191,7 +189,7 @@ TEST_F(RpcHandlerTest, ChargePointGetActiveErrorsReq) {
     evse_info.index = 1; ///< Unique identifier
     evse_info.available_connectors.emplace_back();
     evse_info.available_connectors[0].index = 1;
-    evse_info.available_connectors[0].type = RPCDataTypes::ConnectorTypeEnum::cCCS2;
+    evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
     evse_info.description = "Test EVSE 1";
     data_store.evses[0]->evseinfo.set_data(evse_info);
     // Add a second EVSE with a different index
@@ -206,7 +204,7 @@ TEST_F(RpcHandlerTest, ChargePointGetActiveErrorsReq) {
     data_store.evses[0]->evsestatus.set_data(evse_status1);
     data_store.evses[1]->evsestatus.set_data(evse_status2);
 
-    RPCDataTypes::ErrorObj error0, error1, error2;
+    types::json_rpc_api::ErrorObj error0, error1, error2;
     error0.origin.evse_index = 1;
     error0.origin.connector_index = 0;
     error0.origin.module_id = "evse_1";
@@ -214,7 +212,7 @@ TEST_F(RpcHandlerTest, ChargePointGetActiveErrorsReq) {
     error0.message = "Test error message";
     error0.description = "Test error description";
     error0.uuid = "6db8758b-194d-48e1-99af-c8f0b1d2e3f3";
-    error0.severity = RPCDataTypes::Severity::Low;
+    error0.severity = types::json_rpc_api::Severity::Low;
     error0.timestamp = "2025-01-01T12:00:00Z";
     error0.type = "TestErrorType";
 
@@ -225,7 +223,7 @@ TEST_F(RpcHandlerTest, ChargePointGetActiveErrorsReq) {
     error1.message = "Test error message";
     error1.description = "Test error description";
     error1.uuid = "7db8758b-194d-48e1-99af-c8f0b1d2e3f4";
-    error1.severity = RPCDataTypes::Severity::Medium;
+    error1.severity = types::json_rpc_api::Severity::Medium;
     error1.timestamp = "2025-01-01T12:00:00Z";
     error1.type = "TestErrorType";
 
@@ -236,7 +234,7 @@ TEST_F(RpcHandlerTest, ChargePointGetActiveErrorsReq) {
     error2.message = "Another test error message";
     error2.description = "Another test error description";
     error2.uuid = "8db8758b-194d-48e1-99af-c8f0b1d2e3f5";
-    error2.severity = RPCDataTypes::Severity::High;
+    error2.severity = types::json_rpc_api::Severity::High;
     error2.timestamp = "2025-01-01T12:00:01Z";
     error2.type = "AnotherTestErrorType";
 
@@ -298,10 +296,10 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
     evse_info.index = 1; ///< Unique identifier
     evse_info.available_connectors.emplace_back();
     evse_info.available_connectors[0].index = 1;
-    evse_info.available_connectors[0].type = RPCDataTypes::ConnectorTypeEnum::cCCS2;
+    evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
     evse_info.available_connectors.emplace_back();
     evse_info.available_connectors[1].index = 2;
-    evse_info.available_connectors[1].type = RPCDataTypes::ConnectorTypeEnum::cCCS1;
+    evse_info.available_connectors[1].type = types::json_rpc_api::ConnectorTypeEnum::cCCS1;
     evse_info.description = "Test EVSE 1";
     data_store.evses[0]->evseinfo.set_data(evse_info);
 
@@ -312,8 +310,8 @@ TEST_F(RpcHandlerTest, EvseGetEVSEInfosReq) {
 
     // Set up the second EVSE info
     evse_info.index = 2;
-    evse_info.available_connectors[0].type = RPCDataTypes::ConnectorTypeEnum::cType2;
-    evse_info.available_connectors[1].type = RPCDataTypes::ConnectorTypeEnum::sType2;
+    evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cType2;
+    evse_info.available_connectors[1].type = types::json_rpc_api::ConnectorTypeEnum::sType2;
     data_store.evses.emplace_back(std::make_unique<data::DataStoreEvse>());
     data_store.evses[1]->evseinfo.set_data(evse_info);
 
@@ -365,8 +363,8 @@ TEST_F(RpcHandlerTest, EvseGetStatusReq) {
     evse_status.available = true;
     evse_status.active_connector_index = 1;
     evse_status.error_present = false;
-    evse_status.charge_protocol = RPCDataTypes::ChargeProtocolEnum::ISO15118; ///< charge_protocol
-    evse_status.state = RPCDataTypes::EVSEStateEnum::Charging;
+    evse_status.charge_protocol = types::json_rpc_api::ChargeProtocolEnum::ISO15118; ///< charge_protocol
+    evse_status.state = types::json_rpc_api::EVSEStateEnum::Charging;
     evse_status.ac_charge_status.emplace().evse_active_phase_count = 3;
 
     // Set up the expected responses
@@ -468,7 +466,7 @@ TEST_F(RpcHandlerTest, EvseSetChargingAllowedReq) {
     data_store.evses[0]->evsestatus.set_data(evse_status);
 
     // Set up the expected responses
-    RPCDataTypes::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
     nlohmann::json expected_error = {
         {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
@@ -510,7 +508,7 @@ TEST_F(RpcHandlerTest, EvseMeterDataReq) {
     meter_data.timestamp = "2025-06-10T09:51:56Z";
 
     // Set up the expected responses
-    RPCDataTypes::EVSEGetMeterDataResObj result{{meter_data}, RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::EVSEGetMeterDataResObj result{{meter_data}, RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response_no_error = create_json_rpc_response(result, 1);
     nlohmann::json expected_error_no_data = {
         {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorNoDataAvailable)}};
@@ -585,7 +583,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingCurrentReq) {
     data_store.evses[0]->evsestatus.set_ac_charge_param_evse_max_current(12.3);
 
     // Set up the expected responses
-    RPCDataTypes::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
     nlohmann::json expected_error_invalid_index = {
         {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
@@ -644,7 +642,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReq) {
     data_store.evses[0]->hardwarecapabilities.set_data(hw_cap.hardware_capabilities);
 
     // Set up the expected responses
-    RPCDataTypes::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
     nlohmann::json expected_error = {
         {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
@@ -701,7 +699,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingPhaseCountReqBadCases) {
     data_store.evses[0]->hardwarecapabilities.set_data(hw_cap.hardware_capabilities);
 
     // Set up the expected responses
-    RPCDataTypes::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_no_error = create_json_rpc_response(result, 1);
     nlohmann::json expected_invalid_param = {
         {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidParameter)}};
@@ -782,7 +780,7 @@ TEST_F(RpcHandlerTest, EvseSetDCChargingPowerReq) {
     data_store.evses[0]->evsestatus.set_data(evse_status);
 
     // Set up the expected responses
-    RPCDataTypes::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
     nlohmann::json expected_error = {
         {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
@@ -812,7 +810,7 @@ TEST_F(RpcHandlerTest, EvseEnableConnectorReq) {
         "EVSE.EnableConnector", {{"evse_index", 1}, {"enable", true}, {"priority", 1}, {"connector_index", 99}}, 1);
 
     // Set up the expected responses
-    RPCDataTypes::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
+    types::json_rpc_api::ErrorResObj result{RPCDataTypes::ResponseErrorEnum::NoError};
     nlohmann::json expected_response = create_json_rpc_response(result, 1);
     nlohmann::json expected_error = {
         {"error", response_error_enum_to_string(RPCDataTypes::ResponseErrorEnum::ErrorInvalidEVSEIndex)}};
@@ -825,7 +823,7 @@ TEST_F(RpcHandlerTest, EvseEnableConnectorReq) {
     evse_info.index = 1;
     evse_info.available_connectors.emplace_back();
     evse_info.available_connectors[0].index = 1;
-    evse_info.available_connectors[0].type = RPCDataTypes::ConnectorTypeEnum::cCCS2;
+    evse_info.available_connectors[0].type = types::json_rpc_api::ConnectorTypeEnum::cCCS2;
     data_store.evses[0]->evseinfo.set_data(evse_info);
 
     RPCDataTypes::EVSEStatusObj evse_status;

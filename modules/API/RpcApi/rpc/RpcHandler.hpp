@@ -27,7 +27,6 @@
 #include "methods/Evse.hpp"
 #include "notifications/ChargePoint.hpp"
 #include "notifications/Evse.hpp"
-#include <everest_api_types/json_rpc_api/json_codec.hpp>
 
 using namespace server;
 using namespace jsonrpccxx;

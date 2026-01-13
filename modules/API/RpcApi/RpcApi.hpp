@@ -24,7 +24,7 @@
 #include "data/DataStore.hpp"
 #include "rpc/RpcHandler.hpp"
 #include "server/WebsocketServer.hpp"
-#include <everest_api_types/json_rpc_api/codec.hpp>
+#include <generated/types/json_rpc_api.hpp>
 #include <vector>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
