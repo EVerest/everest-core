@@ -265,7 +265,7 @@ Device Model initialization
 
 The config files are parsed at startup and used to initialize an SQLite
 database. Please see
-`the documentation about the device model initialization <https://github.com/EVerest/libocpp/blob/main/doc/v2/ocpp_201_device_model_initialization.md>`_
+`the documentation about the device model initialization <https://github.com/EVerest/everest-core/blob/main/lib/everest/ocpp/doc/v2/ocpp_201_device_model_initialization.md>`_
 for detailed information about this process.
 
 You should specify the path to the directory of your device model definitions

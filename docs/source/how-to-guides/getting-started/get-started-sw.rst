@@ -15,8 +15,6 @@ For a native build, EVerest requires a Linux based system.
 To build on a Windows or Mac system, you can use WSL2 (Windows) or
 Docker / Podman (Mac).
 
-For Mac, see the :doc:`TODO How-to for MAC setup </how-to-guides/how-to-mac-setup>`.
-
 System Requirements and Dependencies
 ====================================
 

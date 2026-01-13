@@ -90,8 +90,6 @@ No Linux kernel module required.
 AC/DC power supplies
 --------------------
 
-TODO: incomplete: Mention DPM1000, InfiPower, Winline?
-
 Huawei R100040Gx
 ----------------
 
@@ -119,7 +117,7 @@ specify all module addresses in the module configuration.
 Huawei V100R023C10
 ------------------
 
-*Hardware Driver Module* :ref:`TODO Huawei_V100R023C10 <everest_modules_Huawei_V100R023C10>`
+*Hardware Driver Module* :ref:`Huawei_V100R023C10 <everest_modules_Huawei_V100R023C10>`
 
 This device is supported in EVerest with the Huawei production firmware.
 The setup of this device is complex.
@@ -176,6 +174,13 @@ addresses of all modules in the stack.
 By default, it uses the broadcast address. With multiple modules, this
 will result in each module delivering the full current to the EV instead
 of sharing the current.
+
+Other AC/DC power supplies
+--------------------------
+
+- :ref:`DPM1000 <everest_modules_DPM1000>`
+- :ref:`InfyPower <everest_modules_InfyPower>`
+- :ref:`Winline <everest_modules_Winline>`
 
 ------------
 Power meters
@@ -316,12 +321,6 @@ If it is configured for host boot, additional software outside of
 EVerest is required to do firmware loading and configuration for EVSE.
 You can get these tools under NDA from Lumissil.
 
-TODO: Keep next three lines?
-
-A separate Yocto layer can be provided for those tools but requires an
-NDA with Lumissil and Pionix needs Lumissil's agreement to share those
-tools.
-
 If connected via the Ethernet port, no special driver is needed in Linux
 (except for the Ethernet interface driver).
 
@@ -342,8 +341,6 @@ BSP for complete controllers
 Some controllers are supported natively by EVerest and require no
 additional work for Control Pilot, PLC, relay switching etc.
 
-TODO: Incomplete - which BSPs to list here?
-
 PHYTEC phyVERSO controller
 --------------------------
 
@@ -359,3 +356,10 @@ All testing hardware from Pionix is fully supported:
 
 - BelayBox
 - uMWC
+
+Other BSP modules
+-----------------
+
+- :ref:`AdAcEvse22KwzKitBsp <everest_modules_AdAcEvse22KwzKitBsp>`
+- :ref:`TIDA010939 <everest_modules_TIDA010939>`
+- :ref:`YetiDriverBsp <everest_modules_YetiDriver>`
