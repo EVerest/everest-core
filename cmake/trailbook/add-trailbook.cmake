@@ -64,6 +64,23 @@ macro(_add_trailbook_setup_build_directory)
             )
         endif()
 
+        set(CONDITIONAL_DELETE_INSTANCE_DIR_OR_FAIL_COMMAND "")
+        if(TRAILBOOK_${args_NAME}_OVERWRITE_EXISTING_INSTANCE)
+            set(CONDITIONAL_DELETE_INSTANCE_DIR_OR_FAIL_COMMAND
+                COMMAND
+                    ${CMAKE_COMMAND} -E rm -rf
+                    ${CMAKE_CURRENT_BINARY_DIR}/tmp_repo_download/docs/${TRAILBOOK_${args_NAME}_INSTANCE_NAME}
+            )
+        else()
+            # check if instance directory already exists and fail if it does
+            set(CONDITIONAL_DELETE_INSTANCE_DIR_OR_FAIL_COMMAND
+                COMMAND
+                    ${Python3_EXECUTABLE} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_path_exists.py
+                    --directory ${CMAKE_CURRENT_BINARY_DIR}/tmp_repo_download/docs/${TRAILBOOK_${args_NAME}_INSTANCE_NAME}
+                    --return-zero-if-not-exists
+            )
+        endif()
+
         add_custom_command(
             OUTPUT
                 ${CHECK_DONE_FILE_SETUP_BUILD_DIRECTORY}
@@ -71,42 +88,46 @@ macro(_add_trailbook_setup_build_directory)
                 trailbook_${args_NAME}_stage_prepare_sphinx_source_before
                 $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_PREPARE_SPHINX_SOURCE_BEFORE>
                 ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
+                ${Python3_EXECUTABLE} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_path_exists.py
             COMMENT
                 "Trailbook: ${args_NAME} - Downloading all versions repo"
-            COMMAND
+            COMMAND # Remove existing files in deployed docs repo directory from previous builds
                 ${Python3_EXECUTABLE}
                 ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
                 remove
                 --data-file ${SETUP_BUILD_DIRECTORY_FILE_LIST}
                 --root-directory ${DEPLOYED_DOCS_REPO_DIR}
-            COMMAND
+            COMMAND # Clone deployed docs repo
                 ${GIT_EXECUTABLE} clone 
                 -b ${args_DEPLOYED_DOCS_REPO_BRANCH} 
                 --depth 1
                 ${args_DEPLOYED_DOCS_REPO_URL}
                 ${CMAKE_CURRENT_BINARY_DIR}/tmp_repo_download/
+            # Remove latest directory if this is a release instance
             ${CONDITIONAL_DELETE_LATEST_DIR_COMMAND}
-            COMMAND
+            # Remove existing instance directory if overwrite is enabled or fail if it exists
+            ${CONDITIONAL_DELETE_INSTANCE_DIR_OR_FAIL_COMMAND}
+            COMMAND # Create file list of existing files in deployed docs repo directory after clone
                 ${Python3_EXECUTABLE}
                 ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
                 create
                 --data-file ${SETUP_BUILD_DIRECTORY_FILE_LIST}
                 --root-directory ${CMAKE_CURRENT_BINARY_DIR}/tmp_repo_download
-            COMMAND
+            COMMAND # Move cloned files to deployed docs repo directory
                 ${Python3_EXECUTABLE}
                 ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/filelist_manager.py
                 move
                 --data-file ${SETUP_BUILD_DIRECTORY_FILE_LIST}
                 --root-directory ${CMAKE_CURRENT_BINARY_DIR}/tmp_repo_download
                 --target-root-directory ${DEPLOYED_DOCS_REPO_DIR}/
-            COMMAND
+            COMMAND # Delete temporary clone directory
                 ${CMAKE_COMMAND} -E rm -rf
                 ${CMAKE_CURRENT_BINARY_DIR}/tmp_repo_download/
-            COMMAND
+            COMMAND # Create convenience symlink to docs/ in build directory
                 ${CMAKE_COMMAND} -E create_symlink
                 ${DEPLOYED_DOCS_REPO_DIR}/docs/
                 ${TRAILBOOK_BUILD_DIRECTORY}
-            COMMAND
+            COMMAND # Create done file
                 ${CMAKE_COMMAND} -E touch ${CHECK_DONE_FILE_SETUP_BUILD_DIRECTORY}
         )
         set(_SETUP_BUILD_DIRECTORY_LAST_CONFIGURATION "DOWNLOAD_ALL_VERSIONS")
@@ -205,7 +226,7 @@ macro(_add_trailbook_create_metadata_yaml_command)
             ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/create_metadata_yaml.py
             --multiversion-root-directory "${TRAILBOOK_BUILD_DIRECTORY}"
             "--output-path" "${METADATA_YAML_FILE}"
-            --additional-version "${args_INSTANCE_NAME}"
+            --additional-version "${TRAILBOOK_${args_NAME}_INSTANCE_NAME}"
     )
 endmacro()
 
@@ -511,7 +532,6 @@ function(add_trailbook)
         NAME
         STEM_DIRECTORY
         REQUIREMENTS_TXT
-        INSTANCE_NAME
         DEPLOYED_DOCS_REPO_URL
         DEPLOYED_DOCS_REPO_BRANCH
     )
@@ -526,10 +546,17 @@ function(add_trailbook)
 
     option(TRAILBOOK_${args_NAME}_DOWNLOAD_ALL_VERSIONS "Download all versions for trailbook ${args_NAME} and build complete trailbook" OFF)
     option(TRAILBOOK_${args_NAME}_IS_RELEASE "If enabled, the trailbook ${args_NAME} will be marked as release version in versions index" ON)
+    set(TRAILBOOK_${args_NAME}_INSTANCE_NAME "local" CACHE STRING "Instance name for trailbook ${args_NAME}")
+    option(TRAILBOOK_${args_NAME}_OVERWRITE_EXISTING_INSTANCE "Overwrite existing instance with name ${TRAILBOOK_${args_NAME}_INSTANCE_NAME} if it exists" OFF)
+    # Check that at least one of DOWNLOAD_ALL_VERSIONS or IS_RELEASE is ON
     if(NOT TRAILBOOK_${args_NAME}_DOWNLOAD_ALL_VERSIONS AND NOT TRAILBOOK_${args_NAME}_IS_RELEASE)
         message(FATAL_ERROR "add_trailbook: TRAILBOOK_${args_NAME}_DOWNLOAD_ALL_VERSIONS and TRAILBOOK_${args_NAME}_IS_RELEASE cannot both be OFF")
     endif()
-
+    # Check that instance name is lowercase alphanumeric and underscores only
+    string(REGEX MATCH "^[a-z0-9_]+$" _valid_instance_name "${TRAILBOOK_${args_NAME}_INSTANCE_NAME}")
+    if("${_valid_instance_name}" STREQUAL "")
+        message(FATAL_ERROR "add_trailbook: TRAILBOOK_${args_NAME}_INSTANCE_NAME needs to be lowercase alphanumeric and underscores only")
+    endif()
 
     # Parameter NAME
     #   is required
@@ -565,17 +592,6 @@ function(add_trailbook)
         endif()
     endif()
 
-    # Parameter INSTANCE_NAME
-    #   - required
-    #   - needs to be lowercase alphanumeric and underscores only
-    if("${args_INSTANCE_NAME}" STREQUAL "")
-        message(FATAL_ERROR "add_trailbook: INSTANCE_NAME argument is required")
-    endif()
-    string(REGEX MATCH "^[a-z0-9_]+$" _valid_instance_name "${args_INSTANCE_NAME}")
-    if("${_valid_instance_name}" STREQUAL "")
-        message(FATAL_ERROR "add_trailbook: INSTANCE_NAME needs to be lowercase alphanumeric and underscores only")
-    endif()
-
     # Parameter DEPLOYED_DOCS_REPO_URL
     #    - required if TRAILBOOK_<NAME>_DOWNLOAD_ALL_VERSIONS is ON
     if(TRAILBOOK_${args_NAME}_DOWNLOAD_ALL_VERSIONS AND "${args_DEPLOYED_DOCS_REPO_URL}" STREQUAL "")
@@ -590,7 +606,7 @@ function(add_trailbook)
 
     set(TRAILBOOK_INSTANCE_SOURCE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/trailbook_${args_NAME}_source")
     set(TRAILBOOK_BUILD_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/trailbook_${args_NAME}_build")
-    set(TRAILBOOK_INSTANCE_BUILD_DIRECTORY "${TRAILBOOK_BUILD_DIRECTORY}/${args_INSTANCE_NAME}")
+    set(TRAILBOOK_INSTANCE_BUILD_DIRECTORY "${TRAILBOOK_BUILD_DIRECTORY}/${TRAILBOOK_${args_NAME}_INSTANCE_NAME}")
     set(TRAILBOOK_INSTANCE_IS_RELEASE "${TRAILBOOK_${args_NAME}_IS_RELEASE}")
     set(TRAILBOOK_INSTANCE_DOWNLOAD_ALL_VERSIONS "${TRAILBOOK_${args_NAME}_DOWNLOAD_ALL_VERSIONS}")
 
@@ -692,7 +708,7 @@ function(add_trailbook)
         PROPERTIES
             TRAILBOOK_INSTANCE_BUILD_DIRECTORY "${TRAILBOOK_INSTANCE_BUILD_DIRECTORY}"
             TRAILBOOK_BUILD_DIRECTORY "${TRAILBOOK_BUILD_DIRECTORY}"
-            TRAILBOOK_INSTANCE_NAME "${args_INSTANCE_NAME}"
+            TRAILBOOK_INSTANCE_NAME "${TRAILBOOK_${args_NAME}_INSTANCE_NAME}"
             TRAILBOOK_INSTANCE_SOURCE_DIRECTORY "${TRAILBOOK_INSTANCE_SOURCE_DIRECTORY}"
             TRAILBOOK_CURRENT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}"
             ADDITIONAL_DEPS_STAGE_PREPARE_SPHINX_SOURCE_BEFORE ""

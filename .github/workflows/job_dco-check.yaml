@@ -1,11 +1,17 @@
 name: DCO Check
-on:    
-  pull_request: {}
-  merge_group: {}
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'Which runner to use'
+        required: false
+        default: 'ubuntu-24.04'
+        type: string
+
 jobs:
   dco_check:
     name: DCO Check
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.runner }}
     steps:
       - uses: actions/checkout@v3
         if: github.event_name == 'pull_request'
