@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <cstdint>
-#include <iso15118/message/d2/current_demand.hpp>
+#include <iso15118/message/d2/dc_current_demand.hpp>
 #include <iso15118/message/d2/variant.hpp>
 
 #include "helper.hpp"
@@ -23,7 +23,7 @@ SCENARIO("Ser/Deserialize d2 current demand messages") {
         THEN("It should be deserialized successfully") {
             REQUIRE(variant.get_type() == d2::msg::Type::CurrentDemandReq);
 
-            const auto& msg = variant.get<d2::msg::CurrentDemandRequest>();
+            const auto& msg = variant.get<d2::msg::DC_CurrentDemandRequest>();
             const auto& header = msg.header;
 
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D});
@@ -57,7 +57,7 @@ SCENARIO("Ser/Deserialize d2 current demand messages") {
         THEN("It should be deserialized successfully") {
             REQUIRE(variant.get_type() == d2::msg::Type::CurrentDemandReq);
 
-            const auto& msg = variant.get<d2::msg::CurrentDemandRequest>();
+            const auto& msg = variant.get<d2::msg::DC_CurrentDemandRequest>();
             const auto& header = msg.header;
 
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D});
@@ -81,7 +81,7 @@ SCENARIO("Ser/Deserialize d2 current demand messages") {
 
         const auto header = d2::msg::Header{{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D}, std::nullopt};
 
-        auto res = d2::msg::CurrentDemandResponse{};
+        auto res = d2::msg::DC_CurrentDemandResponse{};
         res.header = header;
         res.response_code = dt::ResponseCode::OK;
         auto status = dt::DC_EVSEStatus{};
@@ -108,7 +108,7 @@ SCENARIO("Ser/Deserialize d2 current demand messages") {
 
         const auto header = d2::msg::Header{{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D}, std::nullopt};
 
-        auto res = d2::msg::CurrentDemandResponse{};
+        auto res = d2::msg::DC_CurrentDemandResponse{};
         res.header = header;
         res.response_code = dt::ResponseCode::OK;
         auto status = dt::DC_EVSEStatus{};

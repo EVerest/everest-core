@@ -1,8 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <cstdint>
+#include <iso15118/message/d2/dc_welding_detection.hpp>
 #include <iso15118/message/d2/variant.hpp>
-#include <iso15118/message/d2/welding_detection.hpp>
 
 #include "helper.hpp"
 
@@ -24,7 +24,7 @@ SCENARIO("Ser/Deserialize d2 welding detection messages") {
         THEN("It should be deserialized successfully") {
             REQUIRE(variant.get_type() == d2::msg::Type::WeldingDetectionReq);
 
-            const auto& msg = variant.get<d2::msg::WeldingDetectionRequest>();
+            const auto& msg = variant.get<d2::msg::DC_WeldingDetectionRequest>();
             const auto& header = msg.header;
 
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D});
@@ -38,7 +38,7 @@ SCENARIO("Ser/Deserialize d2 welding detection messages") {
 
         const auto header = d2::msg::Header{{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D}, std::nullopt};
 
-        auto res = d2::msg::WeldingDetectionResponse{};
+        auto res = d2::msg::DC_WeldingDetectionResponse{};
         res.header = header;
         res.response_code = dt::ResponseCode::OK;
         auto status = dt::DC_EVSEStatus{};

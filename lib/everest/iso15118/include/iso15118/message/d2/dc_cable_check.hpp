@@ -6,16 +6,16 @@
 
 namespace iso15118::d2::msg {
 
-struct WeldingDetectionRequest {
+struct DC_CableCheckRequest {
     Header header;
     data_types::DC_EVStatus ev_status;
 };
 
-struct WeldingDetectionResponse {
+struct DC_CableCheckResponse {
     Header header;
     data_types::ResponseCode response_code;
     data_types::DC_EVSEStatus evse_status;
-    data_types::PhysicalValue evse_present_voltage;
+    data_types::EVSEProcessing evse_processing;
 };
 
 } // namespace iso15118::d2::msg

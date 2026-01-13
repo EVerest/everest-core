@@ -51,14 +51,14 @@ CREATE_TYPE_TRAIT(SessionSetupRequest, SessionSetupReq);
 CREATE_TYPE_TRAIT(SessionSetupResponse, SessionSetupRes);
 CREATE_TYPE_TRAIT(AuthorizationRequest, AuthorizationReq);
 CREATE_TYPE_TRAIT(AuthorizationResponse, AuthorizationRes);
-CREATE_TYPE_TRAIT(CableCheckRequest, CableCheckReq);
-CREATE_TYPE_TRAIT(CableCheckResponse, CableCheckRes);
-CREATE_TYPE_TRAIT(PreChargeRequest, PreChargeReq);
-CREATE_TYPE_TRAIT(PreChargeResponse, PreChargeRes);
-CREATE_TYPE_TRAIT(CurrentDemandRequest, CurrentDemandReq);
-CREATE_TYPE_TRAIT(CurrentDemandResponse, CurrentDemandRes);
-CREATE_TYPE_TRAIT(WeldingDetectionRequest, WeldingDetectionReq);
-CREATE_TYPE_TRAIT(WeldingDetectionResponse, WeldingDetectionRes);
+CREATE_TYPE_TRAIT(DC_CableCheckRequest, CableCheckReq);
+CREATE_TYPE_TRAIT(DC_CableCheckResponse, CableCheckRes);
+CREATE_TYPE_TRAIT(DC_PreChargeRequest, PreChargeReq);
+CREATE_TYPE_TRAIT(DC_PreChargeResponse, PreChargeRes);
+CREATE_TYPE_TRAIT(DC_CurrentDemandRequest, CurrentDemandReq);
+CREATE_TYPE_TRAIT(DC_CurrentDemandResponse, CurrentDemandRes);
+CREATE_TYPE_TRAIT(DC_WeldingDetectionRequest, WeldingDetectionReq);
+CREATE_TYPE_TRAIT(DC_WeldingDetectionResponse, WeldingDetectionRes);
 
 #ifdef CREATE_TYPE_TRAIT_PUSHED
 #define CREATE_TYPE_TRAIT CREATE_TYPE_TRAIT_PUSHED

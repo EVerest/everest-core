@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Pionix GmbH and Contributors to EVerest
-#include <iso15118/message/d2/pre_charge.hpp>
+#include <iso15118/message/d2/dc_pre_charge.hpp>
 
 #include <iso15118/detail/variant_access.hpp>
 
@@ -11,7 +11,7 @@
 
 namespace iso15118::d2::msg {
 
-template <> void convert(const struct iso2_PreChargeReqType& in, PreChargeRequest& out) {
+template <> void convert(const struct iso2_PreChargeReqType& in, DC_PreChargeRequest& out) {
     convert(in.DC_EVStatus, out.ev_status);
     convert(in.EVTargetVoltage, out.ev_target_voltage);
     convert(in.EVTargetCurrent, out.ev_target_current);
@@ -20,10 +20,10 @@ template <> void convert(const struct iso2_PreChargeReqType& in, PreChargeReques
 template <>
 void insert_type(VariantAccess& va, const struct iso2_PreChargeReqType& in,
                  const struct iso2_MessageHeaderType& header) {
-    va.insert_type<PreChargeRequest>(in, header);
+    va.insert_type<DC_PreChargeRequest>(in, header);
 }
 
-template <> void convert(const PreChargeResponse& in, struct iso2_PreChargeResType& out) {
+template <> void convert(const DC_PreChargeResponse& in, struct iso2_PreChargeResType& out) {
     init_iso2_PreChargeResType(&out);
 
     cb_convert_enum(in.response_code, out.ResponseCode);
@@ -31,7 +31,7 @@ template <> void convert(const PreChargeResponse& in, struct iso2_PreChargeResTy
     convert(in.evse_present_voltage, out.EVSEPresentVoltage);
 }
 
-template <> int serialize_to_exi(const PreChargeResponse& in, exi_bitstream_t& out) {
+template <> int serialize_to_exi(const DC_PreChargeResponse& in, exi_bitstream_t& out) {
 
     iso2_exiDocument doc;
     init_iso2_exiDocument(&doc);
@@ -45,7 +45,7 @@ template <> int serialize_to_exi(const PreChargeResponse& in, exi_bitstream_t& o
     return encode_iso2_exiDocument(&out, &doc);
 }
 
-template <> size_t serialize(const PreChargeResponse& in, const io::StreamOutputView& out) {
+template <> size_t serialize(const DC_PreChargeResponse& in, const io::StreamOutputView& out) {
     return serialize_helper(in, out);
 }
 
