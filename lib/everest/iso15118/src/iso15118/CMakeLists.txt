@@ -68,6 +68,7 @@ target_sources(iso15118
         message/dc_welding_detection.cpp
         message/session_stop.cpp
 
+        message/d2/authorization.cpp
         message/d2/variant.cpp
         message/d2/msg_data_types.cpp
         message/d2/session_setup.cpp
