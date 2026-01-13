@@ -6,9 +6,6 @@
 
 #include "helper.hpp"
 
-#include <iomanip>
-#include <iostream>
-
 using namespace iso15118;
 
 SCENARIO("Ser/Deserialize d2 authorization messages") {
@@ -37,7 +34,7 @@ SCENARIO("Ser/Deserialize d2 authorization messages") {
         const auto header = d2::msg::Header{{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D}, std::nullopt};
 
         const auto res = d2::msg::AuthorizationResponse{header, d2::msg::data_types::ResponseCode::OK,
-                                                        d2::msg::data_types::EVSEProcessing::Ongoing};
+                                                        d2::msg::data_types::EvseProcessing::Ongoing};
 
         std::vector<uint8_t> expected = {0x80, 0x98, 0x2,  0x0,  0xb6, 0xc8, 0x81, 0xce,
                                          0xc2, 0x13, 0x4b, 0x50, 0x10, 0x1,  0x0};

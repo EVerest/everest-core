@@ -9,18 +9,16 @@
 
 namespace iso15118::d2::msg {
 
-namespace data_types {} // namespace data_types
-
 struct AuthorizationRequest {
     Header header;
     std::string id;
-    std::optional<data_types::GEN_CHALLENGE> gen_challenge;
+    std::optional<data_types::GenChallenge> gen_challenge;
 };
 
 struct AuthorizationResponse {
     Header header;
     data_types::ResponseCode response_code;
-    data_types::EVSEProcessing evse_processing;
+    data_types::EvseProcessing evse_processing;
 };
 
 } // namespace iso15118::d2::msg

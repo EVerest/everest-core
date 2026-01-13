@@ -12,11 +12,8 @@
 namespace iso15118::d2::msg {
 
 template <> void convert(const struct iso2_AuthorizationReqType& in, AuthorizationRequest& out) {
-    std::copy(in.Id.characters, in.Id.characters + in.Id.charactersLen, out.id.begin());
-    if (in.GenChallenge_isUsed) {
-        std::copy(in.GenChallenge.bytes, in.GenChallenge.bytes + in.GenChallenge.bytesLen,
-                  out.gen_challenge.value().begin());
-    }
+    out.id = CB2CPP_STRING(in.Id);
+    CB2CPP_BYTES_IF_USED(in.GenChallenge, out.gen_challenge);
 }
 
 template <>

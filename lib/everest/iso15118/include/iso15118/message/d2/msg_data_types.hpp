@@ -18,7 +18,7 @@ constexpr auto SESSION_ID_LENGTH = 8;
 using SESSION_ID = std::array<uint8_t, SESSION_ID_LENGTH>; // hexBinary, max length 8
 
 constexpr auto GEN_CHALLENGE_LENGTH = 16;
-using GEN_CHALLENGE = std::array<char, GEN_CHALLENGE_LENGTH>; // base64 binary
+using GenChallenge = std::array<uint8_t, GEN_CHALLENGE_LENGTH>; // base64 binary
 
 enum class ResponseCode {
     OK,
@@ -55,7 +55,7 @@ enum class FaultCode {
     UnknownError,
 };
 
-enum class EVSEProcessing {
+enum class EvseProcessing {
     Finished,
     Ongoing,
     Ongoing_WaitingForCustomerInteraction
