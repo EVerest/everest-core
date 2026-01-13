@@ -30,6 +30,7 @@ set(INCLUDE_DIR
     "../server"
     "../rpc"
     "../data"
+    ".."
 )
 
 target_sources(${TEST_TARGET_NAME}

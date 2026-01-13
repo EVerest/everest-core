@@ -6,7 +6,7 @@
 #include "../data/DataStore.hpp"
 
 #include <../rpc/RequestHandlerInterface.hpp>
-#include <generated/types/json_rpc_api.hpp>
+#include <types/json_rpc_api/json_rpc_api.hpp>
 
 class RequestHandlerDummy : public request_interface::RequestHandlerInterface {
 public:

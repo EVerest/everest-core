@@ -5,7 +5,7 @@
 
 #include <optional>
 
-#include <generated/types/json_rpc_api.hpp>
+#include <types/json_rpc_api/json_rpc_api.hpp>
 
 namespace request_interface {
 

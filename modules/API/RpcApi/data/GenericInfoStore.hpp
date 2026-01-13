@@ -5,7 +5,7 @@
 
 #include <atomic>
 #include <functional> // for std::function
-#include <generated/types/json_rpc_api.hpp>
+#include <types/json_rpc_api/json_rpc_api.hpp>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <optional>

@@ -4,7 +4,7 @@
 #define CONVERSIONS_HPP
 
 #include <generated/types/evse_manager.hpp>
-#include <generated/types/json_rpc_api.hpp>
+#include <types/json_rpc_api/json_rpc_api.hpp>
 
 #include <utils/error.hpp>
 
