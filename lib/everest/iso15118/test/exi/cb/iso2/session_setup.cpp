@@ -5,9 +5,6 @@
 
 #include "helper.hpp"
 
-#include <iomanip>
-#include <iostream>
-
 using namespace iso15118;
 
 SCENARIO("Ser/Deserialize d2 session setup messages") {
