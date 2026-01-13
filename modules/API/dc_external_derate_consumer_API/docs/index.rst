@@ -1,12 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_dc_external_derate_consumer_API:
 
-*******************************************
-dc_external_derate_consumer_API
-*******************************************
-
-:ref:`Link <everest_modules_dc_external_derate_consumer_API>` to the module's reference.
+.. *******************************************
+.. dc_external_derate_consumer_API
+.. *******************************************
 
 The complete API specification can be found in the
 

@@ -1,12 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_external_energy_limits_consumer_API:
 
-*******************************************
-external_energy_limits_consumer_API
-*******************************************
-
-:ref:`Link <everest_modules_external_energy_limits_consumer_API>` to the module's reference.
+.. *******************************************
+.. external_energy_limits_consumer_API
+.. *******************************************
 
 The complete API specification can be found in the
 

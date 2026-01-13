@@ -1,10 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_Auth:
 
-===========
-Auth Module
-===========
+.. ===========
+.. Auth Module
+.. ===========
 
 This module handles incoming authorization and reservation requests.
 

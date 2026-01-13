@@ -25,6 +25,7 @@ macro(_trailbook_ev_generate_rst_from_interface_generate_command)
             --template-file "${TEMPLATES_DIRECTORY}/interface.rst.jinja"
             --name "${INTERFACE_NAME}"
             --data-file "${args_INTERFACE_FILE}"
+            --errors-yaml-path "${CMAKE_SOURCE_DIR}/errors/"
             --target-file "${GENERATED_FILE}"
     )
 endmacro()
