@@ -345,4 +345,21 @@ void ErrorHandling::clear_cable_check_fault() {
     }
 }
 
+void ErrorHandling::raise_voltage_plausibility_fault(const std::string& description) {
+    // raise externally
+    // High severity as this indicates a serious measurement inconsistency
+    Everest::error::Error error_object = p_evse->error_factory->create_error(
+        "evse_manager/VoltagePlausibilityFault", "", description, Everest::error::Severity::High);
+    p_evse->raise_error(error_object);
+    process_error();
+}
+
+void ErrorHandling::clear_voltage_plausibility_fault() {
+    // clear externally
+    if (p_evse->error_state_monitor->is_error_active("evse_manager/VoltagePlausibilityFault", "")) {
+        p_evse->clear_error("evse_manager/VoltagePlausibilityFault");
+        process_error();
+    }
+}
+
 } // namespace module

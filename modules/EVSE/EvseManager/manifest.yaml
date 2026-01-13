@@ -346,6 +346,21 @@ config:
       When raising evse_manager/Inoperative use the vendor ID from the original cause
     type: boolean
     default: false
+  voltage_plausibility_max_spread_threshold_V:
+    description: >-
+      Maximum allowed spread (max-min) in volts between voltage measurements from different
+      sources (power supply, powermeter, isolation monitor, over voltage monitor) before a
+      voltage plausibility fault is triggered. During DC charging, if the spread
+      exceeds this threshold for the configured duration, a fault is raised.
+    type: number
+    default: 50.0
+  voltage_plausibility_fault_duration_ms:
+    description: >-
+      Duration in milliseconds for which the spread must exceed the threshold
+      before a voltage plausibility fault is raised. A duration of 0 ms means that a fault
+      will be raised immediately when the threshold is exceeded.
+    type: integer
+    default: 30000
   session_id_type:
     description: >-
       Type to use for generation of session ids.

@@ -782,6 +782,8 @@ void ErrorHandling::raise_cable_check_fault(const std::string& description) {
 }
 void ErrorHandling::clear_cable_check_fault() {
 }
+void ErrorHandling::clear_voltage_plausibility_fault() {
+}
 
 // ----------------------------------------------------------------------------
 // SessionLog stub

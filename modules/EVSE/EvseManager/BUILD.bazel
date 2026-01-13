@@ -6,7 +6,8 @@ IMPLS = [
     "token_provider",
     "random_delay",
     "dc_external_derate",
-    "over_voltage"
+    "over_voltage",
+    "voltage_plausibility"
 ]
 
 cc_everest_module(

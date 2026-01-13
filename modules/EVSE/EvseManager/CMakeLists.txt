@@ -20,6 +20,7 @@ target_sources(${MODULE_NAME}
         backtrace.cpp
         PersistentStore.cpp
         over_voltage/OverVoltageMonitor.cpp
+        voltage_plausibility/VoltagePlausibilityMonitor.cpp
 )
 
 target_link_libraries(${MODULE_NAME}
