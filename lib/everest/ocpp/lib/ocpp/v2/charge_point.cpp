@@ -1086,6 +1086,7 @@ std::optional<DataTransferResponse> ChargePoint::data_transfer_req(const DataTra
 void ChargePoint::websocket_connected_callback(const int configuration_slot,
                                                const NetworkConnectionProfile& network_connection_profile,
                                                const OcppProtocolVersion ocpp_version) {
+    this->message_queue->update_message_timeout(network_connection_profile.messageTimeout);
     this->message_queue->resume(this->message_queue_resume_delay);
     this->ocpp_version = ocpp_version;
     if (this->registration_status == RegistrationStatusEnum::Accepted) {

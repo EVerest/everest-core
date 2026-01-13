@@ -167,6 +167,14 @@ protected:
         return call_count;
     }
 
+    /// \brief Increments call_count and notifies the condition variable.
+    /// Use this from custom Invoke lambdas instead of accessing call_count directly.
+    void mark_call_sent() {
+        std::lock_guard<std::mutex> lock(call_marker_mutex);
+        this->call_count++;
+        this->call_marker_cond_var.notify_one();
+    }
+
     template <typename R> auto MarkAndReturn(R value, bool respond = false) {
         return testing::Invoke([this, value, respond](const json::array_t& s) -> R {
             if (respond) {
@@ -183,10 +191,10 @@ protected:
         });
     }
 
-    void wait_for_calls(int expected_calls = 1) {
+    void wait_for_calls(int expected_calls = 1, std::chrono::seconds timeout = std::chrono::seconds(3)) {
         std::unique_lock<std::mutex> lock(call_marker_mutex);
         EXPECT_TRUE(call_marker_cond_var.wait_for(
-            lock, std::chrono::seconds(3), [this, expected_calls] { return this->call_count >= expected_calls; }));
+            lock, timeout, [this, expected_calls] { return this->call_count >= expected_calls; }));
     }
 
     std::string push_message_call(const TestMessageType& message_type) {
@@ -269,6 +277,9 @@ TEST_F(MessageQueueTest, test_non_transactional_message_is_sent) {
 // \brief Test transactional messages that are sent while being offline are sent afterwards
 TEST_F(MessageQueueTest, test_queuing_up_of_transactional_messages) {
 
+    config.transaction_message_attempts = 2;
+    restart_message_queue();
+
     int message_count = config.queues_total_size_threshold + 3;
     testing::Sequence s;
 
@@ -290,8 +301,6 @@ TEST_F(MessageQueueTest, test_queuing_up_of_transactional_messages) {
         push_message_call(TestMessageType::TRANSACTIONAL);
     }
 
-    message_queue->resume(std::chrono::seconds(0));
-
     // expect one repeated and all other calls been made
     wait_for_calls(message_count + 1);
 }
@@ -311,6 +320,9 @@ TEST_F(MessageQueueTest, test_non_queuing_up_of_non_transactional_messages) {
     push_message_call(TestMessageType::NON_TRANSACTIONAL);
     wait_for_calls(1);
 
+    // go offline and push all other calls
+    message_queue->pause();
+
     for (int i = 1; i < message_count; i++) {
         push_message_call(TestMessageType::NON_TRANSACTIONAL);
     }
@@ -325,6 +337,7 @@ TEST_F(MessageQueueTest, test_non_queuing_up_of_non_transactional_messages) {
 // \brief Test that if queue_all_messages is set to true, non-transactional messages that are sent when online again
 TEST_F(MessageQueueTest, test_queuing_up_of_non_transactional_messages) {
     config.queue_all_messages = true;
+    config.transaction_message_attempts = 2;
     restart_message_queue();
 
     int message_count = config.queues_total_size_threshold;
@@ -342,8 +355,6 @@ TEST_F(MessageQueueTest, test_queuing_up_of_non_transactional_messages) {
     for (int i = 1; i < message_count; i++) {
         push_message_call(TestMessageType::NON_TRANSACTIONAL);
     }
-
-    message_queue->resume(std::chrono::seconds(0));
 
     // expect calls _are_ repeated
     wait_for_calls(message_count + 1);
@@ -478,6 +489,231 @@ TEST_F(MessageQueueTest, test_clean_up_transactional_queue) {
     message_queue->resume(std::chrono::seconds(0));
 
     wait_for_calls(expected_sent_messages);
+}
+
+// \brief Test that transactional retries and non-transactional messages are all delivered
+// when a transactional message continuously fails.
+//
+// OCPP does not require non-transactional messages to wait for transactional retries.
+// The RPC layer is synchronous (one in-flight at a time), but non-transactional messages
+// like Heartbeats or StatusNotifications are allowed to be sent between retry attempts.
+// This test verifies:
+//   - The transactional message is retried the configured number of times
+//   - The non-transactional message is still delivered (not starved by retries)
+//   - Transactional messages maintain their own ordering
+TEST_F(MessageQueueTest, test_transactional_order_strictness) {
+    config.queues_total_size_threshold = 20; // Ensure no drops
+    config.transaction_message_attempts = 2;
+    config.transaction_message_retry_interval = 0;
+    restart_message_queue();
+
+    std::vector<std::string> call_order;
+    std::mutex order_mutex;
+
+    EXPECT_CALL(send_callback_mock, Call(testing::_))
+        .WillRepeatedly(testing::Invoke([&, this](const json::array_t& msg) -> bool {
+            // Identify by payload data since UUID changes on retry
+            std::string data = msg.at(3).at("data").get<std::string>();
+
+            {
+                std::lock_guard<std::mutex> lock(order_mutex);
+                call_order.push_back(data);
+            }
+
+            this->mark_call_sent();
+
+            if (data == "TX1") {
+                return false; // Trigger retry logic
+            }
+
+            reception_timer.timeout(
+                [this, msg]() {
+                    this->message_queue->receive(json{3, msg[1], ""}.dump());
+                },
+                std::chrono::milliseconds(0));
+            return true;
+        }));
+
+    // 1. Push TX1 (blocks TX2)
+    // 2. Push TX2 (queued behind TX1)
+    // 3. Push Heartbeat (Non-transactional)
+    push_message_call(TestMessageType::TRANSACTIONAL, "TX1");
+    push_message_call(TestMessageType::TRANSACTIONAL, "TX2");
+    push_message_call(TestMessageType::NON_TRANSACTIONAL, "Heartbeat");
+
+    // Wait for: TX1 (fail) + TX1 (fail/drop) + TX2 (success) + Heartbeat (success) = 4 calls
+    wait_for_calls(4);
+
+    std::lock_guard<std::mutex> lock(order_mutex);
+
+    // TX1 must have been attempted twice
+    size_t tx1_count = std::count(call_order.begin(), call_order.end(), "TX1");
+    EXPECT_EQ(tx1_count, 2);
+
+    // TX2 must ONLY appear after all TX1 attempts are done.
+    // We find the first occurrence of TX2 and ensure no TX1 exists after it.
+    auto first_tx2 = std::find(call_order.begin(), call_order.end(), "TX2");
+    ASSERT_NE(first_tx2, call_order.end()) << "TX2 was never sent!";
+
+    auto tx1_after_tx2 = std::find(first_tx2, call_order.end(), "TX1");
+    EXPECT_EQ(tx1_after_tx2, call_order.end()) << "TX1 was sent after TX2! Ordering violated.";
+
+    // Heartbeat was delivered
+    EXPECT_TRUE(std::find(call_order.begin(), call_order.end(), "Heartbeat") != call_order.end());
+}
+
+// \brief Test that once retry attempts are exceeded, the message is dropped and the next
+// message in the queue is sent successfully.
+TEST_F(MessageQueueTest, test_message_dropped_after_max_retries_then_next_message_sent) {
+
+    config.transaction_message_attempts = 2;
+    config.transaction_message_retry_interval = 0;
+    restart_message_queue();
+
+    std::vector<std::string> observed_actions;
+    std::mutex actions_mutex;
+    std::atomic<int> local_count{0};
+
+    EXPECT_CALL(send_callback_mock, Call(testing::_))
+        .WillRepeatedly(testing::Invoke([&, this](const json::array_t& msg) -> bool {
+            std::string action = msg.at(2).get<std::string>();
+            int current = ++local_count;
+            {
+                std::lock_guard<std::mutex> lk(actions_mutex);
+                observed_actions.push_back(action);
+            }
+            this->mark_call_sent();
+            if (action == "transactional" && current <= 2) {
+                return false; // fail the first transactional message both times
+            }
+            // Succeed and respond to everything else
+            reception_timer.timeout(
+                [this, msg]() {
+                    this->message_queue->receive(json{3, msg[1], ""}.dump());
+                },
+                std::chrono::milliseconds(0));
+            return true;
+        }));
+
+    EXPECT_CALL(*db, insert_message_queue_message(testing::_, testing::_)).Times(2);
+    EXPECT_CALL(*db, remove_message_queue_message(testing::_, testing::_)).Times(2).WillRepeatedly(testing::Return());
+
+    // Push a transactional message (will be retried and dropped) and a second transactional
+    push_message_call(TestMessageType::TRANSACTIONAL);
+    push_message_call(TestMessageType::TRANSACTIONAL);
+
+    // 2 failed attempts for first message + 1 successful for second
+    wait_for_calls(3);
+
+    std::lock_guard<std::mutex> lk(actions_mutex);
+    ASSERT_GE(observed_actions.size(), 3u);
+    // First two are the failed transactional, third is the next transactional succeeding
+    EXPECT_EQ(observed_actions[0], "transactional");
+    EXPECT_EQ(observed_actions[1], "transactional");
+    EXPECT_EQ(observed_actions[2], "transactional");
+}
+
+// \brief Test handle_timeout_or_callerror when send_callback returns true but no response
+// arrives (timeout fires). Verifies that the timeout timer triggers retry.
+TEST_F(MessageQueueTest, test_timeout_triggers_retry_after_successful_send) {
+
+    config.transaction_message_attempts = 2;
+    config.transaction_message_retry_interval = 0;
+    config.message_timeout_seconds = 1; // short timeout so test completes quickly
+    restart_message_queue();
+
+    std::mutex removal_mutex;
+    std::condition_variable removal_cv;
+    bool message_removed = false;
+
+    // send_callback returns true both times, but we never send a CALLRESULT,
+    // so the timeout fires and triggers handle_timeout_or_callerror
+    EXPECT_CALL(send_callback_mock, Call(testing::_)).Times(2).WillRepeatedly(MarkAndReturn(true));
+    EXPECT_CALL(*db, insert_message_queue_message(testing::_, QueueType::Transaction)).Times(1);
+    EXPECT_CALL(*db, remove_message_queue_message(testing::_, QueueType::Transaction))
+        .Times(1)
+        .WillOnce(testing::Invoke([&](const std::string&, const QueueType) {
+            std::lock_guard<std::mutex> lk(removal_mutex);
+            message_removed = true;
+            removal_cv.notify_one();
+        }));
+
+    push_message_call(TestMessageType::TRANSACTIONAL);
+
+    // Wait for both send attempts (timeouts fire at ~1s each)
+    wait_for_calls(2, std::chrono::seconds(5));
+    EXPECT_EQ(2, get_call_count());
+
+    // Wait for the DB removal that happens when the final timeout exhausts retries
+    {
+        std::unique_lock<std::mutex> lk(removal_mutex);
+        EXPECT_TRUE(removal_cv.wait_for(lk, std::chrono::seconds(5), [&] { return message_removed; }));
+    }
+}
+
+// \brief Test handle_timeout_or_callerror when send_callback returns false.
+// Verifies that send failure followed by eventual success works correctly.
+TEST_F(MessageQueueTest, test_send_failure_then_success) {
+
+    config.transaction_message_attempts = 3;
+    config.transaction_message_retry_interval = 0;
+    restart_message_queue();
+
+    testing::Sequence s;
+
+    // Fail first two, succeed on third
+    EXPECT_CALL(send_callback_mock, Call(testing::_)).InSequence(s).WillOnce(MarkAndReturn(false));
+    EXPECT_CALL(send_callback_mock, Call(testing::_)).InSequence(s).WillOnce(MarkAndReturn(false));
+    EXPECT_CALL(send_callback_mock, Call(testing::_)).InSequence(s).WillOnce(MarkAndReturn(true, true));
+
+    EXPECT_CALL(*db, insert_message_queue_message(testing::_, QueueType::Transaction)).Times(1);
+    EXPECT_CALL(*db, remove_message_queue_message(testing::_, QueueType::Transaction)).Times(1);
+
+    push_message_call(TestMessageType::TRANSACTIONAL);
+    wait_for_calls(3);
+
+    EXPECT_EQ(3, get_call_count());
+}
+
+// \brief Test that non-transactional messages (without queue_all_messages) are dropped
+// immediately on send failure and are NOT retried, regardless of transaction_message_attempts.
+TEST_F(MessageQueueTest, test_non_transactional_not_retried_on_send_failure) {
+
+    config.queue_all_messages = false;
+    config.transaction_message_attempts = 5; // high, to confirm it's irrelevant
+    config.transaction_message_retry_interval = 0;
+    restart_message_queue();
+
+    // Should only be called once - non-transactional messages without queue_all_messages are not retried
+    EXPECT_CALL(send_callback_mock, Call(testing::_)).Times(1).WillOnce(MarkAndReturn(false));
+
+    push_message_call(TestMessageType::NON_TRANSACTIONAL);
+    wait_for_calls(1);
+
+    // Wait to confirm no further retry
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    EXPECT_EQ(1, get_call_count());
+}
+
+// \brief Test that non-transactional messages WITH queue_all_messages=true are retried
+// on send failure, just like transactional messages.
+TEST_F(MessageQueueTest, test_non_transactional_retried_with_queue_all_messages) {
+
+    config.queue_all_messages = true;
+    config.transaction_message_attempts = 3;
+    config.transaction_message_retry_interval = 0;
+    restart_message_queue();
+
+    // All 3 attempts fail
+    EXPECT_CALL(send_callback_mock, Call(testing::_)).Times(3).WillRepeatedly(MarkAndReturn(false));
+    EXPECT_CALL(*db, insert_message_queue_message(testing::_, QueueType::Normal)).Times(1);
+    EXPECT_CALL(*db, remove_message_queue_message(testing::_, QueueType::Normal)).Times(1);
+
+    push_message_call(TestMessageType::NON_TRANSACTIONAL);
+    wait_for_calls(3);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    EXPECT_EQ(3, get_call_count());
 }
 
 } // namespace ocpp

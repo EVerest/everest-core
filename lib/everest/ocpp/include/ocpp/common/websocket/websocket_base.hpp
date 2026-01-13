@@ -20,6 +20,7 @@ struct WebsocketConnectionOptions {
     Uri csms_uri;                                   // the URI of the CSMS
     int security_profile;                           // FIXME: change type to `SecurityProfile`
     std::optional<std::string> authorization_key;
+    std::chrono::milliseconds message_timeout;
     int retry_backoff_random_range_s;
     int retry_backoff_repeat_times;
     int retry_backoff_wait_minimum_s;

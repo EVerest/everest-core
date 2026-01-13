@@ -333,6 +333,11 @@ void ChargePointImpl::init_websocket() {
     this->websocket->register_stopped_connecting_callback([this](const WebsocketCloseReason /*reason*/) {
         if (this->switch_security_profile_callback != nullptr) {
             this->switch_security_profile_callback();
+            return;
+        }
+        if (this->wants_to_be_connected) {
+            EVLOG_warning << "Websocket stopped connecting but wants to be connected. Attempting to reconnect.";
+            this->websocket->start_connecting();
         }
     });
     this->websocket->register_connection_failed_callback([this](const ocpp::ConnectionFailedReason reason) {
@@ -397,6 +402,7 @@ WebsocketConnectionOptions ChargePointImpl::get_ws_connection_options() {
                                                   uri,
                                                   security_profile,
                                                   this->configuration.getAuthorizationKey(),
+                                                  std::chrono::seconds(10),
                                                   this->configuration.getRetryBackoffRandomRange(),
                                                   this->configuration.getRetryBackoffRepeatTimes(),
                                                   this->configuration.getRetryBackoffWaitMinimum(),
@@ -434,12 +440,14 @@ WebsocketConnectionOptions ChargePointImpl::get_ws_connection_options() {
 
 void ChargePointImpl::connect_websocket() {
     if (!this->websocket->is_connected()) {
+        this->wants_to_be_connected = true;
         this->websocket->start_connecting();
     }
 }
 
 void ChargePointImpl::disconnect_websocket() {
     if (this->websocket->is_connected()) {
+        this->wants_to_be_connected = false;
         this->websocket->disconnect(WebsocketCloseReason::Normal);
     }
 }
@@ -1162,6 +1170,7 @@ bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_st
     if (!this->initialized) {
         init(connector_status_map, resuming_session_ids);
     }
+    this->wants_to_be_connected = true;
     this->bootreason = bootreason;
     this->init_websocket();
     this->websocket->start_connecting();
@@ -1267,6 +1276,7 @@ void ChargePointImpl::stop_all_transactions(Reason reason) {
 bool ChargePointImpl::stop() {
     if (!this->stopped) {
         EVLOG_info << "Stopping OCPP Chargepoint";
+        this->wants_to_be_connected = false;
         if (this->boot_notification_timer != nullptr) {
             this->boot_notification_timer->stop();
         }
