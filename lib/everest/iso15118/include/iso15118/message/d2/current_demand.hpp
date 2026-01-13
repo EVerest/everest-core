@@ -7,8 +7,6 @@
 
 namespace iso15118::d2::msg {
 
-namespace data_types {} // namespace data_types
-
 struct CurrentDemandRequest {
     Header header;
     data_types::DC_EVStatus ev_status;
@@ -33,7 +31,7 @@ struct CurrentDemandResponse {
     bool evse_voltage_limit_achieved;
     bool evse_power_limit_achieved;
     data_types::EVSEID evse_id;
-    data_types::SAID sa_schedule_tuple_id;
+    data_types::SAScheduleTupleID sa_schedule_tuple_id;
     std::optional<data_types::PhysicalValue> evse_maximum_voltage_limit{std::nullopt};
     std::optional<data_types::PhysicalValue> evse_maximum_current_limit{std::nullopt};
     std::optional<data_types::PhysicalValue> evse_maximum_power_limit{std::nullopt};

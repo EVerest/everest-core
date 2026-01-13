@@ -33,6 +33,7 @@ template <> int serialize_to_exi(const CableCheckResponse& in, exi_bitstream_t& 
 
     iso2_exiDocument doc;
     init_iso2_exiDocument(&doc);
+    init_iso2_BodyType(&doc.V2G_Message.Body);
 
     convert(in.header, doc.V2G_Message.Header);
 

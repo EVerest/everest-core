@@ -51,7 +51,7 @@ void convert(const Header& in, struct iso2_MessageHeaderType& out) {
     CPP2CB_CONVERT_IF_USED(in.notification, out.Notification);
 }
 
-void convert(const iso2_MeterInfoType& in, data_types::MeterInfo& out) {
+template <> void convert(const iso2_MeterInfoType& in, data_types::MeterInfo& out) {
     out.meter_id = CB2CPP_STRING(in.MeterID);
     CB2CPP_ASSIGN_IF_USED(in.MeterReading, out.meter_reading);
     CB2CPP_BYTES_IF_USED(in.SigMeterReading, out.sig_meter_reading);
@@ -59,7 +59,7 @@ void convert(const iso2_MeterInfoType& in, data_types::MeterInfo& out) {
     CB2CPP_ASSIGN_IF_USED(in.TMeter, out.t_meter);
 }
 
-void convert(const data_types::MeterInfo& in, iso2_MeterInfoType& out) {
+template <> void convert(const data_types::MeterInfo& in, iso2_MeterInfoType& out) {
     init_iso2_MeterInfoType(&out);
 
     CPP2CB_STRING(in.meter_id, out.MeterID);
@@ -72,20 +72,20 @@ void convert(const data_types::MeterInfo& in, iso2_MeterInfoType& out) {
     CPP2CB_ASSIGN_IF_USED(in.t_meter, out.TMeter);
 }
 
-void convert(const iso2_DC_EVStatusType& in, data_types::DC_EVStatus& out) {
+template <> void convert(const iso2_DC_EVStatusType& in, data_types::DC_EVStatus& out) {
     out.ev_ready = in.EVReady;
     cb_convert_enum(in.EVErrorCode, out.ev_error_code);
     out.ev_ress_soc = in.EVRESSSOC;
 }
 
-void convert(const data_types::AC_EVSEStatus& in, iso2_AC_EVSEStatusType& out) {
+template <> void convert(const data_types::AC_EVSEStatus& in, iso2_AC_EVSEStatusType& out) {
     init_iso2_AC_EVSEStatusType(&out);
     cb_convert_enum(in.evse_notification, out.EVSENotification);
     out.NotificationMaxDelay = in.notification_max_delay;
     out.RCD = in.rcd;
 }
 
-void convert(const data_types::DC_EVSEStatus& in, iso2_DC_EVSEStatusType& out) {
+template <> void convert(const data_types::DC_EVSEStatus& in, iso2_DC_EVSEStatusType& out) {
     init_iso2_DC_EVSEStatusType(&out);
     cb_convert_enum(in.evse_notification, out.EVSENotification);
     out.NotificationMaxDelay = in.notification_max_delay;
@@ -96,13 +96,13 @@ void convert(const data_types::DC_EVSEStatus& in, iso2_DC_EVSEStatusType& out) {
     cb_convert_enum(in.evse_status_code, out.EVSEStatusCode);
 }
 
-void convert(const iso2_PhysicalValueType& in, data_types::PhysicalValue& out) {
+template <> void convert(const iso2_PhysicalValueType& in, data_types::PhysicalValue& out) {
     out.multiplier = in.Multiplier;
     out.value = in.Value;
     cb_convert_enum(in.Unit, out.unit);
 }
 
-void convert(const data_types::PhysicalValue& in, iso2_PhysicalValueType& out) {
+template <> void convert(const data_types::PhysicalValue& in, iso2_PhysicalValueType& out) {
     out.Multiplier = in.multiplier;
     out.Value = in.value;
     cb_convert_enum(in.unit, out.Unit);

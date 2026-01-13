@@ -53,7 +53,6 @@ template <> int serialize_to_exi(const CurrentDemandResponse& in, exi_bitstream_
 
     iso2_exiDocument doc;
     init_iso2_exiDocument(&doc);
-    // TODO(kd): Fix in libcbv2g?
     init_iso2_BodyType(&doc.V2G_Message.Body);
 
     convert(in.header, doc.V2G_Message.Header);

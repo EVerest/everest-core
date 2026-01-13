@@ -6,8 +6,6 @@
 
 namespace iso15118::d2::msg {
 
-namespace data_types {} // namespace data_types
-
 struct CableCheckRequest {
     Header header;
     data_types::DC_EVStatus ev_status;

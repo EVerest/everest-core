@@ -6,11 +6,10 @@
 
 #include "helper.hpp"
 
-#include <iomanip>
-#include <iostream>
 #include <vector>
 
 using namespace iso15118;
+namespace dt = d2::msg::data_types;
 
 SCENARIO("Ser/Deserialize d2 current demand messages") {
     GIVEN("Deserialize current demand req - minimal") {
@@ -31,10 +30,10 @@ SCENARIO("Ser/Deserialize d2 current demand messages") {
 
             // TODO(kd): Should EV/EVSEStatus also be tested here?
             REQUIRE(msg.ev_status.ev_ready == true);
-            REQUIRE(msg.ev_status.ev_error_code == d2::msg::data_types::DC_EVErrorCode::NO_ERROR);
+            REQUIRE(msg.ev_status.ev_error_code == dt::DC_EVErrorCode::NO_ERROR);
             REQUIRE(msg.ev_status.ev_ress_soc == 80);
 
-            REQUIRE(d2::msg::data_types::from_PhysicalValue(msg.ev_target_current) == 20.5);
+            REQUIRE(dt::from_PhysicalValue(msg.ev_target_current) == 20.5);
             REQUIRE(msg.ev_maximum_voltage_limit == std::nullopt);
             REQUIRE(msg.ev_maximum_current_limit == std::nullopt);
             REQUIRE(msg.ev_maximum_power_limit == std::nullopt);
@@ -42,7 +41,7 @@ SCENARIO("Ser/Deserialize d2 current demand messages") {
             REQUIRE(msg.charging_complete == true);
             REQUIRE(msg.remaining_time_to_full_soc == std::nullopt);
             REQUIRE(msg.remaining_time_to_bulk_soc == std::nullopt);
-            REQUIRE(d2::msg::data_types::from_PhysicalValue(msg.ev_target_voltage) == 355.5);
+            REQUIRE(dt::from_PhysicalValue(msg.ev_target_voltage) == 355.5);
         }
     }
     GIVEN("Deserialize current demand req - all fields present") {
@@ -63,42 +62,39 @@ SCENARIO("Ser/Deserialize d2 current demand messages") {
 
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D});
 
-            // TODO(kd): Should EV/EVSEStatus also be tested here?
             REQUIRE(msg.ev_status.ev_ready == true);
-            REQUIRE(msg.ev_status.ev_error_code == d2::msg::data_types::DC_EVErrorCode::NO_ERROR);
+            REQUIRE(msg.ev_status.ev_error_code == dt::DC_EVErrorCode::NO_ERROR);
             REQUIRE(msg.ev_status.ev_ress_soc == 80);
 
-            REQUIRE(d2::msg::data_types::from_PhysicalValue(msg.ev_target_current) == 20.5);
-            REQUIRE(d2::msg::data_types::from_PhysicalValue(msg.ev_maximum_voltage_limit.value()) == 1000);
-            REQUIRE(d2::msg::data_types::from_PhysicalValue(msg.ev_maximum_current_limit.value()) == 200);
-            REQUIRE(d2::msg::data_types::from_PhysicalValue(msg.ev_maximum_power_limit.value()) == 10000);
+            REQUIRE(dt::from_PhysicalValue(msg.ev_target_current) == 20.5);
+            REQUIRE(dt::from_PhysicalValue(msg.ev_maximum_voltage_limit.value()) == 1000);
+            REQUIRE(dt::from_PhysicalValue(msg.ev_maximum_current_limit.value()) == 200);
+            REQUIRE(dt::from_PhysicalValue(msg.ev_maximum_power_limit.value()) == 10000);
             REQUIRE(msg.bulk_charging_complete.value() == true);
             REQUIRE(msg.charging_complete == true);
-            REQUIRE(d2::msg::data_types::from_PhysicalValue(msg.remaining_time_to_full_soc.value()) == 60000);
-            REQUIRE(d2::msg::data_types::from_PhysicalValue(msg.remaining_time_to_bulk_soc.value()) == 40000);
-            REQUIRE(d2::msg::data_types::from_PhysicalValue(msg.ev_target_voltage) == 355.5);
+            REQUIRE(dt::from_PhysicalValue(msg.remaining_time_to_full_soc.value()) == 60000);
+            REQUIRE(dt::from_PhysicalValue(msg.remaining_time_to_bulk_soc.value()) == 40000);
+            REQUIRE(dt::from_PhysicalValue(msg.ev_target_voltage) == 355.5);
         }
     }
     GIVEN("Serialize current demand res - minimal") {
 
         const auto header = d2::msg::Header{{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D}, std::nullopt};
 
-        const auto res = d2::msg::CurrentDemandResponse{
-            header,
-            d2::msg::data_types::ResponseCode::OK,
-            d2::msg::data_types::DC_EVSEStatus{
-                {},
-                d2::msg::data_types::isolationLevel::Valid,
-                d2::msg::data_types::DC_EVSEStatusCode::EVSE_Ready,
-            },
-            d2::msg::data_types::from_float(300.5, d2::msg::data_types::UnitSymbol::V),
-            d2::msg::data_types::from_float(5.5, d2::msg::data_types::UnitSymbol::A),
-            true,
-            true,
-            true,
-            "000000",
-            3,
-        };
+        auto res = d2::msg::CurrentDemandResponse{};
+        res.header = header;
+        res.response_code = dt::ResponseCode::OK;
+        auto status = dt::DC_EVSEStatus{};
+        status.evse_isolation_status = dt::IsolationLevel::Valid;
+        status.evse_status_code = dt::DC_EVSEStatusCode::EVSE_Ready;
+        res.evse_status = status;
+        res.evse_present_voltage = dt::from_float(300.5, d2::msg::data_types::UnitSymbol::V);
+        res.evse_present_current = dt::from_float(5.5, d2::msg::data_types::UnitSymbol::A);
+        res.evse_current_limit_achieved = true;
+        res.evse_voltage_limit_achieved = true;
+        res.evse_power_limit_achieved = true;
+        res.evse_id = "000000";
+        res.sa_schedule_tuple_id = 3;
 
         std::vector<uint8_t> expected = {0x80, 0x98, 0x02, 0x00, 0xB6, 0xC8, 0x81, 0xCE, 0xC2, 0x13, 0x4B, 0x50, 0xE0,
                                          0x00, 0x00, 0x00, 0x20, 0x40, 0x84, 0x0B, 0xD1, 0x70, 0x00, 0xC3, 0xF0, 0xA8,
@@ -112,36 +108,34 @@ SCENARIO("Ser/Deserialize d2 current demand messages") {
 
         const auto header = d2::msg::Header{{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D}, std::nullopt};
 
-        const auto res = d2::msg::CurrentDemandResponse{
-            header,
-            d2::msg::data_types::ResponseCode::OK,
-            d2::msg::data_types::DC_EVSEStatus{
-                {},
-                d2::msg::data_types::isolationLevel::Valid,
-                d2::msg::data_types::DC_EVSEStatusCode::EVSE_Ready,
-            },
-            d2::msg::data_types::from_float(300.5, d2::msg::data_types::UnitSymbol::V),
-            d2::msg::data_types::from_float(5.5, d2::msg::data_types::UnitSymbol::A),
-            true,
-            true,
-            true,
-            "000000",
-            3,
-            d2::msg::data_types::from_float(1000, d2::msg::data_types::UnitSymbol::V),
-            d2::msg::data_types::from_float(100, d2::msg::data_types::UnitSymbol::A),
-            d2::msg::data_types::from_float(100000, d2::msg::data_types::UnitSymbol::W),
-            d2::msg::data_types::MeterInfo{
-                "FOO_METER",
-                999,
-                std::vector<uint8_t>{
-                    0xAA,
-                    0xBB,
-                },
-                444,
-                100,
-            },
-            true,
+        auto res = d2::msg::CurrentDemandResponse{};
+        res.header = header;
+        res.response_code = dt::ResponseCode::OK;
+        auto status = dt::DC_EVSEStatus{};
+        status.evse_isolation_status = dt::IsolationLevel::Valid;
+        status.evse_status_code = dt::DC_EVSEStatusCode::EVSE_Ready;
+        res.evse_status = status;
+        res.evse_present_voltage = dt::from_float(300.5, d2::msg::data_types::UnitSymbol::V);
+        res.evse_present_current = dt::from_float(5.5, d2::msg::data_types::UnitSymbol::A);
+        res.evse_current_limit_achieved = true;
+        res.evse_voltage_limit_achieved = true;
+        res.evse_power_limit_achieved = true;
+        res.evse_id = "000000";
+        res.sa_schedule_tuple_id = 3;
+        res.evse_maximum_voltage_limit = dt::from_float(1000, d2::msg::data_types::UnitSymbol::V);
+        res.evse_maximum_current_limit = dt::from_float(100, d2::msg::data_types::UnitSymbol::A);
+        res.evse_maximum_power_limit = dt::from_float(100000, d2::msg::data_types::UnitSymbol::W);
+        auto meterInfo = dt::MeterInfo{};
+        meterInfo.meter_id = "FOO_METER";
+        meterInfo.meter_reading = 999;
+        meterInfo.sig_meter_reading = std::vector<uint8_t>{
+            0xAA,
+            0xBB,
         };
+        meterInfo.meter_status = 444;
+        meterInfo.t_meter = 100;
+        res.meter_info = meterInfo;
+        res.receipt_required = true;
 
         std::vector<uint8_t> expected = {
             0x80, 0x98, 0x02, 0x00, 0xB6, 0xC8, 0x81, 0xCE, 0xC2, 0x13, 0x4B, 0x50, 0xE0, 0x00, 0x00, 0x00, 0x20, 0x40,
