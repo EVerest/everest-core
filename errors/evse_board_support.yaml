@@ -48,6 +48,12 @@ errors:
     description: The latch on the connector is broken.
   - name: MREC26CutCable
     description: The output cable has been severed from the EVSE.
+  - name: TiltDetected
+    description: The EVSE has been tilted beyond acceptable limits.
+  - name: WaterIngressDetected
+    description: A substantial amount of water has been detected inside the EVSE.
+  - name: EnclosureOpen
+    description: The EVSE enclosure is open, e.g. a door or panel is not properly closed.
   - name: VendorError
     description: >-
       Vendor specific error code. Will stop charging session.
@@ -57,4 +63,3 @@ errors:
   - name: CommunicationFault
     description: >-
       The communication to the hardware or underlying driver is lost or has errors.
-

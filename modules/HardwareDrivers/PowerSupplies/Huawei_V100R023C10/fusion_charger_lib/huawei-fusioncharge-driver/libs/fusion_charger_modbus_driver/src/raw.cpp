@@ -30,9 +30,9 @@ std::string fusion_charger::modbus_driver::raw_registers::psu_output_port_availa
         return "AVAILABLE";
     case PsuOutputPortAvailability::NOT_AVAILABLE:
         return "NOT_AVAILABLE";
-    default:
-        return "UNKNOWN";
     }
+
+    return "UNKNOWN";
 }
 
 std::string fusion_charger::modbus_driver::raw_registers::SettingPowerUnitRegisters::psu_running_mode_to_string(

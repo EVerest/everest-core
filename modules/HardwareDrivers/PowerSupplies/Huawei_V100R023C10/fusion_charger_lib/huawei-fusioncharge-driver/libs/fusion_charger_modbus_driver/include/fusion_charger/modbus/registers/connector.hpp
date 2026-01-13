@@ -28,6 +28,7 @@ struct ConnectorRegistersConfig {
     std::function<float()> get_output_current;
     std::function<ContactorStatus()> get_contactor_status;
     std::function<ElectronicLockStatus()> get_electronic_lock_status;
+    std::function<bool()> get_dc_output_contact_fault;
 };
 
 struct ConnectorRegisters {
@@ -72,7 +73,7 @@ struct ConnectorRegisters {
     DataProviderHolding<PsuOutputPortAvailability> psu_port_available;
 
     // alarms
-    DataProviderHoldingUnsolicitatedReportCallback<std::uint16_t> dc_output_contact_fault;
+    DataProviderCallbacksUnsolicitated<std::uint16_t> dc_output_contact_fault;
     DataProviderHoldingUnsolicitatedReportCallback<std::uint16_t> inverse_connection_dispenser_inlet_cable;
 
     /**
@@ -113,7 +114,8 @@ struct ConnectorRegisters {
         hmac_key(),
         rated_output_power_psu(0),
         psu_port_available(PsuOutputPortAvailability::NOT_AVAILABLE),
-        dc_output_contact_fault(0, utils::always_report),
+        dc_output_contact_fault(utils::wrap_alarm_register_func(config.get_dc_output_contact_fault),
+                                utils::ignore_write<std::uint16_t>, utils::always_report),
         inverse_connection_dispenser_inlet_cable(0, utils::always_report) {
     }
 

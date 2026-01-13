@@ -38,6 +38,21 @@ static std::vector<ConnectorBase*> get_connector_bases(Huawei_V100R023C10* mod, 
     return connector_bases;
 }
 
+static std::string get_everest_error_for_dispenser_alarm(DispenserAlarms alarm) {
+    switch (alarm) {
+    case DispenserAlarms::DOOR_STATUS_ALARM:
+        return "evse_board_support/EnclosureOpen";
+    case DispenserAlarms::WATER_ALARM:
+        return "evse_board_support/WaterIngressDetected";
+    case DispenserAlarms::EPO_ALARM:
+        return "evse_board_support/MREC8EmergencyStop";
+    case DispenserAlarms::TILT_ALARM:
+        return "evse_board_support/TiltDetected";
+    }
+
+    throw std::runtime_error("Unknown DispenserAlarm enum value");
+}
+
 void Huawei_V100R023C10::init() {
     this->communication_fault_raised = false;
     this->psu_not_running_raised = false;
@@ -134,6 +149,48 @@ void Huawei_V100R023C10::init() {
     }
 
     dispenser = std::make_unique<Dispenser>(dispenser_config, connector_configs, log);
+
+    // Subscribe to BSP Dispenser Alarms
+    for (int bsp_idx = 0; bsp_idx < number_of_connectors_used; bsp_idx++) {
+        dispenser_alarms_per_bsp.push_back(std::set<DispenserAlarms>{});
+
+        for (auto& alarm : get_all_dispenser_alarms()) {
+            std::string everest_error = get_everest_error_for_dispenser_alarm(alarm);
+
+            r_board_support[bsp_idx]->subscribe_error(
+                everest_error,
+                [this, bsp_idx, alarm, everest_error](const ::Everest::error::Error& e) {
+                    // Error raised
+                    auto& alarms = dispenser_alarms_per_bsp[bsp_idx];
+                    if (alarms.find(alarm) == alarms.end()) {
+                        alarms.insert(alarm);
+
+                        EVLOG_info << "Raising dispenser alarm due to BSP error " << everest_error;
+                        dispenser->set_dispenser_alarm(alarm, true);
+                    }
+                },
+                [this, bsp_idx, alarm, everest_error](const ::Everest::error::Error& e) {
+                    // Error cleared
+                    auto& alarms = dispenser_alarms_per_bsp[bsp_idx];
+                    if (alarms.find(alarm) != alarms.end()) {
+                        alarms.erase(alarm);
+
+                        // check if any other BSP raised this alarm
+                        bool alarm_still_raised = false;
+                        for (const auto& other_alarms : dispenser_alarms_per_bsp) {
+                            if (other_alarms.find(alarm) != other_alarms.end()) {
+                                alarm_still_raised = true;
+                                break;
+                            }
+                        }
+                        if (not alarm_still_raised) {
+                            EVLOG_info << "Clearing dispenser alarm as all BSPs cleared error " << everest_error;
+                            dispenser->set_dispenser_alarm(alarm, false);
+                        }
+                    }
+                });
+        }
+    }
 }
 
 void Huawei_V100R023C10::ready() {
