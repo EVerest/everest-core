@@ -142,7 +142,6 @@
  {{ line }}
 {%          endif %}
 {%        endfor %}
-{# X {{ var_data.description }} Y #}
 {%      endif %}
 {%      if 'documentation' in var_data %}
 {{ documentation(var_data['documentation']) | indent(1, True) -}}
@@ -228,6 +227,22 @@
 {{ cmd(cmd_name, cmd_data) -}}
 {%      endfor %}
 {%  endmacro %}
+
+
+{### Renders a list of errors ###}
+{% macro errors(errs, definitions) %}
+{%      for err in errs %}
+**{{ err }}** : {{ definitions[err] }}
+{%      endfor %}
+{% endmacro %}
+
+{### Renders a list of error_categories ###}
+{% macro error_categories(categories, error_definitions) %}
+{%      for cat in categories %}
+**{{ cat }}** :
+{{ errors(categories[cat], error_definitions[cat]) | indent(1, True) -}}
+{%      endfor %}
+{% endmacro %}
 
 {#################################}
 {### types.json macros         ###}

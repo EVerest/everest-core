@@ -79,10 +79,18 @@ def main():
         help='YAML file containing data for the template'
     )
     parser.add_argument(
-        '--has-module-explanation',
-        dest='has_module_explanation',
-        action='store_true',
-        help='Flag indicating if the module explanation should be referenced'
+        '--module-handwritten-doc',
+        type=Path,
+        dest='module_handwritten_doc',
+        action='store',
+        help='Path to the handwritten module documentation if it exists'
+    )
+    parser.add_argument(
+        '--errors-yaml-path',
+        type=Path,
+        dest='errors_path',
+        action='store',
+        help='Path to the error definition yaml files'
     )
     parser.add_argument(
         '--target-file',
@@ -91,9 +99,6 @@ def main():
         action='store',
         required=True,
         help='Output file for the processed template'
-    )
-    parser.set_defaults(
-        has_module_explanation=False,
     )
     args = parser.parse_args()
 
@@ -127,6 +132,14 @@ def main():
     if args.target_file.suffix != '.rst':
         raise ValueError("Target file must have a .rst extension")
 
+    if args.errors_path:
+        if not args.errors_path.is_absolute():
+            raise ValueError("Errors yaml directory path must be absolute")
+        if not args.errors_path.exists():
+            raise ValueError(f"Errors yaml directory '{args.errors_path}' does not exist")
+        if not args.errors_path.is_dir():
+            raise ValueError("Errors yaml directory path is not a directory")
+
     if not args.target_file.parent.exists():
         args.target_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -141,10 +154,32 @@ def main():
 
     template_file_name = args.template_file.relative_to(args.template_dir)
     template = env.get_template(str(template_file_name))
+    data=yaml.safe_load(args.data_file.read_text())
+    data["errors_sanitized"] = {}
+    data['error_definitions'] = {}
+    if args.errors_path and "errors" in data.keys():
+        for err in data["errors"]:
+            error_path = err['reference'].split('#')[0]
+
+            filename = Path(args.errors_path, error_path.split('/')[-1])
+            with open(filename.with_suffix(".yaml")) as f:
+                text = f.read()
+                yaml_content = yaml.safe_load(text)
+            data['error_definitions'][error_path] = {}
+            for err_def in yaml_content['errors']:
+                data['error_definitions'][error_path][err_def['name']] = err_def['description']
+
+            if not error_path in data["errors_sanitized"]:
+                data["errors_sanitized"][error_path] = []
+            if len(err['reference'].split('#')) > 1:
+                data["errors_sanitized"][error_path].append(err['reference'].split('#')[1][1:])
+            else:
+                for error in data['error_definitions'][error_path].keys():
+                    data["errors_sanitized"][error_path].append(error)
     output = template.render(
         name=args.name,
-        data=yaml.safe_load(args.data_file.read_text()),
-        has_module_explanation=args.has_module_explanation,
+        handwritten_module_doc=args.module_handwritten_doc,
+        data=data,
     )
     args.target_file.write_text(output)
 

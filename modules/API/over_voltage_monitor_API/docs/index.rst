@@ -1,12 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_over_voltage_monitor_API:
 
-*******************************************
-over_voltage_monitor_API
-*******************************************
-
-:ref:`Link <everest_modules_over_voltage_monitor_API>` to the module's reference.
+.. *******************************************
+.. over_voltage_monitor_API
+.. *******************************************
 
 The complete API specification can be found in the
 

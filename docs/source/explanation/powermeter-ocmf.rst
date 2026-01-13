@@ -6,7 +6,7 @@ Powermeter OCMF Handling
 
 This document explains how EVerest modules implementing the :doc:`powermeter interface </reference/interfaces/powermeter>`
 shall handle OCMF report generation and transmission when used in conjunction with the
-:doc:`EvseManager module </reference/modules/EvseManager>`.
+:ref:`EvseManager module <everest_modules_EvseManager>`.
 
 The following sequence diagrams illustrate the interactions between the involved modules
 during the start and stop of a transaction, including error handling scenarios:

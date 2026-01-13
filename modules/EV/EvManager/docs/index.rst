@@ -1,15 +1,13 @@
-:orphan:
-
 .. _everest_modules_handwritten_EvManager:
 
-=========
-EvManager
-=========
+.. =========
+.. EvManager
+.. =========
 
 This Module implements the car simulator for a charging session.
 
 Configuration
-_____________
+=============
 
 ``connector_id``
     The connector id of the EVSE Manager

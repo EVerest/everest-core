@@ -33,7 +33,7 @@ be implemented by the hardware or non-EVerest software.
 Regarding EVerest integration, "Part 2 11 Randomized delays" is
 particularly important. EVerest has support for that feature by
 enabling the following config option in the
-:doc:`EvseManager module </reference/modules/EvseManager>`:
+:ref:`EvseManager module <everest_modules_EvseManager>`:
 
 .. code-block:: yaml
 

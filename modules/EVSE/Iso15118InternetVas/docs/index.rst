@@ -1,12 +1,8 @@
-:orphan:
-
 .. _everest_modules_handwritten_Iso15118InternetVas:
 
-*******************************************
-Iso15118InternetVas
-*******************************************
-
-:ref:`Link <everest_modules_Iso15118InternetVas>` to the module's reference.
+.. *******************************************
+.. Iso15118InternetVas
+.. *******************************************
 
 .. warning::
    This module and its helper scripts are **examples** and not intended for

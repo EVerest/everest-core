@@ -1,1 +1,1 @@
-ev_add_module(TestErrorHandling)
+ev_add_module(TestErrorHandling SKIP_DOC_GENERATION)
