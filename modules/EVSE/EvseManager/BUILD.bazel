@@ -5,7 +5,8 @@ IMPLS = [
     "evse",
     "token_provider",
     "random_delay",
-    "dc_external_derate"
+    "dc_external_derate",
+    "over_voltage"
 ]
 
 cc_everest_module(

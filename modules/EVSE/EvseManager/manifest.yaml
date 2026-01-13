@@ -98,6 +98,13 @@ config:
       Default is 0, which means the voltage will be determined according to IEC 61851-23 (2023) CC.4.1.2
     type: integer
     default: 0
+  internal_over_voltage_duration_ms:
+    description: >-
+      Time in milliseconds the internal software over voltage monitor waits before raising MREC5 once the measured
+      voltage exceeds the negotiated limit.
+    type: integer
+    minimum: 0
+    default: 400
   dbg_hlc_auth_after_tstep:
     description: >-
       Special mode: send HLC auth ok only after t_step_XX is finished (true) or directly when available (false)

@@ -33,6 +33,7 @@ const std::unordered_map<std::string, std::string> MREC_ERROR_MAP = {
     {"ac_rcd/MREC2GroundFailure", "CX002"},
     {"evse_manager/MREC22ResistanceFault", "CX022"},
     {"evse_manager/MREC11CableCheckFault", "CX011"},
+    {"evse_manager/MREC5OverVoltage", "CX005"},
 };
 
 const auto EVSE_MANAGER_INOPERATIVE_ERROR = "evse_manager/Inoperative";
