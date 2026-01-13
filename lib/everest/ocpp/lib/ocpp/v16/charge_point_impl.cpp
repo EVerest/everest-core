@@ -37,12 +37,12 @@ const auto DEFAULT_BOOT_NOTIFICATION_INTERVAL_S = 60; // fallback interval if Bo
 const auto DEFAULT_PRICE_NUMBER_OF_DECIMALS = 3;
 const auto DEFAULT_WAIT_FOR_SET_USER_PRICE_TIMEOUT_MS = 0;
 
-ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& share_path,
-                                 const fs::path& user_config_path, const fs::path& database_path,
-                                 const fs::path& sql_init_path, const fs::path& message_log_path,
-                                 const std::shared_ptr<EvseSecurity> evse_security,
+ChargePointImpl::ChargePointImpl(std::unique_ptr<ChargePointConfigurationInterface> config,
+                                 const fs::path& database_path, const fs::path& sql_init_path,
+                                 const fs::path& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
                                  const std::optional<SecurityConfiguration> security_configuration) :
     ocpp::ChargingStationBase(evse_security, security_configuration),
+    configuration(std::move(config)),
     bootreason(BootReasonEnum::PowerUp),
     initialized(false),
     InvalidCSMSCertificate_logged(false),
@@ -54,7 +54,6 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
     message_log_path(message_log_path.string()), // .string() for compatibility with boost::filesystem
     share_path(share_path),
     switch_security_profile_callback(nullptr) {
-    this->configuration = std::make_shared<ocpp::v16::ChargePointConfiguration>(config, share_path, user_config_path);
     this->heartbeat_timer = std::make_unique<Everest::SteadyTimer>(&this->io_context, [this]() { this->heartbeat(); });
     this->heartbeat_interval = this->configuration->getHeartbeatInterval();
     auto database_connection = std::make_unique<everest::db::sqlite::Connection>(
@@ -2855,8 +2854,7 @@ void ChargePointImpl::sign_certificate(const ocpp::CertificateSigningUseEnum& ce
         this->configuration->getChargeBoxSerialNumber(), use_tpm);
 
     if (response.status != GetCertificateSignRequestStatus::Accepted || !response.csr.has_value()) {
-        EVLOG_error << "Create CSR (TPM=" << use_tpm << ")"
-                    << " failed for:"
+        EVLOG_error << "Create CSR (TPM=" << use_tpm << ")" << " failed for:"
                     << ocpp::conversions::certificate_signing_use_enum_to_string(certificate_signing_use);
 
         std::string gen_error =

@@ -4,7 +4,7 @@
 #pragma once
 
 #include <ocpp/common/message_dispatcher.hpp>
-#include <ocpp/v16/charge_point_configuration.hpp>
+#include <ocpp/v16/charge_point_configuration_interface.hpp>
 
 namespace ocpp {
 namespace v16 {
@@ -12,7 +12,7 @@ namespace v16 {
 class MessageDispatcher : public MessageDispatcherInterface<MessageType> {
 
 public:
-    MessageDispatcher(ocpp::MessageQueue<MessageType>& message_queue, ChargePointConfiguration& configuration,
+    MessageDispatcher(ocpp::MessageQueue<MessageType>& message_queue, ChargePointConfigurationInterface& configuration,
                       std::atomic<RegistrationStatus>& registration_status) :
         message_queue(message_queue), configuration(configuration), registration_status(registration_status){};
     void dispatch_call(const json& call, bool triggered = false) override;
@@ -22,7 +22,7 @@ public:
 
 private:
     ocpp::MessageQueue<MessageType>& message_queue;
-    ChargePointConfiguration& configuration;
+    ChargePointConfigurationInterface& configuration;
     std::atomic<RegistrationStatus>& registration_status;
 };
 

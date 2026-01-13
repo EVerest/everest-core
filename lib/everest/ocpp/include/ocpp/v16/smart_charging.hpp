@@ -7,7 +7,7 @@
 #include <cstddef>
 #include <limits>
 
-#include <ocpp/v16/charge_point_configuration.hpp>
+#include <ocpp/v16/charge_point_configuration_interface.hpp>
 #include <ocpp/v16/connector.hpp>
 #include <ocpp/v16/database_handler.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
@@ -40,7 +40,7 @@ class SmartChargingHandler {
 private:
     std::map<std::int32_t, std::shared_ptr<Connector>> connectors;
     std::shared_ptr<ocpp::v16::DatabaseHandler> database_handler;
-    ChargePointConfiguration& configuration;
+    ChargePointConfigurationInterface& configuration;
     std::map<int, ChargingProfile> stack_level_charge_point_max_profiles_map;
     std::mutex charge_point_max_profiles_map_mutex;
     std::mutex tx_default_profiles_map_mutex;
@@ -59,7 +59,8 @@ protected:
 
 public:
     SmartChargingHandler(std::map<std::int32_t, std::shared_ptr<Connector>>& connectors,
-                         std::shared_ptr<DatabaseHandler> database_handler, ChargePointConfiguration& configuration);
+                         std::shared_ptr<DatabaseHandler> database_handler,
+                         ChargePointConfigurationInterface& configuration);
 
     ///
     /// \brief validates the given \p profile according to the specification
