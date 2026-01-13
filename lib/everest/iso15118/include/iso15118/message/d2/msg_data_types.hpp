@@ -17,6 +17,9 @@ namespace data_types {
 constexpr auto SESSION_ID_LENGTH = 8;
 using SESSION_ID = std::array<uint8_t, SESSION_ID_LENGTH>; // hexBinary, max length 8
 
+constexpr auto GEN_CHALLENGE_LENGTH = 16;
+using GenChallenge = std::array<uint8_t, GEN_CHALLENGE_LENGTH>; // base64 binary
+
 enum class ResponseCode {
     OK,
     OK_NewSessionEstablished,
@@ -50,6 +53,12 @@ enum class FaultCode {
     ParsingError,
     NoTLSRootCertificatAvailable,
     UnknownError,
+};
+
+enum class EvseProcessing {
+    Finished,
+    Ongoing,
+    Ongoing_WaitingForCustomerInteraction
 };
 
 struct Notification {
