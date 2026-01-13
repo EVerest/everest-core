@@ -11,4 +11,5 @@ function(create_exi_test_target NAME)
 endfunction()
 
 create_exi_test_target(session_setup)
+create_exi_test_target(authorization)
 
