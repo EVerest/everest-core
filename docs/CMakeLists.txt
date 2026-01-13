@@ -1,3 +1,9 @@
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/conf.py.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/conf.py
+    @ONLY
+)
+
 find_package(
     trailbook
     0.1.0

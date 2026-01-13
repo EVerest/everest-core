@@ -22,7 +22,7 @@ copyright = '2021-2025, EVerest community'
 author = 'EVerest community'
 
 # The full version, including alpha/beta/rc tags, taken from CMakeLists.txt
-release = '2025.9.0'
+release = '@PROJECT_VERSION@'
 # The short X.Y version.
 version = '.'.join(release.split('.')[:2])
 

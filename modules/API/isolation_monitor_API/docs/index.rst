@@ -8,4 +8,4 @@ The complete API specification can be found in the
 
 ``docs/source/reference/EVerest_API/isolation_monitor_API.yaml``
 
-file in the source repository, or in the `AsyncAPI HTML documentation <../../../reference/api/isolation_monitor_API/index.html>`_ automatically generated from it.
+file in the source repository, or in the `AsyncAPI HTML documentation <../../../api/isolation_monitor_API/index.html>`_ automatically generated from it.
