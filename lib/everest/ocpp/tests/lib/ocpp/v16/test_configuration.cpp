@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
+#include "ocpp/v16/charge_point_configuration_interface.hpp"
 #include <fstream>
 #include <memory>
 
@@ -13,7 +14,7 @@ namespace {
 using namespace ocpp::v16;
 
 struct ConfigurationTester : public testing::Test {
-    std::unique_ptr<ChargePointConfiguration> config;
+    std::unique_ptr<ChargePointConfigurationInterface> config;
 
     void SetUp() override {
         std::ifstream ifs(CONFIG_FILE_LOCATION_V16);
