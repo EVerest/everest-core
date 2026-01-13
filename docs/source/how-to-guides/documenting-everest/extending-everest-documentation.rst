@@ -74,7 +74,7 @@ Git branches. The scheme to name a branch should be adhered to
 
 .. code-block:: bash
 
-  doc/name-of-topic
+  docs/name-of-topic
 
 Optionally, to better find your own branches in a list, you could also add
 your name initials.
@@ -84,7 +84,7 @@ about Plug'n'Charge, you could name your branch
 
 .. code-block:: bash
 
-  doc/ab-plug-n-charge
+  docs/ab-plug-n-charge
 
 Choosing the type of documentation
 ----------------------------------
@@ -141,15 +141,3 @@ to invest time to review your work.
 
 After merging the PR, don't forget to also close the issue and eventually
 inform the community about your newly created documentation work.
-
-********************************
-Publication of the Documentation
-********************************
-
-TODO: still valid?
-The documentation is built by the ``deploy-sphinx-doc.yml`` workflow located in
-``EVerest/everest-core``. It is triggered by a push to the ``main`` branch of
-``EVerest/everest-core``. The workflow generates the documentation and pushes it to
-GitHub Pages.
-
-After that, the documentation is available at `<https://everest.github.io>`_.

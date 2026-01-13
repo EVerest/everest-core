@@ -4,7 +4,9 @@
 Documenting Quickstart
 ######################
 
-This is a short how-to for writing documentation in EVerest.
+This is a short how-to for writing documentation in EVerest. Please refer to the
+`Documentation README <https://github.com/EVerest/everest-core/blob/main/docs/README.md>`_
+for build instructions for the documentation.
 
 To get more detailed information, see
 :ref:`Documenting EVerest <documenting_everest>`.
@@ -37,7 +39,7 @@ To get more detailed information, see
    everest-core GitHub repository you just have chosen.
    Describe the most important aspects of the topic to be documented.
 
-4. Create a Git branch like ``doc/name-of-topic`` in the EVerest main
+4. Create a Git branch like ``docs/name-of-topic`` in the EVerest main
    repository.
    
    Put a note in the issue to inform the community that you start working on
