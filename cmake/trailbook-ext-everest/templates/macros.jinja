@@ -289,7 +289,9 @@
 {%      set ignore_keys = ['description', 'interface', 'documentation', 'config'] %}
 {%      set mapping_result = mapping( name, data.items(), ignore_keys, False) %}
 {%      if mapping_result != '' %}
+X
 {{ mapping_result | indent(1, True) -}}
+Y
 {%      endif %}
 {%      if 'config' in data %}
  **config:**
