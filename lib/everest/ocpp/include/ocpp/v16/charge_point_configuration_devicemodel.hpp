@@ -14,7 +14,7 @@
 
 namespace ocpp {
 namespace v2 {
-class DeviceModelStorageInterface;
+class DeviceModelInterface;
 }
 namespace v16 {
 
@@ -28,7 +28,7 @@ public:
     using SetResult = v2::SetVariableStatusEnum;
 
 protected:
-    std::unique_ptr<v2::DeviceModelStorageInterface> storage;
+    std::unique_ptr<v2::DeviceModelInterface> storage;
 
     SetResult internalAllowChargingProfileWithoutStartSchedule(const std::string& value);
     SetResult internalCentralSystemURI(const std::string& value);
@@ -98,8 +98,8 @@ protected:
     SetResult internalWaitForSetUserPriceTimeout(const std::string& value);
 
 public:
-    explicit ChargePointConfigurationDeviceModel(
-        std::unique_ptr<v2::DeviceModelStorageInterface> device_model_storage_interface);
+    explicit ChargePointConfigurationDeviceModel(std::unique_ptr<v2::DeviceModelInterface> device_model_interface);
+    virtual ~ChargePointConfigurationDeviceModel() = default;
 
     // UserConfig and Internal
     std::string getChargeBoxSerialNumber() override;

@@ -29,8 +29,7 @@ protected:
         v16_config = std::make_unique<ocpp::v16::ChargePointConfiguration>(config_file, CONFIG_DIR_V16,
                                                                            USER_CONFIG_FILE_LOCATION_V16);
         device_model = std::make_unique<MemoryStorage>();
-        std::unique_ptr<ocpp::v2::DeviceModelStorageInterface> proxy =
-            std::make_unique<MemoryStorageProxy>(*device_model);
+        std::unique_ptr<ocpp::v2::DeviceModelInterface> proxy = std::make_unique<MemoryStorageProxy>(*device_model);
         v2_config = std::make_unique<ocpp::v16::ChargePointConfigurationDeviceModel>(std::move(proxy));
     }
 

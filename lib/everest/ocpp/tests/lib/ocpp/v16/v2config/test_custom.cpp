@@ -263,6 +263,8 @@ TEST_F(Configuration, SetV2) {
 
     // set an initial custom key value
     device_model->set("Custom", "ACustomKey", "");
+    device_model->set("Custom", "ACustomRWKey", "");
+    device_model->set_readonly("ACustomKey");
 
     // non-existent key
     EXPECT_FALSE(v2_config->get("DoesNotExist").has_value());
@@ -303,33 +305,31 @@ TEST_F(Configuration, SetV2) {
     EXPECT_EQ(v2_config->set("TLSKeylogFile", "1201"), std::nullopt);
     EXPECT_EQ(v2_config->getTLSKeylogFile(), "/tmp/ocpp_tls_keylog.txt");
 
-    // TODO(james-ctc): enable once it is possible to get custom mutability
-
     // custom key (read only)
-    // kv = v2_config->get("ACustomKey");
-    // ASSERT_TRUE(kv);
-    // EXPECT_EQ(kv.value().key, "ACustomKey");
-    // EXPECT_EQ(kv.value().value, "");
-    // EXPECT_TRUE(kv.value().readonly);
-    // EXPECT_EQ(v2_config->set("ACustomKey", "ToThisValueToo"), std::nullopt);
-    // kv = v2_config->get("ACustomKey");
-    // ASSERT_TRUE(kv);
-    // EXPECT_EQ(kv.value().key, "ACustomKey");
-    // EXPECT_EQ(kv.value().value, "ToThisValueToo");
-    // EXPECT_TRUE(kv.value().readonly);
+    kv = v2_config->get("ACustomKey");
+    ASSERT_TRUE(kv);
+    EXPECT_EQ(kv.value().key, "ACustomKey");
+    EXPECT_EQ(kv.value().value, "");
+    EXPECT_TRUE(kv.value().readonly);
+    EXPECT_EQ(v2_config->set("ACustomKey", "ToThisValueToo"), std::nullopt);
+    kv = v2_config->get("ACustomKey");
+    ASSERT_TRUE(kv);
+    EXPECT_EQ(kv.value().key, "ACustomKey");
+    EXPECT_EQ(kv.value().value, "");
+    EXPECT_TRUE(kv.value().readonly);
 
     // custom key (read write)
-    // kv = v2_config->get("ACustomRWKey");
-    // ASSERT_TRUE(kv);
-    // EXPECT_EQ(kv.value().key, "ACustomRWKey");
-    // EXPECT_EQ(kv.value().value, "");
-    // EXPECT_FALSE(kv.value().readonly);
-    // EXPECT_EQ(v2_config->set("ACustomRWKey", "ToThisValueTooMore"), ConfigurationStatus::Accepted);
-    // kv = v2_config->get("ACustomKey");
-    // ASSERT_TRUE(kv);
-    // EXPECT_EQ(kv.value().key, "ACustomKey");
-    // EXPECT_EQ(kv.value().value, "ToThisValueTooMore");
-    // EXPECT_FALSE(kv.value().readonly);
+    kv = v2_config->get("ACustomRWKey");
+    ASSERT_TRUE(kv);
+    EXPECT_EQ(kv.value().key, "ACustomRWKey");
+    EXPECT_EQ(kv.value().value, "");
+    EXPECT_FALSE(kv.value().readonly);
+    EXPECT_EQ(v2_config->set("ACustomRWKey", "ToThisValueTooMore"), ConfigurationStatus::Accepted);
+    kv = v2_config->get("ACustomRWKey");
+    ASSERT_TRUE(kv);
+    EXPECT_EQ(kv.value().key, "ACustomRWKey");
+    EXPECT_EQ(kv.value().value, "ToThisValueTooMore");
+    EXPECT_FALSE(kv.value().readonly);
 }
 
 } // namespace
