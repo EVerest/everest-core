@@ -13,6 +13,8 @@
 #include "ocpp/v16/types.hpp"
 #include <everest/conversions/ocpp/ocpp_conversions.hpp>
 #include <fmt/core.h>
+#include <ocpp/v16/charge_point_configuration_base.hpp>
+#include <ocpp/v2/device_model_storage_interface.hpp>
 
 #include <conversions.hpp>
 #include <error_mapping.hpp>
@@ -184,12 +186,10 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
     if (session_event.event == types::evse_manager::SessionEventEnum::Enabled) {
         this->charge_point->on_enabled(evse_id);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::Disabled) {
-        EVLOG_debug << "EVSE#" << evse_id << ": "
-                    << "Received Disabled";
+        EVLOG_debug << "EVSE#" << evse_id << ": " << "Received Disabled";
         this->charge_point->on_disabled(evse_id);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::TransactionStarted) {
-        EVLOG_info << "EVSE#" << evse_id << ": "
-                   << "Received TransactionStarted";
+        EVLOG_info << "EVSE#" << evse_id << ": " << "Received TransactionStarted";
         const auto transaction_started = session_event.transaction_started.value();
 
         const auto timestamp = ocpp_conversions::to_ocpp_datetime_or_now(session_event.timestamp);
@@ -210,26 +210,21 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         this->charge_point->on_transaction_started(ocpp_connector_id, session_event.uuid, id_token, energy_Wh_import,
                                                    reservation_id_opt, timestamp, signed_meter_data);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::ChargingPausedEV) {
-        EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
-                    << "Received ChargingPausedEV";
+        EVLOG_debug << "Connector#" << ocpp_connector_id << ": " << "Received ChargingPausedEV";
         this->charge_point->on_suspend_charging_ev(ocpp_connector_id);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::ChargingPausedEVSE or
                session_event.event == types::evse_manager::SessionEventEnum::WaitingForEnergy) {
-        EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
-                    << "Received ChargingPausedEVSE";
+        EVLOG_debug << "Connector#" << ocpp_connector_id << ": " << "Received ChargingPausedEVSE";
         this->charge_point->on_suspend_charging_evse(ocpp_connector_id);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::SwitchingPhases) {
-        EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
-                    << "Received SwitchingPhases";
+        EVLOG_debug << "Connector#" << ocpp_connector_id << ": " << "Received SwitchingPhases";
         this->charge_point->on_suspend_charging_evse(ocpp_connector_id, SWITCHING_PHASES_REASON);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::ChargingStarted ||
                session_event.event == types::evse_manager::SessionEventEnum::ChargingResumed) {
-        EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
-                    << "Received ChargingResumed";
+        EVLOG_debug << "Connector#" << ocpp_connector_id << ": " << "Received ChargingResumed";
         this->charge_point->on_resume_charging(ocpp_connector_id);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::TransactionFinished) {
-        EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
-                    << "Received TransactionFinished";
+        EVLOG_debug << "Connector#" << ocpp_connector_id << ": " << "Received TransactionFinished";
 
         const auto transaction_finished = session_event.transaction_finished.value();
         const auto timestamp = ocpp_conversions::to_ocpp_datetime_or_now(session_event.timestamp);
@@ -256,16 +251,14 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
                                                    energy_Wh_import, id_tag_opt, signed_meter_data);
         // always triggered by libocpp
     } else if (session_event.event == types::evse_manager::SessionEventEnum::SessionStarted) {
-        EVLOG_info << "Connector#" << ocpp_connector_id << ": "
-                   << "Received SessionStarted";
+        EVLOG_info << "Connector#" << ocpp_connector_id << ": " << "Received SessionStarted";
         // ev side disconnect
         auto session_started = session_event.session_started.value();
         this->charge_point->on_session_started(ocpp_connector_id, session_event.uuid,
                                                conversions::to_ocpp_session_started_reason(session_started.reason),
                                                session_started.logging_path);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::SessionFinished) {
-        EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
-                    << "Received SessionFinished";
+        EVLOG_debug << "Connector#" << ocpp_connector_id << ": " << "Received SessionFinished";
         // ev side disconnect
         this->evse_soc_map[evse_id].reset();
         this->charge_point->on_session_stopped(ocpp_connector_id, session_event.uuid);
@@ -573,10 +566,19 @@ void OCPP::init() {
         }
     }
 
+// #define DATABASE_CONFIG
+#ifdef DATABASE_CONFIG
+    // use OCPP 2.x device model storage
+    std::unique_ptr<ocpp::v2::DeviceModelStorageInterface> device_model;
+    auto configuration = std::make_unique<ocpp::v16::ChargePointConfigurationBase>(std::move(device_model));
+#else
+    // use OCPP 1.6 JSON file storage
+    auto configuration = std::make_unique<ocpp::v16::ChargePointConfiguration>(json_config.dump(),
+                                                                               this->ocpp_share_path, user_config_path);
+#endif
     this->charge_point = std::make_unique<ocpp::v16::ChargePoint>(
-        json_config.dump(), this->ocpp_share_path, user_config_path, std::filesystem::path(this->config.DatabasePath),
-        sql_init_path, std::filesystem::path(this->config.MessageLogPath),
-        std::make_shared<EvseSecurity>(*this->r_security));
+        std::move(configuration), std::filesystem::path(this->config.DatabasePath), sql_init_path,
+        std::filesystem::path(this->config.MessageLogPath), std::make_shared<EvseSecurity>(*this->r_security));
 
     this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(config.MessageQueueResumeDelay));
 
