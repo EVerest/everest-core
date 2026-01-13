@@ -58,6 +58,7 @@ The following changes to :doc:`AsyncAPI specifications </reference/api/autogener
 - Changing field semantics that affect expected behavior (e.g., units, value ranges)
 - Adding ``required`` constraints to previously unconstrained fields
 - Changing ``enum`` values or removing enum options
+- Adding a change where something additional is needed for the previous implementation would work
 
 **Protocol:**
 
@@ -72,6 +73,9 @@ Examples
 **Breaking**: Changing ``EVInfo.soc`` from ``number`` to ``string`` requires client parser updates.
 
 **Breaking**: Making ``StopTransactionRequest.id_tag`` required breaks clients that omit it.
+
+**Breaking**: Requiring ``m2e/disable_charging`` to be called before ``m2e/unlock_connector`` breaks clients
+that previously called unlock directly.
 
 Non-Breaking Changes
 ====================
@@ -165,7 +169,7 @@ Non-Breaking Changes
 
 - Adding a new optional option with a documented default
 - Making a required option optional with a backward-compatible default
-- Expanding acceptable value ranges (e.g., 1-100 → 0-100)
+- Expanding acceptable value ranges if existing implementations don't reject the new values (e.g., 1-100 → 0-100)
 - Adding new enum values while preserving existing ones
 - Improving documentation or examples
 
