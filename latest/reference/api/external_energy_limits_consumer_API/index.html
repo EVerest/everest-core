@@ -111,7 +111,7 @@
 </div></div></div></div></div></div><div><div class="flex py-2"><div class="min-w-1/4 mr-2"><span class="break-anywhere text-sm italic">total_power_W</span><div class="text-red-600 text-xs">required</div></div><div><div><div class="capitalize text-sm text-teal-500 font-bold inline-block mr-2">number</div><div class="inline-block"></div><div><div class="prose max-w-none text-sm"><p>The total power in W</p>
 </div></div></div></div></div></div></div></div><div><div class="flex py-2"><div class="min-w-1/4 mr-2"><span class="break-anywhere text-sm italic">priority</span><div class="text-red-600 text-xs">required</div></div><div><div><div class="capitalize text-sm text-teal-500 font-bold inline-block mr-2">integer</div><div class="inline-block"><span class="bg-purple-600 font-bold no-underline text-white rounded lowercase mr-2 p-1 text-xs">[ 0 .. 1000 ]</span></div><div><div class="prose max-w-none text-sm"><p>If multiple conflicting setpoints are specified in the tree, the priority selects which one is used. Highest priority is 0, lowest priority is 1000.</p>
 </div></div></div></div></div></div><div><div class="flex py-2"><div class="min-w-1/4 mr-2"><span class="break-anywhere text-sm italic">source</span><div class="text-red-600 text-xs">required</div></div><div><div><div class="capitalize text-sm text-teal-500 font-bold inline-block mr-2">string</div><div class="inline-block"></div><div><div class="prose max-w-none text-sm"><p>Source of the setpoint</p>
-</div></div></div></div></div></div><p class="mt-2 text-xs text-gray-700">Additional properties are allowed.</p></div></div></div></div><p class="mt-2 text-xs text-gray-700">Additional properties are allowed.</p></div></div></div></div></div><div class="panel-item--right px-8"><div class="bg-gray-800 px-8 py-4 mt-4 -mx-8 2xl:mx-0 2xl:px-4 2xl:rounded examples"><h4 class="text-white text-lg">Examples</h4><div class="mt-4"><div><button class="focus:outline-none undefined" type="button"><div class="inline-block"><span class="inline-block w-20 py-0.5 mr-1 text-gray-200 text-sm border text-center rounded focus:outline-none">Payload</span></div><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 20 20" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" class="inline-block align-baseline cursor-pointer ml-0.5 -mb-1 w-5 h-5 transform transition-transform duration-150 ease-linear  fill-current text-gray-200"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg></button></div><div class="hidden"><div class="mt-4"><div class="prose max-w-none text-sm"><pre><code class="hljs language-json">{
+</div></div></div></div></div></div><p class="mt-2 text-xs text-gray-700">Additional properties are allowed.</p></div></div></div></div><p class="mt-2 text-xs text-gray-700">Additional properties are allowed.</p></div></div></div></div></div><div class="panel-item--right px-8"><div class="bg-gray-800 px-8 py-4 mt-4 -mx-8 2xl:mx-0 2xl:px-4 2xl:rounded examples"><h4 class="text-white text-lg">Examples</h4><div class="mt-4"><div><button class="focus:outline-none undefined" type="button"><div class="inline-block"><span class="inline-block w-20 py-0.5 mr-1 text-gray-200 text-sm border text-center rounded focus:outline-none">Payload</span></div><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 20 20" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" class="inline-block align-baseline cursor-pointer ml-0.5 -mb-1 w-5 h-5 transform transition-transform duration-150 ease-linear  fill-current text-gray-200"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg></button></div><div class="hidden"><ul><li class="mt-4"><h5 class="text-xs font-bold text-gray-500">#1 Example</h5><p class="text-xs font-bold text-gray-500">Set enforced limits</p><div class="mt-1"><div class="prose max-w-none text-sm"><pre><code class="hljs language-json">{
   <span class="hljs-attr">"schedule_import"</span>: [
     {
       <span class="hljs-attr">"timestamp"</span>: <span class="hljs-string">"2019-08-24T14:15:22Z"</span>,
@@ -249,7 +249,7 @@
   ]
 }
 </code></pre>
-</div><h6 class="text-xs font-bold text-gray-600 italic mt-2">This example has been generated automatically.</h6></div></div></div></div></div></div></div></div></div></div></li><li class="mb-12" id="operation-receive-receive_heartbeat"><div><div class="panel-item--center px-8"><div class="mb-4"><h3><span class="font-mono border uppercase p-1 rounded mr-2 border-green-600 text-green-600" title="receive">RECEIVE</span> <span class="font-mono text-base">e2m/heartbeat</span></h3></div><div class="border bg-gray-100 rounded px-4 py-2 mt-2"><div class="text-sm text-gray-700">Operation ID<span class="border text-orange-600 rounded text-xs ml-2 py-0 px-2">receive_heartbeat</span></div></div><div class="mt-2 text-sm"><p>Available only on servers:</p><ul class="flex flex-wrap leading-normal"><li class="inline-block mt-2 mr-2"><a href="#server-default" class="border border-solid border-blue-300 hover:bg-blue-300 hover:text-blue-600 text-blue-500 font-bold no-underline text-xs rounded px-3 py-1 cursor-pointer"><span class="underline">default</span></a></li></ul></div><div class="mt-2" id="operation-receive-e2m/heartbeat-security"></div><div class="mt-2"></div><div class="mt-2"></div><div class="mt-2"></div></div><div class="w-full mt-4" id="operation-receive-e2m/heartbeat-message"><div class="mt-2"><p class="px-8">Accepts the following message:</p><div class="mt-2"><div class="panel-item"><div class="panel-item--center px-8"><div class="shadow rounded bg-gray-200 p-4 border"><div><span class="text-gray-700 mr-2">Receive heartbeat</span><span class="border text-orange-600 rounded text-xs py-0 px-2">receive_heartbeat</span></div><p class="text-gray-600 text-sm">Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration</p><ul class="leading-normal mt-2 mb-4 space-x-2 space-y-2"><li class="inline-block"><a href="https://www.iana.org/assignments/media-types/application/json" class="border border-solid border-orange-300 hover:bg-orange-300 hover:text-orange-600 text-orange-500 font-bold no-underline text-xs uppercase rounded px-3 py-1" target="_blank" rel="nofollow noopener noreferrer"><span>application/json</span></a></li></ul><div class="border bg-gray-100 rounded px-4 py-2 mt-2"><div class="text-sm text-gray-700">Message ID<span class="border text-orange-600 rounded text-xs ml-2 py-0 px-2">receive_heartbeat</span></div></div><div class="mt-2"><div><div class="flex py-2"><div class="min-w-1/4 mr-2"><span class="break-anywhere text-sm ">Payload</span></div><div><div><div class="capitalize text-sm text-teal-500 font-bold inline-block mr-2">integer</div><div class="inline-block"></div><div><div class="prose max-w-none text-sm"><p>64bit unsigned integer. The id of every heartbeat increases by 1 and overflows when the maximum representable value is reached</p>
+</div></div></li></ul></div></div></div></div></div></div></div></div></div></li><li class="mb-12" id="operation-receive-receive_heartbeat"><div><div class="panel-item--center px-8"><div class="mb-4"><h3><span class="font-mono border uppercase p-1 rounded mr-2 border-green-600 text-green-600" title="receive">RECEIVE</span> <span class="font-mono text-base">e2m/heartbeat</span></h3></div><div class="border bg-gray-100 rounded px-4 py-2 mt-2"><div class="text-sm text-gray-700">Operation ID<span class="border text-orange-600 rounded text-xs ml-2 py-0 px-2">receive_heartbeat</span></div></div><div class="mt-2 text-sm"><p>Available only on servers:</p><ul class="flex flex-wrap leading-normal"><li class="inline-block mt-2 mr-2"><a href="#server-default" class="border border-solid border-blue-300 hover:bg-blue-300 hover:text-blue-600 text-blue-500 font-bold no-underline text-xs rounded px-3 py-1 cursor-pointer"><span class="underline">default</span></a></li></ul></div><div class="mt-2" id="operation-receive-e2m/heartbeat-security"></div><div class="mt-2"></div><div class="mt-2"></div><div class="mt-2"></div></div><div class="w-full mt-4" id="operation-receive-e2m/heartbeat-message"><div class="mt-2"><p class="px-8">Accepts the following message:</p><div class="mt-2"><div class="panel-item"><div class="panel-item--center px-8"><div class="shadow rounded bg-gray-200 p-4 border"><div><span class="text-gray-700 mr-2">Receive heartbeat</span><span class="border text-orange-600 rounded text-xs py-0 px-2">receive_heartbeat</span></div><p class="text-gray-600 text-sm">Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration</p><ul class="leading-normal mt-2 mb-4 space-x-2 space-y-2"><li class="inline-block"><a href="https://www.iana.org/assignments/media-types/application/json" class="border border-solid border-orange-300 hover:bg-orange-300 hover:text-orange-600 text-orange-500 font-bold no-underline text-xs uppercase rounded px-3 py-1" target="_blank" rel="nofollow noopener noreferrer"><span>application/json</span></a></li></ul><div class="border bg-gray-100 rounded px-4 py-2 mt-2"><div class="text-sm text-gray-700">Message ID<span class="border text-orange-600 rounded text-xs ml-2 py-0 px-2">receive_heartbeat</span></div></div><div class="mt-2"><div><div class="flex py-2"><div class="min-w-1/4 mr-2"><span class="break-anywhere text-sm ">Payload</span></div><div><div><div class="capitalize text-sm text-teal-500 font-bold inline-block mr-2">integer</div><div class="inline-block"></div><div><div class="prose max-w-none text-sm"><p>64bit unsigned integer. The id of every heartbeat increases by 1 and overflows when the maximum representable value is reached</p>
 </div></div></div></div></div></div></div></div></div><div class="panel-item--right px-8"><div class="bg-gray-800 px-8 py-4 mt-4 -mx-8 2xl:mx-0 2xl:px-4 2xl:rounded examples"><h4 class="text-white text-lg">Examples</h4><div class="mt-4"><div><button class="focus:outline-none undefined" type="button"><div class="inline-block"><span class="inline-block w-20 py-0.5 mr-1 text-gray-200 text-sm border text-center rounded focus:outline-none">Payload</span></div><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 20 20" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" class="inline-block align-baseline cursor-pointer ml-0.5 -mb-1 w-5 h-5 transform transition-transform duration-150 ease-linear  fill-current text-gray-200"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg></button></div><div class="hidden"><ul><li class="mt-4"><h5 class="text-xs font-bold text-gray-500">#1 Example</h5><p class="text-xs font-bold text-gray-500">Heartbeat</p><div class="mt-1">42</div></li></ul></div></div></div></div></div></div></div></div></div></li><li class="mb-12" id="operation-send-send_communication_check"><div><div class="panel-item--center px-8"><div class="mb-4"><h3><span class="font-mono border uppercase p-1 rounded mr-2 border-blue-600 text-blue-500" title="send">SEND</span> <span class="font-mono text-base">m2e/communication_check</span></h3></div><div class="border bg-gray-100 rounded px-4 py-2 mt-2"><div class="text-sm text-gray-700">Operation ID<span class="border text-orange-600 rounded text-xs ml-2 py-0 px-2">send_communication_check</span></div></div><div class="mt-2 text-sm"><p>Available only on servers:</p><ul class="flex flex-wrap leading-normal"><li class="inline-block mt-2 mr-2"><a href="#server-default" class="border border-solid border-blue-300 hover:bg-blue-300 hover:text-blue-600 text-blue-500 font-bold no-underline text-xs rounded px-3 py-1 cursor-pointer"><span class="underline">default</span></a></li></ul></div><div class="mt-2" id="operation-send-m2e/communication_check-security"></div><div class="mt-2"></div><div class="mt-2"></div><div class="mt-2"></div></div><div class="w-full mt-4" id="operation-send-m2e/communication_check-message"><div class="mt-2"><p class="px-8">Accepts the following message:</p><div class="mt-2"><div class="panel-item"><div class="panel-item--center px-8"><div class="shadow rounded bg-gray-200 p-4 border"><div><span class="text-gray-700 mr-2">Send communication check</span><span class="border text-orange-600 rounded text-xs py-0 px-2">send_communication_check</span></div><p class="text-gray-600 text-sm">Signal to EVerest that communication is good or check shall be stopped</p><ul class="leading-normal mt-2 mb-4 space-x-2 space-y-2"><li class="inline-block"><a href="https://www.iana.org/assignments/media-types/application/json" class="border border-solid border-orange-300 hover:bg-orange-300 hover:text-orange-600 text-orange-500 font-bold no-underline text-xs uppercase rounded px-3 py-1" target="_blank" rel="nofollow noopener noreferrer"><span>application/json</span></a></li></ul><div class="border bg-gray-100 rounded px-4 py-2 mt-2"><div class="text-sm text-gray-700">Message ID<span class="border text-orange-600 rounded text-xs ml-2 py-0 px-2">send_communication_check</span></div></div><div class="mt-2"><div><div class="flex py-2"><div class="min-w-1/4 mr-2"><span class="break-anywhere text-sm ">Payload</span></div><div><div><div class="capitalize text-sm text-teal-500 font-bold inline-block mr-2">boolean</div><div class="inline-block"></div><div><div class="prose max-w-none text-sm"><p>Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'</p>
 </div></div></div></div></div></div></div></div></div><div class="panel-item--right px-8"><div class="bg-gray-800 px-8 py-4 mt-4 -mx-8 2xl:mx-0 2xl:px-4 2xl:rounded examples"><h4 class="text-white text-lg">Examples</h4><div class="mt-4"><div><button class="focus:outline-none undefined" type="button"><div class="inline-block"><span class="inline-block w-20 py-0.5 mr-1 text-gray-200 text-sm border text-center rounded focus:outline-none">Payload</span></div><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 20 20" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" class="inline-block align-baseline cursor-pointer ml-0.5 -mb-1 w-5 h-5 transform transition-transform duration-150 ease-linear  fill-current text-gray-200"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg></button></div><div class="hidden"><ul><li class="mt-4"><h5 class="text-xs font-bold text-gray-500">#1 Example</h5><p class="text-xs font-bold text-gray-500">CommunicationCheck</p><div class="mt-1"></div></li></ul></div></div></div></div></div></div></div></div></div></li></ul></section><section id="messages" class="mt-16"><h2 class="2xl:w-7/12 text-3xl font-light mb-4 px-8">Messages</h2><ul><li class="mb-4" id="message-send_set_external_limits"><div class="panel-item"><div class="panel-item--center px-8"><div class="shadow rounded bg-gray-200 p-4 border"><div><span class="text-gray-700 font-bold mr-2">#<!-- -->1</span><span class="text-gray-700 mr-2">Send external energy limits</span><span class="border text-orange-600 rounded text-xs py-0 px-2">send_set_external_limits</span></div><p class="text-gray-600 text-sm">External energy limits</p><ul class="leading-normal mt-2 mb-4 space-x-2 space-y-2"><li class="inline-block"><a href="https://www.iana.org/assignments/media-types/application/json" class="border border-solid border-orange-300 hover:bg-orange-300 hover:text-orange-600 text-orange-500 font-bold no-underline text-xs uppercase rounded px-3 py-1" target="_blank" rel="nofollow noopener noreferrer"><span>application/json</span></a></li></ul><div class="border bg-gray-100 rounded px-4 py-2 mt-2"><div class="text-sm text-gray-700">Message ID<span class="border text-orange-600 rounded text-xs ml-2 py-0 px-2">send_set_external_limits</span></div></div><div class="mt-2" id="message-send_set_external_limits-payload"><div><div class="flex py-2"><div class="min-w-1/4 mr-2"><button class="focus:outline-none undefined" type="button"><div class="inline-block"><span class="break-anywhere text-sm ">Payload</span></div><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 20 20" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" class="inline-block align-baseline cursor-pointer ml-0.5 -mb-1 w-5 h-5 transform transition-transform duration-150 ease-linear  "><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg></button><button type="button" class="ml-1 text-sm text-gray-500">Expand all</button></div><div><div><div class="capitalize text-sm text-teal-500 font-bold inline-block mr-2">object</div><div class="inline-block"></div><div><div class="prose max-w-none text-sm"><p>External Limits data type</p>
 </div></div></div></div></div><div class="rounded p-4 py-2 border bg-gray-100  hidden"><div><div class="flex py-2"><div class="min-w-1/4 mr-2"><button class="focus:outline-none undefined" type="button"><div class="inline-block"><span class="break-anywhere text-sm italic">schedule_import</span></div><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 20 20" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" class="inline-block align-baseline cursor-pointer ml-0.5 -mb-1 w-5 h-5 transform transition-transform duration-150 ease-linear  "><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg></button><button type="button" class="ml-1 text-sm text-gray-500">Expand all</button><div class="text-red-600 text-xs">required</div></div><div><div><div class="capitalize text-sm text-teal-500 font-bold inline-block mr-2">array&lt;object&gt;</div><div class="inline-block"></div><div><div class="prose max-w-none text-sm"><p>Energy import/limits time series. The first entry is special as it will be active already now even if the timestamp is in the future, so it is good practice to set the first entry to current time. The time series can have arbitrary time difference between entries and all timestamps are absolute UTC time. The last entry is valid for any time after the schedule ends.</p>
@@ -846,6 +846,148 @@
             },
             "x-parser-schema-id": "ExternalLimits"
           },
+          "examples": [
+            {
+              "summary": "Set enforced limits",
+              "payload": {
+                "schedule_import": [
+                  {
+                    "timestamp": "2019-08-24T14:15:22Z",
+                    "limits_to_root": {
+                      "total_power_W": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_max_current_A": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_min_current_A": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_max_phase_count": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_min_phase_count": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_supports_changing_phases_during_charging": true,
+                      "ac_number_of_active_phases": 1
+                    },
+                    "limits_to_leaves": {
+                      "total_power_W": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_max_current_A": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_min_current_A": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_max_phase_count": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_min_phase_count": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_supports_changing_phases_during_charging": true,
+                      "ac_number_of_active_phases": 1
+                    },
+                    "conversion_efficiency": 1,
+                    "price_per_kwh": {
+                      "timestamp": "2019-08-24T14:15:22Z",
+                      "value": 0,
+                      "currency": "str"
+                    }
+                  }
+                ],
+                "schedule_export": [
+                  {
+                    "timestamp": "2019-08-24T14:15:22Z",
+                    "limits_to_root": {
+                      "total_power_W": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_max_current_A": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_min_current_A": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_max_phase_count": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_min_phase_count": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_supports_changing_phases_during_charging": true,
+                      "ac_number_of_active_phases": 1
+                    },
+                    "limits_to_leaves": {
+                      "total_power_W": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_max_current_A": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_min_current_A": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_max_phase_count": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_min_phase_count": {
+                        "value": 0,
+                        "source": "string"
+                      },
+                      "ac_supports_changing_phases_during_charging": true,
+                      "ac_number_of_active_phases": 1
+                    },
+                    "conversion_efficiency": 1,
+                    "price_per_kwh": {
+                      "timestamp": "2019-08-24T14:15:22Z",
+                      "value": 0,
+                      "currency": "str"
+                    }
+                  }
+                ],
+                "schedule_setpoints": [
+                  {
+                    "timestamp": "2019-08-24T14:15:22Z",
+                    "setpoint": {
+                      "ac_current_A": 0,
+                      "total_power_W": 0,
+                      "frequency_table": [
+                        {
+                          "frequency_Hz": 0,
+                          "total_power_W": 0
+                        }
+                      ],
+                      "priority": 1000,
+                      "source": "string"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
           "x-parser-unique-object-id": "send_set_external_limits"
         }
       },

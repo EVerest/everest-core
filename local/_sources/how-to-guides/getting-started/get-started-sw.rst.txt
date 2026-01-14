@@ -551,7 +551,7 @@ Good news: A tutorial about developing EVerest modules is waiting for you.
 
 :ref:`Continue with the tutorial here! <tutorial_develop_new_everest_module>`
 
-See you in our :ref:`weekly tech meetings <exp_communicity_channels>` and thanks for
+See you in our :ref:`weekly tech meetings <project-community>` and thanks for
 being a part of the EVerest community!
 
 ----

@@ -239,6 +239,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../../how-to-guides/bringup/dc.html">DC BringUp</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../how-to-guides/choosing-version-and-upgrading.html">Choosing an EVerest Version</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../../explanation/index.html">Explanation</a><input aria-label="Toggle navigation of Explanation" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -526,7 +527,16 @@
 <p class="caption" role="heading"><span class="caption-text">Getting Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../qa/index.html">Q &amp; A</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../community-channels.html">Meet the EVerest Community</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../project/index.html">Project &amp; Community</a><input aria-label="Toggle navigation of Project &amp; Community" class="toctree-checkbox" id="toctree-checkbox-31" name="toctree-checkbox-31" role="switch" type="checkbox"/><label for="toctree-checkbox-31"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/community.html">Meet the EVerest Community</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html">Contributing to EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/governance/governance.html">EVerest project governance policy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/governance/code-of-conduct.html">Code of Conduct</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/governance/security.html">Security Policy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/releases/releases-and-versioning.html">Releases and Versioning of EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/releases/breaking-changes.html">Breaking Changes Definition</a></li>
+</ul>
+</li>
 </ul>
 
 </div>
@@ -575,14 +585,14 @@
 <span class="target" id="everest-modules-handwritten-ocpp201"></span><p>This module implements and integrates OCPP 2.0.1 and OCPP 2.1 within EVerest. A connection to a Charging Station Management System (CSMS) can be
 established by loading this module as part of the EVerest configuration. This module leverages <a class="reference external" href="https://github.com/EVerest/libocpp">libocpp</a>,
 EVerest’s OCPP library.</p>
-<p>The EVerest config <a class="reference external" href="../../config/config-sil-ocpp201.yaml">config-sil-ocpp201.yaml</a> serves as an example for how to add the OCPP201 module
+<p>The EVerest config <code class="docutils literal notranslate"><span class="pre">config-sil-ocpp201.yaml</span></code> serves as an example for how to add the OCPP201 module
 to your EVerest config.</p>
 <p>📌 <strong>Note:</strong>: This module can be used for OCPP2.0.1 and OCPP2.1 communication. The module name OCPP201 is kept for now to allow backwards
 compatability with existing EVerest configurations. It will likely be renamed in the future. The following descriptions apply for both
 OCPP2.0.1 and OCPP2.1, referred by using the term <strong>OCPP2</strong>.</p>
 <section id="module-configuration">
 <h3>Module configuration<a class="headerlink" href="#module-configuration" title="Link to this heading">¶</a></h3>
-<p>Like for every EVerest module, the configuration parameters are defined as part of the module <a class="reference external" href="../manifest.yaml">manifest</a>. OCPP2 defines
+<p>Like for every EVerest module, the configuration parameters are defined as part of the module <code class="docutils literal notranslate"><span class="pre">manifest.yaml</span></code>. OCPP2 defines
 a device model structure and a lot of standardized variables that are used within the functional requirements of the protocol. Please see
 Part 1 - Architecture &amp; Topology of the OCPP2.0.1 or OCPP2.1 specification for further information about the device model and how it is composed.</p>
 <p>For this module, the device model is configured separately in a JSON format. This module initializes the device model based on the configuration
@@ -615,41 +625,41 @@ protocol is to do as much work as possible as part of the library. It therefore 
 OCPP is a protocol that affects, controls, and monitors many areas of a charging station’s operation though. It is therefore required to
 integrate libocpp with other parts of EVerest. This integration is done by this module and will be explained in this section.</p>
 <p>For a detailed description of libocpp and its functionalities, please refer to <a class="reference external" href="https://github.com/EVerest/libocpp">its documentation</a>.</p>
-<p>The <a class="reference external" href="../manifest.yaml">manifest</a> of this module defines requirements and implementations of EVerest interfaces to integrate the OCPP communication
+<p>The <code class="docutils literal notranslate"><span class="pre">manifest.yaml</span></code> of this module defines requirements and implementations of EVerest interfaces to integrate the OCPP communication
 with other parts of EVerest. In order to describe how the responsibilities for functions and operations required by OCPP are divided between libocpp
 and this module, the following sections pick up the requirements of this module and implementations one by one.</p>
 <section id="provides-auth-validator">
 <h4>Provides: auth_validator<a class="headerlink" href="#provides-auth-validator" title="Link to this heading">¶</a></h4>
-<p><strong>Interface</strong>: <a class="reference external" href="../../interfaces/auth_token_validator.yaml">auth_token_validator</a></p>
+<p><strong>Interface</strong>: <a class="reference internal" href="../../../interfaces/auth_token_validator.html#everest-interfaces-auth-token-validator"><span class="std std-ref">auth_token_validator</span></a></p>
 <p>This interface is implemented to forward authorization requests from EVerest to libocpp. Libocpp contains the business logic to either validate the
 authorization request locally using the authorization cache and local authorization list or to forward the request to the CSMS using an
 <strong>Authorize.req</strong>. The implementation also covers the validation of Plug&amp;Charge authorization requests.</p>
 </section>
 <section id="provides-auth-provider">
 <h4>Provides: auth_provider<a class="headerlink" href="#provides-auth-provider" title="Link to this heading">¶</a></h4>
-<p><strong>Interface</strong>: <a class="reference external" href="../../interfaces/auth_token_provider.yaml">auth_token_provider</a></p>
+<p><strong>Interface</strong>: <a class="reference internal" href="../../../interfaces/auth_token_provider.html#everest-interfaces-auth-token-provider"><span class="std std-ref">auth_token_provider</span></a></p>
 <p>This interface is implemented to publish authorization requests from the CSMS within EVerest. An authorization request from the CSMS is implemented
 by a <strong>RequestStartTransaction.req</strong>.</p>
 </section>
 <section id="provides-data-transfer">
 <h4>Provides: data_transfer<a class="headerlink" href="#provides-data-transfer" title="Link to this heading">¶</a></h4>
-<p><strong>Interface</strong>: <a class="reference external" href="../../interfaces/ocpp_data_transfer.yaml">ocpp_data_transfer</a></p>
+<p><strong>Interface</strong>: <a class="reference internal" href="../../../interfaces/ocpp_data_transfer.html#everest-interfaces-ocpp-data-transfer"><span class="std std-ref">ocpp_data_transfer</span></a></p>
 <p>This interface is implemented to provide a command to initiate a <strong>DataTransfer.req</strong> from the charging station to the CSMS.</p>
 </section>
 <section id="provides-ocpp-generic">
-<h4>Provides: ocpp_generic<a class="headerlink" href="#provides-ocpp-generic" title="Link to this heading">¶</a></h4>
-<p><strong>Interface</strong>: <a class="reference external" href="../../interfaces/ocpp.yaml">ocpp</a></p>
+<span id="handwritten-ocpp201-provides-ocpp-generic"></span><h4>Provides: ocpp_generic<a class="headerlink" href="#provides-ocpp-generic" title="Link to this heading">¶</a></h4>
+<p><strong>Interface</strong>: <a class="reference internal" href="../../../interfaces/ocpp.html#everest-interfaces-ocpp"><span class="std std-ref">ocpp</span></a></p>
 <p>This interface is implemented to provide an API to control an OCPP service and to set and get OCPP-specific data.</p>
 </section>
 <section id="provides-session-cost">
 <h4>Provides: session_cost<a class="headerlink" href="#provides-session-cost" title="Link to this heading">¶</a></h4>
-<p><strong>Interface</strong>: <a class="reference external" href="../../interfaces/session_cost.yaml">session_cost</a></p>
+<p><strong>Interface</strong>: <a class="reference internal" href="../../../interfaces/session_cost.html#everest-interfaces-session-cost"><span class="std std-ref">session_cost</span></a></p>
 <p>This interface is implemented to publish session costs received by the CSMS as part of the California Pricing whitepaper extension.</p>
 </section>
 <section id="requires-evse-manager">
 <h4>Requires: evse_manager<a class="headerlink" href="#requires-evse-manager" title="Link to this heading">¶</a></h4>
-<p><strong>Interface</strong>: <a class="reference external" href="../../interfaces/evse_manager.yaml">evse_manager</a></p>
-<p>Typically the <a class="reference external" href="../EvseManager/">EvseManager</a> module is used to fulfill this requirement.</p>
+<p><strong>Interface</strong>: <a class="reference internal" href="../../../interfaces/evse_manager.html#everest-interfaces-evse-manager"><span class="std std-ref">evse_manager</span></a></p>
+<p>Typically the <a class="reference internal" href="../EvseManager/autogenerated.html#everest-modules-evsemanager"><span class="std std-ref">EvseManager</span></a> module is used to fulfill this requirement.</p>
 <p>This module requires (1-128) implementations of this interface in order to integrate with the charge control logic of EVerest. One connection represents
 one EVSE. In order to manage multiple EVSEs via one OCPP connection, multiple connections need to be configured in the EVerest config file.</p>
 <p>This module makes use of the following commands of this interface:</p>
@@ -663,8 +673,8 @@ different sources. It therefore contains an argument <strong>priority</strong> i
 mid-range.</p></li>
 <li><p><strong>set_external_limits</strong> to apply power or ampere limits at the EVSE received by the CSMS using the SmartCharging feature profile. Libocpp contains the
 business logic to calculate the composite schedule for received charging profiles. This module gets notified in case charging profiles are added,
-changed, or cleared. When notified, this module requests the composite schedule from libocpp and publishes the result via the
-<a class="reference external" href="#provides-ocpp_generic">Provides: ocpp_generic</a> interface. The duration of the composite schedule can be configured by the configuration parameter
+changed, or cleared. When notified, this module requests the composite schedule from libocpp and publishes the result via the provided
+<a class="reference internal" href="#handwritten-ocpp201-provides-ocpp-generic"><span class="std std-ref">ocpp_generic</span></a> interface implementation. The duration of the composite schedule can be configured by the configuration parameter
 <strong>PublishChargingScheduleDurationS</strong> of this module. The configuration parameter <strong>PublishChargingScheduleIntervalS</strong> defines the interval to use to
 periodically retrieve and publish the composite schedules. The configuration parameter <strong>RequestCompositeScheduleUnit</strong> can be used to specify the unit in
 which composite schedules are requested and shared within EVerest.</p></li>
@@ -683,8 +693,8 @@ the transaction handling of libocpp.</p></li>
 </section>
 <section id="requires-connector-zero-sink">
 <h4>Requires: connector_zero_sink<a class="headerlink" href="#requires-connector-zero-sink" title="Link to this heading">¶</a></h4>
-<p><strong>Interface</strong>: <a class="reference external" href="../../interfaces/external_energy_limits.yaml">external_energy_limits</a></p>
-<p>Typically the <a class="reference external" href="../EnergyNode/">EnergyNode</a> module is used to fulfill this requirement.</p>
+<p><strong>Interface</strong>: <a class="reference internal" href="../../../interfaces/external_energy_limits.html#everest-interfaces-external-energy-limits"><span class="std std-ref">external_energy_limits</span></a></p>
+<p>Typically the <a class="reference internal" href="../../EnergyManagement/EnergyNode/autogenerated.html#everest-modules-energynode"><span class="std std-ref">EnergyNode</span></a> module is used to fulfill this requirement.</p>
 <p>This module optionally requires the connection to a module implementing the <strong>external_energy_limits</strong> interface. This connection is used to apply power or
 ampere limits at EVSE id zero received by the CSMS using the SmartCharging feature profile.</p>
 <p>This module makes use of the following commands of this interface:
@@ -692,8 +702,8 @@ ampere limits at EVSE id zero received by the CSMS using the SmartCharging featu
 </section>
 <section id="requires-auth">
 <h4>Requires: auth<a class="headerlink" href="#requires-auth" title="Link to this heading">¶</a></h4>
-<p><strong>Interface</strong>: <a class="reference external" href="../../interfaces/auth.yaml">auth</a></p>
-<p>Typically the <a class="reference external" href="../Auth/">Auth</a> module is used to fulfill this requirement.</p>
+<p><strong>Interface</strong>: <a class="reference internal" href="../../../interfaces/auth.html#everest-interfaces-auth"><span class="std std-ref">auth</span></a></p>
+<p>Typically the <a class="reference internal" href="../Auth/autogenerated.html#everest-modules-auth"><span class="std std-ref">Auth</span></a> module is used to fulfill this requirement.</p>
 <p>This module requires a connection to a module implementing the <strong>auth</strong> interface. This connection is used to set the standardized <strong>ConnectionTimeout</strong>
 configuration key if configured and/or changed by the CSMS.</p>
 <p>This module makes use of the following commands of this interface:</p>
@@ -704,8 +714,8 @@ configuration key if configured and/or changed by the CSMS.</p>
 </section>
 <section id="requires-system">
 <h4>Requires: system<a class="headerlink" href="#requires-system" title="Link to this heading">¶</a></h4>
-<p><strong>Interface</strong>: <a class="reference external" href="../../interfaces/system.yaml">system</a></p>
-<p>The <a class="reference external" href="../System/">System</a> module can be used to fulfill this requirement. Note that this module is not meant to be used in production systems without any
+<p><strong>Interface</strong>: <a class="reference internal" href="../../../interfaces/system.html#everest-interfaces-system"><span class="std std-ref">system</span></a></p>
+<p>The <a class="reference internal" href="../../Misc/System/autogenerated.html#everest-modules-system"><span class="std std-ref">System</span></a> module can be used to fulfill this requirement. Note that this module is not meant to be used in production systems without any
 modification!</p>
 <p>This module requires a connection to a module implementing the <strong>system</strong> interface. This connection is used to execute and control system-wide operations that
 can be triggered by the CSMS, like log uploads, firmware updates, and resets.</p>
@@ -730,10 +740,10 @@ status. This signal is expected as a result of an <strong>update_firmware</stron
 </section>
 <section id="requires-security">
 <h4>Requires: security<a class="headerlink" href="#requires-security" title="Link to this heading">¶</a></h4>
-<p><strong>Interface</strong>: <a class="reference external" href="../../interfaces/evse_security.yaml">evse_security</a></p>
+<p><strong>Interface</strong>: <a class="reference internal" href="../../../interfaces/evse_security.html#everest-interfaces-evse-security"><span class="std std-ref">evse_security</span></a></p>
 <p>This module requires a connection to a module implementing the <strong>evse_security</strong> interface. This connection is used to execute security-related operations and to
 manage certificates and private keys.</p>
-<p>Typically the <a class="reference external" href="../EvseSecurity/">EvseSecurity</a> module is used to fulfill this requirement.</p>
+<p>Typically the <a class="reference internal" href="../EvseSecurity/autogenerated.html#everest-modules-evsesecurity"><span class="std std-ref">EvseSecurity</span></a> module is used to fulfill this requirement.</p>
 <p>This module makes use of the following commands of this interface:</p>
 <ul class="simple">
 <li><p><strong>install_ca_certificate</strong> to handle an <strong>InstallCertificate.req</strong> message from the CSMS</p></li>
@@ -760,7 +770,7 @@ conversion functionality is used by this OCPP2 module and the OCPP1.6 module, it
 </section>
 <section id="requires-data-transfer">
 <h4>Requires: data_transfer<a class="headerlink" href="#requires-data-transfer" title="Link to this heading">¶</a></h4>
-<p><strong>Interface</strong>: <a class="reference external" href="../../interfaces/ocpp_data_transfer.yaml">ocpp_data_transfer</a></p>
+<p><strong>Interface</strong>: <a class="reference internal" href="../../../interfaces/ocpp_data_transfer.html#everest-interfaces-ocpp-data-transfer"><span class="std std-ref">ocpp_data_transfer</span></a></p>
 <p>This module optionally requires a connection to a module implementing the <strong>ocpp_data_transfer</strong> interface. This connection is used to handle <strong>DataTransfer.req</strong>
 messages from the CSMS. A module implementing this interface can contain custom logic to handle the requests from the CSMS.</p>
 <p>This module makes use of the following commands of this interface:</p>
@@ -770,7 +780,7 @@ messages from the CSMS. A module implementing this interface can contain custom 
 </section>
 <section id="requires-display-message">
 <h4>Requires: display_message<a class="headerlink" href="#requires-display-message" title="Link to this heading">¶</a></h4>
-<p><strong>Interface</strong>: <a class="reference external" href="../../interfaces/display_message.yaml">display_message</a></p>
+<p><strong>Interface</strong>: <a class="reference internal" href="../../../interfaces/display_message.html#everest-interfaces-display-message"><span class="std std-ref">display_message</span></a></p>
 <p>This module optionally requires a connection to a module implementing the <strong>display_message</strong> interface. This connection is used to allow the CSMS to display pricing
 or other information on the display of a charging station. In order to fulfill the requirements of the California Pricing whitepaper, it is required to connect a
 module implementing this interface.</p>
@@ -783,7 +793,7 @@ module implementing this interface.</p>
 </section>
 <section id="requires-extensions-15118">
 <h4>Requires: extensions_15118<a class="headerlink" href="#requires-extensions-15118" title="Link to this heading">¶</a></h4>
-<p><strong>Interface</strong>: <a class="reference external" href="../../interfaces/iso15118_extensions.yaml">iso15118_extensions</a></p>
+<p><strong>Interface</strong>: <a class="reference internal" href="../../../interfaces/iso15118_extensions.html#everest-interfaces-iso15118-extensions"><span class="std std-ref">iso15118_extensions</span></a></p>
 <p>This module optionally requires (0-128) implementations of this interface in order to share data between ISO15118 and OCPP modules. One
 connection represents one ISO15118 module.</p>
 <p>This module makes use of the following commands of this interface:</p>
@@ -962,8 +972,8 @@ Today <cite>OCPP</cite> is the only supported source for internally managed vari
 </section>
 <section id="auto-generated-reference">
 <h2>Auto-Generated Reference<a class="headerlink" href="#auto-generated-reference" title="Link to this heading">¶</a></h2>
-<section id="id4">
-<h3>Module Configuration<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<section id="id1">
+<h3>Module Configuration<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
 <div class="line-block">
 <div class="line"><strong>MessageLogPath</strong>: <em>string</em> &lt;optional&gt;</div>
 <div class="line"><em>default: “/tmp/everest_ocpp_logs”</em></div>
@@ -1187,7 +1197,7 @@ Today <cite>OCPP</cite> is the only supported source for internally managed vari
 </ul>
 </li>
 <li><a class="reference internal" href="#auto-generated-reference">Auto-Generated Reference</a><ul>
-<li><a class="reference internal" href="#id4">Module Configuration</a></li>
+<li><a class="reference internal" href="#id1">Module Configuration</a></li>
 <li><a class="reference internal" href="#provides">Provides</a></li>
 <li><a class="reference internal" href="#requirements">Requirements</a></li>
 </ul>

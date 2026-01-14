@@ -23,12 +23,6 @@ Below that, you will be presented with a categorized list of all articles.
 
       How to communicate error states between modules.
 
-   .. grid-item-card:: The EVerest Community
-      :link: ../community-channels
-      :link-type: doc
-
-      Different options exist to get involved in the EVerest community.
-
    .. grid-item-card:: EVerest Modules in Detail
       :link: detail-module-concept
       :link-type: doc

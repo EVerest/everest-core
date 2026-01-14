@@ -239,6 +239,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../how-to-guides/bringup/dc.html">DC BringUp</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../how-to-guides/choosing-version-and-upgrading.html">Choosing an EVerest Version</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../explanation/index.html">Explanation</a><input aria-label="Toggle navigation of Explanation" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -526,7 +527,16 @@
 <p class="caption" role="heading"><span class="caption-text">Getting Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../qa/index.html">Q &amp; A</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../community-channels.html">Meet the EVerest Community</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../project/index.html">Project &amp; Community</a><input aria-label="Toggle navigation of Project &amp; Community" class="toctree-checkbox" id="toctree-checkbox-31" name="toctree-checkbox-31" role="switch" type="checkbox"/><label for="toctree-checkbox-31"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../project/community.html">Meet the EVerest Community</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../project/contributing.html">Contributing to EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../project/governance/governance.html">EVerest project governance policy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../project/governance/code-of-conduct.html">Code of Conduct</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../project/governance/security.html">Security Policy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../project/releases/releases-and-versioning.html">Releases and Versioning of EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../project/releases/breaking-changes.html">Breaking Changes Definition</a></li>
+</ul>
+</li>
 </ul>
 
 </div>
@@ -568,16 +578,26 @@
           <section id="dependencies-snapshot">
 <span id="snapshot"></span><h1>Dependencies Snapshot<a class="headerlink" href="#dependencies-snapshot" title="Link to this heading">¶</a></h1>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Josev</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">branch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">everest</span>
+<span class="w">  </span><span class="nt">branch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fix/update-marshmallow-version</span>
 <span class="w">  </span><span class="nt">cmake_condition</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV</span>
 <span class="w">  </span><span class="nt">git</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/EVerest/ext-switchev-iso15118.git</span>
-<span class="w">  </span><span class="nt">git_rev</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">89db9d27db551801d45627f802e4c3a029ed29c2</span>
-<span class="w">  </span><span class="nt">git_tag</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2025.12.0</span>
+<span class="w">  </span><span class="nt">git_rev</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0f0803db76828689876dbdff4b23ed5d918c8a1c</span>
+<span class="w">  </span><span class="nt">git_tag</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fix/update-marshmallow-version</span>
+<span class="nt">everest-ci</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">branch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main</span>
+<span class="w">  </span><span class="nt">git</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">git@github.com:EVerest/everest-ci.git</span>
+<span class="w">  </span><span class="nt">git_rev</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">b8a492f49750fa45d69270d41b1cab3c2b4fe53f</span>
+<span class="w">  </span><span class="nt">git_tag</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main</span>
 <span class="nt">everest-core</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">branch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature/docs-migration</span>
+<span class="w">  </span><span class="nt">branch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docs/release-policy</span>
 <span class="w">  </span><span class="nt">git</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">git@github.com:EVerest/everest-core.git</span>
-<span class="w">  </span><span class="nt">git_rev</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bb4f1d998406f25be8daf1a3e63902312ce634c5</span>
-<span class="w">  </span><span class="nt">git_tag</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feature/docs-migration</span>
+<span class="w">  </span><span class="nt">git_rev</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">a2ad3c16096ae517c9319918a597f8ee0225cbcf</span>
+<span class="w">  </span><span class="nt">git_tag</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docs/release-policy</span>
+<span class="nt">ext-switchev-iso15118</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">branch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fix/update-marshmallow-version</span>
+<span class="w">  </span><span class="nt">git</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">git@github.com:EVerest/ext-switchev-iso15118.git</span>
+<span class="w">  </span><span class="nt">git_rev</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0f0803db76828689876dbdff4b23ed5d918c8a1c</span>
+<span class="w">  </span><span class="nt">git_tag</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fix/update-marshmallow-version</span>
 <span class="nt">libnfc-nci</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">branch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">everest</span>
 <span class="w">  </span><span class="nt">cmake_condition</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">EVEREST_DEPENDENCY_ENABLED_LIBNFC_NCI</span>
