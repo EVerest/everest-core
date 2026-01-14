@@ -141,7 +141,7 @@ Release Process
 ===============
 
 Project releases occur on a scheduled basis as agreed to by the TSC.
-See :doc:`Release and Versioning </project/releases/release-and-versioning>` for details.
+See :ref:`Release and Versioning <project-release-and-versioning>` for details.
 
 Conflict resolution
 ===================

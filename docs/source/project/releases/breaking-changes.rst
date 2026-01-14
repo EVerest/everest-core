@@ -1,11 +1,11 @@
-.. _exp-breaking_changes:
+.. _project-breaking-changes:
 
 ############################
 Breaking Changes Definition
 ############################
 
 This document defines what constitutes a breaking change versus a non-breaking change for the components of the
-:ref:`EVerest public API <exp-release-and-versioning-public-api>`.
+:ref:`EVerest public API <project-release-and-versioning-public-api>`.
 Understanding these definitions is critical for both maintainers and integrators.
 
 ********
@@ -22,7 +22,7 @@ without modification when upgrading to a new version of EVerest.
 Scope
 =====
 
-This document covers breaking change definitions for all components of the :ref:`EVerest public API <exp-release-and-versioning-public-api>`.
+This document covers breaking change definitions for all components of the :ref:`EVerest public API <project-release-and-versioning-public-api>`.
 
 This includes:
 - :ref:`AsyncAPI specifications <exp-breaking-changes-asyncapi>`
@@ -244,7 +244,7 @@ Behavioral Compatibility
 Additional Resources
 ********************
 
-For more information on EVerest's release and versioning strategy, see :ref:`exp-release-and-versioning`.
+For more information on EVerest's release and versioning strategy, see :ref:`project-release-and-versioning`.
 
 For questions about breaking changes or to report potential compatibility issues, please contact the EVerest
 maintainers or raise an issue in the GitHub repository.

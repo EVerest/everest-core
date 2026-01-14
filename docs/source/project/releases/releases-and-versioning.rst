@@ -1,4 +1,4 @@
-.. _exp-release-and-versioning:
+.. _project-release-and-versioning:
 
 ##################################
 Releases and Versioning of EVerest
@@ -56,7 +56,7 @@ Patch Releases
 Patch releases address bugs, security issues, and other critical fixes within a stable release line. These releases:
 
 - Increment only the patch number (x)
-- Never introduce breaking changes to the :ref:`public API of EVerest <exp-release-and-versioning-public-api>`
+- Never introduce breaking changes to the :ref:`public API of EVerest <project-release-and-versioning-public-api>`
 - Are backported from the main development branch
 - Are tagged in Git with the incremented patch number
 
@@ -68,7 +68,7 @@ Development Versions
 The ``main`` branch represents ongoing development work for the next stable release. Development versions may introduce breaking changes
 and new features that will be included in the next yyyy.mm.0 release.
 
-.. _exp-release-and-versioning-public-api:
+.. _project-release-and-versioning-public-api:
 
 Public API Definition
 =====================
@@ -86,7 +86,7 @@ The public API consists of:
 
 The individual public API components may maintain their own version numbers independent of the EVerest release version.
 
-Please refer to :doc:`breaking changes </explanation/breaking-changes>` for detailed definitions of breaking changes within the public API.
+Please refer to :ref:`breaking changes <project-breaking-changes>` for detailed definitions of breaking changes within the public API.
 
 .. note::
 
@@ -96,7 +96,7 @@ Please refer to :doc:`breaking changes </explanation/breaking-changes>` for deta
 Stability Guarantees
 ====================
 
-Within a stable release branch (e.g., all ``2026.01.x`` versions), no :doc:`breaking changes </explanation/breaking-changes>` are backported to the 
+Within a stable release branch (e.g., all ``2026.01.x`` versions), no :ref:`breaking changes <project-breaking-changes>` are backported to the 
 public API. Patch releases within a stable line maintain full backward compatibility.
 
 This guarantee means:
@@ -124,7 +124,7 @@ The EVerest project **provides infrastructure** for stable release maintenance:
 * Each stable release creates a dedicated branch (``stable/yyyy.mm``)
 * Stable branches remain open for community contributions
 * Critical security patches and bug fixes can be backported by project maintainers
-or community contributions
+  or community contributions
 
 **Important:** The existence of a stable branch does not guarantee ongoing 
 maintenance activity. Actual maintenance depends on community involvement and 

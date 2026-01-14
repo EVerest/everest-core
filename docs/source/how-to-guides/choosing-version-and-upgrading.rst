@@ -6,7 +6,7 @@ Choosing an EVerest Version
 
 This guide helps you choose the right EVerest version for your use case.
 
-Please refer to our :doc:`versioning policy </explanation/releases-and-versioning>` for detailed information on
+Please refer to our :ref:`versioning policy <project-release-and-versioning>` for detailed information on
 versioning and release cycles.
 
 .. note::

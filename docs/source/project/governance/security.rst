@@ -8,7 +8,7 @@ Supported Versions
 ==================
 
 Since the beginning of 2026 we are releasing versions of EVerest with a cadence of six months.
-The specifics of this release process are outlined in the :doc:`TODO Release Documentation </project/releases/release-and-versioning>`.
+The specifics of this release process are outlined in the :ref:`Release Documentation <project-release-and-versioning>`.
 
 Reporting a Vulnerability
 =========================

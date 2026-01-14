@@ -83,18 +83,6 @@ Below that, you will be presented with a categorized list of all articles.
 
       How this documentation is structured.
 
-   .. grid-item-card:: EVerest Releases and Versioning
-      :link: releases-and-versioning
-      :link-type: doc
-
-      Explanation of the EVerest versioning scheme and release process.
-
-   .. grid-item-card:: Breaking Changes in EVerest
-      :link: breaking-changes
-      :link-type: doc
-
-      Explanation of what constitutes a breaking change in EVerest.
-
 .. toctree::
     :hidden:
     :maxdepth: 1
@@ -113,6 +101,3 @@ Below that, you will be presented with a categorized list of all articles.
     hardware-drivers
     the-everest-documentation
     powermeter-ocmf
-    releases-and-versioning
-    breaking-changes
-    the-everest-documentation
