@@ -147,13 +147,6 @@ void EvseManager::init() {
         {
             std::scoped_lock lock(hw_caps_mutex);
             hw_capabilities = c;
-            // Maybe override with user setting for this EVSE
-            if (config.max_current_import_A < hw_capabilities.max_current_A_import) {
-                hw_capabilities.max_current_A_import = config.max_current_import_A;
-            }
-            if (config.max_current_export_A < hw_capabilities.max_current_A_export) {
-                hw_capabilities.max_current_A_export = config.max_current_export_A;
-            }
         }
 
         if (ac_nr_phases_active == 0) {

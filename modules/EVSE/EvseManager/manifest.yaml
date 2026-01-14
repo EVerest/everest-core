@@ -50,14 +50,6 @@ config:
     description: Allow ventilated charging or not
     type: boolean
     default: true
-  max_current_import_A:
-    description: User configurable current limit for this EVSE in Ampere
-    type: number
-    default: 32
-  max_current_export_A:
-    description: User configurable current limit for this EVSE in Ampere
-    type: number
-    default: 32
   charge_mode:
     description: Select charging mode
     type: string
