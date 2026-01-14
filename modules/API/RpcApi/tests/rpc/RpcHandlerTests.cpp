@@ -453,6 +453,8 @@ TEST_F(RpcHandlerTest, EvseSetChargingAllowedReq) {
     // Set up requests
     nlohmann::json evse_set_charging_allowed_req_valid_index =
         create_json_rpc_request("EVSE.SetChargingAllowed", {{"evse_index", 1}, {"charging_allowed", true}}, 1);
+    nlohmann::json evse_set_charging_allowed_req_valid_index_false =
+        create_json_rpc_request("EVSE.SetChargingAllowed", {{"evse_index", 1}, {"charging_allowed", false}}, 1);
     nlohmann::json evse_set_charging_allowed_req_invalid_index =
         create_json_rpc_request("EVSE.SetChargingAllowed", {{"evse_index", 99}, {"charging_allowed", true}}, 1);
 
@@ -479,6 +481,11 @@ TEST_F(RpcHandlerTest, EvseSetChargingAllowedReq) {
     // Check if the EVSE status is updated
     ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().has_value());
     ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().value().charging_allowed);
+    // Send EVSE.SetChargingAllowed request with valid ID and false
+    send_req_and_validate_res(client, evse_set_charging_allowed_req_valid_index_false, expected_response);
+    // Check if the EVSE status is updated
+    ASSERT_TRUE(data_store.evses[0]->evsestatus.get_data().has_value());
+    ASSERT_FALSE(data_store.evses[0]->evsestatus.get_data().value().charging_allowed);
 
     // Send EVSE.SetChargingAllowed request with invalid ID
     send_req_and_validate_res(client, evse_set_charging_allowed_req_invalid_index, expected_error,
