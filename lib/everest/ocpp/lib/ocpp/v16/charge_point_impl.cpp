@@ -2854,7 +2854,8 @@ void ChargePointImpl::sign_certificate(const ocpp::CertificateSigningUseEnum& ce
         this->configuration->getChargeBoxSerialNumber(), use_tpm);
 
     if (response.status != GetCertificateSignRequestStatus::Accepted || !response.csr.has_value()) {
-        EVLOG_error << "Create CSR (TPM=" << use_tpm << ")" << " failed for:"
+        EVLOG_error << "Create CSR (TPM=" << use_tpm << ")"
+                    << " failed for:"
                     << ocpp::conversions::certificate_signing_use_enum_to_string(certificate_signing_use);
 
         std::string gen_error =
