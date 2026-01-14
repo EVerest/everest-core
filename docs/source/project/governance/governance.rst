@@ -115,13 +115,20 @@ TSC responsibilities
 - Represent EVerest in the broader community
 - Make decisions on project structure and processes
 
+Voting process
+~~~~~~~~~~~~~~
+
+Decisions require a simple majority vote of TSC members. Each TSC member receives one vote.
+Voting can occur during TSC meetings or asynchronously via the TSC mailing list.
+Voting delegation in case of absence can be requested via email to the TSC mailing list.
+
 When does a voting member lose voting status
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If a voting member is no longer interested or cannot perform their TSC duties,
 they should volunteer to step down to non-voting member or emeritus status.
 In extreme cases, a voting member can be removed by a vote of the other voting
-members per the voting process below.
+members per the voting process above.
 
 TSC meetings and participation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
