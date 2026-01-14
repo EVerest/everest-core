@@ -12,125 +12,101 @@ Unit types
 
 .. _units_signed-SignedMeterValue:
 
-| **SignedMeterValue**:*object* 
+| **SignedMeterValue**: *object* 
 |  Representation of a signed meter value
 |  properties:
-|   **signed_meter_data**:*string* <required>
+|   **signed_meter_data**: *string* <required>
 |    Signed meter data (encoded in a string representation with eg. Base64)
-|   **signing_method**:*string* <required>
+|   **signing_method**: *string* <required>
 |    Method used to create the signature
-|   **encoding_method**:*string* <required>
+|   **encoding_method**: *string* <required>
 |    Method used to encode the meter values before signing them
-|   **public_key**:*string* <optional>
+|   **public_key**: *string* <optional>
 |    Public key (encoded in a string representation with eg. Base64)
-|   **timestamp**:*string* <optional>
+|   **timestamp**: *string* <optional>
 |    Timestamp of measurement
 |    format:date-time
 
 .. _units_signed-Current:
 
-| **Current**:*object* 
+| **Current**: *object* 
 |  Current in Ampere
 |  properties:
-|   **DC**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **DC**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    DC current
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L1**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L1**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L1 value only
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L2**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L2**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L2 value only
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L3**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L3**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L3 value only
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **N**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **N**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC Neutral value only
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
 
 .. _units_signed-Voltage:
 
-| **Voltage**:*object* 
+| **Voltage**: *object* 
 |  Voltage in Volt
 |  properties:
-|   **DC**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **DC**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    DC voltage
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L1**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L1**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L1 value only
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L2**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L2**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L2 value only
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L3**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L3**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L3 value only
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
 
 .. _units_signed-Frequency:
 
-| **Frequency**:*object* 
+| **Frequency**: *object* 
 |  AC only: Frequency in Hertz
 |  properties:
-|   **L1**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L1**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L1 value
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L2**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L2**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L2 value
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L3**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L3**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L3 value
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
 
 .. _units_signed-Power:
 
-| **Power**:*object* 
+| **Power**: *object* 
 |  Instantaneous power in Watt. Negative values are exported, positive values imported Energy.
 |  properties:
-|   **total**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **total**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    DC / AC Sum value
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L1**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L1**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L1 value only
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L2**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L2**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L2 value only
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L3**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L3**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L3 value only
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
 
 .. _units_signed-Energy:
 
-| **Energy**:*object* 
+| **Energy**: *object* 
 |  Energy in Wh.
 |  properties:
-|   **total**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **total**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    DC / AC Sum value (which is relevant for billing)
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L1**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L1**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L1 value only
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L2**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L2**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L2 value only
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L3**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L3**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    AC L3 value only
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
 
 .. _units_signed-ReactivePower:
 
-| **ReactivePower**:*object* 
+| **ReactivePower**: *object* 
 |  Reactive power VAR
 |  properties:
-|   **total**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **total**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    VAR total
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L1**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L1**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    VAR phase A
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L2**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L2**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    VAR phase B
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.
-|   **L3**:*object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
+|   **L3**: *object* <required> (:ref:`units_signed-SignedMeterValue <units_signed-SignedMeterValue>`)
 |    VAR phase C
-|    **There is an extended definition for this object** :ref:`here <units_signed-SignedMeterValue>`.

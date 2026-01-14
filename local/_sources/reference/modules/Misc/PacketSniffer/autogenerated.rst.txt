@@ -1,0 +1,45 @@
+
+
+.. _everest_modules_PacketSniffer:
+
+#############
+PacketSniffer
+#############
+| Using the "PacketSniffer" EVerest module it is possible to capture and store the different packets on the PLC interface.
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **device**: *string* <optional>
+| *default: "eth1"*
+|  The ethernet device on which the messages are to be captured
+| **session_logging_path**: *string* <optional>
+| *default: "/tmp"*
+|  Output directory for session capture dump files
+
+Provides
+========
+| **main**: :ref:`empty <everest_interfaces_empty>`
+|  EVerest API
+
+Requirements
+============
+| **evse_manager**: :ref:`evse_manager <everest_interfaces_evse_manager>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Sebastian Lukas
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

@@ -1,8 +1,8 @@
 .. _snapshot:
 
-##########################################
-Snapshot
-##########################################
+#####################
+Dependencies Snapshot
+#####################
 
 .. literalinclude:: assets/snapshot.yaml
     :language: yaml

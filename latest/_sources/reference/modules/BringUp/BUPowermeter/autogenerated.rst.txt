@@ -1,0 +1,51 @@
+
+
+.. _everest_modules_BUPowermeter:
+
+############
+BUPowermeter
+############
+| Interactive bring up helper for Powermeter interface
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **evse_id**: *string* <optional>
+| *default: "EVSE_ID"*
+|  Id of this EVSE
+| **transaction_id**: *string* <optional>
+| *default: "12345678-1234-5678-1234-567812345678"*
+|  OCPP transaction UUID
+| **identification_data**: *string* <optional>
+| *default: "A1B2C3D4E5F6"*
+|  User identification means, e.g. RFID card ID
+| **tariff_text**: *string* <optional>
+| *default: "custom"*
+|  Tariff Text
+
+Provides
+========
+| **main**: :ref:`empty <everest_interfaces_empty>`
+|  This module does not provide anything
+
+Requirements
+============
+| **powermeter**: :ref:`powermeter <everest_interfaces_powermeter>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Florin Mihut
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

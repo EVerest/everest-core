@@ -1,0 +1,37 @@
+
+
+.. _everest_modules_EvAPI:
+
+#####
+EvAPI
+#####
+| The EVerest EV API module, exposing some internal functionality on an external MQTT connection.
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`empty <everest_interfaces_empty>`
+|  EVerest EV API
+
+Requirements
+============
+| **ev_manager**: :ref:`ev_manager <everest_interfaces_ev_manager>` 1..128
+
+********
+Metadata
+********
+Authors
+=======
+| Kai-Uwe Hermann
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

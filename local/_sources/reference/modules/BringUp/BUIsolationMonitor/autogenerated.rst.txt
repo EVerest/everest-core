@@ -1,0 +1,37 @@
+
+
+.. _everest_modules_BUIsolationMonitor:
+
+##################
+BUIsolationMonitor
+##################
+| Interactive bring up helper for Isolation Monitor interface
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`empty <everest_interfaces_empty>`
+|  This module does not provide anything
+
+Requirements
+============
+| **imd**: :ref:`isolation_monitor <everest_interfaces_isolation_monitor>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

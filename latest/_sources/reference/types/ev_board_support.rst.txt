@@ -12,7 +12,7 @@ EV and EVSE board support types
 
 .. _ev_board_support-EvCpState:
 
-| **EvCpState**:*string* 
+| **EvCpState**: *string* 
 |  ControlPilot state
 |  enum:
 |    - A

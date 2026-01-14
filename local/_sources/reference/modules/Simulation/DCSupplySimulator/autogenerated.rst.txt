@@ -1,0 +1,58 @@
+
+
+.. _everest_modules_DCSupplySimulator:
+
+#################
+DCSupplySimulator
+#################
+| Implementation of a programmable power supply for DC charging
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`power_supply_DC <everest_interfaces_power_supply_DC>`
+|  Main interface for the power supply
+|  **config:**
+|   **bidirectional**: *boolean* <optional>
+|   *default: True*
+|    Set to true for bidirectional supply
+|   **max_power**: *number* <optional>
+|   *default: 150000*
+|    Max supported power in watt
+|   **min_voltage**: *number* <optional>
+|   *default: 200.0*
+|    Min supported voltage
+|   **max_voltage**: *number* <optional>
+|   *default: 900.0*
+|    Max supported voltage
+|   **min_current**: *number* <optional>
+|   *default: 1.0*
+|    Min supported current
+|   **max_current**: *number* <optional>
+|   *default: 200.0*
+|    Max supported current
+| **powermeter**: :ref:`powermeter <everest_interfaces_powermeter>`
+|  Power meter interface for simulation
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen (Pionix GmbH)
+| Fabian Hartung (chargebyte GmbH)
+| Mohannad Oraby (chargebyte GmbH)
+| Sebastian Lukas (Pionix GmbH)
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

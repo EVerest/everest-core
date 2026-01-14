@@ -1,0 +1,68 @@
+
+
+.. _everest_modules_EvseSecurity:
+
+############
+EvseSecurity
+############
+| This module implements the evse_security interface. It uses the filesystem to store certificates and keys
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **csms_ca_bundle**: *string* <optional>
+| *default: "ca/csms/CSMS_ROOT_CA.pem"*
+|  Path to csms_ca_bundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+| **mf_ca_bundle**: *string* <optional>
+| *default: "ca/mf/MF_ROOT_CA.pem"*
+|  Path to mf_ca_bundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+| **mo_ca_bundle**: *string* <optional>
+| *default: "ca/mo/MO_ROOT_CA.pem"*
+|  Path to mo_ca_bundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+| **v2g_ca_bundle**: *string* <optional>
+| *default: "ca/v2g/V2G_ROOT_CA.pem"*
+|  Path to v2g_ca_bundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+| **csms_leaf_cert_directory**: *string* <optional>
+| *default: "client/csms"*
+|  Directory where CSMS leaf certificates are stored. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+| **csms_leaf_key_directory**: *string* <optional>
+| *default: "client/csms"*
+|  Directory where CSMS private keys are stored. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+| **secc_leaf_cert_directory**: *string* <optional>
+| *default: "client/cso"*
+|  Directory where SECC leaf certificates are stored. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+| **secc_leaf_key_directory**: *string* <optional>
+| *default: "client/cso"*
+|  Directory where SECC private keys are stored. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
+| **private_key_password**: *string* <optional>
+| *default: ""*
+|  Password for encrypted private keys.
+
+Provides
+========
+| **main**: :ref:`evse_security <everest_interfaces_evse_security>`
+|  Implementation of the evse_security interface
+
+
+********
+Metadata
+********
+Authors
+=======
+| Piet Gömpel
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

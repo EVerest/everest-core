@@ -14,8 +14,9 @@ debug_json
 *********
 Variables
 *********
-| **title**:*string* 
+| **title**: *string* 
 |  Title of the Debug object
-| **debug_json**:*object* 
+| **debug_json**: *object* 
 |  Provides the debug object as a json object
+
 

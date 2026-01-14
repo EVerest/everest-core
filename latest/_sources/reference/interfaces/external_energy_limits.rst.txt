@@ -17,6 +17,6 @@ Commands
 ********
 | **set_external_limits**:*void*
 |  Set additional external energy flow limits at this node.
-|  **value**:*object* <required> (:ref:`energy-ExternalLimits <energy-ExternalLimits>`)
+|  **value**: *object* <required> (:ref:`energy-ExternalLimits <energy-ExternalLimits>`)
 |   External limits object
-|   **There is an extended definition for this object** :ref:`here <energy-ExternalLimits>`.
+

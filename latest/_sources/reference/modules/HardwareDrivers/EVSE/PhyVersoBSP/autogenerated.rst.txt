@@ -1,0 +1,178 @@
+
+
+.. _everest_modules_PhyVersoBSP:
+
+###########
+PhyVersoBSP
+###########
+| Driver module for Phytec PhyVerso EV Charging controller with Pionix MCU firmware
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **serial_port**: *string* <optional>
+| *default: "/dev/ttyUSB0"*
+|  Serial port the hardware is connected to
+| **baud_rate**: *integer* <optional>
+| *default: 115200*
+|  Serial baud rate to use when communicating with the hardware
+| **reset_gpio**: *integer* <optional>
+| *default: -1*
+|  If set <0 it is disabled. If > 0, configured reset_gpio_bank and reset_gpio_pin configuration is used for hard reset of MCU
+| **conn1_max_current_A_import**: *integer* <optional>
+| *default: 16*
+|  Maximum import current in amps
+| **conn1_min_current_A_import**: *integer* <optional>
+| *default: 6*
+|  Minimum import current in amps
+| **conn1_min_phase_count_import**: *integer* <optional>
+| *default: 3*
+|  Minimum phase count for import
+| **conn1_max_phase_count_import**: *integer* <optional>
+| *default: 3*
+|  Maximum phase count for import
+| **conn1_min_current_A_export**: *integer* <optional>
+| *default: 0*
+|  Minimum export current in amps
+| **conn1_max_current_A_export**: *integer* <optional>
+| *default: 0*
+|  Maximum export current in amps
+| **conn1_min_phase_count_export**: *integer* <optional>
+| *default: 3*
+|  Minimum phase count for export
+| **conn1_max_phase_count_export**: *integer* <optional>
+| *default: 3*
+|  Maximum phase count for export
+| **conn1_has_socket**: *boolean* <optional>
+| *default: False*
+|  Set to true if it has a socket, false if it has a permanently attached cable
+| **conn1_dc**: *boolean* <optional>
+| *default: False*
+|  Set to true if it is for DC, false if it is AC
+| **conn2_max_current_A_import**: *integer* <optional>
+| *default: 16*
+|  Maximum import current in amps
+| **conn2_min_current_A_import**: *integer* <optional>
+| *default: 6*
+|  Minimum import current in amps
+| **conn2_min_phase_count_import**: *integer* <optional>
+| *default: 3*
+|  Minimum phase count for import
+| **conn2_max_phase_count_import**: *integer* <optional>
+| *default: 3*
+|  Maximum phase count for import
+| **conn2_min_current_A_export**: *integer* <optional>
+| *default: 0*
+|  Minimum export current in amps
+| **conn2_max_current_A_export**: *integer* <optional>
+| *default: 0*
+|  Maximum export current in amps
+| **conn2_min_phase_count_export**: *integer* <optional>
+| *default: 3*
+|  Minimum phase count for export
+| **conn2_max_phase_count_export**: *integer* <optional>
+| *default: 3*
+|  Maximum phase count for export
+| **conn2_has_socket**: *boolean* <optional>
+| *default: False*
+|  Set to true if it has a socket, false if it has a permanently attached cable
+| **conn2_dc**: *boolean* <optional>
+| *default: False*
+|  Set to true if it is for DC, false if it is AC
+| **reset_gpio_bank**: *integer* <optional>
+| *default: 1*
+|  GPIO peripheral bank the nRST pin of the MCU is mapped to
+| **reset_gpio_pin**: *integer* <optional>
+| *default: 23*
+|  GPIO peripheral pin the nRST pin of the MCU is mapped to
+| **conn1_motor_lock_type**: *integer* <optional>
+| *default: -1*
+|  Connector 1 motor lock type; 
+|    -1 == no Lock
+|     1 == Hella Style time-based lock, 
+|     2 == Valeo potentiometer feedback based; 
+|  If charging port has a socket and is AC charging, it will need a lock specified
+| **conn2_motor_lock_type**: *integer* <optional>
+| *default: -1*
+|  Connector 2 motor lock type; 
+|    -1 == no Lock
+|     1 == Hella Style time-based lock, 
+|     2 == Valeo potentiometer feedback based; 
+|  If charging port has a socket and is AC charging, it will need a lock specified
+| **conn1_gpio_stop_button_enabled**: *boolean* <optional>
+| *default: False*
+|  Set to true to enable external charging stop button for connector 1 on a GPIO connected to the SOM
+| **conn1_gpio_stop_button_bank**: *string* <optional>
+| *default: "gpiochip1"*
+|  GPIO peripheral bank for connector 1 stop button
+| **conn1_gpio_stop_button_pin**: *integer* <optional>
+| *default: 36*
+|  GPIO peripheral pin for connector 1 stop button
+| **conn1_gpio_stop_button_invert**: *boolean* <optional>
+| *default: False*
+|  Set to true to invert pin logic
+| **conn2_gpio_stop_button_enabled**: *boolean* <optional>
+| *default: False*
+|  Set to true to enable external charging stop button for connector 2 on a GPIO connected to the SOM
+| **conn2_gpio_stop_button_bank**: *string* <optional>
+| *default: "gpiochip1"*
+|  GPIO peripheral bank for connector 2 stop button
+| **conn2_gpio_stop_button_pin**: *integer* <optional>
+| *default: 37*
+|  GPIO peripheral pin for connector 2 stop button
+| **conn2_gpio_stop_button_invert**: *boolean* <optional>
+| *default: False*
+|  Set to true to invert pin logic
+| **conn1_disable_port**: *boolean* <optional>
+| *default: False*
+|  Set to true if port 1 is neither used for AC nor DC charging (will overwrite conn1_dc parameter)
+| **conn2_disable_port**: *boolean* <optional>
+| *default: False*
+|  Set to true if port 2 is neither used for AC nor DC charging (will overwrite conn2_dc parameter)
+| **conn1_feedback_active_low**: *boolean* <optional>
+| *default: True*
+|  Set to true if relay mirror contact on port 1 feedback is active LOW, false if active HIGH; don't change for AC port config
+| **conn2_feedback_active_low**: *boolean* <optional>
+| *default: True*
+|  Set to true if relay mirror contact on port 2 feedback is active LOW, false if active HIGH; don't change for AC port config
+| **conn1_feedback_pull**: *integer* <optional>
+| *default: 2*
+|  DC port config only - specify which way internal pull resistors will work; 0 -> None, 1 -> PullUp, 2 -> PullDown (default=PD)
+| **conn2_feedback_pull**: *integer* <optional>
+| *default: 2*
+|  DC port config only - specify which way internal pull resistors will work; 0 -> None, 1 -> PullUp, 2 -> PullDown (default=PD)
+
+Provides
+========
+| **connector_1**: :ref:`evse_board_support <everest_interfaces_evse_board_support>`
+|  provides the board support interface to low level control the proximity and control pilots, relais and motor lock
+| **connector_2**: :ref:`evse_board_support <everest_interfaces_evse_board_support>`
+|  provides the board support interface to low level control the proximity and control pilots, relais and motor lock
+| **rcd_1**: :ref:`ac_rcd <everest_interfaces_ac_rcd>`
+|  RCD interface for an external RDC-MD
+| **rcd_2**: :ref:`ac_rcd <everest_interfaces_ac_rcd>`
+|  RCD interface of the onboard RDC-MD
+| **connector_lock_1**: :ref:`connector_lock <everest_interfaces_connector_lock>`
+|  Lock interface
+| **connector_lock_2**: :ref:`connector_lock <everest_interfaces_connector_lock>`
+|  Lock interface
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+| Jonas Rockstroh
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

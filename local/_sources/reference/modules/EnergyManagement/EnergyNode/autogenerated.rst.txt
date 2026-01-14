@@ -1,0 +1,52 @@
+
+
+.. _everest_modules_EnergyNode:
+
+##########
+EnergyNode
+##########
+| This module is part of the Energy Tree and represents a simple current fuse.
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **fuse_limit_A**: *number* <required>
+|  Fuse limit in ampere for all phases. Note: this always applies in addition to limits set by external_limits interface.
+| **phase_count**: *integer* <required>
+|  phase count limit. Omit if not limited in this fuse.
+
+Provides
+========
+| **energy_grid**: :ref:`energy <everest_interfaces_energy>`
+|  This is the chain interface to build the energy supply tree
+| **external_limits**: :ref:`external_energy_limits <everest_interfaces_external_energy_limits>`
+|  Additional external limits can be set via this interface.
+
+Requirements
+============
+| **energy_consumer**: :ref:`energy <everest_interfaces_energy>` 1..128
+| **powermeter**: :ref:`powermeter <everest_interfaces_powermeter>` 0..1
+| **price_information**: :ref:`energy_price_information <everest_interfaces_energy_price_information>` 0..1
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

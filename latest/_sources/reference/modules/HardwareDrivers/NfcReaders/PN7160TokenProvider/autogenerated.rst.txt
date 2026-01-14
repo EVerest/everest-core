@@ -1,0 +1,53 @@
+
+
+.. _everest_modules_PN7160TokenProvider:
+
+###################
+PN7160TokenProvider
+###################
+| PN7160 RFID/NFC token provider returning the token as soon as the tag can be read by the reader
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`auth_token_provider <everest_interfaces_auth_token_provider>`
+|  Implementation of PN7160 RFID/NFC token provider
+|  **config:**
+|   **token_debounce_interval_ms**: *integer* <optional>
+|   *default: 3000*
+|    Minimal wait time in ms until next token will be published (debounce interval).
+|   **disable_nfc_rfid**: *boolean* <optional>
+|   *default: False*
+|    Disable NFC RFID reader
+|   **debug**: *boolean* <optional>
+|   *default: False*
+|    Show debug output on command line.
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+| Kai-Uwe Hermann
+| Thilo Molitor
+| Anton Wöllert
+| Christoph Burandt
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

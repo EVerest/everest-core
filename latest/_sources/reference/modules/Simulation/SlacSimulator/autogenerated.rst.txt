@@ -1,0 +1,37 @@
+
+
+.. _everest_modules_SlacSimulator:
+
+#############
+SlacSimulator
+#############
+| SIL Implementation of SLAC data link negotiation according to ISO15118-3.
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **evse**: :ref:`slac <everest_interfaces_slac>`
+|  SLAC interface implementation for EVSE side
+| **ev**: :ref:`ev_slac <everest_interfaces_ev_slac>`
+|  SLAC interface implementation for EV side
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen (Pionix GmbH)
+| Tobias Marzell (Pionix GmbH)
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

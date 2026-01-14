@@ -14,32 +14,28 @@ reservation
 *********
 Variables
 *********
-| **reservation_update**:*object*  (:ref:`reservation-ReservationUpdateStatus <reservation-ReservationUpdateStatus>`)
+| **reservation_update**: *object*  (:ref:`reservation-ReservationUpdateStatus <reservation-ReservationUpdateStatus>`)
 |  Update of the reservation.
-|  **There is an extended definition for this object** :ref:`here <reservation-ReservationUpdateStatus>`.
 
 ********
 Commands
 ********
 | **reserve_now**:*string*
 |  Reserves an evse.
-|  **request**:*object* <required> (:ref:`reservation-Reservation <reservation-Reservation>`)
+|  **request**: *object* <required> (:ref:`reservation-Reservation <reservation-Reservation>`)
 |   Requests to make a reservation
-|   **There is an extended definition for this object** :ref:`here <reservation-Reservation>`.
-|  **Result**:*string*  (:ref:`reservation-ReservationResult <reservation-ReservationResult>`)
+|  **Result**: *string*  (:ref:`reservation-ReservationResult <reservation-ReservationResult>`)
 |   Returns Accepted if reservation was successful or specifies error code.
-|   **There is an extended definition for this object** :ref:`here <reservation-ReservationResult>`.
 | **cancel_reservation**:*boolean*
 |  Cancels the reservation with the given reservation_id
-|  **reservation_id**:*integer* <required>
+|  **reservation_id**: *integer* <required>
 |   Id of the reservation
-|  **Result**:*boolean* 
+|  **Result**: *boolean* 
 |   Returns true if reservation was cancelled. Returns false if there was no reservation to cancel.
 | **exists_reservation**:*string*
 |  Checks if there is a reservation made for the given connector and token. Will also return true if there is a reservation with this token for evse id 0.
-|  **request**:*object* <required> (:ref:`reservation-ReservationCheck <reservation-ReservationCheck>`)
+|  **request**: *object* <required> (:ref:`reservation-ReservationCheck <reservation-ReservationCheck>`)
 |   The information to send for the check if there is a reservation on the given connector for the given token.
-|   **There is an extended definition for this object** :ref:`here <reservation-ReservationCheck>`.
-|  **Result**:*string*  (:ref:`reservation-ReservationCheckStatus <reservation-ReservationCheckStatus>`)
+|  **Result**: *string*  (:ref:`reservation-ReservationCheckStatus <reservation-ReservationCheckStatus>`)
 |   Returns an enum which indicates the reservation status of the given id / id token / group id token combination.
-|   **There is an extended definition for this object** :ref:`here <reservation-ReservationCheckStatus>`.
+

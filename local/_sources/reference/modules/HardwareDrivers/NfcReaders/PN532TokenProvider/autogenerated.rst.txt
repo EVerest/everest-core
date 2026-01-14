@@ -1,0 +1,50 @@
+
+
+.. _everest_modules_PN532TokenProvider:
+
+##################
+PN532TokenProvider
+##################
+| PN532 RFID/NFC token provider returning the token as soon as the tag can be read by the reader
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`auth_token_provider <everest_interfaces_auth_token_provider>`
+|  Implementation of PN532 RFID/NFC token provider
+|  **config:**
+|   **serial_port**: *string* <optional>
+|   *default: "/dev/ttyS0"*
+|    Serial port the PN532 hardware is connected to
+|   **baud_rate**: *integer* <optional>
+|   *default: 115200*
+|    Serial baud rate to use when communicating with PN532 hardware
+|   **read_timeout**: *integer* <optional>
+|   *default: 5*
+|    Time between subsequent card reads (in s)
+|   **debug**: *boolean* <optional>
+|   *default: False*
+|    Show debug output on command line.
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+| Kai-Uwe Hermann
+| Thilo Molitor
+| Anton Wöllert
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

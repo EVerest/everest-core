@@ -12,39 +12,18 @@ Types needed for payment terminal - bookkeeping bank transactions, card types
 
 .. _payment_terminal-BankSessionToken:
 
-| **BankSessionToken**:*object* 
+| **BankSessionToken**: *object* 
 |  In some setups the unique token needs to be provided in the bank statement.
 |  properties:
-|   **token**:*string* <required>
+|   **token**: *string* <required>
 |    Arbitrary token string. Typically short string that is printable case insensitive ascii.
 
 .. _payment_terminal-BankTransactionSummary:
 
-| **BankTransactionSummary**:*object* 
+| **BankTransactionSummary**: *object* 
 |  Summary of a bank transaction. Depends on bank and the backend. Therefore it's mostly opaque data at the moment.
 |  properties:
-|   **session_token**:*object* <required> (:ref:`payment_terminal-BankSessionToken <payment_terminal-BankSessionToken>`)
+|   **session_token**: *object* <required> (:ref:`payment_terminal-BankSessionToken <payment_terminal-BankSessionToken>`)
 |    Token to identify the session. This token can be used to download the invoices.
-|    **There is an extended definition for this object** :ref:`here <payment_terminal-BankSessionToken>`.
-|   **transaction_data**:*string* <required>
+|   **transaction_data**: *string* <required>
 |    Arbitrary data that is needed to identify the transaction. This is mostly opaque data at the moment.
-
-.. _payment_terminal-CardType:
-
-| **CardType**:*string* 
-|  types of cards for the payment terminal
-|  enum:
-|    - BankCard
-|    - RfidCard
-
-.. _payment_terminal-RejectionReason:
-
-| **RejectionReason**:*string* 
-|  Indicates the reason why the card was rejected
-|  enum:
-|    - PinRequired
-|    - InsufficientFunds
-|    - CardNotSupported
-|    - Aborted
-|    - Timeout
-|    - Unknown

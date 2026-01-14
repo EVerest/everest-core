@@ -1,0 +1,73 @@
+
+
+.. _everest_modules_Auth:
+
+####
+Auth
+####
+| This module implements the authentication handling for the EVerest. It is responsible for providing authorization to the connected evse managers. In addition to that, it handles the reservation management.
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **selection_algorithm**: *string* <optional>
+| *default: "FindFirst"*
+|  The selection algorithm contains the logic to select one connector for an incoming token. In case the charging station has only one connector, the selection of a connector is pretty straight-forward because there is only one that is  available. The selection algorithm becomes relevant in case the Auth  module manages authorization requests  for multiple connectors. The following values can be set: PlugEvents: Selection of connector is based on EV Plug In events FindFirst: Simply selects the first available connector that has no active transaction UserInput: Placeholder, not yet implemented
+| **connection_timeout**: *integer* <required>
+|  Defines how many seconds an authorization is valid before it is discarded. Defines how many seconds a user can provide authorization after the plug in of a car
+| **master_pass_group_id**: *string* <optional>
+| *default: ""*
+|  IdTokens that have this id as groupId belong to the Master Pass Group. Meaning they can stop any ongoing transaction, but cannot start transactions. This can, for example, be used by law enforcement personal to stop any ongoing transaction when an EV has to be towed away. If left empty, master_pass_group_id is not used.
+| **prioritize_authorization_over_stopping_transaction**: *boolean* <optional>
+| *default: True*
+|  Boolean value to describe the handling of parent id tokens.
+|  If true, a new token will be preferably used for authorization of a new connector if a connector is available. It will not be used to finish a transaction using its parent_id_token. parent_id_token will only be used to finish transaction if no connector is available for authorization anymore.
+|  If false, a new token will be used to finish a transaction if the parent_id_token of a present transaction matches the parent_id_token of the provided_token. Authorization to available connectors will only be provided if no transaction can be stopped using the given parent_id_token
+| **ignore_connector_faults**: *boolean* <optional>
+| *default: False*
+|  Boolean value to describe the handling of faults on connectors.
+|  If true, faults reported on connectors are ignored, i.e. they can still be authorized. This should be disabled in most use cases, but e.g. in free charging applications it may be useful to allow a charging session in the following case: A connector e.g. has an overtemperature fault that at some point will clear once it is cooled down. A car is plugged in before  the error is cleared. The user would expect that the charging starts once it is cooled down. When this option is set to false,  it will not be authorized on plug in as the connector is in fault state and it will never recover until the car is replugged. If it is set to true, the authorization happens on the faulty connector and charging will start once the fault is cleared.
+|  If false, faulty connectors are treated as not available and will not be authorized. This is a good setting for e.g. public chargers.
+| **plug_in_timeout_enabled**: *boolean* <optional>
+| *default: False*
+|  This parameter is only used if the charging station has multiple EVSEs managed by this Auth module.
+|  Controls the authorization-timeout behavior after a plug-in event. When enabled, an internal timer is started immediately after an EV is detected as plugged in. During the time defined by connection_timeout, the user must present a valid authorization token.
+|  If no valid token is received within the specified connection_timeout, the authorization attempt is considered as timed out and a re-plug by the user is required to start a new authorization process.
+|  This setting is particularly useful for charging stations with multiple EVSEs and a shared, non-EVSE-specific authorization interface (e.g., a single RFID reader). It prevents authorization tokens from being incorrectly associated with an EVSE where an EV is plugged in but has not been authorized, by ensuring that expired or ambiguous plug-ins are not considered for EVSE assignments for future authorization attempts.
+
+Provides
+========
+| **main**: :ref:`auth <everest_interfaces_auth>`
+|  This implements the auth interface for EVerest
+| **reservation**: :ref:`reservation <everest_interfaces_reservation>`
+|  This implements the reservation interface for EVerest.
+
+Requirements
+============
+| **token_provider**: :ref:`auth_token_provider <everest_interfaces_auth_token_provider>` 1..128
+| **token_validator**: :ref:`auth_token_validator <everest_interfaces_auth_token_validator>` 1..128
+| **evse_manager**: :ref:`evse_manager <everest_interfaces_evse_manager>` 1..128
+| **kvs**: :ref:`kvs <everest_interfaces_kvs>` 0..1
+
+********
+Metadata
+********
+Authors
+=======
+| Piet Gömpel
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

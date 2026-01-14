@@ -1,0 +1,101 @@
+
+
+.. _everest_modules_LemDCBM400600:
+
+#############
+LemDCBM400600
+#############
+| Module implementing the LEM DCBM 400/600 power meter driver adapter via HTTP.
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **ip_address**: *string* <required>
+|  IP Address of the power meter API.
+| **port**: *integer* <optional>
+| *default: 80*
+|  Port of the power meter API.
+| **interface**: *string* <optional>
+| *default: ""*
+|  Bind to a specific network interface. If left empty, the module will bind to all interfaces.
+| **meter_tls_certificate**: *string* <optional>
+| *default: ""*
+|  The DCBM's HTTPS certificate, in PEM format. If provided, HTTPS will be used. If left empty, regular HTTP will be used. Note that this does not affect the default port - specify a port explicitly if you wish to use a port other than 80.
+| **ntp_server_1_ip_addr**: *string* <optional>
+| *default: ""*
+|  The IPv4 address (in 4-octet form W.X.Y.Z) of the first NTP server to use for time sync. If this is left empty, NTP will not be configured on the DCBM - its time will be synced with EVerest's system time instead.
+| **ntp_server_1_port**: *integer* <optional>
+| *default: 123*
+|  The port (1-65535) of the first NTP server.
+| **ntp_server_2_ip_addr**: *string* <optional>
+| *default: ""*
+|  The IPv4 address (in 4-octet form W.X.Y.Z) of the second NTP server to use for time sync. This is ignored if ntp_server_1_ip_addr is empty.
+| **ntp_server_2_port**: *integer* <optional>
+| *default: 123*
+|  The port (1-65535) fof the second NTP server.
+| **meter_timezone**: *string* <optional>
+| *default: "+00:00"*
+|  The timezone offset (ignored if NTP servers are set) - it can go from -11 to +14 for hours and 00, 15, 30, 45 for minutes
+| **meter_dst**: *string* <optional>
+| *default: "{"activated": false, "offset": 60, "start": {"order": "last", "day": "sunday", "month": "march", "hour": "T01:00Z"}, "end": {"order": "last", "day": "sunday", "month": "october", "hour": "T01:00Z" }}"*
+|  The Daylight Saving Time (DST) settings (ignored if NTP is set)
+| **resilience_initial_connection_retries**: *integer* <optional>
+| *default: 25*
+|  For the controller resilience, the number of retries to connect to the powermeter at module initialization.
+| **resilience_initial_connection_retry_delay**: *integer* <optional>
+| *default: 10000*
+|  For the controller resilience, the delay in milliseconds before a retry attempt at module initialization..
+| **resilience_transaction_request_retries**: *integer* <optional>
+| *default: 3*
+|  For the controller resilience, the number of retries to connect to the powermeter at a transaction start or stop request.
+| **resilience_transaction_request_retry_delay**: *integer* <optional>
+| *default: 250*
+|  For the controller resilience, the delay in milliseconds before a retry attempt  at a transaction start or stop request.
+| **cable_id**: *integer* <optional>
+| *default: 0*
+|  The cable loss compensation level to use. This allows compensating the measurements of the DCBM with a resistance.
+| **tariff_id**: *integer* <optional>
+| *default: 0*
+|  Used for a unique transaction tariff designation
+| **SC**: *integer* <optional>
+| *default: 0*
+|  SC (OCMF/transaction fields)
+| **UV**: *string* <optional>
+| *default: ""*
+|  User SW Version (OCMF/transaction fields)
+| **UD**: *string* <optional>
+| *default: ""*
+|  UD (OCMF/transaction fields)
+| **command_timeout_ms**: *integer* <optional>
+| *default: 5000*
+|  The timeout in milliseconds for a HTTP command to the LEM power meter.
+
+Provides
+========
+| **main**: :ref:`powermeter <everest_interfaces_powermeter>`
+|  This is the main unit of the module
+
+
+********
+Metadata
+********
+Authors
+=======
+| Valentin Dimov, valentin.dimov@pionix.de
+| Fabian Klemm, fabian.klemm@pionix.de
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

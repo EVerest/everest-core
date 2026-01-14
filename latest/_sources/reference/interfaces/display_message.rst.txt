@@ -18,28 +18,22 @@ Commands
 ********
 | **set_display_message**:*object*
 |  Command to set or replace a display message.
-|  **request**:*array* <required>
+|  **request**: *array* <required>
 |   Request to set a display message
-|   **array_item**:*object*  (:ref:`display_message-DisplayMessage <display_message-DisplayMessage>`)
+|   **array_item**: *object*  (:ref:`display_message-DisplayMessage <display_message-DisplayMessage>`)
 |    The display messages to set
-|    **There is an extended definition for this object** :ref:`here <display_message-DisplayMessage>`.
-| 
-|  **Result**:*object*  (:ref:`display_message-SetDisplayMessageResponse <display_message-SetDisplayMessageResponse>`)
+|  **Result**: *object*  (:ref:`display_message-SetDisplayMessageResponse <display_message-SetDisplayMessageResponse>`)
 |   Response to the set display message request.
-|   **There is an extended definition for this object** :ref:`here <display_message-SetDisplayMessageResponse>`.
 | **get_display_messages**:*object*
 |  Command to get one or more display messages.
-|  **request**:*object* <required> (:ref:`display_message-GetDisplayMessageRequest <display_message-GetDisplayMessageRequest>`)
+|  **request**: *object* <required> (:ref:`display_message-GetDisplayMessageRequest <display_message-GetDisplayMessageRequest>`)
 |   The request for display messages
-|   **There is an extended definition for this object** :ref:`here <display_message-GetDisplayMessageRequest>`.
-|  **Result**:*object*  (:ref:`display_message-GetDisplayMessageResponse <display_message-GetDisplayMessageResponse>`)
+|  **Result**: *object*  (:ref:`display_message-GetDisplayMessageResponse <display_message-GetDisplayMessageResponse>`)
 |   The display messages or an empty array if there are none
-|   **There is an extended definition for this object** :ref:`here <display_message-GetDisplayMessageResponse>`.
 | **clear_display_message**:*object*
 |  Command to remove a display message
-|  **request**:*object* <required> (:ref:`display_message-ClearDisplayMessageRequest <display_message-ClearDisplayMessageRequest>`)
+|  **request**: *object* <required> (:ref:`display_message-ClearDisplayMessageRequest <display_message-ClearDisplayMessageRequest>`)
 |   The request to clear a message
-|   **There is an extended definition for this object** :ref:`here <display_message-ClearDisplayMessageRequest>`.
-|  **Result**:*object*  (:ref:`display_message-ClearDisplayMessageResponse <display_message-ClearDisplayMessageResponse>`)
+|  **Result**: *object*  (:ref:`display_message-ClearDisplayMessageResponse <display_message-ClearDisplayMessageResponse>`)
 |   Response on the clear message request
-|   **There is an extended definition for this object** :ref:`here <display_message-ClearDisplayMessageResponse>`.
+

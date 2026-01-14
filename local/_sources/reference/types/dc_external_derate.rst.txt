@@ -12,14 +12,14 @@ Power supply DC types
 
 .. _dc_external_derate-ExternalDerating:
 
-| **ExternalDerating**:*object* 
+| **ExternalDerating**: *object* 
 |  Derate DC power supply Capabilities from an external source.
 |  properties:
-|   **max_export_current_A**:*number* <required>
+|   **max_export_current_A**: *number* <required>
 |    Maximum current that the power supply can output in Ampere
-|   **max_import_current_A**:*number* <required>
+|   **max_import_current_A**: *number* <required>
 |    Maximum current that the power supply can sink in Ampere
-|   **max_export_power_W**:*number* <required>
+|   **max_export_power_W**: *number* <required>
 |    Maximum export power that the power supply can output in Watt
-|   **max_import_power_W**:*number* <required>
+|   **max_import_power_W**: *number* <required>
 |    Maximum import power that the power supply can sink in Watt

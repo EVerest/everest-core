@@ -14,161 +14,132 @@ evse_security
 *********
 Variables
 *********
-| **certificate_store_update**:*object*  (:ref:`evse_security-CertificateStoreUpdate <evse_security-CertificateStoreUpdate>`)
+| **certificate_store_update**: *object*  (:ref:`evse_security-CertificateStoreUpdate <evse_security-CertificateStoreUpdate>`)
 |  Variable that indicates that the certificate store has been updated, i.e. either a certificate has been installed or deleted. This is used to notify other modules that the certificate store has changed.
-|  **There is an extended definition for this object** :ref:`here <evse_security-CertificateStoreUpdate>`.
 
 ********
 Commands
 ********
 | **install_ca_certificate**:*string*
 |  Command to install a new CA certificate
-|  **certificate**:*string* <required>
+|  **certificate**: *string* <required>
 |   A PEM encoded X.509 certificate.
-|  **certificate_type**:*string* <required> (:ref:`evse_security-CaCertificateType <evse_security-CaCertificateType>`)
+|  **certificate_type**: *string* <required> (:ref:`evse_security-CaCertificateType <evse_security-CaCertificateType>`)
 |   Indicates the type of the certificate
-|   **There is an extended definition for this object** :ref:`here <evse_security-CaCertificateType>`.
-|  **Result**:*string*  (:ref:`evse_security-InstallCertificateResult <evse_security-InstallCertificateResult>`)
+|  **Result**: *string*  (:ref:`evse_security-InstallCertificateResult <evse_security-InstallCertificateResult>`)
 |   Result of the attempt to install a CA certificate
-|   **There is an extended definition for this object** :ref:`here <evse_security-InstallCertificateResult>`.
 | **delete_certificate**:*string*
 |  Command to delete a certificate
-|  **certificate_hash_data**:*object* <required> (:ref:`evse_security-CertificateHashData <evse_security-CertificateHashData>`)
+|  **certificate_hash_data**: *object* <required> (:ref:`evse_security-CertificateHashData <evse_security-CertificateHashData>`)
 |   Indicates the certificate that should be deleted
-|   **There is an extended definition for this object** :ref:`here <evse_security-CertificateHashData>`.
-|  **Result**:*string*  (:ref:`evse_security-DeleteCertificateResult <evse_security-DeleteCertificateResult>`)
+|  **Result**: *string*  (:ref:`evse_security-DeleteCertificateResult <evse_security-DeleteCertificateResult>`)
 |   Result of the attempt to delete a certificate
-|   **There is an extended definition for this object** :ref:`here <evse_security-DeleteCertificateResult>`.
 | **update_leaf_certificate**:*string*
 |  Command to install or update SECC or CSMS leaf certificate
-|  **certificate_chain**:*string* <required>
+|  **certificate_chain**: *string* <required>
 |   Leaf certificate or certificate chain that should be installed
-|  **certificate_type**:*string* <required> (:ref:`evse_security-LeafCertificateType <evse_security-LeafCertificateType>`)
+|  **certificate_type**: *string* <required> (:ref:`evse_security-LeafCertificateType <evse_security-LeafCertificateType>`)
 |   Indicates the type of the certificate
-|   **There is an extended definition for this object** :ref:`here <evse_security-LeafCertificateType>`.
-|  **Result**:*string*  (:ref:`evse_security-InstallCertificateResult <evse_security-InstallCertificateResult>`)
+|  **Result**: *string*  (:ref:`evse_security-InstallCertificateResult <evse_security-InstallCertificateResult>`)
 |   Result of the attempt to install or update a leaf certificate
-|   **There is an extended definition for this object** :ref:`here <evse_security-InstallCertificateResult>`.
 | **verify_certificate**:*string*
 |  Command to verify the given certificate
-|  **certificate_chain**:*string* <required>
+|  **certificate_chain**: *string* <required>
 |   Leaf certificate or certificate chain that is to be verified
-|  **certificate_types**:*array* <required>
+|  **certificate_types**: *array* <required>
 |   Indicates the type of the certificate
-|   **array_item**:*string*  (:ref:`evse_security-LeafCertificateType <evse_security-LeafCertificateType>`)
-|    
-|    **There is an extended definition for this object** :ref:`here <evse_security-LeafCertificateType>`.
-| 
-|  **Result**:*string*  (:ref:`evse_security-CertificateValidationResult <evse_security-CertificateValidationResult>`)
+|   **array_item**: *string*  (:ref:`evse_security-LeafCertificateType <evse_security-LeafCertificateType>`)
+|  **Result**: *string*  (:ref:`evse_security-CertificateValidationResult <evse_security-CertificateValidationResult>`)
 |   Result of the verification
-|   **There is an extended definition for this object** :ref:`here <evse_security-CertificateValidationResult>`.
 | **get_installed_certificates**:*object*
 |  Command to retrieve installed certificates of the EVSE
-|  **certificate_types**:*array* <required>
+|  **certificate_types**: *array* <required>
 |   Types of certificates to be retrieved
-|   **array_item**:*string*  (:ref:`evse_security-CertificateType <evse_security-CertificateType>`)
-|    
-|    **There is an extended definition for this object** :ref:`here <evse_security-CertificateType>`.
-| 
-|  **Result**:*object*  (:ref:`evse_security-GetInstalledCertificatesResult <evse_security-GetInstalledCertificatesResult>`)
+|   **array_item**: *string*  (:ref:`evse_security-CertificateType <evse_security-CertificateType>`)
+|  **Result**: *object*  (:ref:`evse_security-GetInstalledCertificatesResult <evse_security-GetInstalledCertificatesResult>`)
 |   Indicates the result of the command and optional certificate hash data
-|   **There is an extended definition for this object** :ref:`here <evse_security-GetInstalledCertificatesResult>`.
 | **get_v2g_ocsp_request_data**:*object*
 |  Command to retrieve the OCSP request data of the V2G certificates. Contains OCSP data for each certificate that is present in the chain (excluding the root).
-|  **Result**:*object*  (:ref:`evse_security-OCSPRequestDataList <evse_security-OCSPRequestDataList>`)
+|  **Result**: *object*  (:ref:`evse_security-OCSPRequestDataList <evse_security-OCSPRequestDataList>`)
 |   The OCSP request data of all V2G CA certificates including the Sub CAs (excluding the root)
-|   **There is an extended definition for this object** :ref:`here <evse_security-OCSPRequestDataList>`.
 | **get_mo_ocsp_request_data**:*object*
 |  Command to retrieve the OCSP request data of the given MO certificate chain. Contains OCSP data for each certificate that is present in the chain (excluding the root)
-|  **certificate_chain**:*string* <required>
+|  **certificate_chain**: *string* <required>
 |   Certificate chain for which the OCSP data is retrieved
-|  **Result**:*object*  (:ref:`evse_security-OCSPRequestDataList <evse_security-OCSPRequestDataList>`)
+|  **Result**: *object*  (:ref:`evse_security-OCSPRequestDataList <evse_security-OCSPRequestDataList>`)
 |   The OCSP request data of the given certificate chain. Contains OCSP data for each certificate in the given chain.
-|   **There is an extended definition for this object** :ref:`here <evse_security-OCSPRequestDataList>`.
 | **update_ocsp_cache**:*void*
 |  Command to update the OCSP cache with the given data
-|  **certificate_hash_data**:*object* <required> (:ref:`evse_security-CertificateHashData <evse_security-CertificateHashData>`)
+|  **certificate_hash_data**: *object* <required> (:ref:`evse_security-CertificateHashData <evse_security-CertificateHashData>`)
 |   Certificate hash data that identifies the certificate for which the cache should be updated
-|   **There is an extended definition for this object** :ref:`here <evse_security-CertificateHashData>`.
-|  **ocsp_response**:*string* <required>
+|  **ocsp_response**: *string* <required>
 |   OCSPResponse class as defined in IETF RFC 6960. DER and then base64 encoded
 | **is_ca_certificate_installed**:*boolean*
 |  Command that indicates of the given CA certificate type is installed
-|  **certificate_type**:*string* <required> (:ref:`evse_security-CaCertificateType <evse_security-CaCertificateType>`)
+|  **certificate_type**: *string* <required> (:ref:`evse_security-CaCertificateType <evse_security-CaCertificateType>`)
 |   Specifies that CA certificate type
-|   **There is an extended definition for this object** :ref:`here <evse_security-CaCertificateType>`.
-|  **Result**:*boolean* 
+|  **Result**: *boolean* 
 |   True if CA certificate is installed, else false
 | **generate_certificate_signing_request**:*object*
 |  Command to generate a certificate signing request for the given use
-|  **certificate_type**:*string* <required> (:ref:`evse_security-LeafCertificateType <evse_security-LeafCertificateType>`)
+|  **certificate_type**: *string* <required> (:ref:`evse_security-LeafCertificateType <evse_security-LeafCertificateType>`)
 |   Specifies the leaf certificate type
-|   **There is an extended definition for this object** :ref:`here <evse_security-LeafCertificateType>`.
-|  **country**:*string* <required>
+|  **country**: *string* <required>
 |   Specifies the country name (C) of the certificate
-|  **organization**:*string* <required>
+|  **organization**: *string* <required>
 |   Specifies the organization name (O) of the certificate
-|  **common**:*string* <required>
+|  **common**: *string* <required>
 |   Specifies the common name (CN) of the certificate
-|  **use_tpm**:*boolean* <required>
+|  **use_tpm**: *boolean* <required>
 |   Specifies if the CSR should store the private key on the TPM
-|  **Result**:*object*  (:ref:`evse_security-GetCertificateSignRequestResult <evse_security-GetCertificateSignRequestResult>`)
+|  **Result**: *object*  (:ref:`evse_security-GetCertificateSignRequestResult <evse_security-GetCertificateSignRequestResult>`)
 |   The certificate signing request in PEM format
-|   **There is an extended definition for this object** :ref:`here <evse_security-GetCertificateSignRequestResult>`.
 | **get_leaf_certificate_info**:*object*
 |  Command to get the paths of the certificate and the respective key
-|  **certificate_type**:*string* <required> (:ref:`evse_security-LeafCertificateType <evse_security-LeafCertificateType>`)
+|  **certificate_type**: *string* <required> (:ref:`evse_security-LeafCertificateType <evse_security-LeafCertificateType>`)
 |   Specifies the leaf certificate type
-|   **There is an extended definition for this object** :ref:`here <evse_security-LeafCertificateType>`.
-|  **encoding**:*string* <required> (:ref:`evse_security-EncodingFormat <evse_security-EncodingFormat>`)
+|  **encoding**: *string* <required> (:ref:`evse_security-EncodingFormat <evse_security-EncodingFormat>`)
 |   Specifies the encoding of the key
-|   **There is an extended definition for this object** :ref:`here <evse_security-EncodingFormat>`.
-|  **include_ocsp**:*boolean* <required>
+|  **include_ocsp**: *boolean* <required>
 |   Specifies whether per-certificate OCSP data is also requested
-|  **Result**:*object*  (:ref:`evse_security-GetCertificateInfoResult <evse_security-GetCertificateInfoResult>`)
+|  **Result**: *object*  (:ref:`evse_security-GetCertificateInfoResult <evse_security-GetCertificateInfoResult>`)
 |   The response to the requested command
-|   **There is an extended definition for this object** :ref:`here <evse_security-GetCertificateInfoResult>`.
 | **get_all_valid_certificates_info**:*object*
 |  Finds the latest valid leafs, for each root certificate that is present on the filesystem, and returns all the newest valid leafs that are present for different roots
-|  **certificate_type**:*string* <required> (:ref:`evse_security-LeafCertificateType <evse_security-LeafCertificateType>`)
+|  **certificate_type**: *string* <required> (:ref:`evse_security-LeafCertificateType <evse_security-LeafCertificateType>`)
 |   Specifies the leaf certificate type
-|   **There is an extended definition for this object** :ref:`here <evse_security-LeafCertificateType>`.
-|  **encoding**:*string* <required> (:ref:`evse_security-EncodingFormat <evse_security-EncodingFormat>`)
+|  **encoding**: *string* <required> (:ref:`evse_security-EncodingFormat <evse_security-EncodingFormat>`)
 |   Specifies the encoding of the key
-|   **There is an extended definition for this object** :ref:`here <evse_security-EncodingFormat>`.
-|  **include_ocsp**:*boolean* <required>
+|  **include_ocsp**: *boolean* <required>
 |   Specifies whether per-certificate OCSP data is also requested
-|  **Result**:*object*  (:ref:`evse_security-GetCertificateFullInfoResult <evse_security-GetCertificateFullInfoResult>`)
+|  **Result**: *object*  (:ref:`evse_security-GetCertificateFullInfoResult <evse_security-GetCertificateFullInfoResult>`)
 |   The response to the requested command
-|   **There is an extended definition for this object** :ref:`here <evse_security-GetCertificateFullInfoResult>`.
 | **get_verify_file**:*string*
 |  Command to get the file path of a CA bundle that can be used for verification
-|  **certificate_type**:*string* <required> (:ref:`evse_security-CaCertificateType <evse_security-CaCertificateType>`)
+|  **certificate_type**: *string* <required> (:ref:`evse_security-CaCertificateType <evse_security-CaCertificateType>`)
 |   Specifies that CA certificate type
-|   **There is an extended definition for this object** :ref:`here <evse_security-CaCertificateType>`.
-|  **Result**:*string* 
+|  **Result**: *string* 
 |   The path of the CA bundle file
 | **get_verify_location**:*string*
 |  Command to get the file path of the CA root directory that can be used for verification. Will also invoke c_rehash for that directory
-|  **certificate_type**:*string* <required> (:ref:`evse_security-CaCertificateType <evse_security-CaCertificateType>`)
+|  **certificate_type**: *string* <required> (:ref:`evse_security-CaCertificateType <evse_security-CaCertificateType>`)
 |   Specifies that CA certificate type
-|   **There is an extended definition for this object** :ref:`here <evse_security-CaCertificateType>`.
-|  **Result**:*string* 
+|  **Result**: *string* 
 |   The path of the CA certificates directory
 | **get_leaf_expiry_days_count**:*integer*
 |  Command to get the days count until the given leaf certificate expires. If no leaf certificate is installed this command will return 0
-|  **certificate_type**:*string* <required> (:ref:`evse_security-LeafCertificateType <evse_security-LeafCertificateType>`)
+|  **certificate_type**: *string* <required> (:ref:`evse_security-LeafCertificateType <evse_security-LeafCertificateType>`)
 |   Indicates the type of the certificate
-|   **There is an extended definition for this object** :ref:`here <evse_security-LeafCertificateType>`.
-|  **Result**:*integer* 
+|  **Result**: *integer* 
 |   days count until given leaf certificate expires
 | **verify_file_signature**:*boolean*
 |  Verify the file at the given path using the provided certificate and signature
-|  **file_path**:*string* <required>
+|  **file_path**: *string* <required>
 |   Path to the file that should be verified
-|  **signing_certificate**:*string* <required>
+|  **signing_certificate**: *string* <required>
 |   Certificate with which the file was signed. PEM encoded X.509 certificate
-|  **signature**:*string* <required>
+|  **signature**: *string* <required>
 |   Base64 encoded file signature
-|  **Result**:*boolean* 
+|  **Result**: *boolean* 
 |   True if verification succeeded, false if not
+

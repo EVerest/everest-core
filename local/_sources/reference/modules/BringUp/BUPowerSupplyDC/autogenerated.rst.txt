@@ -1,0 +1,37 @@
+
+
+.. _everest_modules_BUPowerSupplyDC:
+
+###############
+BUPowerSupplyDC
+###############
+| Interactive bring up helper for power supply DC interface
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`empty <everest_interfaces_empty>`
+|  This module does not provide anything
+
+Requirements
+============
+| **psu**: :ref:`power_supply_DC <everest_interfaces_power_supply_DC>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

@@ -17,6 +17,6 @@ Commands
 ********
 | **get_bank_session_token**:*object*
 |  Returns the token.
-|  **Result**:*object*  (:ref:`payment_terminal-BankSessionToken <payment_terminal-BankSessionToken>`)
+|  **Result**: *object*  (:ref:`payment_terminal-BankSessionToken <payment_terminal-BankSessionToken>`)
 |   token
-|   **There is an extended definition for this object** :ref:`here <payment_terminal-BankSessionToken>`.
+

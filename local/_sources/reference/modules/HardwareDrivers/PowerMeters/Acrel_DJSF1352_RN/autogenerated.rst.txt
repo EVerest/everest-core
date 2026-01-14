@@ -1,0 +1,43 @@
+
+
+.. _everest_modules_Acrel_DJSF1352_RN:
+
+#################
+Acrel_DJSF1352_RN
+#################
+| Driver module for powermeters of manufacturer Acrel. Supports DJSF1352.
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`powermeter <everest_interfaces_powermeter>`
+|  Provides an Acrel DC powermeter
+|  **config:**
+|   **powermeter_device_id**: *integer* <optional>
+|   *default: 1*
+|    The powermeter's address on the serial bus
+
+Requirements
+============
+| **serial_comm_hub**: :ref:`serial_communication_hub <everest_interfaces_serial_communication_hub>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Lars Dieckmann
+| Jan Christoph Habig
+| Florin Mihut
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

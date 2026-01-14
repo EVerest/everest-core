@@ -1,0 +1,34 @@
+
+
+.. _everest_modules_ExampleErrorGlobalSubscriber:
+
+############################
+ExampleErrorGlobalSubscriber
+############################
+| Simple example module written in C++ to demonstrate error framework on global subscriber side
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **example_global_subscriber**: :ref:`example_error_framework <everest_interfaces_example_error_framework>`
+|  This implements the example interface
+
+
+********
+Metadata
+********
+Authors
+=======
+| Andreas Heinrich
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

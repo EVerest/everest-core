@@ -1,0 +1,106 @@
+
+
+.. _everest_modules_Bender_isoCHA425HV:
+
+##################
+Bender_isoCHA425HV
+##################
+| IMD driver for Bender isoCHA425HV IMD devices.
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`isolation_monitor <everest_interfaces_isolation_monitor>`
+|  Implementation of the driver functionality
+|  **config:**
+|   **imd_device_id**: *integer* <optional>
+|   *default: 3*
+|    The IMD's address on the ModBus
+|   **r1_prealarm_kohm**: *integer* <optional>
+|   *default: 250*
+|    3005 The IMD's internal measurement resistance for signaling an alarm in kiloohms (the internal resistance is only used for switching the IMDs relays, EVerest handles any isolation issue internaly inside the EVSE manager) Note the maximum value is 600k on isoCHA and 500k on isoEV units.
+|   **r2_alarm_kohm**: *integer* <optional>
+|   *default: 100*
+|    3007 This value must be smaller than r1_prealarm_kohm
+|   **undervoltage_alarm_enable**: *boolean* <optional>
+|   *default: False*
+|    3008 Enable under voltage alarm
+|   **undervoltage_alarm_threshold_V**: *integer* <optional>
+|   *default: 30*
+|    3009 Threshold in volt for the under voltage alarm
+|   **overvoltage_alarm_enable**: *boolean* <optional>
+|   *default: False*
+|    3010 Enable over voltage alarm
+|   **overvoltage_alarm_threshold_V**: *integer* <optional>
+|   *default: 1050*
+|    3011 Threshold in volt for the over voltage alarm
+|   **alarm_memory_enable**: *boolean* <optional>
+|   *default: False*
+|    3012 Enable memory for alarm events
+|   **relais_r1_mode**: *boolean* <optional>
+|   *default: False*
+|    3013 false: normally open, true: normally closed
+|   **relais_r2_mode**: *boolean* <optional>
+|   *default: False*
+|    3014 false: normally open, true: normally closed
+|   **delay_startup_device**: *integer* <optional>
+|   *default: 5*
+|    3018 Delay when device is starting up
+|   **delay_t_on_k1_k2**: *integer* <optional>
+|   *default: 5*
+|    3019 delay for switching relais on
+|   **delay_t_off_k1_k2**: *integer* <optional>
+|   *default: 5*
+|    3020 delay for switching relais off
+|   **chademo_mode**: *boolean* <optional>
+|   *default: False*
+|    3023: false: CCS, true: ChaDeMo
+|   **selftest_enable_gridconnection**: *boolean* <optional>
+|   *default: False*
+|    3024: Test grid connection while testing device nEt
+|   **selftest_enable_at_start**: *boolean* <optional>
+|   *default: True*
+|    3025 Perform self test at start up of device
+|   **relay_k1_alarm_assignment**: *integer* <optional>
+|   *default: 0*
+|    3027 Alarm assignment of relay K1 "r1". Bitmask: S.AL(11) Ue>(10) Ce>(9) test(8) U>(7) U<(6) -R2<(5) +R2<(4) -R1<(3) +R1<(2) Err(1)
+|   **relay_k2_alarm_assignment**: *integer* <optional>
+|   *default: 0*
+|    3028 Alarm assignment of relay K2 "r2". Bitmask: S.AL(11) Ue>(10) Ce>(9) test(8) U>(7) U<(6) -R2<(5) +R2<(4) -R1<(3) +R1<(2) Err(1)
+|   **always_publish_measurements**: *boolean* <optional>
+|   *default: False*
+|    Always publish measurement even if stopped by EVerest
+|   **voltage_to_earth_monitoring_alarm_enable**: *boolean* <optional>
+|   *default: False*
+|    3000 Enable over voltage to earth monitoring alarm
+
+Requirements
+============
+| **serial_comm_hub**: :ref:`serial_communication_hub <everest_interfaces_serial_communication_hub>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+| Florin Mihut
+| Jan Christoph Habig
+| Lars Dieckmann
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

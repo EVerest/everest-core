@@ -1,0 +1,37 @@
+
+
+.. _everest_modules_BUDCExternalDerate:
+
+##################
+BUDCExternalDerate
+##################
+| Interactive bring up helper for the dc_external_derate interface
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`empty <everest_interfaces_empty>`
+|  This module does not provide anything
+
+Requirements
+============
+| **derate**: :ref:`dc_external_derate <everest_interfaces_dc_external_derate>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Jan Christoph Habig
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

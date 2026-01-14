@@ -279,4 +279,4 @@ Further information can be seen as shell output by calling edm with parameter
 
 ----
 
-Authors: Kai-Uwe Hermann, Stefan Wahren, Andreas Heinrich, Manuel Ziegler
+**Authors**: Kai-Uwe Hermann, Stefan Wahren, Andreas Heinrich, Manuel Ziegler

@@ -1,0 +1,38 @@
+
+
+.. _everest_modules_DummySessionCostProvider:
+
+########################
+DummySessionCostProvider
+########################
+| Dummy session cost provider to simplify testing of modules which require session_cost
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`session_cost <everest_interfaces_session_cost>`
+|  Implementation of session_cost which periodically publishes new tariffs and session_costs
+|  **config:**
+|   **period_s**: *integer* <optional>
+|   *default: 5*
+|    Period in which to publish (in s)
+
+
+********
+Metadata
+********
+Authors
+=======
+| Christoph Burandt
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

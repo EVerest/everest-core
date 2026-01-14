@@ -1,0 +1,42 @@
+
+
+.. _everest_modules_ChargerInfo:
+
+###########
+ChargerInfo
+###########
+| Provides a charger information interface, backed by simple KVS interface. With the optional dependency to another charger information node, it is possible to chain multiple sources of information.
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **firmware_version_file**: *string* <required>
+|  Sometimes the firmware version cannot be retrieved from the key-value interface. Then it is possible to provide the firmware version string from a simple text file in the filesystem. The first line of this file is used as-is, the remaining file content is ignored. Give the full path to the file which contains the firmware version string.
+
+Provides
+========
+| **main**: :ref:`charger_information <everest_interfaces_charger_information>`
+|  Provides the charger information interface
+
+Requirements
+============
+| **kvs**: :ref:`kvs <everest_interfaces_kvs>` 1..10
+| **charger_information**: :ref:`charger_information <everest_interfaces_charger_information>` 0..1
+
+********
+Metadata
+********
+Authors
+=======
+| Michael Heimpold
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

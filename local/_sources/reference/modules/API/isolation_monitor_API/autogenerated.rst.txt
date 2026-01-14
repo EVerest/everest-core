@@ -1,0 +1,50 @@
+
+
+.. _everest_modules_isolation_monitor_API:
+
+#####################
+isolation_monitor_API
+#####################
+| API for isolation monitors
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **cfg_communication_check_to_s**: *integer* <optional>
+| *default: 5*
+|  Maximum time between two communication check events. Values <= 0 disables communication checks.
+| **cfg_heartbeat_interval_ms**: *integer* <optional>
+| *default: 1000*
+|  Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat.
+
+Provides
+========
+| **main**: :ref:`isolation_monitor <everest_interfaces_isolation_monitor>`
+|  Allows EVerest to control an isolation monitor device via API clients.
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+| Jan Christoph Habig
+| Florin Mihut
+| Miriam Thome
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

@@ -31,11 +31,10 @@ This tutorial includes:
 Prerequisites
 =============
 
-If you're new to EVerest start with our :ref:`Quick Start Guide <exp_getting_started_sw>`
+If you're new to EVerest start with our :ref:`Quick Start Guide <htg_getting_started_sw>`
 to get a simulation in EVerest running for the first time.
 It is important that you have set up the required docker containers for
-Mosquitto and SteVe, which we will use as an example CSMS. For more information
-about these containers, see the :ref:`TODO EVerest Docker Setup page <docker_setup>`.
+Mosquitto and SteVe, which we will use as an example CSMS.
 If you have done that successfully, you can move on with this tutorial.
 
 .. _tutorial_ocpp16_run_with_steve:
@@ -76,7 +75,7 @@ In addition to the EVerest configuration yaml file, OCPP 1.6 is configured
 using a JSON configuration file.
 This configuration file can contain all configuration keys from the OCPP 1.6
 specification.
-Examples for that can be found `here <https://github.com/EVerest/libocpp/tree/main/config/v16>`_.
+Examples for that can be found `here <https://github.com/EVerest/libocpp/tree/main/config/v16>`__.
 
 This is the one we used to connect to SteVe:
 
@@ -225,13 +224,13 @@ and it might also include to change the parameters ``AuthorizationKey`` and
   - Minimal length: 16 bytes
 
 Modify these parameters according to the connection requirements of the CSMS. Find all available configuration keys
-and their descriptions in `here <https://github.com/EVerest/libocpp/tree/main/config/v16/profile_schemas>`_
+and their descriptions in `here <https://github.com/EVerest/libocpp/tree/main/config/v16/profile_schemas>`__
 
 .. note::
 
   For TLS, it might be required to prepare the required certificates and
   private keys. Please see the documentation of the
-  :doc:`EvseSecurity module </reference/modules/EvseSecurity>`
+  :ref:`EvseSecurity module <everest_modules_EvseSecurity>`
   for more information on how to set up the TLS connection for OCPP.
 
 .. _tutorial_ocpp16_configure_ocpp_everest:
@@ -243,14 +242,14 @@ To be able to follow the further explanations, you should be familiar with the c
 Take a look into :doc:`EVerest Module Concept </explanation/detail-module-concept>` for that.
 
 To configure the OCPP module of everest-core, find the available configuration parameters
-in the :doc:`module documentation </explanation/modules/OCPP/index>`, and read through them
+in the :ref:`module documentation <everest_modules_OCPP>`, and read through them
 carefully in order to configure it according to your needs.
 
 In order to enable OCPP 1.6 in EVerest, you need to load the module in the
 EVerest configuration file and set up the module connections.
 The interfaces provided and required by the OCPP module and its purposes are
 described in the
-:doc:`module documentation </explanation/modules/OCPP/index>`.
+:ref:`module documentation <everest_modules_OCPP>`.
 
 The EVerest configuration file
 `config-sil-ocpp.yaml <https://github.com/EVerest/everest-core/blob/main/config/config-sil-ocpp.yaml>`_
@@ -285,10 +284,10 @@ EVerest configuration file:
      complete charging station.
 
      *Module typically used to fulfill this requirement:*  
-     :doc:`EnergyNode </reference/modules/EnergyNode>`
+     :ref:`EnergyNode <everest_modules_EnergyNode>`
 
      More information about the energy management setup can be found in the
-     :doc:`EnergyManager module documentation </explanation/modules/EnergyManager/index>`.
+     :doc:`EnergyManager module documentation </explanation/energymanagement/index>`.
 
    - **auth** (interface: ``auth``, 1):
 
@@ -296,14 +295,14 @@ EVerest configuration file:
      if configured and/or changed by the CSMS.
 
      *Module typically used to fulfill this requirement:*  
-     :doc:`Auth module </reference/modules/Auth>`, ``implementation_id: main``
+     :ref:`Auth module <everest_modules_Auth>`, ``implementation_id: main``
 
    - **reservation** (interface: ``reservation``, 1):
 
      This connection is used to apply reservation requests from the CSMS.
 
      *Module typically used to fulfill this requirement:*  
-     :doc:`Auth module </reference/modules/Auth>`, ``implementation_id: reservation``
+     :ref:`Auth module <everest_modules_Auth>`, ``implementation_id: reservation``
 
    - **system** (interface: ``system``, 1):
 
@@ -312,8 +311,8 @@ EVerest configuration file:
 
      *Modules fulfilling this requirement:*
 
-     - :doc:`Linux_Systemd_Rauc module </reference/modules/Linux_Systemd_Rauc>` (``implementation_id: main``)
-     - For simulation purposes: :doc:`System module </reference/modules/System>` (``implementation_id: main``)
+     - :ref:`Linux_Systemd_Rauc module <everest_modules_Linux_Systemd_Rauc>` (``implementation_id: main``)
+     - For simulation purposes: :ref:`System module <everest_modules_System>` (``implementation_id: main``)
 
      .. note::
         The System module is **not meant to be used in production systems**.
@@ -324,7 +323,7 @@ EVerest configuration file:
      certificates and private keys.
 
      *Module typically used to fulfill this requirement:*  
-     :doc:`EvseSecurity module </reference/modules/EvseSecurity>`, ``implementation_id: main``
+     :ref:`EvseSecurity module <everest_modules_EvseSecurity>`, ``implementation_id: main``
 
    - **data_transfer** (interface: ``ocpp_data_transfer``, 0 to 1):
 
@@ -349,7 +348,7 @@ EVerest configuration file:
    (``implementation_id: auth_provider``) and ``token_validator``
    (``implementation_id: auth_validator``) connections of the Auth module (if you use it).
 
-   Please see the documentation of the :doc:`Auth module </reference/modules/Auth>` for more information.
+   Please see the documentation of the :ref:`Auth module <everest_modules_Auth>` for more information.
 
 4. **Enable Plug & Charge (optional):**
 

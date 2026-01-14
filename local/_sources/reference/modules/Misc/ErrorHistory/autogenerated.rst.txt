@@ -1,0 +1,37 @@
+
+
+.. _everest_modules_ErrorHistory:
+
+############
+ErrorHistory
+############
+| This module provides a persistent error history
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **error_history**: :ref:`error_history <everest_interfaces_error_history>`
+|  Error history
+|  **config:**
+|   **database_path**: *string* <required>
+|    Absolute path to the database file
+
+
+********
+Metadata
+********
+Authors
+=======
+| Andreas Heinrich
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

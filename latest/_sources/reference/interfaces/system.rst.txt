@@ -14,57 +14,54 @@ system
 *********
 Variables
 *********
-| **firmware_update_status**:*object*  (:ref:`system-FirmwareUpdateStatus <system-FirmwareUpdateStatus>`)
+| **firmware_update_status**: *object*  (:ref:`system-FirmwareUpdateStatus <system-FirmwareUpdateStatus>`)
 |  Describes the current status of a firmware update of the system
-|  **There is an extended definition for this object** :ref:`here <system-FirmwareUpdateStatus>`.
-| **log_status**:*object*  (:ref:`system-LogStatus <system-LogStatus>`)
+| **log_status**: *object*  (:ref:`system-LogStatus <system-LogStatus>`)
 |  Describes the current status of log upload of the system
-|  **There is an extended definition for this object** :ref:`here <system-LogStatus>`.
 
 ********
 Commands
 ********
 | **update_firmware**:*string*
 |  Call to start a firmware update
-|  **firmware_update_request**:*object* <required> (:ref:`system-FirmwareUpdateRequest <system-FirmwareUpdateRequest>`)
+|  **firmware_update_request**: *object* <required> (:ref:`system-FirmwareUpdateRequest <system-FirmwareUpdateRequest>`)
 |   Meta data containing information about the firmware request
-|   **There is an extended definition for this object** :ref:`here <system-FirmwareUpdateRequest>`.
-|  **Result**:*string*  (:ref:`system-UpdateFirmwareResponse <system-UpdateFirmwareResponse>`)
+|  **Result**: *string*  (:ref:`system-UpdateFirmwareResponse <system-UpdateFirmwareResponse>`)
 |   Returns the result of the attempt to update the firmware
-|   **There is an extended definition for this object** :ref:`here <system-UpdateFirmwareResponse>`.
 | **allow_firmware_installation**:*void*
 |  Call to allow a firmware installation to proceed
 | **upload_logs**:*object*
 |  Call to start a log upload
-|  **upload_logs_request**:*object* <required> (:ref:`system-UploadLogsRequest <system-UploadLogsRequest>`)
+|  **upload_logs_request**: *object* <required> (:ref:`system-UploadLogsRequest <system-UploadLogsRequest>`)
 |   Meta data containing information about the log request request
-|   **There is an extended definition for this object** :ref:`here <system-UploadLogsRequest>`.
-|  **Result**:*object*  (:ref:`system-UploadLogsResponse <system-UploadLogsResponse>`)
+|  **Result**: *object*  (:ref:`system-UploadLogsResponse <system-UploadLogsResponse>`)
 |   Returns the result of the attempt to upload the logs
-|   **There is an extended definition for this object** :ref:`here <system-UploadLogsResponse>`.
 | **is_reset_allowed**:*boolean*
 |  Call to determine if a reset of the system is allowed
-|  **type**:*string* <required> (:ref:`system-ResetType <system-ResetType>`)
+|  **type**: *string* <required> (:ref:`system-ResetType <system-ResetType>`)
 |   Type of the reset (Soft or Hard)
-|   **There is an extended definition for this object** :ref:`here <system-ResetType>`.
-|  **Result**:*boolean* 
+|  **Result**: *boolean* 
 |   Indicates if the system can be reset
 | **reset**:*void*
 |  Call to reset the system immediately
-|  **type**:*string* <required> (:ref:`system-ResetType <system-ResetType>`)
+|  **type**: *string* <required> (:ref:`system-ResetType <system-ResetType>`)
 |   Type of the reset (Soft or Hard)
-|   **There is an extended definition for this object** :ref:`here <system-ResetType>`.
-|  **scheduled**:*boolean* <required>
+|  **scheduled**: *boolean* <required>
 |   Indicates if this reset command was scheduled or immediately executed. A scheduled reset means that the system was waiting for all transactions to finish before this command was executed. This value is only informational.
 | **set_system_time**:*boolean*
 |  Call to set the system time of EVerest
-|  **timestamp**:*string* <required>
+|  **timestamp**: *string* <required>
 |   The new system time in RFC3339 format
 |   format:date-time
-|  **Result**:*boolean* 
+|  **Result**: *boolean* 
 |   Returns true if the system time could be set successfully, else false
 | **get_boot_reason**:*string*
 |  Call to get the boot reason of the system
-|  **Result**:*string*  (:ref:`system-BootReason <system-BootReason>`)
+|  **Result**: *string*  (:ref:`system-BootReason <system-BootReason>`)
 |   Returns the boot reason of the system
-|   **There is an extended definition for this object** :ref:`here <system-BootReason>`.
+
+******
+Errors
+******
+| **/errors/system** :
+|  **CommunicationFault** : The communication to the hardware or underlying driver is lost or has errors.

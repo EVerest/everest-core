@@ -1,0 +1,50 @@
+
+
+.. _everest_modules_dc_external_derate_consumer_API:
+
+###############################
+dc_external_derate_consumer_API
+###############################
+| API for derating DC power supplies
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **cfg_communication_check_to_s**: *integer* <optional>
+| *default: 5*
+|  Maximum time between two communication check events. Values <= 0 disables communication checks
+| **cfg_heartbeat_interval_ms**: *integer* <optional>
+| *default: 1000*
+|  Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat
+
+Provides
+========
+| **generic_error**: :ref:`generic_error <everest_interfaces_generic_error>`
+|  Providing generic errors for communication check
+
+Requirements
+============
+| **derate**: :ref:`dc_external_derate <everest_interfaces_dc_external_derate>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Jan Christoph Habig
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

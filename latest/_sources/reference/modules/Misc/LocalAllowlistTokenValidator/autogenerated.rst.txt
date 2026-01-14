@@ -1,0 +1,39 @@
+
+
+.. _everest_modules_LocalAllowlistTokenValidator:
+
+############################
+LocalAllowlistTokenValidator
+############################
+| Token Validator for local allow list of RFID tags
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **allowlist_file**: *string* <optional>
+| *default: "/mnt/user_data/etc/allowlist_rfid.txt"*
+|  path/filename of the file containing one RFID token per line
+
+Provides
+========
+| **token_validator**: :ref:`auth_token_validator <everest_interfaces_auth_token_validator>`
+|  Validator interface for auth
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

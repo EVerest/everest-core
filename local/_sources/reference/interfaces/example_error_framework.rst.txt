@@ -12,3 +12,12 @@ example_error_framework
 
 
 
+
+******
+Errors
+******
+| **/errors/example** :
+|  **ExampleErrorA** : Example error A
+|  **ExampleErrorB** : Example error B
+|  **ExampleErrorC** : Example error C
+|  **ExampleErrorD** : Example error D

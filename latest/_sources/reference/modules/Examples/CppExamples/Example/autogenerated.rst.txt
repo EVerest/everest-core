@@ -1,0 +1,55 @@
+
+
+.. _everest_modules_Example:
+
+#######
+Example
+#######
+| Simple example module written in C++
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **example**: :ref:`example <everest_interfaces_example>`
+|  This implements an example interface that uses multiple framework features
+|  **config:**
+|   **current**: *number* <required>
+|    The current the physical connector can supply
+|   **enum_test**: *string* <required>
+|    A config value that tests the enum type
+|    enum:
+|      - one
+|      - two
+|      - three
+|   **enum_test2**: *integer* <required>
+|    Another config value that tests the enum type
+|    enum:
+|      - 1
+|      - 2
+|      - 3
+| **store**: :ref:`kvs <everest_interfaces_kvs>`
+|  This implements the kvs interface, mostly for testing multiple interfaces in one manifest
+
+Requirements
+============
+| **kvs**: :ref:`kvs <everest_interfaces_kvs>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Kai-Uwe Hermann
+| Andreas Heinrich
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

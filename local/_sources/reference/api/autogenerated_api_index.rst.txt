@@ -28,4 +28,5 @@ EVerest API Specification
 * `power_supply_DC_API <power_supply_DC_API/index.html>`_
 * `powermeter_API <powermeter_API/index.html>`_
 * `session_cost_API <session_cost_API/index.html>`_
+* `session_cost_consumer_API <session_cost_consumer_API/index.html>`_
 * `system_API <system_API/index.html>`_

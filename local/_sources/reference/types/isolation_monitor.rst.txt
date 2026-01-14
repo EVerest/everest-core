@@ -12,14 +12,14 @@ Isolation monitor types
 
 .. _isolation_monitor-IsolationMeasurement:
 
-| **IsolationMeasurement**:*object* 
+| **IsolationMeasurement**: *object* 
 |  Results of an isolation measurement
 |  properties:
-|   **resistance_F_Ohm**:*number* <required>
+|   **resistance_F_Ohm**: *number* <required>
 |    Isolation resistance between DC+/DC- and protective earth in Ohm
-|   **voltage_V**:*number* <optional>
+|   **voltage_V**: *number* <optional>
 |    DC voltage between positive and negative terminal in Volt
-|   **voltage_to_earth_l1e_V**:*number* <optional>
+|   **voltage_to_earth_l1e_V**: *number* <optional>
 |    DC voltage to earth on L1 in Volt
-|   **voltage_to_earth_l2e_V**:*number* <optional>
+|   **voltage_to_earth_l2e_V**: *number* <optional>
 |    DC voltage to earth on L2 in Volt

@@ -1,0 +1,88 @@
+
+
+.. _everest_modules_TIDA010939:
+
+##########
+TIDA010939
+##########
+| Driver module for the Texas Instruments TIDA-010939 reference design
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **serial_port**: *string* <optional>
+| *default: "/dev/ttyUSB0"*
+|  Serial port the TIDA010939 hardware is connected to
+| **baud_rate**: *integer* <optional>
+| *default: 115200*
+|  Serial baud rate to use when communicating with TIDA010939 hardware
+| **reset_gpio_chip**: *string* <optional>
+| *default: "gpiochip0"*
+|  Reset GPIO chip to use to HW reset TIDA010939. If set to empty string, it is disabled.
+| **reset_gpio**: *integer* <optional>
+| *default: 27*
+|  GPIO line to use to reset TIDA010939
+| **max_current_A_import**: *integer* <optional>
+| *default: 16*
+|  Maximum import current in amps
+| **min_current_A_import**: *integer* <optional>
+| *default: 6*
+|  Minimum import current in amps
+| **min_phase_count_import**: *integer* <optional>
+| *default: 3*
+|  Minimum phase count for import
+| **max_phase_count_import**: *integer* <optional>
+| *default: 3*
+|  Maximum phase count for import
+| **min_current_A_export**: *integer* <optional>
+| *default: 0*
+|  Minimum export current in amps
+| **max_current_A_export**: *integer* <optional>
+| *default: 0*
+|  Maximum export current in amps
+| **min_phase_count_export**: *integer* <optional>
+| *default: 3*
+|  Minimum phase count for export
+| **max_phase_count_export**: *integer* <optional>
+| *default: 3*
+|  Maximum phase count for export
+| **has_socket**: *boolean* <optional>
+| *default: False*
+|  Set to true if it has a socket, false if it has a permanently attached cable
+
+Provides
+========
+| **board_support**: :ref:`evse_board_support <everest_interfaces_evse_board_support>`
+|  provides the board support Interface to low level control control pilot, relais, motor lock
+| **rcd**: :ref:`ac_rcd <everest_interfaces_ac_rcd>`
+|  RCD interface of the onboard RCD
+| **connector_lock**: :ref:`connector_lock <everest_interfaces_connector_lock>`
+|  Interface for the motor lock
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+| Kai-Uwe Hermann
+| Thilo Molitor
+| Anton Wöllert
+| Fabian Gajek
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

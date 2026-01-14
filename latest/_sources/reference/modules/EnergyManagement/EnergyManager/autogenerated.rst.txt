@@ -1,0 +1,95 @@
+
+
+.. _everest_modules_EnergyManager:
+
+#############
+EnergyManager
+#############
+| This module is the global Energy Manager for all EVSE/Charging stations in this building
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **nominal_ac_voltage**: *number* <optional>
+| *default: 230.0*
+|  Nominal AC voltage to use to convert Ampere to Watt on AC
+| **update_interval**: *integer* <optional>
+| *default: 1*
+|  Update interval for energy distribution [s]
+| **schedule_interval_duration**: *integer* <optional>
+| *default: 60*
+|  Duration of the schedule interval for forecast [min]
+| **schedule_total_duration**: *integer* <optional>
+| *default: 1*
+|  Total duration of schedule forcast [h]
+| **slice_ampere**: *number* <optional>
+| *default: 0.5*
+|  Ampere slice for trading. Lower values will give more even distribution but increase processing time [A].
+| **slice_watt**: *number* <optional>
+| *default: 500*
+|  Watt slice for trading. Lower values will give more even distribution but increase processing time [W].
+| **debug**: *boolean* <optional>
+| *default: False*
+|  Show debug output on command line.
+| **switch_3ph1ph_while_charging_mode**: *string* <optional>
+| *default: "Never"*
+|  If supported by BSP in capabilities to switch between three phases and one phase and config option three_phases is set to true, this controls the algorithm:
+|    - Never: Do not use 1ph/3ph switching even if supported by the BSP
+|    - Oneway: Only switch from 3ph to 1ph if power is not enough, but never switch back to 3ph for a session.
+|    - Both: Switch in both directions, i.e. from 3ph to 1ph and back to 3ph if available power changes
+|  enum:
+|    - Never
+|    - Oneway
+|    - Both
+| **switch_3ph1ph_max_nr_of_switches_per_session**: *integer* <optional>
+| *default: 0*
+|  Limit the maximum number of switches between 1ph and 3ph per charging session. Set to 0 for no limit.
+| **switch_3ph1ph_switch_limit_stickyness**: *string* <optional>
+| *default: "DontChange"*
+|  If the maximum number of switches between 1ph and 3ph is reached, select what should happen:
+|    - SinglePhase: Switch to 1ph mode
+|    - ThreePhase: Switch to 3ph mode
+|    - DontChange: Stay in the mode it is currently in
+|  enum:
+|    - SinglePhase
+|    - ThreePhase
+|    - DontChange
+| **switch_3ph1ph_power_hysteresis_W**: *integer* <optional>
+| *default: 200*
+|  Power based hysteresis in Watt. If set to 200W for example, the hysteresis for PWM based charging will be 4.2kW to 4.4kW. Actual values will depend on configured nominal AC voltage, and they may be different for PWM vs ISO based charging in the future.
+| **switch_3ph1ph_time_hysteresis_s**: *integer* <optional>
+| *default: 600*
+|  Time based hysteresis. It will only switch to 3 phases if the condition to select 3 phases is stable for the configured number of seconds. It will always switch to 1ph mode without waiting for this delay. Set to 0 to disable time based hysteresis.
+
+Provides
+========
+| **main**: :ref:`energy_manager <everest_interfaces_energy_manager>`
+|  Main interface of the energy manager
+
+Requirements
+============
+| **energy_trunk**: :ref:`energy <everest_interfaces_energy>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+| Lars Dieckmann
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

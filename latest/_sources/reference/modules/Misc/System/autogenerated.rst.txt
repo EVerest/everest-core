@@ -1,0 +1,53 @@
+
+
+.. _everest_modules_System:
+
+######
+System
+######
+| This module implements system wide operations
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **DefaultRetries**: *number* <optional>
+| *default: 1*
+|  Specifies how many times Charge Point tries to upload or download files on previous failure.
+| **DefaultRetryInterval**: *number* <optional>
+| *default: 1*
+|  Specifies in seconds after which time a retry of an upload or download on previous failure may be attempted.
+| **ResetDelay**: *integer* <optional>
+| *default: 0*
+|  When receiving a reset request, then the actual execution can be delayed by this amount of time (given in seconds). This might be necessary, for example, when the reset request arrives via the network and the call acknowledgement should be given some time to travel the return path to the caller. Defaults to zero, which means that the reset is executed directly without delay.
+
+Provides
+========
+| **main**: :ref:`system <everest_interfaces_system>`
+|  Implements the system interface
+
+Requirements
+============
+| **store**: :ref:`kvs <everest_interfaces_kvs>` 0..1
+
+********
+Metadata
+********
+Authors
+=======
+| Piet Gömpel
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

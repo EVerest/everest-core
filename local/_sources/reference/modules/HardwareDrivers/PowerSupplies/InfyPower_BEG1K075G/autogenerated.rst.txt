@@ -1,0 +1,41 @@
+
+
+.. _everest_modules_InfyPower_BEG1K075G:
+
+###################
+InfyPower_BEG1K075G
+###################
+| Driver for InfyPower ACDC power supply. Currently supports BEG1K075G with only one module and group dial set to 0.
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **can_device**: *string* <optional>
+| *default: "can0"*
+|  CAN interface name
+
+Provides
+========
+| **main**: :ref:`power_supply_DC <everest_interfaces_power_supply_DC>`
+|  Main interface
+|  **config:**
+|   
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

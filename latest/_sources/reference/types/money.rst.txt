@@ -12,7 +12,7 @@ The definition of the currency and price types.
 
 .. _money-CurrencyCode:
 
-| **CurrencyCode**:*string* 
+| **CurrencyCode**: *string* 
 |  Currency in 3 alphabetical characters according to ISO 4217. The list of values is taken from the  https://www.six-group.com/en/products-services/financial-information/data-standards.html Technical values like "Testing Code", "No Currency" as well as metal and bond-market codes are excluded.
 |  enum:
 |    - AED
@@ -188,32 +188,29 @@ The definition of the currency and price types.
 
 .. _money-Currency:
 
-| **Currency**:*object* 
+| **Currency**: *object* 
 |  Currency object containing the currency code and the accuracy of the minor unit according to ISO 4217.
 |  properties:
-|   **code**:*string* <required> (:ref:`money-CurrencyCode <money-CurrencyCode>`)
+|   **code**: *string* <required> (:ref:`money-CurrencyCode <money-CurrencyCode>`)
 |    Currency code.
-|    **There is an extended definition for this object** :ref:`here <money-CurrencyCode>`.
-|   **decimals**:*integer* <required>
+|   **decimals**: *integer* <required>
 |   *default: 2*
 |    The number of digits after the decimal separator, that are expressed by the minor units of the currency. For example for Euro, Euro cents express 2 digits after the decimal separator. In other words, the price in the main currency units would be the `value * 10^(-decimals)`.
 
 .. _money-MoneyAmount:
 
-| **MoneyAmount**:*object* 
+| **MoneyAmount**: *object* 
 |  Money amount is expressed as an amount of minor units of the currency. Example price of 1.23 EUR is expressed as { value: 123 }
 |  properties:
-|   **value**:*integer* <required>
+|   **value**: *integer* <required>
 |    The amount of minor units of the currency. 
 
 .. _money-Price:
 
-| **Price**:*object* 
+| **Price**: *object* 
 |  Price object containing the currency and the value of money.
 |  properties:
-|   **currency**:*object* <required> (:ref:`money-Currency <money-Currency>`)
+|   **currency**: *object* <required> (:ref:`money-Currency <money-Currency>`)
 |    Currency of the price.
-|    **There is an extended definition for this object** :ref:`here <money-Currency>`.
-|   **value**:*object* <required> (:ref:`money-MoneyAmount <money-MoneyAmount>`)
+|   **value**: *object* <required> (:ref:`money-MoneyAmount <money-MoneyAmount>`)
 |    Value in the minor units of the currency.
-|    **There is an extended definition for this object** :ref:`here <money-MoneyAmount>`.

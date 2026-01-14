@@ -14,10 +14,9 @@ session_cost
 *********
 Variables
 *********
-| **tariff_message**:*object*  (:ref:`session_cost-TariffMessage <session_cost-TariffMessage>`)
+| **tariff_message**: *object*  (:ref:`session_cost-TariffMessage <session_cost-TariffMessage>`)
 |  Message to show to the user with information about the tariff.
-|  **There is an extended definition for this object** :ref:`here <session_cost-TariffMessage>`.
-| **session_cost**:*object*  (:ref:`session_cost-SessionCost <session_cost-SessionCost>`)
+| **session_cost**: *object*  (:ref:`session_cost-SessionCost <session_cost-SessionCost>`)
 |  Session cost object containing the total cost of the session and a list of chunks
-|  **There is an extended definition for this object** :ref:`here <session_cost-SessionCost>`.
+
 

@@ -14,15 +14,15 @@ ev_slac
 *********
 Variables
 *********
-| **state**:*string* 
+| **state**: *string* 
 |  Provides the state enum.
 |  enum:
 |    - UNMATCHED
 |    - MATCHING
 |    - MATCHED
-| **dlink_ready**:*boolean* 
+| **dlink_ready**: *boolean* 
 |  Inform higher layers about a change in data link status. Emits true if link was set up and false when the link is shut down.
-| **ev_mac_address**:*string* 
+| **ev_mac_address**: *string* 
 |  Inform higher layers about the MAC address of the charging connector
 |  pattern:``^[A-F0-9]{2}(:[A-F0-9]{2}){5}$``
 
@@ -33,5 +33,13 @@ Commands
 |  Reset SLAC
 | **trigger_matching**:*boolean*
 |  Trigger start of matching process
-|  **Result**:*boolean* 
+|  **Result**: *boolean* 
 |   True on success, returns False if transition was unexpected and cannot be handled by SLAC state machine.
+
+******
+Errors
+******
+| **/errors/generic** :
+|  **CommunicationFault** : Communication with the underlying hardware or device has a fault
+|  **VendorError** : Vendor specific error code.
+|  **VendorWarning** : Vendor specific error code.

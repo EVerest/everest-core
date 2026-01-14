@@ -1,0 +1,67 @@
+
+
+.. _everest_modules_IsoMux:
+
+######
+IsoMux
+######
+| This module is a multiplexer to support switching over between different ISO module implementations
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **device**: *string* <optional>
+| *default: "eth0"*
+|  Ethernet device used for HLC. Any local interface that has an ipv6 link-local and a MAC addr will work
+| **tls_security**: *string* <optional>
+| *default: "allow"*
+|  Controls how to handle encrypted communication
+|  enum:
+|    - prohibit
+|    - allow
+|    - force
+| **tls_key_logging**: *boolean* <optional>
+| *default: False*
+|  Enable/Disable the export of TLS session keys (pre-master-secret) during a TLS handshake. This log file can be used to decrypt TLS sessions. Note that this option is for testing and simulation purpose only
+| **tls_timeout**: *integer* <optional>
+| *default: 15000*
+|  Set the TLS timeout in ms when establishing a tls connection 
+| **proxy_port_iso2**: *integer* <optional>
+| *default: 61341*
+|  TCP port of the local ISO2 instance
+| **proxy_port_iso20**: *integer* <optional>
+| *default: 50000*
+|  TCP port of the local ISO20 instance
+
+Provides
+========
+| **charger**: :ref:`ISO15118_charger <everest_interfaces_ISO15118_charger>`
+|  This module implements the ISO15118-2 implementation of an AC or DC charger
+| **extensions**: :ref:`iso15118_extensions <everest_interfaces_iso15118_extensions>`
+|  This interface is used to share data between ISO15118 and OCPP modules to support the requirements of the OCPP protocol
+
+Requirements
+============
+| **security**: :ref:`evse_security <everest_interfaces_evse_security>` 1
+| **iso2**: :ref:`ISO15118_charger <everest_interfaces_ISO15118_charger>` 1
+| **iso20**: :ref:`ISO15118_charger <everest_interfaces_ISO15118_charger>` 1
+| **ext2**: :ref:`iso15118_extensions <everest_interfaces_iso15118_extensions>` 1
+| **ext20**: :ref:`iso15118_extensions <everest_interfaces_iso15118_extensions>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

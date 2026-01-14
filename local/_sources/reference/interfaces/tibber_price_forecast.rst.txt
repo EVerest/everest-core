@@ -14,6 +14,7 @@ tibber_price_forecast
 *********
 Variables
 *********
-| **forecast**:*object* 
+| **forecast**: *object* 
 |  Forecast JSON Object containing a timestamp and the price forecast
+
 

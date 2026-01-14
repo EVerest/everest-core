@@ -1,0 +1,47 @@
+
+
+.. _everest_modules_YetiEvDriver:
+
+############
+YetiEvDriver
+############
+| Driver module for EV side for the YETI hardware
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **serial_port**: *string* <optional>
+| *default: "/dev/ttyUSB0"*
+|  Serial port the Yeti hardware is connected to
+| **baud_rate**: *integer* <optional>
+| *default: 115200*
+|  Serial baud rate to use when communicating with Yeti hardware
+| **reset_gpio**: *integer* <optional>
+| *default: -1*
+|  Reset GPIO number to use to HW reset Yeti. If set <0 it is disabled.
+
+Provides
+========
+| **ev_board_support**: :ref:`ev_board_support <everest_interfaces_ev_board_support>`
+|  provides the board support Interface to low level control control pilot, relais, rcd
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+| Sebastian Lukas
+| Piet Gömpel
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

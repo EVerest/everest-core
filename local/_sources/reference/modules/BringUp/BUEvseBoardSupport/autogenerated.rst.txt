@@ -1,0 +1,39 @@
+
+
+.. _everest_modules_BUEvseBoardSupport:
+
+##################
+BUEvseBoardSupport
+##################
+| Interactive bring up helper for EVSE Board support interface
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`empty <everest_interfaces_empty>`
+|  This module does not provide anything
+
+Requirements
+============
+| **bsp**: :ref:`evse_board_support <everest_interfaces_evse_board_support>` 1
+| **lock_motor**: :ref:`connector_lock <everest_interfaces_connector_lock>` 0..1
+| **ac_rcd**: :ref:`ac_rcd <everest_interfaces_ac_rcd>` 0..1
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

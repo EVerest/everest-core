@@ -1,0 +1,34 @@
+
+
+.. _everest_modules_DummyV2G:
+
+########
+DummyV2G
+########
+| This module implements an empty dummy for HLC. It does not actually communicate with the car.
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`ISO15118_charger <everest_interfaces_ISO15118_charger>`
+|  This module implements the ISO15118-2 implementation of an AC or DC charger
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

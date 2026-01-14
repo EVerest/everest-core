@@ -34,36 +34,48 @@ power_supply_DC
 *********
 Variables
 *********
-| **voltage_current**:*object*  (:ref:`power_supply_DC-VoltageCurrent <power_supply_DC-VoltageCurrent>`)
+| **voltage_current**: *object*  (:ref:`power_supply_DC-VoltageCurrent <power_supply_DC-VoltageCurrent>`)
 |  Voltage/Current at the input/output
-|  **There is an extended definition for this object** :ref:`here <power_supply_DC-VoltageCurrent>`.
-| **mode**:*string*  (:ref:`power_supply_DC-Mode <power_supply_DC-Mode>`)
+| **mode**: *string*  (:ref:`power_supply_DC-Mode <power_supply_DC-Mode>`)
 |  Current mode. Published on change.
-|  **There is an extended definition for this object** :ref:`here <power_supply_DC-Mode>`.
-| **capabilities**:*object*  (:ref:`power_supply_DC-Capabilities <power_supply_DC-Capabilities>`)
+| **capabilities**: *object*  (:ref:`power_supply_DC-Capabilities <power_supply_DC-Capabilities>`)
 |  Publish capabilities of this PSU.
-|  **There is an extended definition for this object** :ref:`here <power_supply_DC-Capabilities>`.
 
 ********
 Commands
 ********
 | **setMode**:*void*
 |  Set operation mode of the bidirectional DC power supply
-|  **mode**:*string* <required> (:ref:`power_supply_DC-Mode <power_supply_DC-Mode>`)
+|  **mode**: *string* <required> (:ref:`power_supply_DC-Mode <power_supply_DC-Mode>`)
 |   Operation mode of power supply
-|   **There is an extended definition for this object** :ref:`here <power_supply_DC-Mode>`.
-|  **phase**:*string* <required> (:ref:`power_supply_DC-ChargingPhase <power_supply_DC-ChargingPhase>`)
+|  **phase**: *string* <required> (:ref:`power_supply_DC-ChargingPhase <power_supply_DC-ChargingPhase>`)
 |   Charging phase for this mode change. This information should normally not be needed by the power supply, as it should always just operate in CCCV mode. Some special setups however are handling CableCheck/PreCharge/Charge a little bit different internally.
-|   **There is an extended definition for this object** :ref:`here <power_supply_DC-ChargingPhase>`.
 | **setExportVoltageCurrent**:*void*
 |  Set output target voltage limit. Must be within reported limits.
-|  **voltage**:*number* <required>
+|  **voltage**: *number* <required>
 |   Output voltage in Volt
-|  **current**:*number* <required>
+|  **current**: *number* <required>
 |   Output current limit in Ampere
 | **setImportVoltageCurrent**:*void*
 |  Set minimal import voltage and current limit.  Must be within reported limits.
-|  **voltage**:*number* <required>
+|  **voltage**: *number* <required>
 |   Current will be drawn if input is above this voltage (in Volt)
-|  **current**:*number* <required>
+|  **current**: *number* <required>
 |   Input current limit in Ampere
+
+******
+Errors
+******
+| **/errors/power_supply_DC** :
+|  **CommunicationFault** : The communication to the hardware or underlying driver is lost or has errors.
+|  **HardwareFault** : The hardware reported a fault
+|  **OverTemperature** : The hardware shut down because of over temperature. This should not be used if the power supply can handle temperature reduction by reducing output power, in this case update the capabilities as needed. 
+|  **UnderTemperature** : The hardware cannot operate because it is too cold
+|  **UnderVoltageAC** : The AC input voltage is too low
+|  **OverVoltageAC** : The AC input voltage is too high
+|  **UnderVoltageDC** : The DC output voltage is too low
+|  **OverVoltageDC** : The DC output voltage is too high
+|  **OverCurrentAC** : The AC input current is too high
+|  **OverCurrentDC** : The DC output current it too high
+|  **VendorError** : Vendor specific error code. Will stop charging session.
+|  **VendorWarning** : Vendor specific error code. Charging may continue.

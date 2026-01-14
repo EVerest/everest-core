@@ -17,9 +17,8 @@ Commands
 ********
 | **data_transfer**:*object*
 |  Performs a OCPP data transfer request and returns the response
-|  **request**:*object* <required> (:ref:`ocpp-DataTransferRequest <ocpp-DataTransferRequest>`)
+|  **request**: *object* <required> (:ref:`ocpp-DataTransferRequest <ocpp-DataTransferRequest>`)
 |   Request object containing data transfer request
-|   **There is an extended definition for this object** :ref:`here <ocpp-DataTransferRequest>`.
-|  **Result**:*object*  (:ref:`ocpp-DataTransferResponse <ocpp-DataTransferResponse>`)
+|  **Result**: *object*  (:ref:`ocpp-DataTransferResponse <ocpp-DataTransferResponse>`)
 |   Result object containing data transfer response
-|   **There is an extended definition for this object** :ref:`here <ocpp-DataTransferResponse>`.
+

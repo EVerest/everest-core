@@ -1,0 +1,89 @@
+
+
+.. _everest_modules_Winline:
+
+#######
+Winline
+#######
+| Driver for Winline ACDC power supply. Supports multiple Winline modules using CAN protocol either in fixed address mode or group discovery mode.
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **can_device**: *string* <optional>
+| *default: "can0"*
+|  CAN interface name
+| **module_addresses**: *string* <optional>
+| *default: ""*
+|  Module Addresses to use. If you have multiple PSUs, use individual addresses and list them comma separated, e.g. "1,2".
+| **group_address**: *integer* <optional>
+| *default: 0*
+|  Group address. Use this if your PSUs are using automatic allocation of the addresses. If you have multiple PSUs, set this number in accordance with the group dial setting of the PSUs you want to use. Can't use module addresses and group addresses at the same time, if both are set, the module addresses will be used.
+| **device_connection_timeout_s**: *integer* <optional>
+| *default: 15*
+|  Timeout in seconds to wait for a module to respond before considering it offline. CRITICAL SAFETY: Must be greater than module internal timeout to prevent overcurrent risk. Recommended: 15s.
+| **conversion_efficiency_export**: *number* <optional>
+| *default: 0.95*
+|  Conversion efficiency of the export mode.
+| **controller_address**: *integer* <optional>
+| *default: 240*
+|  Controller address defaults to 0xF0.
+| **min_export_voltage_V**: *number* <optional>
+| *default: 50.0*
+|  Minimum export voltage limit (V)
+| **max_export_voltage_V**: *number* <optional>
+| *default: 1000.0*
+|  Maximum export voltage limit (V)
+| **min_export_current_A**: *number* <optional>
+| *default: 0.0*
+|  Minimum export current limit (A)
+| **max_export_current_A**: *number* <optional>
+| *default: 133.3*
+|  Maximum export current limit (A) - will be updated by device rated values
+| **power_state_grace_period_ms**: *integer* <optional>
+| *default: 2000*
+|  Grace period in milliseconds to wait before verifying power state changes
+| **current_regulation_tolerance_A**: *number* <optional>
+| *default: 0.5*
+|  Current regulation tolerance (A)
+| **peak_current_ripple_A**: *number* <optional>
+| *default: 2*
+|  Peak current ripple (A)
+| **altitude_setting_m**: *integer* <optional>
+| *default: 1000*
+|  Working altitude setting in meters. This affects the power derating of the modules at high altitudes. Valid range: 1000-5000m. Default: 1000m (sea level).
+| **input_mode**: *string* <optional>
+| *default: "AC"*
+|  Input mode for the power supply modules. AC mode for AC input, DC mode for DC input. This setting affects the internal configuration of the modules.
+|  enum:
+|    - AC
+|    - DC
+| **module_current_limit_point**: *number* <optional>
+| *default: 3.3325*
+|  Percentage of the rated current that the module will use as the current limit point (0.0-3.3325)
+
+Provides
+========
+| **main**: :ref:`power_supply_DC <everest_interfaces_power_supply_DC>`
+|  Main interface
+|  **config:**
+|   
+
+
+********
+Metadata
+********
+Authors
+=======
+| Florin Mihut
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

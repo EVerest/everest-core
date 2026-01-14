@@ -14,34 +14,29 @@ evse_board_support
 *********
 Variables
 *********
-| **event**:*object*  (:ref:`board_support_common-BspEvent <board_support_common-BspEvent>`)
+| **event**: *object*  (:ref:`board_support_common-BspEvent <board_support_common-BspEvent>`)
 |  Event from ControlPilot signal/output relais
-|  **There is an extended definition for this object** :ref:`here <board_support_common-BspEvent>`.
-| **ac_nr_of_phases_available**:*integer* 
+| **ac_nr_of_phases_available**: *integer* 
 |  Instantaneous phase count available to car
-| **telemetry**:*object*  (:ref:`evse_board_support-Telemetry <evse_board_support-Telemetry>`)
+| **telemetry**: *object*  (:ref:`evse_board_support-Telemetry <evse_board_support-Telemetry>`)
 |  Other telemetry
-|  **There is an extended definition for this object** :ref:`here <evse_board_support-Telemetry>`.
-| **capabilities**:*object*  (:ref:`evse_board_support-HardwareCapabilities <evse_board_support-HardwareCapabilities>`)
+| **capabilities**: *object*  (:ref:`evse_board_support-HardwareCapabilities <evse_board_support-HardwareCapabilities>`)
 |  Hardware capabilities/limits. The BSP must publish this variable at least once during start up. For AC, the capabilities are the limits of the AC hardware power path. For DC, this are the limits for the AC input for the AC/DC converter. The BSP may publish this variable to update limits in case they change during runtime, e.g. if the maximum current changes because the hardware gets too hot.
-|  **There is an extended definition for this object** :ref:`here <evse_board_support-HardwareCapabilities>`.
-| **ac_pp_ampacity**:*object*  (:ref:`board_support_common-ProximityPilot <board_support_common-ProximityPilot>`)
+| **ac_pp_ampacity**: *object*  (:ref:`board_support_common-ProximityPilot <board_support_common-ProximityPilot>`)
 |  Current carrying capacity of the connected cable in ampere for AC charging with a socket. Publish whenever it changes. This has no meaning for DC or AC charging with a fixed attached cable, it does not  need to be implemented and the returned value is not used in those cases.
-|  **There is an extended definition for this object** :ref:`here <board_support_common-ProximityPilot>`.
-| **request_stop_transaction**:*object*  (:ref:`evse_manager-StopTransactionRequest <evse_manager-StopTransactionRequest>`)
+| **request_stop_transaction**: *object*  (:ref:`evse_manager-StopTransactionRequest <evse_manager-StopTransactionRequest>`)
 |  Publish to stop the transaction gracefully (e.g. user pressed the stop button)
-|  **There is an extended definition for this object** :ref:`here <evse_manager-StopTransactionRequest>`.
 
 ********
 Commands
 ********
 | **enable**:*void*
 |  Enables or disables the charging port. Typically disabled results in control pilot state F. It must not accept cars for new charging sessions if disabled.
-|  **value**:*boolean* <required>
+|  **value**: *boolean* <required>
 |   True: enabled, false: disabled.
 | **pwm_on**:*void*
 |  Turns PWM on with duty cycle (in percent)
-|  **value**:*number* <required>
+|  **value**: *number* <required>
 |   PWM duty cycle (>0, <100)
 | **pwm_off**:*void*
 |  Turns PWM off (constant high voltage)
@@ -49,18 +44,57 @@ Commands
 |  Turns PWM off with Error F (constant negative voltage)
 | **allow_power_on**:*void*
 |  Sets allow_power_on flag. If false, Relais must never be switched on.
-|  **value**:*object* <required> (:ref:`evse_board_support-PowerOnOff <evse_board_support-PowerOnOff>`)
+|  **value**: *object* <required> (:ref:`evse_board_support-PowerOnOff <evse_board_support-PowerOnOff>`)
 |   Flag and context
-|   **There is an extended definition for this object** :ref:`here <evse_board_support-PowerOnOff>`.
 | **ac_switch_three_phases_while_charging**:*void*
 |  Optional, in case of doubt do not implement. Report in hardware_capabilites if this command is supported. This command switches between one and three phase operation during an active charging session. Some cars can be permanently destroyed by that, so the bsp needs to implement a special sequence for the switching. The exact sequence can be defined by the BSP, but one example would be a C2->C1->B1->F->B1->B2->C2 or similar. Use with caution.
-|  **value**:*boolean* <required>
+|  **value**: *boolean* <required>
 |   True: switch to 3ph, False: switch to 1ph
 | **evse_replug**:*void*
 |  Optional, in case of doubt do not implement. Special command initiate a virtual replug sequence without restarting session. Emits a EvseReplugStarted event if supported and started. BSP will take care to not emit other events such as CarPluggedIn/Out during that time. Once finished it will emit a EvseReplugFinished. This is mainly for testing purposes, don't implement for production use.
-|  **value**:*integer* <required>
+|  **value**: *integer* <required>
 |   Time in ms for the duration of the replug sequence
 | **ac_set_overcurrent_limit_A**:*void*
 |  Many chargers implement a fast over current shutdown directly in the hardware that triggers if the EV draws more current than the PWM allows. If the hardware does not have this functionality, just ignore this command. Do not use it to set the PWM duty cycle. Otherwise this command reports a value that should be used for the overcurrent detection.  A margin needs to be added to avoid false triggers. Do not use the PWM duty cycle to infer the current limit in the BSP, as this will not work with HLC.
-|  **value**:*number* <required>
+|  **value**: *number* <required>
 |   Ampere current limit value
+
+******
+Errors
+******
+| **/errors/evse_board_support** :
+|  **DiodeFault** : The CP diode in the EV is shorted.
+|  **VentilationNotAvailable** : EV requested state D but no ventilation is available.
+|  **BrownOut** : The hardware/MCU detected a brown out.
+|  **EnergyManagement** : Energy could not be delivered because an (external) energy management failed.
+|  **PermanentFault** : The EVSE is permanently broken and requires repair.
+|  **MREC2GroundFailure** : Ground fault circuit interrupter has been activated.
+|  **MREC3HighTemperature** : High temperature inside the EVSE is derating power delivery.
+|  **MREC4OverCurrentFailure** : Over current protection device has tripped.
+|  **MREC5OverVoltage** : Input voltage to the vehicle has risen above an acceptable level.
+|  **MREC6UnderVoltage** : Input voltage to the vehicle has dropped below an acceptable level.
+|  **MREC8EmergencyStop** : Emergency stop is pressed by the user (required if equipped).
+|  **MREC10InvalidVehicleMode** : The vehicle is in an invalid mode for charging (Reported by IEC stack)
+|  **MREC14PilotFault** : The control pilot voltage is out of range.
+|  **MREC15PowerLoss** : The EVSE is unable to supply any power due to mains failure
+|  **MREC17EVSEContactorFault** : Contactors fail to open or close on EVSE's side. May also include welding related errors.
+|  **MREC18CableOverTempDerate** : Temperature of charging cable or connector assembly is too high, resulting in reduced power operation.
+|  **MREC19CableOverTempStop** : Temperature of charging cable or connector assembly is too high, resulting in a stopped charging session.
+|  **MREC20PartialInsertion** : Cable latch is raised due to incomplete insertion into the vehicle charging port.
+|  **MREC23ProximityFault** : The proximity voltage is out of range.
+|  **MREC24ConnectorVoltageHigh** : The output voltage of EVSE is high before charging starts or after charging ends.
+|  **MREC25BrokenLatch** : The latch on the connector is broken.
+|  **MREC26CutCable** : The output cable has been severed from the EVSE.
+|  **TiltDetected** : The EVSE has been tilted beyond acceptable limits.
+|  **WaterIngressDetected** : A substantial amount of water has been detected inside the EVSE.
+|  **EnclosureOpen** : The EVSE enclosure is open, e.g. a door or panel is not properly closed.
+|  **VendorError** : Vendor specific error code. Will stop charging session.
+|  **VendorWarning** : Vendor specific error code. Charging may continue.
+|  **CommunicationFault** : The communication to the hardware or underlying driver is lost or has errors.
+| **/errors/ac_rcd** :
+|  **Selftest** : The Selftest failed, device permanently broken
+|  **DC** : RCD was triggered by a DC fault
+|  **AC** : RCD was triggered by an AC fault
+|  **MREC2GroundFailure** : MREC compliant fault code
+|  **VendorError** : Vendor specific error code. Will stop charging session.
+|  **VendorWarning** : Vendor specific error code. Charging may continue.

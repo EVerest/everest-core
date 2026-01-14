@@ -1,0 +1,56 @@
+
+
+.. _everest_modules_UUGreenPower_UR1000X0:
+
+#####################
+UUGreenPower_UR1000X0
+#####################
+| Driver for UUGreenPower_UR1000X0 ACDC power supply. Currently supports only one module.
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **can_device**: *string* <optional>
+| *default: "can0"*
+|  CAN interface name
+| **module_addresses**: *string* <optional>
+| *default: "0"*
+|  Module Addresses to use. Set to "0" for broadcast. Make sure to connect only one PSU on the CAN bus in broadcast mode, otherwise it will charge at a too high current (as every module will produce the full current the EV requests!) If you have multiple PSUs, use individual addresses and list them comma separated, e.g. "1,2". Then it will share the current between these PSUs.
+| **voltage_mode**: *integer* <optional>
+| *default: 0*
+|  Set to 0 for automatic switching, 1 for high voltage mode, 2 for low voltage mode
+| **max_export_current_A**: *integer* <optional>
+| *default: 100*
+|  Maximum current that the PSU module can deliver. When using multiple PSUs in parallel, this refers to each individual PSU current capability.
+| **max_export_power_W**: *integer* <optional>
+| *default: 40000*
+|  Maximum power that the PSU module can deliver. When using multiple PSUs in parallel, this refers to each individual PSU power capability.
+
+Provides
+========
+| **main**: :ref:`power_supply_DC <everest_interfaces_power_supply_DC>`
+|  Main interface
+|  **config:**
+|   
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+| Jan Christoph Habig
+| Andreas Heinrich
+| Florin Mihut
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

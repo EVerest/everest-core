@@ -17,6 +17,6 @@ Commands
 ********
 | **get_charger_information**:*object*
 |  Queries the current charger information
-|  **Result**:*object*  (:ref:`charger_information-ChargerInformation <charger_information-ChargerInformation>`)
+|  **Result**: *object*  (:ref:`charger_information-ChargerInformation <charger_information-ChargerInformation>`)
 |   Returns an object with the current charger meta information
-|   **There is an extended definition for this object** :ref:`here <charger_information-ChargerInformation>`.
+

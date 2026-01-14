@@ -12,78 +12,74 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 
 .. _ocpp-CustomData:
 
-| **CustomData**:*object* 
+| **CustomData**: *object* 
 |  Custom data extension
 |  properties:
-|   **vendor_id**:*string* <required>
+|   **vendor_id**: *string* <required>
 |    Vendor Id to identify the customization, this is also included in the data field and only reproduced for convenience
-|   **data**:*string* <required>
+|   **data**: *string* <required>
 |    Custom json data object encoded as string
 
 .. _ocpp-V2XFreqWattPointType:
 
-| **V2XFreqWattPointType**:*object* 
+| **V2XFreqWattPointType**: *object* 
 |  A point of a frequency-watt curve.
 |  properties:
-|   **frequency**:*number* <required>
+|   **frequency**: *number* <required>
 |    Net frequency in Hz
-|   **power**:*number* <required>
+|   **power**: *number* <required>
 |    Power in W to charge (positive) or discharge (negative) at specified frequency.
 
 .. _ocpp-V2XSignalWattPointCurve:
 
-| **V2XSignalWattPointCurve**:*object* 
+| **V2XSignalWattPointCurve**: *object* 
 |  A point of a signal-watt curve.
 |  properties:
-|   **signal**:*integer* <required>
+|   **signal**: *integer* <required>
 |    Signal value from an AFRRSignalRequest.
-|   **power**:*number* <required>
+|   **power**: *number* <required>
 |    Power in W to charge (positive) or discharge (negative) at specified frequency.
 
 .. _ocpp-ChargingSchedulePeriod:
 
-| **ChargingSchedulePeriod**:*object* 
+| **ChargingSchedulePeriod**: *object* 
 |  Element providing information on a charging schedule period.
 |  properties:
-|   **start_period**:*integer* <required>
-|    
-|   **limit**:*number* <required>
+|   **start_period**: *integer* <required>
+|   **limit**: *number* <required>
 |    Optional only when not required by the operationMode, as in CentralSetpoint, ExternalSetpoint, ExternalLimits, LocalFrequency, LocalLoadBalancing. Charging rate limit during the schedule period, in the applicable chargingRateUnit. This SHOULD be a non-negative value; a negative value is only supported for backwards compatibility with older systems that use a negative value to specify a discharging limit. When using chargingRateUnit = W, this field represents the sum of the power of all phases, unless values are provided for L2 and L3, in which case this field represents phase L1.
-|   **limit_L2**:*number* <optional>
+|   **limit_L2**: *number* <optional>
 |    Charging rate limit on phase L2 in the applicable chargingRateUnit.
-|   **limit_L3**:*number* <optional>
+|   **limit_L3**: *number* <optional>
 |    Charging rate limit on phase L3 in the applicable chargingRateUnit.
-|   **number_phases**:*integer* <optional>
-|    
-|   **stack_level**:*integer* <optional>
-|    
-|   **phase_to_use**:*integer* <optional>
-|    
-|   **discharge_limit**:*number* <optional>
+|   **number_phases**: *integer* <optional>
+|   **stack_level**: *integer* <optional>
+|   **phase_to_use**: *integer* <optional>
+|   **discharge_limit**: *number* <optional>
 |    value <= 0. Limit in chargingRateUnit that the EV is allowed to discharge with. Note, these are negative values in order to be consistent with setpoint, which can be positive and negative. For AC this field represents the sum of all phases, unless values are provided for L2 and L3, in which case this field represents phase L1.
-|   **discharge_limit_L2**:*number* <optional>
+|   **discharge_limit_L2**: *number* <optional>
 |    Limit in chargingRateUnit on phase L2 that the EV is allowed to discharge with
-|   **discharge_limit_L3**:*number* <optional>
+|   **discharge_limit_L3**: *number* <optional>
 |    Limit in chargingRateUnit on phase L3 that the EV is allowed to discharge with
-|   **setpoint**:*number* <optional>
+|   **setpoint**: *number* <optional>
 |    Setpoint in chargingRateUnit that the EV should follow as close as possible. Use negative values for discharging. When a limit and/or dischargeLimit are given the overshoot when following setpoint must remain within these values. This field represents the sum of all phases,unless values are provided for L2 and L3, in which case this field represents phase L1.
-|   **setpoint_L2**:*number* <optional>
+|   **setpoint_L2**: *number* <optional>
 |    Setpoint in chargingRateUnit that the EV should follow on phase L2 as close as possible.
-|   **setpoint_L3**:*number* <optional>
+|   **setpoint_L3**: *number* <optional>
 |    Setpoint in chargingRateUnit that the EV should follow on phase L3 as close as possible.
-|   **setpoint_reactive**:*number* <optional>
+|   **setpoint_reactive**: *number* <optional>
 |    Setpoint for reactive power (or current) in chargingRateUnit that the EV should follow as closely as possible. Positive values for inductive, negative for capacitive reactive power or current. This field represents the sum of all phases, unless values are provided for L2 and L3, in which case this field represents phase L1.
-|   **setpoint_reactive_L2**:*number* <optional>
+|   **setpoint_reactive_L2**: *number* <optional>
 |    Setpoint for reactive power (or current) in chargingRateUnit that the EV should follow on phase L2 as closely as possible.
-|   **setpoint_reactive_L3**:*number* <optional>
+|   **setpoint_reactive_L3**: *number* <optional>
 |    Setpoint for reactive power (or current) in chargingRateUnit that the EV should follow on phase L3 as closely as possible.
-|   **preconditioning_request**:*number* <optional>
+|   **preconditioning_request**: *number* <optional>
 |    If true, the EV should attempt to keep the BMS preconditioned for this time interval.
-|   **evse_sleep**:*boolean* <optional>
+|   **evse_sleep**: *boolean* <optional>
 |    If true, the EVSE must turn off power electronics/modules associated with this transaction. Default value when absent is false.
-|   **v2x_baseline**:*number* <optional>
+|   **v2x_baseline**: *number* <optional>
 |    Power value that, when present, is used as a baseline on top of which values from v2xFreqWattCurve and v2xSignalWattCurve are added
-|   **operation_mode**:*string* <optional>
+|   **operation_mode**: *string* <optional>
 |    Operation mode for (bi-)directional charging during a charging schedule period.
 |    enum:
 |      - Idle
@@ -94,82 +90,67 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 |      - CentralFrequency
 |      - LocalFrequency
 |      - LocalLoadBalancing
-|   **v2x_freq_watt_curve**:*array* <optional>
+|   **v2x_freq_watt_curve**: *array* <optional>
 |    Only required when operationMode = LocalFrequency. When used it must contain at least two coordinates to specify a power-frequency table to use during this period. The table determines the value of setpoint power for a given frequency. chargingRateUnit must be W for LocalFrequency control.
-|    **array_item**:*object*  (:ref:`ocpp-V2XFreqWattPointType <ocpp-V2XFreqWattPointType>`)
+|    **array_item**: *object*  (:ref:`ocpp-V2XFreqWattPointType <ocpp-V2XFreqWattPointType>`)
 |     A point of a frequency-watt curve.
-|     **There is an extended definition for this object** :ref:`here <ocpp-V2XFreqWattPointType>`.
-| 
-|   **v2x_signal_watt_curve**:*array* <optional>
+|   **v2x_signal_watt_curve**: *array* <optional>
 |    Only used, but not required, when operationMode = LocalFrequency. When used it must contain at least two coordinates to specify a signal-frequency curve to use during this period. The curve determines the value of setpoint power for a given signal. chargingRateUnit must be W for LocalFrequency control.
-|    **array_item**:*object*  (:ref:`ocpp-V2XSignalWattPointCurve <ocpp-V2XSignalWattPointCurve>`)
+|    **array_item**: *object*  (:ref:`ocpp-V2XSignalWattPointCurve <ocpp-V2XSignalWattPointCurve>`)
 |     A point of a signal-watt curve.
-|     **There is an extended definition for this object** :ref:`here <ocpp-V2XSignalWattPointCurve>`.
-| 
 
 .. _ocpp-ChargingSchedule:
 
-| **ChargingSchedule**:*object* 
+| **ChargingSchedule**: *object* 
 |  Element providing information on an OCPP charging schedule.
 |  properties:
-|   **evse**:*integer* <required>
+|   **evse**: *integer* <required>
 |    The OCPP 2.0.1 EVSE ID (not used in OCPP 1.6).
-|   **charging_rate_unit**:*string* <required>
-|    
-|   **charging_schedule_period**:*array* <required>
-|    
-|    **array_item**:*object*  (:ref:`ocpp-ChargingSchedulePeriod <ocpp-ChargingSchedulePeriod>`)
+|   **charging_rate_unit**: *string* <required>
+|   **charging_schedule_period**: *array* <required>
+|    **array_item**: *object*  (:ref:`ocpp-ChargingSchedulePeriod <ocpp-ChargingSchedulePeriod>`)
 |     schedule periods
-|     **There is an extended definition for this object** :ref:`here <ocpp-ChargingSchedulePeriod>`.
-| 
-|   **duration**:*integer* <optional>
-|    
-|   **start_schedule**:*string* <optional>
-|    
-|   **min_charging_rate**:*number* <optional>
-|    
+|   **duration**: *integer* <optional>
+|   **start_schedule**: *string* <optional>
+|   **min_charging_rate**: *number* <optional>
 
 .. _ocpp-ChargingSchedules:
 
-| **ChargingSchedules**:*object* 
+| **ChargingSchedules**: *object* 
 |  schedules for connectors
 |  properties:
-|   **schedules**:*array* <required>
+|   **schedules**: *array* <required>
 |    array of schedules
-|    **array_item**:*object*  (:ref:`ocpp-ChargingSchedule <ocpp-ChargingSchedule>`)
+|    **array_item**: *object*  (:ref:`ocpp-ChargingSchedule <ocpp-ChargingSchedule>`)
 |     schedule for a connector
-|     **There is an extended definition for this object** :ref:`here <ocpp-ChargingSchedule>`.
-| 
 
 .. _ocpp-EVSE:
 
-| **EVSE**:*object* 
+| **EVSE**: *object* 
 |  Type of an EVSE. If only the id is present, this type identifies an EVSE. If also a connector_id is given, this type identifies a Connector of the EVSE
 |  properties:
-|   **id**:*integer* <required>
+|   **id**: *integer* <required>
 |    Id of the EVSE
-|   **connector_id**:*integer* <optional>
+|   **connector_id**: *integer* <optional>
 |    An id to designate a specific connector (on an EVSE) by connector index number
 
 .. _ocpp-OcppTransactionEvent:
 
-| **OcppTransactionEvent**:*object* 
+| **OcppTransactionEvent**: *object* 
 |  Element providing information on OCPP transactions.
 |  properties:
-|   **transaction_event**:*string* <required> (:ref:`ocpp-TransactionEvent <ocpp-TransactionEvent>`)
+|   **transaction_event**: *string* <required> (:ref:`ocpp-TransactionEvent <ocpp-TransactionEvent>`)
 |    The transaction related event.
-|    **There is an extended definition for this object** :ref:`here <ocpp-TransactionEvent>`.
-|   **evse**:*object* <optional> (:ref:`ocpp-EVSE <ocpp-EVSE>`)
+|   **evse**: *object* <optional> (:ref:`ocpp-EVSE <ocpp-EVSE>`)
 |    The OCPP 2.0.1 EVSE associated with the transaction.
-|    **There is an extended definition for this object** :ref:`here <ocpp-EVSE>`.
-|   **session_id**:*string* <required>
+|   **session_id**: *string* <required>
 |    The EVSE manager assigned session ID.
-|   **transaction_id**:*string* <optional>
+|   **transaction_id**: *string* <optional>
 |    The CSMS assigned transaction ID. A string is used to support OCPP 2.0.1. For OCPP 1.6 the integer is converted to a string
 
 .. _ocpp-TransactionEvent:
 
-| **TransactionEvent**:*string* 
+| **TransactionEvent**: *string* 
 |  The transaction event enumeration
 |  enum:
 |    - Started
@@ -178,23 +159,21 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 
 .. _ocpp-OcppTransactionEventResponse:
 
-| **OcppTransactionEventResponse**:*object* 
+| **OcppTransactionEventResponse**: *object* 
 |  Information that can be returned with a OCPP TransactionEventResponse
 |  properties:
-|   **original_transaction_event**:*object* <required> (:ref:`ocpp-OcppTransactionEvent <ocpp-OcppTransactionEvent>`)
+|   **original_transaction_event**: *object* <required> (:ref:`ocpp-OcppTransactionEvent <ocpp-OcppTransactionEvent>`)
 |    The original transaction event that promted this response
-|    **There is an extended definition for this object** :ref:`here <ocpp-OcppTransactionEvent>`.
-|   **total_cost**:*number* <optional>
+|   **total_cost**: *number* <optional>
 |    Running or total cost
-|   **charging_priority**:*integer* <optional>
+|   **charging_priority**: *integer* <optional>
 |    Priority from -9 to 9 for smart charging, higher values mean higher priority
-|   **personal_message**:*object* <optional> (:ref:`text_message-MessageContent <text_message-MessageContent>`)
+|   **personal_message**: *object* <optional> (:ref:`text_message-MessageContent <text_message-MessageContent>`)
 |    Personal message
-|    **There is an extended definition for this object** :ref:`here <text_message-MessageContent>`.
 
 .. _ocpp-DataTransferStatus:
 
-| **DataTransferStatus**:*string* 
+| **DataTransferStatus**: *string* 
 |  Data Transfer Status enum
 |  enum:
 |    - Accepted
@@ -205,65 +184,59 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 
 .. _ocpp-DataTransferRequest:
 
-| **DataTransferRequest**:*object* 
+| **DataTransferRequest**: *object* 
 |  Type for data transfer request provided by OCPP
 |  properties:
-|   **vendor_id**:*string* <required>
+|   **vendor_id**: *string* <required>
 |    Identifies the vendor
-|   **message_id**:*string* <optional>
+|   **message_id**: *string* <optional>
 |    Identifies the message
-|   **data**:*string* <optional>
+|   **data**: *string* <optional>
 |    Data provided by this data transfer
-|   **custom_data**:*object* <optional> (:ref:`ocpp-CustomData <ocpp-CustomData>`)
+|   **custom_data**: *object* <optional> (:ref:`ocpp-CustomData <ocpp-CustomData>`)
 |    Custom data extension
-|    **There is an extended definition for this object** :ref:`here <ocpp-CustomData>`.
 
 .. _ocpp-DataTransferResponse:
 
-| **DataTransferResponse**:*object* 
+| **DataTransferResponse**: *object* 
 |  Type for data transfer response provided by OCPP
 |  properties:
-|   **status**:*string* <required> (:ref:`ocpp-DataTransferStatus <ocpp-DataTransferStatus>`)
+|   **status**: *string* <required> (:ref:`ocpp-DataTransferStatus <ocpp-DataTransferStatus>`)
 |    Status of the data transfer
-|    **There is an extended definition for this object** :ref:`here <ocpp-DataTransferStatus>`.
-|   **data**:*string* <optional>
+|   **data**: *string* <optional>
 |    Data provided by this data transfer
-|   **custom_data**:*object* <optional> (:ref:`ocpp-CustomData <ocpp-CustomData>`)
+|   **custom_data**: *object* <optional> (:ref:`ocpp-CustomData <ocpp-CustomData>`)
 |    Custom data extension
-|    **There is an extended definition for this object** :ref:`here <ocpp-CustomData>`.
 
 .. _ocpp-KeyValue:
 
-| **KeyValue**:*object* 
+| **KeyValue**: *object* 
 |  Type for a key value pair
 |  properties:
-|   **key**:*string* <required>
+|   **key**: *string* <required>
 |    Key / Identifier
-|   **read_only**:*boolean* <required>
+|   **read_only**: *boolean* <required>
 |    Indicates if the configuration key is configured to be read-only
-|   **value**:*string* <optional>
+|   **value**: *string* <optional>
 |    Value of the configuration key
 
 .. _ocpp-GetConfigurationResponse:
 
-| **GetConfigurationResponse**:*object* 
+| **GetConfigurationResponse**: *object* 
 |  Response to a GetConfiguration request
 |  properties:
-|   **configuration_keys**:*array* <required>
+|   **configuration_keys**: *array* <required>
 |    List of known configuration keys of key value pairs
-|    **array_item**:*object*  (:ref:`ocpp-KeyValue <ocpp-KeyValue>`)
+|    **array_item**: *object*  (:ref:`ocpp-KeyValue <ocpp-KeyValue>`)
 |     Key value pair
-|     **There is an extended definition for this object** :ref:`here <ocpp-KeyValue>`.
-| 
-|   **unknown_keys**:*array* <required>
+|   **unknown_keys**: *array* <required>
 |    List of unknown configuration keys
-|    **array_item**:*string* 
+|    **array_item**: *string* 
 |     Unknown key
-| 
 
 .. _ocpp-ConfigurationStatus:
 
-| **ConfigurationStatus**:*string* 
+| **ConfigurationStatus**: *string* 
 |  Response to a set_custom_configuration_key command
 |  enum:
 |    - Accepted
@@ -273,7 +246,7 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 
 .. _ocpp-SecurityEventEnum:
 
-| **SecurityEventEnum**:*string* 
+| **SecurityEventEnum**: *string* 
 |  Enum for known security events
 |  enum:
 |    - FirmwareUpdated
@@ -299,61 +272,58 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 
 .. _ocpp-SecurityEvent:
 
-| **SecurityEvent**:*object* 
+| **SecurityEvent**: *object* 
 |  Type for a security event
 |  properties:
-|   **type**:*string* <required>
+|   **type**: *string* <required>
 |    Type of the security event
-|   **info**:*string* <optional>
+|   **info**: *string* <optional>
 |    Additional information about the occurred security event
-|   **critical**:*boolean* <optional>
+|   **critical**: *boolean* <optional>
 |    If set this overwrites the default criticality recommended in the OCPP 2.0.1 appendix. A critical security event is transmitted as a message to the CSMS, a non-critical one is just written to the security log
-|   **timestamp**:*string* <optional>
+|   **timestamp**: *string* <optional>
 |    Timestamp of the moment the security event was generated, if absent the current datetime is assumed
 |    format:date-time
 
 .. _ocpp-Variable:
 
-| **Variable**:*object* 
+| **Variable**: *object* 
 |  Type for a variable with a name and an optional instance For OCPP1.6: A Variable should only contain a name. The name identifies
-|   the configuration key.
-| For OCPP2.0.1: All properties of the Variable can be used
+|    the configuration key.
+|  For OCPP2.0.1: All properties of the Variable can be used
 |  properties:
-|   **name**:*string* <required>
+|   **name**: *string* <required>
 |    Name of a variable
-|   **instance**:*string* <optional>
+|   **instance**: *string* <optional>
 |    Name of instance in case the variable exists as multiple instances
 
 .. _ocpp-Component:
 
-| **Component**:*object* 
+| **Component**: *object* 
 |  Type for a component with name, optional instance and optional evse For OCPP1.6: A definition of a Component doesn't exist in OCPP1.6; In the context of OCPP1.6
-|   this type may not be relevant or used.
-| For OCPP2.0.1: All properties of the Component can be used
+|    this type may not be relevant or used.
+|  For OCPP2.0.1: All properties of the Component can be used
 |  properties:
-|   **name**:*string* <required>
+|   **name**: *string* <required>
 |    Name of a component
-|   **instance**:*string* <optional>
+|   **instance**: *string* <optional>
 |    Name of instance in case the component exists as multiple instances
-|   **evse**:*object* <optional> (:ref:`ocpp-EVSE <ocpp-EVSE>`)
+|   **evse**: *object* <optional> (:ref:`ocpp-EVSE <ocpp-EVSE>`)
 |    Specifies the EVSE when component is located at EVSE level, also specifies the connector when component is located at Connector level
-|    **There is an extended definition for this object** :ref:`here <ocpp-EVSE>`.
 
 .. _ocpp-ComponentVariable:
 
-| **ComponentVariable**:*object* 
+| **ComponentVariable**: *object* 
 |  Type for a combination of component and variable. Note that for OCPP1.6 only the Variable.name (configuration key) is sufficient to identify a configuration key. For OCPP2.0.1 all properties of the type(s) can be used.
 |  properties:
-|   **component**:*object* <required> (:ref:`ocpp-Component <ocpp-Component>`)
+|   **component**: *object* <required> (:ref:`ocpp-Component <ocpp-Component>`)
 |    Component
-|    **There is an extended definition for this object** :ref:`here <ocpp-Component>`.
-|   **variable**:*object* <required> (:ref:`ocpp-Variable <ocpp-Variable>`)
+|   **variable**: *object* <required> (:ref:`ocpp-Variable <ocpp-Variable>`)
 |    Variable
-|    **There is an extended definition for this object** :ref:`here <ocpp-Variable>`.
 
 .. _ocpp-AttributeEnum:
 
-| **AttributeEnum**:*string* 
+| **AttributeEnum**: *string* 
 |  Attribute enum Actual: The actual value of a variable Target: The target value of a variable MinSet: The minimal allowed value of a variable MaxSet: The maximum allowed value of a variable
 |  enum:
 |    - Actual
@@ -363,7 +333,7 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 
 .. _ocpp-GetVariableStatusEnumType:
 
-| **GetVariableStatusEnumType**:*string* 
+| **GetVariableStatusEnumType**: *string* 
 |  Indicates the status of the GetVariableRequest as part of the GetVariableResult operation Accepted: Variable successfully retrieved Rejected: Request is rejected UnknownComponent: Component is not known UnknownVariable: Variable is not known NotSupportedAttributeType: The AttributeType is not supported
 |  enum:
 |    - Accepted
@@ -374,7 +344,7 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 
 .. _ocpp-SetVariableStatusEnumType:
 
-| **SetVariableStatusEnumType**:*string* 
+| **SetVariableStatusEnumType**: *string* 
 |  Indicates the status of the SetVariableRequest operation as part of the SetVariableResult Accepted: Variable successfully set Rejected: Request is rejected UnknownComponent: Component is not known UnknownVariable: Variable is not known NotSupportedAttributeType: The AttributeType is not supported RebootRequired: A reboot is required
 |  enum:
 |    - Accepted
@@ -386,7 +356,7 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 
 .. _ocpp-EventTriggerEnum:
 
-| **EventTriggerEnum**:*string* 
+| **EventTriggerEnum**: *string* 
 |  Indicates the trigger reason of a generic event as part of the type EventData Alerting: Monitored variable has passed an Lower or Upper Threshold Delta: Delta Monitored Variable value has changed by more than specified amount Periodic: Periodic Monitored Variable has been sampled for reporting at the specified interval
 |  enum:
 |    - Alerting
@@ -395,7 +365,7 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 
 .. _ocpp-EventNotificationType:
 
-| **EventNotificationType**:*string* 
+| **EventNotificationType**: *string* 
 |  Indicates the event notification type as part of the type EventData HardWiredNotification: The software implemented by the manufacturer triggered a hardwired notification HardWiredMonitor: Triggered by a monitor, which is hardwired by the manufacturer PreconfiguredMonitor: Triggered by a monitor, which is preconfigured by the manufacturer. CustomMonitor: Triggered by a monitor which is set by a message by the Charging Station Operator.
 |  enum:
 |    - HardWiredNotification
@@ -405,99 +375,86 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 
 .. _ocpp-GetVariableRequest:
 
-| **GetVariableRequest**:*object* 
+| **GetVariableRequest**: *object* 
 |  Type to request a variable value (OCPP2.0.1) or configuration value (OCPP1.6)
 |  properties:
-|   **component_variable**:*object* <required> (:ref:`ocpp-ComponentVariable <ocpp-ComponentVariable>`)
+|   **component_variable**: *object* <required> (:ref:`ocpp-ComponentVariable <ocpp-ComponentVariable>`)
 |    Identifier for which the value should be requested
-|    **There is an extended definition for this object** :ref:`here <ocpp-ComponentVariable>`.
-|   **attribute_type**:*string* <optional> (:ref:`ocpp-AttributeEnum <ocpp-AttributeEnum>`)
+|   **attribute_type**: *string* <optional> (:ref:`ocpp-AttributeEnum <ocpp-AttributeEnum>`)
 |    AttributeEnum for which the value should be requested. When absent, actual is assumed
-|    **There is an extended definition for this object** :ref:`here <ocpp-AttributeEnum>`.
 
 .. _ocpp-GetVariableResult:
 
-| **GetVariableResult**:*object* 
+| **GetVariableResult**: *object* 
 |  Result of a GetVariableRequest
 |  properties:
-|   **status**:*string* <required> (:ref:`ocpp-GetVariableStatusEnumType <ocpp-GetVariableStatusEnumType>`)
+|   **status**: *string* <required> (:ref:`ocpp-GetVariableStatusEnumType <ocpp-GetVariableStatusEnumType>`)
 |    Status of the GetVariableResult
-|    **There is an extended definition for this object** :ref:`here <ocpp-GetVariableStatusEnumType>`.
-|   **attribute_type**:*string* <optional> (:ref:`ocpp-AttributeEnum <ocpp-AttributeEnum>`)
+|   **attribute_type**: *string* <optional> (:ref:`ocpp-AttributeEnum <ocpp-AttributeEnum>`)
 |    AttributeEnum for which the value was requested. When absent, actual is assumed
-|    **There is an extended definition for this object** :ref:`here <ocpp-AttributeEnum>`.
-|   **value**:*string* <optional>
+|   **value**: *string* <optional>
 |    Value of the requested variable and AttributeEnum. This field can only be empty when the given status is NOT accepted
-|   **component_variable**:*object* <required> (:ref:`ocpp-ComponentVariable <ocpp-ComponentVariable>`)
+|   **component_variable**: *object* <required> (:ref:`ocpp-ComponentVariable <ocpp-ComponentVariable>`)
 |    Identifier for which the value was requested
-|    **There is an extended definition for this object** :ref:`here <ocpp-ComponentVariable>`.
 
 .. _ocpp-SetVariableRequest:
 
-| **SetVariableRequest**:*object* 
+| **SetVariableRequest**: *object* 
 |  Type to request to set a variable or configuration key
 |  properties:
-|   **component_variable**:*object* <required> (:ref:`ocpp-ComponentVariable <ocpp-ComponentVariable>`)
+|   **component_variable**: *object* <required> (:ref:`ocpp-ComponentVariable <ocpp-ComponentVariable>`)
 |    Identifier for which the value should be set
-|    **There is an extended definition for this object** :ref:`here <ocpp-ComponentVariable>`.
-|   **value**:*string* <required>
+|   **value**: *string* <required>
 |    Value of the variable that should be set
-|   **attribute_type**:*string* <optional> (:ref:`ocpp-AttributeEnum <ocpp-AttributeEnum>`)
+|   **attribute_type**: *string* <optional> (:ref:`ocpp-AttributeEnum <ocpp-AttributeEnum>`)
 |    AttributeEnum for which the value should be set. When absent, actual is assumed
-|    **There is an extended definition for this object** :ref:`here <ocpp-AttributeEnum>`.
 
 .. _ocpp-SetVariableResult:
 
-| **SetVariableResult**:*object* 
+| **SetVariableResult**: *object* 
 |  Result of a SetVariableRequest
 |  properties:
-|   **status**:*string* <required> (:ref:`ocpp-SetVariableStatusEnumType <ocpp-SetVariableStatusEnumType>`)
+|   **status**: *string* <required> (:ref:`ocpp-SetVariableStatusEnumType <ocpp-SetVariableStatusEnumType>`)
 |    Status of the SetVariableResult
-|    **There is an extended definition for this object** :ref:`here <ocpp-SetVariableStatusEnumType>`.
-|   **component_variable**:*object* <required> (:ref:`ocpp-ComponentVariable <ocpp-ComponentVariable>`)
+|   **component_variable**: *object* <required> (:ref:`ocpp-ComponentVariable <ocpp-ComponentVariable>`)
 |    Identifier for which the set of the value should be requested
-|    **There is an extended definition for this object** :ref:`here <ocpp-ComponentVariable>`.
-|   **attribute_type**:*string* <optional> (:ref:`ocpp-AttributeEnum <ocpp-AttributeEnum>`)
+|   **attribute_type**: *string* <optional> (:ref:`ocpp-AttributeEnum <ocpp-AttributeEnum>`)
 |    AttributeEnum for which the set of the value is requested. When absent, actual is assumed
-|    **There is an extended definition for this object** :ref:`here <ocpp-AttributeEnum>`.
 
 .. _ocpp-EventData:
 
-| **EventData**:*object* 
+| **EventData**: *object* 
 |  Type to report an event notification for a component-variable
 |  properties:
-|   **component_variable**:*object* <required> (:ref:`ocpp-ComponentVariable <ocpp-ComponentVariable>`)
+|   **component_variable**: *object* <required> (:ref:`ocpp-ComponentVariable <ocpp-ComponentVariable>`)
 |    Identifier for which the event occurred
-|    **There is an extended definition for this object** :ref:`here <ocpp-ComponentVariable>`.
-|   **event_id**:*integer* <required>
+|   **event_id**: *integer* <required>
 |    Identifies the event
-|   **timestamp**:*string* <required>
+|   **timestamp**: *string* <required>
 |    Timestamp of the moment the report was generated
 |    format:date-time
-|   **trigger**:*string* <required> (:ref:`ocpp-EventTriggerEnum <ocpp-EventTriggerEnum>`)
+|   **trigger**: *string* <required> (:ref:`ocpp-EventTriggerEnum <ocpp-EventTriggerEnum>`)
 |    Type of the monitor that triggered this event
-|    **There is an extended definition for this object** :ref:`here <ocpp-EventTriggerEnum>`.
-|   **actual_value**:*string* <required>
+|   **actual_value**: *string* <required>
 |    Actual value of the variable
-|   **event_notification_type**:*string* <required> (:ref:`ocpp-EventNotificationType <ocpp-EventNotificationType>`)
+|   **event_notification_type**: *string* <required> (:ref:`ocpp-EventNotificationType <ocpp-EventNotificationType>`)
 |    Type of the event notification
-|    **There is an extended definition for this object** :ref:`here <ocpp-EventNotificationType>`.
-|   **cause**:*integer* <optional>
+|   **cause**: *integer* <optional>
 |    Refers to the Id of an event that is considered to be the cause for this event
-|   **tech_code**:*string* <optional>
+|   **tech_code**: *string* <optional>
 |    Technical (error) code as reported by component
-|   **tech_info**:*string* <optional>
+|   **tech_info**: *string* <optional>
 |    Technical detail information as reported by component
-|   **cleared**:*boolean* <optional>
+|   **cleared**: *boolean* <optional>
 |    Cleared is set to true to report the clearing of a monitored situation
-|   **transaction_id**:*string* <optional>
+|   **transaction_id**: *string* <optional>
 |    If an event notification is linked to a specific transaction, this field can be used to specify its transactionId
-|   **variable_monitoring_id**:*integer* <optional>
+|   **variable_monitoring_id**: *integer* <optional>
 |    Identifies the VariableMonitoring which triggered the event
 
 .. _ocpp-OperationalStatusEnumType:
 
-| **OperationalStatusEnumType**:*string* 
+| **OperationalStatusEnumType**: *string* 
 |  Operational status of Charging Station /EVSE / Connector
 |  enum:
 |    - Inoperative
@@ -505,19 +462,17 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 
 .. _ocpp-ChangeAvailabilityRequest:
 
-| **ChangeAvailabilityRequest**:*object* 
+| **ChangeAvailabilityRequest**: *object* 
 |  Request type to change the availability of the Charging Station/ an EVSE / a Connector.
 |  properties:
-|   **operational_status**:*string* <required> (:ref:`ocpp-OperationalStatusEnumType <ocpp-OperationalStatusEnumType>`)
+|   **operational_status**: *string* <required> (:ref:`ocpp-OperationalStatusEnumType <ocpp-OperationalStatusEnumType>`)
 |    Type of availability change that the Charging Station should perform.
-|    **There is an extended definition for this object** :ref:`here <ocpp-OperationalStatusEnumType>`.
-|   **evse**:*object* <optional> (:ref:`ocpp-EVSE <ocpp-EVSE>`)
+|   **evse**: *object* <optional> (:ref:`ocpp-EVSE <ocpp-EVSE>`)
 |    Specify EVSE/Connector whose status is changed. When omitted, the message refers to the Charging Station as a whole.
-|    **There is an extended definition for this object** :ref:`here <ocpp-EVSE>`.
 
 .. _ocpp-ChangeAvailabilityStatusEnumType:
 
-| **ChangeAvailabilityStatusEnumType**:*string* 
+| **ChangeAvailabilityStatusEnumType**: *string* 
 |  Status returned in response to ChangeAvailabilityRequest.
 |  enum:
 |    - Accepted
@@ -526,29 +481,27 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 
 .. _ocpp-StatusInfoType:
 
-| **StatusInfoType**:*object* 
+| **StatusInfoType**: *object* 
 |  Element providing more information about the status.
 |  properties:
-|   **reason_code**:*string* <required>
+|   **reason_code**: *string* <required>
 |    A predefined code for the reason why the status is returned in this response. The string is case-insensitive.
-|   **additional_info**:*string* <optional>
+|   **additional_info**: *string* <optional>
 |    Additional text to provide detailed information
 
 .. _ocpp-ChangeAvailabilityResponse:
 
-| **ChangeAvailabilityResponse**:*object* 
+| **ChangeAvailabilityResponse**: *object* 
 |  Response type to request to change the availability of the Charging Station/ an EVSE / a Connector.
 |  properties:
-|   **status**:*string* <required> (:ref:`ocpp-ChangeAvailabilityStatusEnumType <ocpp-ChangeAvailabilityStatusEnumType>`)
+|   **status**: *string* <required> (:ref:`ocpp-ChangeAvailabilityStatusEnumType <ocpp-ChangeAvailabilityStatusEnumType>`)
 |    Indicates whether the Charging Station is able to perform the availability change.
-|    **There is an extended definition for this object** :ref:`here <ocpp-ChangeAvailabilityStatusEnumType>`.
-|   **status_info**:*object* <optional> (:ref:`ocpp-StatusInfoType <ocpp-StatusInfoType>`)
+|   **status_info**: *object* <optional> (:ref:`ocpp-StatusInfoType <ocpp-StatusInfoType>`)
 |    Detailed status information.
-|    **There is an extended definition for this object** :ref:`here <ocpp-StatusInfoType>`.
 
 .. _ocpp-RegistrationStatus:
 
-| **RegistrationStatus**:*string* 
+| **RegistrationStatus**: *string* 
 |  Indicates whether the Charging Station has been registered within the OCPP CSMS
 |  enum:
 |    - Accepted
@@ -557,17 +510,15 @@ OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definit
 
 .. _ocpp-BootNotificationResponse:
 
-| **BootNotificationResponse**:*object* 
+| **BootNotificationResponse**: *object* 
 |  OCPP BootNotificationResponse
 |  properties:
-|   **status**:*string* <required> (:ref:`ocpp-RegistrationStatus <ocpp-RegistrationStatus>`)
+|   **status**: *string* <required> (:ref:`ocpp-RegistrationStatus <ocpp-RegistrationStatus>`)
 |    Indicates whether the Charging Station has been registered within the OCPP CSMS
-|    **There is an extended definition for this object** :ref:`here <ocpp-RegistrationStatus>`.
-|   **current_time**:*string* <required>
+|   **current_time**: *string* <required>
 |    Contains the CSMS current time in RFC3339 format
 |    format:date-time
-|   **interval**:*integer* <required>
+|   **interval**: *integer* <required>
 |    When Status is Accepted, this contains the heartbeat interval in seconds. If the CSMS returns something other than Accepted, the value of the interval field indicates the minimum wait time before sending a next BootNotification request.
-|   **status_info**:*object* <optional> (:ref:`ocpp-StatusInfoType <ocpp-StatusInfoType>`)
+|   **status_info**: *object* <optional> (:ref:`ocpp-StatusInfoType <ocpp-StatusInfoType>`)
 |    Detailed status information.
-|    **There is an extended definition for this object** :ref:`here <ocpp-StatusInfoType>`.

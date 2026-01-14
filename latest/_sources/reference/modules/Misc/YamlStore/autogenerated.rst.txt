@@ -1,0 +1,38 @@
+
+
+.. _everest_modules_YamlStore:
+
+#########
+YamlStore
+#########
+| Provides a read-only key-value store interface, backed by a simple YAML file.
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **file**: *string* <required>
+|  Path to the YAML file used as a read-only key-value store.
+
+Provides
+========
+| **main**: :ref:`kvs <everest_interfaces_kvs>`
+|  Provides a read-only key-value interface
+
+
+********
+Metadata
+********
+Authors
+=======
+| Michael Heimpold
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

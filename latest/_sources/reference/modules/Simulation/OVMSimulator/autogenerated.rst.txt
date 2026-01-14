@@ -1,0 +1,44 @@
+
+
+.. _everest_modules_OVMSimulator:
+
+############
+OVMSimulator
+############
+| SIL Implementation of an Over voltage monitor for DC charging
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`over_voltage_monitor <everest_interfaces_over_voltage_monitor>`
+|  Main interface for the OVM
+|  **config:**
+|   **simulate_error_shutdown**: *boolean* <optional>
+|   *default: False*
+|    Set to true to simulate an error shutdown during charging
+|   **simulate_emergency_shutdown**: *boolean* <optional>
+|   *default: False*
+|    Set to true to simulate an emergency shutdown during charging
+|   **simulate_error_delay**: *integer* <optional>
+|   *default: 5*
+|    Simulate over voltage error N seconds after start of charging
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen (Pionix GmbH)
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

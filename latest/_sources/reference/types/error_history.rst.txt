@@ -12,17 +12,15 @@ This file contains the types for the error history interface
 
 .. _error_history-ImplementationIdentifier:
 
-| **ImplementationIdentifier**:*object* 
+| **ImplementationIdentifier**: *object* 
 |  Identifier of an implementation
 |  properties:
-|   **module_id**:*string* <required>
-|    
-|   **implementation_id**:*string* <required>
-|    
+|   **module_id**: *string* <required>
+|   **implementation_id**: *string* <required>
 
 .. _error_history-State:
 
-| **State**:*string* 
+| **State**: *string* 
 |  State of an error
 |  enum:
 |    - Active
@@ -31,7 +29,7 @@ This file contains the types for the error history interface
 
 .. _error_history-SeverityFilter:
 
-| **SeverityFilter**:*string* 
+| **SeverityFilter**: *string* 
 |  Severity filter for errors
 |  enum:
 |    - HIGH_GE
@@ -40,41 +38,30 @@ This file contains the types for the error history interface
 
 .. _error_history-TimeperiodFilter:
 
-| **TimeperiodFilter**:*object* 
+| **TimeperiodFilter**: *object* 
 |  Timeperiod filter for errors
 |  properties:
-|   **timestamp_from**:*string* <required>
-|    
+|   **timestamp_from**: *string* <required>
 |    format:date-time
-|   **timestamp_to**:*string* <required>
-|    
+|   **timestamp_to**: *string* <required>
 |    format:date-time
 
 .. _error_history-FilterArguments:
 
-| **FilterArguments**:*object* 
+| **FilterArguments**: *object* 
 |  Arguments for the get_errors command
 |  properties:
-|   **state_filter**:*string/object* <optional> (:ref:`error_history-State <error_history-State>`)
-|    
-|    **There is an extended definition for this object** :ref:`here <error_history-State>`.
-|   **origin_filter**:*string/object* <optional> (:ref:`error_history-ImplementationIdentifier <error_history-ImplementationIdentifier>`)
-|    
-|    **There is an extended definition for this object** :ref:`here <error_history-ImplementationIdentifier>`.
-|   **type_filter**:*string* <optional>
-|    
-|   **severity_filter**:*string/object* <optional> (:ref:`error_history-SeverityFilter <error_history-SeverityFilter>`)
-|    
-|    **There is an extended definition for this object** :ref:`here <error_history-SeverityFilter>`.
-|   **timeperiod_filter**:*string/object* <optional> (:ref:`error_history-TimeperiodFilter <error_history-TimeperiodFilter>`)
-|    
-|    **There is an extended definition for this object** :ref:`here <error_history-TimeperiodFilter>`.
-|   **handle_filter**:*string* <optional>
+|   **state_filter**: *string/object* <optional> (:ref:`error_history-State <error_history-State>`)
+|   **origin_filter**: *string/object* <optional> (:ref:`error_history-ImplementationIdentifier <error_history-ImplementationIdentifier>`)
+|   **type_filter**: *string* <optional>
+|   **severity_filter**: *string/object* <optional> (:ref:`error_history-SeverityFilter <error_history-SeverityFilter>`)
+|   **timeperiod_filter**: *string/object* <optional> (:ref:`error_history-TimeperiodFilter <error_history-TimeperiodFilter>`)
+|   **handle_filter**: *string* <optional>
 |    Handle of an error
 
 .. _error_history-Severity:
 
-| **Severity**:*string* 
+| **Severity**: *string* 
 |  Severity of an error
 |  enum:
 |    - High
@@ -83,28 +70,16 @@ This file contains the types for the error history interface
 
 .. _error_history-ErrorObject:
 
-| **ErrorObject**:*object* 
+| **ErrorObject**: *object* 
 |  Represents an error
 |  properties:
-|   **type**:*string* <required>
-|    
-|   **sub_type**:*string* <optional>
-|    
-|   **description**:*string* <required>
-|    
-|   **message**:*string* <required>
-|    
-|   **severity**:*string/object* <required> (:ref:`error_history-Severity <error_history-Severity>`)
-|    
-|    **There is an extended definition for this object** :ref:`here <error_history-Severity>`.
-|   **origin**:*string/object* <required> (:ref:`error_history-ImplementationIdentifier <error_history-ImplementationIdentifier>`)
-|    
-|    **There is an extended definition for this object** :ref:`here <error_history-ImplementationIdentifier>`.
-|   **timestamp**:*string* <required>
-|    
+|   **type**: *string* <required>
+|   **sub_type**: *string* <optional>
+|   **description**: *string* <required>
+|   **message**: *string* <required>
+|   **severity**: *string/object* <required> (:ref:`error_history-Severity <error_history-Severity>`)
+|   **origin**: *string/object* <required> (:ref:`error_history-ImplementationIdentifier <error_history-ImplementationIdentifier>`)
+|   **timestamp**: *string* <required>
 |    format:date-time
-|   **uuid**:*string* <required>
-|    
-|   **state**:*string/object* <required> (:ref:`error_history-State <error_history-State>`)
-|    
-|    **There is an extended definition for this object** :ref:`here <error_history-State>`.
+|   **uuid**: *string* <required>
+|   **state**: *string/object* <required> (:ref:`error_history-State <error_history-State>`)

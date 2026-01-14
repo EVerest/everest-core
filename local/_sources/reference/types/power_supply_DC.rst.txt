@@ -12,7 +12,7 @@ Power supply DC types
 
 .. _power_supply_DC-Mode:
 
-| **Mode**:*string* 
+| **Mode**: *string* 
 |  Operation mode of power supply. Power supply delivers power in Export mode and draws power in Import mode.
 |  enum:
 |    - Off
@@ -22,7 +22,7 @@ Power supply DC types
 
 .. _power_supply_DC-ChargingPhase:
 
-| **ChargingPhase**:*string* 
+| **ChargingPhase**: *string* 
 |  Charging phase of the current mode change. Other is used for e.g. switching it off or any other internal testing not related to real charging.
 |  enum:
 |    - Other
@@ -32,46 +32,46 @@ Power supply DC types
 
 .. _power_supply_DC-VoltageCurrent:
 
-| **VoltageCurrent**:*object* 
+| **VoltageCurrent**: *object* 
 |  Voltage (V) and Current (A) at the input/output of the power supply
 |  properties:
-|   **voltage_V**:*number* <required>
+|   **voltage_V**: *number* <required>
 |    Voltage in V
-|   **current_A**:*number* <required>
+|   **current_A**: *number* <required>
 |    Current in A
 
 .. _power_supply_DC-Capabilities:
 
-| **Capabilities**:*object* 
+| **Capabilities**: *object* 
 |  Capabilities for this power supply.
 |  properties:
-|   **bidirectional**:*boolean* <required>
+|   **bidirectional**: *boolean* <required>
 |    'true: support bidirectional energy flow, false: support only Export mode (output)'
-|   **current_regulation_tolerance_A**:*number* <required>
+|   **current_regulation_tolerance_A**: *number* <required>
 |    Absolute magnitude of the regulation tolerance in Ampere
-|   **peak_current_ripple_A**:*number* <required>
+|   **peak_current_ripple_A**: *number* <required>
 |    Peak-to-peak magnitude of the current ripple in Ampere
-|   **max_export_voltage_V**:*number* <required>
+|   **max_export_voltage_V**: *number* <required>
 |    Maximum voltage that the power supply can output in Volt
-|   **min_export_voltage_V**:*number* <required>
+|   **min_export_voltage_V**: *number* <required>
 |    Minimum voltage that the power supply can output in Volt
-|   **max_export_current_A**:*number* <required>
+|   **max_export_current_A**: *number* <required>
 |    Maximum current that the power supply can output in Ampere
-|   **min_export_current_A**:*number* <required>
+|   **min_export_current_A**: *number* <required>
 |    Minimum current limit that the power supply can set in Ampere
-|   **max_import_voltage_V**:*number* <optional>
+|   **max_import_voltage_V**: *number* <optional>
 |    Maximum voltage that the power supply supports to import energy in Volt
-|   **min_import_voltage_V**:*number* <optional>
+|   **min_import_voltage_V**: *number* <optional>
 |    Minimum voltage that the power supply requires to import energy in Volt
-|   **max_import_current_A**:*number* <optional>
+|   **max_import_current_A**: *number* <optional>
 |    Maximum current that the power supply can output in Ampere
-|   **min_import_current_A**:*number* <optional>
+|   **min_import_current_A**: *number* <optional>
 |    Minimum current limit that the power supply can set in Ampere
-|   **max_export_power_W**:*number* <required>
+|   **max_export_power_W**: *number* <required>
 |    Maximum export power that the power supply can output in Watt
-|   **max_import_power_W**:*number* <optional>
+|   **max_import_power_W**: *number* <optional>
 |    Maximum import power that the power supply can sink in Watt
-|   **conversion_efficiency_import**:*number* <optional>
+|   **conversion_efficiency_import**: *number* <optional>
 |    Typical import efficiency used for energy management
-|   **conversion_efficiency_export**:*number* <optional>
+|   **conversion_efficiency_export**: *number* <optional>
 |    Typical export efficiency used for energy management

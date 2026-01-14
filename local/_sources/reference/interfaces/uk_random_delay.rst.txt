@@ -14,9 +14,8 @@ uk_random_delay
 *********
 Variables
 *********
-| **countdown**:*object*  (:ref:`uk_random_delay-CountDown <uk_random_delay-CountDown>`)
+| **countdown**: *object*  (:ref:`uk_random_delay-CountDown <uk_random_delay-CountDown>`)
 |  Countdown of the currently running random delay
-|  **There is an extended definition for this object** :ref:`here <uk_random_delay-CountDown>`.
 
 ********
 Commands
@@ -29,5 +28,6 @@ Commands
 |  Cancels a running random delay. The effect is the same as if the time expired just now.
 | **set_duration_s**:*void*
 |  Set the maximum duration of the random delay. Default is 600 seconds.
-|  **value**:*integer* <required>
+|  **value**: *integer* <required>
 |   Maximum duration in seconds
+

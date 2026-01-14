@@ -14,7 +14,7 @@ car_simulator
 *********
 Variables
 *********
-| **enabled**:*boolean* 
+| **enabled**: *boolean* 
 |  Indicates whether simulation is currently enabled or not
 
 ********
@@ -22,9 +22,10 @@ Commands
 ********
 | **enable**:*void*
 |  Enables or disables the simulation.
-|  **value**:*boolean* <required>
+|  **value**: *boolean* <required>
 |   Enable/Disable simulation mode
 | **execute_charging_session**:*void*
 |  Executes a charging simulation string
-|  **value**:*string* <required>
+|  **value**: *string* <required>
 |   Charging simulation string
+

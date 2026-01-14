@@ -1,0 +1,44 @@
+
+
+.. _everest_modules_EvSlac:
+
+######
+EvSlac
+######
+| Implementation of EV SLAC data link negotiation according to ISO15118-3.
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`ev_slac <everest_interfaces_ev_slac>`
+|  SLAC interface implementation.
+|  **config:**
+|   **device**: *string* <optional>
+|   *default: "eth1"*
+|    Ethernet device used for PLC.
+|   **set_key_timeout_ms**: *integer* <optional>
+|   *default: 500*
+|    Timeout for CM_SET_KEY.REQ. Default works for QCA7000/QCA7005/CG5317.
+
+
+********
+Metadata
+********
+Authors
+=======
+| aw@pionix.de
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+
+Misc
+====
+|  base_license:https://directory.fsf.org/wiki/License:BSD-3-Clause-Clear

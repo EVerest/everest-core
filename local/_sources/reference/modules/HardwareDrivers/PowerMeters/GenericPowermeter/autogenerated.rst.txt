@@ -1,0 +1,52 @@
+
+
+.. _everest_modules_GenericPowermeter:
+
+#################
+GenericPowermeter
+#################
+| Powermeter driver for various powermeter hardware
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`powermeter <everest_interfaces_powermeter>`
+|  Implementation of the driver functionality
+|  **config:**
+|   **model**: *string* <optional>
+|   *default: "test_dummy"*
+|    Selector for the powermeter configuration file to be used
+|   **powermeter_device_id**: *integer* <optional>
+|   *default: 1*
+|    The powermeter's address on the serial bus
+|   **modbus_base_address**: *integer* <optional>
+|   *default: 30001*
+|    The base address for register access
+
+Requirements
+============
+| **serial_comm_hub**: :ref:`serial_communication_hub <everest_interfaces_serial_communication_hub>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Lars Dieckmann
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

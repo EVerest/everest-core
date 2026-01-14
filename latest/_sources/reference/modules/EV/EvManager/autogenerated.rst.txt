@@ -1,0 +1,123 @@
+
+
+.. _everest_modules_EvManager:
+
+#########
+EvManager
+#########
+| This module implements a Car simulator that can execute charging sessions using the car_simulator interface.
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **connector_id**: *integer* <required>
+|  Connector id of the evse manager to which this simulator is connected to
+| **auto_enable**: *boolean* <optional>
+| *default: False*
+|  Enable this simulation directly at start. Set to true for pure SIL configs, set to false for HIL.
+| **auto_exec**: *boolean* <optional>
+| *default: False*
+|  Enable automatic execution of simulation commands at startup from auto_exec_commands config option.
+| **auto_exec_infinite**: *boolean* <optional>
+| *default: False*
+|  If enabled the simulation commands executes infinitely.
+| **auto_exec_commands**: *string* <optional>
+| *default: ""*
+|  Simulation commands, e.g. sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
+| **ac_nominal_voltage**: *number* <optional>
+| *default: 230*
+|  Nominal AC voltage between phase and neutral in Volt
+| **dc_max_current_limit**: *integer* <optional>
+| *default: 300*
+|  Maximum current allowed by the EV
+| **dc_max_power_limit**: *integer* <optional>
+| *default: 150000*
+|  Maximum power allowed by the EV
+| **dc_max_voltage_limit**: *integer* <optional>
+| *default: 900*
+|  Maximum voltage allowed by the EV
+| **dc_energy_capacity**: *integer* <optional>
+| *default: 60000*
+|  Energy capacity of the EV
+| **dc_target_current**: *integer* <optional>
+| *default: 5*
+|  Target current requested by the EV
+| **dc_target_voltage**: *integer* <optional>
+| *default: 200*
+|  Target voltage requested by the EV
+| **support_sae_j2847**: *boolean* <optional>
+| *default: False*
+|  Supporting SAE J2847 ISO 2 bidi version
+| **dc_discharge_max_current_limit**: *integer* <optional>
+| *default: 300*
+|  Maximum discharge current allowed by the EV
+| **dc_discharge_max_power_limit**: *integer* <optional>
+| *default: 150000*
+|  Maximum discharge power allowed by the EV
+| **dc_discharge_target_current**: *integer* <optional>
+| *default: 5*
+|  Discharge target current requested by the EV
+| **dc_discharge_v2g_minimal_soc**: *integer* <optional>
+| *default: 20*
+|  Discharge minimal soc at which the evse should shutdown
+| **max_current**: *number* <optional>
+| *default: 16*
+|  Ac max current in Ampere
+| **three_phases**: *boolean* <optional>
+| *default: True*
+|  Support three phase
+| **departure_time**: *integer* <optional>
+| *default: 86400*
+|  Departure time in seconds after the session starts
+| **e_amount**: *integer* <optional>
+| *default: 0*
+|  Energy amount in Wh that should be charged during the session
+| **soc**: *integer* <optional>
+| *default: 30*
+|  SoC at start of a simulated charging process
+| **keep_cross_boot_plugin_state**: *boolean* <optional>
+| *default: False*
+|  Keep plugin state across boot (use for simulation only).
+| **plugin_commands**: *string* <optional>
+| *default: ""*
+|  Simulation commands for the EV on "plugin" sim command, e.g. sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
+
+Provides
+========
+| **main**: :ref:`car_simulator <everest_interfaces_car_simulator>`
+|  This implements the car simulator
+| **ev_manager**: :ref:`ev_manager <everest_interfaces_ev_manager>`
+|  Implementation of the ev manager to provide additional information such as detailed EV info
+
+Requirements
+============
+| **ev_board_support**: :ref:`ev_board_support <everest_interfaces_ev_board_support>` 1
+| **ev**: :ref:`ISO15118_ev <everest_interfaces_ISO15118_ev>` 0..1
+| **slac**: :ref:`ev_slac <everest_interfaces_ev_slac>` 0..1
+| **powermeter**: :ref:`powermeter <everest_interfaces_powermeter>` 0..1
+| **kvs**: :ref:`kvs <everest_interfaces_kvs>` 0..1
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+| Sebastian Lukas
+| Tobias Marzell
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

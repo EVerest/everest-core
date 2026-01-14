@@ -1,0 +1,60 @@
+
+
+.. _everest_modules_evse_manager_consumer_API:
+
+#########################
+evse_manager_consumer_API
+#########################
+| API for using EVSE manager (consumer API)
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **cfg_communication_check_to_s**: *integer* <optional>
+| *default: 5*
+|  Maximum time between two communication check events. Values <= 0 disables communication checks.
+| **cfg_heartbeat_interval_ms**: *integer* <optional>
+| *default: 1000*
+|  Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat.
+| **cfg_request_reply_to_s**: *integer* <optional>
+| *default: 550*
+|  Maximum time between request and reply. After timeout the request is answered with a default response.
+
+Provides
+========
+| **main**: :ref:`generic_error <everest_interfaces_generic_error>`
+|  Provides errors types for module communication status.
+
+Requirements
+============
+| **evse_manager**: :ref:`evse_manager <everest_interfaces_evse_manager>` 1
+| **evse_bsp**: :ref:`evse_board_support <everest_interfaces_evse_board_support>` 0..1
+| **slac**: :ref:`slac <everest_interfaces_slac>` 0..1
+| **imd**: :ref:`isolation_monitor <everest_interfaces_isolation_monitor>` 0..1
+| **ps_dc**: :ref:`power_supply_DC <everest_interfaces_power_supply_DC>` 0..1
+| **random_delay**: :ref:`uk_random_delay <everest_interfaces_uk_random_delay>` 0..1
+
+********
+Metadata
+********
+Authors
+=======
+| James Chapman
+| Jan Christoph Habig
+| Florin Mihut
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

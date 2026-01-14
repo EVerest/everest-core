@@ -1,0 +1,50 @@
+
+
+.. _everest_modules_auth_token_provider_API:
+
+#######################
+auth_token_provider_API
+#######################
+| API for auth token provider
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **cfg_communication_check_to_s**: *integer* <optional>
+| *default: 5*
+|  Maximum time between two communication check events. Values <= 0 disables communication checks.
+| **cfg_heartbeat_interval_ms**: *integer* <optional>
+| *default: 1000*
+|  Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat.
+
+Provides
+========
+| **main**: :ref:`auth_token_provider <everest_interfaces_auth_token_provider>`
+|  Allows API clients to provide auth tokens.
+
+
+********
+Metadata
+********
+Authors
+=======
+| James Chapman
+| Jan Christoph Habig
+| Andreas Heinrich
+| Florin Mihut
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

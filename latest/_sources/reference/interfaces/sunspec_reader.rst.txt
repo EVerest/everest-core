@@ -14,11 +14,12 @@ sunspec_reader
 *********
 Variables
 *********
-| **measurement**:*object* 
+| **measurement**: *object* 
 |  Measured dataset
 |  properties:
-|   **timestamp**:*number* <required>
+|   **timestamp**: *number* <required>
 |    Timestamp of measurement
-|   **value**:*number* <optional>
+|   **value**: *number* <optional>
 |    Measurement value
+
 

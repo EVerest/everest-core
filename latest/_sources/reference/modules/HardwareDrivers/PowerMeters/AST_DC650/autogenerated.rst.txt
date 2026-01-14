@@ -1,0 +1,67 @@
+
+
+.. _everest_modules_AST_DC650:
+
+#########
+AST_DC650
+#########
+| Module that collects power and energy measurements from an AST powermeter
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`powermeter <everest_interfaces_powermeter>`
+|  Implementation of the driver functionality
+|  **config:**
+|   **powermeter_device_id**: *integer* <optional>
+|   *default: 1*
+|    The powermeter's address on the serial bus
+|   **serial_port**: *string* <optional>
+|   *default: "/dev/ttyUSB0"*
+|    Serial port the hardware is connected to
+|   **baudrate**: *integer* <optional>
+|   *default: 9600*
+|    Baudrate
+|   **parity**: *integer* <optional>
+|   *default: 0*
+|    Parity bit: 0: None, 1: Odd, 2: Even
+|   **rs485_direction_gpio**: *integer* <optional>
+|   *default: -1*
+|    GPIO to use for direction switching. Set to -1 to disable.
+|   **ignore_echo**: *boolean* <optional>
+|   *default: False*
+|    On some hardware every message that is sent is read back, this setting filters the sent message in the reply.
+|   **gmt_offset_quarter_hours**: *integer* <optional>
+|   *default: 0*
+|    GMT offset in quarters of an hour, e.g. 8 = +2h
+|   **publish_device_data**: *boolean* <optional>
+|   *default: False*
+|    Regularly publish device data not covered by the "powermeter" interface (for debugging purposes).
+|   **publish_device_diagnostics**: *boolean* <optional>
+|   *default: False*
+|    Regularly publish device diagnostics (e.g. log messages, errors, SW/HW revisions; for debugging purposes).
+
+
+********
+Metadata
+********
+Authors
+=======
+| Lars Dieckmann
+| Andreas Heinrich
+| Cornelius Claussen
+| Florin Mihut
+| Jan Christoph Habig
+| Kai-Uwe Hermann
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

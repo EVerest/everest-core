@@ -1,0 +1,37 @@
+
+
+.. _everest_modules_TerminalCostAndPriceMessage:
+
+###########################
+TerminalCostAndPriceMessage
+###########################
+| Example cost and price message module
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`empty <everest_interfaces_empty>`
+|  EVerest API
+
+Requirements
+============
+| **session_cost**: :ref:`session_cost <everest_interfaces_session_cost>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Maaike Zijderveld
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

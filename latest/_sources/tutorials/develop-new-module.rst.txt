@@ -1,6 +1,6 @@
-.. _tutorial_develop_new_module:
+.. _tutorial_develop_new_everest_module:
 
-Develop New Modules
+Develop New EVerest Modules
 ***************************
 
 .. hint::
@@ -13,7 +13,7 @@ Develop New Modules
 
 This tutorial is meant to show how to develop your own module for the EVerest
 framework. This tutorial builds on knowledge that is explained in the
-:ref:`Quick Start Guide <exp_getting_started_sw>`, which is a good starting
+:ref:`Quick Start Guide <htg_getting_started_sw>`, which is a good starting
 point for understanding the central concepts of modules.
 
 Goal Of This Tutorial
@@ -32,7 +32,7 @@ learn the following:
 Install Prerequisites
 =====================
 
-Please follow the :ref:`Quick Start Guide <exp_getting_started_sw>` to install
+Please follow the :ref:`Quick Start Guide <htg_getting_started_sw>` to install
 all prerequisites into your environment.
 
 After that, you should in particular have:
@@ -62,7 +62,7 @@ Alternative 1: Setup Workspace via EVerest Dependency Manager
 
 Use the EVerest dependency manager to setup your workspace. This has the
 benefit of allowing your to select a specific snapshot (see the corresponding
-:ref:`docs<edm_main>` for details), as well as it is a single command::
+:ref:`docs <exp_dev_tools_edm>` for details), as well as it is a single command::
 
     edm init --workspace $EVEREST_WORKSPACE
 
@@ -172,7 +172,7 @@ following content:
 
 ..  code-block:: yaml
 
-    description: The Everest Tutorial Module
+    description: The EVerest Tutorial Module
     config:
       config_tutorial_switch:
         description: A boolean configuration parameter.
@@ -564,7 +564,7 @@ We then run the program (you might need to adjust the line number)::
     break modules/TutorialModule/interface_impl_tutorial_module/interface_tutorial_moduleImpl.cpp:17
     run
 
-After the ``run`` command, you should notify in your Everest terminal that all
+After the ``run`` command, you should notify in your EVerest terminal that all
 modules have now started. You may now again use MQTT Explorer as before and
 send a command call via MQTT, this should hit your set breakpoint with a
 output similar to::
@@ -590,4 +590,4 @@ of our implementation:
 
 --------------------------------
 
-Authors: Valentin Dimov, Manuel Ziegler, Andreas Heinrich, Lukas Mertens, Martin Litre, Piet Gömpel
+**Authors**: Valentin Dimov, Manuel Ziegler, Andreas Heinrich, Lukas Mertens, Martin Litre, Piet Gömpel

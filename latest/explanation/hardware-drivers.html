@@ -1,0 +1,983 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="The EVerest Documentation" href="the-everest-documentation.html"><link rel="prev" title="Hardware Architecture" href="hardware-architecture.html">
+        <link rel="prefetch" href="../_static/everest_icon-color.png" as="image">
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.12.19 -->
+        <title>Hardware Drivers - EVerest Manual 2025.12.1</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">EVerest Manual 2025.12.1</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/everest_icon-color.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">EVerest Manual 2025.12.1</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/getting-started/get-started-sw.html">Get started in Software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/getting-started/get-started-hw.html">Get started with Hardware</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><input aria-label="Toggle navigation of Tutorials" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/develop-new-module.html">Develop New EVerest Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/ocpp16.html">How To: OCPP 1.6 in EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/ocpp2.html">How To: OCPP 2.0.1 and 2.1 in EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/plug-and-charge.html">Plug&amp;Charge with EVerest Software in the loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/bazel.html">Experimental Bazel Support in EVerest</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../how-to-guides/index.html">How To Guides</a><input aria-label="Toggle navigation of How To Guides" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../how-to-guides/documenting-everest/index.html">Documenting EVerest</a><input aria-label="Toggle navigation of Documenting EVerest" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../how-to-guides/documenting-everest/extending-everest-documentation.html">Extending the EVerest Documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../how-to-guides/documenting-everest/change-documentation-quickstart.html">Documenting Quickstart</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../how-to-guides/documenting-everest/sphinx-style-guide.html">Sphinx Style Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../how-to-guides/getting-started/index.html">Getting Started with EVerest</a><input aria-label="Toggle navigation of Getting Started with EVerest" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../how-to-guides/getting-started/get-started-sw.html">Get started in Software</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../how-to-guides/getting-started/get-started-hw.html">Get started with Hardware</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../how-to-guides/error-framework-howto.html">Using the Error Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-to-guides/configure-pnc.html">Configure Plug&amp;Charge in EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-to-guides/debug-iso15118.html">Debug ISO 15118</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-to-guides/debug-modules.html">Debug EVerest Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-to-guides/yocto-cross-compilation.html">Cross-compilation of EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-to-guides/eichrecht.html">Eichrecht</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-to-guides/uk-smart-charging-regulations.html">UK Smart Charging Regulations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-to-guides/renesas-mpu/index.html">How to for Renesas MPU (RZ/G2L family)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-to-guides/security-best-practices.html">Security Best Practices</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../how-to-guides/bringup/index.html">BringUp &amp; Qualification</a><input aria-label="Toggle navigation of BringUp &amp; Qualification" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../how-to-guides/bringup/basic.html">Basic BringUp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../how-to-guides/bringup/powermeter.html">BringUp Powermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../how-to-guides/bringup/ac.html">AC BringUp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../how-to-guides/bringup/dc.html">DC BringUp</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Explanation</a><input aria-label="Toggle navigation of Explanation" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="high-level-overview.html">High-Level Overview of EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="error-framework.html">Error Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="detail-module-concept.html">EVerest Modules in Detail</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tier-module-mappings.html">3-tier Module Mappings</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="adapt-everest/index.html">Adapt EVerest</a><input aria-label="Toggle navigation of Adapt EVerest" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="adapt-everest/sub-systems.html">Sub-systems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adapt-everest/apis.html">EVerest APIs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="energymanagement/index.html">Energy Management in EVerest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-tools/edm.html">edm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-tools/ev-cli.html">ev-cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pnc-process.html">The Plug&amp;Charge Process in EVerest</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="linux-yocto/index.html">Linux / Yocto</a><input aria-label="Toggle navigation of Linux / Yocto" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="linux-yocto/setting-up-linux-os.html">Setting up the Linux operating system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="linux-yocto/building-yocto.html">Building Yocto for your custom hardware</a></li>
+<li class="toctree-l3"><a class="reference internal" href="linux-yocto/ota-updates.html">Over-the-air-updates (OTA)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="linux-yocto/partitioning-schemes-for-rauc-ota.html">Partitioning schemes for RAUC OTA</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="hardware-architecture.html">Hardware Architecture</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Hardware Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="the-everest-documentation.html">The EVerest Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="powermeter-ocmf.html">Powermeter OCMF Handling</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">Reference</a><input aria-label="Toggle navigation of Reference" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reference/modules/index.html">Modules</a><input aria-label="Toggle navigation of Modules" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/modules/API/index.html">API</a><input aria-label="Toggle navigation of API" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/API/autogenerated.html">API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/EvAPI/autogenerated.html">EvAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/auth_consumer_API/autogenerated.html">auth_consumer_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/auth_token_provider_API/autogenerated.html">auth_token_provider_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/auth_token_validator_API/autogenerated.html">auth_token_validator_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/dc_external_derate_consumer_API/autogenerated.html">dc_external_derate_consumer_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/display_message_API/autogenerated.html">display_message_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/error_history_consumer_API/autogenerated.html">error_history_consumer_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/evse_board_support_API/autogenerated.html">evse_board_support_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/evse_manager_consumer_API/autogenerated.html">evse_manager_consumer_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/external_energy_limits_consumer_API/autogenerated.html">external_energy_limits_consumer_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/generic_error_raiser_API/autogenerated.html">generic_error_raiser_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/isolation_monitor_API/autogenerated.html">isolation_monitor_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/ocpp_consumer_API/autogenerated.html">ocpp_consumer_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/over_voltage_monitor_API/autogenerated.html">over_voltage_monitor_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/power_supply_DC_API/autogenerated.html">power_supply_DC_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/powermeter_API/autogenerated.html">powermeter_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/session_cost_API/autogenerated.html">session_cost_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/session_cost_consumer_API/autogenerated.html">session_cost_consumer_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/slac_API/autogenerated.html">slac_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/API/system_API/autogenerated.html">system_API</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/modules/BringUp/index.html">BringUp</a><input aria-label="Toggle navigation of BringUp" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/BringUp/BUDCExternalDerate/autogenerated.html">BUDCExternalDerate</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/BringUp/BUDisplayMessage/autogenerated.html">BUDisplayMessage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/BringUp/BUEvseBoardSupport/autogenerated.html">BUEvseBoardSupport</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/BringUp/BUIsolationMonitor/autogenerated.html">BUIsolationMonitor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/BringUp/BUOcppConsumer/autogenerated.html">BUOcppConsumer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/BringUp/BUOverVoltageMonitor/autogenerated.html">BUOverVoltageMonitor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/BringUp/BUPowerSupplyDC/autogenerated.html">BUPowerSupplyDC</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/BringUp/BUPowermeter/autogenerated.html">BUPowermeter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/BringUp/BUSlac/autogenerated.html">BUSlac</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/BringUp/BUSystem/autogenerated.html">BUSystem</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/BringUp/BUTokenProvider/autogenerated.html">BUTokenProvider</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/modules/EV/index.html">EV</a><input aria-label="Toggle navigation of EV" class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EV/EvManager/autogenerated.html">EvManager</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EV/EvSlac/autogenerated.html">EvSlac</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EV/PyEvJosev/autogenerated.html">PyEvJosev</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/modules/EVSE/index.html">EVSE</a><input aria-label="Toggle navigation of EVSE" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EVSE/Auth/autogenerated.html">Auth</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EVSE/Evse15118D20/autogenerated.html">Evse15118D20</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EVSE/EvseManager/autogenerated.html">EvseManager</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EVSE/EvseSecurity/autogenerated.html">EvseSecurity</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EVSE/EvseSlac/autogenerated.html">EvseSlac</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EVSE/EvseV2G/autogenerated.html">EvseV2G</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EVSE/Iso15118InternetVas/autogenerated.html">Iso15118InternetVas</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EVSE/IsoMux/autogenerated.html">IsoMux</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EVSE/OCPP/autogenerated.html">OCPP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EVSE/OCPP201/autogenerated.html">OCPP201</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EVSE/StaticISO15118VASProvider/autogenerated.html">StaticISO15118VASProvider</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/modules/EnergyManagement/index.html">EnergyManagement</a><input aria-label="Toggle navigation of EnergyManagement" class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EnergyManagement/EnergyManager/autogenerated.html">EnergyManager</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/EnergyManagement/EnergyNode/autogenerated.html">EnergyNode</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/modules/Examples/index.html">Examples</a><input aria-label="Toggle navigation of Examples" class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/modules/Examples/CppExamples/index.html">CppExamples</a><input aria-label="Toggle navigation of CppExamples" class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/Examples/CppExamples/Example/autogenerated.html">Example</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/Examples/CppExamples/ExampleUser/autogenerated.html">ExampleUser</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/Examples/CppExamples/OCPPExtensionExample/autogenerated.html">OCPPExtensionExample</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/Examples/CppExamples/TerminalCostAndPriceMessage/autogenerated.html">TerminalCostAndPriceMessage</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/Examples/CppExamples/TerminalDisplayMessage/autogenerated.html">TerminalDisplayMessage</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/modules/Examples/error-framework/index.html">error-framework</a><input aria-label="Toggle navigation of error-framework" class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" role="switch" type="checkbox"/><label for="toctree-checkbox-18"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/Examples/error-framework/ExampleErrorGlobalSubscriber/autogenerated.html">ExampleErrorGlobalSubscriber</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/Examples/error-framework/ExampleErrorRaiser/autogenerated.html">ExampleErrorRaiser</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/Examples/error-framework/ExampleErrorSubscriber/autogenerated.html">ExampleErrorSubscriber</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/Examples/error-framework/PyExampleErrorRaiser/autogenerated.html">PyExampleErrorRaiser</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/Examples/error-framework/PyExampleErrorSubscriber/autogenerated.html">PyExampleErrorSubscriber</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/modules/HardwareDrivers/index.html">HardwareDrivers</a><input aria-label="Toggle navigation of HardwareDrivers" class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" role="switch" type="checkbox"/><label for="toctree-checkbox-19"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/modules/HardwareDrivers/EV/index.html">EV</a><input aria-label="Toggle navigation of EV" class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" role="switch" type="checkbox"/><label for="toctree-checkbox-20"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/EV/YetiEvDriver/autogenerated.html">YetiEvDriver</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/modules/HardwareDrivers/EVSE/index.html">EVSE</a><input aria-label="Toggle navigation of EVSE" class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" role="switch" type="checkbox"/><label for="toctree-checkbox-21"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/EVSE/AdAcEvse22KwzKitBSP/autogenerated.html">AdAcEvse22KwzKitBSP</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/EVSE/MicroMegaWattBSP/autogenerated.html">MicroMegaWattBSP</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/EVSE/PhyVersoBSP/autogenerated.html">PhyVersoBSP</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/EVSE/TIDA010939/autogenerated.html">TIDA010939</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/EVSE/YetiDriver/autogenerated.html">YetiDriver</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/modules/HardwareDrivers/IsolationMonitors/index.html">IsolationMonitors</a><input aria-label="Toggle navigation of IsolationMonitors" class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" role="switch" type="checkbox"/><label for="toctree-checkbox-22"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/IsolationMonitors/Bender_isoCHA425HV/autogenerated.html">Bender_isoCHA425HV</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/modules/HardwareDrivers/NfcReaders/index.html">NfcReaders</a><input aria-label="Toggle navigation of NfcReaders" class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" role="switch" type="checkbox"/><label for="toctree-checkbox-23"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/NfcReaders/NxpNfcFrontendTokenProvider/autogenerated.html">NxpNfcFrontendTokenProvider</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/NfcReaders/PN532TokenProvider/autogenerated.html">PN532TokenProvider</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/NfcReaders/PN7160TokenProvider/autogenerated.html">PN7160TokenProvider</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerMeters/index.html">PowerMeters</a><input aria-label="Toggle navigation of PowerMeters" class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" role="switch" type="checkbox"/><label for="toctree-checkbox-24"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerMeters/AST_DC650/autogenerated.html">AST_DC650</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerMeters/Acrel_DJSF1352_RN/autogenerated.html">Acrel_DJSF1352_RN</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerMeters/DZG_GSH01/autogenerated.html">DZG_GSH01</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerMeters/GenericPowermeter/autogenerated.html">GenericPowermeter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerMeters/IsabellenhuetteIemDcr/autogenerated.html">IsabellenhuetteIemDcr</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerMeters/LemDCBM400600/autogenerated.html">LemDCBM400600</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/index.html">PowerSupplies</a><input aria-label="Toggle navigation of PowerSupplies" class="toctree-checkbox" id="toctree-checkbox-25" name="toctree-checkbox-25" role="switch" type="checkbox"/><label for="toctree-checkbox-25"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/DPM1000/autogenerated.html">DPM1000</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/Huawei_R100040Gx/autogenerated.html">Huawei_R100040Gx</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/Huawei_V100R023C10/autogenerated.html">Huawei_V100R023C10</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/InfyPower/autogenerated.html">InfyPower</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/InfyPower_BEG1K075G/autogenerated.html">InfyPower_BEG1K075G</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/UUGreenPower_UR1000X0/autogenerated.html">UUGreenPower_UR1000X0</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/Winline/autogenerated.html">Winline</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/modules/Misc/index.html">Misc</a><input aria-label="Toggle navigation of Misc" class="toctree-checkbox" id="toctree-checkbox-26" name="toctree-checkbox-26" role="switch" type="checkbox"/><label for="toctree-checkbox-26"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Misc/ChargerInfo/autogenerated.html">ChargerInfo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Misc/ErrorHistory/autogenerated.html">ErrorHistory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Misc/Linux_Systemd_Rauc/autogenerated.html">Linux_Systemd_Rauc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Misc/LocalAllowlistTokenValidator/autogenerated.html">LocalAllowlistTokenValidator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Misc/PacketSniffer/autogenerated.html">PacketSniffer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Misc/PersistentStore/autogenerated.html">PersistentStore</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Misc/SerialCommHub/autogenerated.html">SerialCommHub</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Misc/Setup/autogenerated.html">Setup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Misc/Store/autogenerated.html">Store</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Misc/System/autogenerated.html">System</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Misc/YamlStore/autogenerated.html">YamlStore</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/modules/Simulation/index.html">Simulation</a><input aria-label="Toggle navigation of Simulation" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Simulation/DCSupplySimulator/autogenerated.html">DCSupplySimulator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Simulation/IMDSimulator/autogenerated.html">IMDSimulator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Simulation/OVMSimulator/autogenerated.html">OVMSimulator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Simulation/SlacSimulator/autogenerated.html">SlacSimulator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Simulation/YetiSimulator/autogenerated.html">YetiSimulator</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/modules/Testing/index.html">Testing</a><input aria-label="Toggle navigation of Testing" class="toctree-checkbox" id="toctree-checkbox-28" name="toctree-checkbox-28" role="switch" type="checkbox"/><label for="toctree-checkbox-28"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Testing/DummyBankSessionTokenProvider/autogenerated.html">DummyBankSessionTokenProvider</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Testing/DummySessionCostProvider/autogenerated.html">DummySessionCostProvider</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Testing/DummyTokenProvider/autogenerated.html">DummyTokenProvider</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Testing/DummyTokenProviderManual/autogenerated.html">DummyTokenProviderManual</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Testing/DummyTokenValidator/autogenerated.html">DummyTokenValidator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/modules/Testing/DummyV2G/autogenerated.html">DummyV2G</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reference/interfaces_index.html">EVerest Interfaces</a><input aria-label="Toggle navigation of EVerest Interfaces" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/ISO15118_charger.html">ISO15118_charger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/ISO15118_ev.html">ISO15118_ev</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/ISO15118_vas.html">ISO15118_vas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/ac_rcd.html">ac_rcd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/auth.html">auth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/auth_token_provider.html">auth_token_provider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/auth_token_validator.html">auth_token_validator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/bank_session_token_provider.html">bank_session_token_provider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/car_simulator.html">car_simulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/charger_information.html">charger_information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/connector_lock.html">connector_lock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/dc_external_derate.html">dc_external_derate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/debug_json.html">debug_json</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/display_message.html">display_message</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/empty.html">empty</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/energy.html">energy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/energy_manager.html">energy_manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/energy_price_information.html">energy_price_information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/error_history.html">error_history</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/ev_board_support.html">ev_board_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/ev_manager.html">ev_manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/ev_slac.html">ev_slac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/evse_board_support.html">evse_board_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/evse_manager.html">evse_manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/evse_security.html">evse_security</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/example.html">example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/example_error_framework.html">example_error_framework</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/example_user.html">example_user</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/external_energy_limits.html">external_energy_limits</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/generic_error.html">generic_error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/iso15118_extensions.html">iso15118_extensions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/isolation_monitor.html">isolation_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/kvs.html">kvs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/ocpp.html">ocpp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/ocpp_1_6_charge_point.html">ocpp_1_6_charge_point</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/ocpp_data_transfer.html">ocpp_data_transfer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/over_voltage_monitor.html">over_voltage_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/payment_terminal.html">payment_terminal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/power.html">power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/power_supply_DC.html">power_supply_DC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/powermeter.html">powermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/reservation.html">reservation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/serial_communication_hub.html">serial_communication_hub</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/session_cost.html">session_cost</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/slac.html">slac</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/solar_forecast.html">solar_forecast</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/sunspec_ac_meter.html">sunspec_ac_meter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/sunspec_reader.html">sunspec_reader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/sunspec_scanner.html">sunspec_scanner</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/system.html">system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/test_control.html">test_control</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/tibber_price_forecast.html">tibber_price_forecast</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/interfaces/uk_random_delay.html">uk_random_delay</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reference/types_index.html">EVerest Types</a><input aria-label="Toggle navigation of EVerest Types" class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/authorization.html">authorization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/board_support_common.html">board_support_common</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/charger_information.html">charger_information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/dc_external_derate.html">dc_external_derate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/display_message.html">display_message</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/energy.html">energy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/energy_price_information.html">energy_price_information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/error_history.html">error_history</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/ev_board_support.html">ev_board_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/evse_board_support.html">evse_board_support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/evse_manager.html">evse_manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/evse_security.html">evse_security</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/iso15118.html">iso15118</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/iso15118_vas.html">iso15118_vas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/isolation_monitor.html">isolation_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/money.html">money</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/ocpp.html">ocpp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/payment_terminal.html">payment_terminal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/power_supply_DC.html">power_supply_DC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/powermeter.html">powermeter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/reservation.html">reservation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/serial_comm_hub_requests.html">serial_comm_hub_requests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/session_cost.html">session_cost</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/sunspec_ac_meter.html">sunspec_ac_meter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/system.html">system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/temperature.html">temperature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/text_message.html">text_message</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/uk_random_delay.html">uk_random_delay</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/units.html">units</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/types/units_signed.html">units_signed</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/api/autogenerated_api_index.html">EVerest API Specification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/snapshot.html">Dependencies Snapshot</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Help</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../qa/index.html">Q &amp; A</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../community-channels.html">Meet the EVerest Community</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/explanation/hardware-drivers.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="hardware-drivers">
+<h1>Hardware Drivers<a class="headerlink" href="#hardware-drivers" title="Link to this heading">¶</a></h1>
+<p>This chapter describes Hardware Driver modules that are supported
+natively by EVerest. The presented components have been prequalified
+by Pionix to work with EVerest to ensure a quick path to production.</p>
+<section id="isolation-monitoring-devices">
+<h2>Isolation Monitoring Devices<a class="headerlink" href="#isolation-monitoring-devices" title="Link to this heading">¶</a></h2>
+<section id="bender-isometer-isocha425">
+<h3>Bender ISOMETER isoCHA425<a class="headerlink" href="#bender-isometer-isocha425" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/IsolationMonitors/Bender_isoCHA425HV/autogenerated.html#everest-modules-bender-isocha425hv"><span class="std std-ref">Bender_isoCHA425HV</span></a></p>
+<p>You can find more information about the device here:</p>
+<p><a class="reference external" href="https://www.bender.de/produkte/isolationsueberwachung/isometerr-isocha425hv-mit-agh420-1">https://www.bender.de/produkte/isolationsueberwachung/isometerr-isocha425hv-mit-agh420-1</a></p>
+<p>Here are the most important specifications:</p>
+<ul class="simple">
+<li><p>RS485/ModBus connection</p></li>
+<li><p>Up to 1000 V DC with AGH420-1/AGH421-1</p></li>
+<li><p>&lt; 10s response time</p></li>
+<li><p>Firmware &lt; 5.00: CableCheck time: Self test ~22s + 10s response time,
+can be used with IEC 61851-23:2014, but cannot be used with IEC
+61851-23:2023 certification</p></li>
+<li><p>Firmware 5.00 improves CableCheck time to allow usage with IEC
+61851-23:2023 (available now from Bender as of Q1/2025). Usage of
+older 4.x firmware is not recommended.</p></li>
+<li><p>AGH421-1 allows full disconnection from the DC wires to allow for
+multiple IMDs on the same wires, one active at a time</p></li>
+<li><p>Measures DC output voltage</p></li>
+<li><p>Measures voltage between DC+/DC- and PE as well</p></li>
+<li><p>Two separate relays to trigger in case of errors</p></li>
+</ul>
+<div class="line-block">
+<div class="line">EVerest supports this device with the “Bender_isoCHA425HV” module.
+The module requires a “SerialCommHub” module to be loaded as well for
+the ModBus communication.</div>
+<div class="line">All settings of the device can be adjusted in the module
+configuration.</div>
+</div>
+<p>The error output relays should be wired directly to the DC output relay
+of the charger to enable a low-level emergency shutdown functionality
+which works independently of EVerest.</p>
+<p>EVerest will read the isolation resistance values and switch off if
+they fall below 100 kOhm as well, but safety certification should not
+rely on the Linux system.</p>
+</section>
+</section>
+<section id="nf-rfid-readers">
+<h2>NF/RFID Readers<a class="headerlink" href="#nf-rfid-readers" title="Link to this heading">¶</a></h2>
+<p>Many NXP chips are be supported.
+All modules implement the <em>auth_token_provider</em> interface and publish a
+token to be consumed by matching modules as soon as the NFC chip detects
+a compatible RFID card.</p>
+<section id="nxpnfcfrontendtokenprovider">
+<h3>NxpNfcFrontendTokenProvider<a class="headerlink" href="#nxpnfcfrontendtokenprovider" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/NfcReaders/NxpNfcFrontendTokenProvider/autogenerated.html#everest-modules-nxpnfcfrontendtokenprovider"><span class="std std-ref">NxpNfcFrontendTokenProvider</span></a></p>
+<p>The variety of hardware supported by the underlying NxpNfcFrontendWrapper
+is limited by the time of writing (only CR663), but can be extended.</p>
+<p>This module relies on NXP’s proprietary NxpNfcRdLib which users need
+to obtain from NXP, due to license reasons (Download is free, but requires
+accepting the license terms).</p>
+</section>
+<section id="pn532tokenprovider">
+<h3>PN532TokenProvider<a class="headerlink" href="#pn532tokenprovider" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/NfcReaders/PN532TokenProvider/autogenerated.html#everest-modules-pn532tokenprovider"><span class="std std-ref">PN532TokenProvider</span></a></p>
+<p>Supports the PN532 integrated tranceiver.</p>
+</section>
+<section id="pn7160tokenprovider">
+<h3>PN7160TokenProvider<a class="headerlink" href="#pn7160tokenprovider" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/NfcReaders/PN7160TokenProvider/autogenerated.html#everest-modules-pn7160tokenprovider"><span class="std std-ref">PN7160TokenProvider</span></a></p>
+<p>Supports the PNC7160 NFC Controller via the NCI interface.
+No Linux kernel module required.</p>
+</section>
+</section>
+<section id="ac-dc-power-supplies">
+<h2>AC/DC power supplies<a class="headerlink" href="#ac-dc-power-supplies" title="Link to this heading">¶</a></h2>
+<section id="huawei-r100040gx">
+<h3>Huawei R100040Gx<a class="headerlink" href="#huawei-r100040gx" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/Huawei_R100040Gx/autogenerated.html#everest-modules-huawei-r100040gx"><span class="std std-ref">Huawei_R100040Gx</span></a></p>
+<p>The device is supported by EVerest with the “Huawei_R100040Gx” module.</p>
+<p>Most important specs:</p>
+<ul class="simple">
+<li><p>40 kW ACDC with 150 V - 1000 V output</p></li>
+<li><p>low noise fan design</p></li>
+<li><p>ultra compact</p></li>
+<li><p>automatic switching between series and parallel mode</p></li>
+<li><p>stackable</p></li>
+<li><p>CAN bus interface</p></li>
+</ul>
+<p>In the driver configuration, set the addresses of the modules that are
+used by this driver. If empty (default), it will use all modules that it
+can find on the CAN bus.</p>
+<p>If using multiple modules in a stacked configuration, connect the
+outputs in parallel and connect all modules to the same CAN bus. Then
+specify all module addresses in the module configuration.</p>
+</section>
+<section id="huawei-v100r023c10">
+<h3>Huawei V100R023C10<a class="headerlink" href="#huawei-v100r023c10" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/Huawei_V100R023C10/autogenerated.html#everest-modules-huawei-v100r023c10"><span class="std std-ref">Huawei_V100R023C10</span></a></p>
+<p>This device is supported in EVerest with the Huawei production firmware.
+The setup of this device is complex.
+The development kit with unencrypted firmware is not supported by this driver.</p>
+<p>Most important specs:</p>
+<ul class="simple">
+<li><p>Central power unit architecture with satellites, up to 740 kW</p></li>
+<li><p>150 V - 1000 V output, up to 12 satellites</p></li>
+<li><p>Ethernet communication with EVerest</p></li>
+<li><p>Support for multiple connectors on one satellite</p></li>
+<li><p>Full support for production firmware with TLS encryption and GOOSE
+security</p></li>
+</ul>
+</section>
+<section id="infypower-beg1k075g">
+<h3>Infypower BEG1K075G<a class="headerlink" href="#infypower-beg1k075g" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/InfyPower_BEG1K075G/autogenerated.html#everest-modules-infypower-beg1k075g"><span class="std std-ref">InfyPower_BEG1K075G</span></a></p>
+<p>Supported by EVerest with the “InfyPower_BEG1K075G” module. Stacking of
+multiple modules is not yet supported by the driver.</p>
+<p>Most important specs:</p>
+<ul class="simple">
+<li><p>22 kW bidirectional AC/DC</p></li>
+<li><p>up to 1000 V output voltage</p></li>
+</ul>
+<p>Make sure to update the module to the latest firmware version - older
+firmware versions on this converter are known to have bugs that could
+result in hardware damages. New firmware is available from InfyPower.</p>
+</section>
+<section id="uugreenpower-ur1000x0">
+<h3>UUGreenPower UR1000X0<a class="headerlink" href="#uugreenpower-ur1000x0" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/UUGreenPower_UR1000X0/autogenerated.html#everest-modules-uugreenpower-ur1000x0"><span class="std std-ref">UUGreenPower_UR1000X0</span></a></p>
+<p>Both the 30 kW and 40 kW uni-directional modules from UUGreenPower are
+fully supported by EVerest with the “UUGreenPower_UR1000X0” module.</p>
+<p>The bidirectional versions are not yet supported, but support is planned
+for an upcoming release of EVerest.</p>
+<p>Most important specs:</p>
+<ul class="simple">
+<li><p>30 / 40 kW AC/DC</p></li>
+<li><p>up to 1000 V output voltage</p></li>
+<li><p>automatic series / parallel switching implemented in driver. Can be
+fixed to series or parallel mode in configuration.</p></li>
+</ul>
+<p>If multiple modules are used in a stacked configuration, you must set
+the “module\addresses” configuration parameter to the
+addresses of all modules in the stack.</p>
+<p>By default, it uses the broadcast address. With multiple modules, this
+will result in each module delivering the full current to the EV instead
+of sharing the current.</p>
+</section>
+<section id="other-ac-dc-power-supplies">
+<h3>Other AC/DC power supplies<a class="headerlink" href="#other-ac-dc-power-supplies" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/DPM1000/autogenerated.html#everest-modules-dpm1000"><span class="std std-ref">DPM1000</span></a></p></li>
+<li><p><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/InfyPower/autogenerated.html#everest-modules-infypower"><span class="std std-ref">InfyPower</span></a></p></li>
+<li><p><a class="reference internal" href="../reference/modules/HardwareDrivers/PowerSupplies/Winline/autogenerated.html#everest-modules-winline"><span class="std std-ref">Winline</span></a></p></li>
+</ul>
+</section>
+</section>
+<section id="power-meters">
+<h2>Power meters<a class="headerlink" href="#power-meters" title="Link to this heading">¶</a></h2>
+<section id="dc-lem-dcbm400-600">
+<h3>DC: LEM DCBM400/600<a class="headerlink" href="#dc-lem-dcbm400-600" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/PowerMeters/LemDCBM400600/autogenerated.html#everest-modules-lemdcbm400600"><span class="std std-ref">LemDCBM400600</span></a></p>
+<p>This power meter is fully supported by EVerest a (LemDCBM400600)
+driver.</p>
+<p>It supports German Eichrecht regulations and Eichrecht-compliant fault
+recovery:</p>
+<ul class="simple">
+<li><p>After power failure of the complete unit, the transaction is closed
+with the correct signed meter value from the moment the power loss
+happened. It is then also closed in the CSMS if OCPP is used.</p></li>
+<li><p>If a communication loss happens during charging, charging is stopped.
+If the communication is re-established before the EV unplugs, the
+signed meter value is used to close the transaction in the CSMS. If
+it does not re-establish before the EV unplugs, the transaction
+cannot be billed (and no signed meter value will be used to close the
+CSMS transaction).</p></li>
+</ul>
+<p>Version V2 is required to really be Eichrecht-compliant. The driver
+auto-detects V1 and V2 hardware versions and supports both.</p>
+</section>
+<section id="dc-acrel-djsf1352">
+<h3>DC: Acrel DJSF1352<a class="headerlink" href="#dc-acrel-djsf1352" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/PowerMeters/Acrel_DJSF1352_RN/autogenerated.html#everest-modules-acrel-djsf1352-rn"><span class="std std-ref">Acrel_DJSF1352_RN</span></a></p>
+<p>This is a simple DC power meter with no Eichrecht support. It uses
+ModBus/RS485 and requires a SerialCommHub module to work.</p>
+</section>
+<section id="dc-ast-dc650">
+<h3>DC: AST DC650<a class="headerlink" href="#dc-ast-dc650" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/PowerMeters/AST_DC650/autogenerated.html#everest-modules-ast-dc650"><span class="std std-ref">AST_DC650</span></a></p>
+<p>The driver is implemented in the “AST_DC650” module using the SLIP
+protocol. Eichrecht support is not complete in the driver in the current
+release for all fault cases, but this will come in an upcoming release.</p>
+<p>There is a possibility to use it with a REST-based API similar to the
+LEM.</p>
+</section>
+<section id="dc-dzg-gsh01">
+<h3>DC: DZG GSH01<a class="headerlink" href="#dc-dzg-gsh01" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/PowerMeters/DZG_GSH01/autogenerated.html#everest-modules-dzg-gsh01"><span class="std std-ref">DZG_GSH01</span></a></p>
+<p>The driver is implemented in the “DZG GSH01” module using the SLIP
+protocol.</p>
+<p>Note that you need an extra serial port - it cannot be shared with
+e.g. other ModBus-based devices.</p>
+<p>Eichrecht and OCMF handling are fully implemented.</p>
+</section>
+<section id="dc-isabellenhutte-iem-dcc">
+<h3>DC: Isabellenhütte IEM-DCC<a class="headerlink" href="#dc-isabellenhutte-iem-dcc" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/PowerMeters/IsabellenhuetteIemDcr/autogenerated.html#everest-modules-isabellenhuetteiemdcr"><span class="std std-ref">IsabellenhuetteIemDcr</span></a></p>
+<p>There is a driver for the Isabellenhütte IEM-DCC meter in EVerest.</p>
+</section>
+<section id="ac-genericpowermeter">
+<h3>AC: GenericPowermeter<a class="headerlink" href="#ac-genericpowermeter" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/PowerMeters/GenericPowermeter/autogenerated.html#everest-modules-genericpowermeter"><span class="std std-ref">GenericPowermeter</span></a></p>
+<p>The GenericPowermeter driver has support for most ModBus-based AC power
+meters. It supports a yaml configuration file for register mapping to
+adapt to new power meters.</p>
+<p>Example register mappings are included for the following power meters:</p>
+<ul class="simple">
+<li><p>Eastron SDM72DM, SDM72DM-V2, SDM230, SDM630-V2</p></li>
+<li><p>Klefr 693x - 694x</p></li>
+</ul>
+<p>For all non-Eichrecht power metering, this should be easy to adapt.</p>
+</section>
+<section id="ac-iskra-wm3m4-wm3m4c">
+<h3>AC: Iskra WM3M4 &amp; WM3M4C<a class="headerlink" href="#ac-iskra-wm3m4-wm3m4c" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <span class="xref std std-ref">RsIskraMeter</span></p>
+<p>There is a community driver in the “RsIskraMeter” module. Eichrecht
+support is implemented, some fault cases may require additional
+handling.</p>
+</section>
+</section>
+<section id="power-line-modems">
+<h2>Power line modems<a class="headerlink" href="#power-line-modems" title="Link to this heading">¶</a></h2>
+<p>The following power line modems are supported in the
+<a class="reference internal" href="../reference/modules/EVSE/EvseSlac/autogenerated.html#everest-modules-evseslac"><span class="std std-ref">EvseSlac module</span></a>.
+The chip is detected automatically, but each chip may require some
+configuration for a real product.</p>
+<section id="qualcomm-qca7000-7005-7006">
+<h3>Qualcomm QCA7000/7005/7006<a class="headerlink" href="#qualcomm-qca7000-7005-7006" title="Link to this heading">¶</a></h3>
+<p>Fully supported including proprietary extensions for link detection and
+chip reset.</p>
+<p>It is recommended to enable “do_chip_reset” for all Qualcomm chips. This
+will reset them after each charging session for improved stability.</p>
+<p>If it is booting from the internal flash and correctly configured for
+EVSE, it only requires the SPI Linux kernel driver to be loaded (which
+is included in the Linux main line).</p>
+<p>If it is configured for host boot, additional software outside of
+EVerest is required to do firmware loading and configuration for EVSE.</p>
+<p>If connected via the Ethernet port on QC7006, no special driver is
+needed in Linux (except for the Ethernet interface driver).</p>
+</section>
+<section id="lumissil-cg5317">
+<h3>Lumissil CG5317<a class="headerlink" href="#lumissil-cg5317" title="Link to this heading">¶</a></h3>
+<p>Fully supported including proprietary extensions for link detection.</p>
+<p>Soft reset extensions are not yet in the release, but should not be
+necessary for this chip if the latest firmware is being used. Contact
+Lumissil to ensure you have the latest firmware.</p>
+<p>If it is booting from an externally attached SPI Flash (attached to the
+CG5317) and correctly configured for EVSE, it only requires the SPI
+Linux kernel driver to be loaded. The kernel driver is open source
+licensed but not included in the main line.</p>
+<p>If it is configured for host boot, additional software outside of
+EVerest is required to do firmware loading and configuration for EVSE.
+You can get these tools under NDA from Lumissil.</p>
+<p>If connected via the Ethernet port, no special driver is needed in Linux
+(except for the Ethernet interface driver).</p>
+</section>
+<section id="vertexcom-mse-102x">
+<h3>Vertexcom MSE-102x<a class="headerlink" href="#vertexcom-mse-102x" title="Link to this heading">¶</a></h3>
+<p>It is auto-detected and supported by the EvseSlac module. Proprietary
+extensions for link detection and reset are not yet implemented.
+It may be used without those extensions.</p>
+<p>If connected via the Ethernet port, no special driver is needed in Linux
+(except for the Ethernet interface driver).</p>
+</section>
+</section>
+<section id="bsp-for-complete-controllers">
+<h2>BSP for complete controllers<a class="headerlink" href="#bsp-for-complete-controllers" title="Link to this heading">¶</a></h2>
+<p>Some controllers are supported natively by EVerest and require no
+additional work for Control Pilot, PLC, relay switching etc.</p>
+<section id="phytec-phyverso-controller">
+<h3>PHYTEC phyVERSO controller<a class="headerlink" href="#phytec-phyverso-controller" title="Link to this heading">¶</a></h3>
+<p><em>Hardware Driver Module</em> <a class="reference internal" href="../reference/modules/HardwareDrivers/EVSE/PhyVersoBSP/autogenerated.html#everest-modules-phyversobsp"><span class="std std-ref">PhyVersoBSP</span></a></p>
+<p>phyVERSO is fully supported with all features of the hardware for both
+charging ports (AC and DC).</p>
+</section>
+<section id="pionix-test-hardware">
+<h3>Pionix test hardware<a class="headerlink" href="#pionix-test-hardware" title="Link to this heading">¶</a></h3>
+<p>All testing hardware from Pionix is fully supported:</p>
+<ul class="simple">
+<li><p>BelayBox</p></li>
+<li><p>uMWC</p></li>
+</ul>
+</section>
+<section id="other-bsp-modules">
+<h3>Other BSP modules<a class="headerlink" href="#other-bsp-modules" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="../reference/modules/HardwareDrivers/EVSE/AdAcEvse22KwzKitBSP/autogenerated.html#everest-modules-adacevse22kwzkitbsp"><span class="std std-ref">AdAcEvse22KwzKitBsp</span></a></p></li>
+<li><p><a class="reference internal" href="../reference/modules/HardwareDrivers/EVSE/TIDA010939/autogenerated.html#everest-modules-tida010939"><span class="std std-ref">TIDA010939</span></a></p></li>
+<li><p><a class="reference internal" href="../reference/modules/HardwareDrivers/EVSE/YetiDriver/autogenerated.html#everest-modules-yetidriver"><span class="std std-ref">YetiDriverBsp</span></a></p></li>
+</ul>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="the-everest-documentation.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">The EVerest Documentation</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="hardware-architecture.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Hardware Architecture</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2021-2025, EVerest community
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Hardware Drivers</a><ul>
+<li><a class="reference internal" href="#isolation-monitoring-devices">Isolation Monitoring Devices</a><ul>
+<li><a class="reference internal" href="#bender-isometer-isocha425">Bender ISOMETER isoCHA425</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#nf-rfid-readers">NF/RFID Readers</a><ul>
+<li><a class="reference internal" href="#nxpnfcfrontendtokenprovider">NxpNfcFrontendTokenProvider</a></li>
+<li><a class="reference internal" href="#pn532tokenprovider">PN532TokenProvider</a></li>
+<li><a class="reference internal" href="#pn7160tokenprovider">PN7160TokenProvider</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ac-dc-power-supplies">AC/DC power supplies</a><ul>
+<li><a class="reference internal" href="#huawei-r100040gx">Huawei R100040Gx</a></li>
+<li><a class="reference internal" href="#huawei-v100r023c10">Huawei V100R023C10</a></li>
+<li><a class="reference internal" href="#infypower-beg1k075g">Infypower BEG1K075G</a></li>
+<li><a class="reference internal" href="#uugreenpower-ur1000x0">UUGreenPower UR1000X0</a></li>
+<li><a class="reference internal" href="#other-ac-dc-power-supplies">Other AC/DC power supplies</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#power-meters">Power meters</a><ul>
+<li><a class="reference internal" href="#dc-lem-dcbm400-600">DC: LEM DCBM400/600</a></li>
+<li><a class="reference internal" href="#dc-acrel-djsf1352">DC: Acrel DJSF1352</a></li>
+<li><a class="reference internal" href="#dc-ast-dc650">DC: AST DC650</a></li>
+<li><a class="reference internal" href="#dc-dzg-gsh01">DC: DZG GSH01</a></li>
+<li><a class="reference internal" href="#dc-isabellenhutte-iem-dcc">DC: Isabellenhütte IEM-DCC</a></li>
+<li><a class="reference internal" href="#ac-genericpowermeter">AC: GenericPowermeter</a></li>
+<li><a class="reference internal" href="#ac-iskra-wm3m4-wm3m4c">AC: Iskra WM3M4 &amp; WM3M4C</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#power-line-modems">Power line modems</a><ul>
+<li><a class="reference internal" href="#qualcomm-qca7000-7005-7006">Qualcomm QCA7000/7005/7006</a></li>
+<li><a class="reference internal" href="#lumissil-cg5317">Lumissil CG5317</a></li>
+<li><a class="reference internal" href="#vertexcom-mse-102x">Vertexcom MSE-102x</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#bsp-for-complete-controllers">BSP for complete controllers</a><ul>
+<li><a class="reference internal" href="#phytec-phyverso-controller">PHYTEC phyVERSO controller</a></li>
+<li><a class="reference internal" href="#pionix-test-hardware">Pionix test hardware</a></li>
+<li><a class="reference internal" href="#other-bsp-modules">Other BSP modules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=fcd382bf"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    </body>
+</html>

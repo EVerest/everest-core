@@ -1,0 +1,49 @@
+
+
+.. _everest_modules_session_cost_API:
+
+################
+session_cost_API
+################
+| API for session cost
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **cfg_communication_check_to_s**: *integer* <optional>
+| *default: 5*
+|  Maximum time between two communication check events. Values <= 0 disables communication checks.
+| **cfg_heartbeat_interval_ms**: *integer* <optional>
+| *default: 1000*
+|  Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat.
+
+Provides
+========
+| **main**: :ref:`session_cost <everest_interfaces_session_cost>`
+|  Allows API clients to provide tariff_messages and session_cost records.
+| **generic_error**: :ref:`generic_error <everest_interfaces_generic_error>`
+|  Provides errors types for module communication status.
+
+
+********
+Metadata
+********
+Authors
+=======
+| Christoph Burandt
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

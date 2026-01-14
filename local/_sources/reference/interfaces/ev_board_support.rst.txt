@@ -14,45 +14,49 @@ ev_board_support
 *********
 Variables
 *********
-| **bsp_event**:*object*  (:ref:`board_support_common-BspEvent <board_support_common-BspEvent>`)
+| **bsp_event**: *object*  (:ref:`board_support_common-BspEvent <board_support_common-BspEvent>`)
 |  Events from CP/Relais
-|  **There is an extended definition for this object** :ref:`here <board_support_common-BspEvent>`.
-| **bsp_measurement**:*object*  (:ref:`board_support_common-BspMeasurement <board_support_common-BspMeasurement>`)
+| **bsp_measurement**: *object*  (:ref:`board_support_common-BspMeasurement <board_support_common-BspMeasurement>`)
 |  BSP Measurements
-|  **There is an extended definition for this object** :ref:`here <board_support_common-BspMeasurement>`.
-| **ev_info**:*object*  (:ref:`evse_manager-EVInfo <evse_manager-EVInfo>`)
+| **ev_info**: *object*  (:ref:`evse_manager-EVInfo <evse_manager-EVInfo>`)
 |  More details about the EV if available
-|  **There is an extended definition for this object** :ref:`here <evse_manager-EVInfo>`.
 
 ********
 Commands
 ********
 | **enable**:*void*
 |  Enable/disable the simulation
-|  **value**:*boolean* <required>
+|  **value**: *boolean* <required>
 |   true to enable, false to disable
 | **set_cp_state**:*void*
 |  Sets the CP State that should be set by the EV board support driver (controlled by S2)
-|  **cp_state**:*string* <required> (:ref:`ev_board_support-EvCpState <ev_board_support-EvCpState>`)
+|  **cp_state**: *string* <required> (:ref:`ev_board_support-EvCpState <ev_board_support-EvCpState>`)
 |   The CP State
-|   **There is an extended definition for this object** :ref:`here <ev_board_support-EvCpState>`.
 | **allow_power_on**:*void*
 |  Sets allow_power_on flag. If false, contactor must never be switched on.
-|  **value**:*boolean* <required>
+|  **value**: *boolean* <required>
 |   True: allow power on, false: do not allow power on.
 | **diode_fail**:*void*
 |  Setting a diode failure
-|  **value**:*boolean* <required>
+|  **value**: *boolean* <required>
 |   True: diode failure
 | **set_ac_max_current**:*void*
 |  Setting the max current requested from the ev
-|  **current**:*number* <required>
+|  **current**: *number* <required>
 |   Max current requested from the ev
 | **set_three_phases**:*void*
 |  Setting three or one phase support
-|  **three_phases**:*boolean* <required>
+|  **three_phases**: *boolean* <required>
 |   True: Three phase support, False: One phase support
 | **set_rcd_error**:*void*
 |  Setting a rcd error. Only for simulation purpose.
-|  **rcd_current_mA**:*number* <required>
+|  **rcd_current_mA**: *number* <required>
 |   RCD current in mA
+
+******
+Errors
+******
+| **/errors/generic** :
+|  **CommunicationFault** : Communication with the underlying hardware or device has a fault
+|  **VendorError** : Vendor specific error code.
+|  **VendorWarning** : Vendor specific error code.

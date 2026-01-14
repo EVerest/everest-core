@@ -1,0 +1,53 @@
+
+
+.. _everest_modules_display_message_API:
+
+###################
+display_message_API
+###################
+| API for display messages
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **cfg_communication_check_to_s**: *integer* <optional>
+| *default: 5*
+|  Maximum time between two communication check events. Values <= 0 disables communication checks.
+| **cfg_heartbeat_interval_ms**: *integer* <optional>
+| *default: 1000*
+|  Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat.
+| **cfg_request_reply_to_s**: *integer* <optional>
+| *default: 550*
+|  Maximum time between request and reply. After timeout the request is answered with a default response.
+
+Provides
+========
+| **main**: :ref:`display_message <everest_interfaces_display_message>`
+|  Allows API clients to receive messages to be displayed.
+| **generic_error**: :ref:`generic_error <everest_interfaces_generic_error>`
+|  Provides errors types for module communication status.
+
+
+********
+Metadata
+********
+Authors
+=======
+| Jan Christoph Habig
+| Florin Mihut
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

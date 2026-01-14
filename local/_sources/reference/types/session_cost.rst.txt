@@ -12,37 +12,33 @@ Types to provide the session price
 
 .. _session_cost-TariffMessage:
 
-| **TariffMessage**:*object* 
+| **TariffMessage**: *object* 
 |  Message containing cost information
 |  properties:
-|   **ocpp_transaction_id**:*string* <optional>
+|   **ocpp_transaction_id**: *string* <optional>
 |    Transaction id of ocpp.
-|   **identifier_id**:*string* <optional>
+|   **identifier_id**: *string* <optional>
 |    To which token this message is bound.
-|   **identifier_type**:*string* <optional> (:ref:`display_message-IdentifierType <display_message-IdentifierType>`)
+|   **identifier_type**: *string* <optional> (:ref:`display_message-IdentifierType <display_message-IdentifierType>`)
 |    The type of 'identifier_id'. If omitted, type will be session id.
-|    **There is an extended definition for this object** :ref:`here <display_message-IdentifierType>`.
-|   **messages**:*array* <required>
+|   **messages**: *array* <required>
 |    Message with session price information to show the user.
-|    **array_item**:*object*  (:ref:`text_message-MessageContent <text_message-MessageContent>`)
+|    **array_item**: *object*  (:ref:`text_message-MessageContent <text_message-MessageContent>`)
 |     Message with pricing information in a specific language
-|     **There is an extended definition for this object** :ref:`here <text_message-MessageContent>`.
-| 
 
 .. _session_cost-IdlePrice:
 
-| **IdlePrice**:*object* 
+| **IdlePrice**: *object* 
 |  Price components when idle
 |  properties:
-|   **grace_minutes**:*integer* <required>
+|   **grace_minutes**: *integer* <required>
 |    Grace period in minutes before idle time is charged. Grace minutes start counting from the timestamp of the message in which state changed from "Charging" to "Idle".
-|   **hour_price**:*object* <required> (:ref:`money-Price <money-Price>`)
+|   **hour_price**: *object* <required> (:ref:`money-Price <money-Price>`)
 |    Price per hour while idle
-|    **There is an extended definition for this object** :ref:`here <money-Price>`.
 
 .. _session_cost-CostCategory:
 
-| **CostCategory**:*string* 
+| **CostCategory**: *string* 
 |  Cost category
 |  enum:
 |    - Energy
@@ -52,59 +48,51 @@ Types to provide the session price
 
 .. _session_cost-ChargingPriceComponent:
 
-| **ChargingPriceComponent**:*object* 
+| **ChargingPriceComponent**: *object* 
 |  Charging price for a category
 |  properties:
-|   **category**:*string* <required> (:ref:`session_cost-CostCategory <session_cost-CostCategory>`)
+|   **category**: *string* <required> (:ref:`session_cost-CostCategory <session_cost-CostCategory>`)
 |    Component type for this charging price
-|    **There is an extended definition for this object** :ref:`here <session_cost-CostCategory>`.
-|   **price**:*object* <required> (:ref:`money-Price <money-Price>`)
+|   **price**: *object* <required> (:ref:`money-Price <money-Price>`)
 |    Price for this component
-|    **There is an extended definition for this object** :ref:`here <money-Price>`.
 
 .. _session_cost-NextPeriodPrice:
 
-| **NextPeriodPrice**:*object* 
+| **NextPeriodPrice**: *object* 
 |  Pricing for the next period
 |  properties:
-|   **timestamp_from**:*string* <required>
+|   **timestamp_from**: *string* <required>
 |    Time when these prices become active.
 |    format:date-time
-|   **charging_price**:*array* <required>
+|   **charging_price**: *array* <required>
 |    Price components while charging
-|    **array_item**:*object*  (:ref:`session_cost-ChargingPriceComponent <session_cost-ChargingPriceComponent>`)
-|     
-|     **There is an extended definition for this object** :ref:`here <session_cost-ChargingPriceComponent>`.
-| 
-|   **idle_price**:*object* <optional> (:ref:`session_cost-IdlePrice <session_cost-IdlePrice>`)
+|    **array_item**: *object*  (:ref:`session_cost-ChargingPriceComponent <session_cost-ChargingPriceComponent>`)
+|   **idle_price**: *object* <optional> (:ref:`session_cost-IdlePrice <session_cost-IdlePrice>`)
 |    Price components while idle. Optional if no idle fee charged.
-|    **There is an extended definition for this object** :ref:`here <session_cost-IdlePrice>`.
 
 .. _session_cost-SessionCostChunk:
 
-| **SessionCostChunk**:*object* 
+| **SessionCostChunk**: *object* 
 |  A chunk of the session cost. The total cost of the session is the sum of all chunks.
 |  properties:
-|   **timestamp_from**:*string* <required>
+|   **timestamp_from**: *string* <required>
 |    Absolute timestamp for the start of this chunk in RFC3339 UTC format
 |    format:date-time
-|   **timestamp_to**:*string* <required>
+|   **timestamp_to**: *string* <required>
 |    Absolute timestamp for the end of this chunk in RFC3339 UTC format
 |    format:date-time
-|   **metervalue_from**:*integer* <required>
+|   **metervalue_from**: *integer* <required>
 |    Metervalue (energie Wh import) for the start of this chunk
-|   **metervalue_to**:*integer* <required>
+|   **metervalue_to**: *integer* <required>
 |    Metervalue (energie Wh import) for the end of this chunk
-|   **cost**:*object* <required> (:ref:`money-MoneyAmount <money-MoneyAmount>`)
+|   **cost**: *object* <required> (:ref:`money-MoneyAmount <money-MoneyAmount>`)
 |    Cost of the energy (or other things like time, base price, ...)  consumed during this chunk in the currency specified in the session price
-|    **There is an extended definition for this object** :ref:`here <money-MoneyAmount>`.
-|   **category**:*string* <required> (:ref:`session_cost-CostCategory <session_cost-CostCategory>`)
+|   **category**: *string* <required> (:ref:`session_cost-CostCategory <session_cost-CostCategory>`)
 |    Cost category. Typically this is energy, time or a flat fee.
-|    **There is an extended definition for this object** :ref:`here <session_cost-CostCategory>`.
 
 .. _session_cost-SessionStatus:
 
-| **SessionStatus**:*string* 
+| **SessionStatus**: *string* 
 |  Session status enum. Session can be running or finished. Costs of the running session are not final and can change.
 |  enum:
 |    - Running
@@ -113,43 +101,32 @@ Types to provide the session price
 
 .. _session_cost-SessionCost:
 
-| **SessionCost**:*object* 
+| **SessionCost**: *object* 
 |  Session cost object containing the total cost of the session and a list of chunks
 |  properties:
-|   **id_tag**:*object* <optional> (:ref:`authorization-ProvidedIdToken <authorization-ProvidedIdToken>`)
+|   **id_tag**: *object* <optional> (:ref:`authorization-ProvidedIdToken <authorization-ProvidedIdToken>`)
 |    The id tag assigned to this transaction
-|    **There is an extended definition for this object** :ref:`here <authorization-ProvidedIdToken>`.
-|   **session_id**:*string* <required>
+|   **session_id**: *string* <required>
 |    The session id
-|   **currency**:*object* <required> (:ref:`money-Currency <money-Currency>`)
+|   **currency**: *object* <required> (:ref:`money-Currency <money-Currency>`)
 |    Currency of the session cost. It applies to all chunks.
-|    **There is an extended definition for this object** :ref:`here <money-Currency>`.
-|   **cost_chunks**:*array* <optional>
+|   **cost_chunks**: *array* <optional>
 |    List of cost chunks. The total cost of the session is the sum of all chunks.
-|    **array_item**:*object*  (:ref:`session_cost-SessionCostChunk <session_cost-SessionCostChunk>`)
+|    **array_item**: *object*  (:ref:`session_cost-SessionCostChunk <session_cost-SessionCostChunk>`)
 |     One chunk of the session cost
-|     **There is an extended definition for this object** :ref:`here <session_cost-SessionCostChunk>`.
-| 
-|   **idle_price**:*object* <optional> (:ref:`session_cost-IdlePrice <session_cost-IdlePrice>`)
+|   **idle_price**: *object* <optional> (:ref:`session_cost-IdlePrice <session_cost-IdlePrice>`)
 |    Prices for when the EV is idle.
-|    **There is an extended definition for this object** :ref:`here <session_cost-IdlePrice>`.
-|   **charging_price**:*array* <optional>
+|   **charging_price**: *array* <optional>
 |    Charging prices.
-|    **array_item**:*object*  (:ref:`session_cost-ChargingPriceComponent <session_cost-ChargingPriceComponent>`)
+|    **array_item**: *object*  (:ref:`session_cost-ChargingPriceComponent <session_cost-ChargingPriceComponent>`)
 |     Charging price per type
-|     **There is an extended definition for this object** :ref:`here <session_cost-ChargingPriceComponent>`.
-| 
-|   **next_period**:*object* <optional> (:ref:`session_cost-NextPeriodPrice <session_cost-NextPeriodPrice>`)
+|   **next_period**: *object* <optional> (:ref:`session_cost-NextPeriodPrice <session_cost-NextPeriodPrice>`)
 |    Charging prices for the next period, starting from the given date/time
-|    **There is an extended definition for this object** :ref:`here <session_cost-NextPeriodPrice>`.
-|   **status**:*object* <required> (:ref:`session_cost-SessionStatus <session_cost-SessionStatus>`)
+|   **status**: *object* <required> (:ref:`session_cost-SessionStatus <session_cost-SessionStatus>`)
 |    Session status. Session can be running or finished. Costs of the running session are not final and can change. Only after the session is finished, the session cost can be committed to bank and/or backend.
-|    **There is an extended definition for this object** :ref:`here <session_cost-SessionStatus>`.
-|   **message**:*array* <optional>
+|   **message**: *array* <optional>
 |    Message to show to the user containing information about the price
-|    **array_item**:*object*  (:ref:`text_message-MessageContent <text_message-MessageContent>`)
+|    **array_item**: *object*  (:ref:`text_message-MessageContent <text_message-MessageContent>`)
 |     Message with pricing information in a specific language
-|     **There is an extended definition for this object** :ref:`here <text_message-MessageContent>`.
-| 
-|   **qr_code**:*string* <optional>
+|   **qr_code**: *string* <optional>
 |    QR Code with more information. For example when the charging is finished, to download the invoice from

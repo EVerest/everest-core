@@ -1,0 +1,99 @@
+
+
+.. _everest_modules_OCPP:
+
+####
+OCPP
+####
+| A OCPP charge point / charging station module, currently targeting OCPP-J 1.6
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **ChargePointConfigPath**: *string* <optional>
+| *default: "ocpp-config.json"*
+|  Path to the ocpp configuration file. Libocpp defines a JSON schema for this file. Please refer to the documentation of libocpp for more information about the configuration options.
+| **UserConfigPath**: *string* <optional>
+| *default: "user_config.json"*
+|  Path to the file of the OCPP user config. The user config is used as an overlay for the original config defined by the ChargePointConfigPath. Any changes to configuration keys turned out internally or by the CSMS will be written to the user config file.
+| **DatabasePath**: *string* <optional>
+| *default: "/tmp/ocpp_1_6_charge_point"*
+|  Path to the persistent SQLite database directory. Please refer to the libocpp documentation for more information about the database and its structure.
+| **EnableExternalWebsocketControl**: *boolean* <optional>
+| *default: False*
+|  If true websocket can be disconnected and connected externally. This parameter is for debug and testing purposes.
+| **PublishChargingScheduleIntervalS**: *integer* <optional>
+| *default: 30*
+|  Interval in seconds in which charging schedules received from OCPP are be published over MQTT and signalled to connected modules. If the value is set to 0, charging schedules are only published when changed by CSMS
+| **PublishChargingScheduleDurationS**: *integer* <optional>
+| *default: 600*
+|  Duration in seconds that defines the duration of the requested charging schedules starting from now
+| **MessageLogPath**: *string* <optional>
+| *default: "/tmp/everest_ocpp_logs"*
+|  Path to directory where logs of all OCPP messages are written to
+| **MessageQueueResumeDelay**: *integer* <optional>
+| *default: 0*
+|  Time (seconds) to delay resuming the message queue after reconnecting. This parameter was introduced because some OCTT test cases require that the first message after a reconnect is sent by the CSMS.
+| **RequestCompositeScheduleUnit**: *string* <optional>
+| *default: "A"*
+|  Unit in which composite schedules are requested and shared within EVerest. It is recommended to use Amps for AC and Watts for DC charging stations. Allowed values:
+|    - 'A' for Amps
+|    - 'W' for Watts
+| **DelayOcppStart**: *integer* <optional>
+| *default: 0*
+|  Small delay in time (milliseconds) to start the ocpp chargepoint to allow time for the rest of everest to update the connector status. This is only used to prevent issues from passing by availlable before preparing on a restart.
+| **ResetStopDelay**: *integer* <optional>
+| *default: 0*
+|  Time (seconds) to delay the stopping of the charge point so that the CSMS has enough time to respond to the charge point's last messages before resetting.
+
+Provides
+========
+| **main**: :ref:`ocpp_1_6_charge_point <everest_interfaces_ocpp_1_6_charge_point>`
+|  This is a OCPP 1.6 charge point
+| **auth_validator**: :ref:`auth_token_validator <everest_interfaces_auth_token_validator>`
+|  Validates the provided auth token with OCPP
+| **auth_provider**: :ref:`auth_token_provider <everest_interfaces_auth_token_provider>`
+|  Provides auth tokens from OCPP
+| **data_transfer**: :ref:`ocpp_data_transfer <everest_interfaces_ocpp_data_transfer>`
+|  OCPP data transfer towards the CSMS
+| **ocpp_generic**: :ref:`ocpp <everest_interfaces_ocpp>`
+|  Generic OCPP interface.
+| **session_cost**: :ref:`session_cost <everest_interfaces_session_cost>`
+|  Send session cost
+
+Requirements
+============
+| **charger_information**: :ref:`charger_information <everest_interfaces_charger_information>` 0..1
+| **evse_manager**: :ref:`evse_manager <everest_interfaces_evse_manager>` 1..128
+| **evse_energy_sink**: :ref:`external_energy_limits <everest_interfaces_external_energy_limits>` 0..129
+| **reservation**: :ref:`reservation <everest_interfaces_reservation>` 1
+| **auth**: :ref:`auth <everest_interfaces_auth>` 1
+| **system**: :ref:`system <everest_interfaces_system>` 1
+| **security**: :ref:`evse_security <everest_interfaces_evse_security>` 1
+| **data_transfer**: :ref:`ocpp_data_transfer <everest_interfaces_ocpp_data_transfer>` 0..1
+| **display_message**: :ref:`display_message <everest_interfaces_display_message>` 0..1
+| **extensions_15118**: :ref:`iso15118_extensions <everest_interfaces_iso15118_extensions>` 0..128
+
+********
+Metadata
+********
+Authors
+=======
+| Kai-Uwe Hermann
+| Piet Gömpel
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

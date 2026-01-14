@@ -1,0 +1,50 @@
+
+
+.. _everest_modules_power_supply_DC_API:
+
+###################
+power_supply_DC_API
+###################
+| API for DC power supplies
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **cfg_communication_check_to_s**: *integer* <optional>
+| *default: 5*
+|  Maximum time between two communication check events. Values <= 0 disables communication checks.
+| **cfg_heartbeat_interval_ms**: *integer* <optional>
+| *default: 1000*
+|  Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat.
+
+Provides
+========
+| **main**: :ref:`power_supply_DC <everest_interfaces_power_supply_DC>`
+|  Allows EVerest to control a DC power supply device via API clients.
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+| Jan Christoph Habig
+| Kai Hermann
+| Florin Mihut
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

@@ -22,13 +22,13 @@ Many sections are written like a checklist that you can follow step by step.
 Before we start, we recommend to set up the following development
 environment:
 
--  ☐ Working cross compiler on your PC to do fast updates of your code
-   (e.g. with *rsync* to the target). On Yocto, use *bitbake -c
-   populate_sdk my-image* to generate the SDK.
--  ☐ SSH to the target
--  ☐ Ensure the hardware interfaces to all components are up and running
--  ☐ Include “tmux” in your image
--  ☐ Recommended: Unicode support should work on the target terminal
+- Working cross compiler on your PC to do fast updates of your code
+  (e.g. with *rsync* to the target). On Yocto, use *bitbake -c
+  populate_sdk my-image* to generate the SDK.
+- SSH to the target
+- Ensure the hardware interfaces to all components are up and running
+- Include “tmux” in your image
+- Recommended: Unicode support should work on the target terminal
 
 BringUp modules
 ================
@@ -45,7 +45,7 @@ but later in production they should not be installed.
 
 To get familiar with this method, you can use a pure SIL version on your
 development PC. This step is optional. From the build folder of
-BaseCamp, start the following run script:
+everest-core, start the following run script:
 
 .. code-block:: bash
 
@@ -144,4 +144,4 @@ bringing up the hardware components one by one.
 
 ----
 
-Authors: Cornelius Claussen
+**Authors**: Cornelius Claussen

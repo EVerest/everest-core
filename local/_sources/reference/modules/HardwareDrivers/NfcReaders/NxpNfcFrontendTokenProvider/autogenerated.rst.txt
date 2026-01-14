@@ -1,0 +1,44 @@
+
+
+.. _everest_modules_NxpNfcFrontendTokenProvider:
+
+###########################
+NxpNfcFrontendTokenProvider
+###########################
+| NXP NFC Reader Library token provider returning the token as soon as the tag can be read by the reader
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`auth_token_provider <everest_interfaces_auth_token_provider>`
+|  Implementation of NXP NFC Reader Library based token provider
+|  **config:**
+|   **token_debounce_interval_ms**: *integer* <optional>
+|   *default: 2000*
+|    Minimal wait time in ms until next token will be published (debounce interval).
+
+
+********
+Metadata
+********
+Authors
+=======
+| Christoph Burandt
+| Cornelius Claussen
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

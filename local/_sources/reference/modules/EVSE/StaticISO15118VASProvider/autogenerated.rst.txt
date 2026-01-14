@@ -1,0 +1,38 @@
+
+
+.. _everest_modules_StaticISO15118VASProvider:
+
+#########################
+StaticISO15118VASProvider
+#########################
+| This module provides static ISO15118 value-added services (VAS) defined in a yaml file
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **service_file**: *string* <required>
+|  The path to the service yaml file
+
+Provides
+========
+| **iso15118_vas**: :ref:`ISO15118_vas <everest_interfaces_ISO15118_vas>`
+|  The custom VAS parsed from the yaml file
+
+
+********
+Metadata
+********
+Authors
+=======
+| Mark Oude Elberink
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

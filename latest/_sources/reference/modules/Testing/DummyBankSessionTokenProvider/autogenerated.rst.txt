@@ -1,0 +1,42 @@
+
+
+.. _everest_modules_DummyBankSessionTokenProvider:
+
+#############################
+DummyBankSessionTokenProvider
+#############################
+| Dummy bank session token provider
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`bank_session_token_provider <everest_interfaces_bank_session_token_provider>`
+|  Main implementation of bank session dummy token provider either always returning one configured token or each time a real UUID
+|  **config:**
+|   **token**: *string* <optional>
+|   *default: "DummyBankSessionToken"*
+|    Dummy token string to return
+|   **randomize**: *boolean* <optional>
+|   *default: False*
+|    Randomize token string to return
+
+
+********
+Metadata
+********
+Authors
+=======
+| Kai-Uwe Hermann
+| Christoph Burandt
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

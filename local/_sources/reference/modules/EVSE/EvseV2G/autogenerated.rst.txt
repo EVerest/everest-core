@@ -1,0 +1,89 @@
+
+
+.. _everest_modules_EvseV2G:
+
+#######
+EvseV2G
+#######
+| This module includes a DIN70121 and ISO15118-2 implementation provided by chargebyte GmbH
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **device**: *string* <optional>
+| *default: "eth0"*
+|  Ethernet device used for HLC. Any local interface that has an ipv6 link-local and a MAC addr will work
+| **supported_DIN70121**: *boolean* <optional>
+| *default: True*
+|  The EVSE supports the DIN SPEC
+| **supported_ISO15118_2**: *boolean* <optional>
+| *default: True*
+|  The EVSE supports ISO15118-2
+| **tls_security**: *string* <optional>
+| *default: "allow"*
+|  Controls how to handle encrypted communication
+|  enum:
+|    - prohibit
+|    - allow
+|    - force
+| **terminate_connection_on_failed_response**: *boolean* <optional>
+| *default: False*
+|  Controls how to handle a failed response code of the EVSE. If true the V2G connection is terminated immediately on a failed response code, otherwise the EV is responsible for closing of the V2G communication session with SessionStop.
+| **tls_key_logging**: *boolean* <optional>
+| *default: False*
+|  Enable/Disable the export of TLS session keys (pre-master-secret) during a TLS handshake. This log file can be used to decrypt TLS sessions. Note that this option is for testing and simulation purpose only
+| **tls_key_logging_path**: *string* <optional>
+| *default: "/tmp"*
+|  Output directory for the TLS key log file
+| **tls_timeout**: *integer* <optional>
+| *default: 15000*
+|  Set the TLS timeout in ms when establishing a tls connection 
+| **verify_contract_cert_chain**: *boolean* <optional>
+| *default: False*
+|  Specifies if the EVSE should verify the contract certificate chain locally.
+| **auth_timeout_pnc**: *integer* <optional>
+| *default: 55*
+|  Defines how many seconds the EVSE should wait for authorization in PnC case, before the charging session is aborted. Write 0 if the EVSE should wait indefinitely for PnC authorization.
+| **auth_timeout_eim**: *integer* <optional>
+| *default: 300*
+|  Defines how many seconds the EVSE should wait for authorization in EIM case, before the charging session is aborted. Write 0 if the EVSE should wait indefinitely for EIM authorization.
+| **enable_sdp_server**: *boolean* <optional>
+| *default: True*
+|  Enable the built-in SDP server
+
+Provides
+========
+| **charger**: :ref:`ISO15118_charger <everest_interfaces_ISO15118_charger>`
+|  This module implements the ISO15118-2 implementation of an AC or DC charger
+| **extensions**: :ref:`iso15118_extensions <everest_interfaces_iso15118_extensions>`
+|  This interface is used to share data between ISO15118 and OCPP modules to support the requirements of the OCPP protocol
+
+Requirements
+============
+| **security**: :ref:`evse_security <everest_interfaces_evse_security>` 1
+| **iso15118_vas**: :ref:`ISO15118_vas <everest_interfaces_ISO15118_vas>` 0..128
+
+********
+Metadata
+********
+Authors
+=======
+| Fabian Hartung
+| Mohannad Oraby
+| Sebastian Lukas
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

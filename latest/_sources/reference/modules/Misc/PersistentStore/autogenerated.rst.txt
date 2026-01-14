@@ -1,0 +1,39 @@
+
+
+.. _everest_modules_PersistentStore:
+
+###############
+PersistentStore
+###############
+| Simple implementation of a SQLite backed persistent key-value store
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **sqlite_db_file_path**: *string* <optional>
+| *default: "everest_persistent_store.db"*
+|  Path to the SQLite db file.
+
+Provides
+========
+| **main**: :ref:`kvs <everest_interfaces_kvs>`
+|  This implements a persistent key-value store
+
+
+********
+Metadata
+********
+Authors
+=======
+| Kai-Uwe Hermann
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

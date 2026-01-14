@@ -1,0 +1,48 @@
+
+
+.. _everest_modules_over_voltage_monitor_API:
+
+########################
+over_voltage_monitor_API
+########################
+| API for over voltage monitor
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **cfg_communication_check_to_s**: *integer* <optional>
+| *default: 5*
+|  Maximum time between two communication check events. Values <= 0 disables communication checks.
+| **cfg_heartbeat_interval_ms**: *integer* <optional>
+| *default: 1000*
+|  Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat.
+
+Provides
+========
+| **main**: :ref:`over_voltage_monitor <everest_interfaces_over_voltage_monitor>`
+|  Allows EVerest to control an over voltage monitor device via API clients.
+
+
+********
+Metadata
+********
+Authors
+=======
+| Jan Christoph Habig
+| Florin Mihut
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

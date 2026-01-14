@@ -1,0 +1,55 @@
+
+
+.. _everest_modules_Iso15118InternetVas:
+
+###################
+Iso15118InternetVas
+###################
+| This module provides ISO15118 internet value-added services (VAS).
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **ev_interface**: *string* <required>
+|  Name of the interface which is connected to the EV.
+| **modem_interface**: *string* <required>
+|  Name of the interface which is connected to the internet.
+| **http_support**: *boolean* <required>
+|  Boolean dictating whether we should let the EV know we support HTTP
+| **https_support**: *boolean* <required>
+|  Boolean dictating whether we should let the EV know we support HTTPS
+| **vas_setup_script**: *string* <optional>
+| *default: "vas-internet-setup.sh"*
+|  Filepath of the script, which is executed to setup the VaS network. A relative filepath is appended to the module directory: /usr/libexec/everest/modules/Iso15118InternetVas/. That means in the default case, it expands to: /usr/libexec/everest/modules/Iso15118InternetVas/vas-internet-setup.sh. An absolute filepath is directly executed.
+
+Provides
+========
+| **iso15118_vas**: :ref:`ISO15118_vas <everest_interfaces_ISO15118_vas>`
+|  The internet VAS
+
+Requirements
+============
+| **evse_manager**: :ref:`evse_manager <everest_interfaces_evse_manager>` 0..1
+
+********
+Metadata
+********
+Authors
+=======
+| Martin Litre, Pionix GmbH
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

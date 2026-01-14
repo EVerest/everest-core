@@ -1,0 +1,162 @@
+
+
+.. _everest_modules_Huawei_V100R023C10:
+
+##################
+Huawei_V100R023C10
+##################
+| Driver for the Huawei FusionCharge V100R023C10 DC Power Unit. Currently the driver only supports a single connector per dispenser (per host).
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **ethernet_interface**: *string* <optional>
+| *default: "eth0"*
+|  Ethernet interface name to use for communication with the power supply.
+| **psu_ip**: *string* <optional>
+| *default: "192.168.11.1"*
+|  IP address of the power supply.
+| **psu_port**: *integer* <optional>
+| *default: 502*
+|  Modbus port of the power supply.
+| **tls_enabled**: *boolean* <optional>
+| *default: False*
+|  Enable TLS encryption for the connection to the power supply.
+|  If set to true, the psu_ca, the client_cert and client_key must be provided.
+| **psu_ca_cert**: *string* <optional>
+| *default: ""*
+|  Path to the CA certificate file for the power supply.
+|  If not provided, the connection will not be encrypted.
+| **client_cert**: *string* <optional>
+| *default: ""*
+|  Path to the client certificate file for the power supply.
+|  If not provided, the connection will not be encrypted.
+| **client_key**: *string* <optional>
+| *default: ""*
+|  Path to the client key file for the power supply.
+|  If not provided, the connection will not be encrypted.
+| **module_placeholder_allocation_timeout_s**: *integer* <optional>
+| *default: 5*
+|  Timeout in seconds for the allocation of a module placeholder.
+| **esn**: *string* <optional>
+| *default: "0000000000000000"*
+|  Electronic Serial Number of the dispenser.
+|  Required to identify the dispenser in case there are multiple dispensers.
+| **HACK_publish_requested_voltage_current**: *boolean* <optional>
+| *default: False*
+|  Just publish the requested voltage and current to the power supply.
+|  This is a hack useful for testing in a SIL environment.
+| **HACK_use_ovm_while_cable_check**: *boolean* <optional>
+| *default: False*
+|  Use the over voltage monitor while the cable check is running instead of the powermeter, e.g. when the powermeter is too slow.
+| **send_secure_goose**: *boolean* <optional>
+| *default: True*
+|  Send secure GOOSE frames to the power supply.
+|  If set to false, the GOOSE frames are sent without a signature. If set to true, the outgoing GOOSE frames are signed.
+|  Note: This does not affect receiving GOOSE frames.
+| **allow_insecure_goose**: *boolean* <optional>
+| *default: False*
+|  Allow receiving insecure GOOSE frames from the power supply.
+|  If set to false, the received GOOSE frames must be signed (the signature is only checked if verify_secure_goose is set to true).
+|  If set to true, the received GOOSE frames are not checked for a signature.
+|  Note: If verify_secure_goose is set to true, this setting is ignored.
+| **verify_secure_goose**: *boolean* <optional>
+| *default: True*
+|  Verify the received GOOSE frames.
+|  If set to false, the received GOOSE frames are not verified.
+|  If set to true, the received GOOSE frames must be secure and the signature must be valid.
+|  Note: If this is set to true the allow_insecure_goose setting is ignored
+| **upstream_voltage_source**: *string* <optional>
+| *default: "IMD"*
+|  The PSU upstream voltage source to use
+|  enum:
+|    - IMD
+|    - OVM
+| **telemetry_topic_prefix**: *string* <optional>
+| *default: ""*
+|  MQTT Topic prefix for telemetry data published by this module. No trailing slash.
+|  Set to an empty string (default) to disable telemetry publishing.
+
+Provides
+========
+| **connector_1**: :ref:`power_supply_DC <everest_interfaces_power_supply_DC>`
+|  Power supply interface for the first connector.
+|  **config:**
+|   **global_connector_number**: *integer* <required>
+|    Number of the connector.
+|    Required to identify the connector.
+|   **max_export_current_A**: *number* <optional>
+|   *default: 0*
+|    Maximum current that the connector can deliver.
+|   **max_export_power_W**: *number* <optional>
+|   *default: 0*
+|    Maximum power that the connector can deliver.
+| **connector_2**: :ref:`power_supply_DC <everest_interfaces_power_supply_DC>`
+|  Power supply interface for the second connector.
+|  **config:**
+|   **global_connector_number**: *integer* <optional>
+|   *default: -1*
+|    Number of the connector.
+|    Required to identify the connector.
+|   **max_export_current_A**: *number* <optional>
+|   *default: 0*
+|    Maximum current that the connector can deliver.
+|   **max_export_power_W**: *number* <optional>
+|   *default: 0*
+|    Maximum power that the connector can deliver.
+| **connector_3**: :ref:`power_supply_DC <everest_interfaces_power_supply_DC>`
+|  Power supply interface for the third connector.
+|  **config:**
+|   **global_connector_number**: *integer* <optional>
+|   *default: -1*
+|    Number of the connector.
+|    Required to identify the connector.
+|   **max_export_current_A**: *number* <optional>
+|   *default: 0*
+|    Maximum current that the connector can deliver.
+|   **max_export_power_W**: *number* <optional>
+|   *default: 0*
+|    Maximum power that the connector can deliver.
+| **connector_4**: :ref:`power_supply_DC <everest_interfaces_power_supply_DC>`
+|  Power supply interface for the fourth connector.
+|  **config:**
+|   **global_connector_number**: *integer* <optional>
+|   *default: -1*
+|    Number of the connector.
+|    Required to identify the connector.
+|   **max_export_current_A**: *number* <optional>
+|   *default: 0*
+|    Maximum current that the connector can deliver.
+|   **max_export_power_W**: *number* <optional>
+|   *default: 0*
+|    Maximum power that the connector can deliver.
+
+Requirements
+============
+| **board_support**: :ref:`evse_board_support <everest_interfaces_evse_board_support>` 1..4
+| **isolation_monitor**: :ref:`isolation_monitor <everest_interfaces_isolation_monitor>` 0..4
+| **carside_powermeter**: :ref:`powermeter <everest_interfaces_powermeter>` 0..4
+| **over_voltage_monitor**: :ref:`over_voltage_monitor <everest_interfaces_over_voltage_monitor>` 0..4
+
+********
+Metadata
+********
+Authors
+=======
+| Frickly Systems GmbH
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

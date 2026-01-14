@@ -1,0 +1,72 @@
+
+
+.. _everest_modules_SerialCommHub:
+
+#############
+SerialCommHub
+#############
+| Hub to communicate with attached serial devices
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`serial_communication_hub <everest_interfaces_serial_communication_hub>`
+|  Implementation of serial communication hub
+|  **config:**
+|   **serial_port**: *string* <optional>
+|   *default: "/dev/ttyUSB0"*
+|    Serial port the hardware is connected to
+|   **baudrate**: *integer* <optional>
+|   *default: 9600*
+|    Baudrate
+|   **parity**: *integer* <optional>
+|   *default: 0*
+|    Parity bit: 0: None, 1: Odd, 2: Even
+|   **rtscts**: *boolean* <optional>
+|   *default: False*
+|    Use RTS/CTS hardware flow control
+|   **ignore_echo**: *boolean* <optional>
+|   *default: False*
+|    On some hardware every message that is sent is read back, this setting filters the sent message in the reply.
+|   **rxtx_gpio_chip**: *string* <optional>
+|   *default: ""*
+|    GPIO chip to use to switch between RX/TX. An empty string disables GPIO usage.
+|   **rxtx_gpio_line**: *integer* <optional>
+|   *default: 0*
+|    GPIO line to use to switch between RX/TX
+|   **rxtx_gpio_tx_high**: *boolean* <optional>
+|   *default: False*
+|    GPIO direction, false means low for TX, true means high for TX
+|   **max_packet_size**: *integer* <optional>
+|   *default: 256*
+|    Maximum size of a packet to read/write in bytes. Payload exceeding the size will be chunked. The APU size according to [wikipedia](https://en.wikipedia.org/wiki/Modbus) is 256 bytes, which is used as default here.
+|   **initial_timeout_ms**: *integer* <optional>
+|   *default: 500*
+|    Timeout in ms for the first packet.
+|   **within_message_timeout_ms**: *integer* <optional>
+|   *default: 100*
+|    Timeout in ms for subsequent packets.
+|   **retries**: *integer* <optional>
+|   *default: 2*
+|    Count of retries in case of error in Modbus query.
+
+
+********
+Metadata
+********
+Authors
+=======
+| Lars Dieckmann
+| Cornelius Claussen
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

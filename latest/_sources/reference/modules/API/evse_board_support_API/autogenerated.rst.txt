@@ -1,0 +1,58 @@
+
+
+.. _everest_modules_evse_board_support_API:
+
+######################
+evse_board_support_API
+######################
+| API for EVSE board support
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **cfg_communication_check_to_s**: *integer* <optional>
+| *default: 5*
+|  Maximum time between two communication check events. Values <= 0 disables communication checks.
+| **cfg_heartbeat_interval_ms**: *integer* <optional>
+| *default: 1000*
+|  Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat
+| **cfg_request_reply_to_s**: *integer* <optional>
+| *default: 550*
+|  Maximum time between request and reply. After timeout the request is answered with a default response.
+
+Provides
+========
+| **main**: :ref:`evse_board_support <everest_interfaces_evse_board_support>`
+|  Allows EVerest to control EVSE boards via API clients.
+| **rcd**: :ref:`ac_rcd <everest_interfaces_ac_rcd>`
+|  Allows EVerest to control/monitor AC RCD devices via API clients.
+| **connector_lock**: :ref:`connector_lock <everest_interfaces_connector_lock>`
+|  Allows EVerest to control the connector/motor lock via API clients.
+
+
+********
+Metadata
+********
+Authors
+=======
+| James Chapman
+| Cornelius Claussen
+| Jan Christoph Habig
+| Andreas Heinrich
+| Florin Mihut
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

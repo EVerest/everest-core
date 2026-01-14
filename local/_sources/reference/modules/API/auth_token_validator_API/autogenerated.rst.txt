@@ -1,0 +1,53 @@
+
+
+.. _everest_modules_auth_token_validator_API:
+
+########################
+auth_token_validator_API
+########################
+| API for auth token validator
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **cfg_communication_check_to_s**: *integer* <optional>
+| *default: 5*
+|  Maximum time between two communication check events. Values <= 0 disables communication checks.
+| **cfg_heartbeat_interval_ms**: *integer* <optional>
+| *default: 1000*
+|  Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat.
+| **cfg_request_reply_to_s**: *integer* <optional>
+| *default: 550*
+|  Maximum time between request and reply. After timeout the request is answered with a default response.
+
+Provides
+========
+| **main**: :ref:`auth_token_validator <everest_interfaces_auth_token_validator>`
+|  Allows API clients to validate auth tokens.
+
+
+********
+Metadata
+********
+Authors
+=======
+| James Chapman
+| Jan Christoph Habig
+| Andreas Heinrich
+| Florin Mihut
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

@@ -14,10 +14,21 @@ ev_manager
 *********
 Variables
 *********
-| **bsp_event**:*object*  (:ref:`board_support_common-BspEvent <board_support_common-BspEvent>`)
+| **bsp_event**: *object*  (:ref:`board_support_common-BspEvent <board_support_common-BspEvent>`)
 |  Events from CP/Relais
-|  **There is an extended definition for this object** :ref:`here <board_support_common-BspEvent>`.
-| **ev_info**:*object*  (:ref:`evse_manager-EVInfo <evse_manager-EVInfo>`)
+| **ev_info**: *object*  (:ref:`evse_manager-EVInfo <evse_manager-EVInfo>`)
 |  More details about the EV if available
-|  **There is an extended definition for this object** :ref:`here <evse_manager-EVInfo>`.
 
+
+******
+Errors
+******
+| **/errors/evse_manager** :
+|  **Internal** : Internal error of the state machine
+|  **MREC4OverCurrentFailure** : Over current event
+|  **MREC5OverVoltage** : Over voltage event
+|  **MREC9AuthorizationTimeout** : No authorization was provided within timeout after plugin
+|  **PowermeterTransactionStartFailed** : Transaction could not be started at the powermeter
+|  **Inoperative** : Charging is not possible. Usually caused by another error from one of the requirements.
+|  **MREC22ResistanceFault** : An Isolation Monitoring Device tripped due to low resistance to the chassis during active charging.
+|  **MREC11CableCheckFault** : Cable check failed. Isolation monitor self test failed before charging.

@@ -1,0 +1,50 @@
+
+
+.. _everest_modules_DummyTokenValidator:
+
+###################
+DummyTokenValidator
+###################
+| Dummy token validator always returning the same configured token validation result for every token
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`auth_token_validator <everest_interfaces_auth_token_validator>`
+|  Main implementation of dummy token validator always returning the same configured token validation result for every token
+|  **config:**
+|   **validation_result**: *string* <optional>
+|   *default: "Accepted"*
+|    Dummy validation result to return
+|    enum:
+|      - Accepted
+|      - Blocked
+|      - Expired
+|      - Invalid
+|   **validation_reason**: *string* <optional>
+|   *default: "Token valid"*
+|    Dummy validation reason to return
+|   **sleep**: *number* <optional>
+|   *default: 0.5*
+|    Time to wait before returning the dummy validation result (in s)
+
+
+********
+Metadata
+********
+Authors
+=======
+| Thilo Molitor
+| Cornelius Claussen
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

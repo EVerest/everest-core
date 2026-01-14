@@ -1,0 +1,59 @@
+
+
+.. _everest_modules_Linux_Systemd_Rauc:
+
+##################
+Linux_Systemd_Rauc
+##################
+| This module implements system wide operations for the base linux system
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **DefaultRetries**: *number* <optional>
+| *default: 1*
+|  Specifies how many times Charge Point tries to upload or download files on previous failure.
+| **DefaultRetryInterval**: *number* <optional>
+| *default: 1*
+|  Specifies in seconds after which time a retry of an upload or download on previous failure may be attempted.
+| **OCPPLogPath**: *string* <optional>
+| *default: "/var/log/everest/ocpp"*
+|  Path to folder where logs of all OCPP messages get written to (see ocpp MessageLogPath)
+| **SessionLogPath**: *string* <optional>
+| *default: "/var/log/everest/session"*
+|  Output directory for session log files (see evse_manager session_logging_path)
+| **RebootCommand**: *string* <optional>
+| *default: "/sbin/reboot"*
+|  Command to execute for rebooting the system
+| **VerifyUpdateScriptPath**: *string* <optional>
+| *default: ""*
+|  Full path to shell script that checks if an OTA update has been successful. The script is executed after  an update and shall verify the success of the update. It shall return 0 in case of success and non-zero in case of failure. If empty no check is performed and the update is considered successful and it is marked as good.
+
+Provides
+========
+| **main**: :ref:`system <everest_interfaces_system>`
+|  Implements the system interface
+
+Requirements
+============
+| **store**: :ref:`kvs <everest_interfaces_kvs>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Piet Gömpel
+| Cornelius Claussen
+| James Chapman
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

@@ -26,7 +26,7 @@
 </div></div></div></div></div></div><div><div class="flex py-2"><div class="min-w-1/4 mr-2"><span class="break-anywhere text-sm italic">type</span><div class="text-red-600 text-xs">required</div></div><div><div><div class="capitalize text-sm text-teal-500 font-bold inline-block mr-2">string</div><div class="inline-block"><span class="bg-purple-600 font-bold no-underline text-white rounded lowercase mr-2 p-1 text-xs">[ 0 .. 50 ] characters</span></div><div><div class="prose max-w-none text-sm"><p>Custom type of the token</p>
 </div></div></div></div></div></div></div></div><p class="mt-2 text-xs text-gray-700">Additional properties are allowed.</p></div></div><p class="mt-2 text-xs text-gray-700">Additional properties are allowed.</p></div></div><p class="mt-2 text-xs text-gray-700">Additional properties are allowed.</p></div></div></div></div></div><div class="panel-item--right px-8"><div class="bg-gray-800 px-8 py-4 mt-4 -mx-8 2xl:mx-0 2xl:px-4 2xl:rounded examples"><h4 class="text-white text-lg">Examples</h4><div class="mt-4"><div><button class="focus:outline-none undefined" type="button"><div class="inline-block"><span class="inline-block w-20 py-0.5 mr-1 text-gray-200 text-sm border text-center rounded focus:outline-none">Payload</span></div><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 20 20" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" class="inline-block align-baseline cursor-pointer ml-0.5 -mb-1 w-5 h-5 transform transition-transform duration-150 ease-linear  fill-current text-gray-200"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg></button></div><div class="hidden"><ul><li class="mt-4"><h5 class="text-xs font-bold text-gray-500">#1 Example</h5><div class="mt-1"><div class="prose max-w-none text-sm"><pre><code class="hljs language-json">{
   <span class="hljs-attr">"headers"</span>: {
-    <span class="hljs-attr">"replyTo"</span>: <span class="hljs-string">"everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}"</span>
+    <span class="hljs-attr">"replyTo"</span>: <span class="hljs-string">"everest_api/1/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}"</span>
   },
   <span class="hljs-attr">"payload"</span>: {
     <span class="hljs-attr">"id_token"</span>: {
@@ -399,7 +399,7 @@
               "summary": "",
               "payload": {
                 "headers": {
-                  "replyTo": "everest_api/1.0/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}"
+                  "replyTo": "everest_api/1/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}"
                 },
                 "payload": {
                   "id_token": {
@@ -703,7 +703,7 @@
       "x-parser-unique-object-id": "receive_token_validation_status"
     },
     "receive_heartbeat": {
-      "title": "Receive heatbeat",
+      "title": "Receive heartbeat",
       "action": "receive",
       "channel": "$ref:$.channels.receive_heartbeat",
       "x-parser-unique-object-id": "receive_heartbeat"

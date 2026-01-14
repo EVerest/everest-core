@@ -17,27 +17,28 @@ Commands
 ********
 | **store**:*void*
 |  This command stores a value under a given key
-|  **key**:*string* <required>
+|  **key**: *string* <required>
 |   Key to store the value for
 |   pattern:``^[A-Za-z0-9_.]*$``
-|  **value**:*['null', 'string', 'number', 'integer', 'boolean', 'array', 'object']* <required>
+|  **value**: *['null', 'string', 'number', 'integer', 'boolean', 'array', 'object']* <required>
 |   Value to store
 | **load**:*['null', 'string', 'number', 'integer', 'boolean', 'array', 'object']*
 |  This command loads the previously stored value for a given key (it will return null if the key does not exist)
-|  **key**:*string* <required>
+|  **key**: *string* <required>
 |   Key to load the value for
 |   pattern:``^[A-Za-z0-9_.]+$``
-|  **Result**:*['null', 'string', 'number', 'integer', 'boolean', 'array', 'object']* 
+|  **Result**: *['null', 'string', 'number', 'integer', 'boolean', 'array', 'object']* 
 |   The previously stored value
 | **delete**:*void*
 |  This command removes the value stored under a given key
-|  **key**:*string* <required>
+|  **key**: *string* <required>
 |   Key to delete the value for
 |   pattern:``^[A-Za-z0-9_.]+$``
 | **exists**:*boolean*
 |  This command checks if something is stored under a given key
-|  **key**:*string* <required>
+|  **key**: *string* <required>
 |   Key to check the existence for
 |   pattern:``^[A-Za-z0-9_.]+$``
-|  **Result**:*boolean* 
+|  **Result**: *boolean* 
 |   Returns 'True' if something was stored for this key
+

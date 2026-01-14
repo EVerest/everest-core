@@ -1,0 +1,51 @@
+
+
+.. _everest_modules_DummyTokenProvider:
+
+##################
+DummyTokenProvider
+##################
+| Dummy token provider that listens to AuthRequired event from evse_manager and then publishes one token
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`auth_token_provider <everest_interfaces_auth_token_provider>`
+|  Main implementation of dummy token provider always returning one configured token
+|  **config:**
+|   **token**: *string* <optional>
+|   *default: "DEADBEEF"*
+|    Dummy token string to return
+|   **type**: *string* <optional>
+|   *default: "RFID"*
+|    Type to report for our dummy token
+|   **timeout**: *number* <optional>
+|   *default: 10*
+|    Time our dummy token is valid (in s)
+|   **connector_id**: *integer* <optional>
+|   *default: 0*
+|    If >0, the generated token is only valid for this connector_id
+
+Requirements
+============
+| **evse**: :ref:`evse_manager <everest_interfaces_evse_manager>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Thilo Molitor
+| Cornelius Claussen
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

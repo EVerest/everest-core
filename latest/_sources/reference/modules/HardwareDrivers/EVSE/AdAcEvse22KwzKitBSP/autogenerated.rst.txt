@@ -1,0 +1,65 @@
+
+
+.. _everest_modules_AdAcEvse22KwzKitBSP:
+
+###################
+AdAcEvse22KwzKitBSP
+###################
+| Board support package module for the AD-ACEVSE22KWZ-KIT reference design
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **serial_port**: *string* <optional>
+| *default: "/dev/ttyUSB0"*
+|  Serial port the AD-ACEVSE22KWZ-KIT is connected to
+| **baud_rate**: *integer* <optional>
+| *default: 115200*
+|  Serial baud rate to use when communicating with the AD-ACEVSE22KWZ-KIT
+| **reset_gpio_chip**: *string* <optional>
+| *default: "gpiochip0"*
+|  Reset GPIO chip to use to HW reset the AD-ACEVSE22KWZ-KIT. If set to empty string, it is disabled.
+| **reset_gpio**: *integer* <optional>
+| *default: 27*
+|  GPIO line to use to reset AD-ACEVSE22KWZ-KIT
+| **caps_min_current_A**: *integer* <optional>
+| *default: -1*
+|  Minimal current on AC side. For AC this is typically 6, but for HLC this can be less. -1 means use limit reported by HW.
+| **caps_max_current_A**: *integer* <optional>
+| *default: -1*
+|  Maximum current on AC side. For AC this is typically 16 or 32, but for HLC this can be less. -1 means use limit reported by HW.
+
+Provides
+========
+| **powermeter**: :ref:`powermeter <everest_interfaces_powermeter>`
+|  provides the AD-ACEVSE22KWZ-KIT Internal Power Meter
+| **board_support**: :ref:`evse_board_support <everest_interfaces_evse_board_support>`
+|  provides the board support Interface to low level control control pilot, relais, motor lock
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+| Kai-Uwe Hermann
+| Thilo Molitor
+| Anton Wöllert
+| Ryan Wiebe
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

@@ -12,64 +12,72 @@ Custom VAS types for ISO 15118
 
 .. _iso15118_vas-ParameterValue:
 
-| **ParameterValue**:*object* 
+| **ParameterValue**: *object* 
 |  Value variant of a parameter -> only one of the values should be set
 |  properties:
-|   **finite_string**:*string* <required>
+|   **finite_string**: *string* <required>
 |    String value of the parameter
-|   **rational_number**:*number* <required>
+|   **rational_number**: *number* <required>
 |    Rational value of the parameter
-|   **byte_value**:*integer* <required>
+|   **byte_value**: *integer* <required>
 |    Byte value of the parameter
-|   **short_value**:*integer* <required>
+|   **short_value**: *integer* <required>
 |    Short value of the parameter
-|   **int_value**:*integer* <required>
+|   **int_value**: *integer* <required>
 |    Integer value of the parameter
-|   **bool_value**:*boolean* <required>
+|   **bool_value**: *boolean* <required>
 |    Boolean value of the parameter
 
 .. _iso15118_vas-Parameter:
 
-| **Parameter**:*object* 
+| **Parameter**: *object* 
 |  Single Parameter
 |  properties:
-|   **name**:*string* <required>
+|   **name**: *string* <required>
 |    Name of the parameter
-|   **value**:*object* <required> (:ref:`iso15118_vas-ParameterValue <iso15118_vas-ParameterValue>`)
+|   **value**: *object* <required> (:ref:`iso15118_vas-ParameterValue <iso15118_vas-ParameterValue>`)
 |    Value of the parameter
-|    **There is an extended definition for this object** :ref:`here <iso15118_vas-ParameterValue>`.
 
 .. _iso15118_vas-ParameterSet:
 
-| **ParameterSet**:*object* 
+| **ParameterSet**: *object* 
 |  Parameter Set
 |  properties:
-|   **set_id**:*integer* <required>
+|   **set_id**: *integer* <required>
 |    ParameterSetId
-|   **parameters**:*array* <required>
+|   **parameters**: *array* <required>
 |    List of parameters
-|    **array_item**:*object*  (:ref:`iso15118_vas-Parameter <iso15118_vas-Parameter>`)
-|     
-|     **There is an extended definition for this object** :ref:`here <iso15118_vas-Parameter>`.
-| 
+|    **array_item**: *object*  (:ref:`iso15118_vas-Parameter <iso15118_vas-Parameter>`)
 
 .. _iso15118_vas-SelectedService:
 
-| **SelectedService**:*object* 
+| **SelectedService**: *object* 
 |  Selected Service
 |  properties:
-|   **service_id**:*integer* <required>
+|   **service_id**: *integer* <required>
 |    Service ID
-|   **parameter_set_id**:*integer* <required>
+|   **parameter_set_id**: *integer* <required>
 |    Parameter Set ID
+
+.. _iso15118_vas-OfferedService:
+
+| **OfferedService**: *object* 
+|  Offered VAS Service
+|  properties:
+|   **service_id**: *integer* <required>
+|    Service ID
+|   **service_name**: *string* <optional>
+|    Service Name
+|   **service_scope**: *string* <optional>
+|    Service Scope
+|   **free_service**: *boolean* <optional>
+|    Indicates whether the service is free of charge
 
 .. _iso15118_vas-OfferedServices:
 
-| **OfferedServices**:*object* 
-|  List of offered VAS Service IDs
+| **OfferedServices**: *object* 
+|  List of offered VAS Services
 |  properties:
-|   **service_ids**:*array* <required>
-|    List of offered VAS Service IDs
-|    **array_item**:*integer* 
-|     Service ID
-| 
+|   **services**: *array* <required>
+|    List of offered VAS Services
+|    **array_item**: *object*  (:ref:`iso15118_vas-OfferedService <iso15118_vas-OfferedService>`)

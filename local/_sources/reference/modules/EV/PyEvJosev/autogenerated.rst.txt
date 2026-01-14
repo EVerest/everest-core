@@ -1,0 +1,75 @@
+
+
+.. _everest_modules_PyEvJosev:
+
+#########
+PyEvJosev
+#########
+| This module implements an DIN70121, ISO15118-2 and ISO15118-20 EV using the Josev project.
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **device**: *string* <optional>
+| *default: "eth0"*
+|  Ethernet device used for HLC. Any local interface that has an ipv6 link-local and a MAC addr will work.
+| **supported_DIN70121**: *boolean* <optional>
+| *default: False*
+|  The EV supports the DIN SPEC
+| **supported_ISO15118_2**: *boolean* <optional>
+| *default: False*
+|  The EV supports ISO15118-2
+| **supported_ISO15118_20_AC**: *boolean* <optional>
+| *default: False*
+|  The EV supports ISO15118-20 AC
+| **supported_ISO15118_20_DC**: *boolean* <optional>
+| *default: False*
+|  The EV supports ISO15118-20 DC
+| **tls_active**: *boolean* <optional>
+| *default: False*
+|  If true, EVCC connects to SECC as TLS client
+| **enforce_tls**: *boolean* <optional>
+| *default: False*
+|  The EVCC will enforce a TLS connection
+| **is_cert_install_needed**: *boolean* <optional>
+| *default: False*
+|  If true, the contract certificate will be installed via the evse. And any existing contract certificate will also be overwritten.
+| **enable_tls_1_3**: *boolean* <optional>
+| *default: False*
+|  The EVCC will enable TLS version 1.3
+| **is_internet_service_needed**: *boolean* <optional>
+| *default: False*
+|  If true, the ev will ask for internet service
+| **request_all_service_details**: *boolean* <optional>
+| *default: False*
+|  If true, the ev will ask for details about all offered services
+| **select_all_vas_services**: *boolean* <optional>
+| *default: False*
+|  If true, the ev will select all offered services
+| **supported_d20_energy_services**: *string* <optional>
+| *default: "DC,DC_BPT"*
+|  The supported ISO15118-20 energy services (DC, DC_BPT, AC, AC_BPT) the EV supports, provided as a prioritized list. The first entry in the list has the highest priority and is the most likely to be selected. The services should be separated only with commas.
+
+Provides
+========
+| **ev**: :ref:`ISO15118_ev <everest_interfaces_ISO15118_ev>`
+|  This module implements the ISO15118-2 implementation of an EV
+
+
+********
+Metadata
+********
+Authors
+=======
+| Sebastian Lukas
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

@@ -22,7 +22,7 @@ over_voltage_monitor
 *********
 Variables
 *********
-| **voltage_measurement_V**:*number* 
+| **voltage_measurement_V**: *number* 
 |  Measured voltage in V
 
 ********
@@ -30,9 +30,9 @@ Commands
 ********
 | **set_limits**:*void*
 |  Set the overvoltage limits. It will be called any time the voltage limits change, independent of  whether the monitoring is currently active or not. The values shall be cached, and the last value received shall be used as threshold while monitoring is active.
-|  **emergency_over_voltage_limit_V**:*number* <required>
+|  **emergency_over_voltage_limit_V**: *number* <required>
 |   Specifies the over voltage threshold [V] for emergency shutdown (based on IEC61851-23:2023 Table 103 and IEC61851-23-3:(DRAFT 2025) Table 202) An emergency shutdown shall be triggered if the DC output voltage is higher  than this value.
-|  **error_over_voltage_limit_V**:*number* <required>
+|  **error_over_voltage_limit_V**: *number* <required>
 |   Specifies the over voltage threshold [V] for error shutdown (for use with IEC61851-23:2023 Table 104). An error shutdown shall be triggered if the DC output voltage is higher  than this value. The OVM shall trigger an emergency shutdown if error shutdown does not work properly (after 2.5s, see CC.3.4.2).
 | **start**:*void*
 |  Start monitoring. Called once at the beginning of power transfer. Use the last limits set by set_limits and make sure to update them when set_limits is called while monitoring is active. Trigger shutdowns and raise errors as needed.
@@ -40,3 +40,13 @@ Commands
 |  Stop monitoring. Called once at the end of power transfer. Do not raise any over voltage errors or trigger any shutdowns in this mode.
 | **reset_over_voltage_error**:*void*
 |  Resets the detection logic to allow for new charging session after an over voltage error occurred. This shall clear the over voltage error. If monitoring is still active, it shall be stopped.
+
+******
+Errors
+******
+| **/errors/over_voltage_monitor** :
+|  **MREC5OverVoltage** : The output voltage was above IEC61851-23:2023 6.3.1.106.2 Table 103 limits for more than 9ms. (severity high) or above Table 104 (medium or low severity).
+|  **DeviceFault** : The over voltage monitoring device is no longer functional.
+|  **CommunicationFault** : The communication to the hardware or underlying driver is lost or has errors.
+|  **VendorError** : Vendor specific error code. Will stop charging session.
+|  **VendorWarning** : Vendor specific error code. Charging may continue.

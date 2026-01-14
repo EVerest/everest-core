@@ -1,0 +1,70 @@
+
+
+.. _everest_modules_DPM1000:
+
+#######
+DPM1000
+#######
+| DC Power Supply Driver
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **device**: *string* <optional>
+| *default: "can0"*
+|  Interface name for can device
+| **device_address**: *integer* <optional>
+| *default: 0*
+|  Device address (as selected on front LED panel)
+| **power_limit_W**: *number* <optional>
+| *default: 30000*
+|  Maximum Power Limit in Watt
+| **current_limit_A**: *number* <optional>
+| *default: 100*
+|  Maximum Current Limit in Ampere
+| **voltage_limit_V**: *number* <optional>
+| *default: 1000*
+|  Maximum Voltage Limit in Volt. Will be limited by series parallel setting as well.
+| **series_parallel_mode**: *string* <optional>
+| *default: "Series"*
+|  Select series (300-1000V), parallel (50-500) or automatic switching mode (50-1000). This switches the internal configuration of one module and should not be confused with parallel operation of multiple modules.
+|  enum:
+|    - Series
+|    - Parallel
+|    - Automatic
+| **discharge_gpio_chip**: *string* <optional>
+| *default: ""*
+|  GPIO chip to use to switch external discharge load on and off. An empty string disables discharging. Note that the hardware load must be designed to allow permanent discharge from the highest voltage (e.g. 1000V)
+| **discharge_gpio_line**: *integer* <optional>
+| *default: 0*
+|  GPIO line to use to switch discharge load
+| **discharge_gpio_polarity**: *boolean* <optional>
+| *default: True*
+|  GPIO polarity, false means active low, true means active high
+| **debug_print_all_telemetry**: *boolean* <optional>
+| *default: False*
+|  Read and print all telemetry from the power module. Helpful while debugging.
+
+Provides
+========
+| **main**: :ref:`power_supply_DC <everest_interfaces_power_supply_DC>`
+|  Power supply driver for DPM 1000-30 from SCU Power. Currently supports only one module.
+
+
+********
+Metadata
+********
+Authors
+=======
+| aw@pionix.de
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

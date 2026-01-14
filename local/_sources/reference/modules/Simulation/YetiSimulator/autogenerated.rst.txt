@@ -1,0 +1,50 @@
+
+
+.. _everest_modules_YetiSimulator:
+
+#############
+YetiSimulator
+#############
+| SIL simulator for YETI hardware v1.0
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **connector_id**: *integer* <required>
+|  Connector id of the evse manager to which this simulator is connected to
+| **reset_powermeter_on_session_start**: *boolean* <optional>
+| *default: True*
+|  Reset absolute powermeter readings to zero when CP changes from state A to B
+
+Provides
+========
+| **powermeter**: :ref:`powermeter <everest_interfaces_powermeter>`
+|  provides the Yeti Internal Power Meter
+| **board_support**: :ref:`evse_board_support <everest_interfaces_evse_board_support>`
+|  provides the EVSE board support Interface to low level control pilot, relais, rcd, motor lock
+| **ev_board_support**: :ref:`ev_board_support <everest_interfaces_ev_board_support>`
+|  provides the EV board support Interface to low level control pilot, relais, rcd
+| **rcd**: :ref:`ac_rcd <everest_interfaces_ac_rcd>`
+|  Interface for the simulated AC RCD
+| **connector_lock**: :ref:`connector_lock <everest_interfaces_connector_lock>`
+|  Interface for the simulated Connector lock
+
+
+********
+Metadata
+********
+Authors
+=======
+| Cornelius Claussen
+| Tobias Marzell (Pionix GmbH)
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

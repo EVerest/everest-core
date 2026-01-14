@@ -12,7 +12,7 @@ Message to show on a display
 
 .. _display_message-IdentifierType:
 
-| **IdentifierType**:*string* 
+| **IdentifierType**: *string* 
 |  Types of identifiers
 |  enum:
 |    - IdToken
@@ -21,7 +21,7 @@ Message to show on a display
 
 .. _display_message-MessagePriorityEnum:
 
-| **MessagePriorityEnum**:*string* 
+| **MessagePriorityEnum**: *string* 
 |  Priority of the message. AlwaysFront is the highest priority: The Charging Station SHALL show this message at the configured moment, regardless of other installed messages. Hence, it shall not cycle it with other messages and the Charging Station’s own message shall not override this message. When a newer message with this MessagePriority is received, this message is replaced. InFront: The Charging Station SHALL show this message at the configured moment, regardless of the normal cycle of messages. If there are multiple InFront message that must be shown at the same time, they must be cycled. NormalCycle: Show this message in the cycle of messages.
 |  enum:
 |    - AlwaysFront
@@ -30,7 +30,7 @@ Message to show on a display
 
 .. _display_message-MessageStateEnum:
 
-| **MessageStateEnum**:*string* 
+| **MessageStateEnum**: *string* 
 |  During what state the message should be shown
 |  enum:
 |    - Charging
@@ -42,7 +42,7 @@ Message to show on a display
 
 .. _display_message-DisplayMessageStatusEnum:
 
-| **DisplayMessageStatusEnum**:*string* 
+| **DisplayMessageStatusEnum**: *string* 
 |  Response on a display message request
 |  enum:
 |    - Accepted
@@ -54,7 +54,7 @@ Message to show on a display
 
 .. _display_message-ClearMessageResponseEnum:
 
-| **ClearMessageResponseEnum**:*string* 
+| **ClearMessageResponseEnum**: *string* 
 |  Response on a clear display message request
 |  enum:
 |    - Accepted
@@ -62,91 +62,76 @@ Message to show on a display
 
 .. _display_message-DisplayMessage:
 
-| **DisplayMessage**:*object* 
+| **DisplayMessage**: *object* 
 |  Message to show on a display
 |  properties:
-|   **id**:*integer* <optional>
+|   **id**: *integer* <optional>
 |    The message id
-|   **priority**:*string* <optional> (:ref:`display_message-MessagePriorityEnum <display_message-MessagePriorityEnum>`)
+|   **priority**: *string* <optional> (:ref:`display_message-MessagePriorityEnum <display_message-MessagePriorityEnum>`)
 |    Priority of the message. For OCPP 2.0.1, this is a required property. But as we also use this interface outside of ocpp, for other messages it is not required and if priority is not given, we assume it is the lowest priority, 'NormalCycle'. When priority is 'AlwaysFront' and there already is a message with priority 'AlwaysFront', the last received message shall replace the already existing message.
-|    **There is an extended definition for this object** :ref:`here <display_message-MessagePriorityEnum>`.
-|   **state**:*string* <optional> (:ref:`display_message-MessageStateEnum <display_message-MessageStateEnum>`)
+|   **state**: *string* <optional> (:ref:`display_message-MessageStateEnum <display_message-MessageStateEnum>`)
 |    During what state should this message be shown. When omitted, this message should be shown in any state of the Charging Station
-|    **There is an extended definition for this object** :ref:`here <display_message-MessageStateEnum>`.
-|   **timestamp_from**:*string* <optional>
+|   **timestamp_from**: *string* <optional>
 |    From what date-time should this message be shown. If omitted: directly.
 |    format:date-time
-|   **timestamp_to**:*string* <optional>
+|   **timestamp_to**: *string* <optional>
 |    Until what date-time should this message be shown, after this date/time this message SHALL be removed. If omitted, message can be shown 'forever' (until it is specifically removed).
 |    format:date-time
-|   **identifier_id**:*string* <optional>
+|   **identifier_id**: *string* <optional>
 |    To which user / during which session shall this message be shown. User can be identified by id token (when the session did not start yet), session id or transaction id. identifier_type will hold the type of identifier_id (default session id). Message SHALL be removed by the Charging Station after session has ended. If omitted, message is not tight to a session.
-|   **identifier_type**:*string* <optional> (:ref:`display_message-IdentifierType <display_message-IdentifierType>`)
+|   **identifier_type**: *string* <optional> (:ref:`display_message-IdentifierType <display_message-IdentifierType>`)
 |    The type of 'identifier_id'. If omitted, type will be session id.
-|    **There is an extended definition for this object** :ref:`here <display_message-IdentifierType>`.
-|   **message**:*object* <required> (:ref:`text_message-MessageContent <text_message-MessageContent>`)
+|   **message**: *object* <required> (:ref:`text_message-MessageContent <text_message-MessageContent>`)
 |    The message to show
-|    **There is an extended definition for this object** :ref:`here <text_message-MessageContent>`.
-|   **qr_code**:*string* <optional>
+|   **qr_code**: *string* <optional>
 |    QR Code to scan for more information.
 
 .. _display_message-SetDisplayMessageResponse:
 
-| **SetDisplayMessageResponse**:*object* 
+| **SetDisplayMessageResponse**: *object* 
 |  Response to the set display message request.
 |  properties:
-|   **status**:*object* <required> (:ref:`display_message-DisplayMessageStatusEnum <display_message-DisplayMessageStatusEnum>`)
+|   **status**: *object* <required> (:ref:`display_message-DisplayMessageStatusEnum <display_message-DisplayMessageStatusEnum>`)
 |    Whether the charging station is able to display the message
-|    **There is an extended definition for this object** :ref:`here <display_message-DisplayMessageStatusEnum>`.
-|   **status_info**:*string* <optional>
+|   **status_info**: *string* <optional>
 |    Detailed status information
 
 .. _display_message-GetDisplayMessageRequest:
 
-| **GetDisplayMessageRequest**:*object* 
+| **GetDisplayMessageRequest**: *object* 
 |  Request display messages. The properties are filtered. If the properties are omitted, there will be no filter applied (if all properties are omitted, all stored display messages will be returned).
 |  properties:
-|   **id**:*array* <required>
+|   **id**: *array* <required>
 |    If provided the Charging Station shall return Display Messages of the given ids.
-|    **array_item**:*integer* 
-|     
-| 
-|   **priority**:*string* <required> (:ref:`display_message-MessagePriorityEnum <display_message-MessagePriorityEnum>`)
+|    **array_item**: *integer* 
+|   **priority**: *string* <required> (:ref:`display_message-MessagePriorityEnum <display_message-MessagePriorityEnum>`)
 |    If provided the Charging Station shall return Display Messages with the given priority only.
-|    **There is an extended definition for this object** :ref:`here <display_message-MessagePriorityEnum>`.
-|   **state**:*string* <required> (:ref:`display_message-MessageStateEnum <display_message-MessageStateEnum>`)
+|   **state**: *string* <required> (:ref:`display_message-MessageStateEnum <display_message-MessageStateEnum>`)
 |    If provided the Charging Station shall return Display Messages with the given state only.
-|    **There is an extended definition for this object** :ref:`here <display_message-MessageStateEnum>`.
 
 .. _display_message-GetDisplayMessageResponse:
 
-| **GetDisplayMessageResponse**:*object* 
+| **GetDisplayMessageResponse**: *object* 
 |  Response on the 'get display message' request. Will return the requested display messages.
 |  properties:
-|   **status_info**:*string* <required>
+|   **status_info**: *string* <required>
 |    Detailed status information
-|   **messages**:*array* <required>
+|   **messages**: *array* <required>
 |    Requested messages, if any
-|    **array_item**:*object*  (:ref:`display_message-DisplayMessage <display_message-DisplayMessage>`)
-|     
-|     **There is an extended definition for this object** :ref:`here <display_message-DisplayMessage>`.
-| 
+|    **array_item**: *object*  (:ref:`display_message-DisplayMessage <display_message-DisplayMessage>`)
 
 .. _display_message-ClearDisplayMessageRequest:
 
-| **ClearDisplayMessageRequest**:*object* 
+| **ClearDisplayMessageRequest**: *object* 
 |  Request to remove a specific display message.
 |  properties:
-|   **id**:*integer* <required>
+|   **id**: *integer* <required>
 |    Id of display message that should be removed from the charging station
 
 .. _display_message-ClearDisplayMessageResponse:
 
-| **ClearDisplayMessageResponse**:*object* 
+| **ClearDisplayMessageResponse**: *object* 
 |  Response on the clear display message request.
 |  properties:
-|   **status**:*object* <required> (:ref:`display_message-ClearMessageResponseEnum <display_message-ClearMessageResponseEnum>`)
-|    
-|    **There is an extended definition for this object** :ref:`here <display_message-ClearMessageResponseEnum>`.
-|   **status_info**:*string* <optional>
-|    
+|   **status**: *object* <required> (:ref:`display_message-ClearMessageResponseEnum <display_message-ClearMessageResponseEnum>`)
+|   **status_info**: *string* <optional>

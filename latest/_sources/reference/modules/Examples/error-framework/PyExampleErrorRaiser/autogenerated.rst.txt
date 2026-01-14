@@ -1,0 +1,34 @@
+
+
+.. _everest_modules_PyExampleErrorRaiser:
+
+####################
+PyExampleErrorRaiser
+####################
+| Simple example module written in Python to demonstrate error handling on raiser side
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **example_raiser**: :ref:`example_error_framework <everest_interfaces_example_error_framework>`
+|  This implements an example interface
+
+
+********
+Metadata
+********
+Authors
+=======
+| Andreas Heinrich
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

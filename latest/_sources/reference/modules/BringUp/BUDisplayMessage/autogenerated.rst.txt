@@ -1,0 +1,37 @@
+
+
+.. _everest_modules_BUDisplayMessage:
+
+################
+BUDisplayMessage
+################
+| Interactive bring up helper for Display Message interface
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`empty <everest_interfaces_empty>`
+|  This module does not provide anything
+
+Requirements
+============
+| **dm**: :ref:`display_message <everest_interfaces_display_message>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Christoph Burandt
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

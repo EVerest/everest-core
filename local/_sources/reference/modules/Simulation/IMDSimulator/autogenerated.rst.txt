@@ -1,0 +1,50 @@
+
+
+.. _everest_modules_IMDSimulator:
+
+############
+IMDSimulator
+############
+| SIL Implementation of an Isolation Monitoring Device (IMD) for DC charging
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`isolation_monitor <everest_interfaces_isolation_monitor>`
+|  Main interface for the IMD
+|  **config:**
+|   **resistance_F_Ohm**: *number* <optional>
+|   *default: 900000*
+|    Resistance to return for the simulated measurements in Ohm
+|   **interval**: *integer* <optional>
+|   *default: 1000*
+|    Measurement update interval in milliseconds
+|   **selftest_success**: *boolean* <optional>
+|   *default: True*
+|    Set to true for successful self testing, false for fault
+
+
+********
+Metadata
+********
+Authors
+=======
+| Fabian Hartung (chargebyte GmbH)
+| Cornelius Claussen (Pionix GmbH)
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

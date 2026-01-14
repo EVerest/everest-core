@@ -17,7 +17,7 @@ dc_external_derate
 *********
 Variables
 *********
-| **plug_temperature_C**:*number* 
+| **plug_temperature_C**: *number* 
 |  Current temperature of the plug in degree celsius
 
 ********
@@ -25,6 +25,6 @@ Commands
 ********
 | **set_external_derating**:*void*
 |  Set external derating values. The provided values will be merged with the existing internal capabilities of the power supply: The minimum of the internal and external values will be used. All values are optional, unset means no limit.
-|  **derate**:*object* <required> (:ref:`dc_external_derate-ExternalDerating <dc_external_derate-ExternalDerating>`)
+|  **derate**: *object* <required> (:ref:`dc_external_derate-ExternalDerating <dc_external_derate-ExternalDerating>`)
 |   Operation mode of power supply
-|   **There is an extended definition for this object** :ref:`here <dc_external_derate-ExternalDerating>`.
+

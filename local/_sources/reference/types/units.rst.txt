@@ -12,84 +12,84 @@ Unit types
 
 .. _units-Current:
 
-| **Current**:*object* 
+| **Current**: *object* 
 |  Current in Ampere
 |  properties:
-|   **DC**:*number* <required>
+|   **DC**: *number* <required>
 |    DC current
-|   **L1**:*number* <required>
+|   **L1**: *number* <required>
 |    AC L1 value only
-|   **L2**:*number* <required>
+|   **L2**: *number* <required>
 |    AC L2 value only
-|   **L3**:*number* <required>
+|   **L3**: *number* <required>
 |    AC L3 value only
-|   **N**:*number* <required>
+|   **N**: *number* <required>
 |    AC Neutral value only
 
 .. _units-Voltage:
 
-| **Voltage**:*object* 
+| **Voltage**: *object* 
 |  Voltage in Volt
 |  properties:
-|   **DC**:*number* <required>
+|   **DC**: *number* <required>
 |    DC voltage
-|   **L1**:*number* <required>
+|   **L1**: *number* <required>
 |    AC L1 value only
-|   **L2**:*number* <required>
+|   **L2**: *number* <required>
 |    AC L2 value only
-|   **L3**:*number* <required>
+|   **L3**: *number* <required>
 |    AC L3 value only
 
 .. _units-Frequency:
 
-| **Frequency**:*object* 
+| **Frequency**: *object* 
 |  AC only: Frequency in Hertz
 |  properties:
-|   **L1**:*number* <required>
+|   **L1**: *number* <required>
 |    AC L1 value
-|   **L2**:*number* <optional>
+|   **L2**: *number* <optional>
 |    AC L2 value
-|   **L3**:*number* <optional>
+|   **L3**: *number* <optional>
 |    AC L3 value
 
 .. _units-Power:
 
-| **Power**:*object* 
+| **Power**: *object* 
 |  Instantaneous power in Watt. Negative values are exported, positive values imported Energy.
 |  properties:
-|   **total**:*number* <required>
+|   **total**: *number* <required>
 |    DC / AC Sum value
-|   **L1**:*number* <optional>
+|   **L1**: *number* <optional>
 |    AC L1 value only
-|   **L2**:*number* <optional>
+|   **L2**: *number* <optional>
 |    AC L2 value only
-|   **L3**:*number* <optional>
+|   **L3**: *number* <optional>
 |    AC L3 value only
 
 .. _units-Energy:
 
-| **Energy**:*object* 
+| **Energy**: *object* 
 |  Energy in Wh.
 |  properties:
-|   **total**:*number* <required>
+|   **total**: *number* <required>
 |    DC / AC Sum value (which is relevant for billing)
-|   **L1**:*number* <optional>
+|   **L1**: *number* <optional>
 |    AC L1 value only
-|   **L2**:*number* <optional>
+|   **L2**: *number* <optional>
 |    AC L2 value only
-|   **L3**:*number* <optional>
+|   **L3**: *number* <optional>
 |    AC L3 value only
 
 .. _units-ReactivePower:
 
-| **ReactivePower**:*object* 
+| **ReactivePower**: *object* 
 |  Reactive power VAR
 |  properties:
-|   **total**:*number* <required>
+|   **total**: *number* <required>
 |    VAR total
-|   **L1**:*number* <optional>
+|   **L1**: *number* <optional>
 |    VAR phase A
-|   **L2**:*number* <optional>
+|   **L2**: *number* <optional>
 |    VAR phase B
-|   **L3**:*number* <optional>
+|   **L3**: *number* <optional>
 |    VAR phase C

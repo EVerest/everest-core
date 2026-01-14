@@ -1,0 +1,37 @@
+
+
+.. _everest_modules_PyExampleErrorSubscriber:
+
+########################
+PyExampleErrorSubscriber
+########################
+| Simple example module written in Python to demonstrate error framework on subscriber side
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **example_subscriber**: :ref:`example_error_framework <everest_interfaces_example_error_framework>`
+|  This implements the example interface
+
+Requirements
+============
+| **example_raiser**: :ref:`example_error_framework <everest_interfaces_example_error_framework>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Andreas Heinrich
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

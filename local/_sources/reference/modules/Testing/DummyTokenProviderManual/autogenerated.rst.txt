@@ -1,0 +1,35 @@
+
+
+.. _everest_modules_DummyTokenProviderManual:
+
+########################
+DummyTokenProviderManual
+########################
+| Dummy token provider that manually publishes one token
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`auth_token_provider <everest_interfaces_auth_token_provider>`
+|  Main implementation of dummy token provider always returning one configured token
+
+
+********
+Metadata
+********
+Authors
+=======
+| Kai-Uwe Hermann
+| Cornelius Claussen
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

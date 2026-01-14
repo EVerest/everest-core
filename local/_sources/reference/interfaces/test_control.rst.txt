@@ -14,7 +14,7 @@ test_control
 *********
 Variables
 *********
-| **state**:*string* 
+| **state**: *string* 
 |  State of the test control instance
 
 ********
@@ -22,7 +22,8 @@ Commands
 ********
 | **start_charging**:*string*
 |  Enables the EvManager to begin charging
-|  **mode**:*string* <required>
+|  **mode**: *string* <required>
 |   Sets charging mode (e.g. raw, iso15118)
-|  **Result**:*string* 
+|  **Result**: *string* 
 |   Charging state of the EvManager
+

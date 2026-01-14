@@ -1,0 +1,76 @@
+
+
+.. _everest_modules_DZG_GSH01:
+
+#########
+DZG_GSH01
+#########
+| Module that collects power and energy measurements from an GSH01 powermeter
+
+
+*************************
+Handwritten Documentation
+*************************
+
+.. include:: index.inc
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **main**: :ref:`powermeter <everest_interfaces_powermeter>`
+|  Implementation of the driver functionality
+|  **config:**
+|   **powermeter_device_id**: *integer* <optional>
+|   *default: 255*
+|    The powermeter's address on the serial bus, 255 is broadcast
+|   **serial_port**: *string* <optional>
+|   *default: "/dev/ttyUSB0"*
+|    Serial port the hardware is connected to
+|   **baudrate**: *integer* <optional>
+|   *default: 115200*
+|    Baudrate
+|   **parity**: *integer* <optional>
+|   *default: 0*
+|    Parity bit: 0: None, 1: Odd, 2: Even
+|   **rs485_direction_gpio**: *integer* <optional>
+|   *default: -1*
+|    GPIO to use for direction switching. Set to -1 to disable.
+|   **num_of_retries**: *integer* <optional>
+|   *default: 0*
+|    Number of retries sent via serial interface. Set to 0 to disable retry.
+|   **ignore_echo**: *boolean* <optional>
+|   *default: False*
+|    On some hardware every message that is sent is read back, this setting filters the sent message in the reply.
+|   **max_clock_diff_s**: *integer* <optional>
+|   *default: 60*
+|    Maximal time difference (in seconds) between meter clock and system clock, until new set_time command is sent
+|   **publish_device_data**: *boolean* <optional>
+|   *default: False*
+|    Regularly publish device data not covered by the "powermeter" interface (for debugging purposes).
+|   **publish_device_diagnostics**: *boolean* <optional>
+|   *default: False*
+|    Regularly publish device diagnostics (e.g. log messages, errors, SW/HW revisions; for debugging purposes).
+
+
+********
+Metadata
+********
+Authors
+=======
+| Lars Dieckmann
+| Andreas Heinrich
+| Cornelius Claussen
+| Florin Mihut
+| Jan Christoph Habig
+| Kai-Uwe Hermann
+| Miriam Thome
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

@@ -60,7 +60,7 @@ the charger:
 
 These certificates and keys can be installed during provisioning of the charger, or they can be 
 installed using OCPP1.6 or OCPP2.x. The paths to store these files can be configured in the 
-EvseSecurity module. Please see the :doc:`Documentation of the EvseSecurity </reference/modules/EvseSecurity>`
+EvseSecurity module. Please see the :ref:`Documentation of the EvseSecurity <everest_modules_EvseSecurity>`
 for further information on how to do the configuration for this module.
 
 In the visualization, step (0) shows the process that represents the previously described process of

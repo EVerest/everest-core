@@ -17,32 +17,33 @@ Commands
 ********
 | **scan_unit**:*object*
 |  Scans specific unit at a device's port
-|  **ip_address**:*string* <required>
+|  **ip_address**: *string* <required>
 |   local IP-address of the Sunspec device
 |   pattern:``^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$``
-|  **port**:*integer* <required>
+|  **port**: *integer* <required>
 |   Modbus port
-|  **unit**:*integer* <required>
+|  **unit**: *integer* <required>
 |   Modbus unit id
-|  **Result**:*object* 
+|  **Result**: *object* 
 |   Returns a json overview of the scan
 | **scan_port**:*object*
 |  Scans all units at a device's port
-|  **ip_address**:*string* <required>
+|  **ip_address**: *string* <required>
 |   local IP-address of the Sunspec device
 |   pattern:``^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$``
-|  **port**:*integer* <required>
+|  **port**: *integer* <required>
 |   Modbus port
-|  **Result**:*object* 
+|  **Result**: *object* 
 |   Returns a json overview of the scan
 | **scan_device**:*object*
 |  Scans complete device
-|  **ip_address**:*string* <required>
+|  **ip_address**: *string* <required>
 |   local IP-address of the Sunspec device
 |   pattern:``^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$``
-|  **Result**:*object* 
+|  **Result**: *object* 
 |   Returns a json overview of the scan
 | **scan_network**:*object*
 |  Scans local network
-|  **Result**:*object* 
+|  **Result**: *object* 
 |   Returns a json overview of the scan
+

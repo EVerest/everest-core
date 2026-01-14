@@ -1,0 +1,38 @@
+
+
+.. _everest_modules_ExampleUser:
+
+###########
+ExampleUser
+###########
+| Simple example module written in C++ and using the other example module
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **example_user**: :ref:`example_user <everest_interfaces_example_user>`
+|  This implements the example_user interface
+
+Requirements
+============
+| **example**: :ref:`example <everest_interfaces_example>` 1
+
+********
+Metadata
+********
+Authors
+=======
+| Kai-Uwe Hermann
+| Andreas Heinrich
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

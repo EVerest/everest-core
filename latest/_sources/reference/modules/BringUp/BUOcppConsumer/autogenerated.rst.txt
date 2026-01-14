@@ -1,0 +1,36 @@
+
+
+.. _everest_modules_BUOcppConsumer:
+
+##############
+BUOcppConsumer
+##############
+| Interactive bring up helper for OCPP consumer interface
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **ocpp**: :ref:`ocpp <everest_interfaces_ocpp>`
+|  OCPP inteface
+| **ocpp_data_transfer**: :ref:`ocpp_data_transfer <everest_interfaces_ocpp_data_transfer>`
+|  OCPP data transfer towards the CSMS
+
+
+********
+Metadata
+********
+Authors
+=======
+| James Chapman
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

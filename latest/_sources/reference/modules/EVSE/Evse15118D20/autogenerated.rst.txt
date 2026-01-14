@@ -1,0 +1,86 @@
+
+
+.. _everest_modules_Evse15118D20:
+
+############
+Evse15118D20
+############
+| This module is a draft implementation of iso15118-20 for the EVSE side
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+Module Configuration
+====================
+| **device**: *string* <optional>
+| *default: "eth0"*
+|  Ethernet device used for HLC. Any local interface that has an ipv6 link-local and a MAC addr will work
+| **logging_path**: *string* <optional>
+| *default: "."*
+|  Path to logging directory (will be created if non existent)
+| **tls_negotiation_strategy**: *string* <optional>
+| *default: "ACCEPT_CLIENT_OFFER"*
+|  Select strategy on how to negotiate connection encryption
+|  enum:
+|    - ACCEPT_CLIENT_OFFER
+|    - ENFORCE_TLS
+|    - ENFORCE_NO_TLS
+| **enforce_tls_1_3**: *boolean* <optional>
+| *default: False*
+|  Enforcing tls version 1.3. Only applies if tls_negotiation_strategy is ENFORCE_TLS.
+| **enable_ssl_logging**: *boolean* <optional>
+| *default: False*
+|  Verbosely log the ssl/tls connection
+| **enable_tls_key_logging**: *boolean* <optional>
+| *default: False*
+|  Enable/Disable the export of TLS session keys (pre-master-secret) during a TLS handshake. Note that this option is for testing and simulation purpose only
+| **tls_key_logging_path**: *string* <optional>
+| *default: "/tmp"*
+|  Output directory for the TLS key log file
+| **enable_sdp_server**: *boolean* <optional>
+| *default: True*
+|  Enable the built-in SDP server
+| **supported_dynamic_mode**: *boolean* <optional>
+| *default: True*
+|  The EVSE should support dynamic mode
+| **supported_mobility_needs_mode_provided_by_secc**: *boolean* <optional>
+| *default: False*
+|  The EVSE should support the mobility needs mode provided by the SECC. Mobility needs mode provided by the EVCC is always provided.
+| **supported_scheduled_mode**: *boolean* <optional>
+| *default: False*
+|  The EVSE should support scheduled mode
+| **custom_protocol_namespace**: *string* <optional>
+| *default: ""*
+|  Providing a custom protocol namespace.
+| **negative_bidirectional_limits**: *boolean* <optional>
+| *default: False*
+|  Some cars send or expect negative discharge limits. However, it is not clear from the standard whether the discharge limits should be negative. Until this is clarified, the positive limits can be converted using this option.
+
+Provides
+========
+| **charger**: :ref:`ISO15118_charger <everest_interfaces_ISO15118_charger>`
+|  This interface provides limited access to iso15118-20
+| **extensions**: :ref:`iso15118_extensions <everest_interfaces_iso15118_extensions>`
+|  This interface is used to share data between ISO15118 and OCPP modules to support the requirements of the OCPP protocol
+
+Requirements
+============
+| **security**: :ref:`evse_security <everest_interfaces_evse_security>` 1
+| **iso15118_vas**: :ref:`ISO15118_vas <everest_interfaces_ISO15118_vas>` 0..128
+
+********
+Metadata
+********
+Authors
+=======
+| aw@pionix.de
+| Sebastian Lukas
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+

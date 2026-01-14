@@ -1,7 +1,7 @@
 .. _tutorial_bazel:
 
 =======================================
-Experimental Bazel Support in Everest
+Experimental Bazel Support in EVerest
 =======================================
 
 
@@ -20,7 +20,7 @@ For EVerest developers, Bazel offers a couple advantages:
   integrated with it.
 
 This tutorial will guide you through the process of setting up and using 
-Bazel in your Everest projects.
+Bazel in your EVerest projects.
 
 Getting Started
 ---------------
@@ -207,4 +207,4 @@ Generic `rust_binary` and `rust_test` are used at the moment.
 
 ----
 
-Authors: Evgeny Petrov
+**Authors**: Evgeny Petrov

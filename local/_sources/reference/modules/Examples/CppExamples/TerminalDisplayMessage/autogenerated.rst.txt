@@ -1,0 +1,34 @@
+
+
+.. _everest_modules_TerminalDisplayMessage:
+
+######################
+TerminalDisplayMessage
+######################
+| Example display message module
+
+
+
+************************
+Auto-Generated Reference
+************************
+
+
+
+Provides
+========
+| **display_message**: :ref:`display_message <everest_interfaces_display_message>`
+|  module to show a message
+
+
+********
+Metadata
+********
+Authors
+=======
+| Maaike Zijderveld
+
+License
+=======
+| https://opensource.org/licenses/Apache-2.0
+
