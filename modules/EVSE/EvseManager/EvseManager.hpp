@@ -66,8 +66,6 @@ struct Conf {
     std::string session_logging_path;
     bool session_logging_xml;
     bool has_ventilation;
-    double max_current_import_A;
-    double max_current_export_A;
     std::string charge_mode;
     bool supported_iso_ac_bpt;
     bool ac_hlc_enabled;
