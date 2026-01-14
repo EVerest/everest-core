@@ -143,7 +143,11 @@ messages) and on the other hand requires the clients to send
 (*cfg_communication_check_to_s* - with negative values disabling the
 requirement for these messages).
 
-The same timeout interval applies to the expected replies for requests.
+In situations where a request/reply pattern is implemented, the timeout
+for a response can be configured (*cfg_request_reply_to_s* - these timeouts
+cannot be disabled since internal EVerest timeouts apply) . In general it
+is advisable to respond as quickly as possible in to to prevent EVerest
+from blocking internally.
 
 AsyncAPI
 ========
