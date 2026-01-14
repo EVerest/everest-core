@@ -39,18 +39,18 @@ are divided between libocpp and this module, the following sections pick up the 
 Provides: main
 ^^^^^^^^^^^^^^
 
-**Interface**: `ocpp_1_6_charge_point <../interfaces/ocpp_1_6_charge_point.yaml>`_
+**Interface**: :ref:`ocpp_1_6_charge_point <everest_interfaces_ocpp_1_6_charge_point>`
 
 This interface is implemented to provide an API to control the websocket connection and to control and retrieve OCPP-specific data like  
 security events and configuration keys.
 
 *Note: This interface is deprecated soon and will be removed soon. The functionality is already covered by the generic interface*  
-`ocpp <../interfaces/ocpp.yaml>`_ *which is used by this module and OCPP201.*
+:ref:`ocpp <everest_interfaces_ocpp>` *which is used by this module and OCPP201.*
 
 Provides: auth_validator
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Interface**: `auth_token_validator <../interfaces/auth_token_validator.yaml>`_
+**Interface**: :ref:`auth_token_validator <everest_interfaces_auth_token_validator>`
 
 This interface is implemented to forward authorization requests from EVerest to libocpp. Libocpp contains the business logic to either  
 validate the authorization request locally using the authorization cache and local authorization list or to forward the request to the  
@@ -60,7 +60,7 @@ CSMS using an **Authorize.req**. The implementation also covers the validation o
 Provides: auth_provider
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-**Interface**: `auth_token_provider <../../interfaces/auth_token_provider.yaml>`_
+**Interface**: :ref:`auth_token_provider <everest_interfaces_auth_token_provider>`
 
 This interface is implemented to publish authorization requests from the CSMS within EVerest. An authorization request from the CSMS is  
 turned out by a **RemoteStartTransaction.req**.
@@ -68,30 +68,32 @@ turned out by a **RemoteStartTransaction.req**.
 Provides: data_transfer
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-**Interface**: `ocpp_data_transfer <../../interfaces/ocpp_data_transfer.yaml>`_
+**Interface**: :ref:`ocpp_data_transfer <everest_interfaces_ocpp_data_transfer>`
 
 This interface is implemented to provide a command to initiate a **DataTransfer.req** from the charging station to the CSMS.
+
+.. _provides-ocpp_generic:
 
 Provides: ocpp_generic
 ^^^^^^^^^^^^^^^^^^^^^^
 
-**Interface**: `ocpp <../../interfaces/ocpp.yaml>`__
+**Interface**: :ref:`ocpp <everest_interfaces_ocpp>`
 
 This interface is implemented to provide an API to control an OCPP service and to set and get OCPP-specific data.
 
 Provides: session_cost
 ^^^^^^^^^^^^^^^^^^^^^^
 
-**Interface**: `session_cost <../../interfaces/session_cost.yaml>`_
+**Interface**: :ref:`session_cost <everest_interfaces_session_cost>`
 
 This interface is implemented to publish session costs received by the CSMS as part of the California Pricing whitepaper extension.
 
 Requires: evse_manager
 ^^^^^^^^^^^^^^^^^^^^^^
 
-**Interface**: `evse_manager <../../interfaces/evse_manager.yaml>`_
+**Interface**: :ref:`evse_manager <everest_interfaces_evse_manager>`
 
-Typically the `EvseManager <../EvseManager/>`_ module is used to fulfill this requirement.
+Typically the :ref:`EvseManager <everest_modules_EvseManager>` module is used to fulfill this requirement.
 
 This module requires (1-128) implementations of this interface in order to integrate with the charge control logic of EVerest. One  
 connection represents one EVSE. In order to manage multiple EVSEs via one OCPP connection, multiple connections need to be configured  
@@ -110,7 +112,7 @@ This module makes use of the following commands of this interface:
 * **set_external_limits** to apply a power or ampere limits at the EVSE received by the CSMS using the SmartCharging feature profile.  
   Libocpp contains the business logic to calculate the composite schedule for received charging profiles. This module gets notified in  
   case charging profiles are added, changed, or cleared. When notified, this module requests the composite schedule from libocpp and  
-  publishes the result via the `Provides: ocpp_generic <#provides-ocpp_generic>`_ interface. The duration of the composite schedule can  
+  publishes the result via the provided :ref:`ocpp_generic <provides-ocpp_generic>` interface implementation. The duration of the composite schedule can  
   be configured by the configuration parameter **PublishChargingScheduleDurationS** of this module. The configuration parameter  
   **PublishChargingScheduleIntervalS** defines the interval to use to periodically retrieve and publish the composite schedules.
 * **external_ready_to_start_charging**: To signal that the module has started to establish an OCPP connection to the CSMS
@@ -129,9 +131,9 @@ The interface is used to receive the following variables:
 Requires: connector_zero_sink
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Interface**: `external_energy_limits <../../interfaces/external_energy_limits.yaml>`_
+**Interface**: :ref:`external_energy_limits <everest_interfaces_external_energy_limits>`
 
-Typically the `EnergyNode <../EnergyNode/>`_ module is used to fulfill this requirement.
+Typically the :ref:`EnergyNode <everest_modules_EnergyNode>` module is used to fulfill this requirement.
 
 This module optionally requires the connection to a module implementing the **external_energy_limits** interface. This connection is used  
 to apply power or ampere limits at EVSE id zero received by the CSMS using the SmartCharging feature profile.
@@ -143,9 +145,9 @@ This module makes use of the following commands of this interface:
 Requires: reservation
 ^^^^^^^^^^^^^^^^^^^^^
 
-**Interface**: `reservation <../../interfaces/reservation.yaml>`__
+**Interface**: :ref:`reservation <everest_interfaces_reservation>`
 
-Typically the `Auth <../Auth/>`_ module is used to fulfill this requirement.
+Typically the :ref:`Auth <everest_modules_Auth>` module is used to fulfill this requirement.
 
 This module requires a connection to a module implementing the `reservation` interface. This connection is used to apply reservation  
 requests from the CSMS.
@@ -158,9 +160,9 @@ This module makes use of the following commands of this interface:
 Requires: auth
 ^^^^^^^^^^^^^^
 
-**Interface**: `auth <../../interfaces/auth.yaml>`__
+**Interface**: :ref:`auth <everest_interfaces_auth>`
 
-Typically the `Auth <../Auth/>`_ module is used to fulfill this requirement.
+Typically the :ref:`Auth <everest_modules_Auth>` module is used to fulfill this requirement.
 
 This module requires a connection to a module implementing the **auth** interface. This connection is used to set the standardized  
 **ConnectionTimeout** configuration key if configured and/or changed by the CSMS.
@@ -172,9 +174,9 @@ This module makes use of the following commands of this interface:
 Requires: system
 ^^^^^^^^^^^^^^^^
 
-**Interface**: `system <../../interfaces/system.yaml>`__
+**Interface**: :ref:`system <everest_interfaces_system>`
 
-The `System <../System/>`_ module can be used to fulfill this requirement. Note that this module is not meant to be used in  
+The :ref:`System <everest_modules_System>` module can be used to fulfill this requirement. Note that this module is not meant to be used in  
 production systems without any modification!
 
 This module requires a connection to a module implementing the **system** interface. This connection is used to execute and control  
@@ -203,12 +205,12 @@ The interface is used to receive the following variables:
 Requires: security
 ^^^^^^^^^^^^^^^^^^
 
-**Interface**: `evse_security <../../interfaces/evse_security.yaml>`_
+**Interface**: :ref:`evse_security <everest_interfaces_evse_security>`
 
 This module requires a connection to a module implementing the `evse_security` interface. This connection is used to execute  
 security-related operations and to manage certificates and private keys.
 
-Typically the `EvseSecurity <../EvseSecurity/>`_ module is used to fulfill this requirement.
+Typically the :ref:`EvseSecurity <everest_modules_EvseSecurity>` module is used to fulfill this requirement.
 
 This module makes use of the following commands of this interface:
 
@@ -238,7 +240,7 @@ conversion functionality is used by this OCPP module and the OCPP201 module, it 
 Requires: data_transfer
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-**Interface**: `ocpp_data_transfer <../../interfaces/ocpp_data_transfer.yaml>`_
+**Interface**: :ref:`ocpp_data_transfer <everest_interfaces_ocpp_data_transfer>`
 
 This module optionally requires a connection to a module implementing the **ocpp_data_transfer** interface. This connection is used to  
 handle **DataTransfer.req** messages from the CSMS. A module implementing this interface can contain custom logic to handle the requests  
@@ -251,7 +253,7 @@ This module makes use of the following commands of this interface:
 Requires: display_message
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Interface**: `display_message <../../interfaces/display_message.yaml>`_
+**Interface**: :ref:`display_message <everest_interfaces_display_message>`
 
 This module optionally requires a connection to a module implementing the **display_message** interface. This connection is used to allow  
 the CSMS to display pricing or other information on the display of a charging station.
@@ -263,7 +265,7 @@ This module makes use of the following commands of this interface:
 Requires: extensions_15118
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Interface**: `iso15118_extensions <../../interfaces/iso15118_extensions.yaml>`_
+**Interface**: :ref:`iso15118_extensions <everest_interfaces_iso15118_extensions>`
 
 This module optionally requires (0-128) implementations of this interface in order to share data between ISO15118 and OCPP modules. One  
 connection represents one ISO15118 module. 
