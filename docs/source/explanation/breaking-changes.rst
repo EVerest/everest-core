@@ -58,7 +58,12 @@ The following changes to :doc:`AsyncAPI specifications </reference/api/autogener
 - Changing field semantics that affect expected behavior (e.g., units, value ranges)
 - Adding ``required`` constraints to previously unconstrained fields
 - Changing ``enum`` values or removing enum options
-- Adding a change where something additional is needed for the previous implementation would work
+
+**Behavioral Changes:**
+
+- Changing error handling behavior (e.g., silently ignoring invalid values → raising errors)
+- Changing validation strictness (e.g., accepting malformed data → rejecting it)
+- Changing message ordering or timing guarantees that clients depend on
 
 **Protocol:**
 
@@ -76,6 +81,9 @@ Examples
 
 **Breaking**: Requiring ``m2e/disable_charging`` to be called before ``m2e/unlock_connector`` breaks clients
 that previously called unlock directly.
+
+**Breaking**: Previously accepting invalid ``connector_id: -1`` and ignoring it, now rejecting with error
+breaks clients sending invalid data.
 
 Non-Breaking Changes
 ====================
