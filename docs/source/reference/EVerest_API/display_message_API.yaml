@@ -131,7 +131,7 @@ operations:
     title: 'Send communication check'
     action: send
     channel:
-      $ref : '#/channels/send_communication_check'
+      $ref: '#/channels/send_communication_check'
 
 
 
@@ -156,7 +156,7 @@ components:
     send_reply_set_display_message:
       name: send_reply_set_display_message
       title: 'Reply set display message'
-      summary: 'Reply to a request to set adisplay message'
+      summary: 'Reply to a request to set a display message'
       contentType: application/json
       payload:
         type: object
@@ -185,7 +185,7 @@ components:
     send_reply_get_display_message:
       name: send_reply_get_display_message
       title: 'Reply get display message'
-      summary: 'Reply to a request to get adisplay message'
+      summary: 'Reply to a request to get a display message'
       contentType: application/json
       payload:
         type: object
@@ -225,7 +225,7 @@ components:
     send_reply_clear_display_message:
       name: send_reply_clear_display_message
       title: 'Reply clear display message'
-      summary: 'Reply to a request to clear adisplay message'
+      summary: 'Reply to a request to clear a display message'
       contentType: application/json
       payload:
         type: object

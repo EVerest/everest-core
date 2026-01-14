@@ -125,7 +125,7 @@ operations:
       channel:
         $ref: '#/channels/send_reply_update_firmware'
   send_reply_update_firmware:
-    title: 'Request validate token'
+    title: 'Reply to update firmware request'
     action: send
     description: 'Direction: EVerest to Module'
     channel:
@@ -137,7 +137,7 @@ operations:
       $ref: '#/channels/receive_allow_firmware_installation'
       description: 'Direction: EVerest to Module'
   receive_request_upload_logs:
-    title: 'Receive request to upload loads'
+    title: 'Receive request to upload logs'
     action: receive
     channel:
       $ref: '#/channels/receive_request_upload_logs'
@@ -148,7 +148,7 @@ operations:
       channel:
         $ref: '#/channels/send_reply_upload_logs'
   send_reply_upload_logs:
-    title: 'Request to upload loads'
+    title: 'Request to upload logs'
     action: send
     description: 'Direction: EVerest to Module'
     channel:
@@ -165,7 +165,7 @@ operations:
       channel:
         $ref: '#/channels/send_reply_is_reset_allowed'
   send_reply_is_reset_allowed:
-    title: 'Receive request for is reset allowed'
+    title: 'Send reply for is_reset_allowed'
     action: send
     channel:
       $ref: '#/channels/send_reply_is_reset_allowed'
@@ -233,7 +233,7 @@ operations:
     title: 'Send communication check'
     action: send
     channel:
-      $ref : '#/channels/send_communication_check'
+      $ref: '#/channels/send_communication_check'
 
 
 
@@ -314,7 +314,7 @@ components:
             $ref: '#/components/schemas/ResetType'
     send_reply_is_reset_allowed:
       name: send_reply_is_reset_allowed
-      title: 'Reply to is reset allows'
+      title: 'Reply to is reset allowed'
       summary: 'Reply to is reset allowed request.'
       contentType: application/json
       payload:
@@ -341,7 +341,7 @@ components:
               $ref: '#/components/schemas/SystemTime'
     send_reply_set_system_time:
       name: send_reply_set_system_time
-      title: 'Reply to is reset allows'
+      title: 'Reply to is reset allowed'
       summary: 'Reply to is reset allowed request.'
       contentType: application/json
       payload:
@@ -649,13 +649,13 @@ components:
           type: integer
         oldest_timestamp:
           description: >-
-            Oldest timestamp that should be incluced in the log in RFC3339
+            Oldest timestamp that should be included in the log in RFC3339
             format
           type: string
           format: date-time
         latest_timestamp:
           description: >-
-            Latest timestamp that should be incluced in the log in RFC3339
+            Latest timestamp that should be included in the log in RFC3339
             format
           type: string
           format: date-time

@@ -132,7 +132,7 @@ operations:
     title: 'Send clear error'
     action: send
     channel:
-      $ref : '#/channels/send_clear_error'
+      $ref: '#/channels/send_clear_error'
 
 
   receive_heartbeat:
@@ -145,7 +145,7 @@ operations:
     title: 'Send communication check'
     action: send
     channel:
-      $ref : '#/channels/send_communication_check'
+      $ref: '#/channels/send_communication_check'
 
 
 
@@ -192,8 +192,8 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Mode'
-      examples:   # Define examples here
-        - summary: "Example 1 of sending voltage and current."
+      examples:
+        - summary: "Example of sending mode."
           payload:
             "Export"
     send_capabilities:
@@ -271,7 +271,7 @@ components:
       examples:
         - summary: "CommunicationCheck"
           payload:
-            True
+            true
 
 
   schemas:
@@ -300,7 +300,7 @@ components:
           description: >
             Peak-to-peak magnitude of the current ripple measured in Ampere.
             This value is transmitted to the vehicle and can potentially influence the charging speed.
-            type: number
+          type: number
         max_export_voltage_V:
           description: Maximum voltage that the power supply can output on the DC side. Measured in Volt.
           type: number
@@ -370,7 +370,7 @@ components:
         - Fault: Power supply is in error state
       type: string
       enum:
-        - "Off"
+        - Off
         - Export
         - Import
         - Fault

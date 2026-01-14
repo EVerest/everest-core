@@ -61,7 +61,7 @@ operations:
     title: 'Send clear error'
     action: send
     channel:
-      $ref : '#/channels/send_clear_error'
+      $ref: '#/channels/send_clear_error'
 
   receive_heartbeat:
     title: 'Receive heartbeat'
@@ -73,7 +73,7 @@ operations:
     title: 'Send communication check'
     action: send
     channel:
-      $ref : '#/channels/send_communication_check'
+      $ref: '#/channels/send_communication_check'
 
 
 
@@ -100,11 +100,11 @@ components:
       payload:
         $ref: '#/components/schemas/Error'
       examples:
-          - summary: "Raise error example"
+          - summary: "Clear error example"
             payload:
-                "type": "CommunicationFault"
-                "sub_type": "subtype"
-                "message": "message"
+                type: "CommunicationFault"
+                sub_type: "subtype"
+                message: "message"
 
     receive_heartbeat:
       name: receive_heartbeat
@@ -127,7 +127,7 @@ components:
       examples:
         - summary: "CommunicationCheck"
           payload:
-            True
+            true
 
 
   schemas:

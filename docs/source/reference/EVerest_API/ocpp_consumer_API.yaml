@@ -973,7 +973,7 @@ components:
         - items
       properties:
         items:
-          description: List of GetVarialRequest values
+          description: List of GetVariableRequest values
           type: array
           items:
             $ref: '#/components/schemas/GetVariableRequest'
@@ -1012,7 +1012,7 @@ components:
         - items
       properties:
         items:
-          description: List of GetVarialResult values
+          description: List of GetVariableResult values
           type: array
           items:
             $ref: '#/components/schemas/GetVariableResult'
@@ -1129,7 +1129,7 @@ components:
         - items
       properties:
         items:
-          description: List of SetVarialRequest values
+          description: List of SetVariableRequest values
           type: array
           items:
             $ref: '#/components/schemas/SetVariableRequest'
@@ -1161,7 +1161,7 @@ components:
         - items
       properties:
         items:
-          description: List of SetVarialResult values
+          description: List of SetVariableResult values
           type: array
           items:
             $ref: '#/components/schemas/SetVariableResult'

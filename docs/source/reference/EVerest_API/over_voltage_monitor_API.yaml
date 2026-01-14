@@ -118,7 +118,7 @@ operations:
       $ref: '#/channels/receive_start'
     description: 'Direction: EVerest to Module'
   receive_stop:
-    title: 'Reeive stop over voltage monitoring command'
+    title: 'Receive stop over voltage monitoring command'
     action: receive
     channel:
       $ref: '#/channels/receive_stop'
@@ -148,7 +148,7 @@ operations:
     title: 'Send clear error'
     action: send
     channel:
-      $ref : '#/channels/send_clear_error'
+      $ref: '#/channels/send_clear_error'
 
   receive_heartbeat:
     title: 'Receive heartbeat'
@@ -160,7 +160,7 @@ operations:
     title: 'Send communication check'
     action: send
     channel:
-      $ref : '#/channels/send_communication_check'
+      $ref: '#/channels/send_communication_check'
 
 
 
@@ -264,7 +264,7 @@ components:
       examples:
         - summary: "CommunicationCheck"
           payload:
-            True
+            true
 
 
   schemas:
@@ -291,12 +291,12 @@ components:
           type: number
     VoltageMeasurementV:
       description: >-
-        The voltage measurment should be published in regular intervals,
+        The voltage measurement should be published in regular intervals,
         e.g. 1 second. It is not  used to compare it with the overvoltage threshold
         setting in EVerest, that has to be done in the OVM device itself.
         It will only used to validate that the OVM and the IMD see the same voltage
         to ensure they are correctly wired to the same charging port.
-        If it is not availble in hardware, do not publish the voltage_measurement_V at all.
+        If it is not available in hardware, do not publish the voltage_measurement_V at all.
       type: number
 
     Error:
@@ -338,6 +338,7 @@ components:
         - DeviceFault
         - CommunicationFault
         - VendorError
+        - VendorWarning
     ErrorSeverityEnum:
       description: >-
         Severity of the error. For MREC5OverVoltage report with severity 'high' after an emergency shutdown

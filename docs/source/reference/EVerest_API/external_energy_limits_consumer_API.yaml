@@ -71,146 +71,146 @@ components:
       summary: 'External energy limits'
       payload:
         $ref: '#/components/schemas/ExternalLimits'
-        examples:
-          - summary: "Set enforced limits"
-            payload:
-              {
-                "schedule_import": [
-                  {
-                    "timestamp": "2019-08-24T14:15:22Z",
-                    "limits_to_root": {
-                      "total_power_W": {
-                        "value": 0,
-                        "source": "string"
-                        },
-                      "ac_max_current_A": {
-                        "value": 0,
-                        "source": "string"
-                        },
-                      "ac_min_current_A": {
-                        "value": 0,
-                        "source": "string"
-                        },
-                      "ac_max_phase_count": {
-                        "value": 0,
-                        "source": "string"
-                        },
-                      "ac_min_phase_count": {
-                        "value": 0,
-                        "source": "string"
-                        },
-                      "ac_supports_changing_phases_during_charging": true,
-                      "ac_number_of_active_phases": 1
-                    },
-                    "limits_to_leaves": {
-                      "total_power_W": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_max_current_A": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_min_current_A": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_max_phase_count": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_min_phase_count": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_supports_changing_phases_during_charging": true,
-                      "ac_number_of_active_phases": 1
-                    },
-                    "conversion_efficiency": 1,
-                    "price_per_kwh": {
-                      "timestamp": "2019-08-24T14:15:22Z",
+      examples:
+        - summary: "Set enforced limits"
+          payload:
+            {
+              "schedule_import": [
+                {
+                  "timestamp": "2019-08-24T14:15:22Z",
+                  "limits_to_root": {
+                    "total_power_W": {
                       "value": 0,
-                      "currency": "str"
-                    }
-                  }
-                ],
-                "schedule_export": [
-                  {
-                    "timestamp": "2019-08-24T14:15:22Z",
-                    "limits_to_root": {
-                      "total_power_W": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_max_current_A": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_min_current_A": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_max_phase_count": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_min_phase_count": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_supports_changing_phases_during_charging": true,
-                      "ac_number_of_active_phases": 1
-                    },
-                    "limits_to_leaves": {
-                      "total_power_W": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_max_current_A": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_min_current_A": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_max_phase_count": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_min_phase_count": {
-                        "value": 0,
-                        "source": "string"
-                      },
-                      "ac_supports_changing_phases_during_charging": true,
-                      "ac_number_of_active_phases": 1
-                   },
-                   "conversion_efficiency": 1,
-                   "price_per_kwh": {
-                     "timestamp": "2019-08-24T14:15:22Z",
-                     "value": 0,
-                     "currency": "str"
-                   }
-                 }
-                ],
-                "schedule_setpoints": [
-                  {
-                    "timestamp": "2019-08-24T14:15:22Z",
-                    "setpoint": {
-                      "ac_current_A": 0,
-                      "total_power_W": 0,
-                      "frequency_table": [
-                        {
-                          "frequency_Hz": 0,
-                          "total_power_W": 0
-                        }
-                      ],
-                      "priority": 1000,
                       "source": "string"
-                    }
+                      },
+                    "ac_max_current_A": {
+                      "value": 0,
+                      "source": "string"
+                      },
+                    "ac_min_current_A": {
+                      "value": 0,
+                      "source": "string"
+                      },
+                    "ac_max_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                      },
+                    "ac_min_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                      },
+                    "ac_supports_changing_phases_during_charging": true,
+                    "ac_number_of_active_phases": 1
+                  },
+                  "limits_to_leaves": {
+                    "total_power_W": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_max_current_A": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_min_current_A": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_max_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_min_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_supports_changing_phases_during_charging": true,
+                    "ac_number_of_active_phases": 1
+                  },
+                  "conversion_efficiency": 1,
+                  "price_per_kwh": {
+                    "timestamp": "2019-08-24T14:15:22Z",
+                    "value": 0,
+                    "currency": "str"
                   }
-                ]
-              }
+                }
+              ],
+              "schedule_export": [
+                {
+                  "timestamp": "2019-08-24T14:15:22Z",
+                  "limits_to_root": {
+                    "total_power_W": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_max_current_A": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_min_current_A": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_max_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_min_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_supports_changing_phases_during_charging": true,
+                    "ac_number_of_active_phases": 1
+                  },
+                  "limits_to_leaves": {
+                    "total_power_W": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_max_current_A": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_min_current_A": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_max_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_min_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_supports_changing_phases_during_charging": true,
+                    "ac_number_of_active_phases": 1
+                 },
+                 "conversion_efficiency": 1,
+                 "price_per_kwh": {
+                   "timestamp": "2019-08-24T14:15:22Z",
+                   "value": 0,
+                   "currency": "str"
+                 }
+               }
+              ],
+              "schedule_setpoints": [
+                {
+                  "timestamp": "2019-08-24T14:15:22Z",
+                  "setpoint": {
+                    "ac_current_A": 0,
+                    "total_power_W": 0,
+                    "frequency_table": [
+                      {
+                        "frequency_Hz": 0,
+                        "total_power_W": 0
+                      }
+                    ],
+                    "priority": 1000,
+                    "source": "string"
+                  }
+                }
+              ]
+            }
 
     receive_heartbeat:
       name: receive_heartbeat

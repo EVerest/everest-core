@@ -10,10 +10,11 @@ info:
     example adjusting output current based on internal temperature measurements.
 
     In the simplest case, derating is determined solely by the plug temperature,
-    as reported by the evse_board_support driver. This value is exposed here for conv enience.
+    as reported by the evse_board_support driver. This value is exposed here for
+    convenience.
 
     More advanced implementations may incorporate additional temperature sensors,
-    such as relay temperature or other relevant measurements, to enable more precise cont rol.
+    such as relay temperature or other relevant measurements, to enable more precise control.
 
     Note that this is for DC output in DC charging only.
     To derate for AC chargers (or the AC side in DC chargers), use an EnergyNode and set external_limits instead.
@@ -26,7 +27,7 @@ info:
     - name: powermeter
 servers:
   default:
-    pathname: 'everest_api/1/powermeter/{module_id}'
+    pathname: 'everest_api/1/dc_external_derate_consumer/{module_id}'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt
@@ -74,7 +75,7 @@ operations:
     title: Receive the plug temperature
     action: receive
     channel:
-      $ref : '#/channels/receive_plug_temperature_C'
+      $ref: '#/channels/receive_plug_temperature_C'
 
 
   receive_heartbeat:
@@ -86,7 +87,7 @@ operations:
     title: Send communication check
     action: send
     channel:
-      $ref : '#/channels/send_communication_check'
+      $ref: '#/channels/send_communication_check'
 
 
 

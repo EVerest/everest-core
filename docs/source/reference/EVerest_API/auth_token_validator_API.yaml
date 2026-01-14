@@ -80,7 +80,7 @@ operations:
     title: 'Send validate result update'
     action: send
     channel:
-      $ref : '#/channels/send_validate_result_update'
+      $ref: '#/channels/send_validate_result_update'
 
 
   receive_heartbeat:
@@ -92,7 +92,7 @@ operations:
     title: 'Send communication check'
     action: send
     channel:
-      $ref : '#/channels/send_communication_check'
+      $ref: '#/channels/send_communication_check'
 
 
 

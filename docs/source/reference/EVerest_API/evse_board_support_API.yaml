@@ -93,7 +93,7 @@ channels:
   send_request_stop_transaction:
     address: 'm2e/request_stop_transaction'
     messages:
-      send_ac_pp_ampacity:
+      send_request_stop_transaction:
         $ref: '#/components/messages/send_request_stop_transaction'
 
   ########## ac_rcd
@@ -165,7 +165,7 @@ operations:
       $ref: '#/channels/receive_enable'
     description: 'Direction: EVerest to Module'
   receive_pwm_on:
-    title: 'Reeive PWM duty cycle'
+    title: 'Receive PWM duty cycle'
     action: receive
     channel:
       $ref: '#/channels/receive_pwm_on'
@@ -183,7 +183,7 @@ operations:
       $ref: '#/channels/receive_pwm_F'
     description: 'Direction: EVerest to Module'
   receive_allow_power_on:
-    title: 'Receive permission to switch relaise'
+    title: 'Receive permission to switch relays'
     action: receive
     channel:
       $ref: '#/channels/receive_allow_power_on'
@@ -290,7 +290,7 @@ operations:
     title: 'Send clear error'
     action: send
     channel:
-      $ref : '#/channels/send_clear_error'
+      $ref: '#/channels/send_clear_error'
 
   receive_heartbeat:
     title: 'Receive heartbeat'
@@ -302,7 +302,7 @@ operations:
     title: 'Send communication check'
     action: send
     channel:
-      $ref : '#/channels/send_communication_check'
+      $ref: '#/channels/send_communication_check'
 
 
 
@@ -343,8 +343,8 @@ components:
       summary: Turn PWM off with error F (constant negative voltage)
     receive_allow_power_on:
       name: receive_allow_power_on
-      title: 'Receive permission to switch relaise on'
-      summary: Sets allow_power_on flag. If false, Relais must never be switched on.
+      title: 'Receive permission to switch relays on'
+      summary: Sets allow_power_on flag. If false, relays must never be switched on.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/PowerOnOff'
@@ -355,7 +355,7 @@ components:
             "reason": "DCCableCheck"
     receive_ac_switch_three_phases_while_charging:
       name: receive_ac_switch_three_phases_while_charging
-      title: 'Receive request switch between 3 phase und 1 phase mode'
+      title: 'Receive request switch between 3 phase and 1 phase mode'
       summary: >-
          Optional, in case of doubt do not implement. Report in hardware_capabilites if this command is supported.
          This command switches between one and three phase operation during an active charging session.
@@ -477,9 +477,7 @@ components:
       examples:
         - summary: ""
           payload:
-            {
-            "reason": "Local"
-            }
+            reason: "Local"
 
     ########## ac_rcd
     receive_self_test:
@@ -684,10 +682,10 @@ components:
           minimum: 1
           maximum: 3
         min_phase_count_export:
-         description: Minimum nr of phases the hardware can use (export to grid)
-         type: integer
-         minimum: 1
-         maximum: 3
+          description: Minimum nr of phases the hardware can use (export to grid)
+          type: integer
+          minimum: 1
+          maximum: 3
         supports_changing_phases_during_charging:
           description: >-
             Indicates whether changing number of phases is supported during

@@ -62,7 +62,7 @@ operations:
     title: 'Send communication check'
     action: send
     channel:
-      $ref : '#/channels/send_communication_check'
+      $ref: '#/channels/send_communication_check'
 
 
 
@@ -76,7 +76,7 @@ components:
       payload:
         $ref: 'auth_consumer_API.yaml#/components/schemas/ProvidedIdToken'
       examples:
-        - summary: "CommunicationCheck"
+        - summary: "The Provided Token"
           payload:
             authorization_type: "OCPP"
             id_token:
