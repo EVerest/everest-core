@@ -89,7 +89,7 @@ bool socket_can_handler::open(std::string const& can_device) {
     // The name can occupy the fill buffer. If it does not, nulltermination is necessary
     // Since most Linux systems enforce 15 chars as limit plus 1 for nulltermination
     // we do the same thing here.
-    if(can_device.size() >= IFNAMSIZ){
+    if (can_device.size() >= IFNAMSIZ) {
         return false;
     }
     m_can_dev = can_device;
