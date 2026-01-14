@@ -17,16 +17,13 @@
 
 #include <nlohmann/json.hpp>
 
-
 using nlohmann::json;
-
 
 // enums of json_rpc_api
 
 namespace types {
 namespace json_rpc_api {
-enum class ResponseErrorEnum
-{
+enum class ResponseErrorEnum {
     NoError,
     ErrorInvalidParameter,
     ErrorOutOfRange,
@@ -42,15 +39,24 @@ enum class ResponseErrorEnum
 /// \returns a string representation of the ResponseErrorEnum
 inline std::string response_error_enum_to_string(ResponseErrorEnum e) {
     switch (e) {
-        case ResponseErrorEnum::NoError: return "NoError";
-        case ResponseErrorEnum::ErrorInvalidParameter: return "ErrorInvalidParameter";
-        case ResponseErrorEnum::ErrorOutOfRange: return "ErrorOutOfRange";
-        case ResponseErrorEnum::ErrorValuesNotApplied: return "ErrorValuesNotApplied";
-        case ResponseErrorEnum::ErrorInvalidEVSEIndex: return "ErrorInvalidEVSEIndex";
-        case ResponseErrorEnum::ErrorInvalidConnectorIndex: return "ErrorInvalidConnectorIndex";
-        case ResponseErrorEnum::ErrorNoDataAvailable: return "ErrorNoDataAvailable";
-        case ResponseErrorEnum::ErrorOperationNotSupported: return "ErrorOperationNotSupported";
-        case ResponseErrorEnum::ErrorUnknownError: return "ErrorUnknownError";
+    case ResponseErrorEnum::NoError:
+        return "NoError";
+    case ResponseErrorEnum::ErrorInvalidParameter:
+        return "ErrorInvalidParameter";
+    case ResponseErrorEnum::ErrorOutOfRange:
+        return "ErrorOutOfRange";
+    case ResponseErrorEnum::ErrorValuesNotApplied:
+        return "ErrorValuesNotApplied";
+    case ResponseErrorEnum::ErrorInvalidEVSEIndex:
+        return "ErrorInvalidEVSEIndex";
+    case ResponseErrorEnum::ErrorInvalidConnectorIndex:
+        return "ErrorInvalidConnectorIndex";
+    case ResponseErrorEnum::ErrorNoDataAvailable:
+        return "ErrorNoDataAvailable";
+    case ResponseErrorEnum::ErrorOperationNotSupported:
+        return "ErrorOperationNotSupported";
+    case ResponseErrorEnum::ErrorUnknownError:
+        return "ErrorUnknownError";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type ResponseErrorEnum");
@@ -90,8 +96,8 @@ inline ResponseErrorEnum string_to_response_error_enum(const std::string& s) {
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ResponseErrorEnum");
 }
 
-/// \brief Writes the string representation of the given ResponseErrorEnum \p response_error_enum to the given output stream \p os
-/// \returns an output stream with the ResponseErrorEnum written to
+/// \brief Writes the string representation of the given ResponseErrorEnum \p response_error_enum to the given output
+/// stream \p os \returns an output stream with the ResponseErrorEnum written to
 inline std::ostream& operator<<(std::ostream& os, const types::json_rpc_api::ResponseErrorEnum& response_error_enum) {
     os << types::json_rpc_api::response_error_enum_to_string(response_error_enum);
     return os;
@@ -102,8 +108,7 @@ inline std::ostream& operator<<(std::ostream& os, const types::json_rpc_api::Res
 
 namespace types {
 namespace json_rpc_api {
-enum class ChargeProtocolEnum
-{
+enum class ChargeProtocolEnum {
     Unknown,
     IEC61851,
     DIN70121,
@@ -115,11 +120,16 @@ enum class ChargeProtocolEnum
 /// \returns a string representation of the ChargeProtocolEnum
 inline std::string charge_protocol_enum_to_string(ChargeProtocolEnum e) {
     switch (e) {
-        case ChargeProtocolEnum::Unknown: return "Unknown";
-        case ChargeProtocolEnum::IEC61851: return "IEC61851";
-        case ChargeProtocolEnum::DIN70121: return "DIN70121";
-        case ChargeProtocolEnum::ISO15118: return "ISO15118";
-        case ChargeProtocolEnum::ISO15118_20: return "ISO15118_20";
+    case ChargeProtocolEnum::Unknown:
+        return "Unknown";
+    case ChargeProtocolEnum::IEC61851:
+        return "IEC61851";
+    case ChargeProtocolEnum::DIN70121:
+        return "DIN70121";
+    case ChargeProtocolEnum::ISO15118:
+        return "ISO15118";
+    case ChargeProtocolEnum::ISO15118_20:
+        return "ISO15118_20";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type ChargeProtocolEnum");
@@ -147,8 +157,8 @@ inline ChargeProtocolEnum string_to_charge_protocol_enum(const std::string& s) {
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ChargeProtocolEnum");
 }
 
-/// \brief Writes the string representation of the given ChargeProtocolEnum \p charge_protocol_enum to the given output stream \p os
-/// \returns an output stream with the ChargeProtocolEnum written to
+/// \brief Writes the string representation of the given ChargeProtocolEnum \p charge_protocol_enum to the given output
+/// stream \p os \returns an output stream with the ChargeProtocolEnum written to
 inline std::ostream& operator<<(std::ostream& os, const types::json_rpc_api::ChargeProtocolEnum& charge_protocol_enum) {
     os << types::json_rpc_api::charge_protocol_enum_to_string(charge_protocol_enum);
     return os;
@@ -159,8 +169,7 @@ inline std::ostream& operator<<(std::ostream& os, const types::json_rpc_api::Cha
 
 namespace types {
 namespace json_rpc_api {
-enum class EVSEStateEnum
-{
+enum class EVSEStateEnum {
     Unknown,
     Unplugged,
     Disabled,
@@ -182,21 +191,36 @@ enum class EVSEStateEnum
 /// \returns a string representation of the EVSEStateEnum
 inline std::string evsestate_enum_to_string(EVSEStateEnum e) {
     switch (e) {
-        case EVSEStateEnum::Unknown: return "Unknown";
-        case EVSEStateEnum::Unplugged: return "Unplugged";
-        case EVSEStateEnum::Disabled: return "Disabled";
-        case EVSEStateEnum::Preparing: return "Preparing";
-        case EVSEStateEnum::Reserved: return "Reserved";
-        case EVSEStateEnum::AuthRequired: return "AuthRequired";
-        case EVSEStateEnum::WaitingForEnergy: return "WaitingForEnergy";
-        case EVSEStateEnum::ChargingPausedEV: return "ChargingPausedEV";
-        case EVSEStateEnum::ChargingPausedEVSE: return "ChargingPausedEVSE";
-        case EVSEStateEnum::Charging: return "Charging";
-        case EVSEStateEnum::AuthTimeout: return "AuthTimeout";
-        case EVSEStateEnum::Finished: return "Finished";
-        case EVSEStateEnum::FinishedEVSE: return "FinishedEVSE";
-        case EVSEStateEnum::FinishedEV: return "FinishedEV";
-        case EVSEStateEnum::SwitchingPhases: return "SwitchingPhases";
+    case EVSEStateEnum::Unknown:
+        return "Unknown";
+    case EVSEStateEnum::Unplugged:
+        return "Unplugged";
+    case EVSEStateEnum::Disabled:
+        return "Disabled";
+    case EVSEStateEnum::Preparing:
+        return "Preparing";
+    case EVSEStateEnum::Reserved:
+        return "Reserved";
+    case EVSEStateEnum::AuthRequired:
+        return "AuthRequired";
+    case EVSEStateEnum::WaitingForEnergy:
+        return "WaitingForEnergy";
+    case EVSEStateEnum::ChargingPausedEV:
+        return "ChargingPausedEV";
+    case EVSEStateEnum::ChargingPausedEVSE:
+        return "ChargingPausedEVSE";
+    case EVSEStateEnum::Charging:
+        return "Charging";
+    case EVSEStateEnum::AuthTimeout:
+        return "AuthTimeout";
+    case EVSEStateEnum::Finished:
+        return "Finished";
+    case EVSEStateEnum::FinishedEVSE:
+        return "FinishedEVSE";
+    case EVSEStateEnum::FinishedEV:
+        return "FinishedEV";
+    case EVSEStateEnum::SwitchingPhases:
+        return "SwitchingPhases";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type EVSEStateEnum");
@@ -254,8 +278,8 @@ inline EVSEStateEnum string_to_evsestate_enum(const std::string& s) {
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type EVSEStateEnum");
 }
 
-/// \brief Writes the string representation of the given EVSEStateEnum \p evsestate_enum to the given output stream \p os
-/// \returns an output stream with the EVSEStateEnum written to
+/// \brief Writes the string representation of the given EVSEStateEnum \p evsestate_enum to the given output stream \p
+/// os \returns an output stream with the EVSEStateEnum written to
 inline std::ostream& operator<<(std::ostream& os, const types::json_rpc_api::EVSEStateEnum& evsestate_enum) {
     os << types::json_rpc_api::evsestate_enum_to_string(evsestate_enum);
     return os;
@@ -266,8 +290,7 @@ inline std::ostream& operator<<(std::ostream& os, const types::json_rpc_api::EVS
 
 namespace types {
 namespace json_rpc_api {
-enum class ConnectorTypeEnum
-{
+enum class ConnectorTypeEnum {
     cCCS1,
     cCCS2,
     cG105,
@@ -296,28 +319,50 @@ enum class ConnectorTypeEnum
 /// \returns a string representation of the ConnectorTypeEnum
 inline std::string connector_type_enum_to_string(ConnectorTypeEnum e) {
     switch (e) {
-        case ConnectorTypeEnum::cCCS1: return "cCCS1";
-        case ConnectorTypeEnum::cCCS2: return "cCCS2";
-        case ConnectorTypeEnum::cG105: return "cG105";
-        case ConnectorTypeEnum::cTesla: return "cTesla";
-        case ConnectorTypeEnum::cType1: return "cType1";
-        case ConnectorTypeEnum::cType2: return "cType2";
-        case ConnectorTypeEnum::s309_1P_16A: return "s309_1P_16A";
-        case ConnectorTypeEnum::s309_1P_32A: return "s309_1P_32A";
-        case ConnectorTypeEnum::s309_3P_16A: return "s309_3P_16A";
-        case ConnectorTypeEnum::s309_3P_32A: return "s309_3P_32A";
-        case ConnectorTypeEnum::sBS1361: return "sBS1361";
-        case ConnectorTypeEnum::sCEE_7_7: return "sCEE_7_7";
-        case ConnectorTypeEnum::sType2: return "sType2";
-        case ConnectorTypeEnum::sType3: return "sType3";
-        case ConnectorTypeEnum::Other1PhMax16A: return "Other1PhMax16A";
-        case ConnectorTypeEnum::Other1PhOver16A: return "Other1PhOver16A";
-        case ConnectorTypeEnum::Other3Ph: return "Other3Ph";
-        case ConnectorTypeEnum::Pan: return "Pan";
-        case ConnectorTypeEnum::wInductive: return "wInductive";
-        case ConnectorTypeEnum::wResonant: return "wResonant";
-        case ConnectorTypeEnum::Undetermined: return "Undetermined";
-        case ConnectorTypeEnum::Unknown: return "Unknown";
+    case ConnectorTypeEnum::cCCS1:
+        return "cCCS1";
+    case ConnectorTypeEnum::cCCS2:
+        return "cCCS2";
+    case ConnectorTypeEnum::cG105:
+        return "cG105";
+    case ConnectorTypeEnum::cTesla:
+        return "cTesla";
+    case ConnectorTypeEnum::cType1:
+        return "cType1";
+    case ConnectorTypeEnum::cType2:
+        return "cType2";
+    case ConnectorTypeEnum::s309_1P_16A:
+        return "s309_1P_16A";
+    case ConnectorTypeEnum::s309_1P_32A:
+        return "s309_1P_32A";
+    case ConnectorTypeEnum::s309_3P_16A:
+        return "s309_3P_16A";
+    case ConnectorTypeEnum::s309_3P_32A:
+        return "s309_3P_32A";
+    case ConnectorTypeEnum::sBS1361:
+        return "sBS1361";
+    case ConnectorTypeEnum::sCEE_7_7:
+        return "sCEE_7_7";
+    case ConnectorTypeEnum::sType2:
+        return "sType2";
+    case ConnectorTypeEnum::sType3:
+        return "sType3";
+    case ConnectorTypeEnum::Other1PhMax16A:
+        return "Other1PhMax16A";
+    case ConnectorTypeEnum::Other1PhOver16A:
+        return "Other1PhOver16A";
+    case ConnectorTypeEnum::Other3Ph:
+        return "Other3Ph";
+    case ConnectorTypeEnum::Pan:
+        return "Pan";
+    case ConnectorTypeEnum::wInductive:
+        return "wInductive";
+    case ConnectorTypeEnum::wResonant:
+        return "wResonant";
+    case ConnectorTypeEnum::Undetermined:
+        return "Undetermined";
+    case ConnectorTypeEnum::Unknown:
+        return "Unknown";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type ConnectorTypeEnum");
@@ -396,8 +441,8 @@ inline ConnectorTypeEnum string_to_connector_type_enum(const std::string& s) {
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ConnectorTypeEnum");
 }
 
-/// \brief Writes the string representation of the given ConnectorTypeEnum \p connector_type_enum to the given output stream \p os
-/// \returns an output stream with the ConnectorTypeEnum written to
+/// \brief Writes the string representation of the given ConnectorTypeEnum \p connector_type_enum to the given output
+/// stream \p os \returns an output stream with the ConnectorTypeEnum written to
 inline std::ostream& operator<<(std::ostream& os, const types::json_rpc_api::ConnectorTypeEnum& connector_type_enum) {
     os << types::json_rpc_api::connector_type_enum_to_string(connector_type_enum);
     return os;
@@ -408,8 +453,7 @@ inline std::ostream& operator<<(std::ostream& os, const types::json_rpc_api::Con
 
 namespace types {
 namespace json_rpc_api {
-enum class EnergyTransferModeEnum
-{
+enum class EnergyTransferModeEnum {
     AC_single_phase_core,
     AC_two_phase,
     AC_three_phase_core,
@@ -431,21 +475,36 @@ enum class EnergyTransferModeEnum
 /// \returns a string representation of the EnergyTransferModeEnum
 inline std::string energy_transfer_mode_enum_to_string(EnergyTransferModeEnum e) {
     switch (e) {
-        case EnergyTransferModeEnum::AC_single_phase_core: return "AC_single_phase_core";
-        case EnergyTransferModeEnum::AC_two_phase: return "AC_two_phase";
-        case EnergyTransferModeEnum::AC_three_phase_core: return "AC_three_phase_core";
-        case EnergyTransferModeEnum::DC_core: return "DC_core";
-        case EnergyTransferModeEnum::DC_extended: return "DC_extended";
-        case EnergyTransferModeEnum::DC_combo_core: return "DC_combo_core";
-        case EnergyTransferModeEnum::DC_unique: return "DC_unique";
-        case EnergyTransferModeEnum::DC: return "DC";
-        case EnergyTransferModeEnum::AC_BPT: return "AC_BPT";
-        case EnergyTransferModeEnum::AC_BPT_DER: return "AC_BPT_DER";
-        case EnergyTransferModeEnum::AC_DER: return "AC_DER";
-        case EnergyTransferModeEnum::DC_BPT: return "DC_BPT";
-        case EnergyTransferModeEnum::DC_ACDP: return "DC_ACDP";
-        case EnergyTransferModeEnum::DC_ACDP_BPT: return "DC_ACDP_BPT";
-        case EnergyTransferModeEnum::WPT: return "WPT";
+    case EnergyTransferModeEnum::AC_single_phase_core:
+        return "AC_single_phase_core";
+    case EnergyTransferModeEnum::AC_two_phase:
+        return "AC_two_phase";
+    case EnergyTransferModeEnum::AC_three_phase_core:
+        return "AC_three_phase_core";
+    case EnergyTransferModeEnum::DC_core:
+        return "DC_core";
+    case EnergyTransferModeEnum::DC_extended:
+        return "DC_extended";
+    case EnergyTransferModeEnum::DC_combo_core:
+        return "DC_combo_core";
+    case EnergyTransferModeEnum::DC_unique:
+        return "DC_unique";
+    case EnergyTransferModeEnum::DC:
+        return "DC";
+    case EnergyTransferModeEnum::AC_BPT:
+        return "AC_BPT";
+    case EnergyTransferModeEnum::AC_BPT_DER:
+        return "AC_BPT_DER";
+    case EnergyTransferModeEnum::AC_DER:
+        return "AC_DER";
+    case EnergyTransferModeEnum::DC_BPT:
+        return "DC_BPT";
+    case EnergyTransferModeEnum::DC_ACDP:
+        return "DC_ACDP";
+    case EnergyTransferModeEnum::DC_ACDP_BPT:
+        return "DC_ACDP_BPT";
+    case EnergyTransferModeEnum::WPT:
+        return "WPT";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type EnergyTransferModeEnum");
@@ -503,9 +562,10 @@ inline EnergyTransferModeEnum string_to_energy_transfer_mode_enum(const std::str
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type EnergyTransferModeEnum");
 }
 
-/// \brief Writes the string representation of the given EnergyTransferModeEnum \p energy_transfer_mode_enum to the given output stream \p os
-/// \returns an output stream with the EnergyTransferModeEnum written to
-inline std::ostream& operator<<(std::ostream& os, const types::json_rpc_api::EnergyTransferModeEnum& energy_transfer_mode_enum) {
+/// \brief Writes the string representation of the given EnergyTransferModeEnum \p energy_transfer_mode_enum to the
+/// given output stream \p os \returns an output stream with the EnergyTransferModeEnum written to
+inline std::ostream& operator<<(std::ostream& os,
+                                const types::json_rpc_api::EnergyTransferModeEnum& energy_transfer_mode_enum) {
     os << types::json_rpc_api::energy_transfer_mode_enum_to_string(energy_transfer_mode_enum);
     return os;
 }
@@ -515,8 +575,7 @@ inline std::ostream& operator<<(std::ostream& os, const types::json_rpc_api::Ene
 
 namespace types {
 namespace json_rpc_api {
-enum class Severity
-{
+enum class Severity {
     High,
     Medium,
     Low,
@@ -526,9 +585,12 @@ enum class Severity
 /// \returns a string representation of the Severity
 inline std::string severity_to_string(Severity e) {
     switch (e) {
-        case Severity::High: return "High";
-        case Severity::Medium: return "Medium";
-        case Severity::Low: return "Low";
+    case Severity::High:
+        return "High";
+    case Severity::Medium:
+        return "Medium";
+    case Severity::Low:
+        return "Low";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type Severity");
@@ -560,15 +622,14 @@ inline std::ostream& operator<<(std::ostream& os, const types::json_rpc_api::Sev
 } // namespace json_rpc_api
 } // namespace types
 
-
 // types of json_rpc_api
 namespace types {
 namespace json_rpc_api {
 
 struct ImplementationIdentifier {
-    std::string module_id; ///< TODO: description
-    std::string implementation_id; ///< TODO: description
-    std::optional<int32_t> evse_index; ///< TODO: description
+    std::string module_id;                  ///< TODO: description
+    std::string implementation_id;          ///< TODO: description
+    std::optional<int32_t> evse_index;      ///< TODO: description
     std::optional<int32_t> connector_index; ///< TODO: description
 
     /// \brief Conversion from a given ImplementationIdentifier \p k to a given json object \p j
@@ -604,18 +665,8 @@ struct ImplementationIdentifier {
 
     /// \brief Compares objects of type ImplementationIdentifier for equality
     friend constexpr bool operator==(const ImplementationIdentifier& k, const ImplementationIdentifier& l) {
-        const auto& lhs_tuple = std::tie(
-            k.module_id,
-            k.implementation_id,
-            k.evse_index,
-            k.connector_index
-        );
-        const auto& rhs_tuple = std::tie(
-            l.module_id,
-            l.implementation_id,
-            l.evse_index,
-            l.connector_index
-        );
+        const auto& lhs_tuple = std::tie(k.module_id, k.implementation_id, k.evse_index, k.connector_index);
+        const auto& rhs_tuple = std::tie(l.module_id, l.implementation_id, l.evse_index, l.connector_index);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -624,26 +675,25 @@ struct ImplementationIdentifier {
         return not operator==(k, l);
     }
 
-    /// \brief Writes the string representation of the given ImplementationIdentifier \p k to the given output stream \p os
-    /// \returns an output stream with the ImplementationIdentifier written to
+    /// \brief Writes the string representation of the given ImplementationIdentifier \p k to the given output stream \p
+    /// os \returns an output stream with the ImplementationIdentifier written to
     friend std::ostream& operator<<(std::ostream& os, const ImplementationIdentifier& k) {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct ChargerInfoObj {
-    std::string vendor; ///< EVSE vendor
-    std::string model; ///< EVSE model
-    std::string serial; ///< EVSE serial number
-    std::string firmware_version; ///< EVSE firmware version
-    std::optional<std::string> friendly_name; ///< EVSE friendly name
-    std::optional<std::string> manufacturer; ///< EVSE manufacturer
+    std::string vendor;                          ///< EVSE vendor
+    std::string model;                           ///< EVSE model
+    std::string serial;                          ///< EVSE serial number
+    std::string firmware_version;                ///< EVSE firmware version
+    std::optional<std::string> friendly_name;    ///< EVSE friendly name
+    std::optional<std::string> manufacturer;     ///< EVSE manufacturer
     std::optional<std::string> manufacturer_url; ///< Manufacturer's URL
-    std::optional<std::string> model_url; ///< EVSE model's URL
-    std::optional<std::string> model_no; ///< EVSE model number
-    std::optional<std::string> revision; ///< EVSE model revision
-    std::optional<std::string> board_revision; ///< EVSE board revision
+    std::optional<std::string> model_url;        ///< EVSE model's URL
+    std::optional<std::string> model_no;         ///< EVSE model number
+    std::optional<std::string> revision;         ///< EVSE model revision
+    std::optional<std::string> board_revision;   ///< EVSE board revision
 
     /// \brief Conversion from a given ChargerInfoObj \p k to a given json object \p j
     friend void to_json(json& j, const ChargerInfoObj& k) {
@@ -712,32 +762,12 @@ struct ChargerInfoObj {
 
     /// \brief Compares objects of type ChargerInfoObj for equality
     friend constexpr bool operator==(const ChargerInfoObj& k, const ChargerInfoObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.vendor,
-            k.model,
-            k.serial,
-            k.firmware_version,
-            k.friendly_name,
-            k.manufacturer,
-            k.manufacturer_url,
-            k.model_url,
-            k.model_no,
-            k.revision,
-            k.board_revision
-        );
-        const auto& rhs_tuple = std::tie(
-            l.vendor,
-            l.model,
-            l.serial,
-            l.firmware_version,
-            l.friendly_name,
-            l.manufacturer,
-            l.manufacturer_url,
-            l.model_url,
-            l.model_no,
-            l.revision,
-            l.board_revision
-        );
+        const auto& lhs_tuple =
+            std::tie(k.vendor, k.model, k.serial, k.firmware_version, k.friendly_name, k.manufacturer,
+                     k.manufacturer_url, k.model_url, k.model_no, k.revision, k.board_revision);
+        const auto& rhs_tuple =
+            std::tie(l.vendor, l.model, l.serial, l.firmware_version, l.friendly_name, l.manufacturer,
+                     l.manufacturer_url, l.model_url, l.model_no, l.revision, l.board_revision);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -752,28 +782,24 @@ struct ChargerInfoObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct ErrorObj {
-    std::string type; ///< TODO: description
-    std::string description; ///< TODO: description
-    std::string message; ///< TODO: description
-    types::json_rpc_api::Severity severity; ///< TODO: description
+    std::string type;                                     ///< TODO: description
+    std::string description;                              ///< TODO: description
+    std::string message;                                  ///< TODO: description
+    types::json_rpc_api::Severity severity;               ///< TODO: description
     types::json_rpc_api::ImplementationIdentifier origin; ///< TODO: description
-    std::string timestamp; ///< TODO: description
-    std::string uuid; ///< TODO: description
-    std::optional<std::string> sub_type; ///< TODO: description
+    std::string timestamp;                                ///< TODO: description
+    std::string uuid;                                     ///< TODO: description
+    std::optional<std::string> sub_type;                  ///< TODO: description
 
     /// \brief Conversion from a given ErrorObj \p k to a given json object \p j
     friend void to_json(json& j, const ErrorObj& k) {
         // the required parts of the type
         j = json{
-            {"type", k.type},
-            {"description", k.description},
-            {"message", k.message},
-            {"severity", types::json_rpc_api::severity_to_string(k.severity)},
-            {"origin", k.origin},
-            {"timestamp", k.timestamp},
+            {"type", k.type},       {"description", k.description},
+            {"message", k.message}, {"severity", types::json_rpc_api::severity_to_string(k.severity)},
+            {"origin", k.origin},   {"timestamp", k.timestamp},
             {"uuid", k.uuid},
         };
         // the optional parts of the type
@@ -801,26 +827,10 @@ struct ErrorObj {
 
     /// \brief Compares objects of type ErrorObj for equality
     friend constexpr bool operator==(const ErrorObj& k, const ErrorObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.type,
-            k.description,
-            k.message,
-            k.severity,
-            k.origin,
-            k.timestamp,
-            k.uuid,
-            k.sub_type
-        );
-        const auto& rhs_tuple = std::tie(
-            l.type,
-            l.description,
-            l.message,
-            l.severity,
-            l.origin,
-            l.timestamp,
-            l.uuid,
-            l.sub_type
-        );
+        const auto& lhs_tuple =
+            std::tie(k.type, k.description, k.message, k.severity, k.origin, k.timestamp, k.uuid, k.sub_type);
+        const auto& rhs_tuple =
+            std::tie(l.type, l.description, l.message, l.severity, l.origin, l.timestamp, l.uuid, l.sub_type);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -835,12 +845,11 @@ struct ErrorObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct ConnectorInfoObj {
-    int32_t index; ///< Unique identifier
+    int32_t index;                               ///< Unique identifier
     types::json_rpc_api::ConnectorTypeEnum type; ///< Connector type
-    std::optional<std::string> description; ///< Description
+    std::optional<std::string> description;      ///< Description
 
     /// \brief Conversion from a given ConnectorInfoObj \p k to a given json object \p j
     friend void to_json(json& j, const ConnectorInfoObj& k) {
@@ -869,16 +878,8 @@ struct ConnectorInfoObj {
 
     /// \brief Compares objects of type ConnectorInfoObj for equality
     friend constexpr bool operator==(const ConnectorInfoObj& k, const ConnectorInfoObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.index,
-            k.type,
-            k.description
-        );
-        const auto& rhs_tuple = std::tie(
-            l.index,
-            l.type,
-            l.description
-        );
+        const auto& lhs_tuple = std::tie(k.index, k.type, k.description);
+        const auto& rhs_tuple = std::tie(l.index, l.type, l.description);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -893,15 +894,14 @@ struct ConnectorInfoObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct ACChargeParametersObj {
-    float evse_max_current; ///< evse_max_current
-    int32_t evse_max_phase_count; ///< evse_max_phase_count
-    float evse_maximum_charge_power; ///< evse_maximum_charge_power
-    float evse_minimum_charge_power; ///< evse_minimum_charge_power
-    float evse_nominal_frequency; ///< evse_nominal_frequency
-    std::optional<float> evse_nominal_voltage; ///< evse_nominal_voltage
+    float evse_max_current;                            ///< evse_max_current
+    int32_t evse_max_phase_count;                      ///< evse_max_phase_count
+    float evse_maximum_charge_power;                   ///< evse_maximum_charge_power
+    float evse_minimum_charge_power;                   ///< evse_minimum_charge_power
+    float evse_nominal_frequency;                      ///< evse_nominal_frequency
+    std::optional<float> evse_nominal_voltage;         ///< evse_nominal_voltage
     std::optional<float> evse_maximum_discharge_power; ///< evse_maximum_discharge_power
     std::optional<float> evse_minimum_discharge_power; ///< evse_minimum_discharge_power
 
@@ -950,26 +950,12 @@ struct ACChargeParametersObj {
 
     /// \brief Compares objects of type ACChargeParametersObj for equality
     friend constexpr bool operator==(const ACChargeParametersObj& k, const ACChargeParametersObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.evse_max_current,
-            k.evse_max_phase_count,
-            k.evse_maximum_charge_power,
-            k.evse_minimum_charge_power,
-            k.evse_nominal_frequency,
-            k.evse_nominal_voltage,
-            k.evse_maximum_discharge_power,
-            k.evse_minimum_discharge_power
-        );
-        const auto& rhs_tuple = std::tie(
-            l.evse_max_current,
-            l.evse_max_phase_count,
-            l.evse_maximum_charge_power,
-            l.evse_minimum_charge_power,
-            l.evse_nominal_frequency,
-            l.evse_nominal_voltage,
-            l.evse_maximum_discharge_power,
-            l.evse_minimum_discharge_power
-        );
+        const auto& lhs_tuple = std::tie(k.evse_max_current, k.evse_max_phase_count, k.evse_maximum_charge_power,
+                                         k.evse_minimum_charge_power, k.evse_nominal_frequency, k.evse_nominal_voltage,
+                                         k.evse_maximum_discharge_power, k.evse_minimum_discharge_power);
+        const auto& rhs_tuple = std::tie(l.evse_max_current, l.evse_max_phase_count, l.evse_maximum_charge_power,
+                                         l.evse_minimum_charge_power, l.evse_nominal_frequency, l.evse_nominal_voltage,
+                                         l.evse_maximum_discharge_power, l.evse_minimum_discharge_power);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -984,20 +970,19 @@ struct ACChargeParametersObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct DCChargeParametersObj {
-    float evse_maximum_charge_current; ///< evse_maximum_charge_current
-    float evse_maximum_charge_power; ///< evse_maximum_charge_power
-    float evse_maximum_voltage; ///< evse_maximum_voltage
-    float evse_minimum_charge_current; ///< evse_minimum_charge_current
-    float evse_minimum_charge_power; ///< evse_minimum_charge_power
-    float evse_minimum_voltage; ///< evse_minimum_voltage
-    std::optional<float> evse_energy_to_be_delivered; ///< evse_energy_to_be_delivered
+    float evse_maximum_charge_current;                   ///< evse_maximum_charge_current
+    float evse_maximum_charge_power;                     ///< evse_maximum_charge_power
+    float evse_maximum_voltage;                          ///< evse_maximum_voltage
+    float evse_minimum_charge_current;                   ///< evse_minimum_charge_current
+    float evse_minimum_charge_power;                     ///< evse_minimum_charge_power
+    float evse_minimum_voltage;                          ///< evse_minimum_voltage
+    std::optional<float> evse_energy_to_be_delivered;    ///< evse_energy_to_be_delivered
     std::optional<float> evse_maximum_discharge_current; ///< evse_maximum_discharge_current
-    std::optional<float> evse_maximum_discharge_power; ///< evse_maximum_discharge_power
+    std::optional<float> evse_maximum_discharge_power;   ///< evse_maximum_discharge_power
     std::optional<float> evse_minimum_discharge_current; ///< evse_minimum_discharge_current
-    std::optional<float> evse_minimum_discharge_power; ///< evse_minimum_discharge_power
+    std::optional<float> evse_minimum_discharge_power;   ///< evse_minimum_discharge_power
 
     /// \brief Conversion from a given DCChargeParametersObj \p k to a given json object \p j
     friend void to_json(json& j, const DCChargeParametersObj& k) {
@@ -1058,32 +1043,16 @@ struct DCChargeParametersObj {
 
     /// \brief Compares objects of type DCChargeParametersObj for equality
     friend constexpr bool operator==(const DCChargeParametersObj& k, const DCChargeParametersObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.evse_maximum_charge_current,
-            k.evse_maximum_charge_power,
-            k.evse_maximum_voltage,
-            k.evse_minimum_charge_current,
-            k.evse_minimum_charge_power,
-            k.evse_minimum_voltage,
-            k.evse_energy_to_be_delivered,
-            k.evse_maximum_discharge_current,
-            k.evse_maximum_discharge_power,
-            k.evse_minimum_discharge_current,
-            k.evse_minimum_discharge_power
-        );
-        const auto& rhs_tuple = std::tie(
-            l.evse_maximum_charge_current,
-            l.evse_maximum_charge_power,
-            l.evse_maximum_voltage,
-            l.evse_minimum_charge_current,
-            l.evse_minimum_charge_power,
-            l.evse_minimum_voltage,
-            l.evse_energy_to_be_delivered,
-            l.evse_maximum_discharge_current,
-            l.evse_maximum_discharge_power,
-            l.evse_minimum_discharge_current,
-            l.evse_minimum_discharge_power
-        );
+        const auto& lhs_tuple =
+            std::tie(k.evse_maximum_charge_current, k.evse_maximum_charge_power, k.evse_maximum_voltage,
+                     k.evse_minimum_charge_current, k.evse_minimum_charge_power, k.evse_minimum_voltage,
+                     k.evse_energy_to_be_delivered, k.evse_maximum_discharge_current, k.evse_maximum_discharge_power,
+                     k.evse_minimum_discharge_current, k.evse_minimum_discharge_power);
+        const auto& rhs_tuple =
+            std::tie(l.evse_maximum_charge_current, l.evse_maximum_charge_power, l.evse_maximum_voltage,
+                     l.evse_minimum_charge_current, l.evse_minimum_charge_power, l.evse_minimum_voltage,
+                     l.evse_energy_to_be_delivered, l.evse_maximum_discharge_current, l.evse_maximum_discharge_power,
+                     l.evse_minimum_discharge_current, l.evse_minimum_discharge_power);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -1098,7 +1067,6 @@ struct DCChargeParametersObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct ACChargeStatusObj {
     int32_t evse_active_phase_count; ///< evse_active_phase_count
@@ -1122,12 +1090,8 @@ struct ACChargeStatusObj {
 
     /// \brief Compares objects of type ACChargeStatusObj for equality
     friend constexpr bool operator==(const ACChargeStatusObj& k, const ACChargeStatusObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.evse_active_phase_count
-        );
-        const auto& rhs_tuple = std::tie(
-            l.evse_active_phase_count
-        );
+        const auto& lhs_tuple = std::tie(k.evse_active_phase_count);
+        const auto& rhs_tuple = std::tie(l.evse_active_phase_count);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -1142,12 +1106,11 @@ struct ACChargeStatusObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct DCChargeStatusObj {
-    float evse_present_current; ///< evse_present_current
-    float evse_present_voltage; ///< evse_present_voltage
-    bool evse_power_limit_achieved; ///< evse_power_limit_achieved
+    float evse_present_current;       ///< evse_present_current
+    float evse_present_voltage;       ///< evse_present_voltage
+    bool evse_power_limit_achieved;   ///< evse_power_limit_achieved
     bool evse_current_limit_achieved; ///< evse_current_limit_achieved
     bool evse_voltage_limit_achieved; ///< evse_voltage_limit_achieved
 
@@ -1178,20 +1141,10 @@ struct DCChargeStatusObj {
 
     /// \brief Compares objects of type DCChargeStatusObj for equality
     friend constexpr bool operator==(const DCChargeStatusObj& k, const DCChargeStatusObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.evse_present_current,
-            k.evse_present_voltage,
-            k.evse_power_limit_achieved,
-            k.evse_current_limit_achieved,
-            k.evse_voltage_limit_achieved
-        );
-        const auto& rhs_tuple = std::tie(
-            l.evse_present_current,
-            l.evse_present_voltage,
-            l.evse_power_limit_achieved,
-            l.evse_current_limit_achieved,
-            l.evse_voltage_limit_achieved
-        );
+        const auto& lhs_tuple = std::tie(k.evse_present_current, k.evse_present_voltage, k.evse_power_limit_achieved,
+                                         k.evse_current_limit_achieved, k.evse_voltage_limit_achieved);
+        const auto& rhs_tuple = std::tie(l.evse_present_current, l.evse_present_voltage, l.evse_power_limit_achieved,
+                                         l.evse_current_limit_achieved, l.evse_voltage_limit_achieved);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -1206,25 +1159,24 @@ struct DCChargeStatusObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct DisplayParametersObj {
-    std::optional<int32_t> start_soc; ///< start_soc
-    std::optional<int32_t> present_soc; ///< present_soc
-    std::optional<int32_t> minimum_soc; ///< minimum_soc
-    std::optional<int32_t> target_soc; ///< target_soc
-    std::optional<int32_t> maximum_soc; ///< maximum_soc
+    std::optional<int32_t> start_soc;                     ///< start_soc
+    std::optional<int32_t> present_soc;                   ///< present_soc
+    std::optional<int32_t> minimum_soc;                   ///< minimum_soc
+    std::optional<int32_t> target_soc;                    ///< target_soc
+    std::optional<int32_t> maximum_soc;                   ///< maximum_soc
     std::optional<int32_t> remaining_time_to_minimum_soc; ///< remaining_time_to_minimum_soc
-    std::optional<int32_t> remaining_time_to_target_soc; ///< remaining_time_to_target_soc
+    std::optional<int32_t> remaining_time_to_target_soc;  ///< remaining_time_to_target_soc
     std::optional<int32_t> remaining_time_to_maximum_soc; ///< remaining_time_to_maximum_soc
-    std::optional<bool> charging_complete; ///< charging_complete
-    std::optional<float> battery_energy_capacity; ///< battery_energy_capacity
-    std::optional<bool> inlet_hot; ///< inlet_hot
+    std::optional<bool> charging_complete;                ///< charging_complete
+    std::optional<float> battery_energy_capacity;         ///< battery_energy_capacity
+    std::optional<bool> inlet_hot;                        ///< inlet_hot
 
     /// \brief Conversion from a given DisplayParametersObj \p k to a given json object \p j
     friend void to_json(json& j, const DisplayParametersObj& k) {
         // the required parts of the type
-        j = json ({});
+        j = json({});
         // the optional parts of the type
         if (k.start_soc) {
             j["start_soc"] = k.start_soc.value();
@@ -1303,32 +1255,14 @@ struct DisplayParametersObj {
 
     /// \brief Compares objects of type DisplayParametersObj for equality
     friend constexpr bool operator==(const DisplayParametersObj& k, const DisplayParametersObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.start_soc,
-            k.present_soc,
-            k.minimum_soc,
-            k.target_soc,
-            k.maximum_soc,
-            k.remaining_time_to_minimum_soc,
-            k.remaining_time_to_target_soc,
-            k.remaining_time_to_maximum_soc,
-            k.charging_complete,
-            k.battery_energy_capacity,
-            k.inlet_hot
-        );
-        const auto& rhs_tuple = std::tie(
-            l.start_soc,
-            l.present_soc,
-            l.minimum_soc,
-            l.target_soc,
-            l.maximum_soc,
-            l.remaining_time_to_minimum_soc,
-            l.remaining_time_to_target_soc,
-            l.remaining_time_to_maximum_soc,
-            l.charging_complete,
-            l.battery_energy_capacity,
-            l.inlet_hot
-        );
+        const auto& lhs_tuple =
+            std::tie(k.start_soc, k.present_soc, k.minimum_soc, k.target_soc, k.maximum_soc,
+                     k.remaining_time_to_minimum_soc, k.remaining_time_to_target_soc, k.remaining_time_to_maximum_soc,
+                     k.charging_complete, k.battery_energy_capacity, k.inlet_hot);
+        const auto& rhs_tuple =
+            std::tie(l.start_soc, l.present_soc, l.minimum_soc, l.target_soc, l.maximum_soc,
+                     l.remaining_time_to_minimum_soc, l.remaining_time_to_target_soc, l.remaining_time_to_maximum_soc,
+                     l.charging_complete, l.battery_energy_capacity, l.inlet_hot);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -1343,17 +1277,16 @@ struct DisplayParametersObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct HardwareCapabilitiesObj {
-    float max_current_A_export; ///< TODO: description
-    float max_current_A_import; ///< TODO: description
-    int32_t max_phase_count_export; ///< TODO: description
-    int32_t max_phase_count_import; ///< TODO: description
-    float min_current_A_export; ///< TODO: description
-    float min_current_A_import; ///< TODO: description
-    int32_t min_phase_count_export; ///< TODO: description
-    int32_t min_phase_count_import; ///< TODO: description
+    float max_current_A_export;        ///< TODO: description
+    float max_current_A_import;        ///< TODO: description
+    int32_t max_phase_count_export;    ///< TODO: description
+    int32_t max_phase_count_import;    ///< TODO: description
+    float min_current_A_export;        ///< TODO: description
+    float min_current_A_import;        ///< TODO: description
+    int32_t min_phase_count_export;    ///< TODO: description
+    int32_t min_phase_count_import;    ///< TODO: description
     bool phase_switch_during_charging; ///< TODO: description
 
     /// \brief Conversion from a given HardwareCapabilitiesObj \p k to a given json object \p j
@@ -1391,28 +1324,14 @@ struct HardwareCapabilitiesObj {
 
     /// \brief Compares objects of type HardwareCapabilitiesObj for equality
     friend constexpr bool operator==(const HardwareCapabilitiesObj& k, const HardwareCapabilitiesObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.max_current_A_export,
-            k.max_current_A_import,
-            k.max_phase_count_export,
-            k.max_phase_count_import,
-            k.min_current_A_export,
-            k.min_current_A_import,
-            k.min_phase_count_export,
-            k.min_phase_count_import,
-            k.phase_switch_during_charging
-        );
-        const auto& rhs_tuple = std::tie(
-            l.max_current_A_export,
-            l.max_current_A_import,
-            l.max_phase_count_export,
-            l.max_phase_count_import,
-            l.min_current_A_export,
-            l.min_current_A_import,
-            l.min_phase_count_export,
-            l.min_phase_count_import,
-            l.phase_switch_during_charging
-        );
+        const auto& lhs_tuple =
+            std::tie(k.max_current_A_export, k.max_current_A_import, k.max_phase_count_export, k.max_phase_count_import,
+                     k.min_current_A_export, k.min_current_A_import, k.min_phase_count_export, k.min_phase_count_import,
+                     k.phase_switch_during_charging);
+        const auto& rhs_tuple =
+            std::tie(l.max_current_A_export, l.max_current_A_import, l.max_phase_count_export, l.max_phase_count_import,
+                     l.min_current_A_export, l.min_current_A_import, l.min_phase_count_export, l.min_phase_count_import,
+                     l.phase_switch_during_charging);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -1421,19 +1340,19 @@ struct HardwareCapabilitiesObj {
         return not operator==(k, l);
     }
 
-    /// \brief Writes the string representation of the given HardwareCapabilitiesObj \p k to the given output stream \p os
-    /// \returns an output stream with the HardwareCapabilitiesObj written to
+    /// \brief Writes the string representation of the given HardwareCapabilitiesObj \p k to the given output stream \p
+    /// os \returns an output stream with the HardwareCapabilitiesObj written to
     friend std::ostream& operator<<(std::ostream& os, const HardwareCapabilitiesObj& k) {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct EVSEInfoObj {
-    int32_t index; ///< Unique index of the EVSE, used for identifying it
+    int32_t index;  ///< Unique index of the EVSE, used for identifying it
     std::string id; ///< Unique identifier string, as used in V2G communication
     std::vector<types::json_rpc_api::ConnectorInfoObj> available_connectors; ///< Available connectors
-    std::vector<types::json_rpc_api::EnergyTransferModeEnum> supported_energy_transfer_modes; ///< Supported energy transfer modes of the EVSE
+    std::vector<types::json_rpc_api::EnergyTransferModeEnum>
+        supported_energy_transfer_modes;    ///< Supported energy transfer modes of the EVSE
     std::optional<std::string> description; ///< Description
 
     /// \brief Conversion from a given EVSEInfoObj \p k to a given json object \p j
@@ -1471,20 +1390,10 @@ struct EVSEInfoObj {
 
     /// \brief Compares objects of type EVSEInfoObj for equality
     friend constexpr bool operator==(const EVSEInfoObj& k, const EVSEInfoObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.index,
-            k.id,
-            k.available_connectors,
-            k.supported_energy_transfer_modes,
-            k.description
-        );
-        const auto& rhs_tuple = std::tie(
-            l.index,
-            l.id,
-            l.available_connectors,
-            l.supported_energy_transfer_modes,
-            l.description
-        );
+        const auto& lhs_tuple =
+            std::tie(k.index, k.id, k.available_connectors, k.supported_energy_transfer_modes, k.description);
+        const auto& rhs_tuple =
+            std::tie(l.index, l.id, l.available_connectors, l.supported_energy_transfer_modes, l.description);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -1499,22 +1408,21 @@ struct EVSEInfoObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct EVSEStatusObj {
-    float charged_energy_wh; ///< charged_energy_wh
-    float discharged_energy_wh; ///< discharged_energy_wh
-    int32_t charging_duration_s; ///< charging_duration_s
-    bool charging_allowed; ///< charging_allowed
-    bool available; ///< available
-    int32_t active_connector_index; ///< active_connector_index
-    bool error_present; ///< error_present
-    types::json_rpc_api::ChargeProtocolEnum charge_protocol; ///< charge_protocol
-    types::json_rpc_api::EVSEStateEnum state; ///< state
-    std::optional<types::json_rpc_api::ACChargeParametersObj> ac_charge_param; ///< ac_charge_param
-    std::optional<types::json_rpc_api::DCChargeParametersObj> dc_charge_param; ///< dc_charge_param
-    std::optional<types::json_rpc_api::ACChargeStatusObj> ac_charge_status; ///< ac_charge_status
-    std::optional<types::json_rpc_api::DCChargeStatusObj> dc_charge_status; ///< dc_charge_status
+    float charged_energy_wh;                                                     ///< charged_energy_wh
+    float discharged_energy_wh;                                                  ///< discharged_energy_wh
+    int32_t charging_duration_s;                                                 ///< charging_duration_s
+    bool charging_allowed;                                                       ///< charging_allowed
+    bool available;                                                              ///< available
+    int32_t active_connector_index;                                              ///< active_connector_index
+    bool error_present;                                                          ///< error_present
+    types::json_rpc_api::ChargeProtocolEnum charge_protocol;                     ///< charge_protocol
+    types::json_rpc_api::EVSEStateEnum state;                                    ///< state
+    std::optional<types::json_rpc_api::ACChargeParametersObj> ac_charge_param;   ///< ac_charge_param
+    std::optional<types::json_rpc_api::DCChargeParametersObj> dc_charge_param;   ///< dc_charge_param
+    std::optional<types::json_rpc_api::ACChargeStatusObj> ac_charge_status;      ///< ac_charge_status
+    std::optional<types::json_rpc_api::DCChargeStatusObj> dc_charge_status;      ///< dc_charge_status
     std::optional<types::json_rpc_api::DisplayParametersObj> display_parameters; ///< display_parameters
 
     /// \brief Conversion from a given EVSEStatusObj \p k to a given json object \p j
@@ -1582,38 +1490,14 @@ struct EVSEStatusObj {
 
     /// \brief Compares objects of type EVSEStatusObj for equality
     friend constexpr bool operator==(const EVSEStatusObj& k, const EVSEStatusObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.charged_energy_wh,
-            k.discharged_energy_wh,
-            k.charging_duration_s,
-            k.charging_allowed,
-            k.available,
-            k.active_connector_index,
-            k.error_present,
-            k.charge_protocol,
-            k.state,
-            k.ac_charge_param,
-            k.dc_charge_param,
-            k.ac_charge_status,
-            k.dc_charge_status,
-            k.display_parameters
-        );
-        const auto& rhs_tuple = std::tie(
-            l.charged_energy_wh,
-            l.discharged_energy_wh,
-            l.charging_duration_s,
-            l.charging_allowed,
-            l.available,
-            l.active_connector_index,
-            l.error_present,
-            l.charge_protocol,
-            l.state,
-            l.ac_charge_param,
-            l.dc_charge_param,
-            l.ac_charge_status,
-            l.dc_charge_status,
-            l.display_parameters
-        );
+        const auto& lhs_tuple = std::tie(k.charged_energy_wh, k.discharged_energy_wh, k.charging_duration_s,
+                                         k.charging_allowed, k.available, k.active_connector_index, k.error_present,
+                                         k.charge_protocol, k.state, k.ac_charge_param, k.dc_charge_param,
+                                         k.ac_charge_status, k.dc_charge_status, k.display_parameters);
+        const auto& rhs_tuple = std::tie(l.charged_energy_wh, l.discharged_energy_wh, l.charging_duration_s,
+                                         l.charging_allowed, l.available, l.active_connector_index, l.error_present,
+                                         l.charge_protocol, l.state, l.ac_charge_param, l.dc_charge_param,
+                                         l.ac_charge_status, l.dc_charge_status, l.display_parameters);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -1628,18 +1512,17 @@ struct EVSEStatusObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct Current_A {
     std::optional<float> L1; ///< AC L1 value only
     std::optional<float> L2; ///< AC L2 value only
     std::optional<float> L3; ///< AC L3 value only
-    std::optional<float> N; ///< AC Neutral value only
+    std::optional<float> N;  ///< AC Neutral value only
 
     /// \brief Conversion from a given Current_A \p k to a given json object \p j
     friend void to_json(json& j, const Current_A& k) {
         // the required parts of the type
-        j = json ({});
+        j = json({});
         // the optional parts of the type
         if (k.L1) {
             j["L1"] = k.L1.value();
@@ -1676,18 +1559,8 @@ struct Current_A {
 
     /// \brief Compares objects of type Current_A for equality
     friend constexpr bool operator==(const Current_A& k, const Current_A& l) {
-        const auto& lhs_tuple = std::tie(
-            k.L1,
-            k.L2,
-            k.L3,
-            k.N
-        );
-        const auto& rhs_tuple = std::tie(
-            l.L1,
-            l.L2,
-            l.L3,
-            l.N
-        );
+        const auto& lhs_tuple = std::tie(k.L1, k.L2, k.L3, k.N);
+        const auto& rhs_tuple = std::tie(l.L1, l.L2, l.L3, l.N);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -1702,10 +1575,9 @@ struct Current_A {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct Energy_Wh_import {
-    float total; ///< DC / AC Sum value (which is relevant for billing)
+    float total;             ///< DC / AC Sum value (which is relevant for billing)
     std::optional<float> L1; ///< AC L1 value only
     std::optional<float> L2; ///< AC L2 value only
     std::optional<float> L3; ///< AC L3 value only
@@ -1747,18 +1619,8 @@ struct Energy_Wh_import {
 
     /// \brief Compares objects of type Energy_Wh_import for equality
     friend constexpr bool operator==(const Energy_Wh_import& k, const Energy_Wh_import& l) {
-        const auto& lhs_tuple = std::tie(
-            k.total,
-            k.L1,
-            k.L2,
-            k.L3
-        );
-        const auto& rhs_tuple = std::tie(
-            l.total,
-            l.L1,
-            l.L2,
-            l.L3
-        );
+        const auto& lhs_tuple = std::tie(k.total, k.L1, k.L2, k.L3);
+        const auto& rhs_tuple = std::tie(l.total, l.L1, l.L2, l.L3);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -1773,10 +1635,9 @@ struct Energy_Wh_import {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct Energy_Wh_export {
-    float total; ///< DC / AC Sum value (which is relevant for billing)
+    float total;             ///< DC / AC Sum value (which is relevant for billing)
     std::optional<float> L1; ///< AC L1 value only
     std::optional<float> L2; ///< AC L2 value only
     std::optional<float> L3; ///< AC L3 value only
@@ -1818,18 +1679,8 @@ struct Energy_Wh_export {
 
     /// \brief Compares objects of type Energy_Wh_export for equality
     friend constexpr bool operator==(const Energy_Wh_export& k, const Energy_Wh_export& l) {
-        const auto& lhs_tuple = std::tie(
-            k.total,
-            k.L1,
-            k.L2,
-            k.L3
-        );
-        const auto& rhs_tuple = std::tie(
-            l.total,
-            l.L1,
-            l.L2,
-            l.L3
-        );
+        const auto& lhs_tuple = std::tie(k.total, k.L1, k.L2, k.L3);
+        const auto& rhs_tuple = std::tie(l.total, l.L1, l.L2, l.L3);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -1844,10 +1695,9 @@ struct Energy_Wh_export {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct Frequency_Hz {
-    float L1; ///< AC L1 value
+    float L1;                ///< AC L1 value
     std::optional<float> L2; ///< AC L2 value
     std::optional<float> L3; ///< AC L3 value
 
@@ -1882,16 +1732,8 @@ struct Frequency_Hz {
 
     /// \brief Compares objects of type Frequency_Hz for equality
     friend constexpr bool operator==(const Frequency_Hz& k, const Frequency_Hz& l) {
-        const auto& lhs_tuple = std::tie(
-            k.L1,
-            k.L2,
-            k.L3
-        );
-        const auto& rhs_tuple = std::tie(
-            l.L1,
-            l.L2,
-            l.L3
-        );
+        const auto& lhs_tuple = std::tie(k.L1, k.L2, k.L3);
+        const auto& rhs_tuple = std::tie(l.L1, l.L2, l.L3);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -1906,10 +1748,9 @@ struct Frequency_Hz {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct Power_W {
-    float total; ///< DC / AC Sum value
+    float total;             ///< DC / AC Sum value
     std::optional<float> L1; ///< AC L1 value only
     std::optional<float> L2; ///< AC L2 value only
     std::optional<float> L3; ///< AC L3 value only
@@ -1951,18 +1792,8 @@ struct Power_W {
 
     /// \brief Compares objects of type Power_W for equality
     friend constexpr bool operator==(const Power_W& k, const Power_W& l) {
-        const auto& lhs_tuple = std::tie(
-            k.total,
-            k.L1,
-            k.L2,
-            k.L3
-        );
-        const auto& rhs_tuple = std::tie(
-            l.total,
-            l.L1,
-            l.L2,
-            l.L3
-        );
+        const auto& lhs_tuple = std::tie(k.total, k.L1, k.L2, k.L3);
+        const auto& rhs_tuple = std::tie(l.total, l.L1, l.L2, l.L3);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -1977,7 +1808,6 @@ struct Power_W {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct Voltage_V {
     std::optional<float> L1; ///< AC L1 value only
@@ -1987,7 +1817,7 @@ struct Voltage_V {
     /// \brief Conversion from a given Voltage_V \p k to a given json object \p j
     friend void to_json(json& j, const Voltage_V& k) {
         // the required parts of the type
-        j = json ({});
+        j = json({});
         // the optional parts of the type
         if (k.L1) {
             j["L1"] = k.L1.value();
@@ -2018,16 +1848,8 @@ struct Voltage_V {
 
     /// \brief Compares objects of type Voltage_V for equality
     friend constexpr bool operator==(const Voltage_V& k, const Voltage_V& l) {
-        const auto& lhs_tuple = std::tie(
-            k.L1,
-            k.L2,
-            k.L3
-        );
-        const auto& rhs_tuple = std::tie(
-            l.L1,
-            l.L2,
-            l.L3
-        );
+        const auto& lhs_tuple = std::tie(k.L1, k.L2, k.L3);
+        const auto& rhs_tuple = std::tie(l.L1, l.L2, l.L3);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -2042,18 +1864,18 @@ struct Voltage_V {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct MeterDataObj {
-    Energy_Wh_import energy_Wh_import; ///< Imported energy in Wh (from grid)
-    std::string timestamp; ///< Timestamp of the meter values, as RFC3339 string
-    std::optional<Current_A> current_A; ///< Current in Ampere
+    Energy_Wh_import energy_Wh_import;                ///< Imported energy in Wh (from grid)
+    std::string timestamp;                            ///< Timestamp of the meter values, as RFC3339 string
+    std::optional<Current_A> current_A;               ///< Current in Ampere
     std::optional<Energy_Wh_export> energy_Wh_export; ///< Exported energy in Wh (to grid)
-    std::optional<Frequency_Hz> frequency_Hz; ///< Grid frequency in Hertz
-    std::optional<std::string> meter_id; ///< TODO: description
-    std::optional<std::string> serial_number; ///< TODO: description
-    std::optional<bool> phase_seq_error; ///< TODO: description
-    std::optional<Power_W> power_W; ///< Instantaneous power in Watt. Negative values are exported, positive values imported energy.
+    std::optional<Frequency_Hz> frequency_Hz;         ///< Grid frequency in Hertz
+    std::optional<std::string> meter_id;              ///< TODO: description
+    std::optional<std::string> serial_number;         ///< TODO: description
+    std::optional<bool> phase_seq_error;              ///< TODO: description
+    std::optional<Power_W>
+        power_W; ///< Instantaneous power in Watt. Negative values are exported, positive values imported energy.
     std::optional<Voltage_V> voltage_V; ///< Voltage in Volts
 
     /// \brief Conversion from a given MeterDataObj \p k to a given json object \p j
@@ -2125,30 +1947,12 @@ struct MeterDataObj {
 
     /// \brief Compares objects of type MeterDataObj for equality
     friend constexpr bool operator==(const MeterDataObj& k, const MeterDataObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.energy_Wh_import,
-            k.timestamp,
-            k.current_A,
-            k.energy_Wh_export,
-            k.frequency_Hz,
-            k.meter_id,
-            k.serial_number,
-            k.phase_seq_error,
-            k.power_W,
-            k.voltage_V
-        );
-        const auto& rhs_tuple = std::tie(
-            l.energy_Wh_import,
-            l.timestamp,
-            l.current_A,
-            l.energy_Wh_export,
-            l.frequency_Hz,
-            l.meter_id,
-            l.serial_number,
-            l.phase_seq_error,
-            l.power_W,
-            l.voltage_V
-        );
+        const auto& lhs_tuple =
+            std::tie(k.energy_Wh_import, k.timestamp, k.current_A, k.energy_Wh_export, k.frequency_Hz, k.meter_id,
+                     k.serial_number, k.phase_seq_error, k.power_W, k.voltage_V);
+        const auto& rhs_tuple =
+            std::tie(l.energy_Wh_import, l.timestamp, l.current_A, l.energy_Wh_export, l.frequency_Hz, l.meter_id,
+                     l.serial_number, l.phase_seq_error, l.power_W, l.voltage_V);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -2163,14 +1967,13 @@ struct MeterDataObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct HelloResObj {
-    bool authentication_required; ///< Whether authentication is required
-    std::string api_version; ///< Version of the JSON RPC API
-    std::string everest_version; ///< The version of the running EVerest instance
+    bool authentication_required;                     ///< Whether authentication is required
+    std::string api_version;                          ///< Version of the JSON RPC API
+    std::string everest_version;                      ///< The version of the running EVerest instance
     types::json_rpc_api::ChargerInfoObj charger_info; ///< Charger information
-    std::optional<bool> authenticated; ///< Whether the client is properly authenticated
+    std::optional<bool> authenticated;                ///< Whether the client is properly authenticated
 
     /// \brief Conversion from a given HelloResObj \p k to a given json object \p j
     friend void to_json(json& j, const HelloResObj& k) {
@@ -2203,20 +2006,10 @@ struct HelloResObj {
 
     /// \brief Compares objects of type HelloResObj for equality
     friend constexpr bool operator==(const HelloResObj& k, const HelloResObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.authentication_required,
-            k.api_version,
-            k.everest_version,
-            k.charger_info,
-            k.authenticated
-        );
-        const auto& rhs_tuple = std::tie(
-            l.authentication_required,
-            l.api_version,
-            l.everest_version,
-            l.charger_info,
-            l.authenticated
-        );
+        const auto& lhs_tuple =
+            std::tie(k.authentication_required, k.api_version, k.everest_version, k.charger_info, k.authenticated);
+        const auto& rhs_tuple =
+            std::tie(l.authentication_required, l.api_version, l.everest_version, l.charger_info, l.authenticated);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -2231,11 +2024,10 @@ struct HelloResObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct ChargePointGetEVSEInfosResObj {
     std::vector<types::json_rpc_api::EVSEInfoObj> infos; ///< Array of EVSE infos
-    types::json_rpc_api::ResponseErrorEnum error; ///< Response error
+    types::json_rpc_api::ResponseErrorEnum error;        ///< Response error
 
     /// \brief Conversion from a given ChargePointGetEVSEInfosResObj \p k to a given json object \p j
     friend void to_json(json& j, const ChargePointGetEVSEInfosResObj& k) {
@@ -2260,14 +2052,8 @@ struct ChargePointGetEVSEInfosResObj {
 
     /// \brief Compares objects of type ChargePointGetEVSEInfosResObj for equality
     friend constexpr bool operator==(const ChargePointGetEVSEInfosResObj& k, const ChargePointGetEVSEInfosResObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.infos,
-            k.error
-        );
-        const auto& rhs_tuple = std::tie(
-            l.infos,
-            l.error
-        );
+        const auto& lhs_tuple = std::tie(k.infos, k.error);
+        const auto& rhs_tuple = std::tie(l.infos, l.error);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -2276,17 +2062,16 @@ struct ChargePointGetEVSEInfosResObj {
         return not operator==(k, l);
     }
 
-    /// \brief Writes the string representation of the given ChargePointGetEVSEInfosResObj \p k to the given output stream \p os
-    /// \returns an output stream with the ChargePointGetEVSEInfosResObj written to
+    /// \brief Writes the string representation of the given ChargePointGetEVSEInfosResObj \p k to the given output
+    /// stream \p os \returns an output stream with the ChargePointGetEVSEInfosResObj written to
     friend std::ostream& operator<<(std::ostream& os, const ChargePointGetEVSEInfosResObj& k) {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct ChargePointGetActiveErrorsResObj {
     std::vector<types::json_rpc_api::ErrorObj> active_errors; ///< Array of active charge point errors
-    types::json_rpc_api::ResponseErrorEnum error; ///< Response error
+    types::json_rpc_api::ResponseErrorEnum error;             ///< Response error
 
     /// \brief Conversion from a given ChargePointGetActiveErrorsResObj \p k to a given json object \p j
     friend void to_json(json& j, const ChargePointGetActiveErrorsResObj& k) {
@@ -2310,33 +2095,28 @@ struct ChargePointGetActiveErrorsResObj {
     }
 
     /// \brief Compares objects of type ChargePointGetActiveErrorsResObj for equality
-    friend constexpr bool operator==(const ChargePointGetActiveErrorsResObj& k, const ChargePointGetActiveErrorsResObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.active_errors,
-            k.error
-        );
-        const auto& rhs_tuple = std::tie(
-            l.active_errors,
-            l.error
-        );
+    friend constexpr bool operator==(const ChargePointGetActiveErrorsResObj& k,
+                                     const ChargePointGetActiveErrorsResObj& l) {
+        const auto& lhs_tuple = std::tie(k.active_errors, k.error);
+        const auto& rhs_tuple = std::tie(l.active_errors, l.error);
         return lhs_tuple == rhs_tuple;
     }
 
     /// \brief Compares objects of type ChargePointGetActiveErrorsResObj for inequality
-    friend constexpr bool operator!=(const ChargePointGetActiveErrorsResObj& k, const ChargePointGetActiveErrorsResObj& l) {
+    friend constexpr bool operator!=(const ChargePointGetActiveErrorsResObj& k,
+                                     const ChargePointGetActiveErrorsResObj& l) {
         return not operator==(k, l);
     }
 
-    /// \brief Writes the string representation of the given ChargePointGetActiveErrorsResObj \p k to the given output stream \p os
-    /// \returns an output stream with the ChargePointGetActiveErrorsResObj written to
+    /// \brief Writes the string representation of the given ChargePointGetActiveErrorsResObj \p k to the given output
+    /// stream \p os \returns an output stream with the ChargePointGetActiveErrorsResObj written to
     friend std::ostream& operator<<(std::ostream& os, const ChargePointGetActiveErrorsResObj& k) {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct EVSEGetInfoResObj {
-    types::json_rpc_api::EVSEInfoObj info; ///< TODO: description
+    types::json_rpc_api::EVSEInfoObj info;        ///< TODO: description
     types::json_rpc_api::ResponseErrorEnum error; ///< Response error
 
     /// \brief Conversion from a given EVSEGetInfoResObj \p k to a given json object \p j
@@ -2360,14 +2140,8 @@ struct EVSEGetInfoResObj {
 
     /// \brief Compares objects of type EVSEGetInfoResObj for equality
     friend constexpr bool operator==(const EVSEGetInfoResObj& k, const EVSEGetInfoResObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.info,
-            k.error
-        );
-        const auto& rhs_tuple = std::tie(
-            l.info,
-            l.error
-        );
+        const auto& lhs_tuple = std::tie(k.info, k.error);
+        const auto& rhs_tuple = std::tie(l.info, l.error);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -2382,10 +2156,9 @@ struct EVSEGetInfoResObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct EVSEGetStatusResObj {
-    types::json_rpc_api::EVSEStatusObj status; ///< TODO: description
+    types::json_rpc_api::EVSEStatusObj status;    ///< TODO: description
     types::json_rpc_api::ResponseErrorEnum error; ///< Response error
 
     /// \brief Conversion from a given EVSEGetStatusResObj \p k to a given json object \p j
@@ -2409,14 +2182,8 @@ struct EVSEGetStatusResObj {
 
     /// \brief Compares objects of type EVSEGetStatusResObj for equality
     friend constexpr bool operator==(const EVSEGetStatusResObj& k, const EVSEGetStatusResObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.status,
-            k.error
-        );
-        const auto& rhs_tuple = std::tie(
-            l.status,
-            l.error
-        );
+        const auto& lhs_tuple = std::tie(k.status, k.error);
+        const auto& rhs_tuple = std::tie(l.status, l.error);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -2431,11 +2198,10 @@ struct EVSEGetStatusResObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct EVSEGetHardwareCapabilitiesResObj {
     types::json_rpc_api::HardwareCapabilitiesObj hardware_capabilities; ///< TODO: description
-    types::json_rpc_api::ResponseErrorEnum error; ///< Response error
+    types::json_rpc_api::ResponseErrorEnum error;                       ///< Response error
 
     /// \brief Conversion from a given EVSEGetHardwareCapabilitiesResObj \p k to a given json object \p j
     friend void to_json(json& j, const EVSEGetHardwareCapabilitiesResObj& k) {
@@ -2457,30 +2223,25 @@ struct EVSEGetHardwareCapabilitiesResObj {
     }
 
     /// \brief Compares objects of type EVSEGetHardwareCapabilitiesResObj for equality
-    friend constexpr bool operator==(const EVSEGetHardwareCapabilitiesResObj& k, const EVSEGetHardwareCapabilitiesResObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.hardware_capabilities,
-            k.error
-        );
-        const auto& rhs_tuple = std::tie(
-            l.hardware_capabilities,
-            l.error
-        );
+    friend constexpr bool operator==(const EVSEGetHardwareCapabilitiesResObj& k,
+                                     const EVSEGetHardwareCapabilitiesResObj& l) {
+        const auto& lhs_tuple = std::tie(k.hardware_capabilities, k.error);
+        const auto& rhs_tuple = std::tie(l.hardware_capabilities, l.error);
         return lhs_tuple == rhs_tuple;
     }
 
     /// \brief Compares objects of type EVSEGetHardwareCapabilitiesResObj for inequality
-    friend constexpr bool operator!=(const EVSEGetHardwareCapabilitiesResObj& k, const EVSEGetHardwareCapabilitiesResObj& l) {
+    friend constexpr bool operator!=(const EVSEGetHardwareCapabilitiesResObj& k,
+                                     const EVSEGetHardwareCapabilitiesResObj& l) {
         return not operator==(k, l);
     }
 
-    /// \brief Writes the string representation of the given EVSEGetHardwareCapabilitiesResObj \p k to the given output stream \p os
-    /// \returns an output stream with the EVSEGetHardwareCapabilitiesResObj written to
+    /// \brief Writes the string representation of the given EVSEGetHardwareCapabilitiesResObj \p k to the given output
+    /// stream \p os \returns an output stream with the EVSEGetHardwareCapabilitiesResObj written to
     friend std::ostream& operator<<(std::ostream& os, const EVSEGetHardwareCapabilitiesResObj& k) {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct EVSEGetMeterDataResObj {
     types::json_rpc_api::MeterDataObj meter_data; ///< TODO: description
@@ -2507,14 +2268,8 @@ struct EVSEGetMeterDataResObj {
 
     /// \brief Compares objects of type EVSEGetMeterDataResObj for equality
     friend constexpr bool operator==(const EVSEGetMeterDataResObj& k, const EVSEGetMeterDataResObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.meter_data,
-            k.error
-        );
-        const auto& rhs_tuple = std::tie(
-            l.meter_data,
-            l.error
-        );
+        const auto& lhs_tuple = std::tie(k.meter_data, k.error);
+        const auto& rhs_tuple = std::tie(l.meter_data, l.error);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -2523,13 +2278,12 @@ struct EVSEGetMeterDataResObj {
         return not operator==(k, l);
     }
 
-    /// \brief Writes the string representation of the given EVSEGetMeterDataResObj \p k to the given output stream \p os
-    /// \returns an output stream with the EVSEGetMeterDataResObj written to
+    /// \brief Writes the string representation of the given EVSEGetMeterDataResObj \p k to the given output stream \p
+    /// os \returns an output stream with the EVSEGetMeterDataResObj written to
     friend std::ostream& operator<<(std::ostream& os, const EVSEGetMeterDataResObj& k) {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct ErrorResObj {
     types::json_rpc_api::ResponseErrorEnum error; ///< Response error
@@ -2553,12 +2307,8 @@ struct ErrorResObj {
 
     /// \brief Compares objects of type ErrorResObj for equality
     friend constexpr bool operator==(const ErrorResObj& k, const ErrorResObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.error
-        );
-        const auto& rhs_tuple = std::tie(
-            l.error
-        );
+        const auto& lhs_tuple = std::tie(k.error);
+        const auto& rhs_tuple = std::tie(l.error);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -2573,7 +2323,6 @@ struct ErrorResObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct ChargePointActiveErrorsChangedObj {
     std::vector<types::json_rpc_api::ErrorObj> active_errors; ///< Array of active charge point errors
@@ -2598,31 +2347,28 @@ struct ChargePointActiveErrorsChangedObj {
     }
 
     /// \brief Compares objects of type ChargePointActiveErrorsChangedObj for equality
-    friend constexpr bool operator==(const ChargePointActiveErrorsChangedObj& k, const ChargePointActiveErrorsChangedObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.active_errors
-        );
-        const auto& rhs_tuple = std::tie(
-            l.active_errors
-        );
+    friend constexpr bool operator==(const ChargePointActiveErrorsChangedObj& k,
+                                     const ChargePointActiveErrorsChangedObj& l) {
+        const auto& lhs_tuple = std::tie(k.active_errors);
+        const auto& rhs_tuple = std::tie(l.active_errors);
         return lhs_tuple == rhs_tuple;
     }
 
     /// \brief Compares objects of type ChargePointActiveErrorsChangedObj for inequality
-    friend constexpr bool operator!=(const ChargePointActiveErrorsChangedObj& k, const ChargePointActiveErrorsChangedObj& l) {
+    friend constexpr bool operator!=(const ChargePointActiveErrorsChangedObj& k,
+                                     const ChargePointActiveErrorsChangedObj& l) {
         return not operator==(k, l);
     }
 
-    /// \brief Writes the string representation of the given ChargePointActiveErrorsChangedObj \p k to the given output stream \p os
-    /// \returns an output stream with the ChargePointActiveErrorsChangedObj written to
+    /// \brief Writes the string representation of the given ChargePointActiveErrorsChangedObj \p k to the given output
+    /// stream \p os \returns an output stream with the ChargePointActiveErrorsChangedObj written to
     friend std::ostream& operator<<(std::ostream& os, const ChargePointActiveErrorsChangedObj& k) {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct EVSEHardwareCapabilitiesChangedObj {
-    int32_t evse_index; ///< Index of the EVSE
+    int32_t evse_index;                                                 ///< Index of the EVSE
     types::json_rpc_api::HardwareCapabilitiesObj hardware_capabilities; ///< TODO: description
 
     /// \brief Conversion from a given EVSEHardwareCapabilitiesChangedObj \p k to a given json object \p j
@@ -2645,33 +2391,28 @@ struct EVSEHardwareCapabilitiesChangedObj {
     }
 
     /// \brief Compares objects of type EVSEHardwareCapabilitiesChangedObj for equality
-    friend constexpr bool operator==(const EVSEHardwareCapabilitiesChangedObj& k, const EVSEHardwareCapabilitiesChangedObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.evse_index,
-            k.hardware_capabilities
-        );
-        const auto& rhs_tuple = std::tie(
-            l.evse_index,
-            l.hardware_capabilities
-        );
+    friend constexpr bool operator==(const EVSEHardwareCapabilitiesChangedObj& k,
+                                     const EVSEHardwareCapabilitiesChangedObj& l) {
+        const auto& lhs_tuple = std::tie(k.evse_index, k.hardware_capabilities);
+        const auto& rhs_tuple = std::tie(l.evse_index, l.hardware_capabilities);
         return lhs_tuple == rhs_tuple;
     }
 
     /// \brief Compares objects of type EVSEHardwareCapabilitiesChangedObj for inequality
-    friend constexpr bool operator!=(const EVSEHardwareCapabilitiesChangedObj& k, const EVSEHardwareCapabilitiesChangedObj& l) {
+    friend constexpr bool operator!=(const EVSEHardwareCapabilitiesChangedObj& k,
+                                     const EVSEHardwareCapabilitiesChangedObj& l) {
         return not operator==(k, l);
     }
 
-    /// \brief Writes the string representation of the given EVSEHardwareCapabilitiesChangedObj \p k to the given output stream \p os
-    /// \returns an output stream with the EVSEHardwareCapabilitiesChangedObj written to
+    /// \brief Writes the string representation of the given EVSEHardwareCapabilitiesChangedObj \p k to the given output
+    /// stream \p os \returns an output stream with the EVSEHardwareCapabilitiesChangedObj written to
     friend std::ostream& operator<<(std::ostream& os, const EVSEHardwareCapabilitiesChangedObj& k) {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct EVSEStatusChangedObj {
-    int32_t evse_index; ///< Index of the EVSE
+    int32_t evse_index;                             ///< Index of the EVSE
     types::json_rpc_api::EVSEStatusObj evse_status; ///< TODO: description
 
     /// \brief Conversion from a given EVSEStatusChangedObj \p k to a given json object \p j
@@ -2695,14 +2436,8 @@ struct EVSEStatusChangedObj {
 
     /// \brief Compares objects of type EVSEStatusChangedObj for equality
     friend constexpr bool operator==(const EVSEStatusChangedObj& k, const EVSEStatusChangedObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.evse_index,
-            k.evse_status
-        );
-        const auto& rhs_tuple = std::tie(
-            l.evse_index,
-            l.evse_status
-        );
+        const auto& lhs_tuple = std::tie(k.evse_index, k.evse_status);
+        const auto& rhs_tuple = std::tie(l.evse_index, l.evse_status);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -2717,10 +2452,9 @@ struct EVSEStatusChangedObj {
         os << json(k).dump(4);
         return os;
     }
-
 };
 struct EVSEMeterDataChangedObj {
-    int32_t evse_index; ///< Index of the EVSE
+    int32_t evse_index;                           ///< Index of the EVSE
     types::json_rpc_api::MeterDataObj meter_data; ///< TODO: description
 
     /// \brief Conversion from a given EVSEMeterDataChangedObj \p k to a given json object \p j
@@ -2744,14 +2478,8 @@ struct EVSEMeterDataChangedObj {
 
     /// \brief Compares objects of type EVSEMeterDataChangedObj for equality
     friend constexpr bool operator==(const EVSEMeterDataChangedObj& k, const EVSEMeterDataChangedObj& l) {
-        const auto& lhs_tuple = std::tie(
-            k.evse_index,
-            k.meter_data
-        );
-        const auto& rhs_tuple = std::tie(
-            l.evse_index,
-            l.meter_data
-        );
+        const auto& lhs_tuple = std::tie(k.evse_index, k.meter_data);
+        const auto& rhs_tuple = std::tie(l.evse_index, l.meter_data);
         return lhs_tuple == rhs_tuple;
     }
 
@@ -2760,16 +2488,14 @@ struct EVSEMeterDataChangedObj {
         return not operator==(k, l);
     }
 
-    /// \brief Writes the string representation of the given EVSEMeterDataChangedObj \p k to the given output stream \p os
-    /// \returns an output stream with the EVSEMeterDataChangedObj written to
+    /// \brief Writes the string representation of the given EVSEMeterDataChangedObj \p k to the given output stream \p
+    /// os \returns an output stream with the EVSEMeterDataChangedObj written to
     friend std::ostream& operator<<(std::ostream& os, const EVSEMeterDataChangedObj& k) {
         os << json(k).dump(4);
         return os;
     }
-
 };
 } // namespace json_rpc_api
 } // namespace types
-
 
 #endif // TYPES_JSON_RPC_API_TYPES_HPP
