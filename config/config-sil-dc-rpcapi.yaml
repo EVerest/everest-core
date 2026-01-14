@@ -67,7 +67,7 @@ active_modules:
     module: OVMSimulator
     config_implementation:
       main:
-        simulate_error: false
+        simulate_emergency_shutdown: false
         simulate_error_delay: 5
   ev_manager:
     module: EvManager
