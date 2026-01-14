@@ -8,14 +8,14 @@ namespace iso15118::d2::msg {
 
 struct DC_CableCheckRequest {
     Header header;
-    data_types::DC_EVStatus ev_status;
+    data_types::DcEvStatus ev_status;
 };
 
 struct DC_CableCheckResponse {
     Header header;
     data_types::ResponseCode response_code;
-    data_types::DC_EVSEStatus evse_status;
-    data_types::EVSEProcessing evse_processing;
+    data_types::DcEvseStatus evse_status;
+    data_types::EvseProcessing evse_processing;
 };
 
 } // namespace iso15118::d2::msg

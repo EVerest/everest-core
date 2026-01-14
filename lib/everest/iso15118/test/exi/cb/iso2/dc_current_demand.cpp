@@ -28,9 +28,8 @@ SCENARIO("Ser/Deserialize d2 current demand messages") {
 
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D});
 
-            // TODO(kd): Should EV/EVSEStatus also be tested here?
             REQUIRE(msg.ev_status.ev_ready == true);
-            REQUIRE(msg.ev_status.ev_error_code == dt::DC_EVErrorCode::NO_ERROR);
+            REQUIRE(msg.ev_status.ev_error_code == dt::DcEvErrorCode::NO_ERROR);
             REQUIRE(msg.ev_status.ev_ress_soc == 80);
 
             REQUIRE(dt::from_PhysicalValue(msg.ev_target_current) == 20.5);
@@ -63,16 +62,23 @@ SCENARIO("Ser/Deserialize d2 current demand messages") {
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D});
 
             REQUIRE(msg.ev_status.ev_ready == true);
-            REQUIRE(msg.ev_status.ev_error_code == dt::DC_EVErrorCode::NO_ERROR);
+            REQUIRE(msg.ev_status.ev_error_code == dt::DcEvErrorCode::NO_ERROR);
             REQUIRE(msg.ev_status.ev_ress_soc == 80);
 
             REQUIRE(dt::from_PhysicalValue(msg.ev_target_current) == 20.5);
+            REQUIRE(msg.ev_maximum_voltage_limit.has_value());
             REQUIRE(dt::from_PhysicalValue(msg.ev_maximum_voltage_limit.value()) == 1000);
+            REQUIRE(msg.ev_maximum_current_limit.has_value());
             REQUIRE(dt::from_PhysicalValue(msg.ev_maximum_current_limit.value()) == 200);
+            REQUIRE(msg.ev_maximum_power_limit.has_value());
             REQUIRE(dt::from_PhysicalValue(msg.ev_maximum_power_limit.value()) == 10000);
+            REQUIRE(msg.bulk_charging_complete.has_value());
             REQUIRE(msg.bulk_charging_complete.value() == true);
-            REQUIRE(msg.charging_complete == true);
+            REQUIRE(msg.charging_complete.has_value());
+            REQUIRE(msg.charging_complete.value() == true);
+            REQUIRE(msg.remaining_time_to_bulk_soc.has_value());
             REQUIRE(dt::from_PhysicalValue(msg.remaining_time_to_full_soc.value()) == 60000);
+            REQUIRE(msg.remaining_time_to_full_soc.has_value());
             REQUIRE(dt::from_PhysicalValue(msg.remaining_time_to_bulk_soc.value()) == 40000);
             REQUIRE(dt::from_PhysicalValue(msg.ev_target_voltage) == 355.5);
         }
@@ -84,9 +90,9 @@ SCENARIO("Ser/Deserialize d2 current demand messages") {
         auto res = d2::msg::DC_CurrentDemandResponse{};
         res.header = header;
         res.response_code = dt::ResponseCode::OK;
-        auto status = dt::DC_EVSEStatus{};
+        auto status = dt::DcEvseStatus{};
         status.evse_isolation_status = dt::IsolationLevel::Valid;
-        status.evse_status_code = dt::DC_EVSEStatusCode::EVSE_Ready;
+        status.evse_status_code = dt::DcEvseStatusCode::EVSE_Ready;
         res.evse_status = status;
         res.evse_present_voltage = dt::from_float(300.5, d2::msg::data_types::UnitSymbol::V);
         res.evse_present_current = dt::from_float(5.5, d2::msg::data_types::UnitSymbol::A);
@@ -111,9 +117,9 @@ SCENARIO("Ser/Deserialize d2 current demand messages") {
         auto res = d2::msg::DC_CurrentDemandResponse{};
         res.header = header;
         res.response_code = dt::ResponseCode::OK;
-        auto status = dt::DC_EVSEStatus{};
+        auto status = dt::DcEvseStatus{};
         status.evse_isolation_status = dt::IsolationLevel::Valid;
-        status.evse_status_code = dt::DC_EVSEStatusCode::EVSE_Ready;
+        status.evse_status_code = dt::DcEvseStatusCode::EVSE_Ready;
         res.evse_status = status;
         res.evse_present_voltage = dt::from_float(300.5, d2::msg::data_types::UnitSymbol::V);
         res.evse_present_current = dt::from_float(5.5, d2::msg::data_types::UnitSymbol::A);

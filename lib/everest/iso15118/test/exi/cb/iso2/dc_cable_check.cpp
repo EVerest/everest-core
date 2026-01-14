@@ -28,7 +28,7 @@ SCENARIO("Ser/Deserialize d2 cable check messages") {
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D});
 
             REQUIRE(msg.ev_status.ev_ready == true);
-            REQUIRE(msg.ev_status.ev_error_code == dt::DC_EVErrorCode::NO_ERROR);
+            REQUIRE(msg.ev_status.ev_error_code == dt::DcEvErrorCode::NO_ERROR);
             REQUIRE(msg.ev_status.ev_ress_soc == 0);
         }
     }
@@ -39,11 +39,11 @@ SCENARIO("Ser/Deserialize d2 cable check messages") {
         auto res = d2::msg::DC_CableCheckResponse{};
         res.header = header;
         res.response_code = dt::ResponseCode::OK;
-        auto status = dt::DC_EVSEStatus{};
+        auto status = dt::DcEvseStatus{};
         status.evse_isolation_status = dt::IsolationLevel::Invalid;
-        status.evse_status_code = dt::DC_EVSEStatusCode::EVSE_IsolationMonitoringActive;
+        status.evse_status_code = dt::DcEvseStatusCode::EVSE_IsolationMonitoringActive;
         res.evse_status = status;
-        res.evse_processing = dt::EVSEProcessing::Ongoing;
+        res.evse_processing = dt::EvseProcessing::Ongoing;
 
         std::vector<uint8_t> expected = {0x80, 0x98, 0x2,  0x0, 0xb6, 0xc8, 0x81, 0xce, 0xc2, 0x13,
                                          0x4b, 0x50, 0x40, 0x0, 0x0,  0x0,  0x1,  0x1,  0x0};

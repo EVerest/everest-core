@@ -29,7 +29,7 @@ SCENARIO("Ser/Deserialize d2 pre charge messages") {
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D});
 
             REQUIRE(msg.ev_status.ev_ready == true);
-            REQUIRE(msg.ev_status.ev_error_code == dt::DC_EVErrorCode::NO_ERROR);
+            REQUIRE(msg.ev_status.ev_error_code == dt::DcEvErrorCode::NO_ERROR);
             REQUIRE(msg.ev_status.ev_ress_soc == 0);
 
             REQUIRE(dt::from_PhysicalValue(msg.ev_target_voltage) == 500);
@@ -43,9 +43,9 @@ SCENARIO("Ser/Deserialize d2 pre charge messages") {
         auto res = d2::msg::DC_PreChargeResponse{};
         res.header = header;
         res.response_code = dt::ResponseCode::OK;
-        auto status = dt::DC_EVSEStatus{};
+        auto status = dt::DcEvseStatus{};
         status.evse_isolation_status = dt::IsolationLevel::Valid;
-        status.evse_status_code = dt::DC_EVSEStatusCode::EVSE_Ready;
+        status.evse_status_code = dt::DcEvseStatusCode::EVSE_Ready;
         res.evse_status = status;
         res.evse_present_voltage = dt::from_float(498.5, d2::msg::data_types::UnitSymbol::V);
 

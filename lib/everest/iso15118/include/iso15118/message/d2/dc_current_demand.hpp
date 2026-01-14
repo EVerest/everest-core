@@ -9,7 +9,7 @@ namespace iso15118::d2::msg {
 
 struct DC_CurrentDemandRequest {
     Header header;
-    data_types::DC_EVStatus ev_status;
+    data_types::DcEvStatus ev_status;
     data_types::PhysicalValue ev_target_current;
     data_types::PhysicalValue ev_target_voltage;
     std::optional<data_types::PhysicalValue> ev_maximum_voltage_limit{std::nullopt};
@@ -24,7 +24,7 @@ struct DC_CurrentDemandRequest {
 struct DC_CurrentDemandResponse {
     Header header;
     data_types::ResponseCode response_code;
-    data_types::DC_EVSEStatus evse_status;
+    data_types::DcEvseStatus evse_status;
     data_types::PhysicalValue evse_present_voltage;
     data_types::PhysicalValue evse_present_current;
     bool evse_current_limit_achieved;

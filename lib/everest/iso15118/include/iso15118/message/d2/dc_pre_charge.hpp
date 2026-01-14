@@ -8,7 +8,7 @@ namespace iso15118::d2::msg {
 
 struct DC_PreChargeRequest {
     Header header;
-    data_types::DC_EVStatus ev_status;
+    data_types::DcEvStatus ev_status;
     data_types::PhysicalValue ev_target_voltage;
     data_types::PhysicalValue ev_target_current;
 };
@@ -16,7 +16,7 @@ struct DC_PreChargeRequest {
 struct DC_PreChargeResponse {
     Header header;
     data_types::ResponseCode response_code;
-    data_types::DC_EVSEStatus evse_status;
+    data_types::DcEvseStatus evse_status;
     data_types::PhysicalValue evse_present_voltage;
 };
 

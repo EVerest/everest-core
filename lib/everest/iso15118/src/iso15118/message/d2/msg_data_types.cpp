@@ -72,20 +72,20 @@ template <> void convert(const data_types::MeterInfo& in, iso2_MeterInfoType& ou
     CPP2CB_ASSIGN_IF_USED(in.t_meter, out.TMeter);
 }
 
-template <> void convert(const iso2_DC_EVStatusType& in, data_types::DC_EVStatus& out) {
+template <> void convert(const iso2_DC_EVStatusType& in, data_types::DcEvStatus& out) {
     out.ev_ready = in.EVReady;
     cb_convert_enum(in.EVErrorCode, out.ev_error_code);
     out.ev_ress_soc = in.EVRESSSOC;
 }
 
-template <> void convert(const data_types::AC_EVSEStatus& in, iso2_AC_EVSEStatusType& out) {
+template <> void convert(const data_types::AcEvseStatus& in, iso2_AC_EVSEStatusType& out) {
     init_iso2_AC_EVSEStatusType(&out);
     cb_convert_enum(in.evse_notification, out.EVSENotification);
     out.NotificationMaxDelay = in.notification_max_delay;
     out.RCD = in.rcd;
 }
 
-template <> void convert(const data_types::DC_EVSEStatus& in, iso2_DC_EVSEStatusType& out) {
+template <> void convert(const data_types::DcEvseStatus& in, iso2_DC_EVSEStatusType& out) {
     init_iso2_DC_EVSEStatusType(&out);
     cb_convert_enum(in.evse_notification, out.EVSENotification);
     out.NotificationMaxDelay = in.notification_max_delay;

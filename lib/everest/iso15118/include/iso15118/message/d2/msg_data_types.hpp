@@ -71,7 +71,7 @@ enum class EvseProcessing {
     Ongoing_WaitingForCustomerInteraction
 };
 
-enum class DC_EVErrorCode {
+enum class DcEvErrorCode {
     NO_ERROR,
     FAILED_RESSTemperatureInhibit,
     FAILED_EVShiftPosition,
@@ -86,13 +86,7 @@ enum class DC_EVErrorCode {
     NoData,
 };
 
-enum class EVSEProcessing {
-    Finished,
-    Ongoing,
-    Ongoing_WaitingForCustomerInteraction
-};
-
-enum class EVSENotification {
+enum class EvseNotification {
     None,
     StopCharging,
     ReNegotiation,
@@ -108,7 +102,7 @@ enum class UnitSymbol {
     Wh
 };
 
-enum class DC_EVSEStatusCode {
+enum class DcEvseStatusCode {
     EVSE_NotReady,
     EVSE_Ready,
     EVSE_Shutdown,
@@ -150,23 +144,23 @@ struct Notification {
     std::optional<std::string> fault_msg;
 };
 
-struct EVSEStatus {
+struct EvseStatus {
     uint16_t notification_max_delay{0};
-    EVSENotification evse_notification{EVSENotification::None};
+    EvseNotification evse_notification{EvseNotification::None};
 };
 
-struct AC_EVSEStatus : EVSEStatus {
+struct AcEvseStatus : EvseStatus {
     bool rcd;
 };
 
-struct DC_EVSEStatus : EVSEStatus {
+struct DcEvseStatus : EvseStatus {
     std::optional<IsolationLevel> evse_isolation_status;
-    DC_EVSEStatusCode evse_status_code;
+    DcEvseStatusCode evse_status_code;
 };
 
-struct DC_EVStatus {
+struct DcEvStatus {
     bool ev_ready;
-    DC_EVErrorCode ev_error_code;
+    DcEvErrorCode ev_error_code;
     PercentValue ev_ress_soc;
 };
 
