@@ -8,5 +8,6 @@ To generate and use an updated header in `modules/API/RpcApi/types/json_rpc_api/
 2. Start a build.
 3. The generated header appears at `build/generated/include/generated/types/json_rpc_api.hpp`.
 4. Move that header to `modules/API/RpcApi/types/json_rpc_api/`.
+5. Remove the build folder `build/generated` before your next compile.
 
 Commit both the updated YAML and the moved header to git.
