@@ -10,7 +10,10 @@ RequestHandlerDummy::RequestHandlerDummy(data::DataStoreCharger& dataobj) : data
 
 types::json_rpc_api::ErrorResObj RequestHandlerDummy::set_charging_allowed(const int32_t evse_index,
                                                                            bool charging_allowed) {
-    types::json_rpc_api::ErrorResObj res{types::json_rpc_api::ResponseErrorEnum::NoError};
+    ErrorResObj res{};
+
+    auto evse_store = data_store.get_evse_store(evse_index);
+    evse_store->evsestatus.set_charging_allowed(charging_allowed);
     return res;
 }
 types::json_rpc_api::ErrorResObj RequestHandlerDummy::set_ac_charging(const int32_t evse_index, bool charging_allowed,
