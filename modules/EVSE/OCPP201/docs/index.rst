@@ -8,7 +8,7 @@ This module implements and integrates OCPP 2.0.1 and OCPP 2.1 within EVerest. A 
 established by loading this module as part of the EVerest configuration. This module leverages `libocpp <https://github.com/EVerest/libocpp>`_,
 EVerest's OCPP library.
 
-The EVerest config `config-sil-ocpp201.yaml <../../config/config-sil-ocpp201.yaml>`_ serves as an example for how to add the OCPP201 module
+The EVerest config ``config-sil-ocpp201.yaml`` serves as an example for how to add the OCPP201 module
 to your EVerest config.
 
 📌 **Note:**: This module can be used for OCPP2.0.1 and OCPP2.1 communication. The module name OCPP201 is kept for now to allow backwards 
@@ -18,7 +18,7 @@ OCPP2.0.1 and OCPP2.1, referred by using the term **OCPP2**.
 Module configuration
 ====================
 
-Like for every EVerest module, the configuration parameters are defined as part of the module `manifest <../manifest.yaml>`_. OCPP2 defines
+Like for every EVerest module, the configuration parameters are defined as part of the module ``manifest.yaml``. OCPP2 defines
 a device model structure and a lot of standardized variables that are used within the functional requirements of the protocol. Please see 
 Part 1 - Architecture & Topology of the OCPP2.0.1 or OCPP2.1 specification for further information about the device model and how it is composed.
 
@@ -59,7 +59,7 @@ integrate libocpp with other parts of EVerest. This integration is done by this 
 
 For a detailed description of libocpp and its functionalities, please refer to `its documentation <https://github.com/EVerest/libocpp>`_.
 
-The `manifest <../manifest.yaml>`_ of this module defines requirements and implementations of EVerest interfaces to integrate the OCPP communication
+The ``manifest.yaml`` of this module defines requirements and implementations of EVerest interfaces to integrate the OCPP communication
 with other parts of EVerest. In order to describe how the responsibilities for functions and operations required by OCPP are divided between libocpp
 and this module, the following sections pick up the requirements of this module and implementations one by one.
 
@@ -87,7 +87,7 @@ Provides: data_transfer
 
 This interface is implemented to provide a command to initiate a **DataTransfer.req** from the charging station to the CSMS.
 
-.. _provides-ocpp_generic:
+.. _handwritten_ocpp201_provides-ocpp_generic:
 
 Provides: ocpp_generic
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -125,7 +125,7 @@ This module makes use of the following commands of this interface:
 * **set_external_limits** to apply power or ampere limits at the EVSE received by the CSMS using the SmartCharging feature profile. Libocpp contains the
   business logic to calculate the composite schedule for received charging profiles. This module gets notified in case charging profiles are added,
   changed, or cleared. When notified, this module requests the composite schedule from libocpp and publishes the result via the provided
-  :ref:`ocpp_generic <provides-ocpp_generic>` interface implementation. The duration of the composite schedule can be configured by the configuration parameter
+  :ref:`ocpp_generic <handwritten_ocpp201_provides-ocpp_generic>` interface implementation. The duration of the composite schedule can be configured by the configuration parameter
   **PublishChargingScheduleDurationS** of this module. The configuration parameter **PublishChargingScheduleIntervalS** defines the interval to use to 
   periodically retrieve and publish the composite schedules. The configuration parameter **RequestCompositeScheduleUnit** can be used to specify the unit in
   which composite schedules are requested and shared within EVerest.

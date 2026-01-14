@@ -8,13 +8,13 @@ This module implements and integrates OCPP1.6 within EVerest, including all feat
 to a Charging Station Management System (CSMS) can be established by loading this module as part of the EVerest configuration. This module  
 leverages `libocpp <https://github.com/EVerest/libocpp>`_, EVerest's OCPP library.
 
-The EVerest config `config-sil-ocpp.yaml <../../config/config-sil-ocpp.yaml>`_ serves as an example for how to add the OCPP module to  
+The EVerest config ``config-sil-ocpp.yaml`` serves as an example for how to add the OCPP module to  
 your EVerest config.
 
 Module configuration
 ====================
 
-Like for every EVerest module, the configuration parameters are defined as part of the module `manifest <manifest.yaml>`_. This module  
+Like for every EVerest module, the configuration parameters are defined as part of the module ``manifestyaml``. This module  
 is a little special though. The OCPP1.6 protocol defines a lot of standardized configuration keys that are used as part of the functional  
 requirements of the specification. These configuration keys mainly influence the control flow of libocpp and are managed by a separate  
 JSON configuration file. The module uses the configuration parameter **ChargePointConfigPath** to point to this file.
@@ -32,7 +32,7 @@ required to integrate libocpp with other parts of EVerest. This integration is d
 
 For a detailed description of libocpp and its functionalities, please refer to `its documentation <https://github.com/EVerest/libocpp>`_.
 
-The `manifest <manifest.yaml>`_ of this module defines requirements and implementations of EVerest interfaces to integrate the OCPP  
+The ``manifest.yaml`` of this module defines requirements and implementations of EVerest interfaces to integrate the OCPP  
 communication with other parts of EVerest. In order to describe how the responsibilities for functions and operations required by OCPP  
 are divided between libocpp and this module, the following sections pick up the requirements of this module and implementations one by one.
 
@@ -72,7 +72,7 @@ Provides: data_transfer
 
 This interface is implemented to provide a command to initiate a **DataTransfer.req** from the charging station to the CSMS.
 
-.. _provides-ocpp_generic:
+.. _handwritten_ocpp_provides-ocpp_generic:
 
 Provides: ocpp_generic
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -112,7 +112,7 @@ This module makes use of the following commands of this interface:
 * **set_external_limits** to apply a power or ampere limits at the EVSE received by the CSMS using the SmartCharging feature profile.  
   Libocpp contains the business logic to calculate the composite schedule for received charging profiles. This module gets notified in  
   case charging profiles are added, changed, or cleared. When notified, this module requests the composite schedule from libocpp and  
-  publishes the result via the provided :ref:`ocpp_generic <provides-ocpp_generic>` interface implementation. The duration of the composite schedule can  
+  publishes the result via the provided :ref:`ocpp_generic <handwritten_ocpp_provides-ocpp_generic>` interface implementation. The duration of the composite schedule can  
   be configured by the configuration parameter **PublishChargingScheduleDurationS** of this module. The configuration parameter  
   **PublishChargingScheduleIntervalS** defines the interval to use to periodically retrieve and publish the composite schedules.
 * **external_ready_to_start_charging**: To signal that the module has started to establish an OCPP connection to the CSMS
