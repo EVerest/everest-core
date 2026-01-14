@@ -14,6 +14,8 @@ enum class Type {
     SessionSetupRes,
     ServiceDiscoveryReq,
     ServiceDiscoveryRes,
+    PaymentServiceSelectionReq,
+    PaymentServiceSelectionRes,
     AuthorizationReq,
     AuthorizationRes,
     CableCheckReq,
@@ -53,6 +55,8 @@ CREATE_TYPE_TRAIT(SessionSetupRequest, SessionSetupReq);
 CREATE_TYPE_TRAIT(SessionSetupResponse, SessionSetupRes);
 CREATE_TYPE_TRAIT(ServiceDiscoveryRequest, ServiceDiscoveryReq);
 CREATE_TYPE_TRAIT(ServiceDiscoveryResponse, ServiceDiscoveryRes);
+CREATE_TYPE_TRAIT(PaymentServiceSelectionRequest, PaymentServiceSelectionReq);
+CREATE_TYPE_TRAIT(PaymentServiceSelectionResponse, PaymentServiceSelectionRes);
 CREATE_TYPE_TRAIT(AuthorizationRequest, AuthorizationReq);
 CREATE_TYPE_TRAIT(AuthorizationResponse, AuthorizationRes);
 CREATE_TYPE_TRAIT(DC_CableCheckRequest, CableCheckReq);
