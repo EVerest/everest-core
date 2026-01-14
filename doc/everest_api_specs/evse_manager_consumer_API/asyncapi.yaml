@@ -3,7 +3,7 @@ asyncapi: 3.0.0
 id: 'pionix:de:everest:evse_manager_consumer_API'
 info:
   title: 'EVerest API definition for the use of the EVSE manager'
-  version: 1.0.0
+  version: 1.0.1
   description: >-
     API to allow EVerest API clients to use the EvseManager module.
 
