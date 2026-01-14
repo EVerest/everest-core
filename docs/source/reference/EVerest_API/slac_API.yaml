@@ -175,7 +175,7 @@ operations:
     title: 'Send clear error'
     action: send
     channel:
-      $ref : '#/channels/send_clear_error'
+      $ref: '#/channels/send_clear_error'
 
   receive_heartbeat:
     title: 'Receive heartbeat'
@@ -187,7 +187,7 @@ operations:
     title: 'Send communication check'
     action: send
     channel:
-      $ref : '#/channels/send_communication_check'
+      $ref: '#/channels/send_communication_check'
 
 components:
   messages:
