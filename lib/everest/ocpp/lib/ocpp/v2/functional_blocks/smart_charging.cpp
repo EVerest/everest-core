@@ -550,11 +550,17 @@ std::vector<IntermediateProfile> generate_evse_intermediates(std::vector<Chargin
 }
 } // namespace
 
-CompositeSchedule SmartCharging::calculate_composite_schedule(const ocpp::DateTime& start_time,
+CompositeSchedule SmartCharging::calculate_composite_schedule(const ocpp::DateTime& start_t,
                                                               const ocpp::DateTime& end_time,
                                                               const std::int32_t evse_id,
                                                               ChargingRateUnitEnum charging_rate_unit, bool is_offline,
                                                               bool simulate_transaction_active) {
+
+    // handle edge case where start_time > end_time
+    auto start_time = start_t;
+    if (start_time > end_time) {
+        start_time = end_time;
+    }
 
     const CompositeScheduleConfig config{this->context.device_model, is_offline};
 

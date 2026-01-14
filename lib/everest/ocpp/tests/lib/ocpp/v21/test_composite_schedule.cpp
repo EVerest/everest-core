@@ -420,3 +420,45 @@ TEST_F(CompositeScheduleTestFixtureV21, V21DifferentNumberPhases_StationWide) {
                                                                      ChargingRateUnitEnum::W, false, true);
     EXPECT_EQ(actual, expected);
 }
+
+TEST_F(CompositeScheduleTestFixtureV21, ZeroDuration) {
+    load_charging_profiles_for_evse(BASE_JSON_PATH_V21 + "/station_wide_three_phases/", STATION_WIDE_ID);
+    const DateTime start_time("2024-01-17T18:00:00.000Z");
+    const DateTime end_time("2024-01-17T18:00:01.000Z");
+
+    ChargingSchedulePeriod period1;
+    period1.startPeriod = 0;
+    period1.limit = 12420.0F;
+    period1.limit_L2 = 12430.0F;
+    period1.limit_L3 = 12440.0F;
+    period1.numberPhases = 3;
+
+    CompositeSchedule expected_0;
+    expected_0.chargingSchedulePeriod = {period1};
+    expected_0.evseId = DEFAULT_EVSE_ID;
+    expected_0.duration = 0;
+    expected_0.scheduleStart = start_time;
+    expected_0.chargingRateUnit = ChargingRateUnitEnum::W;
+
+    CompositeSchedule expected_1;
+    expected_1.chargingSchedulePeriod = {period1};
+    expected_1.evseId = DEFAULT_EVSE_ID;
+    expected_1.duration = 1;
+    expected_1.scheduleStart = start_time;
+    expected_1.chargingRateUnit = ChargingRateUnitEnum::W;
+
+    // check with end time and a corresponding duration of 1 second
+    auto actual = handler->calculate_composite_schedule(start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W,
+                                                        false, true);
+    EXPECT_EQ(actual, expected_1);
+
+    // Now with duration of 0 seconds
+    actual = handler->calculate_composite_schedule(start_time, start_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W,
+                                                   false, true);
+    EXPECT_EQ(actual, expected_0);
+
+    // Now with duration of -1 second
+    actual = handler->calculate_composite_schedule(end_time, start_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W,
+                                                   false, true);
+    EXPECT_EQ(actual, expected_0);
+}
