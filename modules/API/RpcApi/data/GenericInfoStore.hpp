@@ -5,10 +5,10 @@
 
 #include <atomic>
 #include <functional> // for std::function
-#include <types/json_rpc_api/json_rpc_api.hpp>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <types/json_rpc_api/json_rpc_api.hpp>
 #include <vector>
 
 // This contains types for all the data objects
