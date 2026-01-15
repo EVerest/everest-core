@@ -53,12 +53,12 @@ class EverestTestController(TestController):
     def plug_in_ac_iso(self, connector_id=1):
         self._mqtt_client.publish(
             f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
-            "sleep 1;iso_wait_slac_matched;iso_start_v2g_session AC 86400 0;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;sleep 20;iso_stop_charging;iso_wait_v2g_session_stopped;unplug")
+            "sleep 1;iso_wait_slac_matched;iso_start_v2g_session AC 86400 0;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;sleep 60;iso_stop_charging;iso_wait_v2g_session_stopped;unplug")
 
     def plug_in_dc_iso(self, connector_id=1):
         self._mqtt_client.publish(
             f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
-            "sleep 1;iso_wait_slac_matched;iso_start_v2g_session DC 86400 0;iso_wait_pwr_ready;iso_wait_for_stop 20;iso_wait_v2g_session_stopped;unplug"
+            "sleep 1;iso_wait_slac_matched;iso_start_v2g_session DC 86400 0;iso_wait_pwr_ready;iso_wait_for_stop 60;iso_wait_v2g_session_stopped;unplug"
         )
 
     def plug_out(self, connector_id=1):
@@ -70,6 +70,36 @@ class EverestTestController(TestController):
         self._mqtt_client.publish(
             f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/modify_charging_session",
             "iso_stop_charging;iso_wait_v2g_session_stopped;unplug")
+    
+    def pause_session(self, connector_id=1):
+        self._mqtt_client.publish(
+            f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/modify_charging_session",
+            "pause;sleep 36000"
+        )
+
+    def resume_session(self, connector_id=1):
+        self._mqtt_client.publish(
+            f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/modify_charging_session",
+            "draw_power_regulated 16,3"
+        )
+
+    def pause_iso_session(self, connector_id=1):
+        self._mqtt_client.publish(
+            f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/modify_charging_session",
+            "iso_pause_charging;iso_wait_for_resume"
+        )
+
+    def resume_iso_session_ac(self, connector_id=1):
+        self._mqtt_client.publish(
+            f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/modify_charging_session",
+            "iso_start_bcb_toggle 3;iso_wait_pwm_is_running;iso_start_v2g_session AC 86400 0;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;iso_wait_for_stop 60"
+        )
+
+    def resume_iso_session_dc(self, connector_id=1):
+        self._mqtt_client.publish(
+            f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/modify_charging_session",
+            "iso_start_bcb_toggle 3;iso_wait_pwm_is_running;iso_start_v2g_session DC 86400 0;iso_wait_pwr_ready;iso_dc_power_on;iso_wait_for_stop 60"
+        )
 
     def swipe(self, token, connectors=None):
         connectors = connectors if connectors is not None else [1]

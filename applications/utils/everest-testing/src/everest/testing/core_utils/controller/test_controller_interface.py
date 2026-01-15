@@ -46,6 +46,36 @@ class TestController():
         Plug out of an electric vehicle properly ending the ISO15118 session.
         """
         raise NotImplementedError()
+    
+    def pause_session(self, connector_id):
+        """
+        Pause an ongoing charging session.
+        """
+        raise NotImplementedError()
+    
+    def resume_session(self, connector_id):
+        """
+        Resume a paused charging session.
+        """
+        raise NotImplementedError()
+    
+    def pause_iso_session(self, connector_id):
+        """
+        Pause an ongoing ISO15118 session initiated by the EV.
+        """
+        raise NotImplementedError()
+    
+    def resume_iso_session_ac(self, connector_id):
+        """
+        Resume a paused ISO15118 session initiated by the EV.
+        """
+        raise NotImplementedError()
+
+    def resume_iso_session_dc(self, connector_id):
+        """
+        Resume a paused ISO15118 session initiated by the EV.
+        """
+        raise NotImplementedError()
 
     def plug_out(self):
         """
