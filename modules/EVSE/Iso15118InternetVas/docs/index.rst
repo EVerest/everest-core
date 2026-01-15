@@ -1,10 +1,8 @@
 .. _everest_modules_handwritten_Iso15118InternetVas:
 
-*******************************************
-Iso15118InternetVas
-*******************************************
-
-:ref:`Link <everest_modules_Iso15118InternetVas>` to the module's reference.
+.. *******************************************
+.. Iso15118InternetVas
+.. *******************************************
 
 .. warning::
    This module and its helper scripts are **examples** and not intended for
@@ -30,12 +28,15 @@ How it works
     ``vas-internet-setup.sh``, to configure all necessary networking components.
     The script's behavior depends on the configuration and the services selected
     by the EV:
+
     - It enables IPv6 forwarding and sets up NAT using ``ip6tables``.
     - If IPv4 support is enabled in the configuration, it also:
+
       - Starts a DHCPv4 server (``udhcpd``) on the EV-facing network
         interface (``ev_interface``). This DHCP server provides the EV with an
         IPv4 address and DNS server information.
       - Enables IPv4 forwarding and NAT using ``iptables``.
+
     - It starts a Router Advertisement Daemon (``radvd``) on the
       ``ev_interface`` to enable the EV to configure an IPv6 address using SLAAC.
       This also includes advertising Recursive DNS Servers (RDNSS) for IPv6.

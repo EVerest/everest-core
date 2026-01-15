@@ -1,0 +1,459 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:everest:power_supply_DC_API'
+info:
+  title: 'EVerest API definition for DC power supplies'
+  version: 1.0.0
+  description: >-
+    API for EVerest API clients implementing DC power supplies.
+
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
+  tags:
+    - name: EVerest
+    - name: DC power supply
+servers:
+  default:
+    pathname: 'everest_api/1/power_supply_DC/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module as defined in the EVerest config file.
+defaultContentType: application/json
+
+
+channels:
+  receive_mode:
+    address: 'e2m/mode'
+    messages:
+      receive_mode:
+        $ref: '#/components/messages/receive_mode'
+  receive_export_voltage_current:
+    address: 'e2m/export_voltage_current'
+    messages:
+      receive_export_voltage_current:
+        $ref: '#/components/messages/receive_export_voltage_current'
+  receive_import_voltage_current:
+    address: 'e2m/import_voltage_current'
+    messages:
+      receive_import_voltage_current:
+        $ref: '#/components/messages/receive_import_voltage_current'
+
+  send_voltage_current:
+    address: 'm2e/voltage_current'
+    messages:
+      send_voltage_current:
+        $ref: '#/components/messages/send_voltage_current'
+  send_mode:
+    address: 'm2e/mode'
+    messages:
+      send_mode:
+        $ref: '#/components/messages/send_mode'
+  send_capabilities:
+    address: 'm2e/capabilities'
+    messages:
+      send_capabilities:
+        $ref: '#/components/messages/send_capabilities'
+
+  send_raise_error:
+    address: 'm2e/raise_error'
+    messages:
+      send_raise_error:
+        $ref: '#/components/messages/send_raise_error'
+  send_clear_error:
+    address: 'm2e/clear_error'
+    messages:
+      send_clear_error:
+        $ref: '#/components/messages/send_clear_error'
+
+
+  receive_heartbeat:
+    address: 'e2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
+
+
+operations:
+  receive_mode:
+    title: 'Receive mode'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_mode'
+    description: 'Direction: EVerest to Module'
+  receive_export_voltage_current:
+    title: 'Receive export voltage current'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_export_voltage_current'
+    description: 'Direction: EVerest to Module'
+  receive_import_voltage_current:
+    title: 'Receive import voltage current'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_import_voltage_current'
+    description: 'Direction: EVerest to Module'
+
+  send_voltage_current:
+    title: 'Send voltage current'
+    action: send
+    channel:
+      $ref: '#/channels/send_voltage_current'
+    description: 'Direction: Module to EVerest'
+  send_mode:
+    title: 'Send mode'
+    action: send
+    channel:
+      $ref: '#/channels/send_mode'
+    description: 'Direction: Module to EVerest'
+  send_capabilities:
+    title: 'Send current capabilities'
+    action: send
+    channel:
+      $ref: '#/channels/send_capabilities'
+    description: 'Direction: Module to EVerest'
+
+  send_raise_error:
+    title: 'Send raise error'
+    action: send
+    channel:
+      $ref: '#/channels/send_raise_error'
+    description: 'Direction: Module to EVerest'
+  send_clear_error:
+    title: 'Send clear error'
+    action: send
+    channel:
+      $ref: '#/channels/send_clear_error'
+
+
+  receive_heartbeat:
+    title: 'Receive heartbeat'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+    description: 'Direction: EVerest to Module'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref: '#/channels/send_communication_check'
+
+
+
+components:
+  messages:
+    receive_mode:
+      name: receive_mode
+      title: 'Receive mode'
+      summary: 'Receive the requested mode for DC power supply and the current charging phase.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ModeRequest'
+    receive_export_voltage_current:
+      name: receive_export_voltage_current
+      title: 'Receive export voltage / current'
+      summary: 'Receive the requested voltage and current when exporting energy to the car.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/VoltageCurrent'
+    receive_import_voltage_current:
+      name: receive_import_voltage_current
+      title: 'Receive import voltage / current'
+      summary: 'Receive the requested voltage and current when importing energy from the car.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/VoltageCurrent'
+
+    send_voltage_current:
+      name: send_voltage_current
+      title: 'Send voltage / current'
+      summary: 'Current value of voltage (V) and current (A).'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/VoltageCurrent'
+      examples:   # Define examples here
+        - summary: "Example 1 of sending voltage and current."
+          payload:
+            voltage_V: 230.0
+            current_A: 15.0
+    send_mode:
+      name: send_mode
+      title: 'Send mode'
+      summary: 'Current mode of DC power supply.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Mode'
+      examples:
+        - summary: "Example of sending mode."
+          payload:
+            "Export"
+    send_capabilities:
+      name: send_capabilities
+      title: 'Send current capabilities'
+      summary: 'Current capabilities of the DC power supply.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Capabilities'
+      examples:
+        - summary: "Capabilities example"
+          payload:
+            bidirectional: true
+            current_regulation_tolerance_A: 0
+            peak_current_ripple_A: 0
+            max_export_voltage_V: 0
+            min_export_voltage_V: 0
+            max_export_current_A: 0
+            min_export_current_A: 0
+            max_import_voltage_V: 0
+            min_import_voltage_V: 0
+            max_import_current_A: 0
+            min_import_current_A: 0
+            max_export_power_W: 0
+            max_import_power_W: 0
+            conversion_efficiency_import: 1
+            conversion_efficiency_export: 1
+
+    send_raise_error:
+      name: send_raise_error
+      title: 'Send raise error'
+      summary: Signal to EVerest that an error happened.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Error'
+      examples:
+          - summary: "Raise error example"
+            payload:
+                "type": "CommunicationFault"
+                "sub_type": "string"
+                "message": "string"
+    send_clear_error:
+      name: send_clear_error
+      title: 'Send clear error'
+      summary: Signal to EVerest that a previously raised error is no longer active.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Error'
+      examples:
+          - summary: "Raise error example"
+            payload:
+                "type": "CommunicationFault"
+                "sub_type": "string"
+                "message": "string"
+
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartBeatId'
+      examples:
+        - summary: "Heartbeat"
+          payload: 42
+
+    send_communication_check:
+      name: send_communication_check
+      title: 'Send communication check'
+      summary: Signal to EVerest that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: "CommunicationCheck"
+          payload:
+            true
+
+
+  schemas:
+    Capabilities:
+      type: object
+      additionalProperties: true
+      required:
+        - bidirectional
+        - max_export_voltage_V
+        - min_export_voltage_V
+        - max_export_current_A
+        - min_export_current_A
+        - max_export_power_W
+        - current_regulation_tolerance_A
+        - peak_current_ripple_A
+      properties:
+        bidirectional:
+          description: |
+            - true: support bidirectional energy flow
+            - false: support only Export mode (output)
+          type: boolean
+        current_regulation_tolerance_A:
+          description: Absolute magnitude of the regulation tolerance. Measured in Ampere.
+          type: number
+        peak_current_ripple_A:
+          description: >
+            Peak-to-peak magnitude of the current ripple measured in Ampere.
+            This value is transmitted to the vehicle and can potentially influence the charging speed.
+          type: number
+        max_export_voltage_V:
+          description: Maximum voltage that the power supply can output on the DC side. Measured in Volt.
+          type: number
+        min_export_voltage_V:
+          description: Minimum voltage that the power supply can output on the DC side. Measured in Volt.
+          type: number
+        max_export_current_A:
+          description: Maximum current that the power supply can output on the DC side. Measured in Ampere.
+          type: number
+        min_export_current_A:
+          description: Minimum current limit on the DC side that the power supply can set. Measured in Ampere.
+          type: number
+        max_import_voltage_V:
+          description: >-
+            Maximum voltage on the DC side that the power supply supports to import energy.
+            Measured in Volt.
+          type: number
+        min_import_voltage_V:
+          description: >
+            Minimum voltage on the DC side that the power supply requires to import energy.
+            Measured in Volt.
+          type: number
+        max_import_current_A:
+          description: Maximum current that the power supply can sink on the DC side. Measuered in Ampere.
+          type: number
+        min_import_current_A:
+          description: >
+            Minimum limit for sinking current on the DC side that the power supply can set.
+            Measured in Ampere.
+          type: number
+        max_export_power_W:
+          description: Maximum export power on the DC side that the power supply can source. Measured in Watt.
+          type: number
+        max_import_power_W:
+          description: Maximum import power on the DC side that the power supply can sink. Measured in Watt.
+          type: number
+        conversion_efficiency_import:
+          description: Typical import efficiency used for energy management
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        conversion_efficiency_export:
+          description: Typical export efficiency used for energy management
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+    ChargingPhase:
+      description: |
+        Charging phase of the current mode change.
+        - Other: Used for e.g. switching it off or any other internal testing not related to real charging.
+        - CableCheck
+        - PreCharge
+        - Charging
+
+      type: string
+      enum:
+        - "Other"
+        - "CableCheck"
+        - "PreCharge"
+        - "Charging"
+    Mode:
+      description: |
+        Mode of the DC power supply
+        - Off: Power Supply switched off
+        - Export: Charge the vehicle
+        - Import: V2G etc
+        - Fault: Power supply is in error state
+      type: string
+      enum:
+        - Off
+        - Export
+        - Import
+        - Fault
+    ModeRequest:
+      description: >-
+        Requested Mode and the current charging state
+      type: object
+      additionalProperties: true
+      properties:
+        mode:
+          $ref: '#/components/schemas/Mode'
+        charging_phase:
+          $ref: '#/components/schemas/ChargingPhase'
+    VoltageCurrent:
+      type: object
+      additionalProperties: true
+      required:
+        - voltage_V
+        - current_A
+      properties:
+        voltage_V:
+          description: Voltage in volt
+          type: number
+        current_A:
+          description: Electric current in amp
+          type: number
+
+    ErrorEnum:
+      description: |
+        Type of error
+        - CommunicationFault: The communication to the hardware or underlying driver is lost or has errors.
+        - HardwareFault: The hardware reported a fault
+        - OverTemperature: The hardware shut down because of over temperature. This should not be used if the power supply can handle temperature reduction by reducing output power, in this case update the capabilities as needed.
+        - UnderTemperature: The hardware cannot operate because it is too cold
+        - UnderVoltageAC: The AC input voltage is too low
+        - OverVoltageAC: The AC input voltage is too high
+        - UnderVoltageDC: The DC output voltage is too low
+        - OverVoltageDC: The DC output voltage is too high
+        - OverCurrentAC: The AC input current is too high
+        - OverCurrentDC: The DC output current it too high
+        - VendorError: Vendor specific error code. Will stop charging session.
+        - VendorWarning: Vendor specific error code. Charging may continue.
+
+      type: string
+      enum:
+        - CommunicationFault
+        - HardwareFault
+        - OverTemperature
+        - UnderTemperature
+        - UnderVoltageAC
+        - OverVoltageAC
+        - UnderVoltageDC
+        - OverVoltageDC
+        - OverCurrentAC
+        - OverCurrentDC
+        - VendorError
+        - VendorWarning
+    Error:
+      description: >-
+        Errors for the power_supply_DC interface.
+        Except for VendorWarning, all error codes will stop the charging session.
+        During all errors, follow the commands for setMode and setVoltageCurrent from EvseManager.
+        If they cannot be sent to the hardware, cache the last values received.
+        Once the PSU is back on-line (e.g. after a CommunicationFault), set the last mode and voltage/current
+        values and only after that clear the error.
+      type: object
+      additionalProperties: true
+      required:
+        - type
+      properties:
+        type:
+          $ref: '#/components/schemas/ErrorEnum'
+        sub_type:
+          description: The subtype of the error
+          type: string
+        message:
+          description: Addition information about the error
+          type: string
+
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
+
+    HeartBeatId:
+      type: integer
+      description: "64bit unsigned integer. The id of every heartbeat increases by 1 and overflows when the maximum representable value is reached"

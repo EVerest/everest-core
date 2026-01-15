@@ -1,8 +1,8 @@
 .. _everest_modules_handwritten_Auth:
 
-===========
-Auth Module
-===========
+.. ===========
+.. Auth Module
+.. ===========
 
 This module handles incoming authorization and reservation requests.
 
@@ -83,5 +83,5 @@ Not yet implemented.
 Plug&Charge Authorization
 =========================
 
-Please see the `Plug&Charge configuration guide <https://everest.github.io/nightly/general/07_configure_plug_and_charge.html>`_ 
+Please see the :doc:`Plug&Charge configuration guide </how-to-guides/configure-pnc>`
 for further information about the Plug&Charge integration in EVerest.

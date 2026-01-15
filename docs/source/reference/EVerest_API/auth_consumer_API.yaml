@@ -1,0 +1,399 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:everest:auth_consumer_API'
+info:
+  title: 'EVerest API definition for auth consumer'
+  version: 1.0.0
+  description: >-
+    API to allow EVerest API clients to use the Auth module.
+
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
+  tags:
+    - name: EVerest
+    - name: Auth
+servers:
+  default:
+    pathname: 'everest_api/1/auth_consumer/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module as defined in the EVerest config file.
+defaultContentType: application/json
+
+
+channels:
+  send_request_withdraw_authorization:
+    address: 'm2e/withdraw_authorization'
+    messages:
+      send_request_withdraw_authorization:
+        $ref: '#/components/messages/send_request_withdraw_authorization'
+  receive_reply_withdraw_authorization:
+    address: null
+    messages:
+      receive_reply_withdraw_authorization:
+        $ref: '#/components/messages/receive_reply_withdraw_authorization'
+
+  receive_token_validation_status:
+    address: 'e2m/token_validation_status'
+    messages:
+      receive_token_validation_status:
+        $ref: '#/components/messages/receive_token_validation_status'
+
+
+  receive_heartbeat:
+    address: 'e2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
+
+
+operations:
+  send_request_withdraw_authorization:
+    title: 'Withdraw granted authorization.'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_withdraw_authorization'
+    description: >-
+      If only the evse_id is given, the granted authorization for this EVSE will be withdrawn.
+      If only the id_token is given, the granted authorization for every EVSE where this id_token
+      is placed will be withdrawn. If both parameters are given, the granted authorization for the
+      given EVSE will be withdrawn, if the placed id_token matches the given id_token
+      If no parameter is given, all granted authorizations for all EVSEs will be removed
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_withdraw_authorization'
+  receive_reply_withdraw_authorization:
+    title: 'Reply to withdraw authorization request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_withdraw_authorization'
+
+  receive_token_validation_status:
+    title: 'Receive token validation status message'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_token_validation_status'
+    description: 'Direction: EVerest to Module'
+
+
+  receive_heartbeat:
+    title: 'Receive heartbeat'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref: '#/channels/send_communication_check'
+
+
+
+components:
+  messages:
+    send_request_withdraw_authorization:
+      name: send_request_withdraw_authorization
+      title: 'Withdraw granted authorization'
+      summary: 'Withdraw granted authorization.'
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:
+                  type: string
+                  description: Address to send the response to.
+            payload:
+              $ref: '#/components/schemas/WithdrawAuthorizationRequest'
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: everest_api/1/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
+            payload: {
+              "id_token": {
+                "value": "string",
+                "type": "Central",
+              },
+              "evse_id": 1
+            }
+    receive_reply_withdraw_authorization:
+      name: receive_reply_withdraw_authorization
+      title: 'Reply to request to withdraw authorization'
+      summary: 'Reply to request to withdraw authorization.'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/WithdrawAuthorizationResult'
+      examples:
+        - summary: ""
+          payload: "Accepted"
+
+    receive_token_validation_status:
+      name: receive_token_validation_status
+      title: 'Receive token validation status message'
+      summary: 'Token validation status'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TokenValidationStatusMessage'
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartBeatId'
+      examples:
+        - summary: "Heartbeat"
+          payload: 42
+
+    send_communication_check:
+      name: send_communication_check
+      title: 'Send communication check'
+      summary: Signal to EVerest that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: "CommunicationCheck"
+          payload:
+            true
+
+
+
+  schemas:
+    AuthorizationType:
+      description: >-
+        Type of authorization of the provided token. The value
+        of AuthorizationType can influence the authorization process
+      type: string
+      enum:
+        - OCPP
+        - RFID
+        - Autocharge
+        - PlugAndCharge
+        - BankCard
+    CertificateHashDataInfo:
+      description: Contains the certificate information
+      type: object
+      additionalProperties: true
+      required:
+        - hashAlgorithm
+        - issuerNameHash
+        - issuerKeyHash
+        - serialNumber
+        - responderURL
+      properties:
+        hashAlgorithm:
+          description: Used algorithms for the hashes provided
+          type: string
+          enum:
+            - SHA256
+            - SHA384
+            - SHA512
+        issuerNameHash:
+          description: Hashed value of the Issuer Distinguished Name
+          type: string
+          maxLength: 128
+        issuerKeyHash:
+          description: Hashed value of the issuers public key
+          type: string
+          maxLength: 128
+        serialNumber:
+          description: The serial number of the certificate
+          type: string
+          maxLength: 40
+        responderURL:
+          description: This contains the responder URL
+          type: string
+          maxLength: 512
+    CustomIdToken:
+      description: 'Type for a custom id token with a free-form type'
+      type: object
+      additionalProperties: true
+      required:
+        - value
+        - type
+      properties:
+        value:
+          description: Arbitrary value of the IdToken
+          type: string
+          minLength: 0
+          maxLength: 36
+        type:
+          description: Custom type of the token
+          type: string
+          minLength: 0
+          maxLength: 50
+    IdToken:
+      description: Type for an id token
+      type: object
+      additionalProperties: true
+      required:
+        - value
+        - type
+      properties:
+        value:
+          description: >-
+            Arbitrary value of the IdToken: This has to be printable case insensitive ascii
+          type: string
+          minLength: 0
+          maxLength: 36
+        type:
+          description: Type of the token
+          type: string
+          $ref: '#/components/schemas/IdTokenType'
+        additional_info:
+          description: A list of additional custom id tokens than can be used for providing additional information for validation
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/CustomIdToken'
+    IdTokenType:
+      description: >-
+        IdTokenType of the provided token. Required by OCPP2.0.1 to distinguish between different types of tokens.
+      type: string
+      enum:
+        - Central
+        - eMAID
+        - MacAddress
+        - ISO14443
+        - ISO15693
+        - KeyCode
+        - Local
+        - NoAuthorization
+    ProvidedIdToken:
+      description: Type for IdToken provided by auth token providers. Contains additional information about the IdToken like the source and purpose
+      type: object
+      additionalProperties: true
+      required:
+        - id_token
+        - authorization_type
+      properties:
+        request_id:
+          description: >-
+            Id of the authorization request of this token. Could be used to put remoteStartId of OCPP2.0.1
+          type: integer
+        id_token:
+          description: IdToken of the provided token
+          type: object
+          $ref: '#/components/schemas/IdToken'
+        parent_id_token:
+          description: Parent IdToken of the provided token
+          type: object
+          $ref: '#/components/schemas/IdToken'
+        authorization_type:
+          description: Authorization type of the token.
+          type: string
+          $ref: '#/components/schemas/AuthorizationType'
+          minLength: 2
+          maxLength: 32
+        connectors:
+          description: A list of connector ids to which the authorization can be assigned
+          type: array
+          items:
+            minimum: 1
+            type: integer
+        prevalidated:
+          description: Indicates that the id token is already validated by the provider
+          type: boolean
+        certificate:
+          description: The X.509 certificated presented by EV and encoded in PEM format
+          type: string
+          maxLength: 5500
+        iso15118CertificateHashData:
+          description: >-
+            Contains the information needed to verify the EV Contract Certificate
+            via OCSP
+          type: array
+          items:
+            description: An array of contract certificate infos
+            type: object
+            $ref: '#/components/schemas/CertificateHashDataInfo'
+          minItems: 1
+          maxItems: 4
+    TokenValidationStatus:
+      description: |
+        Ongoing token validation status
+        - TimedOut Occurs when the token has been authorized but no connector is selected within connection_timeout seconds
+      type: string
+      enum:
+        - Processing
+        - Accepted
+        - Rejected
+        - TimedOut
+    TokenValidationStatusMessage:
+      description: The token validation status
+      type: object
+      additionalProperties: true
+      required:
+        - token
+        - status
+      properties:
+        token:
+          description: The id tag assigned to this transaction
+          type: object
+          $ref: '#/components/schemas/ProvidedIdToken'
+        status:
+          type: string
+          $ref: '#/components/schemas/TokenValidationStatus'
+        messages:
+          type: array
+          items:
+            type: object
+            $ref: 'display_message_API.yaml#/components/schemas/MessageContent'
+    WithdrawAuthorizationRequest:
+      description: >-
+        Request to withdraw granted authorization.
+        If only the evse_id is given, the granted authorization for this EVSE will be withdrawn.
+        If only the id_token is given, the granted authorization for every EVSE where this
+        id_token is placed will be withdrawn  If both parameters are given, the granted
+        authorization for the given EVSE will be withdrawn, if the placed id_token matches
+        the given id_token. If no parameter is given, all granted authorizations for all EVSEs
+        will be removed
+      type: object
+      additionalProperties: true
+      properties:
+        evse_id:
+          description: The evse id to withdraw authorization for.
+          type: integer
+        id_token:
+          description: The id token to withdraw authorization for.
+          type: object
+          $ref: '#/components/schemas/IdToken'
+    WithdrawAuthorizationResult:
+      description: >-
+        The result of a WithdrawAuthorizationRequest:
+        Accepted in case requested authorization was removed
+        AuthorizationNotFound in case no match for request was found
+        EvseNotFound in case no match for evse_id was found
+        Rejected in case module could not process the request for other reasons
+      type: string
+      additionalProperties: true
+      enum:
+        - Accepted
+        - AuthorizationNotFound
+        - EvseNotFound
+        - Rejected
+
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
+    HeartBeatId:
+      type: integer
+      description: "64bit unsigned integer. The id of every heartbeat increases by 1 and overflows when the maximum representable value is reached"
+

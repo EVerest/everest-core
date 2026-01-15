@@ -1,23 +1,11 @@
 .. _everest_modules_handwritten_slac_API:
 
-..  This file is a placeholder for optional multiple files
-    handwritten documentation for the slac_API module.
-    Please decide whether you want to use the doc.rst file
-    or a set of files in the doc/ directory.
-    In the latter case, you can delete the doc.rst file.
-    In the former case, you can delete the doc/ directory.
-    
-..  This handwritten documentation is optional. In case
-    you do not want to write it, you can delete this file
-    and the doc/ directory.
+.. *******************************************
+.. slac_API
+.. *******************************************
 
-..  The documentation can be written in reStructuredText,
-    and will be converted to HTML and PDF by Sphinx.
-    This index.rst file is the entry point for the module documentation.
+The complete API specification can be found in the
 
-*******************************************
-slac_API
-*******************************************
+``docs/source/reference/EVerest_API/slac_API.yaml``
 
-:ref:`Link <everest_modules_slac_API>` to the module's reference.
-API for SLAC communication
+file in the source repository, or in the `AsyncAPI HTML documentation <../../../api/slac_API/index.html>`_ automatically generated from it.

@@ -1,0 +1,518 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:everest:external_energy_limits_consumer_API'
+info:
+  title: 'EVerest API definition for external energy limits'
+  version: 1.0.0
+  description: >-
+    API to allow EVerest API clients to set energy limits.
+
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
+  tags:
+    - name: EVerest
+    - name: external energy limits
+servers:
+  default:
+    pathname: 'everest_api/1/external_energy_limits_consumer/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module as defined in the EVerest config file.
+defaultContentType: application/json
+
+
+channels:
+  send_set_external_limits:
+    address: 'm2e/set_external_limits'
+    messages:
+      send_set_external_limits:
+        $ref: '#/components/messages/send_set_external_limits'
+
+  receive_heartbeat:
+    address: 'e2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
+
+
+operations:
+  send_set_external_limits:
+    title: 'Send external energy limits'
+    action: send
+    channel:
+      $ref: '#/channels/send_set_external_limits'
+
+  receive_heartbeat:
+    title: 'Receive heartbeat'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref: '#/channels/send_communication_check'
+
+components:
+  messages:
+    send_set_external_limits:
+      name: send_set_external_limits
+      title: 'Send external energy limits'
+      summary: 'External energy limits'
+      payload:
+        $ref: '#/components/schemas/ExternalLimits'
+      examples:
+        - summary: "Set enforced limits"
+          payload:
+            {
+              "schedule_import": [
+                {
+                  "timestamp": "2019-08-24T14:15:22Z",
+                  "limits_to_root": {
+                    "total_power_W": {
+                      "value": 0,
+                      "source": "string"
+                      },
+                    "ac_max_current_A": {
+                      "value": 0,
+                      "source": "string"
+                      },
+                    "ac_min_current_A": {
+                      "value": 0,
+                      "source": "string"
+                      },
+                    "ac_max_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                      },
+                    "ac_min_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                      },
+                    "ac_supports_changing_phases_during_charging": true,
+                    "ac_number_of_active_phases": 1
+                  },
+                  "limits_to_leaves": {
+                    "total_power_W": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_max_current_A": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_min_current_A": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_max_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_min_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_supports_changing_phases_during_charging": true,
+                    "ac_number_of_active_phases": 1
+                  },
+                  "conversion_efficiency": 1,
+                  "price_per_kwh": {
+                    "timestamp": "2019-08-24T14:15:22Z",
+                    "value": 0,
+                    "currency": "str"
+                  }
+                }
+              ],
+              "schedule_export": [
+                {
+                  "timestamp": "2019-08-24T14:15:22Z",
+                  "limits_to_root": {
+                    "total_power_W": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_max_current_A": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_min_current_A": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_max_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_min_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_supports_changing_phases_during_charging": true,
+                    "ac_number_of_active_phases": 1
+                  },
+                  "limits_to_leaves": {
+                    "total_power_W": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_max_current_A": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_min_current_A": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_max_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_min_phase_count": {
+                      "value": 0,
+                      "source": "string"
+                    },
+                    "ac_supports_changing_phases_during_charging": true,
+                    "ac_number_of_active_phases": 1
+                 },
+                 "conversion_efficiency": 1,
+                 "price_per_kwh": {
+                   "timestamp": "2019-08-24T14:15:22Z",
+                   "value": 0,
+                   "currency": "str"
+                 }
+               }
+              ],
+              "schedule_setpoints": [
+                {
+                  "timestamp": "2019-08-24T14:15:22Z",
+                  "setpoint": {
+                    "ac_current_A": 0,
+                    "total_power_W": 0,
+                    "frequency_table": [
+                      {
+                        "frequency_Hz": 0,
+                        "total_power_W": 0
+                      }
+                    ],
+                    "priority": 1000,
+                    "source": "string"
+                  }
+                }
+              ]
+            }
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartBeatId'
+      examples:
+        - summary: "Heartbeat"
+          payload: 42
+
+    send_communication_check:
+      name: send_communication_check
+      title: 'Send communication check'
+      summary: Signal to EVerest that communication is good or check shall be stopped
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: "CommunicationCheck"
+          payload:
+            true
+
+
+  schemas:
+    ExternalLimits:
+      description: External Limits data type
+      type: object
+      additionalProperties: true
+      required:
+        - schedule_import
+        - schedule_export
+        - schedule_setpoints
+      properties:
+        schedule_import:
+          description: >-
+            Energy import/limits time series. The first entry is special as it will be active already now
+            even if the timestamp is in the future, so it is good practice to set the
+            first entry to current time. The time series can have arbitrary time difference
+            between entries and all timestamps are absolute UTC time.
+            The last entry is valid for any time after the schedule ends.
+          type: array
+          items:
+            description: One entry for the time series
+            type: object
+            $ref: '#/components/schemas/ScheduleReqEntry'
+        schedule_export:
+          description: >-
+            Energy export/limits time series. The first entry is special as it will be active already now
+            even if the timestamp is in the future, so it is good practice to set the
+            first entry to current time. The time series can have arbitrary time difference
+            between entries and all timestamps are absolute UTC time.
+            The last entry is valid for any time after the schedule ends.
+          type: array
+          items:
+            description: One entry for the time series
+            type: object
+            $ref: '#/components/schemas/ScheduleReqEntry'
+        schedule_setpoints:
+          description: >-
+            Setpoints time series. The first entry is special
+            as it will be active already now even if the timestamp is in the future,
+            so it is good practice to set the first entry to current time. The time
+            series can have arbitrary time difference between entries and all timestamps
+            are absolute UTC time.
+          type: array
+          items:
+            description: One entry for the time series.
+            type: object
+            $ref: '#/components/schemas/ScheduleSetpointEntry'
+    FrequencyWattPoint:
+      description: A point of a frequency-watt curve
+      type: object
+      additionalProperties: true
+      required:
+        - frequency_Hz
+        - total_power_W
+      properties:
+        frequency_Hz:
+          description: The frequency in Hz
+          type: number
+        total_power_W:
+          description: The total power in W
+          type: number
+    IntegerWithSource:
+      description: Simple number type with source information
+      type: object
+      additionalProperties: true
+      required:
+        - value
+        - source
+      properties:
+        value:
+          description: Value
+          type: integer
+        source:
+          description: Source of the value
+          type: string
+    LimitsReq:
+      description: Energy flow limiting object request (Evses to EnergyManager)
+      type: object
+      additionalProperties: true
+      properties:
+        total_power_W:
+          description: >-
+            Total power limit in Watt. Can be used for DC or as additional
+            limit for AC.
+          type: object
+          $ref: '#/components/schemas/NumberWithSource'
+        ac_max_current_A:
+          description: Max current limit (per phase) in Ampere. AC only.
+          type: object
+          $ref: '#/components/schemas/NumberWithSource'
+        ac_min_current_A:
+          description: >-
+            Min AC current limit per phase in Ampere. Values below that value indicate the
+            device will not work properly, i.e. it will not charge below 6 amps. AC only.
+          type: object
+          $ref: '#/components/schemas/NumberWithSource'
+        ac_max_phase_count:
+          description: Limit to number of phases. Omit if number of phases are not limited.
+          type: object
+          $ref: '#/components/schemas/IntegerWithSource'
+        ac_min_phase_count:
+          description: Minimal number of phases. Omit if number of phases are not limited.
+          type: object
+          $ref: '#/components/schemas/IntegerWithSource'
+        ac_supports_changing_phases_during_charging:
+          description: >-
+            Indicate whether phase switching is allowed during charging or
+            not
+          type: boolean
+        ac_number_of_active_phases:
+          description: >-
+            Number of phases currently offered to the vehicle (1ph or 3ph mode)
+          type: integer
+          minimum: 1
+          maximum: 3
+    LimitsRes:
+      description: Energy flow limiting object Result (Energy manager to Evses)
+      type: object
+      additionalProperties: true
+      properties:
+        total_power_W:
+          description: >-
+            Total power limit in Watt. Can be used for DC or as additional
+            limit for AC. Negative numbers mean export to grid direction.
+          type: object
+          $ref: '#/components/schemas/NumberWithSource'
+        ac_max_current_A:
+          description: Max current limit (per phase) in Ampere. AC only. Negative numbers mean export to grid direction.
+          type: object
+          $ref: '#/components/schemas/NumberWithSource'
+        ac_max_phase_count:
+          description: Limit to number of phases. Omit if number of phases are not limited.
+          type: object
+          $ref: '#/components/schemas/IntegerWithSource'
+    NumberWithSource:
+      description: Simple number type with source information
+      type: object
+      additionalProperties: true
+      required:
+        - value
+        - source
+      properties:
+        value:
+          description: Value
+          type: number
+        source:
+          description: Source of the value
+          type: string
+    PricePerkWh:
+      description: Price information for this timepoint
+      type: object
+      additionalProperties: true
+      required:
+        - timestamp
+        - value
+        - currency
+      properties:
+        timestamp:
+          description: Absolute timestamp for this sample in RFC3339 UTC format
+          type: string
+          format: date-time
+        value:
+          description: Price per kWh (cost)
+          type: number
+        currency:
+          description: Currency in 3 digit ISO 4217
+          type: string
+          minLength: 3
+          maxLength: 3
+    ScheduleReqEntry:
+      description: One entry for the time series (request)
+      type: object
+      additionalProperties: true
+      required:
+        - timestamp
+        - limits_to_root
+        - limits_to_leaves
+      properties:
+        timestamp:
+          description: Absolute timestamp for this sample in RFC3339 UTC format
+          type: string
+          format: date-time
+        limits_to_root:
+          description: Limit for this timestamp, for the root facing side
+          type: object
+          $ref: '#/components/schemas/LimitsReq'
+        limits_to_leaves:
+          description: Limit for this timestamp, for the leaves facing side
+          type: object
+          $ref: '#/components/schemas/LimitsReq'
+        conversion_efficiency:
+          description: Conversion efficiency from root to leaves side (e.g. AC/DC efficiency). Defaults to one if not specified.
+          type: number
+          minimum: 0
+          maximum: 1
+        price_per_kwh:
+          description: Price information for this timepoint
+          type: object
+          $ref: '#/components/schemas/PricePerkWh'
+    ScheduleResEntry:
+      description: One entry for the time series (result)
+      type: object
+      additionalProperties: true
+      required:
+        - timestamp
+        - limits_to_root
+      properties:
+        timestamp:
+          description: Absolute timestamp for this sample in RFC3339 UTC format
+          type: string
+          format: date-time
+        limits_to_root:
+          description: Limit for this timestamp, for the root facing side
+          type: object
+          $ref: '#/components/schemas/LimitsRes'
+        price_per_kwh:
+          description: Price information for this timepoint
+          type: object
+          $ref: '#/components/schemas/PricePerkWh'
+    ScheduleSetpointEntry:
+      description: One entry for the time series (setpoint request)
+      type: object
+      additionalProperties: true
+      required:
+        - timestamp
+      properties:
+        timestamp:
+          description: Absolute timestamp for this sample in RFC3339 UTC format
+          type: string
+          format: date-time
+        setpoint:
+          description: Setpoint for this timestamp
+          type: object
+          $ref: '#/components/schemas/SetpointType'
+    SetpointType:
+      description: Defines a setpoint
+      type: object
+      additionalProperties: true
+      required:
+        - source
+        - priority
+      properties:
+        ac_current_A:
+          description: >-
+            The target value in amps per phase for either charging or discharging depending on the sign.
+            Positive values indicate charging, while negative values indicate discharging.
+            Do not set ac_current_A, total_power_W and frequency_table properties simultaneously.
+          type: number
+        total_power_W:
+          description: >-
+            The target value for the total power for either charging or discharging depending on the sign.
+            Positive values indicate charging, while negative values indicate discharging.
+            Do not set ac_current_A, total_power_W and frequency_table properties simultaneously.
+          type: number
+        frequency_table:
+          description: >-
+            Frequency table for the setpoint. When used it must contain at least
+            two coordinates to specify a power-frequency table to use during this period.
+            If the array is empty, no frequency setpoint is set.
+            Do not set ac_current_A, total_power_W and frequency_table properties simultaneously.
+          type: array
+          items:
+            description: One entry for the frequency table
+            type: object
+            $ref: '#/components/schemas/FrequencyWattPoint'
+        priority:
+          description: >-
+            If multiple conflicting setpoints are specified in the tree, the priority selects which one is used.
+            Highest priority is 0, lowest priority is 1000.
+          type: integer
+          minimum: 0
+          maximum: 1000
+        source:
+          description: Source of the setpoint
+          type: string
+
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
+    HeartBeatId:
+      type: integer
+      description: "64bit unsigned integer. The id of every heartbeat increases by 1 and overflows when the maximum representable value is reached"
