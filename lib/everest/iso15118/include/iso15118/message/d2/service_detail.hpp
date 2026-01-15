@@ -6,6 +6,7 @@
 
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace iso15118::d2::msg {
@@ -13,12 +14,7 @@ namespace iso15118::d2::msg {
 namespace data_types {
 struct Parameter {
     std::string name;
-    std::optional<bool> boolValue{std::nullopt};
-    std::optional<int8_t> byteValue{std::nullopt};
-    std::optional<int16_t> shortValue{std::nullopt};
-    std::optional<int32_t> intValue{std::nullopt};
-    std::optional<PhysicalValue> physicalValue{std::nullopt};
-    std::optional<std::string> stringValue{std::nullopt};
+    std::variant<bool, int8_t, int16_t, int32_t, PhysicalValue, std::string> value;
 };
 
 struct ParameterSet {

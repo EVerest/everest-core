@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 Pionix GmbH and Contributors to EVerest
+#include <cstdint>
 #include <iso15118/message/d2/service_detail.hpp>
 
 #include <iso15118/detail/variant_access.hpp>
@@ -8,6 +9,7 @@
 #include <cbv2g/iso_2/iso2_msgDefEncoder.h>
 
 #include <iso15118/detail/helper.hpp>
+#include <variant>
 
 namespace iso15118::d2::msg {
 
@@ -33,14 +35,25 @@ template <> void convert(const data_types::ServiceParameterList& in, struct iso2
             auto& out_param = out_parameter_set.Parameter.array[parameter_idx++];
             CPP2CB_STRING(parameter.name, out_param.Name);
 
-            // TODO(kd): This is a bit naive implementation. Alternatively we could do an if statement using has_value()
-            // for each field. This way we can prevent errors but also we will introduce a priority between field types.
-            CPP2CB_ASSIGN_IF_USED(parameter.boolValue, out_param.boolValue);
-            CPP2CB_ASSIGN_IF_USED(parameter.byteValue, out_param.byteValue);
-            CPP2CB_ASSIGN_IF_USED(parameter.shortValue, out_param.shortValue);
-            CPP2CB_ASSIGN_IF_USED(parameter.intValue, out_param.intValue);
-            CPP2CB_CONVERT_IF_USED(parameter.physicalValue, out_param.physicalValue);
-            CPP2CB_STRING_IF_USED(parameter.stringValue, out_param.stringValue);
+            if (std::holds_alternative<bool>(parameter.value)) {
+                out_param.boolValue = std::get<bool>(parameter.value);
+                out_param.boolValue_isUsed = true;
+            } else if (std::holds_alternative<int8_t>(parameter.value)) {
+                out_param.byteValue = std::get<int8_t>(parameter.value);
+                out_param.byteValue_isUsed = true;
+            } else if (std::holds_alternative<int16_t>(parameter.value)) {
+                out_param.shortValue = std::get<int16_t>(parameter.value);
+                out_param.shortValue_isUsed = true;
+            } else if (std::holds_alternative<int32_t>(parameter.value)) {
+                out_param.intValue = std::get<int32_t>(parameter.value);
+                out_param.intValue_isUsed = true;
+            } else if (std::holds_alternative<data_types::PhysicalValue>(parameter.value)) {
+                convert(std::get<data_types::PhysicalValue>(parameter.value), out_param.physicalValue);
+                out_param.physicalValue_isUsed = true;
+            } else if (std::holds_alternative<std::string>(parameter.value)) {
+                CPP2CB_STRING(std::get<std::string>(parameter.value), out_param.stringValue);
+                out_param.stringValue_isUsed = true;
+            }
         }
         out_parameter_set.Parameter.arrayLen = parameter_set.parameter.size();
     }

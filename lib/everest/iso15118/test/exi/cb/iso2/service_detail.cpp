@@ -39,18 +39,12 @@ SCENARIO("Ser/Deserialize d2 service detail messages") {
         auto parameterSet = dt::ParameterSet{};
         parameterSet.parameter_set_id = 50;
 
-        auto boolValue = dt::Parameter{"bool"};
-        boolValue.boolValue = true;
-        auto byteValue = dt::Parameter{"byte"};
-        byteValue.byteValue = 8;
-        auto shortValue = dt::Parameter{"short"};
-        shortValue.shortValue = 16;
-        auto intValue = dt::Parameter{"int"};
-        intValue.intValue = 32;
-        auto physicalValue = dt::Parameter{"physical"};
-        physicalValue.physicalValue = dt::PhysicalValue{55, -1, dt::UnitSymbol::A};
-        auto stringValue = dt::Parameter{"string"};
-        stringValue.stringValue = "Foo Bar";
+        dt::Parameter boolValue{"bool", true};
+        dt::Parameter byteValue{"byte", (int8_t)8};
+        dt::Parameter shortValue{"short", (int16_t)16};
+        dt::Parameter intValue{"int", (int32_t)32};
+        dt::Parameter physicalValue{"physical", dt::PhysicalValue{55, -1, dt::UnitSymbol::A}};
+        dt::Parameter stringValue{"string", "Foo Bar"};
 
         parameterSet.parameter.push_back(boolValue);
         parameterSet.parameter.push_back(byteValue);
