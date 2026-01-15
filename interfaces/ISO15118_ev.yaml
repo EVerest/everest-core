@@ -44,6 +44,13 @@ cmds:
         $ref: /iso15118#/DcEvBPTParameters
   enable_sae_j2847_v2g_v2h:
     description: Enable the SAE J2847 2 V2H V2G
+  update_soc:
+    description: Updating the EV SoC state
+    arguments:
+      SoC:
+        description: The actual State of Charge from the EV
+        type: number
+        minimum: 0
 vars:
   v2g_session_finished:
     description: The v2g session between the charger and the car is finished

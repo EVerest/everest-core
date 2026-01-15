@@ -138,10 +138,20 @@ void CarSimulation::simulate_soc() {
         sim_data.battery_charge_wh += power * factor;
     }
 
-    ev_info.soc = (sim_data.battery_charge_wh / sim_data.battery_capacity_wh) * 100.0;
-    if (ev_info.soc > 100.0) {
-        ev_info.soc = 100.0;
+    auto soc = (sim_data.battery_charge_wh / sim_data.battery_capacity_wh) * 100.0;
+
+    if (soc > 100.0) {
+        soc = 100.0;
+    } else if (soc <= 0.0) {
+        soc = 0.0;
     }
+
+    if (latest_soc != soc) {
+        latest_soc = soc;
+        r_ev[0]->call_update_soc(soc);
+    }
+
+    ev_info.soc = soc;
     ev_info.battery_capacity = sim_data.battery_capacity_wh;
     ev_info.battery_full_soc = 100;
 
