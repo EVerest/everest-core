@@ -47,6 +47,8 @@ void handle_v2g(VariantAccess& va) {
         insert_type(va, doc.V2G_Message.Body.SessionSetupReq, doc.V2G_Message.Header);
     } else if (doc.V2G_Message.Body.ServiceDiscoveryReq_isUsed) {
         insert_type(va, doc.V2G_Message.Body.ServiceDiscoveryReq, doc.V2G_Message.Header);
+    } else if (doc.V2G_Message.Body.ServiceDetailReq_isUsed) {
+        insert_type(va, doc.V2G_Message.Body.ServiceDetailReq, doc.V2G_Message.Header);
     } else if (doc.V2G_Message.Body.PaymentServiceSelectionReq_isUsed) {
         insert_type(va, doc.V2G_Message.Body.PaymentServiceSelectionReq, doc.V2G_Message.Header);
     } else if (doc.V2G_Message.Body.AuthorizationReq_isUsed) {
