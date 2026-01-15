@@ -13,3 +13,4 @@ __pycache__/
 *.diff
 *.orig
 *.rej
+docs/source/conf.py
