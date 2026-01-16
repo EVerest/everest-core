@@ -300,10 +300,6 @@ void powermeterImpl::configure_device() {
     // see if there is a pending closed transaction that needs to be read
     read_transaction_state_and_id();
     // configure the device to use automtic transaction id generation
-    // write 1 to register 328672 (7000h)
-    EVLOG_info << "Configuring the device to use automtic transaction id generation";
-    std::vector<uint16_t> data = {0};
-    p_modbus_transport->write_multiple_registers(MODBUS_OCMF_TRANSACTION_ID_GENERATION_ADDRESS, data);
 
     EVLOG_info << "Device configured";
     // TODO(fmihut): check how to recover from a power outage
@@ -501,6 +497,12 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
     if (transaction_id.empty()) {
         EVLOG_info << "Cleaning up the transaction request.";
         try {
+            if (!m_pending_closed_transaction) {
+                std::vector<uint16_t> command_data = {MODBUS_OCMF_COMMAND_END};
+                p_modbus_transport->write_multiple_registers(MODBUS_OCMF_COMMAND_ADDRESS, command_data);
+                EVLOG_info << "Transaction " << transaction_id << " stopped";
+            }
+            m_pending_closed_transaction = false;
             clear_transaction_states();
         } catch (const std::exception& e) {
             EVLOG_error << __PRETTY_FUNCTION__ << " Error: " << e.what() << std::endl;
@@ -513,8 +515,7 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
             // the received transaction id is different from the current transaction id
             // since there is a pending closed transaction, I assume a power loss occurred
             // we need to check if the transaction id is equal to the transaction id from OCMF file
-            EVLOG_info
-                << "Power loss occurred, checking if the transaction id is equal to the transaction id from OCMF file";
+            EVLOG_info << "Power loss occurred, checking if the transaction id == transaction id from OCMF file";
             std::string ocmf_file = read_ocmf_file();
             const auto ocmf_file_transaction_id_opt = ocmf_utils::extract_transaction_id_from_ocmf_record(ocmf_file);
             if (!ocmf_file_transaction_id_opt.has_value()) {
@@ -530,6 +531,7 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
                 return {
                     types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, {}, "Transaction id mismatch"};
             }
+            EVLOG_info << "Transaction id matches, sending successful transaction stop response with OCMF file";
             m_pending_closed_transaction = false;
             auto signed_meter_value = types::units_signed::SignedMeterValue{ocmf_file, "", "OCMF"};
             signed_meter_value.public_key.emplace(m_public_key_hex);
