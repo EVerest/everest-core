@@ -223,15 +223,29 @@ void car_simulatorImpl::register_all_commands() {
             return this->car_simulation->iso_dc_power_on(arguments);
         });
         command_registry->register_command("iso_start_v2g_session", 1, [this](const CmdArguments& arguments) {
+            constexpr auto payment_option = "auto";
+            EVLOG_debug << "Using default payment_options, departure time and eamount";
+            CmdArguments args{arguments[0], payment_option, std::to_string(mod->config.departure_time),
+                              std::to_string(mod->config.e_amount)};
+            return this->car_simulation->iso_start_v2g_session(args, mod->config.three_phases);
+        });
+        command_registry->register_command("iso_start_v2g_session", 2, [this](const CmdArguments& arguments) {
             EVLOG_debug << "Using default departure time and eamount";
-            CmdArguments args{arguments[0], std::to_string(mod->config.departure_time),
+            CmdArguments args{arguments[0], arguments[1], std::to_string(mod->config.departure_time),
                               std::to_string(mod->config.e_amount)};
             return this->car_simulation->iso_start_v2g_session(args, mod->config.three_phases);
         });
         command_registry->register_command("iso_start_v2g_session", 3, [this](const CmdArguments& arguments) {
+            constexpr auto payment_option = "auto";
+            EVLOG_debug << "Using default payment_options";
+            CmdArguments args{arguments[0], payment_option, arguments[1], arguments[2]};
+            return this->car_simulation->iso_start_v2g_session(args, mod->config.three_phases);
+        });
+        command_registry->register_command("iso_start_v2g_session", 4, [this](const CmdArguments& arguments) {
             // 1. Argument: EnergyMode
-            // 2. Argument: DepartureTime
-            // 3. Argument: EAmount
+            // 2. Argument: PaymentOption
+            // 3. Argument: DepartureTime
+            // 4. Argument: EAmount
             return this->car_simulation->iso_start_v2g_session(arguments, mod->config.three_phases);
         });
         command_registry->register_command("iso_stop_charging", 0, [this](const CmdArguments& arguments) {
