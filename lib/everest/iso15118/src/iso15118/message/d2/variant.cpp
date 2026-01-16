@@ -55,6 +55,8 @@ void handle_v2g(VariantAccess& va) {
         insert_type(va, doc.V2G_Message.Body.AuthorizationReq, doc.V2G_Message.Header);
     } else if (doc.V2G_Message.Body.PowerDeliveryReq_isUsed) {
         insert_type(va, doc.V2G_Message.Body.PowerDeliveryReq, doc.V2G_Message.Header);
+    } else if (doc.V2G_Message.Body.SessionStopReq_isUsed) {
+        insert_type(va, doc.V2G_Message.Body.SessionStopReq, doc.V2G_Message.Header);
     } else if (doc.V2G_Message.Body.CableCheckReq_isUsed) {
         insert_type(va, doc.V2G_Message.Body.CableCheckReq, doc.V2G_Message.Header);
     } else if (doc.V2G_Message.Body.ChargeParameterDiscoveryReq_isUsed) {
