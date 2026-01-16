@@ -40,8 +40,6 @@ active_modules:
       ev_receipt_required: false
       evse_id: DE*PNX*E12345*1
       has_ventilation: true
-      max_current_import_A: 16
-      max_current_export_A: 16
       payment_enable_contract: false
       payment_enable_eim: true
       session_logging: true
