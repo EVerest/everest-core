@@ -76,12 +76,9 @@ active_modules:
   iso_monitor:
     config_implementation:
       main:
-        imd_device_id: 3
-    connections:
-      serial_comm_hub:
-        - implementation_id: main
-          module_id: comm_hub
-    module: Bender_isoCHA425HV
+        selftest_success: true
+        resistance_F_Ohm: 900000
+    module: IMDSimulator
   comm_hub:
     config_implementation:
       main:
@@ -90,9 +87,7 @@ active_modules:
         parity: 2
     module: SerialCommHub
   powersupply_dc:
-    config_module:
-      can_device: cb_can
-    module: InfyPower_BEG1K075G
+    module: DCSupplySimulator
   grid_connection_point:
     config_module:
       fuse_limit_A: 16
@@ -115,6 +110,7 @@ active_modules:
     config_module:
       device: cb_plc
       tls_security: prohibit
+      supported_DIN70121: false
     connections: {}
     module: EvseV2G
     connections:
