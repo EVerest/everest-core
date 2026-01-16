@@ -1042,7 +1042,7 @@ void EvseManager::ready() {
         // Forward some events to HLC
         if (hlc_enabled) {
             // Reset HLC auth waiting flags on new session
-            if (event == CPEvent::CarPluggedIn) {
+            if (event == CPEvent::CarUnplugged) {
                 r_hlc[0]->call_reset_error();
                 r_hlc[0]->call_ac_contactor_closed(false);
                 r_hlc[0]->call_stop_charging(false);
