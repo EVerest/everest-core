@@ -35,6 +35,15 @@ add_executable(pionix_chargebridge
   main.cpp
 )
 
+add_executable(pionix_chargebridge_discover
+  test.cpp
+)
+
+target_link_libraries(pionix_chargebridge_discover
+  everest::io
+)
+
+
 target_link_libraries(pionix_chargebridge
   everest::io
   everest::everest_api_types

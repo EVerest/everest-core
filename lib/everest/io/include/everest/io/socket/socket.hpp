@@ -7,10 +7,36 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include <everest/io/event/unique_fd.hpp>
 
 namespace everest::lib::io::socket {
+
+struct if_info {
+    std::string name;
+    std::string ipv4;
+};
+
+std::string get_interface_address(std::string const& name);
+
+std::vector<if_info> get_all_interaces();
+
+void set_reuse_address(int fd);
+
+void set_reuse_port(int fd);
+
+void bind_socket_ip4(int fd, std::string const& ip, std::uint16_t port);
+
+void set_udp_multicast(int fd, std::string const& multicast_ip, std::string const& interface_ip);
+
+std::uint32_t ip_to_s_addr(std::string const& ip);
+
+event::unique_fd open_udp_multicast_socket(std::string const& multicast_group, std::uint16_t port,
+                                           std::string interface_address, std::string listen_address,
+                                           bool reuse_address, bool reuse_port);
+
+event::unique_fd open_mdns_socket(std::string const& interface_name);
 
 /**
  * @brief Open a UDP socket in server mode
