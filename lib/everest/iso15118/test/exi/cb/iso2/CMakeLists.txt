@@ -18,6 +18,7 @@ create_exi_test_target(dc_welding_detection)
 create_exi_test_target(service_discovery)
 create_exi_test_target(service_detail)
 create_exi_test_target(payment_service_selection)
+create_exi_test_target(power_delivery)
 create_exi_test_target(session_setup)
 create_exi_test_target(authorization)
 
