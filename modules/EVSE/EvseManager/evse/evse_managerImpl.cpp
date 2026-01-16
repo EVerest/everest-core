@@ -33,14 +33,6 @@ void evse_managerImpl::init() {
         }
     });
 
-    if (!this->mod->config.connector_type.empty()) {
-        try {
-            connector_type = types::evse_manager::string_to_connector_type_enum(this->mod->config.connector_type);
-        } catch (const std::out_of_range& e) {
-            EVLOG_warning << "Unknown/invalid connector type: " << this->mod->config.connector_type;
-        }
-    }
-
     // Interface to Node-RED debug UI
 
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/enable", mod->config.connector_id),
@@ -331,7 +323,7 @@ types::evse_manager::Evse evse_managerImpl::handle_get_evse() {
     types::evse_manager::Connector connector;
     // EvseManager currently only supports a single connector with id: 1;
     connector.id = 1;
-    connector.type = connector_type;
+    connector.type = mod->connector_type;
 
     connectors.push_back(connector);
     evse.connectors = connectors;
@@ -461,12 +453,12 @@ evse_managerImpl::handle_update_allowed_energy_transfer_modes(
     // also TODO: for DC we can check whether BPT can be supported in case DC supply supports it
     std::copy_if(allowed_energy_transfer_modes.begin(), allowed_energy_transfer_modes.end(),
                  std::back_inserter(filtered_energy_transfer_modes), [&](types::iso15118::EnergyTransferMode m) {
-                     if (!connector_type.has_value()) {
+                     if (!mod->connector_type.has_value()) {
                          return true;
                      }
 
                      // for MCS we only allow MCS types
-                     if (connector_type == types::evse_manager::ConnectorTypeEnum::cMCS) {
+                     if (mod->connector_type == types::evse_manager::ConnectorTypeEnum::cMCS) {
                          return m == types::iso15118::EnergyTransferMode::MCS or
                                 m == types::iso15118::EnergyTransferMode::MCS_BPT;
                      }

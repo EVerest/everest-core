@@ -67,7 +67,6 @@ private:
     // insert your private definitions here
     std::atomic_bool connector_status_changed{false};
     types::evse_manager::Limits limits;
-    std::optional<types::evse_manager::ConnectorTypeEnum> connector_type;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
