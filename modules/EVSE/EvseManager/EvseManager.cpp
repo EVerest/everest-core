@@ -223,6 +223,17 @@ void EvseManager::ready() {
     charger = std::make_unique<Charger>(bsp, error_handling, r_powermeter_billing(), store,
                                         hw_capabilities.connector_type, config.evse_id);
 
+    // Create voltage plausibility monitor for DC charging
+    voltage_plausibility_monitor = std::make_unique<VoltagePlausibilityMonitor>(
+        [this](const std::string& description) {
+            if (this->error_handling) {
+                this->error_handling->raise_voltage_plausibility_fault(description);
+            }
+        },
+        config.voltage_plausibility_std_deviation_threshold_V,
+        std::chrono::milliseconds(config.voltage_plausibility_fault_duration_ms),
+        std::chrono::milliseconds(config.voltage_plausibility_measurement_max_age_ms));
+
     // Now incoming hardware capabilties can be processed
     hw_caps_mutex.unlock();
 
@@ -471,6 +482,10 @@ void EvseManager::ready() {
                     internal_over_voltage_monitor->reset();
                     internal_over_voltage_monitor->start_monitor();
                 }
+                if (voltage_plausibility_monitor) {
+                    voltage_plausibility_monitor->reset();
+                    voltage_plausibility_monitor->start_monitor();
+                }
             });
 
             r_hlc[0]->subscribe_current_demand_finished([this] {
@@ -478,6 +493,9 @@ void EvseManager::ready() {
                 sae_bidi_active = false;
                 if (not r_over_voltage_monitor.empty()) {
                     r_over_voltage_monitor[0]->call_stop();
+                }
+                if (voltage_plausibility_monitor) {
+                    voltage_plausibility_monitor->stop_monitor();
                 }
                 if (internal_over_voltage_monitor) {
                     internal_over_voltage_monitor->stop_monitor();
@@ -501,6 +519,9 @@ void EvseManager::ready() {
 
                 r_imd[0]->subscribe_isolation_measurement([this](types::isolation_monitor::IsolationMeasurement m) {
                     // new DC isolation monitoring measurement received
+                    if (voltage_plausibility_monitor && m.voltage_V.has_value()) {
+                        voltage_plausibility_monitor->update_isolation_monitor_voltage(m.voltage_V.value());
+                    }
 
                     // Check for isolation errors
                     if (charger->get_current_state() == Charger::EvseState::Charging and
@@ -568,6 +589,9 @@ void EvseManager::ready() {
             if (not r_powersupply_DC.empty()) {
                 r_powersupply_DC[0]->subscribe_voltage_current([this](types::power_supply_DC::VoltageCurrent m) {
                     powersupply_measurement = m;
+                    if (voltage_plausibility_monitor) {
+                        voltage_plausibility_monitor->update_power_supply_voltage(m.voltage_V);
+                    }
                     types::iso15118::DcEvsePresentVoltageCurrent present_values;
                     present_values.evse_present_voltage = (m.voltage_V > 0 ? m.voltage_V : 0.0);
                     present_values.evse_present_current = m.current_A;
@@ -794,6 +818,12 @@ void EvseManager::ready() {
                 if (not r_over_voltage_monitor.empty()) {
                     r_over_voltage_monitor[0]->call_set_limits(get_emergency_over_voltage_threshold(),
                                                                get_error_over_voltage_threshold());
+                    // Subscribe to voltage measurements from over_voltage_monitor for plausibility check
+                    r_over_voltage_monitor[0]->subscribe_voltage_measurement_V([this](float voltage_V) {
+                        if (voltage_plausibility_monitor) {
+                            voltage_plausibility_monitor->update_over_voltage_monitor_voltage(voltage_V);
+                        }
+                    });
                 }
                 if (internal_over_voltage_monitor) {
                     internal_over_voltage_monitor->set_limits(get_emergency_over_voltage_threshold(),
@@ -1072,6 +1102,10 @@ void EvseManager::ready() {
 
     if (r_powermeter_billing().size() > 0) {
         r_powermeter_billing()[0]->subscribe_powermeter([this](types::powermeter::Powermeter p) {
+            // Update voltage plausibility monitor with powermeter voltage
+            if (voltage_plausibility_monitor && p.voltage_V.has_value() && p.voltage_V.value().DC.has_value()) {
+                voltage_plausibility_monitor->update_powermeter_voltage(p.voltage_V.value().DC.value());
+            }
             // Inform charger about current charging current. This is used for slow OC detection.
             if (p.current_A and p.current_A.value().L1 and p.current_A.value().L2 and p.current_A.value().L3) {
                 charger->set_current_drawn_by_vehicle(p.current_A.value().L1.value(), p.current_A.value().L2.value(),
