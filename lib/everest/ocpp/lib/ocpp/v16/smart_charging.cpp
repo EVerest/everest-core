@@ -208,8 +208,14 @@ ChargingSchedule SmartChargingHandler::calculate_composite_schedule(const ocpp::
                                                                     const std::int32_t evse_id,
                                                                     ChargingRateUnit charging_rate_unit,
                                                                     bool is_offline, bool simulate_transaction_active) {
+    // handle edge case where start_time > end_time
+    auto start_time_w = start_time;
+    if (start_time_w > end_time) {
+        start_time_w = end_time;
+    }
+
     const auto enhanced_composite_schedule = this->calculate_enhanced_composite_schedule(
-        start_time, end_time, evse_id, charging_rate_unit, is_offline, simulate_transaction_active);
+        start_time_w, end_time, evse_id, charging_rate_unit, is_offline, simulate_transaction_active);
     ChargingSchedule composite_schedule;
     composite_schedule.chargingRateUnit = enhanced_composite_schedule.chargingRateUnit;
     composite_schedule.duration = enhanced_composite_schedule.duration;

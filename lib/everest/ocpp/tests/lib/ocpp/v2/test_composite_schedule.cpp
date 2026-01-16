@@ -1201,4 +1201,51 @@ TEST_F(CompositeScheduleTestFixtureV2, TxDefaultConnector0) {
                                      PeriodEquals(350, 10000.0F)));
 }
 
+TEST_F(CompositeScheduleTestFixtureV2, ZeroDuration) {
+    // test relating to libocpp issue 1169
+    // incorrect composite schedule when duration is zero
+
+    // using absolute schedule with limit 32.0, starting 2024-01-01T12:02:00Z
+    // default limit is 57.0 (DEFAULT_LIMIT_AMPERE)
+
+    load_charging_profiles_for_evse("singles/Absolute_301.json", STATION_WIDE_ID);
+
+    const DateTime start_time = ocpp::DateTime("2024-01-01T12:02:00Z");
+    const DateTime end_time = ocpp::DateTime("2024-01-01T12:02:01Z");
+    const auto expected_limit = 32.0F;
+
+    // check with end time and a corresponding duration of 1 second
+    auto result = handler->calculate_composite_schedule(start_time, end_time, STATION_WIDE_ID, ChargingRateUnitEnum::A,
+                                                        false, true);
+
+    EXPECT_EQ(result.evseId, STATION_WIDE_ID);
+    EXPECT_EQ(result.scheduleStart, start_time);
+    EXPECT_EQ(result.duration, 1);
+    EXPECT_EQ(result.chargingRateUnit, ChargingRateUnitEnum::A);
+
+    EXPECT_THAT(result.chargingSchedulePeriod, testing::ElementsAre(PeriodEquals(0, expected_limit)));
+
+    // Now with duration of 0 seconds
+    result = handler->calculate_composite_schedule(start_time, start_time, STATION_WIDE_ID, ChargingRateUnitEnum::A,
+                                                   false, true);
+
+    EXPECT_EQ(result.evseId, STATION_WIDE_ID);
+    EXPECT_EQ(result.scheduleStart, start_time);
+    EXPECT_EQ(result.duration, 0);
+    EXPECT_EQ(result.chargingRateUnit, ChargingRateUnitEnum::A);
+
+    EXPECT_THAT(result.chargingSchedulePeriod, testing::ElementsAre(PeriodEquals(0, expected_limit)));
+
+    // Now with duration of -1 second
+    result = handler->calculate_composite_schedule(end_time, start_time, STATION_WIDE_ID, ChargingRateUnitEnum::A,
+                                                   false, true);
+
+    EXPECT_EQ(result.evseId, STATION_WIDE_ID);
+    EXPECT_EQ(result.scheduleStart, start_time);
+    EXPECT_EQ(result.duration, 0);
+    EXPECT_EQ(result.chargingRateUnit, ChargingRateUnitEnum::A);
+
+    EXPECT_THAT(result.chargingSchedulePeriod, testing::ElementsAre(PeriodEquals(0, expected_limit)));
+}
+
 } // namespace ocpp::v2

@@ -408,7 +408,8 @@ IntermediateProfile generate_profile_from_periods(std::vector<period_entry_t>& p
     IntermediateProfile combined{};
     DateTime current = now;
 
-    while (current < end) {
+    // run calculation at least once especially where current >= end
+    do {
         // find schedule to use for time: current
         DateTime earliest = end;
         DateTime next_earliest = end;
@@ -477,7 +478,7 @@ IntermediateProfile generate_profile_from_periods(std::vector<period_entry_t>& p
                 current = next_earliest;
             }
         }
-    }
+    } while (current < end);
 
     return combined;
 }
