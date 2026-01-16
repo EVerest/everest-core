@@ -71,7 +71,7 @@ void isolation_monitorImpl::ready() {
             if (not update_control_word1()) {
                 EVLOG_error << "Failed to update control word 1";
                 continue;
-            };
+            }
         }
 
         // update Timeout register if enabled
@@ -153,7 +153,7 @@ void isolation_monitorImpl::ready() {
             if (not configure_device()) {
                 EVLOG_error << "Failed to reconfigure device after communication fault";
                 continue;
-            };
+            }
 
             clear_error("isolation_monitor/CommunicationFault");
         }
@@ -316,6 +316,8 @@ bool isolation_monitorImpl::configure_device() {
 
     new_settings[8] = indicator_relay_k1_function; // 2008
     new_settings[9] = indicator_relay_k2_function; // 2009
+
+    new_settings[10] = mod->config.automatic_self_test ? 1 : 0; // 2010
 
     if (not std::equal(new_settings.begin(), new_settings.end(), present_settings->begin())) {
         const auto write_success = write_holding_registers(2000, new_settings);

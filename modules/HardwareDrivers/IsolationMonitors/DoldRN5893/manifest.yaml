@@ -106,7 +106,7 @@ config:
       - INSULATION_FAULT_ON_DC-_OR_DEVICE_FAULT
     default: INSULATION_FAULT_PRE_ALARM_OR_DEVICE_FAULT
   automatic_self_test:
-    description: 42011 -  Automatic self-test - Whether automatic self-test is enabled
+    description: 42011 - Automatic self-test - Whether automatic self-test is enabled
     type: boolean
     default: false
 provides:
