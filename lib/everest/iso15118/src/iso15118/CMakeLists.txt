@@ -69,6 +69,7 @@ target_sources(iso15118
         message/session_stop.cpp
 
         message/d2/authorization.cpp
+        message/d2/charge_parameter_discovery.cpp
         message/d2/dc_cable_check.cpp
         message/d2/dc_current_demand.cpp
         message/d2/dc_pre_charge.cpp

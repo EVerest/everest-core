@@ -10,6 +10,7 @@ function(create_exi_test_target NAME)
     catch_discover_tests(test_exi_d2_${NAME})
 endfunction()
 
+create_exi_test_target(charge_parameter_discovery)
 create_exi_test_target(dc_cable_check)
 create_exi_test_target(dc_current_demand)
 create_exi_test_target(dc_pre_charge)
