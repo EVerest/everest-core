@@ -31,6 +31,7 @@ add_executable(pionix_chargebridge
   src/heartbeat_service.cpp
   src/plc_bridge.cpp
   src/serial_bridge.cpp
+  src/discovery.cpp
 
   main.cpp
 )
