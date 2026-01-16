@@ -1,0 +1,123 @@
+description: DOLD RN5893 IMD driver module
+config:
+  device_id:
+    description: Modbus device address of DOLD RN5893, set via potentiometers on device
+    type: integer
+
+  self_test_timeout_s:
+    description: Maximum time in seconds a self-test is allowed to take
+    type: integer
+    default: 30
+
+  keep_measurement_active:
+    description: |
+      Normally, this module stops measurements when stop is called and restarts when start is called. 
+      If this option is enabled, measurements will continue even if stop is called.
+      This does not affect publishing of measurements, which is still controlled by start/stop commands and 
+      the always_publish_measurements option.
+    type: boolean
+    default: false
+  always_publish_measurements:
+    description: |
+      Whether measurements should always be published, no matter if start/stop commands have been received.
+      Note that this only works if keep_measurement_active is enabled.
+    type: boolean
+    default: false
+
+  timeout_release:
+    description: 40002 - Timeout release - whether the timeout on the IMD side should be enabled. This enables writing the Timeout register every cycle
+    type: boolean
+    default: false
+  timeout_s:
+    description: |
+      40003 - Timeout - the time in seconds after the device will trigger a fault if no communication is received.
+      This should not be smaller than 2 seconds, as this module writes the register every second
+    type: number
+    minimum: 2
+    default: 3
+    maximum: 10
+
+  broken_wire_detect:
+    description: 42001 - Broken wire detect in measuring circuit - Whether connection to L(+)/L(-) should be monitored and if so, when
+    type: string
+    enum:
+      - ON
+      - OFF
+      - ONLY_DURING_SELF_TEST
+    default: ON
+  storing_insulation_fault:
+    description: 42002 - Storing insulation fault message - See datasheet for details
+    type: boolean
+    default: false
+  switching_mode_indicator_relay:
+    description: 42003 - Switching mode of indicator relay K1 + K2 - Behaviour type of the indicator relays. See datasheet for details
+    type: string
+    enum:
+      - DE_ENERGIZED_ON_TRIP
+      - ENERGIZED_ON_TRIP
+    default: DE_ENERGIZED_ON_TRIP
+  power_supply_type:
+    description: 42004 - Power supply type - Type of connected power network. See datasheet for details
+    type: string
+    enum:
+      - AC
+      - DC
+      - 3NAC
+    default: DC
+  response_value_alarm_kohm:
+    description: 42006 – Response value Alarm - Alarm threshold setting in kOhm
+    type: integer
+    maximum: 500
+    minimum: 1
+    default: 500
+  response_value_pre_alarm_kohm:
+    description: 42007 - Response value Pre-Alarm – Pre-Alarm threshold setting in kOhm
+    type: integer
+    maximum: 500
+    minimum: 1
+    default: 500
+  coupling_device:
+    description: 42008 – Coupling device - Whether a coupling device is connected and which one
+    type: string
+    enum:
+      - NONE
+      - RP5898
+    default: NONE
+  indicator_relay_k1_function:
+    description: 42009 - Indicator relay K1 - Function of the indicator relay K1. See datasheet for details
+    type: string
+    enum:
+      - INSULATION_FAULT_ALARM
+      - INSULATION_FAULT_PREALARM
+      - DEVICE_FAULT
+      - INSULATION_FAULT_ALARM_OR_DEVICE_FAULT
+      - INSULATION_FAULT_ON_DC+
+      - INSULATION_FAULT_ON_DC+_OR_DEVICE_FAULT
+    default: INSULATION_FAULT_ALARM_OR_DEVICE_FAULT
+  indicator_relay_k2_function:
+    description: 42010 – Indicator relay K2 - Function of the indicator relay K2. See datasheet for details
+    type: string
+    enum:
+      - INSULATION_FAULT_ALARM
+      - INSULATION_FAULT_PREALARM
+      - DEVICE_FAULT
+      - INSULATION_FAULT_PRE_ALARM_OR_DEVICE_FAULT
+      - INSULATION_FAULT_ON_DC-
+      - INSULATION_FAULT_ON_DC-_OR_DEVICE_FAULT
+    default: INSULATION_FAULT_PRE_ALARM_OR_DEVICE_FAULT
+  automatic_self_test:
+    description: 42011 - Automatic self-test - Whether automatic self-test is enabled
+    type: boolean
+    default: false
+provides:
+  main:
+    description: IMD Interface of DOLD RN5893
+    interface: isolation_monitor
+requires:
+  serial_comm_hub:
+    interface: serial_communication_hub
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Frickly Systems GmbH
+    - Mark Oude Elberink
