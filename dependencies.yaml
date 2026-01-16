@@ -35,7 +35,7 @@ libcurl:
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: fix/update-marshmallow-version # FIXME
+  git_tag: ec48efc4034a5e52139f05b88ac1dcdd61583639
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # linux_libnfc-nci for RFID
 libnfc-nci:
