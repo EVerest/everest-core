@@ -20,6 +20,8 @@ enum class Type {
     PaymentServiceSelectionRes,
     AuthorizationReq,
     AuthorizationRes,
+    ChargeParameterDiscoveryReq,
+    ChargeParameterDiscoveryRes,
     CableCheckReq,
     CableCheckRes,
     PreChargeReq,
@@ -63,6 +65,8 @@ CREATE_TYPE_TRAIT(PaymentServiceSelectionRequest, PaymentServiceSelectionReq);
 CREATE_TYPE_TRAIT(PaymentServiceSelectionResponse, PaymentServiceSelectionRes);
 CREATE_TYPE_TRAIT(AuthorizationRequest, AuthorizationReq);
 CREATE_TYPE_TRAIT(AuthorizationResponse, AuthorizationRes);
+CREATE_TYPE_TRAIT(ChargeParameterDiscoveryRequest, ChargeParameterDiscoveryReq);
+CREATE_TYPE_TRAIT(ChargeParameterDiscoveryResponse, ChargeParameterDiscoveryRes);
 CREATE_TYPE_TRAIT(DC_CableCheckRequest, CableCheckReq);
 CREATE_TYPE_TRAIT(DC_CableCheckResponse, CableCheckRes);
 CREATE_TYPE_TRAIT(DC_PreChargeRequest, PreChargeReq);
