@@ -43,16 +43,15 @@ features for local energy management, PV-integration and many more!
 # Getting Started
 
 See our documentation on [everest.github.io](https://everest.github.io) to get started with using or developing EVerest. The best
-way to start is with our [Getting Started Guides](https://everest.github.io/latest/explanation/getting-started/index.html).
+way to start is with our [Getting Started Guides](https://everest.github.io/nightly/how-to-guides/getting-started/index.html).
 
 # Community
 
-Find more information about the community and ways to get involved [here](https://everest.github.io/latest/project/community.html).
-
+Find more information about the community and ways to get involved [here](https://everest.github.io/nightly/project/community.html).
 # Contributing to EVerest
 
 Anyone can contribute to EVerest! Learn more about getting involved
-[here](https://everest.github.io/latest/project/contributing.html).
+[here](https://everest.github.io/nightly/project/contributing.html).
 
 # License
 

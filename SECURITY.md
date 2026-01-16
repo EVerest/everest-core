@@ -1,3 +1,3 @@
 # Security Policy
 
-Please refer to our [EVerest Security Policy](https://everest.github.io/latest/explanation/project/governance/security.html).
+Please refer to our [EVerest Security Policy](https://everest.github.io/nightly/project/governance/security.html).
