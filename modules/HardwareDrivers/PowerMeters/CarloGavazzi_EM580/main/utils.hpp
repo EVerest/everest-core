@@ -5,7 +5,9 @@
 #define POWERMETER_UTILS_HPP
 
 #include <cstdint>
+#include <cctype>
 #include <iomanip>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -46,6 +48,23 @@ struct ByteLength {
 private:
     transport::DataVector::size_type value;
 };
+
+/**
+ * @brief Convert 4 bytes from Modbus data to uint32_t
+ * @param data The Modbus data vector
+ * @param offset Byte offset into the data vector
+ * @return The converted 32-bit unsigned integer
+ * @note According to EM580 Modbus spec: byte order within word is MSB->LSB,
+ *       but for INT32/UINT32/UINT64, word order is LSW->MSW.
+ *       So bytes are arranged as: [LSW_MSB, LSW_LSB, MSW_MSB, MSW_LSB]
+ *       which becomes: MSW_MSB MSW_LSB LSW_MSB LSW_LSB
+ */
+inline uint32_t to_uint32(const transport::DataVector& data, ByteOffset offset) {
+    // Original byte order: [byte0, byte1, byte2, byte3] = [LSW_MSB, LSW_LSB, MSW_MSB, MSW_LSB]
+    // Convert to: MSW_MSB MSW_LSB LSW_MSB LSW_LSB = byte2<<24 | byte3<<16 | byte0<<8 | byte1
+    const auto off = static_cast<transport::DataVector::size_type>(offset);
+    return static_cast<uint32_t>(data[off] << 24 | data[off + 1] << 16 | data[off + 2] << 8 | data[off + 3]);
+}
 
 /**
  * @brief Convert 4 bytes from Modbus data to int32_t
@@ -109,6 +128,100 @@ inline std::string to_hex_string(const transport::DataVector& data, ByteOffset o
  * @brief Utility functions for converting OCMF enum types to Modbus register values
  */
 namespace ocmf_utils {
+
+inline bool is_uuid36(const std::string& s) {
+    if (s.size() != 36) {
+        return false;
+    }
+    for (std::size_t i = 0; i < s.size(); ++i) {
+        const char c = s[i];
+        if (i == 8 || i == 13 || i == 18 || i == 23) {
+            if (c != '-') {
+                return false;
+            }
+            continue;
+        }
+        if (!std::isxdigit(static_cast<unsigned char>(c))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/// Extract the transaction id (UUID) from an OCMF record by parsing the JSON `"TT"` field
+/// and taking the UUID after the last "<=>" marker.
+///
+/// Expected input looks like: `OCMF|{...,"TT":"...<=>UUID",...}|{...}`
+inline std::optional<std::string> extract_transaction_id_from_ocmf_record(const std::string& ocmf_record) {
+    // Find JSON key "TT"
+    const std::string key = "\"TT\"";
+    std::size_t key_pos = ocmf_record.find(key);
+    if (key_pos == std::string::npos) {
+        return std::nullopt;
+    }
+
+    // Find ':' after the key and the opening quote of the JSON string value.
+    std::size_t colon_pos = ocmf_record.find(':', key_pos + key.size());
+    if (colon_pos == std::string::npos) {
+        return std::nullopt;
+    }
+
+    std::size_t value_start = ocmf_record.find('"', colon_pos + 1);
+    if (value_start == std::string::npos) {
+        return std::nullopt;
+    }
+    ++value_start; // move past opening quote
+
+    // Parse a JSON string (escape-aware) until the closing unescaped quote.
+    std::string tt_value;
+    tt_value.reserve(128);
+    bool escaped = false;
+    for (std::size_t i = value_start; i < ocmf_record.size(); ++i) {
+        const char c = ocmf_record[i];
+        if (escaped) {
+            // Keep the escaped character as-is; for our purposes we only need to find "<=>".
+            tt_value.push_back(c);
+            escaped = false;
+            continue;
+        }
+        if (c == '\\') {
+            escaped = true;
+            continue;
+        }
+        if (c == '"') {
+            // end of JSON string
+            break;
+        }
+        tt_value.push_back(c);
+    }
+
+    const std::string marker = "<=>";
+    const std::size_t marker_pos = tt_value.rfind(marker);
+    if (marker_pos == std::string::npos) {
+        return std::nullopt;
+    }
+
+    std::string tail = tt_value.substr(marker_pos + marker.size());
+    // Trim whitespace
+    while (!tail.empty() && std::isspace(static_cast<unsigned char>(tail.front()))) {
+        tail.erase(tail.begin());
+    }
+    while (!tail.empty() && std::isspace(static_cast<unsigned char>(tail.back()))) {
+        tail.pop_back();
+    }
+
+    // Try to find a UUID inside the tail (prefer the last match, in case of extra suffix/prefix).
+    std::optional<std::string> last_uuid;
+    if (tail.size() >= 36) {
+        for (std::size_t i = 0; i + 36 <= tail.size(); ++i) {
+            const std::string candidate = tail.substr(i, 36);
+            if (is_uuid36(candidate)) {
+                last_uuid = candidate;
+            }
+        }
+    }
+    return last_uuid;
+}
 
 /**
  * @brief Convert OCMFIdentificationFlags enum to numeric value for Modbus register

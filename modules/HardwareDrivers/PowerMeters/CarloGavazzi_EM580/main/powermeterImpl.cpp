@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <set>
 #include <thread>
 #include <utility>
@@ -82,6 +83,7 @@ const uint16_t MODBUS_OCMF_COMMAND_ABORT = 0x41; // Abort transaction ('A' in MS
 
 // OCMF State / status registers (Table 4.39 and related)
 const int MODBUS_OCMF_STATE_ADDRESS = 328929;               // 7100h: OCMF State (UINT16)
+const int MODBUS_OCMF_TRANSACTION_ID_ADDRESS = 328931;      // 7102h: OCMF Transaction ID (UINT32)
 const uint16_t MODBUS_OCMF_STATE_NOT_READY = 0;             // Not ready
 const uint16_t MODBUS_OCMF_STATE_RUNNING = 1;               // Running
 const uint16_t MODBUS_OCMF_STATE_READY = 2;                 // Ready
@@ -144,6 +146,7 @@ constexpr float TEMPERATURE = 0.1F;        // Value weight: Temperature*10
 namespace module::main {
 
 void powermeterImpl::init() {
+    m_pending_closed_transaction = false;
     // Set up error handler for CommunicationFault
     transport::ErrorHandler error_handler = [this](const std::string& error_message) {
         // Check if error is already active to avoid duplicate errors
@@ -274,6 +277,15 @@ void powermeterImpl::read_serial_number() {
     EVLOG_info << "Serial number: " << m_serial_number;
 }
 
+void powermeterImpl::read_transaction_state_and_id() {
+    transport::DataVector state_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_ADDRESS, 1);
+    uint16_t ocmf_state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
+    if (ocmf_state == MODBUS_OCMF_STATE_READY) {
+        m_pending_closed_transaction = true;
+        EVLOG_info << "Detected a closed transaction with data pending to be read";
+    }
+}
+
 void powermeterImpl::configure_device() {
     EVLOG_info << "Configure the device...";
     read_firmware_versions();
@@ -285,7 +297,8 @@ void powermeterImpl::configure_device() {
     synchronize_time();
     // Set timezone offset
     set_timezone(config.timezone_offset_minutes);
-
+    // see if there is a pending closed transaction that needs to be read
+    read_transaction_state_and_id();
     // configure the device to use automtic transaction id generation
     // write 1 to register 328672 (7000h)
     EVLOG_info << "Configuring the device to use automtic transaction id generation";
@@ -400,91 +413,43 @@ void powermeterImpl::write_transaction_registers(const types::powermeter::Transa
     p_modbus_transport->write_multiple_registers(MODBUS_OCMF_CHARGING_POINT_ID_START_ADDRESS, evse_id_data);
 }
 
+std::string powermeterImpl::read_ocmf_file() {
+    transport::DataVector size_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_SIZE_ADDRESS, 1);
+    uint16_t size = modbus_utils::to_uint16(size_data, modbus_utils::ByteOffset{0});
+    if (size == 0) {
+        throw std::runtime_error("OCMF file size is 0");
+    }
+    transport::DataVector file_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_FILE_ADDRESS, size);
+    return std::string{file_data.begin(), file_data.end()};
+}
+
+void powermeterImpl::clear_transaction_states() {
+    transport::DataVector state_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_ADDRESS, 1);
+    uint16_t ocmf_state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
+
+    if (ocmf_state == MODBUS_OCMF_STATE_READY) {
+        EVLOG_info << "OCMF state before starting transaction: " << ocmf_state;
+        EVLOG_info << "Cleanup necessary ...";
+        read_ocmf_file();
+        // write 0 to the OCMF state to confirm the reading of the OCMF file
+        std::vector<uint16_t> ocmf_confirmation_data = {MODBUS_OCMF_STATE_NOT_READY};
+        p_modbus_transport->write_multiple_registers(MODBUS_OCMF_STATE_ADDRESS, ocmf_confirmation_data);
+        EVLOG_info << "Cleanup done.";
+    }
+}
+
 types::powermeter::TransactionStartResponse
 powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& treq) {
-    // Helper function to validate strings for EM580 device
-    // According to EM580 Modbus document (line 2376-2377 and APPENDIX), only specific ASCII characters are allowed
-    // Exact allowed characters from APPENDIX table:
-    //   33 (!), 36 ($), 37 (%), 39 ('), 40-47 (()*+,-./), 48-57 (0-9), 58 (:), 60-63 (<=>?), 65-90 (A-Z), 97-122 (a-z),
-    //   128 (€), 156 (£), 157 (¥)
-    // NOT allowed: space (32), pipe (124), quote (34), hash (35), ampersand (38), semicolon (59), and other characters
-    // Returns true if valid, false if invalid characters are found
-    auto validate_string_for_em580 = [](const std::string& str) -> bool {
-        // Build set of allowed character codes (exact list from APPENDIX)
-        static const std::set<uint8_t> allowed = []() {
-            std::set<uint8_t> a;
-            a.insert(33); // !
-            a.insert(36); // $
-            a.insert(37); // %
-            for (uint8_t c = 39; c <= 58; ++c)
-                a.insert(c); // ()*+,-./0-9:
-            for (uint8_t c = 60; c <= 63; ++c)
-                a.insert(c); // <=>?
-            for (uint8_t c = 65; c <= 90; ++c)
-                a.insert(c); // A-Z
-            for (uint8_t c = 97; c <= 122; ++c)
-                a.insert(c); // a-z
-            a.insert(128);   // €
-            a.insert(156);   // £
-            a.insert(157);   // ¥
-            return a;
-        }();
-
-        for (size_t i = 0; i < str.length(); ++i) {
-            uint8_t code = static_cast<uint8_t>(str[i]);
-            if (allowed.find(code) == allowed.end()) {
-                return false;
-            }
-        }
-
-        return true;
-    };
-
     try {
         EVLOG_info << "Starting transaction with transaction id: " << treq.transaction_id
-                   << " and evse id: " << treq.evse_id << " and identification status: " << treq.identification_status
-                   << " and identification type: "
+                   << " evse id: " << treq.evse_id << " identification status: " << treq.identification_status
+                   << " identification type: "
                    << types::powermeter::ocmfidentification_type_to_string(treq.identification_type)
-                   << " and identification level: "
+                   << " identification level: "
                    << types::powermeter::ocmfidentification_level_to_string(
                           treq.identification_level.value_or(types::powermeter::OCMFIdentificationLevel::NONE))
-                   << " and identification data: " << treq.identification_data.value_or("")
-                   << " and tariff text: " << treq.tariff_text.value_or("none");
-
-        // write 0 to the OCMF state to confirm the reading of the OCMF file
-        std::vector<uint16_t> ocmf_confirmation_data_not_ready = {MODBUS_OCMF_STATE_NOT_READY};
-        p_modbus_transport->write_multiple_registers(MODBUS_OCMF_STATE_ADDRESS, ocmf_confirmation_data_not_ready);
-        
-        std::vector<uint16_t> ocmf_confirmation_data_ready = {MODBUS_OCMF_STATE_READY};
-        p_modbus_transport->write_multiple_registers(MODBUS_OCMF_STATE_ADDRESS, ocmf_confirmation_data_ready);
-        // Write transaction registers first
-        EVLOG_info << "Write transaction registers...";
-        write_transaction_registers(treq);
-
-        // 8. Write tariff text (register 326881, 6900h) - CHAR[252] = 126 words
-        // The meter expects a null-terminated string; the helper initializes all words to 0,
-        //
-        // IMPORTANT: EM580 only allows specific ASCII characters (see APPENDIX). Space and special characters are NOT
-        // allowed.
-        //
-        EVLOG_info << "Write tariff text...";
-        std::string tariff_text = treq.tariff_text.value_or("") + "<=>" + treq.transaction_id;
-        // if (!validate_string_for_em580(tariff_text)) {
-        //     EVLOG_error << "String contains invalid characters for EM580 device: '" << tariff_text << "'";
-        //     return {types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR,
-        //             {},
-        //             {},
-        //             "Invalid tariff text (device supports only an subset of ASCII characters)"};
-        // } else {
-            std::vector<uint16_t> tariff_text_data =
-                string_to_modbus_char_array(tariff_text, MODBUS_OCMF_TARIFF_TEXT_WORD_COUNT);
-            p_modbus_transport->write_multiple_registers(MODBUS_OCMF_TARIFF_TEXT_ADDRESS, tariff_text_data);
-        // }
-
-        EVLOG_info << "Write session modality ... to charging vehicle";
-        std::vector<uint16_t> session_modality_data = {MODBUS_OCMF_SESSION_MODALITY_CHARGING_VEHICLE};
-        p_modbus_transport->write_multiple_registers(MODBUS_OCMF_SESSION_MODALITY_ADDRESS, session_modality_data);
-
+                   << " identification data: " << treq.identification_data.value_or("")
+                   << " tariff text: " << treq.tariff_text.value_or("none");
         // Check OCMF state and ensure it's NOT_READY before starting a transaction
         // According to the Modbus document, the OCMF state must be NOT_READY (0) to start a new transaction
         transport::DataVector state_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_ADDRESS, 1);
@@ -492,26 +457,27 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& treq
         EVLOG_info << "OCMF state before starting transaction: " << ocmf_state;
 
         if (ocmf_state != MODBUS_OCMF_STATE_NOT_READY) {
-            if (ocmf_state == MODBUS_OCMF_STATE_READY) {
-                // If state is READY, we need to reset it to NOT_READY to allow a new transaction
-                // This confirms the reading of the previous OCMF file (if any) and allows a new session
-                EVLOG_info << "OCMF state is READY, resetting to NOT_READY to allow new transaction";
-                std::vector<uint16_t> reset_state_data = {MODBUS_OCMF_STATE_NOT_READY};
-                p_modbus_transport->write_multiple_registers(MODBUS_OCMF_STATE_ADDRESS, reset_state_data);
-                // Wait a bit for the state to update
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            } else if (ocmf_state == MODBUS_OCMF_STATE_RUNNING) {
-                // If a transaction is already running, we cannot start a new one
-                throw std::runtime_error(
-                    "Cannot start transaction: OCMF state is RUNNING (transaction already active)");
-            } else if (ocmf_state == MODBUS_OCMF_STATE_CORRUPTED) {
-                // If state is CORRUPTED, we should reset it
-                EVLOG_warning << "OCMF state is CORRUPTED, resetting to NOT_READY";
-                std::vector<uint16_t> reset_state_data = {MODBUS_OCMF_STATE_NOT_READY};
-                p_modbus_transport->write_multiple_registers(MODBUS_OCMF_STATE_ADDRESS, reset_state_data);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
+            EVLOG_warning << "Spurious transaction detected, clearing transaction states ...";
+            clear_transaction_states();
+            m_pending_closed_transaction = false;
+            return {types::powermeter::TransactionRequestStatus::OK};
         }
+
+        // Write transaction registers first
+        EVLOG_info << "Write transaction registers...";
+        write_transaction_registers(treq);
+
+        // 8. Write tariff text (register 326881, 6900h) - CHAR[252] = 126 words
+        // The meter expects a null-terminated string; the helper initializes all words to 0,
+        EVLOG_info << "Write tariff text...";
+        std::string tariff_text = treq.tariff_text.value_or("") + "<=>" + treq.transaction_id;
+        std::vector<uint16_t> tariff_text_data =
+            string_to_modbus_char_array(tariff_text, MODBUS_OCMF_TARIFF_TEXT_WORD_COUNT);
+        p_modbus_transport->write_multiple_registers(MODBUS_OCMF_TARIFF_TEXT_ADDRESS, tariff_text_data);
+
+        EVLOG_info << "Write session modality ... to charging vehicle";
+        std::vector<uint16_t> session_modality_data = {MODBUS_OCMF_SESSION_MODALITY_CHARGING_VEHICLE};
+        p_modbus_transport->write_multiple_registers(MODBUS_OCMF_SESSION_MODALITY_ADDRESS, session_modality_data);
 
         // Write 'B' command to start transaction (Table 4.35, register 328737)
         std::vector<uint16_t> command_data1 = {MODBUS_OCMF_COMMAND_START};
@@ -529,59 +495,113 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& treq
 }
 
 types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
+    EVLOG_info << "Stopping transaction with transaction id: " << (transaction_id.empty() ? "empty" : transaction_id);
+    // if the transaction id is empty, we need to clean up the transaction states
+    // we do our best to clean up the transaction states
+    if (transaction_id.empty()) {
+        EVLOG_info << "Cleaning up the transaction request.";
+        try {
+            clear_transaction_states();
+        } catch (const std::exception& e) {
+            EVLOG_error << __PRETTY_FUNCTION__ << " Error: " << e.what() << std::endl;
+        }
+        m_pending_closed_transaction = false;
+        return {types::powermeter::TransactionRequestStatus::OK, {}, {}};
+    }
     try {
-        // Write 'E' command to end transaction (Table 4.35, register 328737)
-        std::vector<uint16_t> command_data = {MODBUS_OCMF_COMMAND_END};
-        p_modbus_transport->write_multiple_registers(MODBUS_OCMF_COMMAND_ADDRESS, command_data);
-        EVLOG_info << "Transaction " << transaction_id << " stopped";
-        m_transaction_active.store(false);
-
-        // check if the OCMF state is ready (Table 4.36, register 328742)
-        uint16_t state = MODBUS_OCMF_STATE_NOT_READY;
-        transport::DataVector state_data;
-        int retries = 0;
-        while (state != MODBUS_OCMF_STATE_READY) {
-            state_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_ADDRESS, 1);
-            state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
-            if (state == MODBUS_OCMF_STATE_CORRUPTED || state == MODBUS_OCMF_STATE_RUNNING) {
+        if (m_pending_closed_transaction) {
+            // the received transaction id is different from the current transaction id
+            // since there is a pending closed transaction, I assume a power loss occurred
+            // we need to check if the transaction id is equal to the transaction id from OCMF file
+            EVLOG_info
+                << "Power loss occurred, checking if the transaction id is equal to the transaction id from OCMF file";
+            std::string ocmf_file = read_ocmf_file();
+            const auto ocmf_file_transaction_id_opt = ocmf_utils::extract_transaction_id_from_ocmf_record(ocmf_file);
+            if (!ocmf_file_transaction_id_opt.has_value()) {
+                EVLOG_error << "Failed to extract transaction id from OCMF file TT field";
                 return {types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR,
                         {},
                         {},
-                        "get_signed_meter_value_error"};
+                        "Failed to extract transaction id from OCMF file"};
             }
-            if (state != MODBUS_OCMF_STATE_READY) {
-                EVLOG_info << "OCMF state: " << state;
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                retries++;
-                if (retries > 10) {
+            const std::string& ocmf_file_transaction_id = *ocmf_file_transaction_id_opt;
+            EVLOG_info << "OCMF file transaction id: " << ocmf_file_transaction_id;
+            if (ocmf_file_transaction_id != transaction_id) {
+                return {
+                    types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, {}, "Transaction id mismatch"};
+            }
+            m_pending_closed_transaction = false;
+            auto signed_meter_value = types::units_signed::SignedMeterValue{ocmf_file, "", "OCMF"};
+            signed_meter_value.public_key.emplace(m_public_key_hex);
+
+            // write 0 to the OCMF state to confirm the reading of the OCMF file
+            std::vector<uint16_t> ocmf_confirmation_data = {MODBUS_OCMF_STATE_NOT_READY};
+            p_modbus_transport->write_multiple_registers(MODBUS_OCMF_STATE_ADDRESS, ocmf_confirmation_data);
+            return types::powermeter::TransactionStopResponse{types::powermeter::TransactionRequestStatus::OK,
+                                                              {}, // Empty start_signed_meter_value
+                                                              signed_meter_value};
+        } else if (m_transaction_id == transaction_id) {
+            EVLOG_info << "Sending the end transaction command to the device";
+            // Write 'E' command to end transaction (Table 4.35, register 328737)
+            std::vector<uint16_t> command_data = {MODBUS_OCMF_COMMAND_END};
+            p_modbus_transport->write_multiple_registers(MODBUS_OCMF_COMMAND_ADDRESS, command_data);
+            EVLOG_info << "Transaction " << transaction_id << " stopped";
+            m_transaction_active.store(false);
+
+            // check if the OCMF state is ready (Table 4.36, register 328742)
+            uint16_t state = MODBUS_OCMF_STATE_NOT_READY;
+            transport::DataVector state_data;
+            int retries = 0;
+            while (state != MODBUS_OCMF_STATE_READY) {
+                state_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_ADDRESS, 1);
+                state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
+                if (state == MODBUS_OCMF_STATE_CORRUPTED) {
                     return {types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR,
                             {},
                             {},
                             "get_signed_meter_value_error"};
                 }
+                if (state != MODBUS_OCMF_STATE_READY) {
+                    EVLOG_info << "OCMF state: " << state;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    retries++;
+                    if (retries > 10) {
+                        return {types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR,
+                                {},
+                                {},
+                                "get_signed_meter_value_error"};
+                    }
+                }
             }
+
+            // read the size of the OCMF file
+            transport::DataVector size_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_SIZE_ADDRESS, 1);
+            uint16_t size = modbus_utils::to_uint16(size_data, modbus_utils::ByteOffset{0});
+            if (size == 0) {
+                throw std::runtime_error("OCMF file size is 0");
+            }
+
+            // read the OCMF file
+            transport::DataVector file_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_FILE_ADDRESS, size);
+            std::string ocmf_data{file_data.begin(), file_data.end()};
+            EVLOG_info << "OCMF file: " << ocmf_data;
+            auto signed_meter_value = types::units_signed::SignedMeterValue{ocmf_data, "", "OCMF"};
+            signed_meter_value.public_key.emplace(m_public_key_hex);
+
+            // write 0 to the OCMF state to confirm the reading of the OCMF file
+            std::vector<uint16_t> ocmf_confirmation_data = {MODBUS_OCMF_STATE_NOT_READY};
+            p_modbus_transport->write_multiple_registers(MODBUS_OCMF_STATE_ADDRESS, ocmf_confirmation_data);
+            m_pending_closed_transaction = false;
+            return types::powermeter::TransactionStopResponse{types::powermeter::TransactionRequestStatus::OK,
+                                                              {}, // Empty start_signed_meter_value
+                                                              signed_meter_value};
+        } else {
+            EVLOG_error << "No open transaction or unknown transaction id: " << transaction_id;
+            return {types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR,
+                    {},
+                    {},
+                    "No open transaction or unknown transaction id"};
         }
-
-        // read the size of the OCMF file
-        transport::DataVector size_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_SIZE_ADDRESS, 1);
-        uint16_t size = modbus_utils::to_uint16(size_data, modbus_utils::ByteOffset{0});
-        if (size == 0) {
-            throw std::runtime_error("OCMF file size is 0");
-        }
-
-        // read the OCMF file
-        transport::DataVector file_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_FILE_ADDRESS, size);
-        std::string ocmf_data{file_data.begin(), file_data.end()};
-        EVLOG_info << "OCMF file: " << ocmf_data;
-        auto signed_meter_value = types::units_signed::SignedMeterValue{ocmf_data, "", "OCMF"};
-        signed_meter_value.public_key.emplace(m_public_key_hex);
-
-        // write 0 to the OCMF state to confirm the reading of the OCMF file
-        std::vector<uint16_t> ocmf_confirmation_data = {MODBUS_OCMF_STATE_NOT_READY};
-        p_modbus_transport->write_multiple_registers(MODBUS_OCMF_STATE_ADDRESS, ocmf_confirmation_data);
-        return types::powermeter::TransactionStopResponse{types::powermeter::TransactionRequestStatus::OK,
-                                                          {}, // Empty start_signed_meter_value
-                                                          signed_meter_value};
     } catch (const std::exception& e) {
         EVLOG_error << __PRETTY_FUNCTION__ << " Error: " << e.what() << std::endl;
         return {types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, {}, "get_signed_meter_value_error"};

@@ -27,7 +27,7 @@ active_modules:
   cli:
     config_module:
       evse_id: "DE*ENBW*BER001*EVSE01"
-      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality.No-spaces-are-allowed.The-kWh-price-is-0.30-EUR/kWh-just-joking-it-is-2.30-EUR/kWh"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
       identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
     module: BUPowermeter
     standalone: true

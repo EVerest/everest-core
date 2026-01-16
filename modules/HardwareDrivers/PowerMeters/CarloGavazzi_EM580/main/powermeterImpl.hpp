@@ -68,6 +68,7 @@ private:
 
     std::atomic_bool m_transaction_active{false};
     std::atomic_bool m_pending_time_sync{false};
+    bool m_pending_closed_transaction{false};
 
     virtual void init() override;
     void configure_device();
@@ -79,10 +80,13 @@ private:
     void dump_device_state(void);
     void read_firmware_versions();
     void read_serial_number();
+    void read_transaction_state_and_id();
+    std::string read_ocmf_file();
     void synchronize_time();
     void set_timezone(int offset_minutes);
     void time_sync_thread();
     [[nodiscard]] bool is_transaction_active() const;
+    void clear_transaction_states();
     void write_transaction_registers(const types::powermeter::TransactionReq& transaction_req);
     void read_device_state();
     std::vector<uint16_t> string_to_modbus_char_array(const std::string& str, size_t word_count);
