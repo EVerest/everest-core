@@ -26,6 +26,10 @@ on:
         required: false
         default: false
         type: boolean
+      is_fork:
+        description: 'Whether the current repository is a fork'
+        required: true
+        type: boolean
     secrets:
       SA_GITHUB_SSH_KEY:
         description: 'SSH key for the service account used to deploy the documentation'
@@ -95,6 +99,23 @@ jobs:
         run: |
           mkdir scripts
           rsync -a source/${{ inputs.build_kit_scripts_directory }}/ scripts
+      - name: Prepare github pages input
+        id: github-pages-input
+        run: |
+          if [ "${{ inputs.is_fork }}" = "true" ]; then
+            echo "Using https URL for GitHub Pages repo since this is a fork"
+            PREFIX="https://github.com/"
+          else
+            echo "Using SSH URL for GitHub Pages repo since this is not a fork"
+            PREFIX="git@github.com:"
+          fi
+          OWNER="${{ github.repository_owner }}"
+          REPO="everest.github.io"
+          URL="${PREFIX}${OWNER}/${REPO}"
+          echo "prefix=$PREFIX" >> $GITHUB_OUTPUT
+          echo "owner=$OWNER" >> $GITHUB_OUTPUT
+          echo "repo=$REPO" >> $GITHUB_OUTPUT
+          echo "url=$URL" >> $GITHUB_OUTPUT
       - name: Build Documentation
         run: |
           docker run \
@@ -103,7 +124,7 @@ jobs:
           --env TRAILBOOK_everest_IS_RELEASE=OFF \
           --env TRAILBOOK_everest_INSTANCE_NAME=nightly \
           --env TRAILBOOK_everest_OVERWRITE_EXISTING_INSTANCE=ON \
-          --env EVEREST_DOCS_REPO_URL=git@github.com:${{ github.repository_owner }}/everest.github.io \
+          --env EVEREST_DOCS_REPO_URL=${{ steps.github-pages-input.outputs.url }} \
           --volume "${{ github.workspace }}:/ext" \
           --name build-docs-container \
           build-kit run-script build_docs
