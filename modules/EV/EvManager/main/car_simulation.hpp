@@ -132,6 +132,8 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> timepoint_last_update;
     double charge_current_a{0};
 
+    double latest_soc{0};
+
     enum class ChargeMode {
         None,
         AC,
