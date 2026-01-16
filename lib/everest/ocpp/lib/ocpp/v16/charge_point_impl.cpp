@@ -404,6 +404,7 @@ WebsocketConnectionOptions ChargePointImpl::get_ws_connection_options() {
                                                   uri,
                                                   security_profile,
                                                   this->configuration->getAuthorizationKey(),
+                                                  std::chrono::seconds(10),
                                                   this->configuration->getRetryBackoffRandomRange(),
                                                   this->configuration->getRetryBackoffRepeatTimes(),
                                                   this->configuration->getRetryBackoffWaitMinimum(),

@@ -525,7 +525,6 @@ public:
                 }
 
                 if (!this->send_callback(this->in_flight->message)) {
-                    this->paused = true;
                     EVLOG_error << "Could not send message, this is most likely because the charge point is offline.";
                     if (this->in_flight && is_transaction_message(*this->in_flight)) {
                         EVLOG_info << "The message in flight is transaction related and will be sent again once the "
