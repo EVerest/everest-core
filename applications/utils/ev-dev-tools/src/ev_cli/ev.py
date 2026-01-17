@@ -13,6 +13,7 @@ from ev_cli import __version__
 from ev_cli import helpers
 from ev_cli.type_parsing import TypeParser
 from ev_cli.error_parsing import ErrorParser
+from ev_cli import coverage
 
 from datetime import datetime
 from pathlib import Path
@@ -735,6 +736,11 @@ def types_get_templates(args):
     print(f'{interface_files}')
 
 
+def coverage_remove_files(args):
+    print(f'args: {args}')
+    coverage.remove_unnecessary_files(build_dir=Path(args.build_dir), dry_run=args.dry_run, summary=args.summary, silent=args.silent)
+
+
 def main():
     global validators, everest_dirs, work_dir
 
@@ -770,6 +776,7 @@ def main():
     parser_if = subparsers.add_parser('interface', aliases=['if'], help='interface related actions')
     parser_hlp = subparsers.add_parser('helpers', aliases=['hlp'], help='helper actions')
     parser_types = subparsers.add_parser('types', aliases=['ty'], help='type related actions')
+    parser_coverage = subparsers.add_parser('coverage', aliases=['cov'], help='coverage related actions')
 
     mod_actions = parser_mod.add_subparsers(metavar='<action>', help='available actions', required=True)
     mod_create_parser = mod_actions.add_parser('create', aliases=['c'], parents=[
@@ -840,6 +847,19 @@ def main():
                                      'be generated - if no type is given, all will be processed and non-processable '
                                      'will be skipped')
     types_genhdr_parser.set_defaults(action_handler=types_genhdr)
+
+    coverage_actions = parser_coverage.add_subparsers(metavar='<action>', help='available actions', required=True)
+    parser_file_remover = coverage_actions.add_parser(
+        'remove_files', aliases=['rm'], help='Remove orphaned / unnecessary files')
+
+    parser_file_remover.add_argument('--build-dir', type=str, required=True, help='Build directory')
+    parser_file_remover.add_argument('--dry-run', required=False, action='store_true',
+                                     help='Dry run, does not remove any files', default=False)
+    parser_file_remover.add_argument('--summary', required=False, action='store_true',
+                                     help='Only show a summary of removed files', default=False)
+    parser_file_remover.add_argument('--silent', required=False, action='store_true',
+                                     help='Suppress all output, summary is still shown when requested', default=False)
+    parser_file_remover.set_defaults(action_handler=coverage_remove_files)
 
     for sub_parser, get_template_function in [
         (mod_actions, module_get_templates),
