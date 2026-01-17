@@ -118,7 +118,7 @@ Response handle_get_config_value(const GetRequest& get_request, const std::strin
             }
         }
     }
-
+    response.response = get_response;
     return response;
 }
 
