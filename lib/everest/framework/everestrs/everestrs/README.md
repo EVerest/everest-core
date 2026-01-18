@@ -53,10 +53,10 @@ required for rust-analyzer's IDE integration to work properly.
 - First, build your EVerest workspace with Rust support enabled by
   passing `-DEVEREST_ENABLE_RS_SUPPORT=ON` to CMake.
 - Create a file at `modules/.cargo/config.toml` in your repository.
-  It file should contain the following, with `<build-dir>` replaced with the
-  path to your EVerest build directory.
+  It file should contain the following, with `<build-dir>` replaced by the
+  name of your EVerest build directory.
 
   ```toml
   [env]
-  EVEREST_RS_LINK_DEPENDENCIES = "<build-dir>/everestrs-link-dependencies.txt"
+  EVEREST_RS_LINK_DEPENDENCIES = { value = "../<build-dir>/everestrs-link-dependencies.txt", relative = true }
   ```
