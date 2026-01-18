@@ -169,10 +169,4 @@ fn main() {
 
     println!("cargo:rustc-link-lib=boost_log");
     println!("cargo:rustc-link-lib=boost_log_setup");
-
-    // If the c++ libraries are build with `-fprofile-arcs -ftest-coverage`
-    // compiler flags we've to link against the `gcov` lib as well.
-    if env::var("CARGO_FEATURE_LINK_GCOV").is_ok() {
-        println!("cargo:rustc-link-lib=gcov");
-    }
 }

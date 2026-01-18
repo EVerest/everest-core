@@ -18,7 +18,6 @@ cxx = { version = "=1.0.189", features = ["c++17"] }
 
 [features]
 build_bazel = []
-link_gcov = []
 
 # We use this for the integration tests in this project.
 [dev-dependencies]
