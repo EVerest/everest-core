@@ -712,9 +712,9 @@ void OCPP201::ready() {
 
     callbacks.configure_network_connection_profile_callback =
         [this](const int32_t configuration_slot, const ocpp::v2::NetworkConnectionProfile& network_connection_profile) {
-            std::promise<ocpp::v2::ConfigNetworkResult> promise;
-            std::future<ocpp::v2::ConfigNetworkResult> future = promise.get_future();
-            ocpp::v2::ConfigNetworkResult result;
+            std::promise<ocpp::ConfigNetworkResult> promise;
+            std::future<ocpp::ConfigNetworkResult> future = promise.get_future();
+            ocpp::ConfigNetworkResult result;
             result.success = true;
             promise.set_value(result);
             return future;
