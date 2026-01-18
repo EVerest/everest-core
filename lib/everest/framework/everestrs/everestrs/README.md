@@ -57,6 +57,7 @@ required for rust-analyzer's IDE integration to work properly.
   name of your EVerest build directory.
 
   ```toml
-  [env]
-  EVEREST_RS_LINK_DEPENDENCIES = { value = "../<build-dir>/everestrs-link-dependencies.txt", relative = true }
+  [env.EVEREST_RS_LINK_DEPENDENCIES]
+  value = "../<build-dir>/everestrs-link-dependencies.txt"
+  relative = true
   ```
