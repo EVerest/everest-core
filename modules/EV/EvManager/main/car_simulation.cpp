@@ -148,7 +148,10 @@ void CarSimulation::simulate_soc() {
 
     if (latest_soc != soc) {
         latest_soc = soc;
-        r_ev[0]->call_update_soc(soc);
+
+        if (!r_ev.empty()) {
+            r_ev[0]->call_update_soc(soc);
+        }
     }
 
     ev_info.soc = soc;
