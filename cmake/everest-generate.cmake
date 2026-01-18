@@ -257,12 +257,6 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         message(STATUS "Creating rust workspace at ${RUST_WORKSPACE_DIR}")
     endif ()
 
-    if (EVEREST_CORE_BUILD_TESTING)
-        set(EVERESTRS_FEATURE_FLAGS ",features = [\"link_gcov\"]")
-    else()
-        set(EVERESTRS_FEATURE_FLAGS "")
-    endif()
-
     # NOTE (aw): we could also write a small python script, which would do that for us
     add_custom_command(OUTPUT ${RUST_WORKSPACE_CARGO_FILE}
         COMMAND
@@ -278,7 +272,7 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         COMMAND
             echo "[workspace.dependencies]" >> Cargo.toml
         COMMAND
-            echo "everestrs = { path = \"$<TARGET_PROPERTY:everest::everestrs_sys,EVERESTRS_DIR>\" ${EVERESTRS_FEATURE_FLAGS} }" >> Cargo.toml
+            echo "everestrs = { path = \"$<TARGET_PROPERTY:everest::everestrs_sys,EVERESTRS_DIR>\" }" >> Cargo.toml
         COMMAND
             echo "everestrs-build = { path = \"$<TARGET_PROPERTY:everest::everestrs_sys,EVERESTRS_BUILD_DIR>\" }" >> Cargo.toml
         WORKING_DIRECTORY
@@ -329,6 +323,7 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         WORKING_DIRECTORY
             ${RUST_WORKSPACE_DIR}
         DEPENDS
+            everest::everestrs_sys
             generate_rust
     )
 

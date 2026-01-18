@@ -120,12 +120,15 @@ target_link_libraries(everestrs_sys
         everest::log
 )
 
+set(EVERESTRS_LINK_DEPENDENCIES $<TARGET_FILE:everest::everestrs_sys>)
+get_target_property(EVERESTRS_LINK_TARGETS everest::everestrs_sys LINK_LIBRARIES)
+foreach(link_target IN LISTS EVERESTRS_LINK_TARGETS)
+    list(APPEND EVERESTRS_LINK_DEPENDENCIES $<TARGET_FILE:${link_target}>)
+endforeach()
+
 set_property(
     TARGET
         everestrs_sys
     PROPERTY
-        EVERESTRS_LINK_DEPENDENCIES
-            $<TARGET_FILE:everest::everestrs_sys>
-            $<TARGET_FILE:everest::framework>
-            $<TARGET_FILE:everest::log>
+        EVERESTRS_LINK_DEPENDENCIES "${EVERESTRS_LINK_DEPENDENCIES}"
 )
