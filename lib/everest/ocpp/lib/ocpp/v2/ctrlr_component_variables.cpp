@@ -27,6 +27,7 @@ const Component SecurityCtrlr = {"SecurityCtrlr"};
 const Component SmartChargingCtrlr = {"SmartChargingCtrlr"};
 const Component TariffCostCtrlr = {"TariffCostCtrlr"};
 const Component TxCtrlr = {"TxCtrlr"};
+const Component OCPP16MavericksCtrlr = {"OCPP16MavericksCtrlr"};
 } // namespace ControllerComponents
 
 namespace StandardizedVariables {
@@ -1212,6 +1213,158 @@ const ComponentVariable ISO15118CtrlrAvailable = {
     ControllerComponents::ISO15118Ctrlr,
     std::optional<Variable>({
         "Available",
+    }),
+};
+
+// OCPP1.6 Mavericks - Configuration keys without direct OCPP 2.x equivalents
+const ComponentVariable BlinkRepeat = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "BlinkRepeat",
+    }),
+};
+const ComponentVariable ConnectorPhaseRotationMaxLength = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "ConnectorPhaseRotationMaxLength",
+    }),
+};
+const RequiredComponentVariable GetConfigurationMaxKeys = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "GetConfigurationMaxKeys",
+    }),
+};
+const ComponentVariable LightIntensity = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "LightIntensity",
+    }),
+};
+const ComponentVariable MinimumStatusDuration = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "MinimumStatusDuration",
+    }),
+};
+const ComponentVariable StopTransactionOnEVSideDisconnect = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "StopTransactionOnEVSideDisconnect",
+    }),
+};
+const RequiredComponentVariable SupportedFeatureProfiles = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "SupportedFeatureProfiles",
+    }),
+};
+const ComponentVariable SupportedFeatureProfilesMaxLength = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "SupportedFeatureProfilesMaxLength",
+    }),
+};
+const RequiredComponentVariable UnlockConnectorOnEVSideDisconnect = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "UnlockConnectorOnEVSideDisconnect",
+    }),
+};
+const ComponentVariable ReserveConnectorZeroSupported = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "ReserveConnectorZeroSupported",
+    }),
+};
+const ComponentVariable HostName = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "HostName",
+    }),
+};
+const ComponentVariable AllowChargingProfileWithoutStartSchedule = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "AllowChargingProfileWithoutStartSchedule",
+    }),
+};
+const ComponentVariable WaitForStopTransactionsOnResetTimeout = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "WaitForStopTransactionsOnResetTimeout",
+    }),
+};
+const ComponentVariable StopTransactionIfUnlockNotSupported = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "StopTransactionIfUnlockNotSupported",
+    }),
+};
+const ComponentVariable MeterPublicKeys = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "MeterPublicKeys",
+    }),
+};
+const ComponentVariable DisableSecurityEventNotifications = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "DisableSecurityEventNotifications",
+    }),
+};
+const ComponentVariable ISO15118CertificateManagementEnabled = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "ISO15118CertificateManagementEnabled",
+    }),
+};
+const ComponentVariable CustomDisplayCostAndPrice = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "CustomDisplayCostAndPrice",
+    }),
+};
+const ComponentVariable DefaultPrice = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "DefaultPrice",
+    }),
+};
+const ComponentVariable DefaultPriceText = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "DefaultPriceText",
+    }),
+};
+const ComponentVariable CustomIdleFeeAfterStop = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "CustomIdleFeeAfterStop",
+    }),
+};
+const ComponentVariable SupportedLanguages = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "SupportedLanguages",
+    }),
+};
+const ComponentVariable CustomMultiLanguageMessages = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "CustomMultiLanguageMessages",
+    }),
+};
+const ComponentVariable Language = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "Language",
+    }),
+};
+const ComponentVariable WaitForSetUserPriceTimeout = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "WaitForSetUserPriceTimeout",
     }),
 };
 
