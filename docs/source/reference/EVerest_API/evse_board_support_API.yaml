@@ -787,6 +787,9 @@ components:
         - Selftest: 'The Selftest failed, device permanently broken'
         - DC: 'RCD was triggered by a DC fault'
         - AC: 'RCD was triggered by an AC fault'
+        - TiltDetected: 'The EVSE has been tilted beyond acceptable limits.'
+        - WaterIngressDetected: 'A substantial amount of water has been detected inside the EVSE.'
+        - EnclosureOpen: 'The EVSE enclosure is open, e.g. a door or panel is not properly closed.'
         - VendorError: 'Vendor specific error code. Will stop charging session.'
         - VendorWarning: 'Vendor specific error code. Charging may continue.'
 
@@ -823,6 +826,9 @@ components:
         - Selftest
         - DC
         - AC
+        - TiltDetected
+        - WaterIngressDetected
+        - EnclosureOpen
         - VendorError
         - VendorWarning
     Error:
