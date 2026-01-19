@@ -26,6 +26,8 @@ enum class Type {
     PowerDeliveryRes,
     SessionStopReq,
     SessionStopRes,
+    ChargingStatusReq,
+    ChargingStatusRes,
     CableCheckReq,
     CableCheckRes,
     PreChargeReq,
@@ -75,6 +77,8 @@ CREATE_TYPE_TRAIT(PowerDeliveryRequest, PowerDeliveryReq);
 CREATE_TYPE_TRAIT(PowerDeliveryResponse, PowerDeliveryRes);
 CREATE_TYPE_TRAIT(SessionStopRequest, SessionStopReq);
 CREATE_TYPE_TRAIT(SessionStopResponse, SessionStopRes);
+CREATE_TYPE_TRAIT(AC_ChargingStatusRequest, ChargingStatusReq);
+CREATE_TYPE_TRAIT(AC_ChargingStatusResponse, ChargingStatusRes);
 CREATE_TYPE_TRAIT(DC_CableCheckRequest, CableCheckReq);
 CREATE_TYPE_TRAIT(DC_CableCheckResponse, CableCheckRes);
 CREATE_TYPE_TRAIT(DC_PreChargeRequest, PreChargeReq);

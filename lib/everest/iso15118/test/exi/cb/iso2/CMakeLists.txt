@@ -11,6 +11,7 @@ function(create_exi_test_target NAME)
 endfunction()
 
 create_exi_test_target(charge_parameter_discovery)
+create_exi_test_target(ac_charging_status)
 create_exi_test_target(dc_cable_check)
 create_exi_test_target(dc_current_demand)
 create_exi_test_target(dc_pre_charge)
