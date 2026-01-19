@@ -96,6 +96,7 @@ int WebSocketServer::callback_ws(struct lws* wsi, enum lws_callback_reasons reas
 
 WebSocketServer::WebSocketServer(bool ssl_enabled, int port, const std::string& iface) : m_ssl_enabled(ssl_enabled) {
     // Constructor implementation
+    memset(&m_info, 0, sizeof(m_info));
     lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG, log_callback);
     m_info.port = port;
     // interface: must not be empty (else nothing to do)
