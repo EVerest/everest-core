@@ -59,6 +59,9 @@ enum class ErrorEnum {
     Selftest,
     DC,
     AC,
+    TiltDetected,
+    WaterIngressDetected,
+    EnclosureOpen,
     VendorError,
     VendorWarning,
     CommunicationFault

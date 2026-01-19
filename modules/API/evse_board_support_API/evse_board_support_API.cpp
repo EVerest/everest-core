@@ -210,6 +210,9 @@ evse_board_support_API::ErrorHandler evse_board_support_API::make_error_handler(
     case ErrorEnum::MREC24ConnectorVoltageHigh:
     case ErrorEnum::MREC25BrokenLatch:
     case ErrorEnum::MREC26CutCable:
+    case ErrorEnum::TiltDetected:
+    case ErrorEnum::WaterIngressDetected:
+    case ErrorEnum::EnclosureOpen:
     case ErrorEnum::VendorError:
     case ErrorEnum::VendorWarning:
     case ErrorEnum::CommunicationFault:
