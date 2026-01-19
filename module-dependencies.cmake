@@ -4,7 +4,7 @@
 
 ev_define_dependency(
     DEPENDENCY_NAME sigslot
-    DEPENDENT_MODULES_LIST EnergyNode EvseManager MicroMegaWattBSP YetiDriver)
+    DEPENDENT_MODULES_LIST EnergyNode EvseManager MicroMegaWattBSP YetiDriver PhyVersoBSP)
 
 ev_define_dependency(
     DEPENDENCY_NAME pugixml
