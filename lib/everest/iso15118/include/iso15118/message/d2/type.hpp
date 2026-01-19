@@ -21,7 +21,9 @@ enum class Type {
     CurrentDemandReq,
     CurrentDemandRes,
     WeldingDetectionReq,
-    WeldingDetectionRes
+    WeldingDetectionRes,
+    MeteringReceiptReq,
+    MeteringReceiptRes
 };
 
 template <typename T> struct TypeTrait {
@@ -59,6 +61,8 @@ CREATE_TYPE_TRAIT(DC_CurrentDemandRequest, CurrentDemandReq);
 CREATE_TYPE_TRAIT(DC_CurrentDemandResponse, CurrentDemandRes);
 CREATE_TYPE_TRAIT(DC_WeldingDetectionRequest, WeldingDetectionReq);
 CREATE_TYPE_TRAIT(DC_WeldingDetectionResponse, WeldingDetectionRes);
+CREATE_TYPE_TRAIT(MeteringReceiptRequest, MeteringReceiptReq);
+CREATE_TYPE_TRAIT(MeteringReceiptResponse, MeteringReceiptRes);
 
 #ifdef CREATE_TYPE_TRAIT_PUSHED
 #define CREATE_TYPE_TRAIT CREATE_TYPE_TRAIT_PUSHED
