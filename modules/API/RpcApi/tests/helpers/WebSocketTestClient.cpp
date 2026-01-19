@@ -14,7 +14,8 @@ WebSocketTestClient::WebSocketTestClient(const std::string& address, int port) :
 
     struct lws_protocols protocols[] = {{"EVerestRpcApi", callback, 0, 0, 0, NULL, 0}, LWS_PROTOCOL_LIST_TERM};
 
-    struct lws_context_creation_info info = {};
+    struct lws_context_creation_info info;
+    memset(&info, 0, sizeof(info));
     info.port = CONTEXT_PORT_NO_LISTEN; /* client */
     info.protocols = protocols;
     info.gid = -1;
@@ -90,7 +91,7 @@ bool WebSocketTestClient::connect() {
     if (m_wsi == nullptr) {
         EVLOG_error << "Error while connecting to WebSocket server";
     } else {
-        EVLOG_info << "Connecting to WebSocket server..";
+        EVLOG_info << "Connecting to WebSocket server...";
         start_lws_service_thread();
     }
     return m_wsi != nullptr;
