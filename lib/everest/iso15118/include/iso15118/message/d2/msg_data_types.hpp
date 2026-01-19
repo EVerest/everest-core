@@ -26,7 +26,7 @@ using SAScheduleTupleID = int16_t;                              // [1-255]
 using MeterID = std::string;                                    // MaxLength: 32
 using EVSEID = std::string;                                     // Length: 7-37
 using MeterReading = uint64_t;                                  // Wh
-using SigMeterReading = std::vector<uint8_t>;                   // MaxLength: 64
+using SigMeterReading = std::string;                            // base 64 binary, MaxLength: 64
 using MeterStatus = int16_t;
 using TMeter = int64_t; // Unix timestamp format
 

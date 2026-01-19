@@ -14,6 +14,7 @@ create_exi_test_target(dc_cable_check)
 create_exi_test_target(dc_current_demand)
 create_exi_test_target(dc_pre_charge)
 create_exi_test_target(dc_welding_detection)
+create_exi_test_target(metering_receipt)
 create_exi_test_target(session_setup)
 create_exi_test_target(authorization)
 

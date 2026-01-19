@@ -73,6 +73,7 @@ target_sources(iso15118
         message/d2/dc_current_demand.cpp
         message/d2/dc_pre_charge.cpp
         message/d2/dc_welding_detection.cpp
+        message/d2/metering_receipt.cpp
         message/d2/variant.cpp
         message/d2/msg_data_types.cpp
         message/d2/session_setup.cpp
