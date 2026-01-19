@@ -54,7 +54,10 @@ void convert(const Header& in, struct iso2_MessageHeaderType& out) {
 template <> void convert(const iso2_MeterInfoType& in, data_types::MeterInfo& out) {
     out.meter_id = CB2CPP_STRING(in.MeterID);
     CB2CPP_ASSIGN_IF_USED(in.MeterReading, out.meter_reading);
-    CB2CPP_BYTES_IF_USED(in.SigMeterReading, out.sig_meter_reading);
+    if (in.SigMeterReading_isUsed) {
+        out.sig_meter_reading = data_types::SigMeterReading(in.SigMeterReading.bytes,
+                                                            in.SigMeterReading.bytes + in.SigMeterReading.bytesLen);
+    }
     CB2CPP_ASSIGN_IF_USED(in.MeterStatus, out.meter_status);
     CB2CPP_ASSIGN_IF_USED(in.TMeter, out.t_meter);
 }
