@@ -1,5 +1,3 @@
-:orphan:
-
 .. _everest_modules_handwritten_ev_board_support_API:
 
 ..  This file is a placeholder for optional multiple files
@@ -12,9 +10,12 @@
     and will be converted to HTML and PDF by Sphinx.
     This index.rst file is the entry point for the module documentation.
 
-*******************************************
-ev_board_support_API
-*******************************************
+.. *******************************************
+.. ev_board_support_API
+.. *******************************************
 
-:ref:`Link <everest_modules_ev_board_support_API>` to the module's reference.
-API for EV board support
+The complete API specification can be found in the
+
+``docs/source/reference/EVerest_API/ev_board_support_API.yaml``
+
+file in the source repository, or in the `AsyncAPI HTML documentation <../../../api/ev_board_support_API/index.html>`_ automatically generated from it.
