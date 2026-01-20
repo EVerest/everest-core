@@ -27,10 +27,6 @@ if (NOT everest-cmake_FOUND)
     include("${everest-cmake_SOURCE_DIR}/everest-cmake-config.cmake")
 endif()
 
-if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
-    include(cmake/exported-build.cmake)
-endif()
-
 # options
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
@@ -41,6 +37,17 @@ Licence Agreement (“Licence Agreement”), clauses 1. ISO’s Copyright, \
 7. Termination, 8. Limitations, and 9. Governing Law." OFF)
 
 option(ISO15118_INSTALL "Enable install target" ${EVC_MAIN_PROJECT})
+option(DISABLE_ISO15118_LOCAL_DEPENDENCIES "Disable local dependency lookup for libiso15118" OFF)
+option(ISO15118_USE_EXPORTED_BUILD "Use (experimental) exported build of libiso15118" OFF)
+option(${PROJECT_NAME}_USE_PYTHON_VENV "Use python venv for pip install targets" ON)
+
+if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+    if(ISO15118_USE_EXPORTED_BUILD)
+        include(cmake/exported-build.cmake)
+    else()
+        include(cmake/local-build.cmake)
+    endif()
+endif()
 
 # list of compile options
 set(ISO15118_COMPILE_OPTIONS_WARNING "-Wall;-Wextra;-Wno-unused-function;-Werror" CACHE STRING "A list of compile options used")
