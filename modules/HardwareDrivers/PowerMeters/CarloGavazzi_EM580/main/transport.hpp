@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
 
 namespace transport {
 
@@ -40,6 +41,14 @@ using ClearErrorHandler = std::function<void()>;
 class AbstractModbusTransport {
 
 public:
+    AbstractModbusTransport() = default;
+    virtual ~AbstractModbusTransport() = default;
+
+    AbstractModbusTransport(const AbstractModbusTransport&) = delete;
+    AbstractModbusTransport& operator=(const AbstractModbusTransport&) = delete;
+    AbstractModbusTransport(AbstractModbusTransport&&) = delete;
+    AbstractModbusTransport& operator=(AbstractModbusTransport&&) = delete;
+
     virtual transport::DataVector fetch(int address, int register_count) = 0;
     virtual void write_multiple_registers(int address, const std::vector<uint16_t>& data) = 0;
 };
@@ -50,7 +59,7 @@ public:
 
 class SerialCommHubTransport : public AbstractModbusTransport {
 
-protected:
+private:
     serial_communication_hubIntf& m_serial_hub;
     int m_device_id;
     int m_base_address;
@@ -199,23 +208,38 @@ protected:
     }
 
 public:
-    SerialCommHubTransport(serial_communication_hubIntf& serial_hub, int device_id, int base_address,
-                           int initial_retry_count, int initial_retry_delay_ms, int normal_retry_count,
-                           int normal_retry_delay_ms, ErrorHandler error_handler = nullptr,
-                           ClearErrorHandler clear_error_handler = nullptr) :
-        m_serial_hub(serial_hub),
-        m_device_id(device_id),
-        m_base_address(base_address),
-        m_initial_retry_count(initial_retry_count),
-        m_initial_retry_delay_ms(initial_retry_delay_ms),
-        m_normal_retry_count(normal_retry_count),
-        m_normal_retry_delay_ms(normal_retry_delay_ms),
-        m_error_handler(error_handler),
-        m_clear_error_handler(clear_error_handler) {
+    struct RetryConfig {
+        int initial_retry_count;
+        int initial_retry_delay_ms;
+        int normal_retry_count;
+        int normal_retry_delay_ms;
+    };
+
+    struct TransportConfig {
+        int device_id;
+        int base_address;
+        RetryConfig retry;
+    };
+
+    SerialCommHubTransport(serial_communication_hubIntf& serial_hub, TransportConfig config) :
+        SerialCommHubTransport(serial_hub, config, nullptr, nullptr) {
     }
 
-    virtual transport::DataVector fetch(int address, int register_count) override;
-    virtual void write_multiple_registers(int address, const std::vector<uint16_t>& data) override;
+    SerialCommHubTransport(serial_communication_hubIntf& serial_hub, TransportConfig config, ErrorHandler error_handler,
+                           ClearErrorHandler clear_error_handler) :
+        m_serial_hub(serial_hub),
+        m_device_id(config.device_id),
+        m_base_address(config.base_address),
+        m_initial_retry_count(config.retry.initial_retry_count),
+        m_initial_retry_delay_ms(config.retry.initial_retry_delay_ms),
+        m_normal_retry_count(config.retry.normal_retry_count),
+        m_normal_retry_delay_ms(config.retry.normal_retry_delay_ms),
+        m_error_handler(std::move(error_handler)),
+        m_clear_error_handler(std::move(clear_error_handler)) {
+    }
+
+    transport::DataVector fetch(int address, int register_count) override;
+    void write_multiple_registers(int address, const std::vector<uint16_t>& data) override;
 };
 
 } // namespace transport

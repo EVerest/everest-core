@@ -48,6 +48,36 @@ public:
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
+    // Test-only access helpers (used by unit tests to avoid spinning up the full EVerest runtime).
+    // These are intentionally narrow: inject transport + tweak minimal internal state + invoke handlers.
+    struct TestAccess {
+        static void set_modbus_transport(powermeterImpl& self,
+                                         std::unique_ptr<transport::AbstractModbusTransport> transport) {
+            self.p_modbus_transport = std::move(transport);
+        }
+
+        static void set_pending_closed_transaction(powermeterImpl& self, bool pending) {
+            self.m_pending_closed_transaction = pending;
+        }
+
+        static void set_transaction_id(powermeterImpl& self, std::string transaction_id) {
+            self.m_transaction_id = std::move(transaction_id);
+        }
+
+        static void set_public_key_hex(powermeterImpl& self, std::string public_key_hex) {
+            self.m_public_key_hex = std::move(public_key_hex);
+        }
+
+        static types::powermeter::TransactionStartResponse start_transaction(powermeterImpl& self,
+                                                                             types::powermeter::TransactionReq& req) {
+            return self.handle_start_transaction(req);
+        }
+
+        static types::powermeter::TransactionStopResponse stop_transaction(powermeterImpl& self,
+                                                                           std::string& transaction_id) {
+            return self.handle_stop_transaction(transaction_id);
+        }
+    };
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
 
 protected:

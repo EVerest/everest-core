@@ -147,10 +147,21 @@ void powermeterImpl::init() {
         }
     };
 
-    p_modbus_transport = std::make_unique<transport::SerialCommHubTransport>(
-        *mod->r_modbus, config.powermeter_device_id, MODBUS_BASE_ADDRESS, config.initial_connection_retry_count,
-        config.initial_connection_retry_delay_ms, config.communication_retry_count, config.communication_retry_delay_ms,
-        error_handler, clear_error_handler);
+    const transport::SerialCommHubTransport::RetryConfig retry_config{
+        config.initial_connection_retry_count,
+        config.initial_connection_retry_delay_ms,
+        config.communication_retry_count,
+        config.communication_retry_delay_ms,
+    };
+
+    const transport::SerialCommHubTransport::TransportConfig transport_config{
+        config.powermeter_device_id,
+        MODBUS_BASE_ADDRESS,
+        retry_config,
+    };
+
+    p_modbus_transport = std::make_unique<transport::SerialCommHubTransport>(*mod->r_modbus, transport_config,
+                                                                             error_handler, clear_error_handler);
 }
 
 void powermeterImpl::read_signature_config() {
@@ -676,6 +687,7 @@ void powermeterImpl::read_powermeter_values() {
         static_cast<float>(modbus_utils::to_int32(data, modbus_utils::ByteOffset{Offsets::ENERGY_EXPORT}));
     powermeter.energy_Wh_export = energy_Wh_export;
 
+    // Disable for now the temperature reading, since I can't read it in the above block read
     // Read internal temperature (INT16, weight: Temperature*10) - register 300776 (0307h) - 1 word
     // transport::DataVector temperature_data = p_modbus_transport->fetch(MODBUS_TEMPERATURE_ADDRESS, 1);
     // types::temperature::Temperature temperature;
