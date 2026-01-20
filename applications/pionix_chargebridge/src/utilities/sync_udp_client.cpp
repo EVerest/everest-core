@@ -21,7 +21,8 @@ sync_udp_client::sync_udp_client(std::string const& remote, std::uint16_t port, 
 
 void sync_udp_client::init(std::string const& remote, std::uint16_t port) {
     m_udp.open_as_client(remote, port);
-    m_handler.register_event_handler(m_udp.get_fd(), [this](auto) {}, everest::lib::io::event::poll_events::read);
+    m_handler.register_event_handler(
+        m_udp.get_fd(), [this](auto) {}, everest::lib::io::event::poll_events::read);
 }
 
 reply sync_udp_client::request_reply(udp_payload const& payload) {
