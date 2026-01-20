@@ -399,8 +399,6 @@ private:
         }
     };
 
-    std::chrono::time_point<std::chrono::steady_clock> time_disconnected;
-
     // callback struct
     Callbacks callbacks;
 
