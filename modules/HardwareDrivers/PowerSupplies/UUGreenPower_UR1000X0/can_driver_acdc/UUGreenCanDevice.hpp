@@ -93,7 +93,7 @@ private:
 
     bool tx(const uint8_t module_address, const std::vector<uint8_t>& payload);
 
-    std::vector<uint8_t> module_addresses{{UU::ADDR_BROADCAST}};
+    std::vector<uint8_t> module_addresses{UU::ADDR_BROADCAST};
 
     bool switch_on_nolock(bool on);
     bool internal_update_voltage_mode();
