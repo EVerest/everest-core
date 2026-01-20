@@ -1368,6 +1368,202 @@ const ComponentVariable WaitForSetUserPriceTimeout = {
     }),
 };
 
+// Additional OCPP1.6 Mavericks - Configuration keys without direct OCPP 2.x equivalents
+// TODO(james-ctc): double check there is no V2 mapping
+
+const ComponentVariable AuthorizeRemoteTxRequests = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "AuthorizeRemoteTxRequests",
+    }),
+};
+const ComponentVariable CentralSystemURI = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "CentralSystemURI",
+    }),
+};
+const ComponentVariable CertificateStoreMaxLength = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "CertificateStoreMaxLength",
+    }),
+};
+const ComponentVariable ChargeProfileMaxStackLevel = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "ChargeProfileMaxStackLevel",
+    }),
+};
+const ComponentVariable ChargingScheduleAllowedChargingRateUnit = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "ChargingScheduleAllowedChargingRateUnit",
+    }),
+};
+const ComponentVariable ChargingScheduleMaxPeriods = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "ChargingScheduleMaxPeriods",
+    }),
+};
+const ComponentVariable ClockAlignedDataInterval = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "ClockAlignedDataInterval",
+    }),
+};
+const ComponentVariable ConnectionTimeOut = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "ConnectionTimeOut",
+    }),
+};
+const ComponentVariable ConnectorEvseIds = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "ConnectorEvseIds",
+    }),
+};
+const ComponentVariable ConnectorPhaseRotation = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "ConnectorPhaseRotation",
+    }),
+};
+const ComponentVariable ISO15118PnCEnabled = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "ISO15118PnCEnabled",
+    }),
+};
+const ComponentVariable LocalAuthListEnabled = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "LocalAuthListEnabled",
+    }),
+};
+const ComponentVariable LocalAuthListMaxLength = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "LocalAuthListMaxLength",
+    }),
+};
+const ComponentVariable MaxChargingProfilesInstalled = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "MaxChargingProfilesInstalled",
+    }),
+};
+const ComponentVariable MeterValueSampleInterval = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "MeterValueSampleInterval",
+    }),
+};
+const ComponentVariable MeterValuesAlignedData = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "MeterValuesAlignedData",
+    }),
+};
+const ComponentVariable MeterValuesAlignedDataMaxLength = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "MeterValuesAlignedDataMaxLength",
+    }),
+};
+const ComponentVariable MeterValuesSampledData = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "MeterValuesSampledData",
+    }),
+};
+const ComponentVariable MeterValuesSampledDataMaxLength = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "MeterValuesSampledDataMaxLength",
+    }),
+};
+const ComponentVariable RetryBackoffRandomRange = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "RetryBackoffRandomRange",
+    }),
+};
+const ComponentVariable RetryBackoffRepeatTimes = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "RetryBackoffRepeatTimes",
+    }),
+};
+const ComponentVariable RetryBackoffWaitMinimum = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "RetryBackoffWaitMinimum",
+    }),
+};
+const ComponentVariable SendLocalListMaxLength = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "SendLocalListMaxLength",
+    }),
+};
+const ComponentVariable StopTransactionOnInvalidId = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "StopTransactionOnInvalidId",
+    }),
+};
+const ComponentVariable StopTxnAlignedData = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "StopTxnAlignedData",
+    }),
+};
+const ComponentVariable StopTxnAlignedDataMaxLength = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "StopTxnAlignedDataMaxLength",
+    }),
+};
+const ComponentVariable StopTxnSampledData = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "StopTxnSampledData",
+    }),
+};
+const ComponentVariable StopTxnSampledDataMaxLength = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "StopTxnSampledDataMaxLength",
+    }),
+};
+const ComponentVariable SupportedFileTransferProtocols = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "SupportedFileTransferProtocols",
+    }),
+};
+const ComponentVariable SupportedMeasurands = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "SupportedMeasurands",
+    }),
+};
+const ComponentVariable TransactionMessageAttempts = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "TransactionMessageAttempts",
+    }),
+};
+const ComponentVariable TransactionMessageRetryInterval = {
+    ControllerComponents::OCPP16MavericksCtrlr,
+    std::optional<Variable>({
+        "TransactionMessageRetryInterval",
+    }),
+};
+
 } // namespace ControllerComponentVariables
 
 namespace EvseComponentVariables {
