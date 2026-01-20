@@ -1,0 +1,460 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:everest:ev_board_support_API'
+info:
+  title: 'EVerest API definition for EV board support'
+  version: 1.0.0
+  description: >-
+    API for EVerest API clients implementing ev board support.
+
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
+  tags:
+    - name: EVerest
+    - name: ev_board_support
+servers:
+  default:
+    pathname: 'everest_api/1/ev_board_support/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module as defined in the EVerest config file.
+defaultContentType: application/json
+
+
+channels:
+  ########## ev_board_support
+  receive_enable:
+    address: 'e2m/enable'
+    messages:
+      receive_enable:
+        $ref: '#/components/messages/receive_enable'
+  receive_set_cp_state:
+    address: 'e2m/set_cp_state'
+    messages:
+      receive_set_cp_state:
+        $ref: '#/components/messages/receive_set_cp_state'
+  receive_allow_power_on:
+    address: 'e2m/allow_power_on'
+    messages:
+      receive_allow_power_on:
+        $ref: '#/components/messages/receive_allow_power_on'
+  receive_diode_fail:
+    address: 'e2m/diode_fail'
+    messages:
+      receive_diode_fail:
+        $ref: '#/components/messages/receive_diode_fail'
+  receive_set_ac_max_current:
+    address: 'e2m/set_ac_max_current'
+    messages:
+      receive_set_ac_max_current:
+        $ref: '#/components/messages/receive_set_ac_max_current'
+  receive_set_three_phases:
+    address: 'e2m/set_three_phases'
+    messages:
+       receive_set_three_phases:
+         $ref: '#/components/messages/receive_set_three_phases'
+  receive_set_rcd_error:
+    address: 'e2m/set_rcd_error'
+    messages:
+      receive_set_rcd_error:
+        $ref: '#/components/messages/receive_set_rcd_error'
+
+  send_bsp_event:
+    address: 'm2e/bsp_event'
+    messages:
+      send_bsp_event:
+        $ref: '#/components/messages/send_bsp_event'
+  send_bsp_measurement:
+    address: 'm2e/bsp_measurement'
+    messages:
+      send_bsp_measurement:
+        $ref: '#/components/messages/send_bsp_measurement'
+  send_ev_info:
+    address: 'm2e/ev_info'
+    messages:
+      send_ev_info:
+        $ref: '#/components/messages/send_ev_info'
+
+
+  send_raise_error:
+    address: 'm2e/raise_error'
+    messages:
+      send_raise_error:
+        $ref: '#/components/messages/send_raise_error'
+  send_clear_error:
+    address: 'm2e/clear_error'
+    messages:
+      send_clear_error:
+        $ref: '#/components/messages/send_clear_error'
+
+  receive_heartbeat:
+    address: 'e2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
+
+
+operations:
+  ########## ev_board_support
+  receive_enable:
+    title: 'Receive Enable'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_enable'
+    description: 'Direction: EVerest to Module'
+  receive_set_cp_state:
+    title: 'Receive Set CP State'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_set_cp_state'
+    description: 'Direction: EVerest to Module'
+  receive_allow_power_on:
+    title: 'Receive Allow Power On'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_allow_power_on'
+    description: 'Direction: EVerest to Module'
+  receive_diode_fail:
+    title: 'Receive Diode Fail'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_diode_fail'
+    description: 'Direction: EVerest to Module'
+  receive_set_ac_max_current:
+    title: 'Receive Set AC max Current'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_set_ac_max_current'
+    description: 'Direction: EVerest to Module'
+  receive_set_three_phases:
+    title: 'Receive Set Three Phases'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_set_three_phases'
+    description: 'Direction: EVerest to Module'
+  receive_set_rcd_error:
+    title: 'Receive Set RCD error'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_set_rcd_error'
+    description: 'Direction: EVerest to Module'
+
+  send_bsp_event:
+    title: 'Send BSP Event'
+    action: send
+    channel:
+      $ref: '#/channels/send_bsp_event'
+    description: 'Direction: Module to EVerest'
+  send_bsp_measurement:
+    title: 'Send BSP measurement'
+    action: send
+    channel:
+      $ref: '#/channels/send_bsp_measurement'
+    description: 'Direction: Module to EVerest'
+  send_ev_info:
+    title: 'Send EV Info'
+    action: send
+    channel:
+      $ref: '#/channels/send_ev_info'
+    description: 'Direction: Module to EVerest'
+
+
+  send_raise_error:
+    title: 'Send raise error'
+    action: send
+    channel:
+      $ref: '#/channels/send_raise_error'
+    description: 'Direction: Module to EVerest'
+  send_clear_error:
+    title: 'Send clear error'
+    action: send
+    channel:
+      $ref: '#/channels/send_clear_error'
+
+  receive_heartbeat:
+    title: 'Receive heartbeat'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+    description: 'Direction: EVerest to Module'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref: '#/channels/send_communication_check'
+
+
+
+components:
+  messages:
+    ########## ev_board_support
+    receive_enable:
+      name: receive_enable
+      title: 'Receive enable or disable'
+      summary: Enables or disables the EV simulation.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Enabled'
+      examples:
+        - summary: "Enable the EV."
+          payload:
+            "true"
+    receive_set_cp_state:
+      name: receive_set_cp_state
+      title: 'Receive CP State'
+      summary: Receive the CP State that should be set by the EV board support driver (controlled by S2)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/EvCpState'
+      examples:
+        - summary: "Set the CP state to A."
+          payload:
+            "A"
+    receive_allow_power_on:
+      name: receive_allow_power_on
+      title: 'Receive permission to switch relays on'
+      summary: If false, contactor must never be switched on.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PowerOnOff'
+      examples:
+        - summary: "Allow the relays to be closed."
+          payload:
+            "true"
+    receive_diode_fail:
+      name: receive_diode_fail
+      title: 'Receive diode failure state'
+      summary: If true, simulator should set a diode failure.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DiodeFailure'
+      examples:
+        - summary: "Diode failure signaled"
+          payload:
+            "true"
+    receive_set_ac_max_current:
+      name: receive_set_ac_max_current
+      title: 'Receive the max AC current'
+      summary: Maximum AC current to be requested from the EV.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AcMaxCurrent'
+      examples:
+        - summary: "EV should request 16A maximum"
+          payload:
+            16.0
+    receive_set_three_phases:
+      name: receive_set_three_phases
+      title: 'Receive three or one phase support'
+      summary: Wether the EV should indicate single or three phase support.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ThreePhaseSupport'
+      examples:
+        - summary: "EV should request single phase only."
+          payload:
+            "false"
+    receive_set_rcd_error:
+      name: receive_set_rcd_error
+      title: 'Setting set RCD error.'
+      summary: Setting a rcd error. Only for simulation purpose.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RCDCurrent'
+      examples:
+        - summary: "EV should request single phase only."
+          payload:
+            30.0
+
+    send_bsp_event:
+      name: send_bsp_event
+      title: 'Send BSP event'
+      summary: 'Events from CP/Relais'
+      contentType: application/json
+      payload:
+        $ref: 'evse_board_support_API.yaml#/components/schemas/BspEvent'
+      examples:
+        - summary: "Signal state A (not connected)"
+          payload:
+            "event": "A"
+    send_bsp_measurement:
+      name: send_bsp_measurement
+      title: 'Send BSP Measurements'
+      summary: Instantaneous BSP measurements
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/BspMeasurement'
+      examples:
+        - summary: "Report cable ampicity of 32A and some RCD current + PWM duty cycle"
+          payload:
+            proximity_pilot:  
+              "ampacity": "A_32"
+            rcd_current_mA: 5
+            cp_pwm_duty_cycle: 53
+    send_ev_info:
+      name: send_ev_info
+      title: 'Send EV Info'
+      summary: Details about the EV if available
+      contentType: application/json
+      payload:
+        $ref: 'evse_manager_consumer_API.yaml#/components/schemas/EVInfo'
+      examples:
+        - summary: "Selection of EV information items."
+          payload:
+            soc: 67
+            present_voltage: 390
+            present_current: 80
+            target_voltage: 420
+            target_current: 80
+            maximum_current_limit: 120
+            minimum_current_limit: 10
+            maximum_voltage_limit: 500
+            evcc_id: "aa:bb:cc:dd:ee:ff"
+            battery_capacity: 77000
+            battery_full_soc: 95
+
+
+    send_raise_error:
+      name: send_raise_error
+      title: 'Send raise error'
+      summary: Signal to EVerest that an error happened.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Error'
+      examples:
+        - summary: ""
+          payload:
+            "type": "VendorError"
+            "sub_type": "string"
+            "message": "string"
+    send_clear_error:
+      name: send_clear_error
+      title: 'Send clear error'
+      summary: Signal to EVerest that a previously raised error is no longer active.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Error'
+      examples:
+        - summary: ""
+          payload:
+            "type": "VendorError"
+            "sub_type": "string"
+            "message": "string"
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartBeatId'
+      examples:
+        - summary: "Heartbeat"
+          payload: 42
+
+    send_communication_check:
+      name: send_communication_check
+      title: 'Send communication check'
+      summary: Signal to EVerest that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: ""
+          payload:
+            "true"
+
+
+  schemas:
+    Enabled:
+      description: 'True: enabled. False: disabled.'
+      type: boolean
+    EvCpState:
+      description: ControlPilot state
+      type: string
+      enum:
+        - A
+        - B
+        - C
+        - D
+        - 'E'
+    PowerOnOff:
+      description: 'True: allow power on, false: do not allow power on.'
+      type: boolean
+    DiodeFailure:
+      description: 'True: Diode failure, false: no failure.'
+      type: boolean
+    AcMaxCurrent:
+      description: 'Max current requested from the EV.'
+      type: number
+    ThreePhaseSupport:
+      description: 'True: Three phase support, False: One phase support.'
+      type: boolean
+    RCDCurrent:
+      description: 'RCD current in mA.'
+      type: number
+    BspMeasurement:
+      description: Bsp Measurement
+      type: object
+      additionalProperties: true
+      required:
+        - cp_pwm_duty_cycle
+        - proximity_pilot
+      properties:
+        proximity_pilot:  
+          description: Current capability of the cable
+          type: object
+          $ref: 'evse_board_support_API.yaml#/components/schemas/ProximityPilot'
+        rcd_current_mA:
+          description: RCD current in mA
+          type: number
+        cp_pwm_duty_cycle:
+          description: CP PWM Duty Cycle in percent (0-100)
+          type: number
+
+
+    ErrorEnum:
+      description: |
+        Type of error
+        - CommunicationFault: The communication to the hardware or underlying driver is lost or has errors.
+        - VendorError: Vendor specific error code. Will stop charging session.
+        - VendorWarning: Vendor specific error code. Charging may continue.
+
+      type: string
+      enum:
+        - CommunicationFault
+        - VendorError
+        - VendorWarning
+    Error:
+      description: >-
+        Error object with type, subtype and message.
+      type: object
+      additionalProperties: true
+      required:
+        - type
+      properties:
+        type:
+          $ref: '#/components/schemas/ErrorEnum'
+        sub_type:
+          description: The subtype of the error
+          type: string
+        message:
+          description: Addition information about the error
+          type: string
+
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
+    HeartBeatId:
+      type: integer
+      description: "64bit unsigned integer. The id of every heartbeat increases by 1 and overflows when the maximum representable value is reached"
