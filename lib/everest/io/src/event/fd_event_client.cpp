@@ -67,9 +67,9 @@ void generic_fd_event_client_impl::setup_io_event_handler(int fd) {
                                                     success = tx_handler(fd);
                                                 }
                                             },
-                                            {poll_events::read});
+                                            poll_events::read);
     m_event_handler->register_event_handler(&m_io_event_fd, [this, fd](auto) {
-        m_event_handler->modify_event_handler(fd, {poll_events::write}, event_modification::add);
+        m_event_handler->modify_event_handler(fd, poll_events::write, event_modification::add);
     });
 }
 
@@ -102,7 +102,7 @@ bool generic_fd_event_client_impl::tx_handler(int fd) {
     case action_status::empty: {
         // if there are no more message we no longer listen to writeable events
         // otherwise we wait for the socket to become writeable again.
-        m_event_handler->modify_event_handler(fd, {event::poll_events::write}, event::event_modification::remove);
+        m_event_handler->modify_event_handler(fd, event::poll_events::write, event::event_modification::remove);
         return true;
     }
     case action_status::fail: {
