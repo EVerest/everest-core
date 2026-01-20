@@ -160,6 +160,7 @@ TEST(EM580PowermeterImpl, StopTransactionEmptyIdWithoutPendingClosedTransactionC
 
     auto* transport_ptr = transport.get();
     module::main::powermeterImpl::TestAccess::set_modbus_transport(impl, std::move(transport));
+    module::main::powermeterImpl::TestAccess::set_transaction_id(impl, "12345678-1234-5678-1234-567812345678");
     module::main::powermeterImpl::TestAccess::set_pending_closed_transaction(impl, false);
 
     std::string empty_id;

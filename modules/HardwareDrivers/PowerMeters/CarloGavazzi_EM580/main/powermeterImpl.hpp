@@ -62,6 +62,7 @@ public:
 
         static void set_transaction_id(powermeterImpl& self, std::string transaction_id) {
             self.m_transaction_id = std::move(transaction_id);
+            self.m_transaction_active.store(true);
         }
 
         static void set_public_key_hex(powermeterImpl& self, std::string public_key_hex) {

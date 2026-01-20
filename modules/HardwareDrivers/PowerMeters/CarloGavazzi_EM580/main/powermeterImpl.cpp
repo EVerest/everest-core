@@ -497,7 +497,7 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
     if (transaction_id.empty()) {
         EVLOG_info << "Cleaning up the transaction request.";
         try {
-            if (!m_pending_closed_transaction) {
+            if (!m_pending_closed_transaction and m_transaction_active.load()) {
                 std::vector<uint16_t> command_data = {MODBUS_OCMF_COMMAND_END};
                 p_modbus_transport->write_multiple_registers(MODBUS_OCMF_COMMAND_ADDRESS, command_data);
                 EVLOG_info << "Transaction " << transaction_id << " stopped";
