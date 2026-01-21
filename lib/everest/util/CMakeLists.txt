@@ -17,6 +17,14 @@ set_target_properties(everest_util
         BUILD_INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
+install(TARGETS everest_util
+    EXPORT everest-core-targets
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
+)
+
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/everest
     DESTINATION include
     FILES_MATCHING PATTERN "*.hpp"
