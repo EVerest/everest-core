@@ -59,6 +59,7 @@ Result SessionStop::feed(Event ev) {
             m_ctx.feedback.ev_termination(ev_termination_code, ev_termination_explanation);
         }
         m_ctx.respond(res);
+        m_ctx.feedback.response_code(res.response_code);
 
         // Todo(sl): Tell the reason why the charger is stopping. Shutdown, Error, etc.
         if (req->charging_session == message_20::datatypes::ChargingSession::Pause) {
@@ -81,6 +82,7 @@ Result SessionStop::feed(Event ev) {
         const message_20::Type req_type = variant->get_type();
         send_sequence_error(req_type, m_ctx);
 
+        m_ctx.feedback.response_code(dt::ResponseCode::FAILED_SequenceError);
         m_ctx.session_stopped = true;
         return {};
     }
