@@ -1,1 +1,2 @@
 ev_add_module(Bender_isoCHA425HV)
+ev_add_module(DoldRN5893)
