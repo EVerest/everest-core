@@ -25,6 +25,7 @@ Scope
 This document covers breaking change definitions for all components of the :ref:`EVerest public API <project-release-and-versioning-public-api>`.
 
 This includes:
+
 - :ref:`AsyncAPI specifications <exp-breaking-changes-asyncapi>`
 - :ref:`Configuration files and storage contracts <exp-breaking-changes-configuration>`
 
