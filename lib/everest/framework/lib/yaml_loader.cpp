@@ -3,8 +3,10 @@
 #include <utils/yaml_loader.hpp>
 
 #include <cstddef>
+#include <cstring>
 #include <fstream>
 #include <limits>
+#include <stdexcept>
 
 #include <fmt/core.h>
 #include <ryml.hpp>
@@ -128,10 +130,20 @@ nlohmann::ordered_json load_yaml(const std::filesystem::path& path) {
 }
 
 void save_yaml(const nlohmann::ordered_json& data, const std::filesystem::path& path) {
+    if (!std::filesystem::exists(path.parent_path())) {
+        std::filesystem::create_directory(path.parent_path());
+    }
+
     // FIXME: saving yaml seems to be quite complicated, but we should be able to just emit json here...
-    std::ofstream ofs(path.c_str());
+    std::ofstream ofs(path);
     ofs << data << std::endl;
     ofs.close();
+
+    if (!ofs) {
+        const int ec = errno;
+        throw std::runtime_error(
+            fmt::format("Writing user-config to '{}' failed with ec: {}", path.string(), std::strerror(ec)));
+    }
 }
 
 } // namespace Everest
