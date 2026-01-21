@@ -103,6 +103,7 @@ jobs:
       SA_GITHUB_SSH_KEY: ${{ secrets.SA_GITHUB_SSH_KEY }}
     with:
       runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      is_fork: ${{ needs.setup-env.outputs.is_fork == 'true' }}
       build_kit_artifact_name: ${{ needs.build-build-kit.outputs.build_kit_artifact_name }}
       build_kit_image_tag: ${{ needs.build-build-kit.outputs.build_kit_image_tag }}
       deploy_docs: false
