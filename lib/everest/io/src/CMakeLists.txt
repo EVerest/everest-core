@@ -70,8 +70,12 @@ else()
   )
 endif()
 
-install(
-  TARGETS everest_io
+install(TARGETS everest_io
+    EXPORT everest-core-targets
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
 )
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/everest
