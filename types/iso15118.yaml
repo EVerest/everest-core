@@ -724,6 +724,13 @@ types:
       - Extended
       - Dual2
       - Dual4
+      - Mcs
+      - Chaoji
+      - UltraChaoji
+      - rMcs
+      - xMcs
+      - Aviation
+      - Marine
   ControlMode:
     description: >-
       (2.1) Indicates whether EV wants to operate in Dynamic or Scheduled mode. When
