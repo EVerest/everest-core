@@ -14,4 +14,8 @@ include(${CMAKE_CURRENT_LIST_DIR}/ev-project-bootstrap.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/everest-core-targets.cmake)
 include(CMakeFindDependencyMacro)
 
-ev_add_project(@PACKAGE_EVEREST_DATADIR@ everest-core)
+ev_add_project(
+    EV_PROJECT_DIRECTORY @PACKAGE_EVEREST_DATADIR@
+    EV_PROJECT_NAME everest-core
+    SKIP_DOC_GENERATION
+)
