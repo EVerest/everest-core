@@ -98,7 +98,7 @@ std::tuple<bool, std::optional<ErrorDefinition>> parse_error_type(const std::str
     if (error_type == "ac_rcd_Selftest") {
         return {raise, error_definitions::ac_rcd_Selftest};
     }
-    if (error_type == "ac_rc_AC") {
+    if (error_type == "ac_rcd_AC") {
         return {raise, error_definitions::ac_rcd_AC};
     }
     if (error_type == "ac_rcd_DC") {
