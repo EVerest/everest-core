@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 
 #include "configuration_stub.hpp"
+#include "ocpp/v16/known_keys.hpp"
+#include "ocpp/v2/ocpp_types.hpp"
 #include <ocpp/v16/charge_point_configuration_base.hpp>
 #include <optional>
 
@@ -36,6 +38,39 @@ TEST(ConnectorID, Build) {
     EXPECT_EQ(CPCB::MeterPublicKey_string(1), "MeterPublicKey[1]");
     EXPECT_EQ(CPCB::MeterPublicKey_string(12), "MeterPublicKey[12]");
     EXPECT_EQ(CPCB::MeterPublicKey_string(123), "MeterPublicKey[123]");
+}
+
+using namespace ocpp;
+
+TEST(V2Mapping, V16ToV2) {
+    using namespace ocpp::v16::keys;
+    using namespace ocpp::v2;
+
+    auto res = convert_v2(valid_keys::CpoName);
+    ASSERT_TRUE(res);
+    auto component = std::get<Component>(res.value());
+    auto variable = std::get<Variable>(res.value());
+    EXPECT_EQ(component.name, "SecurityCtrlr");
+    EXPECT_EQ(variable.name, "OrganizationName");
+
+    res = convert_v2("CpoName");
+    ASSERT_TRUE(res);
+    component = std::get<Component>(res.value());
+    variable = std::get<Variable>(res.value());
+    EXPECT_EQ(component.name, "SecurityCtrlr");
+    EXPECT_EQ(variable.name, "OrganizationName");
+}
+
+TEST(V2Mapping, V2ToV16) {
+    using namespace ocpp::v16::keys;
+    using namespace ocpp::v2;
+
+    Component comp;
+    comp.name = "SecurityCtrlr";
+    Variable var;
+    var.name = "OrganizationName";
+    auto res = convert_v2(comp, var);
+    EXPECT_EQ(res, "CpoName");
 }
 
 } // namespace
