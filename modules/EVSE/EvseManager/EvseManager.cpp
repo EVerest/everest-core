@@ -2361,7 +2361,7 @@ types::evse_manager::EVInfo EvseManager::get_ev_info() {
 }
 
 void EvseManager::apply_new_target_voltage_current() {
-    if (latest_target_voltage > 0) {
+    if (latest_target_voltage >= 0) {
         powersupply_DC_set(latest_target_voltage, latest_target_current);
     }
 }
