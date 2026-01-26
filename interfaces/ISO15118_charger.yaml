@@ -456,3 +456,4 @@ vars:
     description:
       The response code send to EV
     type: string
+    $ref: /iso15118#/ResponseCode

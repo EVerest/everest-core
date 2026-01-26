@@ -1857,3 +1857,47 @@ types:
       ev_termination_explanation:
         description: Contains the EV termination explanation
         type: string
+  ResponseCode:
+    description: Response codes as defined in ISO15118-2 and ISO15118-20
+    type: string
+    enum:
+      - OK
+      - OK_CertificateExpiresSoon
+      - OK_NewSessionEstablished
+      - OK_OldSessionJoined
+      - OK_PowerToleranceConfirmed
+      - WARNING_AuthorizationSelectionInvalid
+      - WARNING_CertificateExpired
+      - WARNING_CertificateNotYetValid
+      - WARNING_CertificateRevoked
+      - WARNING_CertificateValidationError
+      - WARNING_ChallengeInvalid
+      - WARNING_EIMAuthorizationFailure
+      - WARNING_eMSPUnknown
+      - WARNING_EVPowerProfileViolation
+      - WARNING_GeneralPnCAuthorizationError
+      - WARNING_NoCertificateAvailable
+      - WARNING_NoContractMatchingPCIDFound
+      - WARNING_PowerToleranceNotConfirmed
+      - WARNING_ScheduleRenegotiationFailed
+      - WARNING_StandbyNotAllowed
+      - WARNING_WPT
+      - FAILED
+      - FAILED_AssociationError
+      - FAILED_ContactorError
+      - FAILED_EVPowerProfileInvalid
+      - FAILED_EVPowerProfileViolation
+      - FAILED_MeteringSignatureNotValid
+      - FAILED_NoEnergyTransferServiceSelected
+      - FAILED_NoServiceRenegotiationSupported
+      - FAILED_PauseNotAllowed
+      - FAILED_PowerDeliveryNotApplied
+      - FAILED_PowerToleranceNotConfirmed
+      - FAILED_ScheduleRenegotiation
+      - FAILED_ScheduleSelectionInvalid
+      - FAILED_SequenceError
+      - FAILED_ServiceIDInvalid
+      - FAILED_ServiceSelectionInvalid
+      - FAILED_SignatureError
+      - FAILED_UnknownSession
+      - FAILED_WrongChargeParameter
