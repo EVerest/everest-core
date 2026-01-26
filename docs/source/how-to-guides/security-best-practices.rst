@@ -80,8 +80,9 @@ should be given individual Linux capabilities like this:
 Here is a list of capabilities required by the EVerest modules:
 
 ================= ============================================
-EvseSlac / EvSlac CAP_NET_RAW
+Module name       Capabilities
 ================= ============================================
+EvseSlac / EvSlac CAP_NET_RAW
 Setup             CAP_NET_ADMIN, CAP_NET_RAW, CAP_DAC_OVERRIDE
 PacketSniffer     CAP_NET_RAW
 ================= ============================================
