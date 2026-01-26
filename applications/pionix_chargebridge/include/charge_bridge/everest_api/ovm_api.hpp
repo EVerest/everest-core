@@ -9,6 +9,7 @@
 #include <everest_api_types/evse_manager/API.hpp>
 #include <everest_api_types/over_voltage_monitor/API.hpp>
 #include <everest_api_types/utilities/Topics.hpp>
+#include <everest_api_types/evse_manager/API.hpp>
 #include <functional>
 #include <protocol/cb_common.h>
 #include <protocol/evse_bsp_cb_to_host.h>
