@@ -16,7 +16,7 @@ bool tcp_socket::open(std::string const& remote, uint16_t port) {
         auto socket = socket::open_tcp_socket_with_timeout(remote, port, m_timeout_ms);
         socket::set_non_blocking(socket);
         m_fd = std::move(socket);
-        return socket::get_pending_error(socket) == 0;
+        return socket::get_pending_error(m_fd) == 0;
     } catch (...) {
     }
     return false;

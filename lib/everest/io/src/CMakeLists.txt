@@ -26,6 +26,7 @@ target_sources(everest_io
         tun_tap/tap_handler.cpp
         tcp/tcp_socket.cpp
         netlink/vcan_netlink_manager.cpp
+        raw/raw_socket.cpp
 )
 
 target_include_directories(everest_io
