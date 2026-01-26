@@ -47,29 +47,30 @@ bool generic_fd_event_client_impl::setup_error_event_handler() {
 
 void generic_fd_event_client_impl::setup_io_event_handler(int fd) {
     using namespace everest::lib::io::event;
-    m_event_handler->register_event_handler(fd,
-                                            [this, fd](auto events) {
-                                                auto success = true;
-                                                if (events.count(poll_events::error)) {
-                                                    auto error = m_get_error();
-                                                    if (error) {
-                                                        set_error_status_and_notify(error);
-                                                    }
-                                                    success = false;
-                                                }
-                                                if (events.count(poll_events::hungup)) {
-                                                    success = false;
-                                                }
-                                                if (success && events.count(poll_events::read)) {
-                                                    success = rx_handler();
-                                                }
-                                                if (success && events.count(poll_events::write)) {
-                                                    success = tx_handler(fd);
-                                                }
-                                            },
-                                            {poll_events::read});
+    m_event_handler->register_event_handler(
+        fd,
+        [this, fd](auto events) {
+            auto success = true;
+            if (events.count(poll_events::error)) {
+                auto error = m_get_error();
+                if (error) {
+                    set_error_status_and_notify(error);
+                }
+                success = false;
+            }
+            if (events.count(poll_events::hungup)) {
+                success = false;
+            }
+            if (success && events.count(poll_events::read)) {
+                success = rx_handler();
+            }
+            if (success && events.count(poll_events::write)) {
+                success = tx_handler(fd);
+            }
+        },
+        poll_events::read);
     m_event_handler->register_event_handler(&m_io_event_fd, [this, fd](auto) {
-        m_event_handler->modify_event_handler(fd, {poll_events::write}, event_modification::add);
+        m_event_handler->modify_event_handler(fd, poll_events::write, event_modification::add);
     });
 }
 
@@ -102,7 +103,7 @@ bool generic_fd_event_client_impl::tx_handler(int fd) {
     case action_status::empty: {
         // if there are no more message we no longer listen to writeable events
         // otherwise we wait for the socket to become writeable again.
-        m_event_handler->modify_event_handler(fd, {event::poll_events::write}, event::event_modification::remove);
+        m_event_handler->modify_event_handler(fd, event::poll_events::write, event::event_modification::remove);
         return true;
     }
     case action_status::fail: {
