@@ -453,7 +453,6 @@ vars:
     type: object
     $ref: /iso15118#/EvTermination
   response_code:
-    description:
-      The response code send to EV
+    description: The response code send from EV
     type: string
     $ref: /iso15118#/ResponseCode
