@@ -50,6 +50,36 @@ EVerest will read the isolation resistance values and switch off if
 they fall below 100 kOhm as well, but safety certification should not
 rely on the Linux system.
 
+Dold RN5893 IMD
+-------------------------
+
+*Hardware Driver Module* :ref:`Dold RN5893 <everest_modules_DoldRN5893>`
+
+You can find more information about the device here:
+
+`<https://www.dold.com/en/products/relay-modules/monitoring-devices/insulation-monitors/rn-5893>`_
+
+Here are the most important specifications:
+- Width:	52,5 mm
+- Classification:	For DC charging stations
+- Response value:	1 - 500 kΩ
+- IMD type:	AC, DC, AC/DC
+- Nominal voltage IT system:	AC 0 - 230, AC 0 - 690 (Coupling device), DC 0 - 230, DC 0 - 1000 (Coupling device) V
+- Auxiliary voltage:	AC/DC
+- Earth fault indicator:	Yes
+- Approvals:	UL-Recognized
+- Response value type:	Adjustable
+- Bus interface:	Modbus RTU
+- Enclosure design:	Distribution board
+- Type:	RN 5893
+
+| EVerest supports this device with the "DoldRN5893" module.
+  The module requires a "SerialCommHub" module to be loaded as well for
+  the ModBus communication.
+| All settings of the device can be adjusted in the module
+  configuration.
+
+
 ---------------
 NF/RFID Readers
 ---------------
