@@ -370,6 +370,7 @@ private:
     // utility
     std::shared_ptr<MessageQueue<v2::MessageType>> message_queue;
     std::shared_ptr<DatabaseHandler> database_handler;
+    fs::path share_path;
 
     // states
     std::atomic<RegistrationStatusEnum> registration_status;
