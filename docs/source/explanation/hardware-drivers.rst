@@ -60,9 +60,6 @@ You can find more information about the device here:
 `<https://www.dold.com/en/products/relay-modules/monitoring-devices/insulation-monitors/rn-5893>`_
 
 Here are the most important specifications:
-
-Technical specifications
-
 - Width:	52,5 mm
 - Classification:	For DC charging stations
 - Response value:	1 - 500 kΩ
