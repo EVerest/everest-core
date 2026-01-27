@@ -1257,6 +1257,17 @@ int WebsocketLibwebsockets::process_callback(void* wsi_ptr, int callback_reason,
             }
         }
 
+        if (this->connection_options.everest_version.has_value()) {
+            auto& str = this->connection_options.everest_version.value();
+            if (0 != lws_add_http_header_by_name(
+                         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): needed for appropriate type
+                         wsi, reinterpret_cast<const unsigned char*>("EVerest-Version"),
+                         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): needed for appropriate type
+                         reinterpret_cast<const unsigned char*>(str.c_str()), str.length(), ptr, end_header)) {
+                EVLOG_warning << "Could not add EVerest-Version header.";
+            }
+        }
+
         if (this->connection_options.security_profile == 1 || this->connection_options.security_profile == 2) {
             std::optional<std::string> authorization_header = this->getAuthorizationHeader();
 
