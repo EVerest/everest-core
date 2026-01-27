@@ -32,9 +32,9 @@ private:
     bool validate_eebus_service_port() const;
     bool validate_grpc_port() const;
     bool validate_eebus_ems_ski() const;
-    bool validate_certificate_path();
-    bool validate_private_key_path();
-    bool validate_eebus_grpc_api_binary_path();
+    bool validate_certificate_path() const;
+    bool validate_private_key_path() const;
+    bool validate_eebus_grpc_api_binary_path() const;
     bool validate_manage_eebus_grpc_api_binary() const;
     bool validate_vendor_code() const;
     bool validate_device_brand() const;

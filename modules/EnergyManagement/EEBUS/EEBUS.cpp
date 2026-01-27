@@ -13,36 +13,12 @@
 
 namespace module {
 
-namespace {
-void start_eebus_grpc_api(const std::filesystem::path& binary_path, int port, const std::filesystem::path& cert_file,
-                          const std::filesystem::path& key_file) {
-    try {
-        std::vector<std::string> args;
-        constexpr int num_args = 6;
-        args.reserve(num_args);
-        args.emplace_back("-port");
-        args.emplace_back(std::to_string(port));
-        args.emplace_back("-certificate-path");
-        args.emplace_back(cert_file.string());
-        args.emplace_back("-private-key-path");
-        args.emplace_back(key_file.string());
-        everest::run_application::CmdOutput output =
-            everest::run_application::run_application(binary_path.string(), args);
-        EVLOG_info << "eebus-grpc output: " << output.output;
-        EVLOG_info << "eebus-grpc exit code: " << output.exit_code;
-    } catch (const std::exception& e) {
-        EVLOG_critical << "start_eebus_grpc_api thread caught exception: " << e.what();
-    } catch (...) {
-        EVLOG_critical << "start_eebus_grpc_api thread caught unknown exception.";
-    }
-}
-} // namespace
-
 EEBUS::~EEBUS() {
     if (this->connection_handler) {
         this->connection_handler->stop();
     }
-    if (this->config.manage_eebus_grpc_api_binary && this->eebus_grpc_api_thread_active.exchange(false)) {
+    if (this->config.manage_eebus_grpc_api_binary) {
+        this->eebus_grpc_api_thread_active.store(false);
         if (this->eebus_grpc_api_thread.joinable()) {
             this->eebus_grpc_api_thread.join();
         }
@@ -68,7 +44,7 @@ void EEBUS::init() {
         if (config_validator->validate()) {
             this->eebus_grpc_api_thread_active.store(true);
             this->eebus_grpc_api_thread =
-                std::thread(start_eebus_grpc_api, config_validator->get_eebus_grpc_api_binary_path(),
+                std::thread(&EEBUS::start_eebus_grpc_api, this, config_validator->get_eebus_grpc_api_binary_path(),
                             config_validator->get_grpc_port(), config_validator->get_certificate_path(),
                             config_validator->get_private_key_path());
         } else {
@@ -89,6 +65,36 @@ void EEBUS::init() {
     }
 
     this->connection_handler->subscribe_to_events();
+}
+
+void EEBUS::start_eebus_grpc_api(const std::filesystem::path& binary_path, int port,
+                                 const std::filesystem::path& cert_file, const std::filesystem::path& key_file) {
+    try {
+        std::vector<std::string> args;
+        constexpr int num_args = 6;
+        args.reserve(num_args);
+        args.emplace_back("-port");
+        args.emplace_back(std::to_string(port));
+        args.emplace_back("-certificate-path");
+        args.emplace_back(cert_file.string());
+        args.emplace_back("-private-key-path");
+        args.emplace_back(key_file.string());
+        everest::run_application::CmdOutput output = everest::run_application::run_application(
+            binary_path.string(), args, [this](const std::string& output_line) {
+                if (!output_line.empty()) {
+                    EVLOG_debug << "eebus-grpc: " << output_line;
+                }
+                if (not this->eebus_grpc_api_thread_active) {
+                    return everest::run_application::CmdControl::Terminate;
+                }
+                return everest::run_application::CmdControl::Continue;
+            });
+        EVLOG_info << "eebus-grpc exit code: " << output.exit_code;
+    } catch (const std::exception& e) {
+        EVLOG_critical << "start_eebus_grpc_api thread caught exception: " << e.what();
+    } catch (...) {
+        EVLOG_critical << "start_eebus_grpc_api thread caught unknown exception.";
+    }
 }
 
 void EEBUS::ready() {

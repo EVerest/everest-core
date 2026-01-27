@@ -15,6 +15,22 @@ ConfigValidator::ConfigValidator(const Conf& config, std::filesystem::path etc_p
     certificate_path(std::filesystem::path(config.certificate_path)),
     private_key_path(std::filesystem::path(config.private_key_path)),
     eebus_grpc_api_binary_path(std::filesystem::path(config.eebus_grpc_api_binary_path)) {
+
+    if (this->manage_eebus_grpc_api_binary) {
+        if (this->certificate_path.is_relative()) {
+            this->certificate_path = this->etc_prefix / "certs" / this->certificate_path;
+            EVLOG_info << "Certificate path is relative, using etc prefix: " << this->certificate_path;
+        }
+        if (this->private_key_path.is_relative()) {
+            this->private_key_path = this->etc_prefix / "certs" / this->private_key_path;
+            EVLOG_info << "Key path is relative, using etc prefix: " << this->private_key_path;
+        }
+        if (this->eebus_grpc_api_binary_path.is_relative()) {
+            this->eebus_grpc_api_binary_path = this->libexec_prefix / this->eebus_grpc_api_binary_path;
+            EVLOG_info << "EEBUS GRPC API binary path is relative, using libexec prefix: "
+                       << this->eebus_grpc_api_binary_path;
+        }
+    }
 }
 
 bool ConfigValidator::validate() {
@@ -107,53 +123,40 @@ bool ConfigValidator::validate_eebus_ems_ski() const {
     return true;
 }
 
-bool ConfigValidator::validate_certificate_path() {
+bool ConfigValidator::validate_certificate_path() const {
     if (!this->manage_eebus_grpc_api_binary) {
         return true;
-    }
-    if (this->certificate_path.is_relative()) {
-        this->certificate_path = this->etc_prefix / "certs" / this->certificate_path;
-        EVLOG_info << "Certificate path is relative, using etc prefix: " << this->certificate_path;
     }
     if (!std::filesystem::exists(this->certificate_path)) {
-        EVLOG_error << "Certificate file does not exist";
+        EVLOG_error << "Certificate file does not exist: " << this->certificate_path;
         return false;
     }
     return true;
 }
 
-bool ConfigValidator::validate_private_key_path() {
+bool ConfigValidator::validate_private_key_path() const {
     if (!this->manage_eebus_grpc_api_binary) {
         return true;
-    }
-    if (this->private_key_path.is_relative()) {
-        this->private_key_path = this->etc_prefix / "certs" / this->private_key_path;
-        EVLOG_info << "Key path is relative, using etc prefix: " << this->private_key_path;
     }
     if (!std::filesystem::exists(this->private_key_path)) {
-        EVLOG_error << "Key file does not exist";
+        EVLOG_error << "Key file does not exist: " << this->private_key_path;
         return false;
     }
     return true;
 }
 
-bool ConfigValidator::validate_eebus_grpc_api_binary_path() {
+bool ConfigValidator::validate_eebus_grpc_api_binary_path() const {
     if (!this->manage_eebus_grpc_api_binary) {
         return true;
     }
-    if (this->eebus_grpc_api_binary_path.is_relative()) {
-        this->eebus_grpc_api_binary_path = this->libexec_prefix / this->eebus_grpc_api_binary_path;
-        EVLOG_info << "EEBUS GRPC API binary path is relative, using libexec prefix: "
-                   << this->eebus_grpc_api_binary_path;
-    }
     if (!std::filesystem::exists(this->eebus_grpc_api_binary_path)) {
-        EVLOG_error << "EEBUS GRPC API binary does not exist";
+        EVLOG_error << "EEBUS GRPC API binary does not exist: " << this->eebus_grpc_api_binary_path;
         return false;
     }
-    std::filesystem::perms perms = std::filesystem::status(this->eebus_grpc_api_binary_path).permissions();
-    std::filesystem::perms owner_exec_perms = std::filesystem::perms::owner_exec;
+    const auto perms = std::filesystem::status(this->eebus_grpc_api_binary_path).permissions();
+    const auto owner_exec_perms = std::filesystem::perms::owner_exec;
     if ((perms & owner_exec_perms) == std::filesystem::perms::none) {
-        EVLOG_error << "EEBUS GRPC API binary is not executable";
+        EVLOG_error << "EEBUS GRPC API binary is not executable: " << this->eebus_grpc_api_binary_path;
         return false;
     }
     return true;
