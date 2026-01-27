@@ -71,6 +71,8 @@ private:
     void ready();
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
+    void start_eebus_grpc_api(const std::filesystem::path& binary_path, int port,
+                              const std::filesystem::path& cert_file, const std::filesystem::path& key_file);
     std::thread eebus_grpc_api_thread;
     std::atomic<bool> eebus_grpc_api_thread_active;
 
