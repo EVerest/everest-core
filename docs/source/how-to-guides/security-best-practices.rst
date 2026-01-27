@@ -38,7 +38,7 @@ In the EVerest config file, add the following to the settings section:
 - Don't use the *admin-panel* on the product and ensure EVerest does
   not listen on port 8849. In the Yocto recipes, this is disabled by
   default. Take special care if you use another build system. Set
-  "EVEREST_ENABLE_ADMIN_PANEL_BACKEND=OFF2 in cmake.
+  "EVEREST_ENABLE_ADMIN_PANEL_BACKEND=OFF" in cmake.
 - Do not run EVerest modules as root user. Create a low privilege
   user, that has access only to what is needed (via filesystem
   permissions, group memberships, ...). In Yocto, you can do this in your
@@ -80,8 +80,9 @@ should be given individual Linux capabilities like this:
 Here is a list of capabilities required by the EVerest modules:
 
 ================= ============================================
-EvseSlac / EvSlac CAP_NET_RAW
+Module name       Capabilities
 ================= ============================================
+EvseSlac / EvSlac CAP_NET_RAW
 Setup             CAP_NET_ADMIN, CAP_NET_RAW, CAP_DAC_OVERRIDE
 PacketSniffer     CAP_NET_RAW
 ================= ============================================
