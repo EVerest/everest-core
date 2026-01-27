@@ -35,8 +35,6 @@ convert_service_id_to_service_category(const std::uint16_t service_id) {
         return iso15118::message_20::datatypes::ServiceCategory::MCS_BPT;
     case 10:
         return iso15118::message_20::datatypes::ServiceCategory::AC_DER;
-    case 65:
-        return iso15118::message_20::datatypes::ServiceCategory::Internet;
     default:
         // returning ParkingStatus as default to show nonsense
         return iso15118::message_20::datatypes::ServiceCategory::ParkingStatus;

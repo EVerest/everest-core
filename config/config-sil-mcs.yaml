@@ -3,7 +3,6 @@ active_modules:
     module: Evse15118D20
     config_module:
       device: auto
-      enable_tls_key_logging: true
     connections:
       security:
         - module_id: evse_security
