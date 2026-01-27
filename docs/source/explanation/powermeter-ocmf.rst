@@ -162,4 +162,6 @@ Start of Powermeter or recovery after communication loss
 
   Note over Powermeter: In case of CommunicationError during start/stop<br> transaction please check the start/stop transaction diagrams
 
+--------------------------------
+
   **Authors**: Florin Mihut, Piet Gömpel
