@@ -21,6 +21,7 @@ namespace API_EVM = everest::lib::API::V1_0::types::evse_manager;
 
 struct evse_bsp_config {
     std::string module_id;
+    bool enabled{false};
     API_BSP::HardwareCapabilities capabilities;
 };
 

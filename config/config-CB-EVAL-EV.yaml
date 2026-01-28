@@ -1,0 +1,46 @@
+settings:
+  mqtt_everest_prefix: everest_ev
+active_modules:
+  ev_api:
+    connections:
+      ev_manager:
+        - implementation_id: ev_manager
+          module_id: ev_manager
+    module: EvAPI
+  iso15118_ev:
+    module: PyEvJosev
+    config_module:
+      device: cb_ev_plc
+      supported_DIN70121: true
+      supported_ISO15118_2: true
+      supported_ISO15118_20_DC: true
+      tls_active: false
+  ev_bsp_1:
+    module: ev_board_support_API
+    config_module:
+      cfg_heartbeat_interval_ms: 500
+  ev_slac:
+    module: EvSlac
+    config_implementation:
+      main:
+        device: cb_ev_plc
+  ev_manager:
+    module: EvManager
+    config_module:
+      connector_id: 1
+      auto_enable: true
+      auto_exec: true
+      auto_exec_infinite: true
+      auto_exec_commands: wait_for_real_plugin;iso_wait_pwm_is_running;iso_wait_slac_matched;iso_start_v2g_session DC;iso_wait_pwr_ready;iso_dc_power_on;iso_wait_for_stop 60;iso_wait_v2g_session_stopped;unplug;sleep 5;
+      dc_target_current: 5
+      dc_target_voltage: 444
+    connections:
+      ev_board_support:
+        - module_id: ev_bsp_1
+          implementation_id: main
+      ev:
+        - module_id: iso15118_ev
+          implementation_id: ev
+      slac:
+        - module_id: ev_slac
+          implementation_id: main

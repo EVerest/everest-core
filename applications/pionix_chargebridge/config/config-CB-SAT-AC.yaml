@@ -1,6 +1,7 @@
 charge_bridge:
   name: cb_sat_ac
-  ip: chargebridge-44b7d0c98ace.local
+  ip: 10.10.10.88
+  #ip: 10.10.10.20
   fw_file: ./firmware/charge-bridge-fw_complete.cbfw
   fw_update_on_start: true
   mdns_name: ""
@@ -12,7 +13,7 @@ heartbeat:
 safety:
   pp_mode: "disabled"
   cp_avg_ms: 10
-  inverted_emergency_input: 1
+  inverted_emergency_input: 0
   relay_1:
     relay_mode: "PowerRelay"
     # Auxilary contact is connected from the OMRON relay

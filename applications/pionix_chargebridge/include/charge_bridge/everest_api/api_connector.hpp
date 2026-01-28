@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#include <charge_bridge/everest_api/ev_bsp_api.hpp>
 #include <charge_bridge/everest_api/evse_bsp_api.hpp>
 #include <charge_bridge/everest_api/ovm_api.hpp>
 #include <chrono>
@@ -27,8 +28,9 @@ struct everest_api_config {
     std::string mqtt_bind;
     uint16_t mqtt_port;
     uint32_t mqtt_ping_interval_ms;
-    evse_bsp_config bsp;
+    evse_bsp_config evse;
     evse_ovm_config ovm;
+    evse_ev_bsp_config ev;
 };
 
 class api_connector : public everest::lib::io::event::fd_event_register_interface {
@@ -54,16 +56,21 @@ private:
     std::chrono::steady_clock::time_point m_last_cb_heartbeat;
     everest::lib::io::event::timer_fd m_sync_timer;
 
-    std::string m_bsp_receive_topic;
-    std::string m_bsp_send_topic;
+    std::string m_evse_bsp_receive_topic;
+    std::string m_evse_bsp_send_topic;
     std::string m_ovm_receive_topic;
     std::string m_ovm_send_topic;
+    std::string m_ev_bsp_receive_topic;
+    std::string m_ev_bsp_send_topic;
+    bool m_evse_bsp_enabled{false};
     bool m_ovm_enabled{false};
+    bool m_ev_bsp_enabled{false};
     bool m_cb_initial_comm_check{true};
     bool m_cb_connected{false};
     evse_bsp_host_to_cb m_host_status;
 
-    evse_bsp_api m_bsp;
+    evse_bsp_api m_evse_bsp;
     ovm_api m_ovm;
+    ev_bsp_api m_ev_bsp;
 };
 } // namespace charge_bridge::evse_bsp

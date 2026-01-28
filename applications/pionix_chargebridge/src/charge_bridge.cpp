@@ -31,8 +31,8 @@ charge_bridge::charge_bridge(charge_bridge_config const& config) : m_config(conf
     if (config.plc.has_value()) {
         m_plc = std::make_unique<plc_bridge>(config.plc.value());
     }
-    if (config.evse.has_value()) {
-        m_bsp = std::make_unique<evse_bridge>(config.evse.value());
+    if (config.bsp.has_value()) {
+        m_bsp = std::make_unique<bsp_bridge>(config.bsp.value());
     }
     if (config.heartbeat.has_value()) {
         m_heartbeat = std::make_unique<heartbeat_service>(config.heartbeat.value(), [this](bool connected) {
@@ -229,16 +229,21 @@ void print_charge_bridge_config(charge_bridge_config const& c) {
         std::cout << " netmask " << c.plc->plc_netmaks;
         std::cout << " MTU " << c.plc->plc_mtu << std::endl;
     }
-    if (c.evse) {
-        std::cout << " * evse_bsp:  " << c.evse->cb_remote << ":" << c.evse->cb_port;
-        std::cout << " module " << c.evse->api.bsp.module_id;
-        std::cout << " MQTT " << c.evse->api.mqtt_remote << ":" << c.evse->api.mqtt_port;
-        if (not c.evse->api.mqtt_bind.empty()) {
-            std::cout << " on " << c.evse->api.mqtt_bind;
+    if (c.bsp) {
+        if (c.bsp->api.evse.enabled) {
+            std::cout << " * evse_bsp:  ";
+        } else if (c.bsp->api.ev.enabled) {
+            std::cout << " * ev_bsp:    ";
         }
-        std::cout << " ping " << c.evse->api.mqtt_ping_interval_ms << "ms";
-        if (c.evse->api.ovm.enabled) {
-            std::cout << " OVM module " << c.evse->api.ovm.module_id;
+        std::cout << c.bsp->cb_remote << ":" << c.bsp->cb_port;
+        std::cout << " module " << c.bsp->api.evse.module_id;
+        std::cout << " MQTT " << c.bsp->api.mqtt_remote << ":" << c.bsp->api.mqtt_port;
+        if (not c.bsp->api.mqtt_bind.empty()) {
+            std::cout << " on " << c.bsp->api.mqtt_bind;
+        }
+        std::cout << " ping " << c.bsp->api.mqtt_ping_interval_ms << "ms";
+        if (c.bsp->api.ovm.enabled) {
+            std::cout << " OVM module " << c.bsp->api.ovm.module_id;
         }
         std::cout << std::endl;
     }
