@@ -329,6 +329,28 @@ config:
       When raising evse_manager/Inoperative use the vendor ID from the original cause
     type: boolean
     default: false
+  voltage_plausibility_std_deviation_threshold_V:
+    description: >-
+      Maximum allowed standard deviation in volts between voltage measurements from different
+      sources (power supply, powermeter, isolation monitor, over voltage monitor) before a
+      voltage plausibility fault is triggered. During DC charging, if the standard deviation
+      exceeds this threshold for the configured duration, a fault is raised.
+    type: number
+    default: 50.0
+  voltage_plausibility_fault_duration_ms:
+    description: >-
+      Duration in milliseconds for which the standard deviation must exceed the threshold
+      before a voltage plausibility fault is raised. A duration of 0 ms means that a fault
+      will be raised immediately when the threshold is exceeded.
+    type: integer
+    default: 10000
+  voltage_plausibility_measurement_max_age_ms:
+    description: >-
+      Maximum age in milliseconds of a voltage measurement before it is considered stale
+      and excluded from standard deviation calculation. Measurements older than this value
+      are not used in the plausibility check.
+    type: integer
+    default: 3000
   session_id_type:
     description: >-
       Type to use for generation of session ids.

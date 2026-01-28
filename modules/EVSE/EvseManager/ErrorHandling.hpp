@@ -96,6 +96,9 @@ public:
     void raise_cable_check_fault(const std::string& description);
     void clear_cable_check_fault();
 
+    void raise_voltage_plausibility_fault(const std::string& description);
+    void clear_voltage_plausibility_fault();
+
 protected:
     void raise_inoperative_error(const Everest::error::Error& caused_by);
 
