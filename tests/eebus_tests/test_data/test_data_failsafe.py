@@ -1,0 +1,83 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright Pionix GmbH and Contributors to EVerest
+
+import os, pathlib
+import datetime
+
+from .test_data import TestData
+from helpers.types import ExternalLimits, ScheduleReqEntry, LimitsReq, TotalPowerW
+
+from helpers.import_helpers import insert_dir_to_sys_path
+insert_dir_to_sys_path(pathlib.Path(os.path.dirname(os.path.realpath(__file__))) / "../grpc_libs/generated")
+import common_types.types_pb2 as common_types_pb2
+
+class TestDataFailsafe(TestData):
+    """
+    In this scenario, the module enters failsafe state due to missing heartbeat.
+    It then transitions to unlimited autonomous after failsafe duration expires.
+    """
+    def get_load_limit(self) -> common_types_pb2.LoadLimit:
+        # This is not directly used for failsafe, but required by the test setup
+        return common_types_pb2.LoadLimit(
+            duration_nanoseconds=0,
+            is_changeable=True,
+            is_active=False,
+            value=4200,
+            delete_duration=False,
+        )
+
+    def get_expected_external_limits(self) -> ExternalLimits:
+        # The initial limit is inactive, then failsafe limit is applied, then no limit
+        return ExternalLimits(
+            schedule_import=[
+                ScheduleReqEntry(
+                    timestamp=datetime.datetime.now(),
+                    limits_to_root=LimitsReq(),
+                    limits_to_leaves=LimitsReq(),
+                    conversion_efficiency=None,
+                    prive_per_kwh=None
+                )
+            ],
+            schedule_export=[],
+        )
+
+    def get_expected_failsafe_limits(self, failsafe_control_limit: int) -> ExternalLimits:
+        return ExternalLimits(
+            schedule_import=[
+                ScheduleReqEntry(
+                    timestamp=datetime.datetime.now(),
+                    limits_to_root=LimitsReq(
+                        total_power_W=TotalPowerW(
+                            source="EEBUS LPC",
+                            value=float(failsafe_control_limit),
+                        ),
+                    ),
+                    limits_to_leaves=LimitsReq(
+                        total_power_W=TotalPowerW(
+                            source="EEBUS LPC",
+                            value=float(failsafe_control_limit),
+                        ),
+                    ),
+                    conversion_efficiency=None,
+                    prive_per_kwh=None
+                )
+            ],
+            schedule_export=[],
+        )
+
+    def get_expected_unlimited_autonomous_limits(self) -> ExternalLimits:
+        return ExternalLimits(
+            schedule_import=[
+                ScheduleReqEntry(
+                    timestamp=datetime.datetime.now(),
+                    limits_to_root=LimitsReq(),
+                    limits_to_leaves=LimitsReq(),
+                    conversion_efficiency=None,
+                    prive_per_kwh=None
+                )
+            ],
+            schedule_export=[],
+        )
+
+    def run_additional_assertions(self, limits: ExternalLimits):
+        assert True
