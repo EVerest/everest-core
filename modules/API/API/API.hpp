@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef API_HPP
-#define API_HPP
+#ifndef METHODS_API_HPP
+#define METHODS_API_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -228,4 +228,4 @@ private:
 
 } // namespace module
 
-#endif // API_HPP
+#endif // METHODS_API_HPP
