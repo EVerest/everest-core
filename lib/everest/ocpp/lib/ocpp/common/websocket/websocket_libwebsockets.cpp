@@ -73,9 +73,6 @@ enum class EConnectionState {
 /// \brief Message to return in the callback to close the socket connection
 static constexpr int LWS_CLOSE_SOCKET_RESPONSE_MESSAGE = -1;
 
-/// \brief How much we wait for a message to be sent in seconds
-static constexpr int MESSAGE_SEND_TIMEOUT_S = 1;
-
 /// \brief Current connection data, sets the internal state of the
 struct ConnectionData {
     explicit ConnectionData(WebsocketLibwebsockets* owner) :
@@ -1153,7 +1150,7 @@ void WebsocketLibwebsockets::poll_message(const std::shared_ptr<WebsocketMessage
     request_write();
 
     message_queue.wait_on_custom_event([&] { return (true == msg->message_sent); },
-                                       std::chrono::seconds(MESSAGE_SEND_TIMEOUT_S));
+                                       this->connection_options.message_timeout);
 
     if (msg->message_sent) {
         EVLOG_debug << "Successfully sent last message!";
