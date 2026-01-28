@@ -8,10 +8,10 @@
 
 namespace ocpp {
 class EvseSecurity;
+class ConnectivityManagerInterface;
 
 namespace v2 {
 class DeviceModelAbstract;
-class ConnectivityManagerInterface;
 class EvseManagerInterface;
 class DatabaseHandlerInterface;
 class ComponentStateManagerInterface;
