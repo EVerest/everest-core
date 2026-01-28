@@ -33,7 +33,7 @@ function(_ev_add_project)
     cmake_parse_arguments(args "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (args_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "ev_add_project macro got unknown argument(s): ${args_UNPARSED_ARGUMENTS}")
+        message(FATAL_ERROR "_ev_add_project function got unknown argument(s): ${args_UNPARSED_ARGUMENTS}")
     endif()
 
     if(args_KEYWORDS_MISSING_VALUES)
@@ -204,19 +204,19 @@ macro(ev_add_project)
     set(options SKIP_DOC_GENERATION)
     set(oneValueArgs EV_PROJECT_DIRECTORY EV_PROJECT_NAME)
     set(multiValueArgs "")
-    cmake_parse_arguments(args "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    cmake_parse_arguments(macro_args "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (args_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "ev_add_project macro got unknown argument(s): ${args_UNPARSED_ARGUMENTS}")
+    if (macro_args_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "ev_add_project macro got unknown argument(s): ${macro_args_UNPARSED_ARGUMENTS}")
     endif()
 
-    if(args_KEYWORDS_MISSING_VALUES)
-        message(FATAL_ERROR "ev_add_project() keyword(s) missing values: ${args_KEYWORDS_MISSING_VALUES}")
+    if(macro_args_KEYWORDS_MISSING_VALUES)
+        message(FATAL_ERROR "ev_add_project() keyword(s) missing values: ${macro_args_KEYWORDS_MISSING_VALUES}")
     endif()
 
-    if(args_EV_PROJECT_DIRECTORY AND NOT args_EV_PROJECT_NAME)
+    if(macro_args_EV_PROJECT_DIRECTORY AND NOT macro_args_EV_PROJECT_NAME)
         message(FATAL_ERROR "ev_add_project() was called with EV_PROJECT_DIRECTORY but is missing EV_PROJECT_NAME.")
-    elseif(NOT args_EV_PROJECT_DIRECTORY AND args_EV_PROJECT_NAME)
+    elseif(NOT macro_args_EV_PROJECT_DIRECTORY AND macro_args_EV_PROJECT_NAME)
         message(FATAL_ERROR "ev_add_project() was called with EV_PROJECT_NAME but is missing EV_PROJECT_DIRECTORY.")
     endif()
 
@@ -230,14 +230,20 @@ macro(ev_add_project)
 
     setup_ev_cli()
 
-    if (${args_SKIP_DOC_GENERATION})
-        set (fwd_OPTION "SKIP_DOC_GENERATION")
+    if (${macro_args_SKIP_DOC_GENERATION})
+        set (macro_fwd_OPTION "SKIP_DOC_GENERATION")
+    else()
+        set (macro_fwd_OPTION "")
     endif()
 
-    if (${args_EV_PROJECT_DIRECTORY} and ${args_EV_PROJECT_NAME})
-        _ev_add_project(${fwd_OPTION} ${args_EV_PROJECT_DIRECTORY} ${args_EV_PROJECT_NAME})
+    if (macro_args_EV_PROJECT_DIRECTORY AND macro_args_EV_PROJECT_NAME)
+        _ev_add_project(
+            EV_PROJECT_DIRECTORY ${macro_args_EV_PROJECT_DIRECTORY}
+            EV_PROJECT_NAME ${macro_args_EV_PROJECT_NAME}
+            ${macro_fwd_OPTION}
+        )
     else()
-        _ev_add_project(${fwd_OPTION})
+        _ev_add_project(${macro_fwd_OPTION})
     endif ()
 endmacro()
 
