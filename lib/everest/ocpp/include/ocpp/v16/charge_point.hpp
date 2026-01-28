@@ -7,6 +7,7 @@
 #include <ocpp/common/evse_security.hpp>
 #include <ocpp/common/evse_security_impl.hpp>
 #include <ocpp/common/support_older_cpp_versions.hpp>
+#include <ocpp/v16/charge_point_configuration_interface.hpp>
 #include <ocpp/v16/charge_point_state_machine.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
 #include <ocpp/v16/smart_charging.hpp>
@@ -75,6 +76,26 @@ public:
     /// implementation
     explicit ChargePoint(const std::string& config, const fs::path& share_path, const fs::path& user_config_path,
                          const fs::path& database_path, const fs::path& sql_init_path, const fs::path& message_log_path,
+                         const std::shared_ptr<EvseSecurity> evse_security,
+                         const std::optional<SecurityConfiguration> security_configuration = std::nullopt);
+
+    /// \brief The main entrypoint for libOCPP for OCPP 1.6
+    /// \param config unique pointer to a configuration object
+    /// \param database_path this points to the location of the sqlite database that libocpp uses to keep track of
+    /// connector availability, the authorization cache and auth list, charging profiles and transaction data
+    /// \param sql_init_path this points to the init.sql file which contains the database schema used by libocpp for its
+    /// sqlite database
+    /// \param message_log_path this points to the directory in which libocpp can put OCPP communication logfiles for
+    /// debugging purposes. This behavior can be controlled by the "LogMessages" (set to true by default) and
+    /// "LogMessagesFormat" (set to ["log", "html", "session_logging"] by default, "console" and "console_detailed" are
+    /// also available) configuration keys in the "Internal" section of the config file. Please note that this is
+    /// intended for debugging purposes only as it logs all communication, including authentication messages.
+    /// \param evse_security Pointer to evse_security that manages security related operations; if nullptr
+    /// security_configuration must be set
+    /// \param security_configuration specifies the file paths that are required to set up the internal evse_security
+    /// implementation
+    explicit ChargePoint(std::unique_ptr<ChargePointConfigurationInterface> config, const fs::path& database_path,
+                         const fs::path& sql_init_path, const fs::path& message_log_path,
                          const std::shared_ptr<EvseSecurity> evse_security,
                          const std::optional<SecurityConfiguration> security_configuration = std::nullopt);
 
