@@ -91,6 +91,28 @@ The systemd service should start the manager process as root. It will
 then change the user for the child processes it forks (the modules) and
 set the capabilities as needed.
 
+- To ensure that internal services cannot be accessed via the PowerLine connection,
+  iptables can be used with the following rules. In this example the powerline modul
+  is on device seth0.
+
+.. code-block::
+
+   ip6tables -S | grep seth0
+   -A INPUT -i seth0 -p ipv6-icmp -j ACCEPT
+   -A INPUT -i seth0 -p udp -m udp --dport 15118 -j ACCEPT
+   -A INPUT -i seth0 -p tcp -m tcp --dport 50000 -j ACCEPT
+   -A INPUT -i seth0 -p tcp -m tcp --dport 61341 -j ACCEPT
+   -A INPUT -i seth0 -p tcp -m tcp --dport 64109 -j ACCEPT
+   -A OUTPUT -o seth0 -p ipv6-icmp -j ACCEPT
+   -A OUTPUT -o seth0 -p udp -m udp --sport 15118 -j ACCEPT
+   -A OUTPUT -o seth0 -p tcp -m tcp --sport 50000 -j ACCEPT
+   -A OUTPUT -o seth0 -p tcp -m tcp --sport 61341 -j ACCEPT
+   -A OUTPUT -o seth0 -p tcp -m tcp --sport 64109 -j ACCEPT
+
+According to the standard, port 15118 is used for SDP messages.
+EvseV2G uses the following ports: TCP (61341), TLS (64109).
+libiso15118 uses port 50000 for TCP and TLS1.2/1.3.
+
 General (non-EVerest-related) security aspects
 ====================================================================
 
