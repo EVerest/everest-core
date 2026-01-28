@@ -39,16 +39,21 @@ channels:
     messages:
       receive_pwm_on:
         $ref: '#/components/messages/receive_pwm_on'
-  receive_pwm_off:
-    address: 'e2m/pwm_off'
+  receive_cp_state_X1:
+    address: 'e2m/cp_state_X1'
     messages:
-      receive_pwm_off:
-        $ref: '#/components/messages/receive_pwm_off'
-  receive_pwm_F:
-    address: 'e2m/pwm_F'
+      receive_cp_state_X1:
+        $ref: '#/components/messages/receive_cp_state_X1'
+  receive_cp_state_F:
+    address: 'e2m/cp_state_F'
     messages:
-      receive_pwm_F:
-        $ref: '#/components/messages/receive_pwm_F'
+      receive_cp_state_F:
+        $ref: '#/components/messages/receive_cp_state_F'
+  receive_cp_state_E:
+    address: 'e2m/cp_state_E'
+    messages:
+      receive_cp_state_E:
+        $ref: '#/components/messages/receive_cp_state_E'
   receive_allow_power_on:
     address: 'e2m/allow_power_on'
     messages:
@@ -170,17 +175,23 @@ operations:
     channel:
       $ref: '#/channels/receive_pwm_on'
     description: 'Direction: EVerest to Module'
-  receive_pwm_off:
-    title: 'Receive PWM off'
+  receive_cp_state_X1:
+    title: 'Receive CP state X1'
     action: receive
     channel:
-      $ref: '#/channels/receive_pwm_off'
+      $ref: '#/channels/receive_cp_state_X1'
     description: 'Direction: EVerest to Module'
-  receive_pwm_F:
-    title: 'Receive PWM F'
+  receive_cp_state_F:
+    title: 'Receive CP state F'
     action: receive
     channel:
-      $ref: '#/channels/receive_pwm_F'
+      $ref: '#/channels/receive_cp_state_F'
+    description: 'Direction: EVerest to Module'
+  receive_cp_state_E:
+    title: 'Receive CP state E'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_cp_state_E'
     description: 'Direction: EVerest to Module'
   receive_allow_power_on:
     title: 'Receive permission to switch relays'
@@ -333,14 +344,18 @@ components:
         - summary: ""
           payload:
             100
-    receive_pwm_off:
-      name: receive_pwm_off
-      title: 'Receive PWM switch off'
-      summary: Turn PWM off (constant high voltage)
-    receive_pwm_F:
-      name: receive_pwm_F
-      title: 'Receive PWM switch off'
+    receive_cp_state_X1:
+      name: receive_cp_state_X1
+      title: 'Receive CP state X1'
+      summary: Turn PWM off and set CP to constant high voltage (state X1)
+    receive_cp_state_F:
+      name: receive_cp_state_F
+      title: 'Receive CP state F'
       summary: Turn PWM off with error F (constant negative voltage)
+    receive_cp_state_E:
+      name: receive_cp_state_E
+      title: 'Receive CP state E'
+      summary: Set CP to 0 V (state E)
     receive_allow_power_on:
       name: receive_allow_power_on
       title: 'Receive permission to switch relays on'

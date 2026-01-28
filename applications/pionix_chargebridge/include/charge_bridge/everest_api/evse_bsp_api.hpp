@@ -68,8 +68,8 @@ private:
 
     void receive_enable(std::string const& payload);
     void receive_pwm_on(std::string const& payload);
-    void receive_pwm_off(std::string const& payload);
-    void receive_pwm_F(std::string const& payload);
+    void receive_cp_state_X1(std::string const& payload);
+    void receive_cp_state_F(std::string const& payload);
     void receive_allow_power_on(std::string const& payload);
     void receive_ac_switch_three_phases_while_charging(std::string const& payload);
     void receive_evse_replug(std::string const& payload);

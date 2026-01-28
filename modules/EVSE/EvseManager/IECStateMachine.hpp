@@ -83,8 +83,8 @@ public:
     void set_overcurrent_limit(double amps);
 
     void set_pwm(double value);
-    void set_pwm_off();
-    void set_pwm_F();
+    void set_cp_state_X1();
+    void set_cp_state_F();
 
     void set_three_phases(bool t) {
         three_phases = t;

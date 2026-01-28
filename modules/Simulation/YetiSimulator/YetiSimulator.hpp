@@ -63,8 +63,8 @@ public:
     }
 
     void pwm_on(const double dutycycle);
-    void pwm_off();
-    void pwm_f();
+    void cp_state_x1();
+    void cp_state_f();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
