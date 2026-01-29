@@ -99,6 +99,9 @@ target_sources(cbv2g_iso20
         iso_20/iso20_WPT_Datatypes.c
         iso_20/iso20_WPT_Decoder.c
         iso_20/iso20_WPT_Encoder.c
+        iso_20/iso20_AC_DER_IEC_Datatypes.c
+        iso_20/iso20_AC_DER_IEC_Decoder.c
+        iso_20/iso20_AC_DER_IEC_Encoder.c
 )
 
 target_include_directories(cbv2g_iso20
