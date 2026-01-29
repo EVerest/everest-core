@@ -22,6 +22,8 @@
 
 #include <EebusCallbacks.hpp>
 #include <EebusConnectionHandler.hpp>
+#include <everest/io/event/fd_event_handler.hpp>
+#include <everest/io/event/timer_fd.hpp>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -79,6 +81,10 @@ private:
     std::unique_ptr<EebusConnectionHandler> connection_handler;
 
     eebus::EEBusCallbacks callbacks{};
+    everest::lib::io::event::fd_event_handler event_handler;
+    std::thread event_handler_thread;
+    std::atomic_bool running_flag{true};
+    std::shared_ptr<ConfigValidator> config_validator;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

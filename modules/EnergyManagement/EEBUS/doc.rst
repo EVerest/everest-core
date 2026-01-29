@@ -44,16 +44,18 @@ The module's main class is ``EEBUS``. Its ``init()`` method orchestrates the set
 
 4.  **Use Case Logic**: For the LPC use case, an ``LpcUseCaseHandler`` is created. This class implements the LPC state machine as defined by the EEBUS specification.
 
-5.  **Event Handling**: To receive events (like new power limits or heartbeats) from the gRPC service, a ``UseCaseEventReader`` is started. It runs in the background, listens for incoming events, and pushes them into a queue within the ``LpcUseCaseHandler``.
+6.  **Event Handling**: The main module's event loop (`event_handler`) periodically calls the `sync()` method of the `EebusConnectionHandler`. This `sync()` method, in turn, runs the `EebusConnectionHandler`'s internal event loop (`m_handler`) once. This internal loop is responsible for handling all subsequent events.
 
-6.  **State Machine and Limit Calculation**: The ``LpcUseCaseHandler`` processes these events in a worker thread. Based on the events and its internal state (e.g., ``Limited``, ``Failsafe``), it determines the current power limit.
+7.  **Receiving gRPC Events**: A `UseCaseEventReader` runs in the background listening for incoming events from the gRPC service. When an event is received, it invokes a callback that posts an action to the `EebusConnectionHandler`'s internal event loop (`m_handler`).
 
-7.  **Publishing Limits**: The calculated limits are then translated into an EVerest ``ExternalLimits`` schedule using the ``helper::translate_to_external_limits`` function. This schedule is published to the ``EnergyManager`` (or another connected module) via the ``eebus_energy_sink`` required interface.
+8.  **State Machine and Limit Calculation**: The `m_handler` event loop executes the queued action, which calls the `LpcUseCaseHandler` to handle the event. The handler processes the event, runs its internal state machine, and determines the current power limit. The state machine is also periodically triggered by a timer within this same internal event loop.
+
+9.  **Publishing Limits**: The calculated limits are then translated into an EVerest ``ExternalLimits`` schedule using the ``helper::translate_to_external_limits`` function. This schedule is published to the ``EnergyManager`` (or another connected module) via the ``eebus_energy_sink`` required interface.
 
 State Machine Diagram
 =====================
 
-The following diagram shows the state machine of the `LpcUseCaseHandler`.
+The following diagram shows the state machine of the `LpcUseCaseHandler`, which is responsible for the "Limitation of Power Consumption" (LPC) logic.
 
 .. code-block:: plantuml
 
@@ -96,6 +98,7 @@ The handler processes the following events:
 - ``DataUpdateFailsafeDurationMinimum``: Update of the minimum failsafe duration.
 - ``DataUpdateFailsafeConsumptionActivePowerLimit``: Update of the failsafe power limit.
 - ``WriteApprovalRequired``: The handler needs to approve pending writes from the EEBUS service.
+- ``UseCaseSupportUpdate``: The handler receives an update about use case support. This is currently ignored.
 
 Based on its state and the received limits, the module publishes ``ExternalLimits`` to the ``eebus_energy_sink``, which is typically connected to an ``EnergyManager`` module.
 
@@ -115,41 +118,49 @@ This sequence diagram illustrates the code flow when an event is received from t
    participant UseCaseEventReader
    participant "gRPC Service" as GrpcService
 
-   EEBUS -> EebusConnectionHandler : create
-   EebusConnectionHandler -> LpcUseCaseHandler : create
-   EebusConnectionHandler -> UseCaseEventReader : create
-   EEBUS -> EebusConnectionHandler : initialize_connection()
-   EEBUS -> EebusConnectionHandler : add_lpc_use_case()
-   EEBUS -> EebusConnectionHandler : subscribe_to_events()
+   EEBUS ->> EebusConnectionHandler : create()
    activate EebusConnectionHandler
-   EebusConnectionHandler -> UseCaseEventReader : start()
+   EebusConnectionHandler -> EebusConnectionHandler : initialize_connection()
+   deactivate EebusConnectionHandler
+
+   EEBUS ->> EebusConnectionHandler : add_use_case(LPC)
+   activate EebusConnectionHandler
+   EebusConnectionHandler ->> LpcUseCaseHandler : create()
+   EebusConnectionHandler ->> UseCaseEventReader : create()
+   EebusConnectionHandler ->> GrpcService : AddUseCase()
+   EebusConnectionHandler ->> UseCaseEventReader : start()
    activate UseCaseEventReader
-   UseCaseEventReader -> GrpcService : SubscribeUseCaseEvents()
+   UseCaseEventReader ->> GrpcService : SubscribeUseCaseEvents()
    deactivate UseCaseEventReader
    deactivate EebusConnectionHandler
 
-   EEBUS -> EebusConnectionHandler : start_service()
+   EEBUS ->> EebusConnectionHandler : done_adding_use_case()
    activate EebusConnectionHandler
-   EebusConnectionHandler -> LpcUseCaseHandler : start()
-   activate LpcUseCaseHandler
-   deactivate LpcUseCaseHandler
+   EebusConnectionHandler -> EebusConnectionHandler : start_service()
+   EebusConnectionHandler ->> GrpcService : StartService()
+   EebusConnectionHandler ->> LpcUseCaseHandler : start()
    deactivate EebusConnectionHandler
 
    ... event arrives ...
 
-   GrpcService -> UseCaseEventReader : OnReadDone()
+   GrpcService ->> UseCaseEventReader : OnReadDone(event)
    activate UseCaseEventReader
-   UseCaseEventReader -> LpcUseCaseHandler : handle_event(event)
-
-   LpcUseCaseHandler -> LpcUseCaseHandler : push event to queue & notify
+   UseCaseEventReader ->> EebusConnectionHandler : event_callback(event)
    deactivate UseCaseEventReader
+   activate EebusConnectionHandler
+   EebusConnectionHandler -> EebusConnectionHandler : m_handler.add_action()
+   note right: Event is queued in the event loop
 
-   LpcUseCaseHandler -> LpcUseCaseHandler : run() loop wakes up
+   ... event loop runs ...
+
+   EebusConnectionHandler ->> LpcUseCaseHandler : handle_event(event)
    activate LpcUseCaseHandler
-   LpcUseCaseHandler -> LpcUseCaseHandler : process event, set_state()
+   LpcUseCaseHandler -> LpcUseCaseHandler : run_state_machine()
    LpcUseCaseHandler -> LpcUseCaseHandler : apply_limit_for_current_state()
-   LpcUseCaseHandler -> EEBUS : callbacks.update_limits_callback()
+   LpcUseCaseHandler ->> EEBUS : callbacks.update_limits_callback()
    deactivate LpcUseCaseHandler
+   deactivate EebusConnectionHandler
+
 
    @enduml
 
@@ -170,6 +181,8 @@ This diagram shows the main classes within the EEBUS module and their relationsh
      - eebus_grpc_api_thread: thread
      - connection_handler: unique_ptr<EebusConnectionHandler>
      - callbacks: eebus::EEBusCallbacks
+     - event_handler: fd_event_handler
+     - event_handler_thread: thread
      + init()
      + ready()
    }
@@ -179,11 +192,19 @@ This diagram shows the main classes within the EEBUS module and their relationsh
      - lpc_handler: unique_ptr<LpcUseCaseHandler>
      - event_reader: unique_ptr<UseCaseEventReader>
      - control_service_stub: shared_ptr<control_service::ControlService::Stub>
-     + initialize_connection()
-     + start_service()
-     + add_lpc_use_case()
-     + subscribe_to_events()
+     - m_handler: fd_event_handler
+     - state_machine_timer: timer_fd
+     - reconnection_timer: timer_fd
+     - last_use_case: EEBusUseCase
+     - last_callbacks: EEBusCallbacks
+     - use_case_added: bool
+     + add_use_case()
      + stop()
+     - initialize_connection()
+     - configure_service()
+     - create_channel_and_stub()
+     - reconnect()
+     - reset()
    }
 
    class LpcUseCaseHandler {
@@ -191,11 +212,9 @@ This diagram shows the main classes within the EEBUS module and their relationsh
      - callbacks: eebus::EEBusCallbacks
      - stub: shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub>
      - state: State
-     - event_queue: queue<UseCaseEvent>
      + start()
-     + stop()
      + handle_event()
-     - run()
+     + run_state_machine()
      - set_state()
      - apply_limit_for_current_state()
    }
@@ -224,9 +243,19 @@ This diagram shows the main classes within the EEBUS module and their relationsh
    EebusConnectionHandler *-- ConfigValidator
    LpcUseCaseHandler *-- ConfigValidator
    LpcUseCaseHandler ..> eebus.EEBusCallbacks
-   UseCaseEventReader ..> LpcUseCaseHandler : event_callback
+   UseCaseEventReader ..> EebusConnectionHandler : event_callback
+   EebusConnectionHandler ..> LpcUseCaseHandler
 
    @enduml
+
+Robustness
+==========
+
+The module includes several features to make it resilient against connection losses and process crashes.
+
+- **gRPC Process Restart**: If the module is configured to manage the ``eebus_grpc_api`` binary (via ``manage_eebus_grpc_api_binary: true``), it will automatically restart the binary if it crashes or exits unexpectedly. There is a 5-second delay between restart attempts.
+
+- **gRPC Reconnection**: The ``EebusConnectionHandler`` will automatically try to reconnect to the gRPC service if the connection is lost. It will attempt to reconnect every 5 seconds. Once reconnected, it will re-establish the configured use cases.
 
 Configuration
 =============
@@ -238,19 +267,19 @@ Configuration
    * - Key
      - Description
    * - ``manage_eebus_grpc_api_binary``
-     - (boolean) Whether the module should manage the eebus grpc api binary. Default: ``true``
+     - (boolean) Whether the module should manage the ``eebus_grpc_api`` binary. Default: ``true``
    * - ``eebus_service_port``
-     - (integer) Port for the control service, this will be sent in the SetConfig call. Default: ``4715``
+     - (integer) Port for the control service, this will be sent in the ``SetConfig`` call. Default: ``4715``
    * - ``grpc_port``
-     - (integer) Port for grpc control service connection. This is the port on which we will create our control service channel and start the grpc binary with. Default: ``50051``
+     - (integer) Port for gRPC control service connection. Required if ``manage_eebus_grpc_api_binary`` is true. Default: ``50051``
    * - ``eebus_ems_ski``
-     - (string, required) EEBUS EMS SKI.
+     - (string, required) The SKI of the EEBUS energy management system (e.g. HEMS) to connect to.
    * - ``certificate_path``
-     - (string) Path to the certificate file used by eebus go client. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used. Default: ``eebus/evse_cert``
+     - (string) Path to the certificate file. If relative, it will be prefixed with ``<etc>/everest/certs``. Required if ``manage_eebus_grpc_api_binary`` is true. Default: ``eebus/evse_cert``
    * - ``private_key_path``
-     - (string) Path to the private key file used by eebus go client. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used. Default: ``eebus/evse_key``
+     - (string) Path to the private key file. If relative, it will be prefixed with ``<etc>/everest/certs``. Required if ``manage_eebus_grpc_api_binary`` is true. Default: ``eebus/evse_key``
    * - ``eebus_grpc_api_binary_path``
-     - (string) Path to the eebus grpc api binary. If relative will be prefixed with everest prefix + libexec. Otherwise absolute file path is used. Default: ``eebus_grpc_api``
+     - (string) Path to the ``eebus_grpc_api`` binary. If relative, it will be prefixed with ``<libexec>``. Required if ``manage_eebus_grpc_api_binary`` is true. Default: ``eebus_grpc_api``
    * - ``vendor_code``
      - (string, required) Vendor code for the configuration of the control service.
    * - ``device_brand``
@@ -259,10 +288,10 @@ Configuration
      - (string, required) Device model for the configuration of the control service.
    * - ``serial_number``
      - (string, required) Serial number for the configuration of the control service.
-   * - ``failsafe_control_limit``
-     - (integer) Failsafe control limit for LPC use case. This will also be used for the default consumption limit, unit is Watts. Default: ``4200``
-   * - ``max_nominal_power``
-     - (integer) Maximum nominal power of the charging station. This is the max power the CS can consume. Default: ``32000``
+   * - ``failsafe_control_limit_W``
+     - (integer) Failsafe control limit for the LPC use case in Watts. This is also used for the default consumption limit. Default: ``4200``
+   * - ``max_nominal_power_W``
+     - (integer) Maximum nominal power of the charging station in Watts. This is the maximum power the CS can consume. Default: ``32000``
 
 Provided and required interfaces
 ================================

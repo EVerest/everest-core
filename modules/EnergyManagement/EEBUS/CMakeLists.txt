@@ -33,6 +33,7 @@ target_link_libraries(${MODULE_NAME}
         proto_control_service
         proto_cs_lpc_service
         everest::run_application
+        everest::io
 )
 add_dependencies(${MODULE_NAME} eebus_grpc_api_cmd)
 target_include_directories(${MODULE_NAME}

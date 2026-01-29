@@ -19,26 +19,26 @@ LpcUseCaseHandler::LpcUseCaseHandler(std::shared_ptr<ConfigValidator> config, ee
     heartbeat_timeout(HEARTBEAT_TIMEOUT),
     failsafe_duration_timeout(std::chrono::hours(2)), // Default to 2 hours, as per spec
     failsafe_control_limit(this->config->get_failsafe_control_limit()) {
+    this->initialize_event_handlers();
 }
 
-LpcUseCaseHandler::~LpcUseCaseHandler() {
-    stop();
+void LpcUseCaseHandler::initialize_event_handlers() {
+    this->event_handlers = {
+        {"DataUpdateHeartbeat", &LpcUseCaseHandler::handle_data_update_heartbeat},
+        {"DataUpdateLimit", &LpcUseCaseHandler::handle_data_update_limit},
+        {"DataUpdateFailsafeDurationMinimum", &LpcUseCaseHandler::handle_data_update_failsafe_duration_minimum},
+        {"DataUpdateFailsafeConsumptionActivePowerLimit",
+         &LpcUseCaseHandler::handle_data_update_failsafe_consumption_active_power_limit},
+        {"WriteApprovalRequired", &LpcUseCaseHandler::handle_write_approval_required},
+        {"UseCaseSupportUpdate", &LpcUseCaseHandler::handle_use_case_support_update},
+    };
 }
 
 void LpcUseCaseHandler::start() {
     this->running = true;
     this->init_timestamp = std::chrono::steady_clock::now();
-    this->worker_thread = std::thread(&LpcUseCaseHandler::run, this);
+    this->last_heartbeat_timestamp = std::chrono::steady_clock::now(); // Simulate initial heartbeat
     this->start_heartbeat();
-}
-
-void LpcUseCaseHandler::stop() {
-    if (running.exchange(false)) {
-        cv.notify_all();
-        if (worker_thread.joinable()) {
-            worker_thread.join();
-        }
-    }
 }
 
 void LpcUseCaseHandler::set_stub(std::shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub> stub) {
@@ -46,170 +46,150 @@ void LpcUseCaseHandler::set_stub(std::shared_ptr<cs_lpc::ControllableSystemLPCCo
 }
 
 void LpcUseCaseHandler::handle_event(const control_service::UseCaseEvent& event) {
-    std::lock_guard<std::mutex> lock(this->queue_mutex);
-    this->event_queue.push(event);
-    this->cv.notify_one();
-}
+    const auto& event_str = event.event();
 
-void LpcUseCaseHandler::run() {
-    this->set_state(State::Init);
-
-    {
-        std::lock_guard<std::mutex> lock(this->heartbeat_mutex);
-        this->last_heartbeat_timestamp = std::chrono::steady_clock::now(); // Simulate initial heartbeat
+    auto it = this->event_handlers.find(event_str);
+    if (it != this->event_handlers.end()) {
+        (this->*(it->second))();
+    } else if (!event_str.empty()) {
+        EVLOG_error << "Unknown event received: " << event_str;
     }
 
-    while (this->running) {
-        std::unique_lock<std::mutex> lock(this->queue_mutex);
-        if (cv.wait_for(lock, std::chrono::seconds(1), [this] { return !this->event_queue.empty(); })) {
-            // Event received
-            control_service::UseCaseEvent event = this->event_queue.front();
-            this->event_queue.pop();
-            lock.unlock();
+    this->run_state_machine();
+}
 
-            const auto& event_str = event.event();
+void LpcUseCaseHandler::handle_data_update_heartbeat() {
+    this->last_heartbeat_timestamp = std::chrono::steady_clock::now();
+    EVLOG_debug << "Heartbeat received";
+}
 
-            if (event_str == "DataUpdateHeartbeat") {
-                std::lock_guard<std::mutex> heartbeat_lock(this->heartbeat_mutex);
-                this->last_heartbeat_timestamp = std::chrono::steady_clock::now();
-                EVLOG_debug << "Heartbeat received";
-            } else if (event_str == "DataUpdateLimit") {
-                update_limit_from_event();
-            } else if (event_str == "DataUpdateFailsafeDurationMinimum") {
-                cs_lpc::FailsafeDurationMinimumRequest read_duration_req;
-                cs_lpc::FailsafeDurationMinimumResponse read_duration_res;
-                auto read_status =
-                    cs_lpc::CallFailsafeDurationMinimum(this->stub, read_duration_req, &read_duration_res);
-                if (read_status.ok()) {
-                    this->failsafe_duration_timeout =
-                        std::chrono::nanoseconds(read_duration_res.duration_nanoseconds());
-                    EVLOG_info << "FailsafeDurationMinimum updated to " << read_duration_res.duration_nanoseconds()
-                               << "ns";
-                } else {
-                    EVLOG_warning << "Could not re-read FailsafeDurationMinimum after update event: "
-                                  << read_status.error_message();
-                }
-            } else if (event_str == "DataUpdateFailsafeConsumptionActivePowerLimit") {
-                cs_lpc::FailsafeConsumptionActivePowerLimitRequest read_limit_req;
-                cs_lpc::FailsafeConsumptionActivePowerLimitResponse read_limit_res;
-                auto read_status =
-                    cs_lpc::CallFailsafeConsumptionActivePowerLimit(this->stub, read_limit_req, &read_limit_res);
-                if (read_status.ok()) {
-                    this->failsafe_control_limit = read_limit_res.limit();
-                    EVLOG_info << "FailsafeConsumptionActivePowerLimit updated to " << this->failsafe_control_limit;
-                } else {
-                    EVLOG_warning << "Could not re-read FailsafeConsumptionActivePowerLimit after update event: "
-                                  << read_status.error_message();
-                }
-            } else if (event_str == "WriteApprovalRequired") {
-                approve_pending_writes();
-            } else if (event_str == "UseCaseSupportUpdate") {
-                // ignore
-            } else {
-                EVLOG_error << "Unknown event received: " << event_str;
-            }
-        } else {
-            // Timeout
-            lock.unlock();
+void LpcUseCaseHandler::handle_data_update_limit() {
+    update_limit_from_event();
+}
+
+void LpcUseCaseHandler::handle_data_update_failsafe_duration_minimum() {
+    cs_lpc::FailsafeDurationMinimumRequest read_duration_req;
+    cs_lpc::FailsafeDurationMinimumResponse read_duration_res;
+    auto read_status = cs_lpc::CallFailsafeDurationMinimum(this->stub, read_duration_req, &read_duration_res);
+    if (read_status.ok()) {
+        this->failsafe_duration_timeout = std::chrono::nanoseconds(read_duration_res.duration_nanoseconds());
+        EVLOG_info << "FailsafeDurationMinimum updated to " << read_duration_res.duration_nanoseconds() << "ns";
+    } else {
+        EVLOG_warning << "Could not re-read FailsafeDurationMinimum after update event: " << read_status.error_message();
+    }
+}
+
+void LpcUseCaseHandler::handle_data_update_failsafe_consumption_active_power_limit() {
+    cs_lpc::FailsafeConsumptionActivePowerLimitRequest read_limit_req;
+    cs_lpc::FailsafeConsumptionActivePowerLimitResponse read_limit_res;
+    auto read_status = cs_lpc::CallFailsafeConsumptionActivePowerLimit(this->stub, read_limit_req, &read_limit_res);
+    if (read_status.ok()) {
+        this->failsafe_control_limit = read_limit_res.limit();
+        EVLOG_info << "FailsafeConsumptionActivePowerLimit updated to " << this->failsafe_control_limit;
+    } else {
+        EVLOG_warning << "Could not re-read FailsafeConsumptionActivePowerLimit after update event: "
+                      << read_status.error_message();
+    }
+}
+
+void LpcUseCaseHandler::handle_write_approval_required() {
+    approve_pending_writes();
+}
+
+void LpcUseCaseHandler::handle_use_case_support_update() {
+    // ignore
+}
+
+void LpcUseCaseHandler::run_state_machine() {
+    auto now = std::chrono::steady_clock::now();
+
+    // Heartbeat check
+    bool heartbeat_has_timeout = (now - this->last_heartbeat_timestamp) > this->heartbeat_timeout;
+    std::optional<common_types::LoadLimit> limit;
+    limit = this->current_limit;
+    const bool limit_is_active = limit.has_value() && limit.value().is_active();
+    const bool limit_is_deactivated = limit.has_value() && !limit.value().is_active();
+    const bool limit_expired =
+        limit.has_value() && !limit->delete_duration() && limit->duration_nanoseconds() != 0 &&
+        now >= (std::chrono::nanoseconds(limit->duration_nanoseconds()) + this->last_limit_received_timestamp);
+
+    switch (this->state) {
+    case State::Init:
+        if (heartbeat_has_timeout) {
+            set_state(State::Failsafe);
+            break;
         }
-
-        auto now = std::chrono::steady_clock::now();
-
-        // Heartbeat check
-        bool heartbeat_has_timeout = false;
-        {
-            std::lock_guard<std::mutex> heartbeat_lock(this->heartbeat_mutex);
-            heartbeat_has_timeout = (now - this->last_heartbeat_timestamp) > this->heartbeat_timeout;
+        if ((now - this->init_timestamp) > LPC_TIMEOUT) {
+            set_state(State::UnlimitedAutonomous);
+            break;
         }
-        std::optional<common_types::LoadLimit> limit;
-        {
-            std::lock_guard<std::mutex> limit_lock(this->limit_mutex);
-            limit = this->current_limit;
+        if (limit_is_active) {
+            set_state(State::Limited);
+            break;
         }
-        const bool limit_is_active = limit.has_value() && limit.value().is_active();
-        const bool limit_is_deactivated = limit.has_value() && !limit.value().is_active();
-        const bool limit_expired =
-            limit.has_value() && !limit->delete_duration() && limit->duration_nanoseconds() != 0 &&
-            now >= (std::chrono::nanoseconds(limit->duration_nanoseconds()) + this->last_limit_received_timestamp);
-
-        switch (this->state.load()) {
-        case State::Init:
-            if (heartbeat_has_timeout) {
-                set_state(State::Failsafe);
-                break;
-            }
-            if ((now - this->init_timestamp) > LPC_TIMEOUT) {
-                set_state(State::UnlimitedAutonomous);
-                break;
-            }
+        if (limit_is_deactivated) {
+            set_state(State::UnlimitedControlled);
+        }
+        break;
+    case State::Limited:
+        if (heartbeat_has_timeout) {
+            set_state(State::Failsafe);
+            break;
+        }
+        if (limit_is_deactivated or limit_expired) {
+            set_state(State::UnlimitedControlled);
+        }
+        // duration of limit expired, deactivated power limit received -> UnlimitedControlled
+        break;
+    case State::UnlimitedControlled:
+        if (heartbeat_has_timeout) {
+            set_state(State::Failsafe);
+            break;
+        }
+        if (limit_is_active) {
+            set_state(State::Limited);
+        }
+        break;
+    case State::UnlimitedAutonomous:
+        if (heartbeat_has_timeout) {
+            set_state(State::Failsafe);
+            break;
+        }
+        if (limit_is_deactivated or limit_expired) {
+            set_state(State::UnlimitedControlled);
+            break;
+        }
+        if (limit_is_active) {
+            set_state(State::Limited);
+        }
+        break;
+    case State::Failsafe:
+        // No heartbeat stay in failsafe
+        if (heartbeat_has_timeout) {
+            break;
+        }
+        // Received heartbeat with a new limit
+        if (this->last_limit_received_timestamp >= this->failsafe_entry_timestamp) {
             if (limit_is_active) {
                 set_state(State::Limited);
-                break;
-            }
-            if (limit_is_deactivated) {
+            } else if (limit_is_deactivated) {
                 set_state(State::UnlimitedControlled);
             }
             break;
-        case State::Limited:
-            if (heartbeat_has_timeout) {
-                set_state(State::Failsafe);
-                break;
-            }
-            if (limit_is_deactivated or limit_expired) {
-                set_state(State::UnlimitedControlled);
-            }
-            // duration of limit expired, deactivated power limit received -> UnlimitedControlled
-            break;
-        case State::UnlimitedControlled:
-            if (heartbeat_has_timeout) {
-                set_state(State::Failsafe);
-                break;
-            }
-            if (limit_is_active) {
-                set_state(State::Limited);
-            }
-            break;
-        case State::UnlimitedAutonomous:
-            if (heartbeat_has_timeout) {
-                set_state(State::Failsafe);
-                break;
-            }
-            if (limit_is_deactivated or limit_expired) {
-                set_state(State::UnlimitedControlled);
-                break;
-            }
-            if (limit_is_active) {
-                set_state(State::Limited);
-            }
-            break;
-        case State::Failsafe:
-            // No heartbeat stay in failsafe
-            if (heartbeat_has_timeout) {
-                break;
-            }
-            // Received heartbeat with a new limit
-            if (this->last_limit_received_timestamp >= this->failsafe_entry_timestamp) {
-                if (limit_is_active) {
-                    set_state(State::Limited);
-                } else if (limit_is_deactivated) {
-                    set_state(State::UnlimitedControlled);
-                }
-                break;
-            }
-            // Received heartbeat, but no new limit within failsafe duration timeout + 120 seconds spec timeout
-            if (now > (this->failsafe_entry_timestamp + this->failsafe_duration_timeout +
-                       std::chrono::seconds(LPC_TIMEOUT))) {
-                set_state(State::UnlimitedAutonomous);
-                break;
-            }
+        }
+        // Received heartbeat, but no new limit within failsafe duration timeout + 120 seconds spec timeout
+        if (now >
+            (this->failsafe_entry_timestamp + this->failsafe_duration_timeout + std::chrono::seconds(LPC_TIMEOUT))) {
+            set_state(State::UnlimitedAutonomous);
             break;
         }
+        break;
+    }
 
-        const bool state_has_changed = this->state_changed.exchange(false);
-        const bool limit_has_changed = this->limit_value_changed.exchange(false);
-        if (state_has_changed || limit_has_changed) {
-            this->apply_limit_for_current_state();
-        }
+    if (this->state_changed || this->limit_value_changed) {
+        this->state_changed = false;
+        this->limit_value_changed = false;
+        this->apply_limit_for_current_state();
     }
 }
 
@@ -289,11 +269,8 @@ void LpcUseCaseHandler::update_limit_from_event() {
         EVLOG_error << "ConsumptionLimit failed: " << status.error_message();
         return;
     }
-    {
-        std::lock_guard<std::mutex> lock(this->limit_mutex);
-        this->current_limit = response.load_limit();
-        this->last_limit_received_timestamp = std::chrono::steady_clock::now();
-    }
+    this->current_limit = response.load_limit();
+    this->last_limit_received_timestamp = std::chrono::steady_clock::now();
     this->limit_value_changed = true;
 }
 
@@ -313,11 +290,8 @@ void LpcUseCaseHandler::start_heartbeat() {
 void LpcUseCaseHandler::apply_limit_for_current_state() {
     types::energy::ExternalLimits limits;
 
-    State state_copy = this->state.load();
-
-    switch (state_copy) {
+    switch (this->state) {
     case State::Limited: {
-        std::lock_guard<std::mutex> lock(this->limit_mutex);
         if (this->current_limit.has_value()) {
             limits = translate_to_external_limits(this->current_limit.value());
         }
@@ -331,33 +305,29 @@ void LpcUseCaseHandler::apply_limit_for_current_state() {
         break;
     }
     case State::UnlimitedControlled:
-    case State::UnlimitedAutonomous: {
+    case State::UnlimitedAutonomous:
+    case State::Init: {
         common_types::LoadLimit unlimited_limit;
         unlimited_limit.set_is_active(false);
         limits = translate_to_external_limits(unlimited_limit);
         break;
     }
-    case State::Init:
-        // TODO(mlitre): Check what to apply
-        break;
     }
 
     this->callbacks.update_limits_callback(limits);
 }
 
 void LpcUseCaseHandler::set_state(State new_state) {
-    State old_state = this->state.load();
+    State old_state = this->state;
     if (old_state != new_state) {
         EVLOG_info << "LPC Use Case Handler changing state from " << state_to_string(old_state) << " to "
                    << state_to_string(new_state);
-        this->state.store(new_state);
+        this->state = new_state;
         this->state_changed = true;
 
         if (new_state == State::Failsafe) {
             this->failsafe_entry_timestamp = std::chrono::steady_clock::now();
         }
-
-        this->cv.notify_all();
     }
 }
 

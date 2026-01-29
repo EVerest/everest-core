@@ -53,55 +53,61 @@ void EEBUS::init() {
     }
 
     this->connection_handler = std::make_unique<EebusConnectionHandler>(config_validator);
+    event_handler.register_event_handler(this->connection_handler.get());
 
-    if (!this->connection_handler->initialize_connection()) {
-        EVLOG_critical << "Failed to initialize connection to EEBUS service";
-        return;
-    }
-
-    if (!this->connection_handler->add_lpc_use_case(this->callbacks)) {
-        EVLOG_critical << "Failed to add LPC use case";
-        return;
-    }
-
-    this->connection_handler->subscribe_to_events();
+    this->connection_handler->add_use_case(eebus::EEBusUseCase::LPC, this->callbacks);
+    this->connection_handler->done_adding_use_case();
 }
 
 void EEBUS::start_eebus_grpc_api(const std::filesystem::path& binary_path, int port,
                                  const std::filesystem::path& cert_file, const std::filesystem::path& key_file) {
-    try {
-        std::vector<std::string> args;
-        constexpr int num_args = 6;
-        args.reserve(num_args);
-        args.emplace_back("-port");
-        args.emplace_back(std::to_string(port));
-        args.emplace_back("-certificate-path");
-        args.emplace_back(cert_file.string());
-        args.emplace_back("-private-key-path");
-        args.emplace_back(key_file.string());
-        everest::run_application::CmdOutput output = everest::run_application::run_application(
-            binary_path.string(), args, [this](const std::string& output_line) {
-                if (!output_line.empty()) {
-                    EVLOG_debug << "eebus-grpc: " << output_line;
-                }
-                if (not this->eebus_grpc_api_thread_active) {
-                    return everest::run_application::CmdControl::Terminate;
-                }
-                return everest::run_application::CmdControl::Continue;
-            });
-        EVLOG_info << "eebus-grpc exit code: " << output.exit_code;
-    } catch (const std::exception& e) {
-        EVLOG_critical << "start_eebus_grpc_api thread caught exception: " << e.what();
-    } catch (...) {
-        EVLOG_critical << "start_eebus_grpc_api thread caught unknown exception.";
+    std::vector<std::string> args;
+    constexpr int num_args = 6;
+    args.reserve(num_args);
+    args.emplace_back("-port");
+    args.emplace_back(std::to_string(port));
+    args.emplace_back("-certificate-path");
+    args.emplace_back(cert_file.string());
+    args.emplace_back("-private-key-path");
+    args.emplace_back(key_file.string());
+
+    while (this->eebus_grpc_api_thread_active) {
+        try {
+            EVLOG_info << "Starting eebus_grpc_api binary...";
+            everest::run_application::CmdOutput output = everest::run_application::run_application(
+                binary_path.string(), args, [this](const std::string& output_line) {
+                    if (!output_line.empty()) {
+                        EVLOG_debug << "eebus-grpc: " << output_line;
+                    }
+                    if (not this->eebus_grpc_api_thread_active) {
+                        return everest::run_application::CmdControl::Terminate;
+                    }
+                    return everest::run_application::CmdControl::Continue;
+                });
+            EVLOG_warning << "eebus-grpc process exited with code: " << output.exit_code;
+        } catch (const std::exception& e) {
+            EVLOG_critical << "start_eebus_grpc_api thread caught exception: " << e.what();
+        } catch (...) {
+            EVLOG_critical << "start_eebus_grpc_api thread caught unknown exception.";
+        }
+
+        if (this->eebus_grpc_api_thread_active) {
+            EVLOG_info << "Restarting eebus_grpc_api binary in 5 seconds...";
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+        }
     }
+    EVLOG_info << "eebus_grpc_api monitoring thread is stopping.";
 }
 
 void EEBUS::ready() {
     invoke_ready(*p_main);
-    if (!this->connection_handler->start_service()) {
-        EVLOG_critical << "Failed to start EEBUS service";
-        return;
+
+    // Start the event handler in its own thread
+    event_handler_thread = std::thread([this]() { event_handler.run(running_flag); });
+
+    // Main application loop
+    while (running_flag) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 
