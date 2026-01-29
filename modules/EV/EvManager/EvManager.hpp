@@ -52,6 +52,7 @@ struct Conf {
     int soc;
     bool keep_cross_boot_plugin_state;
     std::string plugin_commands;
+    bool force_payment_option;
 };
 
 class EvManager : public Everest::ModuleBase {
