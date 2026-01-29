@@ -5,14 +5,19 @@ description: >-
 cmds:
   enable:
     description: >-
-      Enables or disables the charging port. Typically disabled results in control
-      pilot state F. It must not accept cars for new charging sessions if disabled.
+      Enables or disables the charging port. When disabled, the BSP must prevent new charging sessions
+      and may signal unavailability using a hardware-appropriate CP state (E/F/X1) and/or mechanical
+      blocking.
+      While disabled, the BSP should still listen for PWM updates and cache the last duty cycle received.
+      When re-enabled, it must apply the cached PWM value.
     arguments:
       value:
         description: 'True: enabled, false: disabled.'
         type: boolean
   pwm_on:
-    description: Turns PWM on with duty cycle (in percent)
+    description: >-
+      Turns PWM on with duty cycle (in percent). This command only applies when the charging port is enabled;
+      if disabled, the value must be cached and applied when re-enabled.
     arguments:
       value:
         description: PWM duty cycle (>0, <100)
@@ -20,9 +25,13 @@ cmds:
         minimum: 0
         maximum: 100
   pwm_off:
-    description: Turns PWM off (constant high voltage)
+    description: >-
+      Turns PWM off (constant high voltage). This command only applies when the charging port is enabled;
+      if disabled, the value must be cached and applied when re-enabled.
   pwm_F:
-    description: Turns PWM off with Error F (constant negative voltage)
+    description: >-
+      Turns PWM off with Error F (constant negative voltage). This command only applies when the charging port is enabled;
+      if disabled, the value must be cached and applied when re-enabled.
   allow_power_on:
     description: >-
       Sets allow_power_on flag. If false, Relais must never be switched
