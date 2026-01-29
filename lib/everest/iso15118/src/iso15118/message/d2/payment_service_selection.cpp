@@ -14,6 +14,7 @@ namespace iso15118::d2::msg {
 template <> void convert(const struct iso2_PaymentServiceSelectionReqType& in, PaymentServiceSelectionRequest& out) {
     cb_convert_enum(in.SelectedPaymentOption, out.selected_payment_option);
 
+    out.selected_service_list.reserve(data_types::SelectedServiceListMaxLength);
     for (int i = 0; i < in.SelectedServiceList.SelectedService.arrayLen; i++) {
         const auto& in_service = in.SelectedServiceList.SelectedService.array[i];
         data_types::SelectedService service;

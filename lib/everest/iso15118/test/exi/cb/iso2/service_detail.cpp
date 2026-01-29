@@ -62,7 +62,7 @@ SCENARIO("Ser/Deserialize d2 service detail messages") {
                                          0x41, 0x28, 0xCD, 0xED, 0xE4, 0x08, 0x4C, 0x2E, 0x42, 0x80};
 
         THEN("It should be serialized successfully") {
-            REQUIRE(serialize_helper(res) == expected); // FIXME: Failing right now
+            REQUIRE(serialize_helper(res) == expected);
         }
     }
 }

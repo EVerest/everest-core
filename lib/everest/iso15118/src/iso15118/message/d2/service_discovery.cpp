@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025 Pionix GmbH and Contributors to EVerest
 #include <algorithm>
+#include <cstddef>
 #include <iso15118/message/d2/service_discovery.hpp>
 
 #include <iso15118/detail/variant_access.hpp>
@@ -27,9 +28,9 @@ template <> void convert(const data_types::ChargeService& in, struct iso2_Charge
     CPP2CB_STRING_IF_USED(in.service_scope, out.ServiceScope);
     out.FreeService = in.FreeService;
 
-    const auto supported_energy_transfer_mode_length =
-        std::min(iso2_EnergyTransferModeType_6_ARRAY_SIZE, (int)in.supported_energy_transfer_mode.size());
-    for (int i = 0; i < supported_energy_transfer_mode_length; i++) {
+    const auto supported_energy_transfer_mode_length = std::min(
+        static_cast<size_t>(iso2_EnergyTransferModeType_6_ARRAY_SIZE), in.supported_energy_transfer_mode.size());
+    for (size_t i = 0; i < supported_energy_transfer_mode_length; i++) {
         cb_convert_enum(in.supported_energy_transfer_mode.at(i),
                         out.SupportedEnergyTransferMode.EnergyTransferMode.array[i]);
     }
@@ -38,9 +39,8 @@ template <> void convert(const data_types::ChargeService& in, struct iso2_Charge
 
 template <> void convert(const struct iso2_ServiceDiscoveryReqType& in, ServiceDiscoveryRequest& out) {
     if (in.ServiceCategory_isUsed) {
-        d2::msg::data_types::ServiceCategory category{};
-        cb_convert_enum(in.ServiceCategory, category);
-        out.service_category = category;
+        out.service_category.emplace();
+        cb_convert_enum(in.ServiceCategory, out.service_category.value());
     }
     CB2CPP_STRING_IF_USED(in.ServiceScope, out.service_scope);
 }
@@ -56,20 +56,22 @@ template <> void convert(const ServiceDiscoveryResponse& in, struct iso2_Service
 
     cb_convert_enum(in.response_code, out.ResponseCode);
 
-    int optionIndex = 0;
-    for (auto const& option : in.payment_option_list) {
-        cb_convert_enum(option, out.PaymentOptionList.PaymentOption.array[optionIndex++]);
+    const auto payment_option_length =
+        std::min(static_cast<size_t>(iso2_paymentOptionType_2_ARRAY_SIZE), in.payment_option_list.size());
+    for (size_t i = 0; i < payment_option_length; i++) {
+        cb_convert_enum(in.payment_option_list.at(i), out.PaymentOptionList.PaymentOption.array[i]);
     }
-    out.PaymentOptionList.PaymentOption.arrayLen = in.payment_option_list.size();
+    out.PaymentOptionList.PaymentOption.arrayLen = payment_option_length;
 
     convert(in.charge_service, out.ChargeService);
 
-    int serviceIndex = 0;
     if (in.service_list) {
-        for (auto const& service : in.service_list.value()) {
-            convert(service, out.ServiceList.Service.array[serviceIndex++]);
+        const auto service_list_length =
+            std::min(static_cast<size_t>(iso2_ServiceType_8_ARRAY_SIZE), in.service_list->size());
+        for (size_t i = 0; i < service_list_length; i++) {
+            convert(in.service_list->at(i), out.ServiceList.Service.array[i]);
         }
-        out.ServiceList.Service.arrayLen = in.service_list->size();
+        out.ServiceList.Service.arrayLen = service_list_length;
         CB_SET_USED(out.ServiceList);
     }
 }

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 Pionix GmbH and Contributors to EVerest
+#include <cstddef>
 #include <cstdint>
 #include <iso15118/message/d2/service_detail.hpp>
 
@@ -14,15 +15,15 @@
 namespace iso15118::d2::msg {
 
 template <> void convert(const data_types::ServiceParameterList& in, struct iso2_ServiceParameterListType& out) {
-    const auto parameter_set_length = std::min(iso2_ParameterSetType_5_ARRAY_SIZE, (int)in.size());
-    for (int i = 0; i < parameter_set_length; i++) {
+    const auto parameter_set_length = std::min(static_cast<size_t>(iso2_ParameterSetType_5_ARRAY_SIZE), in.size());
+    for (size_t i = 0; i < parameter_set_length; i++) {
         const auto& in_parameter_set = in.at(i);
         auto& out_parameter_set = out.ParameterSet.array[i];
         out_parameter_set.ParameterSetID = in_parameter_set.parameter_set_id;
 
         const auto parameter_length =
-            std::min(iso2_ParameterType_16_ARRAY_SIZE, (int)in_parameter_set.parameter.size());
-        for (int j = 0; j < parameter_length; j++) {
+            std::min(static_cast<size_t>(iso2_ParameterType_16_ARRAY_SIZE), in_parameter_set.parameter.size());
+        for (size_t j = 0; j < parameter_length; j++) {
             const auto& in_param = in_parameter_set.parameter.at(j);
             auto& out_param = out_parameter_set.Parameter.array[j];
             CPP2CB_STRING(in_param.name, out_param.Name);

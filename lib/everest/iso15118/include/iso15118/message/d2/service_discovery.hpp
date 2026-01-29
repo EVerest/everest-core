@@ -15,7 +15,6 @@ namespace iso15118::d2::msg {
 namespace data_types {
 using ServiceName = std::string;                      // MaxLength: 32
 using ServiceScope = std::string;                     // MaxLength: 64
-using ServiceScope = std::string;                     // MaxLength: 32
 using PaymentOptionList = std::vector<PaymentOption>; // [1 - 2]
 
 enum class ServiceCategory {
