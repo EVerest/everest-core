@@ -15,6 +15,7 @@ struct SelectedService {
     std::optional<ParameterSetID> parameter_set_id{std::nullopt};
 };
 using SelectedServiceList = std::vector<SelectedService>; // [1 - 16]
+constexpr auto SelectedServiceListMaxLength = 16;
 } // namespace data_types
 
 struct PaymentServiceSelectionRequest {

@@ -21,7 +21,10 @@ struct ParameterSet {
     ParameterSetID parameter_set_id;
     std::vector<Parameter> parameter; // [1 - 16]
 };
+constexpr auto ParameterSetListMaxLength = 16;
+
 using ServiceParameterList = std::vector<ParameterSet>; // [1 - 255]
+constexpr auto ServiceParameterListMaxLength = 255;
 } // namespace data_types
 
 struct ServiceDetailRequest {

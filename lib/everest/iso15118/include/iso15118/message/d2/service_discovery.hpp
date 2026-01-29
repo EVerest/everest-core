@@ -34,6 +34,7 @@ enum class EnergyTransferMode {
     DC_unique
 };
 using SupportedEnergyTransferMode = std::vector<EnergyTransferMode>; // MaxLength: 6
+constexpr auto SupportedEnergyTransferModeMaxLength = 6;
 
 struct Service {
     ServiceID service_id;
@@ -43,6 +44,7 @@ struct Service {
     bool FreeService;
 };
 using ServiceList = std::vector<Service>; // [1 - 8]
+constexpr auto ServiceListMaxLength = 8;
 
 struct ChargeService : Service {
     SupportedEnergyTransferMode supported_energy_transfer_mode;

@@ -14,50 +14,42 @@
 namespace iso15118::d2::msg {
 
 template <> void convert(const data_types::ServiceParameterList& in, struct iso2_ServiceParameterListType& out) {
-    int parameter_set_index = 0;
-    for (auto const& parameter_set : in) {
-        if (parameter_set_index >= iso2_ParameterSetType_5_ARRAY_SIZE) {
-            // TODO(kd): Should we raise exception here? I've seen that in -20 there is often no bounds checking at all.
-            // Example: src/iso15118/message/service_detail.cpp:274
-            break;
-        }
+    const auto parameter_set_length = std::min(iso2_ParameterSetType_5_ARRAY_SIZE, (int)in.size());
+    for (int i = 0; i < parameter_set_length; i++) {
+        const auto& in_parameter_set = in.at(i);
+        auto& out_parameter_set = out.ParameterSet.array[i];
+        out_parameter_set.ParameterSetID = in_parameter_set.parameter_set_id;
 
-        auto& out_parameter_set = out.ParameterSet.array[parameter_set_index++];
-        out_parameter_set.ParameterSetID = parameter_set.parameter_set_id;
+        const auto parameter_length =
+            std::min(iso2_ParameterType_16_ARRAY_SIZE, (int)in_parameter_set.parameter.size());
+        for (int j = 0; j < parameter_length; j++) {
+            const auto& in_param = in_parameter_set.parameter.at(j);
+            auto& out_param = out_parameter_set.Parameter.array[j];
+            CPP2CB_STRING(in_param.name, out_param.Name);
 
-        int parameter_idx = 0;
-        for (auto const& parameter : parameter_set.parameter) {
-            if (parameter_idx >= iso2_ParameterType_16_ARRAY_SIZE) {
-                // TODO(kd): Should we raise exception here? I've seen that in -20 there is often no bounds checking at
-                // all. Example: src/iso15118/message/service_detail.cpp:274
-                break;
-            }
-            auto& out_param = out_parameter_set.Parameter.array[parameter_idx++];
-            CPP2CB_STRING(parameter.name, out_param.Name);
-
-            if (std::holds_alternative<bool>(parameter.value)) {
-                out_param.boolValue = std::get<bool>(parameter.value);
+            if (std::holds_alternative<bool>(in_param.value)) {
+                out_param.boolValue = std::get<bool>(in_param.value);
                 out_param.boolValue_isUsed = true;
-            } else if (std::holds_alternative<int8_t>(parameter.value)) {
-                out_param.byteValue = std::get<int8_t>(parameter.value);
+            } else if (std::holds_alternative<int8_t>(in_param.value)) {
+                out_param.byteValue = std::get<int8_t>(in_param.value);
                 out_param.byteValue_isUsed = true;
-            } else if (std::holds_alternative<int16_t>(parameter.value)) {
-                out_param.shortValue = std::get<int16_t>(parameter.value);
+            } else if (std::holds_alternative<int16_t>(in_param.value)) {
+                out_param.shortValue = std::get<int16_t>(in_param.value);
                 out_param.shortValue_isUsed = true;
-            } else if (std::holds_alternative<int32_t>(parameter.value)) {
-                out_param.intValue = std::get<int32_t>(parameter.value);
+            } else if (std::holds_alternative<int32_t>(in_param.value)) {
+                out_param.intValue = std::get<int32_t>(in_param.value);
                 out_param.intValue_isUsed = true;
-            } else if (std::holds_alternative<data_types::PhysicalValue>(parameter.value)) {
-                convert(std::get<data_types::PhysicalValue>(parameter.value), out_param.physicalValue);
+            } else if (std::holds_alternative<data_types::PhysicalValue>(in_param.value)) {
+                convert(std::get<data_types::PhysicalValue>(in_param.value), out_param.physicalValue);
                 out_param.physicalValue_isUsed = true;
-            } else if (std::holds_alternative<std::string>(parameter.value)) {
-                CPP2CB_STRING(std::get<std::string>(parameter.value), out_param.stringValue);
+            } else if (std::holds_alternative<std::string>(in_param.value)) {
+                CPP2CB_STRING(std::get<std::string>(in_param.value), out_param.stringValue);
                 out_param.stringValue_isUsed = true;
             }
         }
-        out_parameter_set.Parameter.arrayLen = parameter_set.parameter.size();
+        out_parameter_set.Parameter.arrayLen = parameter_length;
     }
-    out.ParameterSet.arrayLen = in.size();
+    out.ParameterSet.arrayLen = parameter_set_length;
 }
 
 template <> void convert(const struct iso2_ServiceDetailReqType& in, ServiceDetailRequest& out) {

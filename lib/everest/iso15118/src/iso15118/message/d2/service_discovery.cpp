@@ -27,12 +27,13 @@ template <> void convert(const data_types::ChargeService& in, struct iso2_Charge
     CPP2CB_STRING_IF_USED(in.service_scope, out.ServiceScope);
     out.FreeService = in.FreeService;
 
-    int modeIndex = 0;
-    for (auto const& mode : in.supported_energy_transfer_mode) {
-        // TODO(kd) guard for accessing iso2_ struct array out of bounds?
-        cb_convert_enum(mode, out.SupportedEnergyTransferMode.EnergyTransferMode.array[modeIndex++]);
+    const auto supported_energy_transfer_mode_length =
+        std::min(iso2_EnergyTransferModeType_6_ARRAY_SIZE, (int)in.supported_energy_transfer_mode.size());
+    for (int i = 0; i < supported_energy_transfer_mode_length; i++) {
+        cb_convert_enum(in.supported_energy_transfer_mode.at(i),
+                        out.SupportedEnergyTransferMode.EnergyTransferMode.array[i]);
     }
-    out.SupportedEnergyTransferMode.EnergyTransferMode.arrayLen = in.supported_energy_transfer_mode.size();
+    out.SupportedEnergyTransferMode.EnergyTransferMode.arrayLen = supported_energy_transfer_mode_length;
 }
 
 template <> void convert(const struct iso2_ServiceDiscoveryReqType& in, ServiceDiscoveryRequest& out) {
