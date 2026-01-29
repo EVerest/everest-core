@@ -93,7 +93,7 @@ ChargePoint::ChargePoint(const std::map<std::int32_t, std::int32_t>& evse_connec
 
 ChargePoint::ChargePoint(const std::map<std::int32_t, std::int32_t>& evse_connector_structure,
                          std::unique_ptr<DeviceModelStorageInterface> device_model_storage_interface,
-                         const std::string& /*ocpp_main_path*/, const std::string& core_database_path,
+                         const std::string& ocpp_main_path, const std::string& core_database_path,
                          const std::string& sql_init_path, const std::string& message_log_path,
                          const std::shared_ptr<EvseSecurity> evse_security, const Callbacks& callbacks) :
     ChargePoint(
@@ -101,6 +101,8 @@ ChargePoint::ChargePoint(const std::map<std::int32_t, std::int32_t>& evse_connec
         std::make_shared<DatabaseHandler>(
             std::make_unique<everest::db::sqlite::Connection>(fs::path(core_database_path) / "cp.db"), sql_init_path),
         nullptr /* message_queue initialized in this constructor */, message_log_path, evse_security, callbacks) {
+
+    this->share_path = ocpp_main_path;
 }
 
 ChargePoint::ChargePoint(const std::map<std::int32_t, std::int32_t>& evse_connector_structure,
@@ -113,6 +115,8 @@ ChargePoint::ChargePoint(const std::map<std::int32_t, std::int32_t>& evse_connec
                 std::make_unique<DeviceModelStorageSqlite>(device_model_storage_address, device_model_migration_path,
                                                            device_model_config_path),
                 ocpp_main_path, core_database_path, sql_init_path, message_log_path, evse_security, callbacks) {
+
+    this->share_path = ocpp_main_path;
 }
 
 ChargePoint::~ChargePoint() = default;
@@ -479,7 +483,7 @@ void ChargePoint::initialize(const std::map<std::int32_t, std::int32_t>& evse_co
     this->configure_message_logging_format(message_log_path);
 
     this->connectivity_manager =
-        std::make_unique<ConnectivityManager>(*this->device_model, this->evse_security, this->logging,
+        std::make_unique<ConnectivityManager>(*this->device_model, this->evse_security, this->logging, this->share_path,
                                               [this](const std::string& message) { this->message_callback(message); });
 
     this->connectivity_manager->set_websocket_connected_callback(

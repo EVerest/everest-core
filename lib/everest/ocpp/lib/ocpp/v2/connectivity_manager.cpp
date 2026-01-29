@@ -3,6 +3,9 @@
 
 #include <ocpp/v2/connectivity_manager.hpp>
 
+#include <fstream>
+
+#include <boost/algorithm/string.hpp>
 #include <everest/logging.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
@@ -20,11 +23,12 @@ namespace ocpp {
 namespace v2 {
 
 ConnectivityManager::ConnectivityManager(DeviceModelAbstract& device_model, std::shared_ptr<EvseSecurity> evse_security,
-                                         std::shared_ptr<MessageLogging> logging,
+                                         std::shared_ptr<MessageLogging> logging, const fs::path& share_path,
                                          const std::function<void(const std::string& message)>& message_callback) :
     device_model{device_model},
     evse_security{evse_security},
     logging{logging},
+    share_path{share_path},
     websocket{nullptr},
     message_callback{message_callback},
     wants_to_be_connected{false},
@@ -369,6 +373,17 @@ ConnectivityManager::get_ws_connection_options(const std::int32_t configuration_
             this->device_model.get_optional_value<std::string>(ControllerComponentVariables::IFace),
             this->device_model.get_optional_value<bool>(ControllerComponentVariables::EnableTLSKeylog).value_or(false),
             this->device_model.get_optional_value<std::string>(ControllerComponentVariables::TLSKeylogFile)};
+
+        // Read version file and add to connection_options
+        fs::path version_file_path = this->share_path.parent_path().parent_path() / "version_information.txt";
+        if (fs::exists(version_file_path)) {
+            std::ifstream ifs(version_file_path);
+            std::string version((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+            boost::algorithm::trim(version); // remove leading/trailing whitespace
+            if (!version.empty()) {
+                connection_options.everest_version = version;
+            }
+        }
 
         return connection_options;
 
