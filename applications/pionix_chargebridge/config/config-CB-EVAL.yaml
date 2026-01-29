@@ -1,6 +1,6 @@
 charge_bridge:
   name: cb_eval
-  ip: 10.10.10.194
+  ip: 10.10.10.150
   #ip: chargebridge-44b7d0c9bcc0.local^
   #ip: chargebridge-44b7d0c99629.local
   fw_file: ./firmware/charge-bridge-fw_complete.cbfw
@@ -63,7 +63,7 @@ serial_2:
 plc:
   enable: true
   tap: "cb_plc"
-  ip: 172.25.6.1
+  ip: 172.25.6.2
   netmask: 255.255.255.0
   mtu: 1518
   powersaving_mode: 1
