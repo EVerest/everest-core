@@ -174,6 +174,7 @@ enum class ConnectorTypeEnum {
     cCCS1,
     cCCS2,
     cG105,
+    cMCS,
     cTesla,
     cType1,
     cType2,

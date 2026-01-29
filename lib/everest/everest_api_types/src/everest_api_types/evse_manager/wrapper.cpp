@@ -530,6 +530,8 @@ ConnectorTypeEnum_Internal to_internal_api(ConnectorTypeEnum_External const& val
         return TarT::cCCS2;
     case SrcT::cG105:
         return TarT::cG105;
+    case SrcT::cMCS:
+        return TarT::cMCS;
     case SrcT::cTesla:
         return TarT::cTesla;
     case SrcT::cType1:
@@ -583,6 +585,8 @@ ConnectorTypeEnum_External to_external_api(ConnectorTypeEnum_Internal const& val
         return TarT::cCCS2;
     case SrcT::cG105:
         return TarT::cG105;
+    case SrcT::cMCS:
+        return TarT::cMCS;
     case SrcT::cTesla:
         return TarT::cTesla;
     case SrcT::cType1:

@@ -864,6 +864,9 @@ void to_json(json& j, ConnectorTypeEnum const& k) noexcept {
     case ConnectorTypeEnum::cG105:
         j = "cG105";
         return;
+    case ConnectorTypeEnum::cMCS:
+        j = "cMCS";
+        return;
     case ConnectorTypeEnum::cTesla:
         j = "cTesla";
         return;
@@ -937,6 +940,10 @@ void from_json(json const& j, ConnectorTypeEnum& k) {
     }
     if (s == "cG105") {
         k = ConnectorTypeEnum::cG105;
+        return;
+    }
+    if (s == "cMCS") {
+        k = ConnectorTypeEnum::cMCS;
         return;
     }
     if (s == "cTesla") {
