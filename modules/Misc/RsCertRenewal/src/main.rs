@@ -126,6 +126,22 @@ fn is_expiring_soon(cert: &CertificateInfo, threshold_days: i64) -> bool {
     days_until_expiry <= threshold_days
 }
 
+/// Escapes a string for JSON (handles quotes and backslashes)
+fn json_escape(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '"' => result.push_str("\\\""),
+            '\\' => result.push_str("\\\\"),
+            '\n' => result.push_str("\\n"),
+            '\r' => result.push_str("\\r"),
+            '\t' => result.push_str("\\t"),
+            c => result.push(c),
+        }
+    }
+    result
+}
+
 /// Fetches a renewed certificate from the configured endpoint
 fn fetch_renewed_certificate(endpoint: &str, cert_info: &CertificateInfo) -> Result<String> {
     log::info!(
@@ -136,9 +152,9 @@ fn fetch_renewed_certificate(endpoint: &str, cert_info: &CertificateInfo) -> Res
 
     let request_body = format!(
         r#"{{"subject":"{}","current_expiry":"{}","certificate_path":"{}"}}"#,
-        cert_info.subject,
+        json_escape(&cert_info.subject),
         cert_info.expiry.to_rfc3339(),
-        cert_info.path
+        json_escape(&cert_info.path)
     );
 
     let response = ureq::post(endpoint)
