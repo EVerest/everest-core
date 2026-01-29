@@ -194,10 +194,16 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
                 v2g_ctx->evse_v2g_data.payment_option_list[v2g_ctx->evse_v2g_data.payment_option_list_len] =
                     iso2_paymentOptionType_ExternalPayment;
                 v2g_ctx->evse_v2g_data.payment_option_list_len++;
-            } else if (v2g_ctx->evse_v2g_data.payment_option_list_len == 0) {
-                dlog(DLOG_LEVEL_WARNING, "Unable to configure PaymentOptions %s",
+            } else {
+                dlog(DLOG_LEVEL_WARNING, "Unable to configure PaymentOption %s",
                      types::iso15118::payment_option_to_string(option).c_str());
             }
+        }
+
+        if (v2g_ctx->evse_v2g_data.payment_option_list_len == 0) {
+            dlog(DLOG_LEVEL_ERROR, "No valid PaymentOptions configured, falling back to ExternalPayment");
+            v2g_ctx->evse_v2g_data.payment_option_list[0] = iso2_paymentOptionType_ExternalPayment;
+            v2g_ctx->evse_v2g_data.payment_option_list_len = 1;
         }
     }
 
