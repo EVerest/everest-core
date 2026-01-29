@@ -1,0 +1,15 @@
+[package]
+name = "RsCertRenewal"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+everestrs-build = { workspace = true }
+
+[dependencies]
+anyhow = "1.0"
+chrono = "0.4"
+everestrs = { workspace = true }
+log = "0.4"
+ureq = "2.9"
+x509-parser = { version = "0.16", features = ["verify"] }

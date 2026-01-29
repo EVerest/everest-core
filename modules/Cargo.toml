@@ -5,6 +5,7 @@ members = [
    "HardwareDrivers/Payment/RsPaymentTerminal",
    "Examples/RustExamples/RsExample",
    "Examples/RustExamples/RsExampleUser",
+   "Misc/RsCertRenewal",
 ]
 
 [workspace.dependencies]

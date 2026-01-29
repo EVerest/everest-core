@@ -1,0 +1,29 @@
+description: Module that monitors certificates for expiration and fetches renewals from a configured endpoint
+config:
+  endpoint:
+    description: URL endpoint to fetch new certificates from when they are about to expire
+    type: string
+    default: ""
+  cert_dir:
+    description: Directory containing certificates to monitor for expiration
+    type: string
+    default: ""
+  check_interval_seconds:
+    description: How often to check certificates for expiration (in seconds)
+    type: integer
+    default: 3600
+    minimum: 60
+  expiry_threshold_days:
+    description: Number of days before expiration to trigger renewal
+    type: integer
+    default: 30
+    minimum: 1
+provides:
+  main:
+    interface: empty
+    description: Main implementation for certificate renewal monitoring
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - EVerest Team
+enable_external_mqtt: false
