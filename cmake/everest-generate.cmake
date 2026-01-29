@@ -850,6 +850,47 @@ function (ev_add_py_module MODULE_NAME)
     )
 endfunction()
 
+function (ev_add_module_alias)
+    set(EVEREST_MODULE_INSTALL_PREFIX "${CMAKE_INSTALL_LIBEXECDIR}/everest/modules")
+    set(EVEREST_MODULE_SHARE_INSTALL_PREFIX "${CMAKE_INSTALL_DATADIR}/everest/modules")
+    #
+    # handle passed arguments
+    #
+    set(options
+        ADD_SHARE_ALIAS
+    )
+    set(one_value_args
+        ALIAS
+        MODULE
+    )
+    set(multi_value_args "")
+
+    cmake_parse_arguments(PARSE_ARGV 0 OPTNS "${options}" "${one_value_args}" "${multi_value_args}")
+
+    if (OPTNS_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}() got unknown argument(s): ${OPTNS_UNPARSED_ARGUMENTS}")
+    endif()
+
+    if ("${OPTNS_ALIAS}" STREQUAL "")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}(): ALIAS is required")
+    endif()
+    if ("${OPTNS_MODULE}" STREQUAL "")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}(): MODULE is required")
+    endif()
+
+    set(INSTALL_MODULES_PATH "${CMAKE_INSTALL_PREFIX}/${EVEREST_MODULE_INSTALL_PREFIX}")
+    set(INSTALL_SHARE_MODULES_PATH "${CMAKE_INSTALL_PREFIX}/${EVEREST_MODULE_SHARE_INSTALL_PREFIX}")
+
+    message(STATUS "Creating alias \"${OPTNS_ALIAS}\" for module \"${OPTNS_MODULE}\" in ${INSTALL_MODULES_PATH}")
+
+    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${OPTNS_MODULE} ${OPTNS_ALIAS} WORKING_DIRECTORY ${INSTALL_MODULES_PATH})")
+    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${OPTNS_MODULE} ${OPTNS_ALIAS} WORKING_DIRECTORY ${INSTALL_MODULES_PATH}/${OPTNS_MODULE})")
+    if (OPTNS_ADD_SHARE_ALIAS)
+        message(STATUS "Creating alias \"${OPTNS_ALIAS}\" for module \"${OPTNS_MODULE}\" in ${INSTALL_SHARE_MODULES_PATH}")
+        install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${OPTNS_MODULE} ${OPTNS_ALIAS} WORKING_DIRECTORY ${INSTALL_SHARE_MODULES_PATH})")
+    endif()
+endfunction()
+
 function(ev_install_project)
     set (LIBRARY_PACKAGE_NAME ${PROJECT_NAME})
     set (LIBRARY_PACKAGE_CMAKE_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/${LIBRARY_PACKAGE_NAME})
