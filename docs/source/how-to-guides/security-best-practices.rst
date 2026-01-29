@@ -91,8 +91,8 @@ The systemd service should start the manager process as root. It will
 then change the user for the child processes it forks (the modules) and
 set the capabilities as needed.
 
-- To ensure that internal services cannot be accessed via the PowerLine connection,
-  iptables can be used with the following rules. In this example the powerline modul
+- To ensure that internal services cannot be accessed via the powerline connection,
+  iptables can be used with the following rules. In this example the powerline module
   is on device seth0.
 
 .. code-block::
