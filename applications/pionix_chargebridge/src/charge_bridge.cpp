@@ -8,6 +8,7 @@
 #include <charge_bridge/heartbeat_service.hpp>
 #include <charge_bridge/utilities/logging.hpp>
 #include <charge_bridge/utilities/print_config.hpp>
+#include <charge_bridge/utilities/string.hpp>
 #include <charge_bridge/utilities/sync_udp_client.hpp>
 #include <everest/io/event/fd_event_sync_interface.hpp>
 #include <everest/io/netlink/vcan_netlink_manager.hpp>
@@ -19,21 +20,43 @@
 
 namespace charge_bridge {
 
+namespace {
+std::pair<bool, std::set<std::string>> make_interface_list(std::string const& str, std::string const& pattern) {
+    if (str == pattern) {
+        return {false, {}};
+    };
+    auto raw = utilities::string_after_pattern(str, pattern).substr(1);
+    if (raw.size() <= 2) {
+        return {false, {}};
+    }
+    auto exclude = raw.substr(0, 1) == "!";
+    auto items = utilities::csv_to_set(raw.substr(exclude ? 1 : 0));
+    for (auto const& elem : items) {
+        std::cout << elem << ", ";
+    }
+    std::cout << std::endl;
+    return {exclude, items};
+}
+} // namespace
+
 charge_bridge::charge_bridge(charge_bridge_config const& config) : m_config(config) {
-    if ("ANY_EVSE" == config.cb_remote) {
-        init_discovery(discovery_device_type::CB_EVSE);
-    } else if ("ANY_EV" == config.cb_remote) {
-        init_discovery(discovery_device_type::CB_EV);
+    if (utilities::string_starts_with(config.cb_remote, "ANY_EVSE")) {
+        auto params = make_interface_list(config.cb_remote, "ANY_EVSE");
+        init_discovery(discovery_device_type::CB_EVSE, params.second, params.first);
+    } else if (utilities::string_starts_with(config.cb_remote, "ANY_EV")) {
+        auto params = make_interface_list(config.cb_remote, "ANY_EV");
+        init_discovery(discovery_device_type::CB_EV, params.second, params.first);
     } else {
         init();
     }
 }
 
-void charge_bridge::init_discovery(discovery_device_type type) {
+void charge_bridge::init_discovery(discovery_device_type type, std::set<std::string> const& interfaces,
+                                   bool excluding) {
     using namespace everest::lib::util;
     utilities::print_error(m_config.cb_name, "DISCOVERY", -1) << "Discovery pending" << std::endl;
 
-    m_discovery = std::make_unique<discovery>(type);
+    m_discovery = std::make_unique<discovery>(type, interfaces, excluding);
     m_discovery->set_discovery_callback(bind_obj(&charge_bridge::handle_discovery, this));
     {
         auto handle = m_cb_status.handle();

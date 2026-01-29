@@ -64,7 +64,7 @@ public:
 
 private:
     void init();
-    void init_discovery(discovery_device_type type);
+    void init_discovery(discovery_device_type type, std::set<std::string> const& interfaces, bool excluding);
     void handle_discovery(std::string const& ip);
 
 private:

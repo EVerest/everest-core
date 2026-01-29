@@ -9,6 +9,7 @@
 #include <everest/io/mdns/mdns_client.hpp>
 #include <functional>
 #include <memory>
+#include <set>
 
 namespace charge_bridge {
 
@@ -22,11 +23,13 @@ public:
     using discovery_cb = std::function<void(std::string const&)>;
 
     discovery(discovery_device_type type);
+    discovery(discovery_device_type type, std::set<std::string> const& interfaces, bool excluding);
 
     bool register_events(everest::lib::io::event::fd_event_handler& handler) override;
     bool unregister_events(everest::lib::io::event::fd_event_handler& handler) override;
 
     void set_discovery_callback(discovery_cb const& cb);
+
 private:
     void add_client(std::string const& interface);
     void query_registry();

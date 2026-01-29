@@ -39,6 +39,25 @@ discovery::discovery(discovery_device_type type) : m_type(type) {
     }
 }
 
+discovery::discovery(discovery_device_type type, std::set<std::string> const& interfaces, bool excluding) :
+    m_type(type) {
+    using namespace std::chrono_literals;
+    m_timer.set_timeout(1s);
+
+    for (auto const& item : everest::lib::io::socket::get_all_interaces()) {
+        if (not interfaces.empty()) {
+            if (interfaces.count(item.name) == 1 and excluding) {
+                continue;
+            }
+            if (interfaces.count(item.name) == 0 and not excluding) {
+                continue;
+            }
+        }
+        std::cout << "Adding: " << item.name << std::endl;
+        add_client(item.name);
+    }
+}
+
 void discovery::add_client(std::string const& interface) {
     auto client = std::make_unique<everest::lib::io::mdns::mdns_client>(interface);
     client->set_rx_handler([&](auto const& data, auto&) {
