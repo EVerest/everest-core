@@ -1,0 +1,54 @@
+description: >-
+  The RpcApi module provides a JSON-RPC API for external applications. The main focus is to provide
+  data for displaying the charging parameters and setting charging parameters during charging.
+config:
+  websocket_enabled:
+    description: Enable the websocket server.
+    type: boolean
+    default: true
+  websocket_port:
+    description: Port for the websocket server to listen on.
+    type: integer
+    default: 8080
+  websocket_interface:
+    description: >-
+      Network interface/device for the websocket server to listen on, e.g. 'lo' or 'eth1'.
+      Listen on all interfaces if "all".
+    type: string
+    minLength: 1
+    default: "lo"
+  websocket_tls_enabled:
+    description: Enable TLS for the websocket server. Currently not implemented.
+    type: boolean
+    default: false
+  authentication_required:
+    description: Require authentication for API requests. Currently not implemented.
+    type: boolean
+    default: false
+  max_decimal_places_other:
+    description: Maximum number of decimal places for all floating point values. Ignored if value is 0.
+    type: integer
+    default: 2
+    minimum: 0
+provides:
+  main:
+    description: EVerest JSON-RPC API
+    interface: empty
+requires:
+  evse_manager:
+    interface: evse_manager
+    min_connections: 1
+    max_connections: 128
+  evse_energy_sink:
+    interface: external_energy_limits
+    min_connections: 0
+    max_connections: 128
+  charger_information:
+    interface: charger_information
+    min_connections: 0
+    max_connections: 1
+enable_global_errors: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - chargebyte GmbH
