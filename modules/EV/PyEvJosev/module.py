@@ -110,6 +110,11 @@ class PyEVJosevModule():
         self._es.EAmount_kWh = args['EAmount']
         self._es.EnergyTransferMode = args['EnergyTransferMode']
 
+        if "payment_option" in args['SelectedPaymentOption']:
+            self._es.PaymentOption = args['SelectedPaymentOption']['payment_option']
+        if "enforce_payment_option" in args['SelectedPaymentOption']:
+            self._es.enforce_payment_option = args['SelectedPaymentOption']['enforce_payment_option']
+
         self._ready_event.set()
 
         return True
@@ -147,3 +152,4 @@ class PyEVJosevModule():
 
 py_ev_josev = PyEVJosevModule()
 py_ev_josev.start_evcc_handler()
+
