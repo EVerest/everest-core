@@ -1,6 +1,6 @@
 charge_bridge:
   name: cb_eval_ev
-  ip: 10.10.10.43
+  ip: ANY_EV
   #ip: chargebridge-44b7d0c99629.local
   fw_file: ./firmware/charge-bridge-fw_complete.cbfw
   fw_update_on_start: true
