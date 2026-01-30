@@ -137,6 +137,7 @@ Result ServiceDiscovery::feed(Event ev) {
                            m_ctx.session_config.supported_vas_services, m_ctx.session_ev_info.ev_energy_services);
 
         m_ctx.respond(res);
+        m_ctx.feedback.response_code(res.response_code);
 
         if (res.response_code >= dt::ResponseCode::FAILED) {
             m_ctx.session_stopped = true;
@@ -149,6 +150,7 @@ Result ServiceDiscovery::feed(Event ev) {
 
         m_ctx.respond(res);
         m_ctx.session_stopped = true;
+        m_ctx.feedback.response_code(res.response_code);
 
         return {};
     } else {
@@ -158,6 +160,7 @@ Result ServiceDiscovery::feed(Event ev) {
         const message_20::Type req_type = variant->get_type();
         send_sequence_error(req_type, m_ctx);
 
+        m_ctx.feedback.response_code(dt::ResponseCode::FAILED_SequenceError);
         m_ctx.session_stopped = true;
         return {};
     }

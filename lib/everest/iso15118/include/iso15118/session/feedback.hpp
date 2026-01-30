@@ -86,6 +86,7 @@ struct Callbacks {
     std::function<void(const dt::VasSelectedServiceList&)> selected_vas_services;
     std::function<void(const AcLimits&)> ac_limits;
     std::function<void(const std::string&, const std::string&)> ev_termination;
+    std::function<void(const iso15118::message_20::datatypes::ResponseCode&)> response_code;
 };
 
 } // namespace feedback
@@ -114,6 +115,7 @@ public:
     void selected_vas_services(const dt::VasSelectedServiceList&) const;
     void ac_limits(const feedback::AcLimits&) const;
     void ev_termination(const std::string&, const std::string&) const;
+    void response_code(const iso15118::message_20::datatypes::ResponseCode&) const;
 
 private:
     feedback::Callbacks callbacks;

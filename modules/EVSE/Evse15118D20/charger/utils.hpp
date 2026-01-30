@@ -38,7 +38,6 @@ static_assert(NUMBER_OF_SETUP_STEPS == to_underlying_value(SetupStep::MIN_LIMITS
               "NUMBER_OF_SETUP_STEPS should be in sync with the SetupStep enum definition");
 
 constexpr types::iso15118::V2gMessageId convert_v2g_message_type(iso15118::message_20::Type type) {
-
     using Type = iso15118::message_20::Type;
     using Id = types::iso15118::V2gMessageId;
 
@@ -116,6 +115,97 @@ constexpr types::iso15118::V2gMessageId convert_v2g_message_type(iso15118::messa
     }
 
     return Id::UnknownMessage;
+}
+
+constexpr types::iso15118::ResponseCode
+convert_response_code_types(const iso15118::message_20::datatypes::ResponseCode& code) {
+    using rc = iso15118::message_20::datatypes::ResponseCode;
+    using ResponseCode = types::iso15118::ResponseCode;
+
+    switch (code) {
+    case rc::OK:
+        return ResponseCode::OK;
+    case rc::OK_CertificateExpiresSoon:
+        return ResponseCode::OK_CertificateExpiresSoon;
+    case rc::OK_NewSessionEstablished:
+        return ResponseCode::OK_NewSessionEstablished;
+    case rc::OK_OldSessionJoined:
+        return ResponseCode::OK_OldSessionJoined;
+    case rc::OK_PowerToleranceConfirmed:
+        return ResponseCode::OK_PowerToleranceConfirmed;
+    case rc::WARNING_AuthorizationSelectionInvalid:
+        return ResponseCode::WARNING_AuthorizationSelectionInvalid;
+    case rc::WARNING_CertificateExpired:
+        return ResponseCode::WARNING_CertificateExpired;
+    case rc::WARNING_CertificateNotYetValid:
+        return ResponseCode::WARNING_CertificateNotYetValid;
+    case rc::WARNING_CertificateRevoked:
+        return ResponseCode::WARNING_CertificateRevoked;
+    case rc::WARNING_CertificateValidationError:
+        return ResponseCode::WARNING_CertificateValidationError;
+    case rc::WARNING_ChallengeInvalid:
+        return ResponseCode::WARNING_ChallengeInvalid;
+    case rc::WARNING_EIMAuthorizationFailure:
+        return ResponseCode::WARNING_EIMAuthorizationFailure;
+    case rc::WARNING_eMSPUnknown:
+        return ResponseCode::WARNING_eMSPUnknown;
+    case rc::WARNING_EVPowerProfileViolation:
+        return ResponseCode::WARNING_EVPowerProfileViolation;
+    case rc::WARNING_GeneralPnCAuthorizationError:
+        return ResponseCode::WARNING_GeneralPnCAuthorizationError;
+    case rc::WARNING_NoCertificateAvailable:
+        return ResponseCode::WARNING_NoCertificateAvailable;
+    case rc::WARNING_NoContractMatchingPCIDFound:
+        return ResponseCode::WARNING_NoContractMatchingPCIDFound;
+    case rc::WARNING_PowerToleranceNotConfirmed:
+        return ResponseCode::WARNING_PowerToleranceNotConfirmed;
+    case rc::WARNING_ScheduleRenegotiationFailed:
+        return ResponseCode::WARNING_ScheduleRenegotiationFailed;
+    case rc::WARNING_StandbyNotAllowed:
+        return ResponseCode::WARNING_StandbyNotAllowed;
+    case rc::WARNING_WPT:
+        return ResponseCode::WARNING_WPT;
+    case rc::FAILED:
+        return ResponseCode::FAILED;
+    case rc::FAILED_AssociationError:
+        return ResponseCode::FAILED_AssociationError;
+    case rc::FAILED_ContactorError:
+        return ResponseCode::FAILED_ContactorError;
+    case rc::FAILED_EVPowerProfileInvalid:
+        return ResponseCode::FAILED_EVPowerProfileInvalid;
+    case rc::FAILED_EVPowerProfileViolation:
+        return ResponseCode::FAILED_EVPowerProfileViolation;
+    case rc::FAILED_MeteringSignatureNotValid:
+        return ResponseCode::FAILED_MeteringSignatureNotValid;
+    case rc::FAILED_NoEnergyTransferServiceSelected:
+        return ResponseCode::FAILED_NoEnergyTransferServiceSelected;
+    case rc::FAILED_NoServiceRenegotiationSupported:
+        return ResponseCode::FAILED_NoServiceRenegotiationSupported;
+    case rc::FAILED_PauseNotAllowed:
+        return ResponseCode::FAILED_PauseNotAllowed;
+    case rc::FAILED_PowerDeliveryNotApplied:
+        return ResponseCode::FAILED_PowerDeliveryNotApplied;
+    case rc::FAILED_PowerToleranceNotConfirmed:
+        return ResponseCode::FAILED_PowerToleranceNotConfirmed;
+    case rc::FAILED_ScheduleRenegotiation:
+        return ResponseCode::FAILED_ScheduleRenegotiation;
+    case rc::FAILED_ScheduleSelectionInvalid:
+        return ResponseCode::FAILED_ScheduleSelectionInvalid;
+    case rc::FAILED_SequenceError:
+        return ResponseCode::FAILED_SequenceError;
+    case rc::FAILED_ServiceIDInvalid:
+        return ResponseCode::FAILED_ServiceIDInvalid;
+    case rc::FAILED_ServiceSelectionInvalid:
+        return ResponseCode::FAILED_ServiceSelectionInvalid;
+    case rc::FAILED_SignatureError:
+        return ResponseCode::FAILED_SignatureError;
+    case rc::FAILED_UnknownSession:
+        return ResponseCode::FAILED_UnknownSession;
+    case rc::FAILED_WrongChargeParameter:
+        return ResponseCode::FAILED_WrongChargeParameter;
+    default:
+        return ResponseCode::FAILED;
+    }
 }
 
 std::optional<float> convert_from_optional(const std::optional<dt::RationalNumber>& in);
