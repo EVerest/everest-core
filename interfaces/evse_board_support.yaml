@@ -5,8 +5,11 @@ description: >-
 cmds:
   enable:
     description: >-
-      Enables or disables the charging port. Typically disabled results in control
-      pilot state F. It must not accept cars for new charging sessions if disabled.
+      Enables or disables the charging port. When disabled, the BSP must prevent new charging sessions
+      and may signal unavailability using a hardware-appropriate CP state (E/F/X1) and/or mechanical
+      blocking.
+      While disabled, the BSP should still listen for PWM updates and cache the last duty cycle received.
+      When re-enabled, it must apply the cached PWM value.
     arguments:
       value:
         description: 'True: enabled, false: disabled.'

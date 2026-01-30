@@ -61,6 +61,7 @@ private:
     PpState last_pp_state; ///< The last pp state received from the MCU.
     bool last_stop_button_state;
     ErrorFlags last_error_flags;
+    int last_pwm_raw{10000};
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

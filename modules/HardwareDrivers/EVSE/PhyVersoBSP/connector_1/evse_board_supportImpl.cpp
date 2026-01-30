@@ -119,7 +119,7 @@ void evse_board_supportImpl::ready() {
 
 void evse_board_supportImpl::handle_enable(bool& value) {
     if (value) {
-        mod->serial.set_pwm(1, 10000);
+        mod->serial.set_pwm(1, last_pwm_raw);
     } else {
         mod->serial.set_pwm(1, 0);
     }
@@ -127,18 +127,21 @@ void evse_board_supportImpl::handle_enable(bool& value) {
 
 void evse_board_supportImpl::handle_pwm_on(double& value) {
     if (value >= 0 && value <= 100.) {
-        mod->serial.set_pwm(1, value * 100);
+        last_pwm_raw = value * 100;
+        mod->serial.set_pwm(1, last_pwm_raw);
     } else {
         EVLOG_warning << "Invalid pwm value " << value;
     }
 }
 
 void evse_board_supportImpl::handle_pwm_off() {
-    mod->serial.set_pwm(1, 10000);
+    last_pwm_raw = 10000;
+    mod->serial.set_pwm(1, last_pwm_raw);
 }
 
 void evse_board_supportImpl::handle_pwm_F() {
-    mod->serial.set_pwm(1, 0);
+    last_pwm_raw = 0;
+    mod->serial.set_pwm(1, last_pwm_raw);
 }
 
 void evse_board_supportImpl::handle_allow_power_on(types::evse_board_support::PowerOnOff& value) {
