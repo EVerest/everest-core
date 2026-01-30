@@ -19,7 +19,8 @@ static std::vector<std::vector<std::string>> to_string(types::evse_board_support
     hw_caps.push_back({"Max/Min Phase Count",
                        fmt::format("Imp: {}ph/{}ph Exp: {}ph/{}ph", c.max_phase_count_import, c.min_phase_count_import,
                                    c.max_phase_count_export, c.min_phase_count_export)});
-    hw_caps.push_back({"Connector type", types::evse_board_support::connector_type_to_string(c.connector_type)});
+    hw_caps.push_back({"Connector Type", types::evse_board_support::connector_type_to_string(c.connector_type)});
+    hw_caps.push_back({"CP State E Support", c.supports_cp_state_E ? "Yes" : "No"});
     if (c.max_plug_temperature_C.has_value()) {
         hw_caps.push_back({"Max plug temperature", fmt::format("{}C", c.max_plug_temperature_C.value())});
     }
@@ -187,11 +188,11 @@ void BUEvseBoardSupport::ready() {
 
     std::string pwm_duty_cycle_str{"5.0"};
 
-    Component pwm_off_button = Button(
-        "PWM Off",
+    Component cp_state_X1_button = Button(
+        "CP State X1 (PWM Off)",
         [&] {
-            last_command = "PWM Off";
-            r_bsp->call_pwm_off();
+            last_command = "CP State X1 (PWM Off)";
+            r_bsp->call_cp_state_X1();
         },
         ButtonOption::Animated(Color::Blue, Color::White, Color::BlueLight, Color::White));
 
@@ -205,11 +206,19 @@ void BUEvseBoardSupport::ready() {
         },
         ButtonOption::Animated(Color::Green, Color::White, Color::GreenLight, Color::White));
 
-    Component pwm_F_button = Button(
-        "PWM F",
+    Component cp_state_E_button = Button(
+        "CP State E",
         [&] {
-            last_command = "PWM F";
-            r_bsp->call_pwm_F();
+            last_command = "CP State E";
+            r_bsp->call_cp_state_E();
+        },
+        ButtonOption::Animated(Color::Magenta, Color::White, Color::MagentaLight, Color::White));
+
+    Component cp_state_F_button = Button(
+        "CP State F",
+        [&] {
+            last_command = "CP State F";
+            r_bsp->call_cp_state_F();
         },
         ButtonOption::Animated(Color::Red, Color::White, Color::RedLight, Color::White));
 
@@ -223,8 +232,9 @@ void BUEvseBoardSupport::ready() {
     auto pwm_dc = Input(&pwm_duty_cycle_str, "5.0", o);
     auto pwm_component = Container::Horizontal({
         Container::Vertical({
-            pwm_F_button,
-            pwm_off_button,
+            cp_state_E_button,
+            cp_state_F_button,
+            cp_state_X1_button,
             pwm_on_button,
             pwm_dc,
         }),

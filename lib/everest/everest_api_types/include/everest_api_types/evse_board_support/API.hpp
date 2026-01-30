@@ -88,6 +88,7 @@ struct HardwareCapabilities {
     int32_t max_phase_count_export;
     int32_t min_phase_count_export;
     bool supports_changing_phases_during_charging;
+    bool supports_cp_state_E;
     Connector_type connector_type;
     std::optional<float> max_plug_temperature_C;
 };

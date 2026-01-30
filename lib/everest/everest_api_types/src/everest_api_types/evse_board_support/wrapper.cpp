@@ -123,6 +123,7 @@ HardwareCapabilities_Internal to_internal_api(HardwareCapabilities_External cons
     result.max_phase_count_export = val.max_phase_count_export;
     result.min_phase_count_export = val.min_phase_count_export;
     result.supports_changing_phases_during_charging = val.supports_changing_phases_during_charging;
+    result.supports_cp_state_E = val.supports_cp_state_E;
     result.connector_type = to_internal_api(val.connector_type);
     result.max_plug_temperature_C = val.max_plug_temperature_C;
 
@@ -140,6 +141,7 @@ HardwareCapabilities_External to_external_api(HardwareCapabilities_Internal cons
     result.max_phase_count_export = val.max_phase_count_export;
     result.min_phase_count_export = val.min_phase_count_export;
     result.supports_changing_phases_during_charging = val.supports_changing_phases_during_charging;
+    result.supports_cp_state_E = val.supports_cp_state_E;
     result.connector_type = to_external_api(val.connector_type);
     result.max_plug_temperature_C = val.max_plug_temperature_C;
 

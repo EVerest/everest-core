@@ -80,7 +80,7 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
 }
 
 Charger::~Charger() {
-    pwm_F();
+    cp_state_F();
     // need to send an event to wake up processing
     error_handling_event_queue.push(ErrorHandlingEvents::ForceEmergencyShutdown);
     error_thread_handle.stop();
@@ -197,7 +197,7 @@ void Charger::run_state_machine() {
         case EvseState::Disabled:
             if (initialize_state) {
                 signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
-                pwm_F();
+                cp_state_F();
             }
             break;
 
@@ -229,7 +229,7 @@ void Charger::run_state_machine() {
                 shared_context.max_current_cable = 0;
                 shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Unknown;
                 shared_context.legacy_wakeup_done = false;
-                pwm_off();
+                cp_state_X1();
                 deauthorize_internal();
                 shared_context.transaction_active = false;
                 clear_errors_on_unplug();
@@ -470,9 +470,9 @@ void Charger::run_state_machine() {
                 session_log.evse(false, "Start switching phases");
                 signal_simple_event(types::evse_manager::SessionEventEnum::SwitchingPhases);
                 if (config_context.switch_3ph1ph_cp_state_F) {
-                    pwm_F();
+                    cp_state_F();
                 } else {
-                    pwm_off();
+                    cp_state_X1();
                 }
             }
             if (time_in_current_state >= config_context.switch_3ph1ph_delay_s * 1000) {
@@ -487,12 +487,12 @@ void Charger::run_state_machine() {
             if (initialize_state) {
                 session_log.evse(false, "Enter T_step_EF");
                 internal_context.t_step_ef_x1_pause = false;
-                pwm_F();
+                cp_state_F();
             }
             if (time_in_current_state >= T_STEP_EF + STAY_IN_X1_AFTER_TSTEP_EF_MS) {
                 session_log.evse(false, "Exit T_step_EF");
                 if (internal_context.t_step_EF_return_pwm == 0.) {
-                    pwm_off();
+                    cp_state_X1();
                 } else if (hlc_use_5percent_current_session) {
                     update_pwm_now(PWM_5_PERCENT);
                     internal_context.pwm_set_last_ampere = internal_context.t_step_EF_return_ampere;
@@ -505,19 +505,19 @@ void Charger::run_state_machine() {
                 internal_context.t_step_ef_x1_pause = true;
                 // stay in X1 for a little while as required by EV READY regulations
                 session_log.evse(false, "Pause in X1 for EV READY regulations");
-                pwm_off();
+                cp_state_X1();
             }
             break;
 
         case EvseState::T_step_X1:
             if (initialize_state) {
                 session_log.evse(false, "Enter T_step_X1");
-                pwm_off();
+                cp_state_X1();
             }
             if (time_in_current_state >= T_STEP_X1) {
                 session_log.evse(false, "Exit T_step_X1");
                 if (internal_context.t_step_X1_return_pwm == 0.) {
-                    pwm_off();
+                    cp_state_X1();
                 } else {
                     update_pwm_now(internal_context.t_step_X1_return_pwm);
                     internal_context.pwm_set_last_ampere = internal_context.t_step_EF_return_ampere;
@@ -626,13 +626,13 @@ void Charger::run_state_machine() {
                 // First time we see that a fatal error became active, signal F for a short time.
                 // Only use in basic charging mode.
                 if (entered_fatal_error_state()) {
-                    pwm_F();
+                    cp_state_F();
                 }
 
-                if (internal_context.pwm_F_active and
+                if (internal_context.cp_state_F_active and
                     time_in_fatal_error_state_ms() > config_context.state_F_after_fault_ms and
                     shared_context.shutdown_type == ShutdownType::EmergencyShutdown) {
-                    pwm_off();
+                    cp_state_X1();
                 }
             }
 
@@ -716,12 +716,12 @@ void Charger::run_state_machine() {
                     // EV wants to terminate session
                     shared_context.current_state = EvseState::StoppingCharging;
                     if (shared_context.pwm_running) {
-                        pwm_off();
+                        cp_state_X1();
                     }
                 } else if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Pause) {
                     // EV wants an actual pause
                     if (shared_context.pwm_running) {
-                        pwm_off();
+                        cp_state_X1();
                     }
                 }
 
@@ -754,7 +754,7 @@ void Charger::run_state_machine() {
                         signal_dc_supply_off();
                     }
                 } else {
-                    pwm_off();
+                    cp_state_X1();
                 }
             }
 
@@ -763,12 +763,12 @@ void Charger::run_state_machine() {
                     // EV wants to terminate session
                     shared_context.current_state = EvseState::StoppingCharging;
                     if (shared_context.pwm_running) {
-                        pwm_off();
+                        cp_state_X1();
                     }
                 } else if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Pause) {
                     // EV wants an actual pause
                     if (shared_context.pwm_running) {
-                        pwm_off();
+                        cp_state_X1();
                     }
                 }
             }
@@ -778,7 +778,7 @@ void Charger::run_state_machine() {
             if (initialize_state) {
                 signal_simple_event(types::evse_manager::SessionEventEnum::WaitingForEnergy);
                 if (not hlc_use_5percent_current_session) {
-                    pwm_off();
+                    cp_state_X1();
                 }
             }
             break;
@@ -800,7 +800,7 @@ void Charger::run_state_machine() {
                     // once car is unplugged.
                 } else {
                     // For AC BASIC charging, we reached StoppingCharging because an unplug happend.
-                    pwm_off();
+                    cp_state_X1();
                     shared_context.current_state = EvseState::Finished;
                 }
             }
@@ -1027,7 +1027,7 @@ void Charger::update_pwm_now(float duty_cycle) {
             "Set PWM On ({:.1f}%) took {} ms", duty_cycle * 100.,
             (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start)).count()));
     internal_context.last_pwm_update = std::chrono::steady_clock::now();
-    internal_context.pwm_F_active = false;
+    internal_context.cp_state_F_active = false;
     bsp->set_pwm(duty_cycle);
 }
 
@@ -1045,22 +1045,22 @@ void Charger::update_pwm_now_if_changed_ampere(float ampere) {
     }
 }
 
-void Charger::pwm_off() {
+void Charger::cp_state_X1() {
     session_log.evse(false, "Set PWM Off");
     shared_context.pwm_running = false;
     internal_context.update_pwm_last_duty_cycle = 1.;
     internal_context.pwm_set_last_ampere = 0.;
-    internal_context.pwm_F_active = false;
-    bsp->set_pwm_off();
+    internal_context.cp_state_F_active = false;
+    bsp->set_cp_state_X1();
 }
 
-void Charger::pwm_F() {
+void Charger::cp_state_F() {
     session_log.evse(false, "Set PWM F");
     shared_context.pwm_running = false;
     internal_context.update_pwm_last_duty_cycle = 0.;
     internal_context.pwm_set_last_ampere = 0.;
-    internal_context.pwm_F_active = true;
-    bsp->set_pwm_F();
+    internal_context.cp_state_F_active = true;
+    bsp->set_cp_state_F();
 }
 
 void Charger::run() {
@@ -1207,7 +1207,7 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
             signal_hlc_stop_charging();
         } else {
             shared_context.current_state = EvseState::ChargingPausedEVSE;
-            pwm_off();
+            cp_state_X1();
         }
 
         shared_context.authorized = false;
@@ -1877,7 +1877,7 @@ types::iso15118::DcEvseMinimumLimits Charger::get_evse_min_hlc_limits() {
 void Charger::dlink_pause() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_dlink_pause);
     shared_context.hlc_allow_close_contactor = false;
-    pwm_off();
+    cp_state_X1();
     shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Pause;
 }
 
@@ -1885,7 +1885,7 @@ void Charger::dlink_pause() {
 void Charger::dlink_terminate() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_dlink_terminate);
     shared_context.hlc_allow_close_contactor = false;
-    pwm_off();
+    cp_state_X1();
     shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Terminate;
 }
 
@@ -2050,7 +2050,7 @@ void Charger::emergency_shutdown() {
     // state F is handled in the state machine
     EVLOG_info << "Initiating emergency shutdown";
     if (shared_context.pwm_running) {
-        pwm_off();
+        cp_state_X1();
     }
 
     // Shutdown DC power supplies

@@ -19,10 +19,17 @@ cmds:
         type: number
         minimum: 0
         maximum: 100
-  pwm_off:
+  cp_state_X1:
     description: Turns PWM off (constant high voltage)
-  pwm_F:
-    description: Turns PWM off with Error F (constant negative voltage)
+  cp_state_F:
+    description: >-
+      Turns PWM off with error state F: continuous -12 V on Control Pilot, indicating
+      EV supply equipment not available.
+  cp_state_E:
+    description: >-
+      Sets the Control Pilot line to 0 V (state E) by disabling the power output or shorting to ground.
+      This state is typically used to simulate that no charger is connected to the EV.
+      Note: This command requires hardware support for setting Control Pilot to 0 V (state E).
   allow_power_on:
     description: >-
       Sets allow_power_on flag. If false, Relais must never be switched

@@ -431,7 +431,7 @@ void YetiSimulator::simulation_statemachine() {
 
     case state::State::STATE_A: {
         module_state->use_three_phases_confirmed = module_state->use_three_phases;
-        pwm_off();
+        cp_state_x1();
         module_state->simplified_mode = false;
 
         if (module_state->last_state not_eq state::State::STATE_A and
@@ -508,7 +508,7 @@ void YetiSimulator::simulation_statemachine() {
         break;
     case state::State::STATE_E: {
         powerOff();
-        pwm_off();
+        cp_state_x1();
         break;
     }
     case state::State::STATE_F:
@@ -707,15 +707,15 @@ void YetiSimulator::pwm_on(const double dutycycle) {
         module_state->pwm_running = true;
         module_state->pwm_error_f = false;
     } else {
-        pwm_off();
+        cp_state_x1();
     }
 }
-void YetiSimulator::pwm_off() {
+void YetiSimulator::cp_state_x1() {
     module_state->pwm_duty_cycle = 1.0;
     module_state->pwm_running = false;
     module_state->pwm_error_f = false;
 }
-void YetiSimulator::pwm_f() {
+void YetiSimulator::cp_state_f() {
     module_state->pwm_duty_cycle = 1.0;
     module_state->pwm_running = false;
     module_state->pwm_error_f = true;

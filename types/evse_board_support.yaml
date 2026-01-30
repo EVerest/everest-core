@@ -14,6 +14,7 @@ types:
       - max_phase_count_export
       - min_phase_count_export
       - supports_changing_phases_during_charging
+      - supports_cp_state_E
       - connector_type
     properties:
       max_current_A_import:
@@ -56,6 +57,11 @@ types:
         description: >-
           Indicates whether changing number of phases is supported during
           charging (true) or not (false)
+        type: boolean
+      supports_cp_state_E:
+        description: >-
+          Indicates whether setting Control Pilot to state E is supported (true) or not
+          (false)
         type: boolean
       max_plug_temperature_C:
         type: number

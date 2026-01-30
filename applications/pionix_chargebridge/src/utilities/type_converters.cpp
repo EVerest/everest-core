@@ -487,6 +487,7 @@ bool decode_HardwareCapabilities(c4::yml::ConstNodeRef const& node, EXT_API_BSP:
     rhs.min_phase_count_export = decode<decltype(rhs.min_phase_count_export)>(node, "min_phase_count_export");
     rhs.supports_changing_phases_during_charging = decode<decltype(rhs.supports_changing_phases_during_charging)>(
         node, "supports_changing_phases_during_charging");
+    rhs.supports_cp_state_E = decode<decltype(rhs.supports_cp_state_E)>(node, "supports_cp_state_E");
     rhs.connector_type = decode<decltype(rhs.connector_type)>(node, "connector_type");
     auto tmp = decode<float>(node, "max_plug_temperature_C", NAN);
     rhs.max_plug_temperature_C = std::isnan(tmp) ? std::nullopt : std::make_optional<float>(tmp);
