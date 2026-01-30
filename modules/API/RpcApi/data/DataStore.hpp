@@ -10,6 +10,8 @@
 #include <condition_variable>
 #include <everest/logging.hpp>
 
+namespace RPCDataTypes = types::json_rpc_api;
+
 namespace data {
 
 enum class EVSEStatusField {

@@ -3,8 +3,6 @@
 
 #include "Evse.hpp"
 
-namespace RPCDataTypes = types::json_rpc_api;
-
 namespace methods {
 
 RPCDataTypes::EVSEGetInfoResObj Evse::get_info(const int32_t evse_index) {

@@ -5,8 +5,6 @@
 
 using namespace data;
 
-namespace RPCDataTypes = types::json_rpc_api;
-
 namespace methods {
 
 RPCDataTypes::HelloResObj Api::hello() {
