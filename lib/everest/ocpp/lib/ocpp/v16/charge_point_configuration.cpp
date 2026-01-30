@@ -28,7 +28,7 @@ const std::int32_t MAX_WAIT_FOR_SET_USER_PRICE_TIMEOUT_MS = 30000;
 
 ChargePointConfiguration::ChargePointConfiguration(const std::string& config, const fs::path& ocpp_main_path,
                                                    const fs::path& user_config_path) :
-    user_config_path(user_config_path) {
+    ocpp_main_path(ocpp_main_path), user_config_path(user_config_path) {
 
     if (!fs::exists(this->user_config_path)) {
         EVLOG_critical << "User config file does not exist";
@@ -310,6 +310,25 @@ void ChargePointConfiguration::setChargepointInformationProperty(json& user_conf
         this->config["Internal"][key] = value.value();
         user_config["Internal"][key] = value.value();
     }
+}
+
+bool ChargePointConfiguration::validate(const std::string_view& schema_file, const json& object) {
+    fs::path schema_path = ocpp_main_path / "profile_schemas" / schema_file;
+    std::ifstream ifs(schema_path);
+    auto schema_json = json::parse(ifs);
+    ocpp::Schemas schema(std::move(schema_json));
+    bool result{false};
+    try {
+        auto validator = schema.get_validator();
+        if (validator) {
+            validator->validate(object);
+            result = true;
+        }
+    } catch (const std::exception& e) {
+        EVLOG_error << "Error validating against schema " << schema_file << ": " << e.what();
+    }
+
+    return result;
 }
 
 void ChargePointConfiguration::setChargepointInformation(const std::string& chargePointVendor,
@@ -2855,8 +2874,15 @@ ConfigurationStatus ChargePointConfiguration::setDefaultPriceText(const CiString
         default_price = this->config["CostAndPrice"]["DefaultPriceText"];
     }
 
+    json j;
+    try {
+        j = json::parse(value.get());
+    } catch (const std::exception& e) {
+        EVLOG_error << "Configuration DefaultPriceText is set, but is invalid: " << e.what();
+        return ConfigurationStatus::Rejected;
+    }
+
     // priceText is mandatory
-    json j = json::parse(value.get());
     if (!j.contains("priceText")) {
         EVLOG_error << "Configuration DefaultPriceText is set, but does not contain 'priceText'";
         return ConfigurationStatus::Rejected;
@@ -2886,6 +2912,16 @@ ConfigurationStatus ChargePointConfiguration::setDefaultPriceText(const CiString
 
     if (!language_found) {
         default_price["priceTexts"].push_back(j);
+    }
+
+    // perform schema validation on default_price
+    json test_value;
+    test_value["CustomDisplayCostAndPrice"] = true;
+    test_value["DefaultPriceText"] = default_price;
+
+    if (!validate("CostAndPrice.json", test_value)) {
+        EVLOG_error << "DefaultPriceText value is invalid: " << value;
+        return ConfigurationStatus::Rejected;
     }
 
     this->config["CostAndPrice"]["DefaultPriceText"] = default_price;
@@ -2955,11 +2991,21 @@ std::optional<std::string> ChargePointConfiguration::getDefaultPrice() {
 
 ConfigurationStatus ChargePointConfiguration::setDefaultPrice(const std::string& value) {
 
-    json default_price = json::object();
+    json default_price;
     try {
         default_price = json::parse(value);
     } catch (const std::exception& e) {
         EVLOG_error << "Default price json not correct, can not store default price : " << e.what();
+        return ConfigurationStatus::Rejected;
+    }
+
+    // perform schema validation on value
+    json test_value;
+    test_value["CustomDisplayCostAndPrice"] = true;
+    test_value["DefaultPrice"] = default_price;
+
+    if (!validate("CostAndPrice.json", test_value)) {
+        EVLOG_error << "DefaultPrice is invalid: " << value;
         return ConfigurationStatus::Rejected;
     }
 
