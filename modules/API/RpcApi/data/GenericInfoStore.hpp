@@ -15,8 +15,6 @@
 
 namespace data {
 
-namespace RPCDataTypes = types::json_rpc_api;
-
 template <typename T> class GenericInfoStore {
 protected:
     // the associated data store

@@ -3,8 +3,6 @@
 #include "Evse.hpp"
 #include "../RpcHandler.hpp"
 
-namespace RPCDataTypes = types::json_rpc_api;
-
 namespace notifications {
 
 static const std::string NOTIFICATION_EVSE_HWCAPS_CHANGED = "EVSE.HardwareCapabilitiesChanged";

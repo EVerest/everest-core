@@ -26,7 +26,7 @@ public:
     ~ChargePoint() = default;
 
     // Notifications
-    void sendActiveErrorsChanged(const std::vector<types::json_rpc_api::ErrorObj>& active_errors);
+    void sendActiveErrorsChanged(const std::vector<RPCDataTypes::ErrorObj>& active_errors);
 
 private:
     // Reference to the DataStoreCharger object that holds EVSE data
