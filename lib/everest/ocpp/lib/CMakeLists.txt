@@ -38,6 +38,9 @@ if(LIBOCPP_ENABLE_V16)
             ocpp/v16/charge_point_impl.cpp
             ocpp/v16/message_dispatcher.cpp
             ocpp/v16/smart_charging.cpp
+            ocpp/v16/known_keys.cpp
+            ocpp/v16/charge_point_configuration_base.cpp
+            ocpp/v16/charge_point_configuration_devicemodel.cpp
             ocpp/v16/charge_point_configuration.cpp
             ocpp/v16/charge_point_state_machine.cpp
             ocpp/v16/message_queue.cpp
