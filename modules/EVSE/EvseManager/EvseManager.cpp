@@ -1937,6 +1937,14 @@ void EvseManager::cable_check() {
 
             powersupply_DC_on();
 
+            if (not wait_powersupply_DC_voltage_reached(config.cable_check_relays_open_voltage_V)) {
+                std::ostringstream oss;
+                oss << "CableCheck: Voltage did not rise to " << config.cable_check_relays_open_voltage_V
+                    << " V within timeout";
+                fail_cable_check(oss.str());
+                return;
+            }
+
             selftest_result.clear();
             r_imd[0]->call_start_self_test(config.cable_check_relays_open_voltage_V);
             EVLOG_info << "CableCheck: Early IMD self test started.";
