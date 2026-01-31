@@ -72,13 +72,14 @@ struct Conf {
     bool ac_hlc_use_5percent;
     bool ac_enforce_hlc;
     bool ac_with_soc;
-    int dc_isolation_voltage_V;
     int internal_over_voltage_duration_ms;
     bool dbg_hlc_auth_after_tstep;
-    int hack_sleep_in_cable_check;
-    int hack_sleep_in_cable_check_volkswagen;
+    int dc_isolation_voltage_V;
     int cable_check_wait_number_of_imd_measurements;
     bool cable_check_enable_imd_self_test;
+    bool cable_check_enable_imd_self_test_relays_open;
+    int cable_check_relays_open_voltage_V;
+    int cable_check_relays_closed_timeout_s;
     bool cable_check_wait_below_60V_before_finish;
     bool hack_skoda_enyaq;
     int hack_present_current_offset;
@@ -383,7 +384,6 @@ private:
     bool check_isolation_resistance_in_range(double resistance);
     bool check_voltage_to_protective_earth_in_range(types::isolation_monitor::IsolationMeasurement m);
 
-    static constexpr auto CABLECHECK_CONTACTORS_CLOSE_TIMEOUT{std::chrono::seconds(5)};
     static constexpr double CABLECHECK_CURRENT_LIMIT{2};
     static constexpr double CABLECHECK_INSULATION_FAULT_RESISTANCE_OHM{100000.};
     static constexpr double CABLECHECK_SAFE_VOLTAGE{60.};

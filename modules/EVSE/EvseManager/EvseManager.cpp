@@ -1914,15 +1914,69 @@ void EvseManager::cable_check() {
         }
         charger->get_stopwatch().mark("<60V");
 
-        // normally contactors should be closed before entering cable check routine.
-        // On some hardware implementation it may take some time until the confirmation arrives though,
-        // so we wait with a timeout here until the contactors are confirmed to be closed.
         // Allow closing from HLC perspective, it will wait for CP state C in Charger IEC state machine as well.
         session_log.car(true, "DC HLC Close contactor (in CableCheck)");
         charger->set_hlc_allow_close_contactor(true);
 
+        // Some HW platforms require the self test to be performed at the beginning of cablecheck phase.
+        // They will close the relays only after the self test was successful.
+        // This is done at a configurable voltage. As only the self test is done and no isolation resistance
+        // measurement, this voltage may be different from the voltage used later to measure the resistance
+        // (which is derived from the ev_max_voltage instead)
+        if (config.cable_check_enable_imd_self_test_relays_open) {
+            session_log.evse(true, "IMD Early self test in cablecheck");
+            // Set power supply to configured voltage for the self test
+            if (not powersupply_DC_set(config.cable_check_relays_open_voltage_V, CABLECHECK_CURRENT_LIMIT)) {
+                fail_cable_check(
+                    "CableCheck: Could not set DC power supply voltage and current for early IMD self test.");
+                return;
+            } else {
+                EVLOG_info << "CableCheck early IMD self test: Using " << config.cable_check_relays_open_voltage_V
+                           << " V";
+            }
+
+            powersupply_DC_on();
+
+            selftest_result.clear();
+            r_imd[0]->call_start_self_test(config.cable_check_relays_open_voltage_V);
+            EVLOG_info << "CableCheck: Early IMD self test started.";
+
+            // Wait for the result of the self test
+            bool result{false};
+            bool result_received{false};
+
+            for (int wait_seconds = 0; wait_seconds < CABLECHECK_SELFTEST_TIMEOUT; wait_seconds++) {
+                if (cable_check_should_exit()) {
+                    fail_cable_check("Cancel cable check");
+                    return;
+                }
+                if (selftest_result.wait_for(result, 1s)) {
+                    result_received = true;
+                    break;
+                }
+            }
+
+            if (not result_received) {
+                fail_cable_check("CableCheck: Did not get a early self test result from IMD within timeout");
+                return;
+            }
+
+            if (not result) {
+                EVLOG_error << "CableCheck: Early IMD Self test failed";
+                fail_cable_check("Early IMD self test failed during cable check");
+                return;
+            }
+
+            powersupply_DC_off();
+            charger->get_stopwatch().mark("Early IMD self test");
+        }
+
+        // normally contactors should be closed before entering cable check routine.
+        // On some hardware implementation it may take some time until the confirmation arrives though,
+        // so we wait with a timeout here until the contactors are confirmed to be closed.
+
         Timeout timeout;
-        timeout.start(CABLECHECK_CONTACTORS_CLOSE_TIMEOUT);
+        timeout.start(std::chrono::seconds(config.cable_check_relays_closed_timeout_s));
 
         while (not timeout.reached() and not cable_check_should_exit()) {
             if (not contactor_open) {
@@ -2073,16 +2127,6 @@ void EvseManager::cable_check() {
 
         if (config.hack_pause_imd_during_precharge) {
             imd_stop();
-        }
-
-        // Sleep before submitting result to spend more time in cable check. This is needed for some solar inverters
-        // used as DC chargers for them to warm up. Don't use it.
-        std::this_thread::sleep_for(std::chrono::seconds(config.hack_sleep_in_cable_check));
-        if (car_manufacturer == types::evse_manager::CarManufacturer::VolkswagenGroup) {
-            std::this_thread::sleep_for(std::chrono::seconds(config.hack_sleep_in_cable_check_volkswagen));
-        }
-        if (config.hack_sleep_in_cable_check > 0 or config.hack_sleep_in_cable_check_volkswagen > 0) {
-            charger->get_stopwatch().mark("Sleep");
         }
 
         if (config.cable_check_wait_below_60V_before_finish) {
