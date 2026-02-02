@@ -1,0 +1,128 @@
+name: Integration Tests
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'Which runner to use'
+        required: false
+        default: 'ubuntu-24.04'
+        type: string
+      build_kit_artifact_name:
+        description: 'The name of the build-kit artifact to download'
+        required: true
+        type: string
+      build_kit_image_tag:
+        description: 'The tag of the build-kit image to use for building the project'
+        required: true
+        type: string
+      build_kit_scripts_directory:
+        description: 'Directory in the repository where the build kit scripts are located'
+        required: false
+        default: '.ci/build-kit/scripts'
+        type: string
+      docker_compose_file_path:
+        description: 'The path to the docker-compose file, relative to the repository root'
+        required: false
+        default: '.ci/e2e/docker-compose.yaml'
+        type: string
+      test_service_name:
+        description: 'The name of the service to run integration tests on'
+        required: false
+        default: 'e2e-test-server'
+        type: string
+      result_xml_path:
+        description: 'The path to the result xml file, relative to the github workspace'
+        required: false
+        default: 'result.xml'
+        type: string
+      report_html_path:
+        description: 'The path to the report html file, relative to the github workspace'
+        required: false
+        default: 'report.html'
+        type: string
+      dist_artifact_name:
+        description: 'The name of the dist artifact to download'
+        required: true
+        type: string
+      wheels_artifact_name:
+        description: 'The name of the wheels artifact to download'
+        required: true
+        type: string
+    outputs:
+      integration_tests_artifact_name:
+        description: 'The name of the integration tests artifact'
+        value: ${{ jobs.integration-tests.outputs.integration_tests_artifact_name }}
+
+jobs:
+  integration-tests:
+    name: Run Integration Tests
+    runs-on: ${{ inputs.runner }}
+    env:
+      INTEGRATION_IMAGE_NAME: integration-image
+      BUILD_KIT_IMAGE: ${{ inputs.build_kit_image_tag }}
+      INTEGRATION_TESTS_ARTIFACT_NAME: integration-tests-artifacts
+    outputs:
+      integration_tests_artifact_name: ${{ env.INTEGRATION_TESTS_ARTIFACT_NAME }}
+    steps:
+      - name: Download dist dir
+        uses: actions/download-artifact@v5.0.0
+        with:
+          name: ${{ inputs.dist_artifact_name }}
+      - name: Extract dist.tar.gz
+        run: |
+          tar -xzf ${{ github.workspace }}/dist.tar.gz -C ${{ github.workspace }}
+      - name: Download wheels
+        uses: actions/download-artifact@v5.0.0
+        with:
+          name: ${{ inputs.wheels_artifact_name }}
+          path: wheels
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          path: source
+      - name: Setup run scripts
+        run: |
+          mkdir scripts
+          rsync -a source/${{ inputs.build_kit_scripts_directory }}/ scripts
+      - name: Download build-kit image
+        uses: actions/download-artifact@v5
+        with:
+          name: ${{ inputs.build_kit_artifact_name }}
+      - name: Load build-kit image
+        run: |
+          docker load -i build-kit.tar
+          docker image tag ${{ env.BUILD_KIT_IMAGE }} build-kit
+      - name: Create integration-image
+        run: |
+          docker run \
+          --volume "${{ github.workspace }}:/ext" \
+          --name integration-container \
+          build-kit run-script create_integration_image
+          docker commit integration-container ${{ env.INTEGRATION_IMAGE_NAME }}
+      - name: Run integration tests
+        id: run_integration_tests
+        run: |
+          docker compose \
+          -f source/${{ inputs.docker_compose_file_path }} \
+          run \
+          ${{ inputs.test_service_name }} \
+          run-script run_integration_tests
+      - name: Upload result and report as artifact
+        if: ${{ always() && (steps.run_integration_tests.outcome == 'success' || steps.run_integration_tests.outcome == 'failure') }}
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          if-no-files-found: error
+          name: ${{ env.INTEGRATION_TESTS_ARTIFACT_NAME }}
+          path: |
+            ${{ inputs.result_xml_path }}
+            ${{ inputs.report_html_path }}
+      - name: Render result
+        if: ${{ always() && (steps.run_integration_tests.outcome == 'success' || steps.run_integration_tests.outcome == 'failure') }}
+        uses: pmeier/pytest-results-action@v0.7.2
+        with:
+          path: ${{ inputs.result_xml_path }}
+          summary: True
+          display-options: fEX
+          fail-on-empty: True
+          title: Test results

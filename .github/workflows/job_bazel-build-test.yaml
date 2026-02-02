@@ -1,0 +1,29 @@
+name: Bazel Build And Test
+run-name: ${{ github.actor }} is building with bazel
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'Which runner to use'
+        required: false
+        default: 'ubuntu-24.04'
+        type: string
+jobs:
+  bazel-build-and-test:
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - run: echo branch name is ${{ github.ref }}
+      - name: Checkout
+        uses: actions/checkout@v4.1.0
+      - name: Mount bazel cache
+        uses: actions/cache@v3
+        with:
+          path: "~/.cache/bazel"
+          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'third-party/bazel/*') }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-
+      - name: Build all
+        run: >
+          bazelisk build //...
+      - name: Test all
+        run: bazelisk test //... --test_output=errors

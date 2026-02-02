@@ -27,6 +27,8 @@ types:
       - DC_ACDP
       - DC_ACDP_BPT
       - WPT
+      - MCS
+      - MCS_BPT
   IsolationStatus:
     description: The different charger isolation status
     type: string
@@ -708,6 +710,8 @@ types:
       - AC_BPT
       - DC_BPT
       - DC_ACDP_BPT
+      - MCS
+      - MCS_BPT
       - Internet
       - ParkingStatus
   Connector:
@@ -720,6 +724,13 @@ types:
       - Extended
       - Dual2
       - Dual4
+      - Mcs
+      - Chaoji
+      - UltraChaoji
+      - rMcs
+      - xMcs
+      - Aviation
+      - Marine
   ControlMode:
     description: >-
       (2.1) Indicates whether EV wants to operate in Dynamic or Scheduled mode. When
@@ -1722,6 +1733,18 @@ types:
         type: string
         $ref: /iso15118#/GridCodeIslandingDetectionMethod
 # EV Side
+  SelectedPaymentOption:
+    description: The selected payment option for the Ev.
+    type: object
+    additionalProperties: false
+    properties:
+      payment_option:
+        description: Selected payment option
+        type: string
+        $ref: /iso15118#/PaymentOption
+      enforce_payment_option:
+        description: Enforce the selected payment option
+        type: boolean
   DcEvParameters:
     description: Target settings for dc charging
     type: object

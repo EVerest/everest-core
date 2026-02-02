@@ -29,8 +29,8 @@ target_sources(everest_io
 target_include_directories(everest_io
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+        $<BUILD_INTERFACE:${mosquitto_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
-        ${mosquitto_SOURCE_DIR}/include
 )
 
 target_link_libraries(everest_io
@@ -68,10 +68,21 @@ else()
     PRIVATE
     libmosquitto
   )
+  install(TARGETS libmosquitto
+      EXPORT everest-core-targets
+      ARCHIVE DESTINATION lib
+      LIBRARY DESTINATION lib
+      RUNTIME DESTINATION bin
+      INCLUDES DESTINATION include
+  )
 endif()
 
-install(
-  TARGETS everest_io
+install(TARGETS everest_io
+    EXPORT everest-core-targets
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
 )
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/everest

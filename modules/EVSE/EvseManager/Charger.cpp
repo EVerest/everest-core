@@ -238,6 +238,12 @@ void Charger::run_state_machine() {
 
         case EvseState::WaitingForAuthentication:
 
+            // Wait here until all errors are cleared
+            if (stop_charging_on_fatal_error_internal()) {
+                signal_hlc_error(types::iso15118::EvseError::Error_EmergencyShutdown);
+                break;
+            }
+
             // Explicitly do not allow to be powered on. This is important
             // to make sure control_pilot does not switch on relais even if
             // we start PWM here

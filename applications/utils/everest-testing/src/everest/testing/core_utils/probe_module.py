@@ -3,9 +3,10 @@ import logging
 import threading
 
 from queue import Queue
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 from everest.framework import Module, RuntimeSession
+from everest.framework import error
 
 class ProbeModule:
     """
@@ -107,6 +108,49 @@ class ProbeModule:
         self._mod.subscribe_variable(self._setup.connections[connection_id][0], var_name,
                                      lambda message, _queue=queue: _queue.put(message))
         return queue
+
+    def raise_error(self, implementation_id: str, error_obj: error.Error):
+        """
+        Raise an error from an interface the probe module implements.
+        - implementation_id: the id of the implementation, as used by other modules requiring it in the runtime config
+        - error_obj: the Error object to raise
+        """
+        self._mod.raise_error(implementation_id, error_obj)
+
+    def clear_error(self, implementation_id: str, error_type: str, sub_type: Optional[str] = None):
+        """
+        Clear an error from an interface the probe module implements.
+        - implementation_id: the id of the implementation, as used by other modules requiring it in the runtime config
+        - error_type: the type of the error to clear
+        - sub_type: optional sub-type of the error to clear
+        """
+        if sub_type is not None:
+            self._mod.clear_error(implementation_id, error_type, sub_type)
+        else:
+            self._mod.clear_error(implementation_id, error_type)
+
+    def subscribe_error(self, connection_id: str, error_type: str, 
+                       callback: Callable[[error.Error], None], 
+                       clear_callback: Callable[[error.Error], None]):
+        """
+        Subscribe to a specific error type from a module required by the probe module.
+        - connection_id: the id of the connection, as specified for the probe module in the runtime config
+        - error_type: the type of errors to subscribe to
+        - callback: a function to handle when the error is raised, accepting an Error object
+        - clear_callback: a function to handle when the error is cleared, accepting an Error object
+        """
+        self._mod.subscribe_error(self._setup.connections[connection_id][0], error_type, callback, clear_callback)
+
+    def subscribe_all_errors(self, connection_id: str,
+                            callback: Callable[[error.Error], None],
+                            clear_callback: Callable[[error.Error], None]):
+        """
+        Subscribe to all errors from a module required by the probe module.
+        - connection_id: the id of the connection, as specified for the probe module in the runtime config
+        - callback: a function to handle when any error is raised, accepting an Error object
+        - clear_callback: a function to handle when any error is cleared, accepting an Error object
+        """
+        self._mod.subscribe_all_errors(self._setup.connections[connection_id][0], callback, clear_callback)
 
     def _ready(self):
         """

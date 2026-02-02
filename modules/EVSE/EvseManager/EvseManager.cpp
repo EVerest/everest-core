@@ -56,6 +56,14 @@ bool almost_eq(double a, double b) {
 
 void EvseManager::init() {
 
+    if (!config.connector_type.empty()) {
+        try {
+            connector_type = types::evse_manager::string_to_connector_type_enum(config.connector_type);
+        } catch (const std::out_of_range& e) {
+            EVLOG_warning << "Unknown/invalid connector type: " << config.connector_type;
+        }
+    }
+
     store = std::unique_ptr<PersistentStore>(new PersistentStore(r_store, info.id));
 
     random_delay_enabled = config.uk_smartcharging_random_delay_enable;
@@ -129,10 +137,20 @@ void EvseManager::init() {
             // subscribe to run time updates for real initial values (and changes e.g. due to de-rating)
             r_powersupply_DC[0]->subscribe_capabilities([this](const auto& caps) {
                 update_powersupply_capabilities(caps);
-                const bool dc_was_updated = update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
+
+                auto mode = types::iso15118::EnergyTransferMode::DC;
+                auto bpt_mode = types::iso15118::EnergyTransferMode::DC_BPT;
+
+                if (connector_type.has_value() and
+                    connector_type.value() == types::evse_manager::ConnectorTypeEnum::cMCS) {
+                    mode = types::iso15118::EnergyTransferMode::MCS;
+                    bpt_mode = types::iso15118::EnergyTransferMode::MCS_BPT;
+                }
+
+                const bool dc_was_updated = update_supported_energy_transfers(mode);
                 const bool dc_bpt_was_updated =
-                    caps.bidirectional ? update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT)
-                                       : false;
+                    caps.bidirectional ? update_supported_energy_transfers(bpt_mode) : false;
+
                 if (dc_was_updated || dc_bpt_was_updated) {
                     this->p_evse->publish_supported_energy_transfer_modes(supported_energy_transfers);
                 }
@@ -147,13 +165,6 @@ void EvseManager::init() {
         {
             std::scoped_lock lock(hw_caps_mutex);
             hw_capabilities = c;
-            // Maybe override with user setting for this EVSE
-            if (config.max_current_import_A < hw_capabilities.max_current_A_import) {
-                hw_capabilities.max_current_A_import = config.max_current_import_A;
-            }
-            if (config.max_current_export_A < hw_capabilities.max_current_A_export) {
-                hw_capabilities.max_current_A_export = config.max_current_export_A;
-            }
         }
 
         if (ac_nr_phases_active == 0) {
@@ -431,15 +442,26 @@ void EvseManager::ready() {
             });
 
         } else if (config.charge_mode == "DC") {
-            transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_extended);
-            update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
+            if (connector_type.has_value() and connector_type.value() == types::evse_manager::ConnectorTypeEnum::cMCS) {
+                transfer_modes.push_back(types::iso15118::EnergyTransferMode::MCS);
+                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::MCS);
+            } else {
+                transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_extended);
+                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
+            }
 
             const auto caps = get_powersupply_capabilities();
             update_powersupply_capabilities(caps);
 
             if (caps.bidirectional) {
-                transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_BPT);
-                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT);
+                if (connector_type.has_value() and
+                    connector_type.value() == types::evse_manager::ConnectorTypeEnum::cMCS) {
+                    transfer_modes.push_back(types::iso15118::EnergyTransferMode::MCS_BPT);
+                    update_supported_energy_transfers(types::iso15118::EnergyTransferMode::MCS_BPT);
+                } else {
+                    transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_BPT);
+                    update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT);
+                }
             }
 
             // Set present measurements on HLC to sane defaults

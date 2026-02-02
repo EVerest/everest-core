@@ -1,9 +1,11 @@
-.. _everest_modules_handwritten_session_cost_API
+.. _everest_modules_handwritten_session_cost_API:
 
-*******************************************
-session_cost_API
-*******************************************
+.. *******************************************
+.. session_cost_API
+.. *******************************************
 
-:ref:`Link <everest_modules_session_cost_API>` to the module's reference.
+The complete API specification can be found in the
 
-See ``doc/everest_api_specs/session_cost_API/asyncapi.yaml`` for a full AsycAPI specification.
+``docs/source/reference/EVerest_API/session_cost_API.yaml``
+
+file in the source repository, or in the `AsyncAPI HTML documentation <../../../api/session_cost_API/index.html>`_ automatically generated from it.

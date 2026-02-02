@@ -30,6 +30,8 @@ enum class EnergyTransferMode {
     DC_ACDP,
     DC_ACDP_BPT,
     WPT,
+    MCS,
+    MCS_BPT,
 };
 
 enum class Status {

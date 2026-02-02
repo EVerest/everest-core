@@ -4,6 +4,7 @@ import asyncio
 import sys
 from pathlib import Path
 import threading
+import math
 
 from everest.framework import Module, RuntimeSession, log
 
@@ -38,13 +39,16 @@ async def evcc_handler_main_loop(module_config: dict):
     evcc_config = EVCCConfig()
     patch_josev_config(evcc_config, module_config)
 
+    exi_codec = ExificientEXICodec()
+
     await EVCCHandler(
         evcc_config=evcc_config,
         iface=iface,
-        exi_codec=ExificientEXICodec(),
+        exi_codec=exi_codec,
         ev_controller=SimEVController(evcc_config),
     ).start()
 
+    exi_codec.shutdown()
 
 class PyEVJosevModule():
     def __init__(self) -> None:
@@ -106,6 +110,11 @@ class PyEVJosevModule():
         self._es.EAmount_kWh = args['EAmount']
         self._es.EnergyTransferMode = args['EnergyTransferMode']
 
+        if "payment_option" in args['SelectedPaymentOption']:
+            self._es.PaymentOption = args['SelectedPaymentOption']['payment_option']
+        if "enforce_payment_option" in args['SelectedPaymentOption']:
+            self._es.enforce_payment_option = args['SelectedPaymentOption']['enforce_payment_option']
+
         self._ready_event.set()
 
         return True
@@ -138,5 +147,9 @@ class PyEVJosevModule():
     def _handler_enable_sae_j2847_v2g_v2h(self, args):
         self._es.SAEJ2847_V2H_V2G_Active = True
 
+    def _handler_update_soc(self, args):
+        self._es.actual_soc = math.floor(args['SoC'])
+
 py_ev_josev = PyEVJosevModule()
 py_ev_josev.start_evcc_handler()
+

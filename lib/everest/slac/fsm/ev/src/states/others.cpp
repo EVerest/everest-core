@@ -250,7 +250,7 @@ void JoinNetworkState::enter() {
     msg.new_eks = slac::defs::CM_SET_KEY_REQ_PEKS_NMK_KNOWN_TO_STA;
     memcpy(msg.new_key, nmk, sizeof(msg.new_key));
 
-    ctx.send_slac_message(ctx.plc_mac, msg);
+    ctx.send_slac_message(ctx.plc_mac_chip_commands, msg);
 
     timeout = std::chrono::steady_clock::now() + std::chrono::milliseconds(SET_KEY_TIMEOUT_MS);
 }

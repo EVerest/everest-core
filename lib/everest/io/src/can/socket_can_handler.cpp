@@ -84,6 +84,14 @@ bool socket_can_handler::rx(can_dataset& data) {
 }
 
 bool socket_can_handler::open(std::string const& can_device) {
+    // IFNAMSIZ is the size of the buffer to write the name to.
+    // This situation is special concerning null termination,
+    // The name can occupy the fill buffer. If it does not, nulltermination is necessary
+    // Since most Linux systems enforce 15 chars as limit plus 1 for nulltermination
+    // we do the same thing here.
+    if (can_device.size() >= IFNAMSIZ) {
+        return false;
+    }
     m_can_dev = can_device;
     return open_device() == 0;
 }
@@ -95,7 +103,11 @@ int socket_can_handler::open_device() {
         return errno;
     }
     struct ifreq ifr;
-    strcpy(ifr.ifr_name, m_can_dev.c_str());
+    memset(&ifr, 0, sizeof(ifr));
+    // We know m_can_dev fits because of the check in open().
+    // strncpy will copy the string and the null terminator.
+    // The previous memset handles any trailing bytes in the 16-byte buffer.
+    strncpy(ifr.ifr_name, m_can_dev.c_str(), IFNAMSIZ);
     if (ioctl(can_fd, SIOCGIFINDEX, &ifr) < 0) {
         perror(m_can_dev.c_str());
         return errno;

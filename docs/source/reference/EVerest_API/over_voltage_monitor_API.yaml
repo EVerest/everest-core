@@ -1,0 +1,357 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:everest:over_voltage_monitor'
+info:
+  title: 'EVerest API definition for the implementation of over voltage monitoring'
+  version: 1.0.0
+  description: >-
+    API for EVerest for over voltage monitoring.
+
+    This EVerest API defines a fast over voltage monitoring device according
+    to IEC61851-23:2023 6.3.1.106.2 and 6.3.1.106.3 for DC charging.
+
+
+    6.3.1.106.2
+    An emergency shutdown needs to be triggered if the DC output voltage is above the limit of Table 103 for 9ms.
+    The actual shutdown needs to be handled in a lower layer outside of EVerest, but this interface sets the
+    correct voltage limit during the power transfer and stops monitoring at the end of the session.
+    After the actual emergency shutdown was already performed, report an MREC5OverVoltage error with severity set to high.
+
+    6.3.1.106.3
+    An error shutdown needs to be triggered if the DC output voltage is above the limits of Table 104:
+      - Present voltage > negotiated maximum for >400ms: Trigger error shutdown in <50ms.
+      - Present voltage > negotiated maximum for <400ms and >200ms: Allow energy transfer or error shutdown
+      - Present voltage > negotiated maximum for <200ms: Allow energy transfer
+    To trigger an error shutdown, raise the error MREC5OverVoltage with severity set to medium or low.
+    After raising the error, wait for 2.5s according to CC.3.4.2 and verify the CP signal has been switched to state X1 or F.
+    If not, trigger an emergency shutdown.
+
+    Once an MREC5OverVoltage error was raised, it shall only be cleared when the reset_over_voltage_error command is called.
+    All other errors shall be raised/cleared when they occur/are no longer active immediately.
+
+    The voltage_measurement_V should be published in regular intervals, e.g. 1 second. It is not
+    used to compare it with the overvoltage threshold setting in EVerest, that has to be done in the OVM device itself.
+    It will only be used to validate that the OVM and the IMD see the same voltage to ensure they are correctly wired to the same
+    charging port. If it is not available in hardware, do not publish the voltage_measurement_V at all.
+
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
+  tags:
+    - name: EVerest
+servers:
+  default:
+    pathname: 'everest_api/1/over_voltage_monitor/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module as defined in the EVerest config file.
+defaultContentType: application/json
+
+
+channels:
+  receive_set_limits:
+    address: 'e2m/set_limits'
+    messages:
+      start:
+        $ref: '#/components/messages/receive_set_limits'
+  receive_start:
+    address: 'e2m/start'
+    messages:
+      start:
+        $ref: '#/components/messages/receive_start'
+  receive_stop:
+    address: 'e2m/stop'
+    messages:
+      stop:
+        $ref: '#/components/messages/receive_stop'
+  receive_reset_over_voltage_error:
+    address: 'e2m/reset_over_voltage_error'
+    messages:
+      reset_over_voltage_error:
+        $ref: '#/components/messages/receive_reset_over_voltage_error'
+
+  send_voltage_measurement_V:
+    address: 'm2e/voltage_measurement_V'
+    messages:
+      send_voltage_measurement_V:
+        $ref: '#/components/messages/send_voltage_measurement_V'
+
+
+  send_raise_error:
+    address: 'm2e/raise_error'
+    messages:
+      send_raise_error:
+        $ref: '#/components/messages/send_raise_error'
+  send_clear_error:
+    address: 'm2e/clear_error'
+    messages:
+      send_clear_error:
+        $ref: '#/components/messages/send_clear_error'
+
+  receive_heartbeat:
+    address: 'e2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
+
+
+operations:
+  receive_set_limits:
+    title: Receive set over voltage limits command
+    action: receive
+    channel:
+      $ref: '#/channels/receive_set_limits'
+    description: 'Direction: EVerest to Module'
+  receive_start:
+    title: 'Receive start over voltage monitoring command'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_start'
+    description: 'Direction: EVerest to Module'
+  receive_stop:
+    title: 'Receive stop over voltage monitoring command'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_stop'
+    description: 'Direction: EVerest to Module'
+  receive_reset_over_voltage_error:
+    title: 'Receive reset command'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reset_over_voltage_error'
+    description: 'Direction: EVerest to Module'
+
+  send_voltage_measurement_V:
+    title: 'Send measured voltage in V'
+    action: send
+    channel:
+      $ref: '#/channels/send_voltage_measurement_V'
+    description: 'Direction: Module to EVerest'
+
+
+  send_raise_error:
+    title: 'Send raise error'
+    action: send
+    channel:
+      $ref: '#/channels/send_raise_error'
+    description: 'Direction: Module to EVerest'
+  send_clear_error:
+    title: 'Send clear error'
+    action: send
+    channel:
+      $ref: '#/channels/send_clear_error'
+
+  receive_heartbeat:
+    title: 'Receive heartbeat'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+    description: 'Direction: EVerest to Module'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref: '#/channels/send_communication_check'
+
+
+
+components:
+  messages:
+    receive_set_limits:
+      name: receive_set_limits
+      title: Receive set overvoltage limits.
+      summary: >-
+        It will be called any time the voltage limits change, independent of
+        whether the monitoring is currently active or not.
+        The values shall be cached, and the last value received shall be used as threshold while monitoring is active.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/OverVoltageLimits'
+      examples:
+          - summary: ""
+            payload:
+              {
+              "emergency_limit_V": 600,
+              "error_limit_V": 500
+              }
+    receive_start:
+      name: receive_start
+      title: Receive start over voltage monitoring command
+      summary: >-
+        Start monitoring. Called once at the beginning of power transfer.
+        Use the last limits set by set_limits and make sure to update them when set_limits is called while monitoring is active.
+        Trigger shutdowns and raise errors as needed.
+    receive_stop:
+      name: receive_stop
+      title: Receive stop over voltage monitoring command
+      summary: >-
+          Stop monitoring. Called once at the end of power transfer.
+          Do not raise any over voltage errors or trigger any shutdowns in this mode.
+    receive_reset_over_voltage_error:
+      name: receive_reset_over_voltage_error
+      title: Receive reset command
+      summary: >-
+        Resets the detection logic to allow for new charging session after an over voltage error occured.
+        This shall clear the over voltage error.
+        If monitoring is still active, it shall be stopped.
+
+    send_voltage_measurement_V:
+      name: send_voltage_measurement_V
+      title: Send voltage measurement
+      summary: Send the current voltage measurement to EVerest
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/VoltageMeasurementV'
+      examples:
+          - summary: ""
+            payload: 500
+
+
+    send_raise_error:
+      name: send_raise_error
+      title: 'Send raise error'
+      summary: Signal to EVerest that an error happened.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Error'
+      examples:
+          - summary: "Raise error example"
+            payload:
+                "type": "MREC5OverVoltage"
+                "sub_type": "subtype"
+                "message": "message"
+                "severity": "High"
+    send_clear_error:
+      name: send_clear_error
+      title: 'Send clear error'
+      summary: Signal to EVerest that a previously raised error is no longer active.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Error'
+      examples:
+          - summary: "Clear error example"
+            payload:
+                "type": "CommunicationFault"
+                "sub_type": "subtype"
+                "message": "message"
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartBeatId'
+      examples:
+        - summary: "Heartbeat"
+          payload: 42
+
+    send_communication_check:
+      name: send_communication_check
+      title: 'Send communication check'
+      summary: Signal to EVerest that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: "CommunicationCheck"
+          payload:
+            true
+
+
+  schemas:
+    OverVoltageLimits:
+      type: object
+      additionalProperties: true
+      required:
+        - emergency_limit_V
+        - error_limit_V
+      properties:
+        emergency_limit_V:
+          description: >-
+            Specifies the over voltage threshold [V] for emergency shutdown
+            (based on IEC61851-23:2023 Table 103 and IEC61851-23-3:(DRAFT 2025) Table 202)
+            An emergency shutdown shall be triggered if the DC output voltage is higher
+            than this value.
+          type: number
+        error_limit_V:
+          description: >-
+            Specifies the over voltage threshold [V] for error shutdown (for use with IEC61851-23:2023 Table 104).
+            An error shutdown shall be triggered if the DC output voltage is higher
+            than this value. The OVM shall trigger an emergency shutdown if error shutdown does not work properly
+            (after 2.5s, see CC.3.4.2).
+          type: number
+    VoltageMeasurementV:
+      description: >-
+        The voltage measurement should be published in regular intervals,
+        e.g. 1 second. It is not  used to compare it with the overvoltage threshold
+        setting in EVerest, that has to be done in the OVM device itself.
+        It will only used to validate that the OVM and the IMD see the same voltage
+        to ensure they are correctly wired to the same charging port.
+        If it is not available in hardware, do not publish the voltage_measurement_V at all.
+      type: number
+
+    Error:
+      description: >-
+        Errors for the power_supply_DC interface.
+        Except for VendorWarning, all error codes will stop the charging session.
+        During all errors, follow the commands for setMode and setVoltageCurrent from EvseManager.
+        If they cannot be sent to the hardware, cache the last values received.
+        Once the PSU is back on-line (e.g. after a CommunicationFault), set the last mode and voltage/current
+        values and only after that clear the error.
+      type: object
+      additionalProperties: true
+      required:
+        - type
+      properties:
+        type:
+          $ref: '#/components/schemas/ErrorEnum'
+        sub_type:
+          description: The subtype of the error
+          type: string
+        severity:
+          description: The severity of the error
+          $ref: '#/components/schemas/ErrorSeverityEnum'
+        message:
+          description: Addition information about the error
+          type: string
+    ErrorEnum:
+      description: |
+        Type of error
+        - MREC5OverVoltage: The output voltage was above IEC61851-23:2023 6.3.1.106.2 Table 103 limits for more than 9ms (severity high) or above Table 104 (medium or low severity).
+        - DeviceFault: The over voltage monitoring device is no longer functional.
+        - CommunicationFault: The communication to the hardware or underlying driver is lost or has errors.
+        - VendorError: Vendor specific error code. Will stop charging session.
+        - VendorWarning: Vendor specific error code. Charging may continue.
+
+      type: string
+      enum:
+        - MREC5OverVoltage
+        - DeviceFault
+        - CommunicationFault
+        - VendorError
+        - VendorWarning
+    ErrorSeverityEnum:
+      description: >-
+        Severity of the error. For MREC5OverVoltage report with severity 'high' after an emergency shutdown
+        and severity 'medium' or 'low' to trigger an error shutdown
+      type: string
+      enum:
+        - Low
+        - Medium
+        - High
+
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
+    HeartBeatId:
+      type: integer
+      description: "64bit unsigned integer. The id of every heartbeat increases by 1 and overflows when the maximum representable value is reached"

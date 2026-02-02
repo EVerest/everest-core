@@ -205,6 +205,15 @@ void to_json(json& j, ErrorEnum const& k) noexcept {
     case ErrorEnum::AC:
         j = "AC";
         return;
+    case ErrorEnum::TiltDetected:
+        j = "TiltDetected";
+        return;
+    case ErrorEnum::WaterIngressDetected:
+        j = "WaterIngressDetected";
+        return;
+    case ErrorEnum::EnclosureOpen:
+        j = "EnclosureOpen";
+        return;
     case ErrorEnum::VendorError:
         j = "VendorError";
         return;
@@ -343,6 +352,18 @@ void from_json(json const& j, ErrorEnum& k) {
     }
     if (s == "AC") {
         k = ErrorEnum::AC;
+        return;
+    }
+    if (s == "TiltDetected") {
+        k = ErrorEnum::TiltDetected;
+        return;
+    }
+    if (s == "WaterIngressDetected") {
+        k = ErrorEnum::WaterIngressDetected;
+        return;
+    }
+    if (s == "EnclosureOpen") {
+        k = ErrorEnum::EnclosureOpen;
         return;
     }
     if (s == "VendorError") {

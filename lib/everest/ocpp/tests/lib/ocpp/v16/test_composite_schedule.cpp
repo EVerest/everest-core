@@ -928,5 +928,77 @@ TEST_F(CompositeScheduleTestFixture, TxDefaultConnector0) {
                                      PeriodEquals(350, 10000.0F)));
 }
 
+TEST_F(CompositeScheduleTestFixture, ZeroDuration) {
+    // test relating to libocpp issue 1169
+    // incorrect composite schedule when duration is zero
+
+    // using absolute schedule with limit 2000.0, starting 2024-01-17T18:04:00.000Z
+    // default limit is 33120.0
+
+    auto handler = create_smart_charging_handler(1, false);
+    ChargingProfile profile_tx_default_1 = get_charging_profile_from_file("TxProfile_03_Absolute.json");
+
+    handler->add_tx_default_profile(profile_tx_default_1, 0);
+
+    // start 1 minute into the profile
+    const DateTime start_time = ocpp::DateTime("2024-01-17T18:05:00.000Z");
+    const DateTime end_time = ocpp::DateTime("2024-01-17T18:05:01.000Z");
+    const auto expected_limit = 2000.0F;
+
+    // check with end time and a corresponding duration of 1 second
+    auto result_con0 =
+        handler->calculate_composite_schedule(start_time, end_time, STATION_WIDE_ID, ChargingRateUnit::W, false, true);
+
+    EXPECT_EQ(result_con0.startSchedule, start_time);
+    EXPECT_EQ(result_con0.duration, 1);
+    EXPECT_EQ(result_con0.chargingRateUnit, ChargingRateUnit::W);
+
+    EXPECT_THAT(result_con0.chargingSchedulePeriod, testing::ElementsAre(PeriodEquals(0, expected_limit)));
+
+    auto result_con1 = handler->calculate_composite_schedule(start_time, end_time, 1, ChargingRateUnit::W, false, true);
+
+    EXPECT_EQ(result_con1.startSchedule, start_time);
+    EXPECT_EQ(result_con1.duration, 1);
+    EXPECT_EQ(result_con1.chargingRateUnit, ChargingRateUnit::W);
+
+    EXPECT_THAT(result_con1.chargingSchedulePeriod, testing::ElementsAre(PeriodEquals(0, expected_limit)));
+
+    // Now with duration of 0 seconds
+    result_con0 = handler->calculate_composite_schedule(start_time, start_time, STATION_WIDE_ID, ChargingRateUnit::W,
+                                                        false, true);
+
+    EXPECT_EQ(result_con0.startSchedule, start_time);
+    EXPECT_EQ(result_con0.duration, 0);
+    EXPECT_EQ(result_con0.chargingRateUnit, ChargingRateUnit::W);
+
+    EXPECT_THAT(result_con0.chargingSchedulePeriod, testing::ElementsAre(PeriodEquals(0, expected_limit)));
+
+    result_con1 = handler->calculate_composite_schedule(start_time, start_time, 1, ChargingRateUnit::W, false, true);
+
+    EXPECT_EQ(result_con1.startSchedule, start_time);
+    EXPECT_EQ(result_con1.duration, 0);
+    EXPECT_EQ(result_con1.chargingRateUnit, ChargingRateUnit::W);
+
+    EXPECT_THAT(result_con1.chargingSchedulePeriod, testing::ElementsAre(PeriodEquals(0, expected_limit)));
+
+    // Now with duration of -1 second (treated as an instantaneous 0 duration)
+    result_con0 =
+        handler->calculate_composite_schedule(end_time, start_time, STATION_WIDE_ID, ChargingRateUnit::W, false, true);
+
+    EXPECT_EQ(result_con0.startSchedule, start_time);
+    EXPECT_EQ(result_con0.duration, 0);
+    EXPECT_EQ(result_con0.chargingRateUnit, ChargingRateUnit::W);
+
+    EXPECT_THAT(result_con0.chargingSchedulePeriod, testing::ElementsAre(PeriodEquals(0, expected_limit)));
+
+    result_con1 = handler->calculate_composite_schedule(end_time, start_time, 1, ChargingRateUnit::W, false, true);
+
+    EXPECT_EQ(result_con1.startSchedule, start_time);
+    EXPECT_EQ(result_con1.duration, 0);
+    EXPECT_EQ(result_con1.chargingRateUnit, ChargingRateUnit::W);
+
+    EXPECT_THAT(result_con1.chargingSchedulePeriod, testing::ElementsAre(PeriodEquals(0, expected_limit)));
+}
+
 } // namespace v16
 } // namespace ocpp

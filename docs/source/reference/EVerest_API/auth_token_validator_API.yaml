@@ -1,0 +1,308 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:everest:auth_token_validator_API'
+info:
+  title: 'EVerest API definition for auth token validator - CLIENT side (MODULE)'
+  version: 1.0.0
+  description: >-
+    API for EVerest API clients implementing auth token validator.
+
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
+  tags:
+    - name: EVerest
+    - name: Auth
+servers:
+  default:
+    pathname: 'everest_api/1/auth_token_validator/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module as defined in the EVerest config file.
+defaultContentType: application/json
+
+
+channels:
+  receive_request_validate_token:
+    address: 'e2m/validate_token'
+    messages:
+      receive_request_validate_token:
+        $ref: '#/components/messages/receive_request_validate_token'
+  send_reply_validate_token:
+    address: null
+    messages:
+      send_reply_validate_token:
+        $ref: '#/components/messages/send_reply_validate_token'
+
+  send_validate_result_update:
+    address: 'm2e/validate_result_update'
+    messages:
+      send_validate_result_update:
+        $ref: '#/components/messages/send_validate_result_update'
+
+
+  receive_heartbeat:
+    address: 'e2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
+
+
+operations:
+  receive_request_validate_token:
+    title: 'Request validate token'
+    action: receive
+    description: 'Direction: EVerest to Module'
+    channel:
+      $ref: '#/channels/receive_request_validate_token'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/send_reply_validate_token'
+  send_reply_validate_token:
+    title: 'Receive request to validate token'
+    action: send
+    description: 'Direction: Module to EVerest'
+    channel:
+      $ref: '#/channels/send_reply_validate_token'
+
+  send_validate_result_update:
+    title: 'Send validate result update'
+    action: send
+    channel:
+      $ref: '#/channels/send_validate_result_update'
+
+
+  receive_heartbeat:
+    title: 'Receive heartbeat'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref: '#/channels/send_communication_check'
+
+
+
+components:
+  messages:
+    receive_request_validate_token:
+      name: receive_request_validate_token
+      title: 'Request validate token'
+      summary: 'Request to validate token.'
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+            payload:
+              $ref: 'auth_consumer_API.yaml#/components/schemas/ProvidedIdToken'
+    send_reply_validate_token:
+      name: send_reply_validate_token
+      title: 'Reply validate token'
+      summary: 'Reply to validate token.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ValidationResult'
+      examples:
+        - summary: "Reply validate token."
+          payload:
+            authorization_status: Accepted
+            evse_ids:
+            - 1
+
+    send_validate_result_update:
+      name: send_validate_result_update
+      title: 'Send validate result update'
+      summary: >-
+        Updated validation result for a given token due to some changes.
+        These can be triggered by TransactionEvent messages or StartTransaction.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ValidationResultUpdate'
+      examples:
+        - summary: "ValidationResultUpdate"
+          payload:
+            "connector_id": 1,
+            "validation_result": {
+                "authorization_status": "Accepted",
+                "certificate_status": "Accepted",
+                "expiry_time": "2019-08-24T14:15:22Z",
+                "parent_id_token": {
+                    "value": "string",
+                    "type": "Central"
+                }
+            }
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartBeatId'
+      examples:
+        - summary: "Heartbeat"
+          payload: 42
+
+    send_communication_check:
+      name: send_communication_check
+      title: 'Send communication check'
+      summary: Signal to EVerest that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: "CommunicationCheck"
+          payload:
+            true
+
+
+  schemas:
+    AuthorizationStatus:
+      description: Authorization Status enum
+      type: string
+      enum:
+        - Accepted
+        - Blocked
+        - ConcurrentTx
+        - Expired
+        - Invalid
+        - NoCredit
+        - NotAllowedTypeEVSE
+        - NotAtThisLocation
+        - NotAtThisTime
+        - Unknown
+        - PinRequired
+        - Timeout
+    CertificateStatus:
+      description: Certificate status information
+      type: string
+      enum:
+        - Accepted
+        - SignatureError
+        - CertificateExpired
+        - CertificateRevoked
+        - NoCertificateAvailable
+        - CertChainError
+        - ContractCancelled
+    EnergyTransferMode:
+      description: >-
+        Possible energy transfer modes. The modes AC_single_phase_core to DC_unique apply to DIN70121 and ISO15118-2.
+        The other modes DC to MCS_BPT apply to ISO15118-20 (and amendment).
+      type: string
+      enum:
+        - AC_single_phase_core
+        - AC_two_phase
+        - AC_three_phase_core
+        - DC_core
+        - DC_extended
+        - DC_combo_core
+        - DC_unique
+        - DC
+        - AC_BPT
+        - AC_BPT_DER
+        - AC_DER
+        - DC_BPT
+        - DC_ACDP
+        - DC_ACDP_BPT
+        - WPT
+        - MCS
+        - MCS_BPT
+    ValidationResult:
+      description: >-
+        Result object containing authorization status enum value and an optional
+        parentIdTag
+      type: object
+      additionalProperties: true
+      required:
+        - authorization_status
+        - tariff_messages
+      properties:
+        authorization_status:
+          type: string
+          $ref: '#/components/schemas/AuthorizationStatus'
+        certificate_status:
+          type: string
+          $ref: '#/components/schemas/CertificateStatus'
+        tariff_messages:
+          description: >-
+            Messages that can contain session price information to show the user. The array can contain multiple messages in different languages. The first message in this array shall be used to start the transaction at the powermeter (for OCMF).  Empty if no messages are available.
+          type: array
+          items:
+            description: Message with pricing information in a specific language
+            type: object
+            $ref: 'display_message_API.yaml#/components/schemas/MessageContent'
+        expiry_time:
+          description: Absolute UTC time point when reservation expires in RFC3339 format
+          type: string
+          format: date-time
+        parent_id_token:
+          description: Parent Id Tag of the validated token
+          type: object
+          $ref: 'auth_consumer_API.yaml#/components/schemas/IdToken'
+        evse_ids:
+          description: >-
+            Only used when the id token is valid for one or more specific evses,
+            not for the whole charging station. Indicates for which evse ids the
+            provided token is valid
+          type: array
+          items:
+            minimum: 1
+            type: integer
+        reservation_id:
+          description: The reservation id that is used with this validated token.
+          type: integer
+        allowed_energy_transfer_modes:
+          description: >-
+            This is only used when we want to specify which energy transfer modes are allowed for
+            the respective authorization request.
+          type: array
+          items:
+            type: string
+            $ref: '#/components/schemas/EnergyTransferMode'
+          minItems: 1
+    ValidationResultUpdate:
+      description: >-
+        Result object containing an updated validation result for a given token.
+        This is needed since certain information can be updated at a later time.
+      type: object
+      additionalProperties: true
+      required:
+        - validation_result
+        - connector_id
+      properties:
+        validation_result:
+          description: >-
+            Result object containing authorization status enum value and an optional
+            parentIdTag
+          type: object
+          $ref: '#/components/schemas/ValidationResult'
+        connector_id:
+          description: >-
+            Id of the connector on which the id token information has been updated.
+          type: integer
+
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
+    HeartBeatId:
+      type: integer
+      description: "64bit unsigned integer. The id of every heartbeat increases by 1 and overflows when the maximum representable value is reached"

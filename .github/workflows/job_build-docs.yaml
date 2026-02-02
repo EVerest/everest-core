@@ -1,0 +1,147 @@
+name: Build Documentation
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'Which runner to use'
+        required: false
+        default: 'ubuntu-24.04'
+        type: string
+      build_kit_artifact_name:
+        description: 'The name of the build kit artifact to download'
+        required: true
+        type: string
+      build_kit_image_tag:
+        description: 'The tag of the build-kit image to use for building the project'
+        required: true
+        type: string
+      build_kit_scripts_directory:
+        description: 'Directory in the repository where the build kit scripts are located'
+        required: false
+        default: '.ci/build-kit/scripts'
+        type: string
+      deploy_docs:
+        description: 'Whether to deploy the built documentation to the target repository'
+        required: false
+        default: false
+        type: boolean
+      is_fork:
+        description: 'Whether the current repository is a fork'
+        required: true
+        type: boolean
+    secrets:
+      SA_GITHUB_SSH_KEY:
+        description: 'SSH key for the service account used to deploy the documentation'
+        required: false
+    outputs:
+      docs_html_artifact_name:
+        description: 'The name of the docs-html artifact'
+        value: ${{ jobs.build-docs.outputs.docs_html_artifact_name }}
+
+
+jobs:
+  build-docs:
+    name: Build EVerest Documentation
+    runs-on: ${{ inputs.runner }}
+    env:
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      DOCS_HTML_ARTIFACT_NAME: docs-html
+    outputs:
+      docs_html_artifact_name: ${{ env.DOCS_HTML_ARTIFACT_NAME }}
+    steps:
+      - name: Setup SSH Agent, optional with SSH key
+        env:
+          SSH_KEY: ${{ secrets.SA_GITHUB_SSH_KEY }}
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          if [ -z "${{ env.SSH_KEY }}" ]; then
+            echo "No SSH key provided, skipping SSH key setup"
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          echo "${{ env.SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          # Check if github.com is already in known_hosts, if not, add it
+          if ! grep -q "^github.com " ~/.ssh/known_hosts; then
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+          fi
+          ssh-add ~/.ssh/id_ed25519
+      - name: Configure Git user
+        run: |
+          git config --global user.name "Pionix Github Service Account"
+          git config --global user.email "compiler@pionix.de"
+      - name: Download build-kit image
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.build_kit_artifact_name }}
+      - name: Load build-kit image
+        run: |
+          docker load -i build-kit.tar
+          docker image tag ${{ inputs.build_kit_image_tag }} build-kit
+      - name: Format branch name for cache key
+        run: |
+          BRANCH_NAME_FOR_CACHE="${GITHUB_REF_NAME//-/_}"
+          echo "branch_name_for_cache=${BRANCH_NAME_FOR_CACHE}" >> "$GITHUB_ENV"
+      - name: Setup cache
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: compile-${{ env.branch_name_for_cache }}-${{ github.sha }}
+          restore-keys: |
+            compile-${{ env.branch_name_for_cache }}-
+            compile-
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: source
+      - name: Setup run scripts
+        run: |
+          mkdir scripts
+          rsync -a source/${{ inputs.build_kit_scripts_directory }}/ scripts
+      - name: Prepare github pages input
+        id: github-pages-input
+        run: |
+          if [ "${{ inputs.is_fork }}" = "true" ]; then
+            echo "Using https URL for GitHub Pages repo since this is a fork"
+            PREFIX="https://github.com/"
+          else
+            echo "Using SSH URL for GitHub Pages repo since this is not a fork"
+            PREFIX="git@github.com:"
+          fi
+          OWNER="${{ github.repository_owner }}"
+          REPO="everest.github.io"
+          URL="${PREFIX}${OWNER}/${REPO}"
+          echo "prefix=$PREFIX" >> $GITHUB_OUTPUT
+          echo "owner=$OWNER" >> $GITHUB_OUTPUT
+          echo "repo=$REPO" >> $GITHUB_OUTPUT
+          echo "url=$URL" >> $GITHUB_OUTPUT
+      - name: Build Documentation
+        run: |
+          docker run \
+          --mount type=bind,source=$SSH_AUTH_SOCK,target=/ssh-agent \
+          --env SSH_AUTH_SOCK=/ssh-agent \
+          --env TRAILBOOK_everest_IS_RELEASE=OFF \
+          --env TRAILBOOK_everest_INSTANCE_NAME=nightly \
+          --env TRAILBOOK_everest_OVERWRITE_EXISTING_INSTANCE=ON \
+          --env EVEREST_DOCS_REPO_URL=${{ steps.github-pages-input.outputs.url }} \
+          --volume "${{ github.workspace }}:/ext" \
+          --name build-docs-container \
+          build-kit run-script build_docs
+          docker commit build-docs-container build-docs-image
+      - name: Upload Documentation Artifact
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          if-no-files-found: error
+          path: ${{ github.workspace }}/build/docs/deployed_docs_repo/docs/
+          name: ${{ env.DOCS_HTML_ARTIFACT_NAME }}
+      - name: Deploy Documentation
+        if: ${{ inputs.deploy_docs == true }}
+        run: |
+          docker run \
+          --mount type=bind,source=$SSH_AUTH_SOCK,target=/ssh-agent \
+          --env SSH_AUTH_SOCK=/ssh-agent \
+          --env GITHUB_SHA=${{ github.sha }} \
+          --volume "${{ github.workspace }}:/ext" \
+          --name deploy-docs-container \
+          build-kit run-script deploy_docs

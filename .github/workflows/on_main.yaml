@@ -1,0 +1,74 @@
+name: Build, Lint and Test
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+
+  setup-env:
+    name: Setup Environment
+    uses: ./.github/workflows/job_setup-env.yml
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      ref_everest_ci: v1.5.4
+
+
+  build-build-kit:
+    name: Build the build-kit
+    uses: ./.github/workflows/job_build-build-kit.yml
+    needs:
+      - setup-env
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      base_image_tag_everest_ci: ${{ needs.setup-env.outputs.closest_tag_everest_ci }}
+
+
+  build-cmake-gcc:
+    name: Build with CMake and GCC
+    uses: ./.github/workflows/job_build-cmake-gcc.yml
+    needs:
+      - setup-env
+      - build-build-kit
+    secrets:
+      coverage_deploy_token: "abcd"
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      ref_everest_ci: ${{ needs.setup-env.outputs.ref_everest_ci }}
+      is_fork: ${{ needs.setup-env.outputs.is_fork }}
+      build-kit-artifact-name: ${{ needs.build-build-kit.outputs.build_kit_artifact_name }}
+      build_kit_image_tag: ${{ needs.build-build-kit.outputs.build_kit_image_tag }}
+      artifact_deploy_target_repo: ${{ github.repository_owner }}/everest.github.io
+
+
+  # create-coverage-badge:
+  #   uses: ./.github/workflows/job_create-coverage-badge.yml
+  #   needs:
+  #     - setup-env
+  #     - build-cmake-gcc
+  #   secrets:
+  #     coverage_deploy_token: ${{ secrets.coverage_deploy_token }}
+  #   with:
+  #     runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+  #     ref_everest_ci: ${{ needs.setup-env.outputs.ref_everest_ci }}
+  #     is_fork: ${{ needs.setup-env.outputs.is_fork }}
+  #     artifact_deploy_target_repo: ${{ github.repository_owner }}/everest.github.io
+  #     coverage_report_artifact_name: ${{ needs.build-cmake-gcc.outputs.coverage_report_artifact_name }}
+  #     coverage_xml_artifact_name: ${{ needs.build-cmake-gcc.outputs.coverage_xml_artifact_name }}
+
+
+  build-docs:
+    name: Build and Deploy Documentation
+    needs:
+      - setup-env
+      - build-build-kit
+    uses: ./.github/workflows/job_build-docs.yaml
+    secrets:
+      SA_GITHUB_SSH_KEY: ${{ secrets.SA_GITHUB_SSH_KEY }}
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      is_fork: ${{ needs.setup-env.outputs.is_fork == 'true' }}
+      build_kit_artifact_name: ${{ needs.build-build-kit.outputs.build_kit_artifact_name }}
+      build_kit_image_tag: ${{ needs.build-build-kit.outputs.build_kit_image_tag }}
+      deploy_docs: true

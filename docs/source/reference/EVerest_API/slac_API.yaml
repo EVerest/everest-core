@@ -1,0 +1,378 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:everest:slac_API'
+info:
+  title: 'EVerest API definition for SLAC'
+  version: 1.0.0
+  description: >-
+    API for EVerest API clients implementing SLAC.
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
+  tags:
+    - name: EVerest
+    - name: slac
+servers:
+  default:
+    pathname: 'everest_api/1/slac/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module as defined in the EVerest config file.
+defaultContentType: application/json
+
+channels:
+  ############ slac
+  receive_reset:
+    address: 'e2m/reset'
+    messages:
+      receive_reset:
+        $ref: '#/components/messages/receive_reset'
+  receive_enter_bcd:
+    address: 'e2m/enter_bcd'
+    messages:
+      receive_enter_bcd:
+        $ref: '#/components/messages/receive_enter_bcd'
+  receive_leave_bcd:
+    address: 'e2m/leave_bcd'
+    messages:
+      receive_leave_bcd:
+        $ref: '#/components/messages/receive_leave_bcd'
+  receive_dlink_terminate:
+    address: 'e2m/dlink_terminate'
+    messages:
+      receive_dlink_terminate:
+        $ref: '#/components/messages/receive_dlink_terminate'
+  receive_dlink_error:
+    address: 'e2m/dlink_error'
+    messages:
+      receive_dlink_error:
+        $ref: '#/components/messages/receive_dlink_error'
+  receive_dlink_pause:
+    address: 'e2m/dlink_pause'
+    messages:
+      receive_dlink_pause:
+        $ref: '#/components/messages/receive_dlink_pause'
+  
+  send_state:
+    address: 'm2e/state'
+    messages:
+      send_state:
+        $ref: '#/components/messages/send_state'
+  send_dlink_ready:
+    address: 'm2e/dlink_ready'
+    messages:
+      send_dlink_ready:
+        $ref: '#/components/messages/send_dlink_ready'
+  send_request_error_routine:
+    address: 'm2e/request_error_routine'
+    messages:
+      send_request_error_routine:
+        $ref: '#/components/messages/send_request_error_routine'
+  send_ev_mac_address:
+    address: 'm2e/ev_mac_address'
+    messages:
+      send_ev_mac_address:
+        $ref: '#/components/messages/send_ev_mac_address'
+  
+  ############ errors
+  send_raise_error:
+    address: 'm2e/raise_error'
+    messages:
+      send_raise_error:
+        $ref: '#/components/messages/send_raise_error'
+  send_clear_error:
+    address: 'm2e/clear_error'
+    messages:
+      send_clear_error:
+        $ref: '#/components/messages/send_clear_error'
+
+  ############ heartbeat
+  receive_heartbeat:
+    address: 'e2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+  send_communication_check:
+    address: 'm2e/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+
+operations:
+  ############ slac
+  receive_reset:
+    title: 'Receive reset'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reset'
+    description: 'Direction: EVerest to Module'
+  receive_enter_bcd:
+    title: 'Receive enter_bcd'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_enter_bcd'
+    description: 'Direction: EVerest to Module'
+  receive_leave_bcd:
+    title: 'Receive leave_bcd'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_leave_bcd'
+    description: 'Direction: EVerest to Module'
+  receive_dlink_terminate:
+    title: 'Receive dlink_terminate'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_dlink_terminate'
+    description: 'Direction: EVerest to Module'
+  receive_dlink_error:
+    title: 'Receive dlink_error'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_dlink_error'
+    description: 'Direction: EVerest to Module'
+  receive_dlink_pause:
+    title: 'Receive dlink_pause'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_dlink_pause'
+    description: 'Direction: EVerest to Module'
+  
+  send_state:
+    title: 'Send state'
+    action: send
+    channel:
+      $ref: '#/channels/send_state'
+    description: 'Direction: Module to EVerest'
+  send_dlink_ready:
+    title: 'Send dlink_ready'
+    action: send
+    channel:
+      $ref: '#/channels/send_dlink_ready'
+    description: 'Direction: Module to EVerest'
+  send_request_error_routine:
+    title: 'Send request_error_routine'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_error_routine'
+    description: 'Direction: Module to EVerest'
+  send_ev_mac_address:
+    title: 'Send ev_mac_address'
+    action: send
+    channel:
+      $ref: '#/channels/send_ev_mac_address'
+    description: 'Direction: Module to EVerest'
+
+  send_raise_error:
+    title: 'Send raise error'
+    action: send
+    channel:
+      $ref: '#/channels/send_raise_error'
+    description: 'Direction: Module to EVerest'
+  send_clear_error:
+    title: 'Send clear error'
+    action: send
+    channel:
+      $ref: '#/channels/send_clear_error'
+
+  receive_heartbeat:
+    title: 'Receive heartbeat'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+    description: 'Direction: EVerest to Module'
+  send_communication_check:
+    title: 'Send communication check'
+    action: send
+    channel:
+      $ref: '#/channels/send_communication_check'
+
+components:
+  messages:
+    receive_reset:
+      name: receive_reset
+      title: 'Reset SLAC'
+      summary: Reset SLAC
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Enabled'
+      examples:
+        - summary: ""
+          payload:
+            true
+    receive_enter_bcd:
+      name: receive_enter_bcd
+      title: 'Enter B/C/D'
+      summary: Signal pilot state change to B/C/D from A/E/F.
+    receive_leave_bcd:
+      name: receive_leave_bcd
+      title: 'Leave B/C/D'
+      summary: Signal pilot state change to A/E/F from B/C/D.
+    receive_dlink_terminate:
+      name: receive_dlink_terminate
+      title: 'Dlink terminate'
+      summary: Terminate the data link and become UNMATCHED.
+    receive_dlink_error:
+      name: receive_dlink_error
+      title: 'Dlink error'
+      summary: Terminate the data link and restart the matching process.
+    receive_dlink_pause:
+      name: receive_dlink_pause
+      title: 'Dlink pause'
+      summary: Request power saving mode, while staying MATCHED.
+    
+    send_state:
+      name: send_state
+      title: 'SLAC state'
+      summary: Provides the state enum.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SLACState'
+      examples:
+        - summary: "Example state MATCHED"
+          payload:
+            "state": "MATCHED"
+    send_dlink_ready:
+      name: send_dlink_ready
+      title: 'Dlink ready'
+      summary: >-
+        Inform higher layers about a change in data link status. Emits true
+        if link was set up and false when the link is shut down.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DLinkStatus'
+      examples:
+        - summary: "Example dlink_ready true"
+          payload:
+            "dlink_ready": true
+    send_request_error_routine:
+      name: send_request_error_routine
+      title: 'Request error routine'
+      summary: >-
+        Inform the higher layer to execute the error routine for a SLAC connection
+        retry
+      contentType: application/json
+      payload:
+        type: 'null'
+    send_ev_mac_address:
+      name: send_ev_mac_address
+      title: 'EV MAC address'
+      summary: >-
+        Inform higher layers about the MAC address of the vehicle (upper case)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/MACAddress'
+      examples:
+        - summary: "Example MAC address"
+          payload:
+            "ev_mac_address": "AA:BB:CC:DD:EE:FF"
+
+    send_raise_error:
+      name: send_raise_error
+      title: 'Send raise error'
+      summary: Signal to EVerest that an error happened.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Error'
+      examples:
+        - summary: "Example error message"
+          payload:
+            "type": "CommunicationFault"
+            "sub_type": "string"
+            "message": "string"
+    send_clear_error:
+      name: send_clear_error
+      title: 'Send clear error'
+      summary: Signal to EVerest that an error was resolved.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Error'
+      examples:
+        - summary: Signal to EVerest that a previously raised error is no longer active.
+          payload:
+            "type": "CommunicationFault"
+            "sub_type": "string"
+            "message": "string"
+
+
+    receive_heartbeat:
+      name: receive_heartbeat
+      title: 'Receive heartbeat'
+      summary: Heartbeat produced by EVerest as configured via cfg_heartbeat_interval_ms in the EVerest configuration
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HeartBeatId'
+      examples:
+        - summary: "Heartbeat"
+          payload: 42
+
+    send_communication_check:
+      name: send_communication_check
+      title: 'Send communication check'
+      summary: Signal to EVerest that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: ""
+          payload:
+            true
+  
+
+  schemas:
+    Enabled:
+      type: boolean
+      description: 'true: start SLAC after reset, false: stop SLAC'
+    SLACState:
+      type: object
+      properties:
+        state:
+          type: string
+          description: Provides the state enum.
+          enum:
+            - UNMATCHED
+            - MATCHING
+            - MATCHED
+    DLinkStatus:
+      type: object
+      properties:
+        dlink_ready:
+          type: boolean
+          description: >-
+            Inform higher layers about a change in data link status. Emits true
+            if link was set up and false when the link is shut down.
+    MACAddress:
+      type: object
+      properties:
+        ev_mac_address:
+          type: string
+          description: >-
+            Inform higher layers about the MAC address of the vehicle (upper case)
+          pattern: ^[A-F0-9]{2}(:[A-F0-9]{2}){5}$
+    Error:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ErrorEnum'
+        sub_type:
+          type: string
+          description: Sub-type of the error.
+        message:
+          type: string
+          description: Addition information about the error
+    ErrorEnum:
+      type: string
+      description: |
+        Type of Error
+        - CommunicationFault: The communication to the hardware or underlying driver is lost or has errors.
+        - VendorError: 'Vendor specific error code. Will stop charging session.'
+        - VendorWarning: 'Vendor specific error code. Charging may continue.'
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
+
+    HeartBeatId:
+      type: integer
+      description: "64bit unsigned integer. The id of every heartbeat increases by 1 and overflows when the maximum representable value is reached" 

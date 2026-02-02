@@ -138,10 +138,23 @@ void CarSimulation::simulate_soc() {
         sim_data.battery_charge_wh += power * factor;
     }
 
-    ev_info.soc = (sim_data.battery_charge_wh / sim_data.battery_capacity_wh) * 100.0;
-    if (ev_info.soc > 100.0) {
-        ev_info.soc = 100.0;
+    auto soc = (sim_data.battery_charge_wh / sim_data.battery_capacity_wh) * 100.0;
+
+    if (soc > 100.0) {
+        soc = 100.0;
+    } else if (soc <= 0.0) {
+        soc = 0.0;
     }
+
+    if (latest_soc != soc) {
+        latest_soc = soc;
+
+        if (!r_ev.empty()) {
+            r_ev[0]->call_update_soc(soc);
+        }
+    }
+
+    ev_info.soc = soc;
     ev_info.battery_capacity = sim_data.battery_capacity_wh;
     ev_info.battery_full_soc = 100;
 
@@ -296,22 +309,44 @@ bool CarSimulation::iso_dc_power_on(const CmdArguments& arguments) {
 
 bool CarSimulation::iso_start_v2g_session(const CmdArguments& arguments, bool three_phases) {
     const auto& energy_mode = arguments[0];
-    const auto& departure_time = std::stoi(arguments[1]);
-    const auto& e_amount = std::stoi(arguments[2]);
+    const auto& payment_option = arguments[1];
+    const auto& departure_time = std::stoi(arguments[2]);
+    const auto& e_amount = std::stoi(arguments[3]);
+
+    const auto selected_payment_option = [payment_option,
+                                          this](bool auto_payment_option) -> types::iso15118::SelectedPaymentOption {
+        if (auto_payment_option) {
+            return types::iso15118::SelectedPaymentOption{};
+        }
+        auto selected_payment_option =
+            types::iso15118::SelectedPaymentOption{std::nullopt, config.force_payment_option};
+
+        if (payment_option == "externalpayment") {
+            selected_payment_option.payment_option = types::iso15118::PaymentOption::ExternalPayment;
+        } else if (payment_option == "contract") {
+            selected_payment_option.payment_option = types::iso15118::PaymentOption::Contract;
+        } else {
+            EVLOG_warning << "Go back to auto payment because payment_option was not recognized";
+            selected_payment_option.enforce_payment_option.reset();
+        }
+
+        return selected_payment_option;
+    }(payment_option == "auto");
 
     if (energy_mode == constants::AC) {
         sim_data.energy_mode = EnergyMode::AC;
         if (not three_phases) {
-            r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_single_phase_core, departure_time,
-                                         e_amount);
+            r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_single_phase_core,
+                                         selected_payment_option, departure_time, e_amount);
             charge_mode = ChargeMode::AC;
         } else {
-            r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_three_phase_core, departure_time,
-                                         e_amount);
+            r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::AC_three_phase_core,
+                                         selected_payment_option, departure_time, e_amount);
             charge_mode = ChargeMode::ACThreePhase;
         }
     } else if (energy_mode == constants::DC) {
-        r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::DC_extended, departure_time, e_amount);
+        r_ev[0]->call_start_charging(types::iso15118::EnergyTransferMode::DC_extended, selected_payment_option,
+                                     departure_time, e_amount);
         sim_data.energy_mode = EnergyMode::DC;
         charge_mode = ChargeMode::DC;
     } else {
