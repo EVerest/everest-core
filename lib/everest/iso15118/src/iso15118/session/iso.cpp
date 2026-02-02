@@ -16,6 +16,7 @@
 namespace iso15118 {
 
 static constexpr auto SESSION_IDLE_TIMEOUT_MS = 5000;
+static constexpr auto MIN_RESPONSE_INTERVAL_MS = 100; // minimum time between two response messages
 
 static void log_sdp_packet(const iso15118::io::SdpPacket& sdp) {
     static constexpr auto ESCAPED_BYTE_CHAR_COUNT = 4;
@@ -140,10 +141,11 @@ void Session::push_control_event(const d20::ControlEvent& event) {
 
 TimePoint const& Session::poll() {
     const auto now = get_current_time_point();
+    // FIXME (aw): proper timeout handling!
+    next_session_event = offset_time_point_by_ms(now, SESSION_IDLE_TIMEOUT_MS);
 
     if (not state.connected) {
         // nothing happened so far, just return
-        next_session_event = offset_time_point_by_ms(now, SESSION_IDLE_TIMEOUT_MS);
         return next_session_event;
     }
 
@@ -223,19 +225,35 @@ TimePoint const& Session::poll() {
         // FIXME(sl): check result!
     }
 
-    const auto [got_response, payload_size, payload_type, response_type] = message_exchange.check_and_clear_response();
+    if (message_exchange.has_response()) {
+        const auto [payload_type, response_type] = message_exchange.peek_response_meta();
+        // Before we send back the response message, we check the time between two response messages
+        // sent out. If this is less than MIN_RESPONSE_INTERVAL_MS, we delay the response message to
+        // avoid potential performance issues.
+        if (not response_send_after.has_value()) {
+            response_send_after = now;
+            if (last_response_tx_time.has_value()) {
+                const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    get_current_time_point() - last_response_tx_time.value());
+                if (elapsed < std::chrono::milliseconds(MIN_RESPONSE_INTERVAL_MS)) {
+                    response_send_after =
+                        offset_time_point_by_ms(last_response_tx_time.value(), MIN_RESPONSE_INTERVAL_MS);
+                }
+            }
+        }
 
-    if (got_response) {
-        const auto response_size = setup_response_header(response_buffer, payload_type, payload_size);
-        connection->write(response_buffer, response_size);
-
-        timeouts.start_timeout(d20::TimeoutType::SEQUENCE, d20::TIMEOUT_SEQUENCE);
-
-        // FIXME (aw): this is hacky ...
-        log.exi(static_cast<uint16_t>(payload_type), response_buffer + io::SdpPacket::V2GTP_HEADER_SIZE, payload_size,
-                session::logging::ExiMessageDirection::TO_EV);
-
-        ctx.feedback.v2g_message(response_type);
+        // Send the response as soon as the response interval is reached
+        if (response_send_after.has_value() && now < response_send_after.value()) {
+            next_session_event = response_send_after.value();
+        } else {
+            response_send_after.reset();
+            // FIXME(fh): Currently, the response is still generated when the request is received.
+            // This may have changed after the delay. Ideally, the processing of the request message
+            // and the generated of the response message should be decoupled from each other.
+            send_response(payload_type, response_type);
+        }
+    } else {
+        response_send_after.reset();
     }
 
     if (ctx.session_stopped or ctx.session_paused) {
@@ -250,9 +268,28 @@ TimePoint const& Session::poll() {
         ctx.feedback.signal(signal);
     }
 
-    // FIXME (aw): proper timeout handling!
-    next_session_event = offset_time_point_by_ms(now, SESSION_IDLE_TIMEOUT_MS);
     return next_session_event;
+}
+
+void Session::send_response(io::v2gtp::PayloadType payload_type, message_20::Type response_type) {
+    const auto [got_response, payload_size, stored_payload_type, stored_response_type] =
+        message_exchange.check_and_clear_response();
+    if (not got_response) {
+        return;
+    }
+    payload_type = stored_payload_type;
+    response_type = stored_response_type;
+    const auto response_size = setup_response_header(response_buffer, payload_type, payload_size);
+    connection->write(response_buffer, response_size);
+    last_response_tx_time = get_current_time_point();
+
+    timeouts.start_timeout(d20::TimeoutType::SEQUENCE, d20::TIMEOUT_SEQUENCE);
+
+    // FIXME (aw): this is hacky ...
+    log.exi(static_cast<uint16_t>(payload_type), response_buffer + io::SdpPacket::V2GTP_HEADER_SIZE, payload_size,
+            session::logging::ExiMessageDirection::TO_EV);
+
+    ctx.feedback.v2g_message(response_type);
 }
 
 void Session::handle_connection_event(io::ConnectionEvent event) {
