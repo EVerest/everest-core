@@ -195,10 +195,11 @@ Result ServiceDetail::feed(Event ev) {
 
         using Service = dt::ServiceCategory;
         const std::vector<uint16_t> energy_services{
-            message_20::to_underlying_value(Service::AC),         message_20::to_underlying_value(Service::DC),
-            message_20::to_underlying_value(Service::WPT),        message_20::to_underlying_value(Service::DC_ACDP),
-            message_20::to_underlying_value(Service::AC_BPT),     message_20::to_underlying_value(Service::DC_BPT),
-            message_20::to_underlying_value(Service::DC_ACDP_BPT)};
+            message_20::to_underlying_value(Service::AC),          message_20::to_underlying_value(Service::DC),
+            message_20::to_underlying_value(Service::WPT),         message_20::to_underlying_value(Service::DC_ACDP),
+            message_20::to_underlying_value(Service::AC_BPT),      message_20::to_underlying_value(Service::DC_BPT),
+            message_20::to_underlying_value(Service::DC_ACDP_BPT), message_20::to_underlying_value(Service::MCS),
+            message_20::to_underlying_value(Service::MCS_BPT)};
 
         std::optional<dt::ServiceParameterList> custom_vas_parameters{std::nullopt};
 

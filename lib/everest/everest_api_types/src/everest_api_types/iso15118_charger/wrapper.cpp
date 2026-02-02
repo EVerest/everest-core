@@ -111,6 +111,10 @@ EnergyTransferMode_Internal to_internal_api(EnergyTransferMode_External const& v
         return TarT::DC_ACDP_BPT;
     case SrcT::WPT:
         return TarT::WPT;
+    case SrcT::MCS:
+        return TarT::MCS;
+    case SrcT::MCS_BPT:
+        return TarT::MCS_BPT;
     }
 
     throw std::out_of_range("Unexpected value for EnergyTransferMode_External");
@@ -151,6 +155,10 @@ EnergyTransferMode_External to_external_api(EnergyTransferMode_Internal const& v
         return TarT::DC_ACDP_BPT;
     case SrcT::WPT:
         return TarT::WPT;
+    case SrcT::MCS:
+        return TarT::MCS;
+    case SrcT::MCS_BPT:
+        return TarT::MCS_BPT;
     }
 
     throw std::out_of_range("Unexpected value for EnergyTransferMode_Internal");
