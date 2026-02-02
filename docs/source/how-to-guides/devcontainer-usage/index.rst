@@ -27,19 +27,19 @@ Services are organized into logical profiles for easier management:
 
 .. list-table::
     :header-rows: 1
-    :widths: 20 30 50
+    :widths: 20 20 20 20 20
 
     * - Profiles
       - Services
       - Container Name
       - URL
       - Purpose
-    * - `mqtt/ocpp/sil/all`
+    * - mqtt/ocpp/sil/all
       - **MQTT Server**
       - `<prefix>_devcontainer-mqtt-server-1`
       - localhost:1883
       - Basic MQTT broker
-    * - `ocpp/all`
+    * - ``ocpp/all``
       - **OCPP DB**
       - `<prefix>_devcontainer-ocpp-db-1`
       - Internal
@@ -73,7 +73,7 @@ Services are organized into logical profiles for easier management:
 .. note::
 
     the `all` profile is a synthetic profile that includes all
-    services. Use `./devrd start all` or `./devrd start` (default)
+    services. Use `./applications/devrd/devrd start all` or `./devrd start` (default)
     to start all services.
 
 Where `<prefix>` is the docker compose project name prefix.
@@ -83,24 +83,24 @@ Starting/Stopping Services/Profiles
 ***********************************
 
 To start/stop service containers use the `devrd` cli tool,
-with `./devrd start` and `./devrd stop` commands.
+with `./applications/devrd/devrd start` and `./devrd stop` commands.
 
 Usage examples:
 
 .. code-block:: bash
 
     # Start profiles
-    ./devrd start                  # Start all services (generates .env if missing)
-    ./devrd start all              # Start all services (same as above)
-    ./devrd start sil              # Start SIL simulation tools
-    ./devrd start ocpp             # Start OCPP backend
-    ./devrd start mqtt             # Start only MQTT server
+    ./applications/devrd/devrd start                  # Start all services (generates .env if missing)
+    ./applications/devrd/devrd start all              # Start all services (same as above)
+    ./applications/devrd/devrd start sil              # Start SIL simulation tools
+    ./applications/devrd/devrd start ocpp             # Start OCPP backend
+    ./applications/devrd/devrd start mqtt             # Start only MQTT server
 
     # Stop services
-    ./devrd stop                   # Stop all services
-    ./devrd stop all               # Stop all services (same as above)
-    ./devrd stop sil               # Stop SIL profile only
-    ./devrd stop ev-ws             # Stop all containers matching pattern 'ev-ws'
+    ./applications/devrd/devrd stop                   # Stop all services
+    ./applications/devrd/devrd stop all               # Stop all services (same as above)
+    ./applications/devrd/devrd stop sil               # Stop SIL profile only
+    ./applications/devrd/devrd stop ev-ws             # Stop all containers matching pattern 'ev-ws'
 
 *******************
 Devcontainer Access
@@ -110,87 +110,87 @@ There are two ways to access the devcontainer:
 
 1. **Open an interactive shell in the devcontainer**
 
-    To run commands inside the devcontainer, open an interactive shell
-    with the devrd cli:
+   To run commands inside the devcontainer, open an interactive shell
+   with the devrd cli:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        ./devrd prompt
+       ./applications/devrd/devrd prompt
 
-    This will open an interactive shell inside the devcontainer.
-    The contents of the everest-core repository are mapped
-    to the `/workspace` directory inside the container.
+   This will open an interactive shell inside the devcontainer.
+   The contents of the everest-core repository are mapped
+   to the `/workspace` directory inside the container.
 
-    You can now run all development commands inside this shell.
+   You can now run all development commands inside this shell.
 
 2. **Run a single command in the devcontainer**
 
-    To run a single command inside the devcontainer, use the
-    `devrd exec` command:
+   To run a single command inside the devcontainer, use the
+   `devrd exec` command:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        ./devrd exec <command> [args...]
+       ./applications/devrd/devrd exec <command> [args...]
 
-    This will run the specified command with optional arguments
-    inside the devcontainer and return the output to the host terminal.
+   This will run the specified command with optional arguments
+   inside the devcontainer and return the output to the host terminal.
 
-    Example:
+   Example:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        ./devrd exec ls /workspace
+       ./applications/devrd/devrd exec ls /workspace
 
-    This will list the contents of the `/workspace` directory
-    inside the devcontainer.
+   This will list the contents of the `/workspace` directory
+   inside the devcontainer.
 
 ********************************************
 Clean Up Devcontainer and Service Containers
 ********************************************
 
 To clean up the devcontainer and all service containers,
-use the `./devrd stop` and `./devrd purge` command:
+use the `./applications/devrd/devrd stop` and `./devrd purge` command:
 
 .. code-block:: bash
 
-    ./devrd stop           # Stop all service containers
-    ./devrd purge          # Remove all service containers, images and volumes
+    ./applications/devrd/devrd stop           # Stop all service containers
+    ./applications/devrd/devrd purge          # Remove all service containers, images and volumes
 
 ***********************************
-Manage Flows for Node-RED container
+Manage Flows for Node-RED Container
 ***********************************
 
 There are two commands one should know when working with Node-RED flows:
 
 1. **List available flows**
 
-    To list all available flows in the Node-RED container use the command:
+   To list all available flows in the Node-RED container use the command:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        ./devrd flows
+       ./applications/devrd/devrd flows
 
 2. **Switch to specific flow file**
 
-    To switch to a specific flow file in the Node-RED container use the command:
+   To switch to a specific flow file in the Node-RED container use the command:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        ./devrd flow path/to/flow/file.json
+       ./applications/devrd/devrd flow path/to/flow/file.json
 
-    Where `path/to/flow/file.json` is the path to the flow file.
+   Where `path/to/flow/file.json` is the path to the flow file.
 
 **********************************
-Modify workspace directory mapping
+Modify Workspace Directory Mapping
 **********************************
 
 While the default mapping of the everest-core repository
 is to the `/workspace` directory inside the devcontainer,
-this can be modified by using the `./devrd env` command:
+this can be modified by using the `./applications/devrd/devrd env` command:
 
 .. code-block:: bash
 
-    ./devrd env -w /path/to/workspace
+    ./applications/devrd/devrd env -w /path/to/workspace
 
 This will mount the everest-core repository to the specified
 `/path/to/workspace` directory inside the devcontainer.

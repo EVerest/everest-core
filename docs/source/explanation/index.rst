@@ -23,29 +23,17 @@ Below that, you will be presented with a categorized list of all articles.
 
         How to communicate error states between modules.
 
-    .. grid-item-card:: The EVerest Community
-        :link: ../community-channels
-        :link-type: doc
-
-        Different options exist to get involved in the EVerest community.
-
-    .. grid-item-card:: Getting started with EVerest
-        :link: getting-started/index
-        :link-type: doc
-
-        Hands-on getting started with or without hardware.
-
     .. grid-item-card:: EVerest Modules in Detail
         :link: detail-module-concept
         :link-type: doc
 
         Learn about the module concept of EVerest.
 
-    .. grid-item-card:: EVerest Module Configurations
-        :link: module-configurations
+    .. grid-item-card:: Tier Module Mapping
+        :link: tier-module-mappings
         :link-type: doc
 
-        Learn how to modules interact with each other in different configurations.
+        EVerest's 3-tier module mapping explained.
 
     .. grid-item-card:: Adapt EVerest
         :link: adapt-everest/index
@@ -88,12 +76,6 @@ Below that, you will be presented with a categorized list of all articles.
         :link-type: doc
 
         Description of natively supported hardware driver modules included in EVerest.
-
-    .. grid-item-card:: EVerest Modules
-        :link: modules/index
-        :link-type: doc
-
-        Handwritten documentation for EVerest modules.
 
     .. grid-item-card:: Structure of the EVerest Documentation
         :link: the-everest-documentation
