@@ -6,7 +6,6 @@
 #include <stdexcept>
 #include <thread>
 
-#include <boost/algorithm/string.hpp>
 #include <everest/logging.hpp>
 #include <ocpp/common/constants.hpp>
 #include <ocpp/common/websocket/websocket.hpp>
@@ -431,9 +430,9 @@ WebsocketConnectionOptions ChargePointImpl::get_ws_connection_options() {
     if (fs::exists(version_file_path)) {
         std::ifstream ifs(version_file_path);
         std::string version((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-        boost::algorithm::trim(version); // remove leading/trailing whitespace
-        if (!version.empty()) {
-            connection_options.everest_version = version;
+        std::string trimmed_version = ocpp::trim_string(version); // remove leading/trailing whitespace
+        if (!trimmed_version.empty()) {
+            connection_options.everest_version = trimmed_version;
         }
     }
     return connection_options;

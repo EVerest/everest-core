@@ -5,7 +5,6 @@
 
 #include <fstream>
 
-#include <boost/algorithm/string.hpp>
 #include <everest/logging.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
@@ -379,9 +378,9 @@ ConnectivityManager::get_ws_connection_options(const std::int32_t configuration_
         if (fs::exists(version_file_path)) {
             std::ifstream ifs(version_file_path);
             std::string version((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-            boost::algorithm::trim(version); // remove leading/trailing whitespace
-            if (!version.empty()) {
-                connection_options.everest_version = version;
+            std::string trimmed_version = ocpp::trim_string(version); // remove leading/trailing whitespace
+            if (!trimmed_version.empty()) {
+                connection_options.everest_version = trimmed_version;
             }
         }
 
