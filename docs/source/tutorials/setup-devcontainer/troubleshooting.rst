@@ -1,6 +1,6 @@
-***************
+###############
 Troubleshooting
-***************
+###############
 
 Port conflicts
 --------------
@@ -104,3 +104,7 @@ use the following commands:
     # Start new instance
     cd ~/different-everest-directory
     ./applications/devrd/devrd start
+
+----
+
+**Authors:** Florian Mihut, Andreas Heinrich

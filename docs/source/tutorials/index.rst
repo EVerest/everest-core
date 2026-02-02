@@ -54,4 +54,4 @@ Have a look at this categorized list of all EVerest tutorials:
     ocpp2
     plug-and-charge
     bazel
-    setup-devcontainer/index
+    EVerest devcontainer <setup-devcontainer/index>

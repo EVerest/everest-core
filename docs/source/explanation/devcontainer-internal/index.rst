@@ -6,7 +6,10 @@ This document explains the internal working of the EVerest
 development container (devcontainer) for different setup variants
 and how things are connected.
 
-.. include:: /snippets/overview-devcontainer.rst
+For a more hands-on explanation, consider reading:
+
+- :doc:`Tutorial: Setup the EVerest Development Container </tutorials/setup-devcontainer/index>`
+- :doc:`How-to Guide: How to use a development container for EVerest development and sil testing </how-to-guides/devcontainer-usage/index>`
 
 *******************************
 The Docker Compose Project Name
@@ -103,6 +106,13 @@ Then run from anywhere:
     cd /path/to/workspace/subfolder
     ../applications/devrd/devrd start  # Works correctly, uses workspace from .env file
 
-.. include:: /snippets/troubleshooting-devcontainer.rst
+***************
+Troubleshooting
+***************
+
+See the :doc:`separate troubleshooting section </tutorials/setup-devcontainer/troubleshooting>` for help
+on devcontainer-specific issues.
+
+----
 
 **Authors:** Florian Mihut, Andreas Heinrich

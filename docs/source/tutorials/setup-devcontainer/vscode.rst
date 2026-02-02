@@ -67,7 +67,22 @@ Required Steps
 Now VSCode will build the devcontainer.
 This can take some time depending on your machine and internet connection.
 After this you can use the built-in terminal in VSCode to run commands
-inside the devcontainer.
+inside the devcontainer as for example to build EVerest.
+
+*************
+Example Usage
+*************
+
+You can now use VSCode's terminal to issue commands inside the devcontainer, e.g. for building:
+
+.. code-block:: bash
+
+    docker@16898a21b4f1:/workspace$ mkdir build
+    docker@16898a21b4f1:/workspace$ cd build
+    docker@16898a21b4f1:/workspace$ cmake ..
+    docker@16898a21b4f1:/workspace$ cmake --build . --parallel 8
+
+This will readily build EVerest regardless of your host system setup.
 
 ****************************************
 Tips for VSCode Dev Containers Extension
@@ -78,7 +93,14 @@ any time by running the command **Dev Containers: Reopen in Container** from the
 command palette (F1).
 You can also stop the devcontainer by running the command **Dev Containers: Reopen Folder Locally**.
 
-.. include:: /snippets/troubleshooting-devcontainer.rst
+***************
+Troubleshooting
+***************
+
+See the :doc:`separate troubleshooting section <troubleshooting>` for help
+on devcontainer-specific issues.
+
+----
 
 **Authors:** Florian Mihut, Andreas Heinrich
 

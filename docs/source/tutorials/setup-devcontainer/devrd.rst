@@ -7,11 +7,14 @@ Setup Variant: Service Containers Managed by devrd cli
 This variant utilizes the devrd CLI to manage service containers,
 making it an ideal choice for users who do not use VSCode.
 It provides dedicated control of the service containers independent
-of the devcontainer lifecycle.
+of the devcontainer lifecycle. The devcontainer itself will not start
+or stop any service containers.
 
-Note that when using this variant and still using VSCode, the VSCode
-built-in terminal cannot execute commands directly within the devcontainer.
-Instead, use the devrd CLI to open an interactive session.
+.. note::
+
+    When using this variant and still using VSCode, the VSCode
+    built-in terminal cannot execute commands directly within the devcontainer.
+    Instead, use the devrd CLI to open an interactive session (see below).
 
 ******************************
 What to expect from this setup
@@ -86,6 +89,9 @@ Required Steps
 
    To exit the shell, simply type ``exit`` or press ``Ctrl+D``.
 
+See the :doc:`howto </how-to-guides/devcontainer-usage/index>` to learn how to
+execute EVerest in a SIL using containers.
+
 *************************************
 Optional: Install bash/zsh completion
 *************************************
@@ -125,7 +131,10 @@ Then reload your ``~/.zshrc`` file:
 
     source ~/.zshrc
 
-.. include:: /snippets/troubleshooting-devcontainer.rst
+See the :doc:`separate troubleshooting section <troubleshooting>` for help
+on devcontainer-specific issues.
+
+----
 
 **Authors:** Florian Mihut, Andreas Heinrich
 
