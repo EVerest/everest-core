@@ -1,17 +1,17 @@
+:title: Managed by devrd CLI
+
 ######################################################
-Setup Variant: Service Containers managed by devrd cli
+Setup Variant: Service Containers Managed by devrd cli
 ######################################################
 
-This variant makes use of the devrd cli to manage the service containers.
-So this variant can be used if one is not using VSCode.
-It allows a dedicated control of the service containers independent
-of the devcontainer lifecycle. The devcontainer itself will not start
-or stop any service containers. With this variant the VSCode built-in
-terminal can't be used to run commands in the devcontainer directly.
-For this the devrd cli provides a command to open an interactive session
-in the devcontainer.
+This variant utilizes the devrd CLI to manage service containers,
+making it an ideal choice for users who do not use VSCode.
+It provides dedicated control of the service containers independent
+of the devcontainer lifecycle.
 
-.. include:: /snippets/overview-devcontainer.rst
+Note that when using this variant and still using VSCode, the VSCode
+built-in terminal cannot execute commands directly within the devcontainer.
+Instead, use the devrd CLI to open an interactive session.
 
 ******************************
 What to expect from this setup
@@ -24,7 +24,7 @@ The devrd cli will help to manage the service containers independent
 of the devcontainer lifecycle. So one can start and stop the service containers
 at any time.
 The contents of the everest-core repo are mapped inside the container
-in the directory `/workspace`
+in the directory ``/workspace``.
 
 *************
 Prerequisites
@@ -32,8 +32,8 @@ Prerequisites
 
 To install the prerequisites, please check your operating system or distribution online documentation:
 
-- :ref: `Docker installed <install_docker>`
-- :ref: `Docker compose installed version V2 (not working with V1). <install_docker>`
+- Docker installed [#docker]_
+- Docker compose installed version V2 (not working with V1) [#docker_compose]_
 
 **************
 Required Steps
@@ -41,50 +41,50 @@ Required Steps
 
 1. **Clone the everest-core repository**
 
-    If you have not done this yet, clone the everest-core repository
-    from GitHub to your local machine:
+   If you have not done this yet, clone the everest-core repository
+   from GitHub to your local machine:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        git clone https://github.com/everest-core/everest-core.git path/to/everest-core
+       git clone https://github.com/everest-core/everest-core.git path/to/everest-core
     
-    Where `path/to/everest-core` is the path where you want to
-    clone the repository to.
+   Where ``path/to/everest-core`` is the path where you want to
+   clone the repository to.
 
 2. **Build and start the devcontainer and service containers**
 
-    Change into the cloned repository directory:
+   Change into the cloned repository directory:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        cd path/to/everest-core
+       cd path/to/everest-core
 
-    Then build and start the devcontainer and the service containers
-    with the devrd cli:
+   Then build and start the devcontainer and the service containers
+   with the devrd cli:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        devrd start
+       ./application/devrd/devrd start
 
-    This will build and start the devcontainer and all service containers.
-    If not yet existing, devrd will generate the `.devcontainer/.env` file.
+   This will build and start the devcontainer and all service containers.
+   If not yet existing, devrd will generate the ``.devcontainer/.env`` file.
 
 3. **Open an interactive shell in the devcontainer**
 
-    To run commands inside the devcontainer, open an interactive shell
-    with the devrd cli:
+   To run commands inside the devcontainer, open an interactive shell
+   with the devrd cli:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        devrd prompted
+       ./application/devrd/devrd prompt
 
-    This will open an interactive shell inside the devcontainer.
-    The contents of the everest-core repository are mapped
-    to the `/workspace` directory inside the container.
+   This will open an interactive shell inside the devcontainer.
+   The contents of the everest-core repository are mapped
+   to the ``/workspace`` directory inside the container.
 
-    You can now run all development commands inside this shell.
+   You can now run all development commands inside this shell.
 
-    To exit the shell, simply type `exit` or press `Ctrl+D`.
+   To exit the shell, simply type ``exit`` or press ``Ctrl+D``.
 
 *************************************
 Optional: Install bash/zsh completion
@@ -95,14 +95,14 @@ If you want to enable completion on your host system follow the steps below.
 Install bash completion
 -----------------------
 
-Add the following lines to your ~/.bashrc file:
+Add the following lines to your ``~/.bashrc`` file:
 
 .. code-block:: bash
 
     # bash completion for devrd cli
     source applications/devrd/devrd-completion.bash
 
-Then reload your ~/.bashrc file:
+Then reload your ``~/.bashrc`` file:
 
 .. code-block:: bash
 
@@ -111,7 +111,7 @@ Then reload your ~/.bashrc file:
 Install zsh completion
 ----------------------
 
-Add the following lines to your ~/.zshrc file:
+Add the following lines to your ``~/.zshrc`` file:
 
 .. code-block:: bash
 
@@ -119,7 +119,7 @@ Add the following lines to your ~/.zshrc file:
     autoload -U compinit && compinit
     source applications/devrd/devrd-completion.zsh
 
-Then reload your ~/.zshrc file:
+Then reload your ``~/.zshrc`` file:
 
 .. code-block:: bash
 
@@ -129,5 +129,5 @@ Then reload your ~/.zshrc file:
 
 **Authors:** Florian Mihut, Andreas Heinrich
 
-.. _install_vscode_dev_containers_extension: https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers
-.. _install_docker: https://docs.docker.com/engine/install/
+.. [#docker] `<https://docs.docker.com/engine/install/>`_
+.. [#docker_compose] `<https://docs.docker.com/compose/install>`_

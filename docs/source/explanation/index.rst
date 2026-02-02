@@ -24,16 +24,16 @@ Below that, you will be presented with a categorized list of all articles.
         How to communicate error states between modules.
 
     .. grid-item-card:: EVerest Modules in Detail
-      :link: detail-module-concept
-      :link-type: doc
+        :link: detail-module-concept
+        :link-type: doc
 
         Learn about the module concept of EVerest.
 
     .. grid-item-card:: Tier Module Mapping
-      :link: tier-module-mappings
-      :link-type: doc
+        :link: tier-module-mappings
+        :link-type: doc
 
-      EVerest's 3-tier module mapping explained.
+        EVerest's 3-tier module mapping explained.
 
     .. grid-item-card:: Adapt EVerest
         :link: adapt-everest/index
@@ -78,8 +78,8 @@ Below that, you will be presented with a categorized list of all articles.
         Description of natively supported hardware driver modules included in EVerest.
 
     .. grid-item-card:: Structure of the EVerest Documentation
-      :link: the-everest-documentation
-      :link-type: doc
+        :link: the-everest-documentation
+        :link-type: doc
 
         How this documentation is structured.
    

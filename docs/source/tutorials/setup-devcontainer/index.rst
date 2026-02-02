@@ -8,7 +8,7 @@ of setup. There are two variants:
 .. grid:: 1 2 2 2
     :gutter: 2
 
-    .. grid-item-card: Service Containers managed by VSCode
+    .. grid-item-card:: Service Containers managed by VSCode
         :link: /tutorials/setup-devcontainer/vscode
         :link-type: doc
 
@@ -18,7 +18,7 @@ of setup. There are two variants:
         the devcontainer itself. A dedicated control of this services is not
         possible with this variant.
 
-    .. grid-item-card: Service Containers managed by devrd cli
+    .. grid-item-card:: Service Containers managed by devrd cli
         :link: /tutorials/setup-devcontainer/devrd
         :link-type: doc
 
@@ -32,3 +32,10 @@ of setup. There are two variants:
         in the devcontainer.
 
 .. include:: /snippets/overview-devcontainer.rst
+
+.. toctree::
+    :maxdepth: 1
+    :hidden:
+
+    Managed by devrd CLI <devrd>
+    Managed by VSCode <vscode>

@@ -14,7 +14,7 @@ regarding the EVerest development container:
         :link: /tutorials/setup-devcontainer/index
         :link-type: doc
 
-       Tutorial: Learn the different variants to setup the EVerest development container.
+        Tutorial: Learn the different variants to setup the EVerest development container.
     
     .. grid-item-card:: Setup the EVerest Development Container with VSCode
         :link: /tutorials/setup-devcontainer/vscode

@@ -1,14 +1,15 @@
+:title: Managed by VSCode
+
 ###################################################
-Setup Variant: Service Containers managed by VSCode
+Setup Variant: Service Containers Managed by VSCode
 ###################################################
 
-This variant makes use of the VSCode Dev Containers extension.
-Which will allow to run commands in the VSCode built-in terminal.
+This variant makes use of the VSCode Dev Containers extension [#vscode_devcontainter]_
+.
+This will allow to run commands in the VSCode built-in terminal.
 It will manage the service containers by starting them together with
-the devcontainer itself. A dedicated control of this services is not
-possible with this variant.
-
-.. include:: /snippets/overview-devcontainer.rst
+the `devcontainer` itself. Dedicated control of individual services
+is not possible with this variant.
 
 ******************************
 What to expect from this setup
@@ -20,7 +21,7 @@ VSCode will automatically build the container. After this all development
 happens inside the container.
 
 The contents of the everest-core repo are mapped inside the container
-in the directory `/workspace`
+in the directory ``/workspace``
 You can exit VSCode at any time, re-running it will cause VSCode to ask you
 again to reopen in container.
 
@@ -33,9 +34,9 @@ Prerequisites
 
 To install the prerequisites, please check your operating system or distribution online documentation:
 
-- :ref: `VS Code with Dev Containers extension installed <install_vscode_dev_containers_extension>`
-- :ref: `Docker installed <install_docker>`
-- :ref: `Docker compose installed version V2 (not working with V1). <install_docker>`
+- Docker installed [#docker]_
+- Docker compose installed version V2 (not working with V1) [#docker_compose]_
+- VS Code with Dev Containers extension installed [#vscode_devcontainter]_
 
 **************
 Required Steps
@@ -43,25 +44,25 @@ Required Steps
 
 1. **Clone the everest-core repository**
 
-    If you have not done this yet, clone the everest-core repository
-    from GitHub to your local machine:
+   If you have not done this yet, clone the everest-core repository
+   from GitHub to your local machine:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        git clone https://github.com/everest-core/everest-core.git path/to/everest-core
+       git clone https://github.com/everest-core/everest-core.git path/to/everest-core
 
-    Where `path/to/everest-core` is the path where you want to
-    clone the repository to.
+   Where ``path/to/everest-core`` is the path where you want to
+   clone the repository to.
 
 2. **Open in VSCode**
 
-    Then open this repository in VSCode:
+   Then open this repository in VSCode:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        code path/to/everest-core
+       code path/to/everest-core
     
-    Choose **Reopen in container** when prompted by VSCode.
+   Choose **Reopen in container** when prompted by VSCode.
 
 Now VSCode will build the devcontainer.
 This can take some time depending on your machine and internet connection.
@@ -81,5 +82,6 @@ You can also stop the devcontainer by running the command **Dev Containers: Reop
 
 **Authors:** Florian Mihut, Andreas Heinrich
 
-.. _install_vscode_dev_containers_extension: https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers
-.. _install_docker: https://docs.docker.com/engine/install/
+.. [#docker] `<https://docs.docker.com/engine/install/>`_
+.. [#docker_compose] `<https://docs.docker.com/compose/install>`_
+.. [#vscode_devcontainter] `<https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers>`_
