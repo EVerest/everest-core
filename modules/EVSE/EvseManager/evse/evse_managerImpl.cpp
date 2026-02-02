@@ -448,25 +448,26 @@ evse_managerImpl::handle_update_allowed_energy_transfer_modes(
 
     filtered_energy_transfer_modes.reserve(allowed_energy_transfer_modes.size());
 
-    // TODO(mlitre): Add check for incompatible type(s), for now we just filter out
-    // MCS related stuff and only if a connector type was configured at all;
+    // TODO(mlitre): Add check for incompatible type(s), for now we just transform DC stuff
+    // in case of MCS and only if a connector type was configured at all;
     // also TODO: for DC we can check whether BPT can be supported in case DC supply supports it
-    std::copy_if(allowed_energy_transfer_modes.begin(), allowed_energy_transfer_modes.end(),
-                 std::back_inserter(filtered_energy_transfer_modes), [&](types::iso15118::EnergyTransferMode m) {
-                     if (!mod->connector_type.has_value()) {
-                         return true;
-                     }
+    std::transform(allowed_energy_transfer_modes.begin(), allowed_energy_transfer_modes.end(),
+                   filtered_energy_transfer_modes.begin(), [&](types::iso15118::EnergyTransferMode m) {
+                       // for MCS we have to replace DC types with MCS types
+                       if (mod->connector_type.has_value() and
+                           mod->connector_type == types::evse_manager::ConnectorTypeEnum::cMCS) {
 
-                     // for MCS we only allow MCS types
-                     if (mod->connector_type == types::evse_manager::ConnectorTypeEnum::cMCS) {
-                         return m == types::iso15118::EnergyTransferMode::MCS or
-                                m == types::iso15118::EnergyTransferMode::MCS_BPT;
-                     }
+                           if (m == types::iso15118::EnergyTransferMode::DC) {
+                               return types::iso15118::EnergyTransferMode::MCS;
+                           }
+                           if (m == types::iso15118::EnergyTransferMode::DC_BPT) {
+                               return types::iso15118::EnergyTransferMode::MCS_BPT;
+                           }
+                       }
 
-                     // for everything else, we disallow MCS
-                     return m != types::iso15118::EnergyTransferMode::MCS and
-                            m != types::iso15118::EnergyTransferMode::MCS_BPT;
-                 });
+                       // everything else pass untouched
+                       return m;
+                   });
 
     // check whether at least one mode has survived our filtering
     if (!filtered_energy_transfer_modes.size()) {

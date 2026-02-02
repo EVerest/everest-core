@@ -1816,14 +1816,6 @@ std::vector<types::iso15118::EnergyTransferMode> to_everest_allowed_energy_trans
     value.reserve(allowed_energy_transfer_modes.size());
     for (const auto& mode : allowed_energy_transfer_modes) {
         value.push_back(to_everest_allowed_energy_transfer_mode(mode));
-        // revisit: at the moment, OCPP does not yet know about MCS types
-        // so in case of DC we allow also the corresponding MCS modes
-        if (mode == ocpp::v2::EnergyTransferModeEnum::DC) {
-            value.push_back(types::iso15118::EnergyTransferMode::MCS);
-        }
-        if (mode == ocpp::v2::EnergyTransferModeEnum::DC_BPT) {
-            value.push_back(types::iso15118::EnergyTransferMode::MCS_BPT);
-        }
     }
     return value;
 }
