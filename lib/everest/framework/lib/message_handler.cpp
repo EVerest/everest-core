@@ -59,6 +59,23 @@ bool check_topic_matches(const std::string& full_topic, const std::string& wildc
 
     return full_split.size() == wildcard_split.size();
 }
+
+template <typename HandlerMap, typename ExecuteFn>
+void execute_handlers_from_vector_with_wildcards(HandlerMap& handlers, std::mutex& handler_mutex,
+                                                 const std::string& topic, ExecuteFn execute_fn) {
+    std::vector<std::shared_ptr<TypedHandler>> handlers_copy;
+    {
+        std::lock_guard<std::mutex> lock(handler_mutex);
+        for (const auto& [wildcard_topic, handlers_vec] : handlers) {
+            if (check_topic_matches(topic, wildcard_topic)) {
+                handlers_copy.insert(handlers_copy.end(), handlers_vec.begin(), handlers_vec.end());
+            }
+        }
+    }
+    for (const auto& handler : handlers_copy) {
+        execute_fn(handler);
+    }
+}
 } // namespace
 
 MessageHandler::MessageHandler() {
@@ -198,6 +215,7 @@ void MessageHandler::handle_operation_message(const std::string& topic, const js
     } else {
         data = payload;
     }
+
     switch (msg_type) {
     case MqttMessageType::Var:
         handle_var_message(topic, data);
@@ -309,13 +327,10 @@ void MessageHandler::handle_external_mqtt_message(const std::string& topic, cons
 }
 
 void MessageHandler::handle_error_message(const std::string& topic, const json& data) {
-
     std::vector<std::pair<std::string, std::shared_ptr<TypedHandler>>> matching_handlers;
     {
         std::lock_guard<std::mutex> lock(handler_mutex);
         for (const auto& [_topic, error_handler] : error_handlers) {
-            EVLOG_info << "handle_error_message";
-
             if (check_topic_matches(topic, _topic)) {
                 matching_handlers.emplace_back(_topic, error_handler);
             }
@@ -379,6 +394,10 @@ void MessageHandler::execute_handlers_from_vector(HandlerMap& handlers, const st
         if (it != handlers.end()) {
             handlers_copy = it->second;
         }
+    }
+    if (handlers_copy.empty()) {
+        execute_handlers_from_vector_with_wildcards(handlers, handler_mutex, topic, execute_fn);
+        return;
     }
     for (const auto& handler : handlers_copy) {
         execute_fn(handler);
