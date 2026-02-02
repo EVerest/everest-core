@@ -23,9 +23,6 @@ std::vector<std::string> split_topic(const std::string& topic, char delimiter = 
 // NOLINTNEXTLINE(misc-no-recursion)
 bool check_topic_matches(const std::string& full_topic, const std::string& wildcard_topic) {
     // Verbatim match
-
-    EVLOG_info << "MQTT LOG " << full_topic << " and " << wildcard_topic;
-
     if (full_topic == wildcard_topic) {
         return true;
     }
