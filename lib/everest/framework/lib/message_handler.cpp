@@ -59,6 +59,23 @@ bool check_topic_matches(const std::string& full_topic, const std::string& wildc
 
     return full_split.size() == wildcard_split.size();
 }
+
+template <typename HandlerMap, typename ExecuteFn>
+void execute_handlers_from_vector_with_wildcards(HandlerMap& handlers, std::mutex& handler_mutex,
+                                                 const std::string& topic, ExecuteFn execute_fn) {
+    std::vector<std::shared_ptr<TypedHandler>> handlers_copy;
+    {
+        std::lock_guard<std::mutex> lock(handler_mutex);
+        for (const auto& [wildcard_topic, handlers_vec] : handlers) {
+            if (check_topic_matches(topic, wildcard_topic)) {
+                handlers_copy.insert(handlers_copy.end(), handlers_vec.begin(), handlers_vec.end());
+            }
+        }
+    }
+    for (const auto& handler : handlers_copy) {
+        execute_fn(handler);
+    }
+}
 } // namespace
 
 MessageHandler::MessageHandler() {
@@ -377,6 +394,10 @@ void MessageHandler::execute_handlers_from_vector(HandlerMap& handlers, const st
         if (it != handlers.end()) {
             handlers_copy = it->second;
         }
+    }
+    if (handlers_copy.empty()) {
+        execute_handlers_from_vector_with_wildcards(handlers, handler_mutex, topic, execute_fn);
+        return;
     }
     for (const auto& handler : handlers_copy) {
         execute_fn(handler);
