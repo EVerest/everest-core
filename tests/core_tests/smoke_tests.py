@@ -17,15 +17,37 @@ from everest.testing.core_utils.controller.test_controller_interface import (
 from everest.testing.core_utils.everest_core import EverestCore
 from everest.testing.core_utils.probe_module import ProbeModule
 
+
+class NetworkInterfaceConfigAdjustmentStrategy(EverestConfigAdjustmentStrategy):
+    """
+    Adjustment strategy to set network interface configuration
+    """
+
+    def __init__(self, interface_name: str):
+        self.interface_name = interface_name
+
+    def adjust_everest_configuration(self, everest_config: Dict):
+        adjusted_config = deepcopy(everest_config)
+        adjusted_config["active_modules"]["iso15118_charger"]["config_module"]["device"] = self.interface_name
+        adjusted_config["active_modules"]["iso15118_car"]["config_module"]["device"] = self.interface_name
+        return adjusted_config
+
 class DcConfigAdjustmentStrategy(EverestConfigAdjustmentStrategy):
     """
     Adjustment strategy to disable DIN SPEC 70121 module
     """
+
+    def __init__(self, zero_power_ignore_pause: bool = False):
+        self.zero_power_ignore_pause = zero_power_ignore_pause
+
     def adjust_everest_configuration(self, everest_config: Dict):
         adjusted_config = deepcopy(everest_config)
         adjusted_config["active_modules"]["iso15118_car"]["config_module"]["supported_DIN70121"] = False
         adjusted_config["active_modules"]["evse_manager"]["config_module"]["hack_allow_bpt_with_iso2"] = False
+        adjusted_config["active_modules"]["powersupply_dc"]["config_implementation"] = {"main": {"min_current": 0}}
+        adjusted_config["active_modules"]["evse_manager"]["config_module"]["zero_power_ignore_pause"] = self.zero_power_ignore_pause
         return adjusted_config
+
 async def wait_for_session_events(mock, expected_events, timeout=30):
     """Wait for specific events to appear in the mock's call list in the exact order.
     
@@ -55,6 +77,41 @@ async def wait_for_session_events(mock, expected_events, timeout=30):
 
     raise TimeoutError(f"Timeout waiting for events {expected_events} in order. Got: {events}")
 
+class EnergyVerificationMode:
+    STAY_BELOW = 1
+    MUST_EXCEED = 2
+
+async def assert_energy_delivery(mock, energy_threshold_wh, verify_mode: EnergyVerificationMode = EnergyVerificationMode.MUST_EXCEED, timeout=30):
+    """Assert that the energy delivered (in Wh) is within the specified bounds within the timeout period.
+       If verify_mode is EnergyVerificationMode.STAY_BELOW, the energy must stay below energy_threshold_wh for the entire timeout.
+       If verify_mode is EnergyVerificationMode.MUST_EXCEED, the energy must exceed energy_threshold_wh within the timeout and 
+       the function returns immediately when that happens.
+    """
+
+    start_time = asyncio.get_event_loop().time()
+
+    while asyncio.get_event_loop().time() - start_time < timeout:
+        energy_wh = None
+        for call in mock.call_args_list:
+            powermeter_data = call[0][0]
+            energy_wh = powermeter_data.get("energy_Wh_import").get("total")
+
+        if energy_wh is not None:
+            if verify_mode == EnergyVerificationMode.STAY_BELOW:
+                if energy_wh > energy_threshold_wh:
+                    raise AssertionError(
+                        f"Energy delivered {energy_wh}Wh exceeded threshold of {energy_threshold_wh}Wh."
+                    )
+            else:
+                if energy_wh >= energy_threshold_wh:
+                    return  # Success
+
+        await asyncio.sleep(0.1)
+
+    if verify_mode == EnergyVerificationMode.MUST_EXCEED:
+        raise TimeoutError(
+            f"Timeout waiting for energy delivered to exceed {energy_threshold_wh}Wh. Last known: {energy_wh}Wh."
+        )
 
 async def assert_no_events(mock, excluded_events, wait_time=2):
     """Wait for a period and verify that certain events do NOT occur.
@@ -125,11 +182,13 @@ async def setup_probe_module(
     return probe_module
 
 
-def setup_session_event_monitoring(probe_module: ProbeModule, connection_id: str):
+def setup_evse_manager_monitoring(probe_module: ProbeModule, connection_id: str):
     """Subscribe to session events from a connection. Returns session_event_mock."""
     session_event_mock = Mock()
+    powermeter_mock = Mock()
     probe_module.subscribe_variable(connection_id, "session_event", session_event_mock)
-    return session_event_mock
+    probe_module.subscribe_variable(connection_id, "powermeter", powermeter_mock)
+    return session_event_mock, powermeter_mock
 
 
 def setup_error_monitoring(probe_module: ProbeModule, connection_id: str):
@@ -189,73 +248,12 @@ NO_ENERGY_SESSION_EVENTS = [
 SESSION_END_EVENTS = ["TransactionFinished", "SessionFinished"]
 
 
-async def run_basic_session(test_controller: TestController, session_event_mock, plug_in_method: str):
+async def run_basic_session(test_controller: TestController, session_event_mock, powermeter_mock, plug_in_method: str):
     """Run a complete basic charging session and verify events."""
     getattr(test_controller, plug_in_method)()
     await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
-    
-    test_controller.plug_out()
-    await wait_for_session_events(session_event_mock, SESSION_END_EVENTS)
 
-
-async def run_no_energy_before_session(
-    test_controller: TestController, 
-    probe_module: ProbeModule, 
-    session_event_mock,
-    plug_in_method: str
-):
-    """Run a session where energy is unavailable at start, then becomes available."""
-    await set_external_limits(probe_module, "gcp", 0, 0)
-    
-    getattr(test_controller, plug_in_method)()
-    await wait_for_session_events(session_event_mock, NO_ENERGY_SESSION_EVENTS)
-    await assert_no_events(session_event_mock, ["ChargingStarted"], wait_time=30)
-    
-    await set_external_limits(probe_module, "gcp", 10000, 10000)
-    await wait_for_session_events(session_event_mock, ["ChargingStarted"])
-    
-    test_controller.plug_out()
-    await wait_for_session_events(session_event_mock, SESSION_END_EVENTS)
-
-
-async def run_no_energy_during_session(
-    test_controller: TestController,
-    probe_module: ProbeModule,
-    session_event_mock,
-    plug_in_method: str
-):
-    """Run a session where charging starts normally, then energy is removed and restored."""
-    getattr(test_controller, plug_in_method)()
-    await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
-    
-    await set_external_limits(probe_module, "gcp", 0, 0)
-    await wait_for_session_events(session_event_mock, ["WaitingForEnergy"])
-    await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingResumed"], wait_time=5)
-    
-    await set_external_limits(probe_module, "gcp", 10000, 10000)
-    await wait_for_session_events(session_event_mock, ["ChargingStarted"])
-    
-    test_controller.plug_out()
-    await wait_for_session_events(session_event_mock, SESSION_END_EVENTS)
-
-
-async def run_session_paused_by_evse(
-    test_controller: TestController,
-    probe_module: ProbeModule,
-    session_event_mock,
-    plug_in_method: str
-):
-    """Run a session where EVSE pauses charging (via energy limits) and then resumes."""
-    getattr(test_controller, plug_in_method)()
-    await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
-    
-    await set_external_limits(probe_module, "gcp", 0, 0)
-    await wait_for_session_events(session_event_mock, ["ChargingPausedEVSE"])
-    
-    await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingResumed"], wait_time=5)
-    
-    await set_external_limits(probe_module, "gcp", 10000, 10000)
-    await wait_for_session_events(session_event_mock, ["ChargingResumed"])
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=5, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=30)
     
     test_controller.plug_out()
     await wait_for_session_events(session_event_mock, SESSION_END_EVENTS)
@@ -270,9 +268,9 @@ async def test_pwm_ac_session(
 ):
     """Test session events of a basic PWM AC charging session."""
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
     
-    await run_basic_session(test_controller, session_event_mock, "plug_in")
+    await run_basic_session(test_controller, session_event_mock, powermeter_mock, "plug_in")
 
 
 @pytest.mark.asyncio
@@ -285,9 +283,9 @@ async def test_iso15118_ac_session(
 ):
     """Test session events of an ISO 15118 AC charging session."""
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
     
-    await run_basic_session(test_controller, session_event_mock, "plug_in_ac_iso")
+    await run_basic_session(test_controller, session_event_mock, powermeter_mock, "plug_in_ac_iso")
 
 
 @pytest.mark.asyncio
@@ -301,10 +299,9 @@ async def test_iso15118_dc_session(
 ):
     """Test session events of an ISO 15118 DC charging session."""
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
     
-    await run_basic_session(test_controller, session_event_mock, "plug_in_dc_iso")
-
+    await run_basic_session(test_controller, session_event_mock, powermeter_mock, "plug_in_dc_iso")
 
 @pytest.mark.asyncio
 @pytest.mark.probe_module(
@@ -320,8 +317,8 @@ async def test_iso15118_dc_session_error_before_session(
     """
 
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
-    error_raised_mock, error_cleared_mock = setup_error_monitoring(
+    session_event_mock, _ = setup_evse_manager_monitoring(probe_module, "evse_manager")
+    error_raised_mock, _ = setup_error_monitoring(
         probe_module, "evse_manager"
     )
 
@@ -338,6 +335,10 @@ async def test_iso15118_dc_session_error_before_session(
         session_event_mock.call_count == 0
     ), "No session events should occur while error is active"
 
+###########################################################
+################ Pause and No Energy Tests ################
+###########################################################
+
 @pytest.mark.asyncio
 @pytest.mark.probe_module(
     connections={
@@ -351,9 +352,23 @@ async def test_pwm_ac_session_no_energy_before_session(
 ):
     """Test PWM AC charging session with no energy at the start."""
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
     
-    await run_no_energy_before_session(test_controller, probe_module, session_event_mock, "plug_in")
+    await set_external_limits(probe_module, "gcp", 0, 0)
+    
+    test_controller.plug_in()
+
+    await wait_for_session_events(session_event_mock, NO_ENERGY_SESSION_EVENTS)
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=0, verify_mode=EnergyVerificationMode.STAY_BELOW, timeout=10)
+    
+    await set_external_limits(probe_module, "gcp", 10000, 10000)
+    await wait_for_session_events(session_event_mock, ["ChargingStarted"])
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=5, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=30)
+    
+    test_controller.plug_out()
+    await wait_for_session_events(session_event_mock, SESSION_END_EVENTS)
 
 
 @pytest.mark.asyncio
@@ -364,15 +379,28 @@ async def test_pwm_ac_session_no_energy_before_session(
     }
 )
 @pytest.mark.everest_core_config("config-sil.yaml")
-# FIXME: Expected behavior is unclear here.
 async def test_iso15118_ac_session_no_energy_before_session(
     test_controller: TestController, everest_core: EverestCore
 ):
     """Test ISO 15118 AC charging session with no energy at the start."""
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
+
+    await set_external_limits(probe_module, "gcp", 0, 0)
     
-    await run_no_energy_before_session(test_controller, probe_module, session_event_mock, "plug_in_ac_iso")
+    test_controller.plug_in_ac_iso()
+
+    # even with no energy we go should go to Chargeloop
+    await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=0, verify_mode=EnergyVerificationMode.STAY_BELOW, timeout=10)
+    
+    await set_external_limits(probe_module, "gcp", 10000, 10000)
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=5, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=30)
+    
+    test_controller.plug_out()
+    await wait_for_session_events(session_event_mock, SESSION_END_EVENTS)
 
 
 @pytest.mark.asyncio
@@ -383,17 +411,31 @@ async def test_iso15118_ac_session_no_energy_before_session(
     }
 )
 @pytest.mark.everest_core_config("config-sil-dc.yaml")
-@pytest.mark.everest_config_adaptions(DcConfigAdjustmentStrategy())
-# FIXME: Charging just works if hack_iso2_bpt is set to true although 0W is set
+@pytest.mark.everest_config_adaptions(DcConfigAdjustmentStrategy(zero_power_ignore_pause=True))
 # FIXME: Car simulation currently doesnt seem to support going into pause before session
 async def test_iso15118_dc_session_no_energy_before_session(
     test_controller: TestController, everest_core: EverestCore
 ):
     """Test ISO 15118 DC charging session with no energy at the start."""
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
+
+    await set_external_limits(probe_module, "gcp", 0, 0)
     
-    await run_no_energy_before_session(test_controller, probe_module, session_event_mock, "plug_in_dc_iso")
+    test_controller.plug_in_dc_iso()
+
+    # even with no energy we go should go to Chargeloop
+    await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
+
+    # Allow 5Wh for cable check
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=5, verify_mode=EnergyVerificationMode.STAY_BELOW, timeout=15)
+    
+    await set_external_limits(probe_module, "gcp", 10000, 10000)
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=20, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=30)
+    
+    test_controller.plug_out()
+    await wait_for_session_events(session_event_mock, SESSION_END_EVENTS)
 
 @pytest.mark.asyncio
 @pytest.mark.probe_module(
@@ -408,9 +450,25 @@ async def test_pwm_ac_session_no_energy_during_session(
 ):
     """Test PWM AC charging session where energy is removed and restored during charging."""
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
     
-    await run_no_energy_during_session(test_controller, probe_module, session_event_mock, "plug_in")
+    test_controller.plug_in()
+
+    await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=10, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
+    
+    await set_external_limits(probe_module, "gcp", 0, 0)
+    await wait_for_session_events(session_event_mock, ["WaitingForEnergy"])
+    await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingResumed"], wait_time=5)
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.STAY_BELOW, timeout=5)
+    
+    await set_external_limits(probe_module, "gcp", 10000, 10000)
+    await wait_for_session_events(session_event_mock, ["ChargingStarted"])
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
+    
+    test_controller.plug_out()
+    await wait_for_session_events(session_event_mock, SESSION_END_EVENTS)
 
 
 @pytest.mark.asyncio
@@ -421,18 +479,31 @@ async def test_pwm_ac_session_no_energy_during_session(
     }
 )
 @pytest.mark.everest_core_config("config-sil.yaml")
-# FIXME: Currently we turn off PWM and this ends the session immediately with real EVs.
-# Expected behavior would be to stop the HLC and turn PWM off afterwards. EVSE can
-# then resume if energy is available by turning on the PWM again. The EV is then expected
-# to start a new ISO session
+# FIXME: Fails because CarSim stays in C and we simply turn off PWM
 async def test_iso15118_ac_session_no_energy_during_session(
     test_controller: TestController, everest_core: EverestCore
 ):
     """Test ISO 15118 AC charging session where energy is removed and restored during charging."""
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
     
-    await run_no_energy_during_session(test_controller, probe_module, session_event_mock, "plug_in_ac_iso")
+    test_controller.plug_in_ac_iso()
+
+    await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=10, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
+    
+    await set_external_limits(probe_module, "gcp", 0, 0)
+    await wait_for_session_events(session_event_mock, ["WaitingForEnergy"])
+    await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingResumed"], wait_time=5)
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.STAY_BELOW, timeout=5)
+    
+    await set_external_limits(probe_module, "gcp", 10000, 10000)
+    await wait_for_session_events(session_event_mock, ["ChargingStarted"])
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
+    
+    test_controller.plug_out()
+    await wait_for_session_events(session_event_mock, SESSION_END_EVENTS)
 
 @pytest.mark.asyncio
 @pytest.mark.probe_module(
@@ -443,16 +514,31 @@ async def test_iso15118_ac_session_no_energy_during_session(
 )
 @pytest.mark.everest_core_config("config-sil-dc.yaml")
 @pytest.mark.everest_config_adaptions(DcConfigAdjustmentStrategy())
-# FIXME: 0W is not applied in the powersupply
 # FIXME: EV Simulator doesnt apply the ISO15118 limits from the EVSE
 async def test_iso15118_dc_session_no_energy_during_session(
     test_controller: TestController, everest_core: EverestCore
 ):
     """Test ISO 15118 DC charging session where energy is removed and restored during charging."""
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
     
-    await run_no_energy_during_session(test_controller, probe_module, session_event_mock, "plug_in_dc_iso")
+    test_controller.plug_in_dc_iso()
+
+    await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=10, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
+    
+    await set_external_limits(probe_module, "gcp", 0, 0)
+    # await wait_for_session_events(session_event_mock, ["WaitingForEnergy"])
+    await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingResumed"], wait_time=5)
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.STAY_BELOW, timeout=5)
+    
+    await set_external_limits(probe_module, "gcp", 10000, 10000)
+    # await wait_for_session_events(session_event_mock, ["ChargingStarted"])
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
+    
+    test_controller.plug_out()
+    await wait_for_session_events(session_event_mock, SESSION_END_EVENTS)
 
 @pytest.mark.asyncio
 @pytest.mark.probe_module(
@@ -467,18 +553,24 @@ async def test_pwm_ac_session_paused_by_ev(
 ):
     """Test PWM AC charging session paused by EV."""
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
     
     test_controller.plug_in()
     await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=10, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
     
     test_controller.pause_session()
     await wait_for_session_events(session_event_mock, ["ChargingPausedEV"])
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.STAY_BELOW, timeout=5)
     
     await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingResumed"], wait_time=5)
     
     test_controller.resume_session()
     await wait_for_session_events(session_event_mock, ["ChargingResumed"])
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
     
     test_controller.plug_out()
     await wait_for_session_events(session_event_mock, SESSION_END_EVENTS)
@@ -499,20 +591,24 @@ async def test_iso15118_ac_session_paused_by_ev(
     """
 
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
 
     test_controller.plug_in_ac_iso()
     await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
 
-    await asyncio.sleep(3) # FIXME: Looks like this is required for CarSim
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=10, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
 
     test_controller.pause_iso_session()
     await wait_for_session_events(session_event_mock, ["ChargingPausedEV"])
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=20, verify_mode=EnergyVerificationMode.STAY_BELOW, timeout=5)
 
     await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingResumed"], wait_time=5)
 
     test_controller.resume_iso_session_ac()
     await wait_for_session_events(session_event_mock, ["ChargingStarted"])
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=20, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
 
     test_controller.plug_out()
     await wait_for_session_events(session_event_mock, SESSION_END_EVENTS)
@@ -534,18 +630,25 @@ async def test_iso15118_dc_session_paused_by_ev(
     """
 
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
 
     test_controller.plug_in_dc_iso()
     await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
 
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=10, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
+
     test_controller.pause_iso_session()
     await wait_for_session_events(session_event_mock, ["ChargingPausedEV"])
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=20, verify_mode=EnergyVerificationMode.STAY_BELOW, timeout=5)
 
     await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingResumed"], wait_time=5)
 
     test_controller.resume_iso_session_dc()
-    await wait_for_session_events(session_event_mock, ["ChargingResumed"])
+
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=20, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=45)
+
+    await wait_for_session_events(session_event_mock, ["ChargingStarted"])
 
     test_controller.plug_out()
     await wait_for_session_events(session_event_mock, SESSION_END_EVENTS)
@@ -566,10 +669,11 @@ async def test_pwm_ac_session_paused_by_evse(
     """
 
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
 
     test_controller.plug_in()
     await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=10, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
 
     await probe_module.call_command(
         "evse_manager",
@@ -578,6 +682,7 @@ async def test_pwm_ac_session_paused_by_evse(
     )
 
     await wait_for_session_events(session_event_mock, ["ChargingPausedEVSE"])
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.STAY_BELOW, timeout=5)
 
     await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingResumed"], wait_time=5)
 
@@ -588,6 +693,7 @@ async def test_pwm_ac_session_paused_by_evse(
     )
 
     await wait_for_session_events(session_event_mock, ["ChargingStarted"])
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
 
     test_controller.plug_out()
     await wait_for_session_events(
@@ -608,12 +714,14 @@ async def test_iso15118_ac_session_paused_by_evse(
     """
     Test session events of a basic ISO 15118 AC charging session with session paused by EVSE.
     """
+    #FIXME: Fails with warning: Pause initialized by the charger is not supported in DIN70121 and ISO15118-2
 
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
 
     test_controller.plug_in_ac_iso()
     await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=10, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
 
     await probe_module.call_command(
         "evse_manager",
@@ -622,6 +730,7 @@ async def test_iso15118_ac_session_paused_by_evse(
     )
 
     await wait_for_session_events(session_event_mock, ["ChargingPausedEVSE"])
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.STAY_BELOW, timeout=5)
 
     await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingResumed"], wait_time=5)
 
@@ -632,6 +741,7 @@ async def test_iso15118_ac_session_paused_by_evse(
     )
 
     await wait_for_session_events(session_event_mock, ["ChargingStarted"])
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
 
     test_controller.plug_out()
     await wait_for_session_events(
@@ -653,12 +763,14 @@ async def test_iso15118_dc_session_paused_by_evse(
     """
     Test session events of a basic ISO 15118 DC charging session paused by EVSE.
     """
+    #FIXME: Fails with warning: Pause initialized by the charger is not supported in DIN70121 and ISO15118-2
 
     probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
+    session_event_mock, powermeter_mock = setup_evse_manager_monitoring(probe_module, "evse_manager")
 
     test_controller.plug_in_dc_iso()
     await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=10, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
 
     await probe_module.call_command(
         "evse_manager",
@@ -667,6 +779,7 @@ async def test_iso15118_dc_session_paused_by_evse(
     )
 
     await wait_for_session_events(session_event_mock, ["ChargingPausedEVSE"])
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.STAY_BELOW, timeout=5)
 
     await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingResumed"], wait_time=5)
 
@@ -677,156 +790,10 @@ async def test_iso15118_dc_session_paused_by_evse(
     )
 
     await wait_for_session_events(session_event_mock, ["ChargingStarted"])
+    await assert_energy_delivery(powermeter_mock, energy_threshold_wh=15, verify_mode=EnergyVerificationMode.MUST_EXCEED, timeout=15)
 
     test_controller.plug_out()
     await wait_for_session_events(
         session_event_mock, SESSION_END_EVENTS
     )
 
-@pytest.mark.asyncio
-@pytest.mark.probe_module(
-    connections={
-        "evse_manager": [Requirement("connector_1", "evse")],
-        "gcp": [Requirement("grid_connection_point", "external_limits")],
-    }
-)
-@pytest.mark.everest_core_config("config-sil.yaml")
-async def test_pwm_ac_session_combine_pause_and_no_energy_1(
-    test_controller: TestController, everest_core: EverestCore
-):
-    """
-    Test session events of a basic PWM AC charging session with no energy during a paused session.
-    To verify dedicated pause/resume works independently from no energy pausing
-    """
-
-    probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
-
-    test_controller.plug_in()
-    await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
-
-    await probe_module.call_command(
-        "evse_manager",
-        "pause_charging",
-        {},
-    )
-
-    await wait_for_session_events(session_event_mock, ["ChargingPausedEVSE"])
-
-    await set_external_limits(probe_module, "gcp", 0, 0)
-
-    await probe_module.call_command(
-        "evse_manager",
-        "resume_charging",
-        {},
-    )
-
-    await wait_for_session_events(session_event_mock, ["WaitingForEnergy"])
-    await assert_no_events(session_event_mock, ["ChargingStarted"], wait_time=5)
-
-    await set_external_limits(probe_module, "gcp", 10000, 10000)
-    await wait_for_session_events(session_event_mock, ["ChargingStarted"])
-
-    test_controller.plug_out()
-    await wait_for_session_events(
-        session_event_mock, SESSION_END_EVENTS
-    )
-
-@pytest.mark.asyncio
-@pytest.mark.probe_module(
-    connections={
-        "evse_manager": [Requirement("connector_1", "evse")],
-        "gcp": [Requirement("grid_connection_point", "external_limits")],
-    }
-)
-@pytest.mark.everest_core_config("config-sil.yaml")
-async def test_iso15118_ac_session_combine_pause_and_no_energy_1(
-    test_controller: TestController, everest_core: EverestCore
-):
-    """
-    Test session events of a basic ISO 15118 AC charging session with no energy during a paused session.
-    To verify dedicated pause/resume works independently from no energy pausing
-    """
-
-    probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
-
-    test_controller.plug_in_ac_iso()
-    await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
-
-    await probe_module.call_command(
-        "evse_manager",
-        "pause_charging",
-        {},
-    )
-
-    await wait_for_session_events(session_event_mock, ["ChargingPausedEVSE"])
-
-    await set_external_limits(probe_module, "gcp", 0, 0)
-
-    await probe_module.call_command(
-        "evse_manager",
-        "resume_charging",
-        {},
-    )
-
-    await wait_for_session_events(session_event_mock, ["WaitingForEnergy"])
-    await assert_no_events(session_event_mock, ["ChargingStarted"], wait_time=5)
-
-    await set_external_limits(probe_module, "gcp", 10000, 10000)
-    await wait_for_session_events(session_event_mock, ["ChargingStarted"])
-
-    test_controller.plug_out()
-    await wait_for_session_events(
-        session_event_mock, ["TransactionFinished", "SessionFinished"]
-    )
-
-@pytest.mark.asyncio
-@pytest.mark.probe_module(
-    connections={
-        "evse_manager": [Requirement("connector_1", "evse")],
-        "gcp": [Requirement("grid_connection_point", "external_limits")],
-    }
-)
-@pytest.mark.everest_core_config("config-sil-dc.yaml")
-@pytest.mark.everest_config_adaptions(DcConfigAdjustmentStrategy())
-async def test_iso15118_dc_session_combine_pause_and_no_energy_1(
-    test_controller: TestController, everest_core: EverestCore
-):
-    """
-    Test session events of a basic ISO 15118 DC charging session with no energy during a paused session.
-    To verify dedicated pause/resume works independently from no energy pausing
-    """
-
-    probe_module = await setup_probe_module(test_controller, everest_core)
-    session_event_mock = setup_session_event_monitoring(probe_module, "evse_manager")
-
-    test_controller.plug_in_dc_iso()
-    await wait_for_session_events(session_event_mock, BASIC_SESSION_START_SEQUENCE)
-
-    await probe_module.call_command(
-        "evse_manager",
-        "pause_charging",
-        {},
-    )
-
-    await wait_for_session_events(session_event_mock, ["ChargingPausedEVSE"])
-
-    await set_external_limits(probe_module, "gcp", 0, 0)
-
-    await probe_module.call_command(
-        "evse_manager",
-        "resume_charging",
-        {},
-    )
-
-    await wait_for_session_events(session_event_mock, ["WaitingForEnergy"])
-    await assert_no_events(session_event_mock, ["ChargingStarted"], wait_time=5)
-
-    await set_external_limits(probe_module, "gcp", 10000, 10000)
-    await wait_for_session_events(session_event_mock, ["ChargingStarted"])
-
-    test_controller.plug_out()
-    await wait_for_session_events(
-        session_event_mock, ["TransactionFinished", "SessionFinished"]
-    )
