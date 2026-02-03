@@ -377,8 +377,11 @@ ConnectivityManager::get_ws_connection_options(const std::int32_t configuration_
         fs::path version_file_path = this->share_path.parent_path().parent_path() / "version_information.txt";
         if (fs::exists(version_file_path)) {
             std::ifstream ifs(version_file_path);
-            std::string version((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+            std::string version;
+            std::getline(ifs, version);                               // only get one line to avoid issues
             std::string trimmed_version = ocpp::trim_string(version); // remove leading/trailing whitespace
+            trimmed_version.erase(std::remove(trimmed_version.begin(), trimmed_version.end(), '\n'),
+                                  trimmed_version.end()); // remove unnecessary newline characters
             if (!trimmed_version.empty()) {
                 connection_options.everest_version = trimmed_version;
             }

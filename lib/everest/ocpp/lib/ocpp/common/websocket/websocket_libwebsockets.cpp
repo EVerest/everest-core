@@ -1257,17 +1257,6 @@ int WebsocketLibwebsockets::process_callback(void* wsi_ptr, int callback_reason,
             }
         }
 
-        if (this->connection_options.everest_version.has_value()) {
-            auto& str = this->connection_options.everest_version.value();
-            if (0 != lws_add_http_header_by_name(
-                         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): needed for appropriate type
-                         wsi, reinterpret_cast<const unsigned char*>("EVerest-Version"),
-                         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): needed for appropriate type
-                         reinterpret_cast<const unsigned char*>(str.c_str()), str.length(), ptr, end_header)) {
-                EVLOG_warning << "Could not add EVerest-Version header.";
-            }
-        }
-
         if (this->connection_options.security_profile == 1 || this->connection_options.security_profile == 2) {
             std::optional<std::string> authorization_header = this->getAuthorizationHeader();
 
@@ -1293,6 +1282,18 @@ int WebsocketLibwebsockets::process_callback(void* wsi_ptr, int callback_reason,
             } else {
                 EVLOG_AND_THROW(
                     std::runtime_error("No authorization key provided when connecting with security profile 1 or 2."));
+            }
+        }
+
+        if (this->connection_options.everest_version.has_value()) {
+            auto& str = this->connection_options.everest_version.value();
+            if (0 != lws_add_http_header_by_name(
+                         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): needed for appropriate type
+                         wsi, reinterpret_cast<const unsigned char*>("EVerest-Version"),
+                         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): needed for appropriate type
+                         reinterpret_cast<const unsigned char*>(str.c_str()),
+                         std::min(clamp_to<int>(str.length()), 100), ptr, end_header)) {
+                EVLOG_warning << "Could not add EVerest-Version header.";
             }
         }
 
