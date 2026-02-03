@@ -96,6 +96,7 @@ private:
     bool firmware_update_is_pending = false;
     UploadLogStatusEnumType log_status;
     std::string message_log_path;
+    fs::path share_path;
 
     std::unique_ptr<Websocket> websocket;
     std::unique_ptr<ocpp::MessageDispatcherInterface<MessageType>> message_dispatcher;
