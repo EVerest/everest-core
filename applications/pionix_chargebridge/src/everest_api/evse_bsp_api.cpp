@@ -119,8 +119,6 @@ void evse_bsp_api::dispatch(std::string const& operation, std::string const& pay
         receive_allow_power_on(payload);
     } else if (operation == "ac_switch_three_phases_while_charging") {
         receive_ac_switch_three_phases_while_charging(payload);
-    } else if (operation == "evse_replug") {
-        receive_evse_replug(payload);
     } else if (operation == "ac_overcurrent_limit") {
         receive_ac_overcurrent_limit(payload);
     } else if (operation == "lock") {
@@ -391,9 +389,6 @@ void evse_bsp_api::receive_allow_power_on(std::string const& payload) {
 }
 
 void evse_bsp_api::receive_ac_switch_three_phases_while_charging(std::string const&) {
-}
-
-void evse_bsp_api::receive_evse_replug(std::string const&) {
 }
 
 void evse_bsp_api::receive_ac_overcurrent_limit(std::string const&) {

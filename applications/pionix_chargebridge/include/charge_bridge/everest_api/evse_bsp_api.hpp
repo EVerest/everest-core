@@ -72,7 +72,6 @@ private:
     void receive_pwm_F(std::string const& payload);
     void receive_allow_power_on(std::string const& payload);
     void receive_ac_switch_three_phases_while_charging(std::string const& payload);
-    void receive_evse_replug(std::string const& payload);
     void receive_ac_overcurrent_limit(std::string const& payload);
     void receive_lock();
     void receive_unlock();

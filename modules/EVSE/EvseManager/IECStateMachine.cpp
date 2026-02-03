@@ -451,11 +451,6 @@ double IECStateMachine::read_pp_ampacity() {
     return pp_ampacity;
 }
 
-// Forward special replug request. Only for testing setups.
-void IECStateMachine::evse_replug(int ms) {
-    r_bsp->call_evse_replug(ms);
-}
-
 // Forward special request to switch the number of phases during charging. BSP will need to implement a special
 // sequence to not destroy cars.
 void IECStateMachine::switch_three_phases_while_charging(bool n) {

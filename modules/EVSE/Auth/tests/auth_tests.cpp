@@ -1172,7 +1172,7 @@ TEST_F(AuthTest, test_complete_event_flow) {
     session_event_3.event = SessionEventEnum::ChargingPausedEV;
 
     SessionEvent session_event_4;
-    session_event_4.event = SessionEventEnum::ChargingResumed;
+    session_event_4.event = SessionEventEnum::ChargingStarted;
 
     SessionEvent session_event_5;
     session_event_5.event = SessionEventEnum::TransactionFinished;

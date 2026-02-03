@@ -209,10 +209,6 @@ SessionEventEnum_Internal to_internal_api(SessionEventEnum_External const& val) 
         return TarT::ChargingPausedEV;
     case SrcT::ChargingPausedEVSE:
         return TarT::ChargingPausedEVSE;
-    case SrcT::WaitingForEnergy:
-        return TarT::WaitingForEnergy;
-    case SrcT::ChargingResumed:
-        return TarT::ChargingResumed;
     case SrcT::StoppingCharging:
         return TarT::StoppingCharging;
     case SrcT::ChargingFinished:
@@ -225,10 +221,6 @@ SessionEventEnum_Internal to_internal_api(SessionEventEnum_External const& val) 
         return TarT::ReservationStart;
     case SrcT::ReservationEnd:
         return TarT::ReservationEnd;
-    case SrcT::ReplugStarted:
-        return TarT::ReplugStarted;
-    case SrcT::ReplugFinished:
-        return TarT::ReplugFinished;
     case SrcT::PluginTimeout:
         return TarT::PluginTimeout;
     case SrcT::SwitchingPhases:
@@ -267,10 +259,6 @@ SessionEventEnum_External to_external_api(SessionEventEnum_Internal const& val) 
         return TarT::ChargingPausedEV;
     case SrcT::ChargingPausedEVSE:
         return TarT::ChargingPausedEVSE;
-    case SrcT::WaitingForEnergy:
-        return TarT::WaitingForEnergy;
-    case SrcT::ChargingResumed:
-        return TarT::ChargingResumed;
     case SrcT::StoppingCharging:
         return TarT::StoppingCharging;
     case SrcT::ChargingFinished:
@@ -283,10 +271,6 @@ SessionEventEnum_External to_external_api(SessionEventEnum_Internal const& val) 
         return TarT::ReservationStart;
     case SrcT::ReservationEnd:
         return TarT::ReservationEnd;
-    case SrcT::ReplugStarted:
-        return TarT::ReplugStarted;
-    case SrcT::ReplugFinished:
-        return TarT::ReplugFinished;
     case SrcT::PluginTimeout:
         return TarT::PluginTimeout;
     case SrcT::SwitchingPhases:

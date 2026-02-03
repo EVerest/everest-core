@@ -118,6 +118,7 @@ struct Conf {
     std::string bpt_channel;
     std::string bpt_generator_mode;
     std::string bpt_grid_code_island_method;
+    int hlc_charge_loop_without_energy_timeout_s;
 };
 
 class EvseManager : public Everest::ModuleBase {

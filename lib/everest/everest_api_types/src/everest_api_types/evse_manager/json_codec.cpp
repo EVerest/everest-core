@@ -260,12 +260,6 @@ void to_json(json& j, SessionEventEnum const& k) noexcept {
     case SessionEventEnum::ChargingPausedEVSE:
         j = "ChargingPausedEVSE";
         return;
-    case SessionEventEnum::WaitingForEnergy:
-        j = "WaitingForEnergy";
-        return;
-    case SessionEventEnum::ChargingResumed:
-        j = "ChargingResumed";
-        return;
     case SessionEventEnum::StoppingCharging:
         j = "StoppingCharging";
         return;
@@ -283,12 +277,6 @@ void to_json(json& j, SessionEventEnum const& k) noexcept {
         return;
     case SessionEventEnum::ReservationEnd:
         j = "ReservationEnd";
-        return;
-    case SessionEventEnum::ReplugStarted:
-        j = "ReplugStarted";
-        return;
-    case SessionEventEnum::ReplugFinished:
-        j = "ReplugFinished";
         return;
     case SessionEventEnum::PluginTimeout:
         j = "PluginTimeout";
@@ -350,14 +338,6 @@ void from_json(json const& j, SessionEventEnum& k) {
         k = SessionEventEnum::ChargingPausedEVSE;
         return;
     }
-    if (s == "WaitingForEnergy") {
-        k = SessionEventEnum::WaitingForEnergy;
-        return;
-    }
-    if (s == "ChargingResumed") {
-        k = SessionEventEnum::ChargingResumed;
-        return;
-    }
     if (s == "StoppingCharging") {
         k = SessionEventEnum::StoppingCharging;
         return;
@@ -380,14 +360,6 @@ void from_json(json const& j, SessionEventEnum& k) {
     }
     if (s == "ReservationEnd") {
         k = SessionEventEnum::ReservationEnd;
-        return;
-    }
-    if (s == "ReplugStarted") {
-        k = SessionEventEnum::ReplugStarted;
-        return;
-    }
-    if (s == "ReplugFinished") {
-        k = SessionEventEnum::ReplugFinished;
         return;
     }
     if (s == "PluginTimeout") {

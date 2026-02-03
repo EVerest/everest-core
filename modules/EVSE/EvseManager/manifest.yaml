@@ -396,6 +396,12 @@ config:
       - Active
       - Passive
     default: None
+  hlc_charge_loop_without_energy_timeout_s:
+    description: >-
+      Timeout (s) to allow HLC charge loop to continue without available energy; 
+      when exceeded, the HLC session is stopped and PWM is disabled until energy returns.
+    type: integer
+    default: 300
 provides:
   evse:
     interface: evse_manager

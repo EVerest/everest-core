@@ -43,18 +43,6 @@ cmds:
       value:
         description: 'True: switch to 3ph, False: switch to 1ph'
         type: boolean
-  evse_replug:
-    description: >-
-      Optional, in case of doubt do not implement.
-      Special command initiate a virtual replug sequence without restarting
-      session. Emits a EvseReplugStarted event if supported and started. BSP will
-      take care to not emit other events such as CarPluggedIn/Out during that time.
-      Once finished it will emit a EvseReplugFinished. This is mainly for testing purposes,
-      don't implement for production use.
-    arguments:
-      value:
-        description: Time in ms for the duration of the replug sequence
-        type: integer
   ac_set_overcurrent_limit_A:
     description: >-
       Many chargers implement a fast over current shutdown directly in the hardware that triggers if the EV draws more current than

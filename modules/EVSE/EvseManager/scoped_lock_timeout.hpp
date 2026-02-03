@@ -109,8 +109,6 @@ static std::string to_string(MutexDescription d) {
         return "Charger.cpp: resume_charging";
     case MutexDescription::Charger_waiting_for_power:
         return "Charger.cpp: pause_charging_wait_for_power";
-    case MutexDescription::Charger_resume_power_available:
-        return "Charger.cpp: resume_charging_power_available";
     case MutexDescription::Charger_cancel_transaction:
         return "Charger.cpp: cancel_transaction";
     case MutexDescription::Charger_setup:

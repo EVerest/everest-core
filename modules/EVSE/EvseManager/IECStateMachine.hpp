@@ -76,7 +76,6 @@ public:
 
     void set_pp_ampacity(types::board_support_common::ProximityPilot pp);
     double read_pp_ampacity();
-    void evse_replug(int ms);
     void switch_three_phases_while_charging(bool n);
     void setup(bool has_ventilation);
 

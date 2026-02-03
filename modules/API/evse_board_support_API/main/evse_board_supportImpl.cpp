@@ -63,12 +63,6 @@ void evse_board_supportImpl::handle_ac_switch_three_phases_while_charging(bool& 
     mod->mqtt.publish(topic, data);
 }
 
-void evse_board_supportImpl::handle_evse_replug(int& value) {
-    auto topic = mod->get_topics().everest_to_extern("evse_replug");
-    auto data = generic::serialize(value);
-    mod->mqtt.publish(topic, data);
-}
-
 void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
     auto topic = mod->get_topics().everest_to_extern("ac_overcurrent_limit");
     auto data = generic::serialize(value);

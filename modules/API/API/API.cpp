@@ -130,7 +130,6 @@ void SessionInfo::update_state(const types::evse_manager::SessionEvent event) {
     case Event::TransactionStarted:
         this->state = State::Preparing;
         break;
-    case Event::ChargingResumed:
     case Event::ChargingStarted:
         this->state = State::Charging;
         break;
@@ -139,9 +138,6 @@ void SessionInfo::update_state(const types::evse_manager::SessionEvent event) {
         break;
     case Event::ChargingPausedEVSE:
         this->state = State::ChargingPausedEVSE;
-        break;
-    case Event::WaitingForEnergy:
-        this->state = State::WaitingForEnergy;
         break;
     case Event::ChargingFinished:
         this->state = State::Finished;
@@ -167,8 +163,6 @@ void SessionInfo::update_state(const types::evse_manager::SessionEvent event) {
     case Event::SessionFinished:
         this->state = State::Unplugged;
         break;
-    case Event::ReplugStarted:
-    case Event::ReplugFinished:
     default:
         break;
     }
