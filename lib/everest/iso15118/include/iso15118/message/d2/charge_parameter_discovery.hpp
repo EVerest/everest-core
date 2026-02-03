@@ -71,6 +71,7 @@ struct SalesTariffEntry : Entry {
     std::optional<uint8_t> e_price_level;
     std::vector<ConsumptionCost> consumption_cost; // [1 - 3]
 };
+constexpr auto SalesTariffEntryConsumptionCostMaxLength = 3;
 
 struct SalesTariff {
     std::optional<std::string> id;
@@ -79,11 +80,13 @@ struct SalesTariff {
     std::optional<uint8_t> num_e_price_levels;
     std::vector<SalesTariffEntry> sales_tariff_entry; // [1 - 1024]
 };
+constexpr auto SalesTariffEntryMaxLength = 1024;
 
 struct PMaxScheduleEntry : Entry {
     PhysicalValue p_max; // W
 };
 using PMaxSchedule = std::vector<PMaxScheduleEntry>; // [1 - 1024]
+constexpr auto PMaxScheduleMaxLength = 1024;
 
 struct SaScheduleTuple {
     SAScheduleTupleID sa_schedule_tuple_id;

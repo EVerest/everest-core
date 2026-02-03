@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 Pionix GmbH and Contributors to EVerest
+#include <cstddef>
 #include <iso15118/message/d2/charge_parameter_discovery.hpp>
 
 #include <iso15118/detail/variant_access.hpp>
@@ -61,17 +62,14 @@ template <> void convert(const data_types::ConsumptionCost& in, struct iso2_Cons
     init_iso2_ConsumptionCostType(&out);
     convert(in.start_value, out.startValue);
 
-    int idx = 0;
-    for (const auto& entry : in.cost) {
-        if (idx >= iso2_CostType_3_ARRAY_SIZE) {
-            // TODO(kd): report error?
-            break;
-        }
-        auto& entry_out = out.Cost.array[idx++];
+    const auto cost_type_max_length = std::min(static_cast<size_t>(iso2_CostType_3_ARRAY_SIZE), in.cost.size());
+    for (size_t i = 0; i < cost_type_max_length; i++) {
+        const auto& entry_in = in.cost.at(i);
+        auto& entry_out = out.Cost.array[i];
         init_iso2_CostType(&entry_out);
-        cb_convert_enum(entry.cost_kind, entry_out.costKind);
-        entry_out.amount = entry.amount;
-        CPP2CB_ASSIGN_IF_USED(entry.amount_multiplier, entry_out.amountMultiplier);
+        cb_convert_enum(entry_in.cost_kind, entry_out.costKind);
+        entry_out.amount = entry_in.amount;
+        CPP2CB_ASSIGN_IF_USED(entry_in.amount_multiplier, entry_out.amountMultiplier);
     }
     out.Cost.arrayLen = in.cost.size();
 }
@@ -82,14 +80,12 @@ template <> void convert(const data_types::SalesTariffEntry& in, struct iso2_Sal
     out.RelativeTimeInterval_isUsed = true;
     CPP2CB_ASSIGN_IF_USED(in.e_price_level, out.EPriceLevel);
 
-    int cost_idx = 0;
-    for (const auto& cost : in.consumption_cost) {
-        if (cost_idx >= iso2_ConsumptionCostType_3_ARRAY_SIZE) {
-            // TODO(kd): report error?
-            break;
-        }
-        auto& cost_out = out.ConsumptionCost.array[cost_idx++];
-        convert(cost, cost_out);
+    const auto consumption_cost_max_length =
+        std::min(static_cast<size_t>(iso2_ConsumptionCostType_3_ARRAY_SIZE), in.consumption_cost.size());
+    for (size_t i = 0; i < consumption_cost_max_length; i++) {
+        const auto& cost_in = in.consumption_cost.at(i);
+        auto& cost_out = out.ConsumptionCost.array[i];
+        convert(cost_in, cost_out);
     }
     out.ConsumptionCost.arrayLen = in.consumption_cost.size();
 }
@@ -98,17 +94,15 @@ template <> void convert(const data_types::SaScheduleTuple& in, struct iso2_SASc
     init_iso2_SAScheduleTupleType(&out);
     out.SAScheduleTupleID = in.sa_schedule_tuple_id;
 
-    int entry_idx = 0;
-    for (const auto& entry : in.pmax_schedule) {
-        if (entry_idx >= iso2_PMaxScheduleEntryType_12_ARRAY_SIZE) {
-            // TODO(kd): report error?
-            break;
-        }
-        auto& entry_out = out.PMaxSchedule.PMaxScheduleEntry.array[entry_idx++];
+    const auto pmax_schedule_max_length =
+        std::min(static_cast<size_t>(iso2_PMaxScheduleEntryType_12_ARRAY_SIZE), in.pmax_schedule.size());
+    for (size_t i = 0; i < pmax_schedule_max_length; i++) {
+        const auto& entry_in = in.pmax_schedule.at(i);
+        auto& entry_out = out.PMaxSchedule.PMaxScheduleEntry.array[i];
         init_iso2_PMaxScheduleEntryType(&entry_out);
-        convert(entry.time_interval, entry_out.RelativeTimeInterval);
+        convert(entry_in.time_interval, entry_out.RelativeTimeInterval);
         entry_out.RelativeTimeInterval_isUsed = true;
-        convert(entry.p_max, entry_out.PMax);
+        convert(entry_in.p_max, entry_out.PMax);
     }
     out.PMaxSchedule.PMaxScheduleEntry.arrayLen = in.pmax_schedule.size();
 
@@ -120,14 +114,12 @@ template <> void convert(const data_types::SaScheduleTuple& in, struct iso2_SASc
         CPP2CB_STRING_IF_USED(in.sales_tariff->sales_tariff_description, out.SalesTariff.SalesTariffDescription);
         CPP2CB_ASSIGN_IF_USED(in.sales_tariff->num_e_price_levels, out.SalesTariff.NumEPriceLevels);
 
-        entry_idx = 0;
-        for (const auto& entry : in.sales_tariff->sales_tariff_entry) {
-            if (entry_idx >= iso2_SalesTariffEntryType_12_ARRAY_SIZE) {
-                // TODO(kd): report error?
-                break;
-            }
-            auto& entry_out = out.SalesTariff.SalesTariffEntry.array[entry_idx++];
-            convert(entry, entry_out);
+        const auto sales_tariff_entry_max_length = std::min(
+            static_cast<size_t>(iso2_SalesTariffEntryType_12_ARRAY_SIZE), in.sales_tariff->sales_tariff_entry.size());
+        for (size_t i = 0; i < sales_tariff_entry_max_length; i++) {
+            const auto& entry_in = in.sales_tariff->sales_tariff_entry.at(i);
+            auto& entry_out = out.SalesTariff.SalesTariffEntry.array[i];
+            convert(entry_in, entry_out);
         }
         out.SalesTariff.SalesTariffEntry.arrayLen = in.sales_tariff->sales_tariff_entry.size();
     }
@@ -153,14 +145,12 @@ template <> void convert(const ChargeParameterDiscoveryResponse& in, struct iso2
     cb_convert_enum(in.evse_processing, out.EVSEProcessing);
 
     if (in.sa_schedule_list.has_value()) {
-        int tuple_idx = 0;
-        for (auto& schedule : in.sa_schedule_list.value()) {
-            if (tuple_idx >= iso2_SAScheduleTupleType_3_ARRAY_SIZE) {
-                // TODO(kd): report error?
-                break;
-            }
-            auto& schedule_out = out.SAScheduleList.SAScheduleTuple.array[tuple_idx++];
-            convert(schedule, schedule_out);
+        const auto sa_schedule_list_max_length =
+            std::min(static_cast<size_t>(iso2_SAScheduleTupleType_3_ARRAY_SIZE), in.sa_schedule_list->size());
+        for (size_t i = 0; i < sa_schedule_list_max_length; i++) {
+            const auto& schedule_in = in.sa_schedule_list->at(i);
+            auto& schedule_out = out.SAScheduleList.SAScheduleTuple.array[i];
+            convert(schedule_in, schedule_out);
         }
         out.SAScheduleList.SAScheduleTuple.arrayLen = in.sa_schedule_list->size();
         out.SAScheduleList_isUsed = true;
