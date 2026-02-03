@@ -22,6 +22,8 @@
 
 #include <EebusCallbacks.hpp>
 #include <EebusConnectionHandler.hpp>
+#include <everest/io/event/fd_event_handler.hpp>
+#include <everest/io/event/timer_fd.hpp>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -40,6 +42,8 @@ struct Conf {
     std::string serial_number;
     int failsafe_control_limit_W;
     int max_nominal_power_W;
+    int restart_delay_s;
+    int reconnect_delay_s;
 };
 
 class EEBUS : public Everest::ModuleBase {
@@ -72,13 +76,18 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     void start_eebus_grpc_api(const std::filesystem::path& binary_path, int port,
-                              const std::filesystem::path& cert_file, const std::filesystem::path& key_file);
+                              const std::filesystem::path& cert_file, const std::filesystem::path& key_file,
+                              int restart_delay_s);
     std::thread eebus_grpc_api_thread;
     std::atomic<bool> eebus_grpc_api_thread_active;
 
     std::unique_ptr<EebusConnectionHandler> connection_handler;
 
     eebus::EEBusCallbacks callbacks{};
+    everest::lib::io::event::fd_event_handler event_handler;
+    std::thread event_handler_thread;
+    std::atomic_bool running_flag{true};
+    std::shared_ptr<ConfigValidator> config_validator;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

@@ -95,6 +95,14 @@ int ConfigValidator::get_max_nominal_power() const {
     return this->config.max_nominal_power_W;
 }
 
+int ConfigValidator::get_restart_delay_s() const {
+    return this->config.restart_delay_s;
+}
+
+int ConfigValidator::get_reconnect_delay_s() const {
+    return this->config.reconnect_delay_s;
+}
+
 bool ConfigValidator::validate_eebus_service_port() const {
     if (this->config.eebus_service_port < 0) {
         EVLOG_error << "eebus service port is negative";
