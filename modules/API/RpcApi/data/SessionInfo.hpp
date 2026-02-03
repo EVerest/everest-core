@@ -76,7 +76,6 @@ private:
         Preparing,
         Reserved,
         AuthRequired,
-        WaitingForEnergy,
         ChargingPausedEV,
         ChargingPausedEVSE,
         Charging,

@@ -543,7 +543,6 @@ EVSEStateEnum
   "Preparing",
   "Reserved",
   "AuthRequired",
-  "WaitingForEnergy",
   "Charging",
   "ChargingPausedEV",
   "ChargingPausedEVSE",

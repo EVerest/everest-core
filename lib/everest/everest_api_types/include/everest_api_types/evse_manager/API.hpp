@@ -57,19 +57,21 @@ enum class SessionEventEnum {
     ChargingStarted,
     ChargingPausedEV,
     ChargingPausedEVSE,
-    WaitingForEnergy,
-    ChargingResumed,
     StoppingCharging,
     ChargingFinished,
     TransactionFinished,
     SessionFinished,
     ReservationStart,
     ReservationEnd,
-    ReplugStarted,
-    ReplugFinished,
     PluginTimeout,
     SwitchingPhases,
     SessionResumed,
+};
+
+enum class PauseChargingEVSEReasonEnum {
+    Error,
+    NoEnergy,
+    UserPause,
 };
 
 struct SessionStarted {
@@ -102,6 +104,10 @@ struct TransactionFinished {
 
 struct ChargingStateChangedEvent {
     powermeter::PowermeterValues meter_value;
+};
+
+struct ChargingPausedEVSEReasons {
+    std::vector<types::evse_manager::PauseChargingEVSEReasonEnum> reasons;
 };
 
 struct AuthorizationEvent {
@@ -238,6 +244,7 @@ struct SessionEvent {
     std::optional<SessionFinished> session_finished;
     std::optional<TransactionStarted> transaction_started;
     std::optional<TransactionFinished> transaction_finished;
+    std::optional<ChargingPausedEVSEReasons> charging_paused_evse;
     std::optional<ChargingStateChangedEvent> charging_state_changed_event;
     std::optional<AuthorizationEvent> authorization_event;
     std::optional<EnableDisableSource> source;
@@ -265,7 +272,6 @@ enum class EvseStateEnum {
     Disabled,
     Preparing,
     AuthRequired,
-    WaitingForEnergy,
     ChargingPausedEV,
     ChargingPausedEVSE,
     Charging,

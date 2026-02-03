@@ -176,7 +176,6 @@ enum class EVSEStateEnum {
     Preparing,
     Reserved,
     AuthRequired,
-    WaitingForEnergy,
     ChargingPausedEV,
     ChargingPausedEVSE,
     Charging,
@@ -203,8 +202,6 @@ inline std::string evsestate_enum_to_string(EVSEStateEnum e) {
         return "Reserved";
     case EVSEStateEnum::AuthRequired:
         return "AuthRequired";
-    case EVSEStateEnum::WaitingForEnergy:
-        return "WaitingForEnergy";
     case EVSEStateEnum::ChargingPausedEV:
         return "ChargingPausedEV";
     case EVSEStateEnum::ChargingPausedEVSE:
@@ -246,9 +243,6 @@ inline EVSEStateEnum string_to_evsestate_enum(const std::string& s) {
     }
     if (s == "AuthRequired") {
         return EVSEStateEnum::AuthRequired;
-    }
-    if (s == "WaitingForEnergy") {
-        return EVSEStateEnum::WaitingForEnergy;
     }
     if (s == "ChargingPausedEV") {
         return EVSEStateEnum::ChargingPausedEV;

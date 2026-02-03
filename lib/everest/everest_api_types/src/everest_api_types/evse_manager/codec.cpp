@@ -155,6 +155,16 @@ std::string serialize(SessionInfo const& val) noexcept {
     return result.dump(json_indent);
 }
 
+std::string serialize(PauseChargingEVSEReasonEnum val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
+std::string serialize(ChargingPausedEVSEReasons const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
 std::ostream& operator<<(std::ostream& os, StopTransactionReason const& val) {
     os << serialize(val);
     return os;
@@ -295,6 +305,16 @@ std::ostream& operator<<(std::ostream& os, EvseStateEnum const& val) {
 }
 
 std::ostream& operator<<(std::ostream& os, SessionInfo const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, PauseChargingEVSEReasonEnum const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, ChargingPausedEVSEReasons const& val) {
     os << serialize(val);
     return os;
 }
@@ -470,6 +490,18 @@ template <> EvseStateEnum deserialize(std::string const& s) {
 template <> SessionInfo deserialize(std::string const& s) {
     auto data = json::parse(s);
     SessionInfo result = data;
+    return result;
+}
+
+template <> PauseChargingEVSEReasonEnum deserialize(std::string const& s) {
+    auto data = json::parse(s);
+    PauseChargingEVSEReasonEnum result = data;
+    return result;
+}
+
+template <> ChargingPausedEVSEReasons deserialize(std::string const& s) {
+    auto data = json::parse(s);
+    ChargingPausedEVSEReasons result = data;
     return result;
 }
 

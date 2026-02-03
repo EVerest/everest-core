@@ -74,6 +74,32 @@ types:
     enum:
       - EVConnected
       - Authorized
+  PauseChargingEVSEReasonEnum:
+    description: >-
+      Reason Enum for EVSE Pause
+        UserPause: Session was paused due to external request on the EvseManager interface
+        Error: An error prevents charging, it will resume once the error is cleared
+        NoEnergy: Paused because there is no energy available at this moment
+    type: string
+    enum:
+      - UserPause
+      - Error
+      - NoEnergy
+  ChargingPausedEVSEReasons:
+    description: >-
+      Multiple reasons to be in pause state can be active at any point in time.
+    type: object
+    additionalProperties: false
+    required:
+      - reasons
+    properties:
+      reasons:
+        type: array
+        items:
+          description: A single reason to be paused
+          $ref: /evse_manager#/PauseChargingEVSEReasonEnum
+        minItems: 1
+        maxItems: 3
   SwitchThreePhasesWhileChargingResult:
     description: >-
       Returns success or error code
@@ -101,15 +127,12 @@ types:
         ChargingStarted: DC: CurrentDemand has started. AC: Auth is ok and car requested power (state C/D)
         ChargingPausedEV: Signaled when charging is paused by the EV
         ChargingPausedEVSE: Signaled when charging is paused by the EVSE
-        ChargingResumed: Charging has resumed from a pause
         StoppingCharging: EVSE has started to stop the charging process. DC: CurrentDemand has finished, now doing WeldingCheck etc, AC: Wait for car to return to state B or A
         ChargingFinished: Charging is finished. Essentially the same as TransactionFinished, but emitted for clarity
         TransactionFinished: Signaled when the transaction finished. Transaction finishes at the point where one of the preconditions for charging irrevocably becomes false: When a user swipes to stop the transaction and the stop is authorized.
         SessionFinished: Session finishes at the point that the EVSE is available again (no cable plugged)
         ReservationStart: Signaled when a reservation starts
         ReservationEnd: Signaled when a reservation ends
-        ReplugStarted: Signaled when the EVSE Manager virtually replugs without interrupting the session or transaction
-        ReplugFinished: Signaled when the virtual replug process has finished
         PluginTimeout: Signaled when an EV has been plugged in but no authorization is present within specified ConnectionTimeout
         SwitchingPhases: Signaled when the EVSE Manager starts switching phases
         SessionResumed: Signaled when a session is resumed at startup (e.g. because of previous powerloss)
@@ -126,16 +149,12 @@ types:
       - ChargingStarted
       - ChargingPausedEV
       - ChargingPausedEVSE
-      - WaitingForEnergy
-      - ChargingResumed
       - StoppingCharging
       - ChargingFinished
       - TransactionFinished
       - SessionFinished
       - ReservationStart
       - ReservationEnd
-      - ReplugStarted
-      - ReplugFinished
       - PluginTimeout
       - SwitchingPhases
       - SessionResumed
@@ -336,10 +355,15 @@ types:
           out
         type: object
         $ref: /evse_manager#/TransactionFinished
+      charging_paused_evse:
+        description: >-
+          Multiple reasons to be in pause state can be active at any point in time.
+        type: object
+        $ref: /evse_manager#/ChargingPausedEVSEReasons
       charging_state_changed_event:
         description: >-
           Data for ChargingStateChangedEvent. Shall be set for the following SessionEventEnums:
-          ChargingStarted, ChargingResumed, ChargingPausedEV, Charging
+          ChargingStarted, ChargingPausedEV, Charging
         type: object
         $ref: /evse_manager#/ChargingStateChangedEvent
       authorization_event:

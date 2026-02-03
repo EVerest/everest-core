@@ -378,8 +378,14 @@ config:
       If no energy is available the charger can signal a pause to the car before cable check.
       With this option the charger ignores that and continues as if energy were available.
       This is not standard compliant!
+      As of today most EVs do not handle the pause signal correctly causing the session to be
+      terminated and not allowing to start charging again when energy is available.
+      The default of this value is true, allowing the session to proceed until the charge loop.
+      Terminating the session in the charge loop when no energy is available is handled more
+      gracefully by most EVs and allows to start charging again when energy is available without
+      the need of unplugging and plugging again.
     type: boolean
-    default: false
+    default: true
   zero_power_allow_ev_to_ignore_pause:
     description: >-
       If no energy is available the charger can signal a pause to the car before cable check.
@@ -411,6 +417,19 @@ config:
       - Active
       - Passive
     default: None
+  hlc_charge_loop_without_energy_timeout_s:
+    description: >-
+      Timeout (s) to allow HLC charge loop to continue without available energy; 
+      when exceeded, the HLC session is stopped and PWM is disabled until energy returns.
+      If set too long, some EVs stop the session on their own. Then it cannot be resumed
+      when energy is available again.
+    type: integer
+    default: 5
+  dc_ramp_ampere_per_second:
+    description: >-
+      Maximum ampere per second limit for up/down ramping of current in charging loop.
+    type: integer
+    default: 5
 provides:
   evse:
     interface: evse_manager

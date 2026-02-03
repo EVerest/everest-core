@@ -675,8 +675,6 @@ void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reas
 double IECStateMachine::read_pp_ampacity() {
     return 0.0;
 }
-void IECStateMachine::evse_replug(int ms) {
-}
 void IECStateMachine::switch_three_phases_while_charging(bool n) {
 }
 void IECStateMachine::setup(bool has_ventilation) {
@@ -718,10 +716,6 @@ const std::string cpevent_to_string(CPEvent e) {
         return "BCDtoEF";
     case CPEvent::BCDtoE:
         return "BCDtoE";
-    case CPEvent::EvseReplugStarted:
-        return "EvseReplugStarted";
-    case CPEvent::EvseReplugFinished:
-        return "EvseReplugFinished";
     }
     throw std::out_of_range("No known string conversion for provided enum of type CPEvent");
 }

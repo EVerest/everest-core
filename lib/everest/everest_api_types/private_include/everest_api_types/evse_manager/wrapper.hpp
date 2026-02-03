@@ -35,6 +35,12 @@ using SessionEventEnum_External = SessionEventEnum;
 SessionEventEnum_Internal to_internal_api(SessionEventEnum_External const& val);
 SessionEventEnum_External to_external_api(SessionEventEnum_Internal const& val);
 
+using PauseChargingEVSEReasonEnum_Internal = ::types::evse_manager::PauseChargingEVSEReasonEnum;
+using PauseChargingEVSEReasonEnum_External = PauseChargingEVSEReasonEnum;
+
+PauseChargingEVSEReasonEnum_Internal to_internal_api(PauseChargingEVSEReasonEnum_External const& val);
+PauseChargingEVSEReasonEnum_External to_external_api(PauseChargingEVSEReasonEnum_Internal const& val);
+
 using SessionEvent_Internal = ::types::evse_manager::SessionEvent;
 using SessionEvent_External = SessionEvent;
 
@@ -88,6 +94,12 @@ using ChargingStateChangedEvent_External = ChargingStateChangedEvent;
 
 ChargingStateChangedEvent_Internal to_internal_api(ChargingStateChangedEvent_External const& val);
 ChargingStateChangedEvent_External to_external_api(ChargingStateChangedEvent_Internal const& val);
+
+using ChargingPausedEVSEReasons_Internal = ::types::evse_manager::ChargingPausedEVSEReasons;
+using ChargingPausedEVSEReasons_External = ChargingPausedEVSEReasons;
+
+ChargingPausedEVSEReasons_Internal to_internal_api(ChargingPausedEVSEReasons_External const& val);
+ChargingPausedEVSEReasons_External to_external_api(ChargingPausedEVSEReasons_Internal const& val);
 
 using AuthorizationEvent_Internal = ::types::evse_manager::AuthorizationEvent;
 using AuthorizationEvent_External = AuthorizationEvent;

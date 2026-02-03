@@ -161,8 +161,6 @@ on CP transitions:
 * ``ENTER_BCD``: any other state -> B/C/D. Used to start SLAC
 * ``LEAVE_BCD``: B/C/D -> any other state. Stops SLAC.
 * ``PERMANENT_FAULT``: Permanent fault that cannot be cleared by unplugging car
-* ``EVSE_REPLUG_STARTED``: Replugging sequence started
-* ``EVSE_REPLUG_FINISHED``: Replugging sequence completed
 
 ``PowerMeter``: Contains all data from the power measurement, sent at roughly
 1Hz

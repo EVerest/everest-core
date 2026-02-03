@@ -62,13 +62,8 @@ channels:
   receive_ac_switch_three_phases_while_charging:
     address: 'e2m/ac_switch_three_phases_while_charging'
     messages:
-      receive_ac_switch_three_phases_while_charging:
-        $ref: '#/components/messages/receive_ac_switch_three_phases_while_charging'
-  receive_evse_replug:
-    address: 'e2m/evse_replug'
-    messages:
-      receive_evse_replug:
-        $ref: '#/components/messages/receive_evse_replug'
+       receive_ac_switch_three_phases_while_charging:
+         $ref: '#/components/messages/receive_ac_switch_three_phases_while_charging'
   receive_ac_overcurrent_limit:
     address: 'e2m/ac_overcurrent_limit'
     messages:
@@ -204,12 +199,6 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_ac_switch_three_phases_while_charging'
-    description: 'Direction: EVerest to Module'
-  receive_evse_replug:
-    title: 'Receive request for virtual replug sequence'
-    action: receive
-    channel:
-      $ref: '#/channels/receive_evse_replug'
     description: 'Direction: EVerest to Module'
   receive_ac_overcurrent_limit:
     title: 'Receive over current limit'
@@ -384,23 +373,6 @@ components:
         - summary: ""
           payload:
             "ThreePhases"
-    receive_evse_replug:
-      name: receive_evse_replug
-      title: 'Receive request for virtual replug sequence'
-      summary: >-
-        Optional, in case of doubt do not implement.
-        Special command initiate a virtual replug sequence of adjustable duration without restarting
-        session. Emits a EvseReplugStarted event if supported and started. BSP will
-        take care to not emit other events such as CarPluggedIn/Out during that time.
-        Once finished it will emit a EvseReplugFinished. This is mainly for testing purposes,
-        don't implement for production use.
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/Duration'
-      examples:
-        - summary: ""
-          payload:
-            200
     receive_ac_overcurrent_limit:
       name: receive_ac_overcurrent_limit
       title: 'Receive over current limit'
@@ -624,8 +596,6 @@ components:
             - A-F: CP states as defined in IEC61851-1
             - PowerOn: Hardware confirms that contactors switched on correctly (typically mirror contacts indicated successful switch on)
             - PowerOff: Hardware confirms that contactors switched off correctly and are not welded (typically mirror contacts indicated successful switch off)
-            - EvseReplugStarted: Special testing sequence: virtual replugging started
-            - EvseReplugFinished: Special testing sequence: virtual replugging stopped
             - Disconnected: Only used on EV side: Not connected to a charging station. Do not use on EVSE side.
           enum:
             - 'A'
@@ -636,8 +606,6 @@ components:
             - 'F'
             - 'PowerOn'
             - 'PowerOff'
-            - 'EvseReplugStarted'
-            - 'EvseReplugFinished'
             - 'Disconnected'
     Current:
       description: Electrical current in milliampere (mA)
