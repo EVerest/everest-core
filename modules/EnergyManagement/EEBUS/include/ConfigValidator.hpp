@@ -27,6 +27,8 @@ public:
     int get_failsafe_control_limit() const;
     int get_max_nominal_power() const;
     std::string get_eebus_ems_ski() const;
+    int get_restart_delay_s() const;
+    int get_reconnect_delay_s() const;
 
 private:
     bool validate_eebus_service_port() const;

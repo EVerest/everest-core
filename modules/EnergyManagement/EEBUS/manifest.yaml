@@ -55,6 +55,14 @@ config:
     description: Maximum nominal power of the charging station. This is the max power the CS can consume.
     type: integer
     default: 32000
+  restart_delay_s:
+    description: "Delay in seconds before restarting the eebus_grpc_api binary."
+    type: integer
+    default: 5
+  reconnect_delay_s:
+    description: "Delay in seconds before trying to reconnect to the gRPC service."
+    type: integer
+    default: 5
 provides:
   main:
     description: main

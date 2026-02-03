@@ -42,6 +42,8 @@ struct Conf {
     std::string serial_number;
     int failsafe_control_limit_W;
     int max_nominal_power_W;
+    int restart_delay_s;
+    int reconnect_delay_s;
 };
 
 class EEBUS : public Everest::ModuleBase {
@@ -74,7 +76,8 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     void start_eebus_grpc_api(const std::filesystem::path& binary_path, int port,
-                              const std::filesystem::path& cert_file, const std::filesystem::path& key_file);
+                              const std::filesystem::path& cert_file, const std::filesystem::path& key_file,
+                              int restart_delay_s);
     std::thread eebus_grpc_api_thread;
     std::atomic<bool> eebus_grpc_api_thread_active;
 

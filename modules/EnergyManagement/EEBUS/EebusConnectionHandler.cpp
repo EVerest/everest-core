@@ -43,8 +43,9 @@ void EebusConnectionHandler::reconnect() {
             this->done_adding_use_case();
         }
     } else {
-        EVLOG_warning << "Reconnect attempt failed. Will try again in 5 seconds.";
-        this->reconnection_timer.set_timeout(std::chrono::seconds(5));
+        EVLOG_warning << "Reconnect attempt failed. Will try again in " << this->config->get_reconnect_delay_s()
+                      << " seconds.";
+        this->reconnection_timer.set_timeout(std::chrono::seconds(this->config->get_reconnect_delay_s()));
     }
 }
 
@@ -195,10 +196,10 @@ void EebusConnectionHandler::handle_event(EebusConnectionEvents event) {
     case EebusConnectionEvents::DISCONNECTED:
         this->state = State::DISCONNECTED;
         this->reset();
-        EVLOG_info << "Disconnected from EEBUS gRPC service. Will try to reconnect in 5 seconds.";
-        this->reconnection_timer.set_timeout(std::chrono::seconds(5));
-        this->m_handler.register_event_handler(&this->reconnection_timer,
-                                               [this](auto&) { this->reconnect(); });
+        EVLOG_info << "Disconnected from EEBUS gRPC service. Will try to reconnect in "
+                   << this->config->get_reconnect_delay_s() << " seconds.";
+        this->reconnection_timer.set_timeout(std::chrono::seconds(this->config->get_reconnect_delay_s()));
+        this->m_handler.register_event_handler(&this->reconnection_timer, [this](auto&) { this->reconnect(); });
         break;
     case EebusConnectionEvents::STARTED:
         if (State::READY_TO_START == state) {

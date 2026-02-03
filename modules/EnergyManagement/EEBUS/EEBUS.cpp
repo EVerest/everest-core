@@ -41,15 +41,11 @@ void EEBUS::init() {
     }
 
     if (this->config.manage_eebus_grpc_api_binary) {
-        if (config_validator->validate()) {
-            this->eebus_grpc_api_thread_active.store(true);
-            this->eebus_grpc_api_thread =
-                std::thread(&EEBUS::start_eebus_grpc_api, this, config_validator->get_eebus_grpc_api_binary_path(),
-                            config_validator->get_grpc_port(), config_validator->get_certificate_path(),
-                            config_validator->get_private_key_path());
-        } else {
-            EVLOG_critical << "Could not validate config for starting eebus_grpc_api binary";
-        }
+        this->eebus_grpc_api_thread_active.store(true);
+        this->eebus_grpc_api_thread = std::thread(
+            &EEBUS::start_eebus_grpc_api, this, config_validator->get_eebus_grpc_api_binary_path(),
+            config_validator->get_grpc_port(), config_validator->get_certificate_path(),
+            config_validator->get_private_key_path(), config_validator->get_restart_delay_s());
     }
 
     this->connection_handler = std::make_unique<EebusConnectionHandler>(config_validator);
@@ -60,7 +56,8 @@ void EEBUS::init() {
 }
 
 void EEBUS::start_eebus_grpc_api(const std::filesystem::path& binary_path, int port,
-                                 const std::filesystem::path& cert_file, const std::filesystem::path& key_file) {
+                                 const std::filesystem::path& cert_file, const std::filesystem::path& key_file,
+                                 int restart_delay_s) {
     std::vector<std::string> args;
     constexpr int num_args = 6;
     args.reserve(num_args);
@@ -92,8 +89,8 @@ void EEBUS::start_eebus_grpc_api(const std::filesystem::path& binary_path, int p
         }
 
         if (this->eebus_grpc_api_thread_active) {
-            EVLOG_info << "Restarting eebus_grpc_api binary in 5 seconds...";
-            std::this_thread::sleep_for(std::chrono::seconds(5));
+            EVLOG_info << "Restarting eebus_grpc_api binary in " << restart_delay_s << " seconds...";
+            std::this_thread::sleep_for(std::chrono::seconds(restart_delay_s));
         }
     }
     EVLOG_info << "eebus_grpc_api monitoring thread is stopping.";
