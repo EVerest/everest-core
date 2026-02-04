@@ -121,6 +121,9 @@ void ChargePoint::start(BootReasonEnum bootreason, bool start_connecting) {
     this->message_queue->start();
 
     this->bootreason = bootreason;
+    // Trigger all initial status notifications and callbacks related to component state
+    // Should be done before sending the BootNotification.req so that the correct states can be reported
+    this->component_state_manager->trigger_all_effective_availability_changed_callbacks();
     // get transaction messages from db (if there are any) so they can be sent again.
     this->message_queue->get_persisted_messages_from_db();
     this->provisioning->boot_notification_req(bootreason);
@@ -562,10 +565,6 @@ void ChargePoint::initialize(const std::map<std::int32_t, std::int32_t>& evse_co
     this->evse_manager = std::make_unique<EvseManager>(
         evse_connector_structure, *this->device_model, this->database_handler, component_state_manager,
         transaction_meter_value_callback, this->callbacks.pause_charging_callback);
-
-    // Trigger all initial status notifications and callbacks related to component state
-    // Should be done before sending the BootNotification.req so that the correct states can be reported
-    this->component_state_manager->trigger_all_effective_availability_changed_callbacks();
 
     this->configure_message_logging_format(message_log_path);
 
