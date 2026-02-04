@@ -1,0 +1,27 @@
+description: >-
+  This module implements a Sunspec server for energy management purposes.
+  It provides a Sunspec interface to expose energy management data and control
+  points to Sunspec-compatible clients.
+config:
+  example_config_param:
+    description: >-
+      ...
+    type: string
+    default: "example"
+provides:
+  empty:
+    description: empty
+    interface: empty
+requires:
+  evse_manager:
+    interface: evse_manager
+    min_connections: 1
+    max_connections: 128
+  external_energy_limits:
+    interface: external_energy_limits
+    min_connections: 1
+    max_connections: 128
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Piet Gömpel
