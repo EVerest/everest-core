@@ -454,16 +454,54 @@ async def test_iso15118_ac_session_no_energy_before_session(
 @pytest.mark.probe_module(
     connections={
         "evse_manager": [Requirement("evse_manager", "evse")],
+        "gcp": [Requirement("grid_connection_point", "external_limits")]
+        # FIXME: "iso15118": [Requirement("iso15118_charger", "evse")]
+    }
+)
+@pytest.mark.everest_core_config("config-sil-dc.yaml")
+@pytest.mark.everest_config_adaptions(DcConfigAdjustmentStrategy())
+async def test_iso15118_dc_session_no_energy_before_session(
+    test_controller: TestController, everest_core: EverestCore
+):
+    """Test ISO 15118 DC charging session with no energy at the start."""
+    probe_module, session_event_mock, powermeter_mock = await setup_session_mocks(
+        test_controller, everest_core
+    )
+
+    await set_external_limits(probe_module, "gcp", 0, 0)
+    await start_session(test_controller, session_event_mock, test_controller.plug_in_dc_iso, start_sequence=NO_ENERGY_SESSION_START_SEQUENCE)
+    
+    # current_demand_started
+    # start_pre_charge
+    # start_cable_check
+    # v2g_setup_finish (after PowerDelivery)
+    
+    # verify current demand has not started!
+
+    await assert_energy_below(powermeter_mock, energy_threshold_wh=5, timeout=15)
+    await set_external_limits(probe_module, "gcp", 10000, 10000)
+    await assert_energy_exceeds(powermeter_mock, energy_threshold_wh=20, timeout=30)
+    await end_session(test_controller, session_event_mock)
+
+
+
+
+@pytest.mark.asyncio
+@pytest.mark.probe_module(
+    connections={
+        "evse_manager": [Requirement("evse_manager", "evse")],
         "gcp": [Requirement("grid_connection_point", "external_limits")],
     }
 )
 @pytest.mark.everest_core_config("config-sil-dc.yaml")
 @pytest.mark.everest_config_adaptions(DcConfigAdjustmentStrategy(zero_power_ignore_pause=True))
-# FIXME: Car simulation currently doesnt seem to support going into pause before session
-async def test_iso15118_dc_session_no_energy_before_session(
+async def test_iso15118_dc_session_no_energy_before_session_no_pause(
     test_controller: TestController, everest_core: EverestCore
 ):
-    """Test ISO 15118 DC charging session with no energy at the start."""
+    """
+    Test ISO 15118 DC charging session with no energy at the start. zero_power_ignore_pause=True
+    so the session should start normally and go into CurrentDemand
+    """
     probe_module, session_event_mock, powermeter_mock = await setup_session_mocks(
         test_controller, everest_core
     )
