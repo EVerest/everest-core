@@ -102,6 +102,20 @@ void Provisioning::boot_notification_req(const BootReasonEnum& reason, const boo
     charging_station.serialNumber.emplace(
         this->context.device_model.get_value<std::string>(ControllerComponentVariables::ChargeBoxSerialNumber));
 
+    auto iccid = this->context.device_model.get_optional_value<std::string>(ControllerComponentVariables::ICCID);
+    auto imsi = this->context.device_model.get_optional_value<std::string>(ControllerComponentVariables::IMSI);
+
+    if (iccid.has_value() || imsi.has_value()) {
+        Modem modem;
+        if (iccid.has_value()) {
+            modem.iccid.emplace(iccid.value());
+        }
+        if (imsi.has_value()) {
+            modem.imsi.emplace(imsi.value());
+        }
+        charging_station.modem.emplace(modem);
+    }
+
     req.reason = reason;
     req.chargingStation = charging_station;
 
