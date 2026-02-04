@@ -24,6 +24,7 @@ namespace {
 using namespace ocpp;
 using SetResult = v16::ChargePointConfigurationDeviceModel::SetResult;
 using DeviceModelInterface = v2::DeviceModelInterface;
+using SupportedFeatureProfiles = v16::SupportedFeatureProfiles;
 
 constexpr const char* custom_component = "Custom";
 
@@ -120,12 +121,10 @@ std::optional<bool> isReadOnly(DeviceModelInterface& storage, const std::string_
 }
 
 template <typename T>
-std::optional<T> get_optional(DeviceModelInterface& storage, const std::string_view& component,
-                              const std::string_view& variable) {
-    const v2::Component component_v{std::string{component}};
-    const v2::Variable variable_v{std::string{variable}};
+std::optional<T> get_optional(DeviceModelInterface& storage, const v2::Component& component,
+                              const v2::Variable& variable) {
     std::string value;
-    const auto get_result = storage.get_variable(component_v, variable_v, v2::AttributeEnum::Actual, value);
+    const auto get_result = storage.get_variable(component, variable, v2::AttributeEnum::Actual, value);
     if (get_result == v2::GetVariableStatusEnum::Accepted) {
         try {
             if constexpr (std::is_same_v<bool, T>) {
@@ -136,17 +135,30 @@ std::optional<T> get_optional(DeviceModelInterface& storage, const std::string_v
                 return v2::to_specific_type<T>(value);
             }
         } catch (const std::exception& ex) {
-            EVLOG_warning << component_v.name << '[' << variable_v.name << "] '" << value
+            EVLOG_warning << component.name << '[' << variable.name << "] '" << value
                           << "' to_specific_type exception: " << ex.what();
         }
     }
     return std::nullopt;
 }
 
+template <typename T>
+std::optional<T> get_optional(DeviceModelInterface& storage, const std::string_view& component,
+                              const std::string_view& variable) {
+    const v2::Component component_v{std::string{component}};
+    const v2::Variable variable_v{std::string{variable}};
+    return get_optional<T>(storage, component_v, variable_v);
+}
+
 template <typename T> std::optional<T> get_optional(DeviceModelInterface& storage, v16::keys::valid_keys key) {
-    const auto component = v16::keys::to_section_string_view(key);
-    const auto variable = v16::keys::convert(key);
-    return get_optional<T>(storage, component, variable);
+    std::optional<T> result;
+    const auto cv = v16::keys::convert_v2(key);
+    if (cv) {
+        const auto& component = std::get<v2::Component>(*cv);
+        const auto& variable = std::get<v2::Variable>(*cv);
+        result = get_optional<T>(storage, component, variable);
+    }
+    return result;
 }
 
 template <typename T> T inline get_value(DeviceModelInterface& storage, v16::keys::valid_keys key) {
@@ -166,17 +178,26 @@ template <typename T> inline void get_value(T& value, DeviceModelInterface& stor
     value = get_value<T>(storage, key);
 }
 
-bool key_exists(DeviceModelInterface& storage, const std::string_view& component, const std::string_view& variable) {
-    const v2::Component component_v{std::string{component}};
-    const v2::Variable variable_v{std::string{variable}};
-    const auto result = storage.get_variable_meta_data(component_v, variable_v);
+bool key_exists(DeviceModelInterface& storage, const v2::Component& component, const v2::Variable& variable) {
+    const auto result = storage.get_variable_meta_data(component, variable);
     return result.has_value();
 }
 
+bool key_exists(DeviceModelInterface& storage, const std::string_view& component, const std::string_view& variable) {
+    const v2::Component component_v{std::string{component}};
+    const v2::Variable variable_v{std::string{variable}};
+    return key_exists(storage, component_v, variable_v);
+}
+
 bool key_exists(DeviceModelInterface& storage, v16::keys::valid_keys key) {
-    const auto component = v16::keys::to_section_string_view(key);
-    const auto variable = v16::keys::convert(key);
-    return key_exists(storage, component, variable);
+    bool result{false};
+    const auto cv = v16::keys::convert_v2(key);
+    if (cv) {
+        const auto& component = std::get<v2::Component>(*cv);
+        const auto& variable = std::get<v2::Variable>(*cv);
+        result = key_exists(storage, component, variable);
+    }
+    return result;
 }
 
 std::optional<v16::KeyValue> get_key_value_optional(DeviceModelInterface& storage, v16::keys::valid_keys key) {
@@ -205,17 +226,27 @@ inline v16::KeyValue get_key_value(DeviceModelInterface& storage, v16::keys::val
 }
 
 /// set known key to specified value
+SetResult set_value(DeviceModelInterface& storage, const v2::Component& component, const v2::Variable& variable,
+                    const std::string& value) {
+    return storage.set_value(component, variable, v2::AttributeEnum::Actual, value, "OCPP 1.6");
+}
+
 SetResult set_value(DeviceModelInterface& storage, const std::string_view& component, const std::string_view& variable,
                     const std::string& value) {
     const v2::Component component_v{std::string{component}};
     const v2::Variable variable_v{std::string{variable}};
-    return storage.set_value(component_v, variable_v, v2::AttributeEnum::Actual, value, "OCPP 1.6");
+    return set_value(storage, component_v, variable_v, value);
 }
 
 SetResult set_value(DeviceModelInterface& storage, v16::keys::valid_keys key, const std::string& value) {
-    const v2::Component component{std::string{v16::keys::to_section_string_view(key)}};
-    const v2::Variable variable{std::string{v16::keys::convert(key)}};
-    return storage.set_value(component, variable, v2::AttributeEnum::Actual, value, "OCPP 1.6");
+    auto result = SetResult::UnknownVariable;
+    const auto cv = v16::keys::convert_v2(key);
+    if (cv) {
+        const auto& component = std::get<v2::Component>(*cv);
+        const auto& variable = std::get<v2::Variable>(*cv);
+        result = set_value(storage, component, variable, value);
+    }
+    return result;
 }
 
 /// set known key to optional specified value
@@ -328,7 +359,7 @@ bool key_exists(DeviceModelInterface& storage, const std::string_view& name) {
 SetResult set_value(DeviceModelInterface& storage, const std::string_view& name, const std::string& value) {
     const v2::Component component{custom_component};
     const v2::Variable variable{std::string{name}};
-    return storage.set_value(component, variable, v2::AttributeEnum::Actual, value, "OCPP 1.6");
+    return set_value(storage, component, variable, value);
 }
 
 /// \brief set custom value
@@ -956,8 +987,8 @@ ChargePointConfigurationDeviceModel::ChargePointConfigurationDeviceModel(
     }
 #else
     // TODO(james-ctc): remove these - just added for unit tests
-    initial.insert(conversions::string_to_supported_feature_profiles("PnC"));
-    initial.insert(conversions::string_to_supported_feature_profiles("CostAndPrice"));
+    initial.insert(SupportedFeatureProfiles::PnC);
+    initial.insert(SupportedFeatureProfiles::CostAndPrice);
 #endif
 
     initialise(initial, profiles, measurands);
@@ -2627,11 +2658,21 @@ std::vector<KeyValue> ChargePointConfigurationDeviceModel::get_all_key_value() {
         const auto& component = entry.component;
         const auto& variable = entry.variable;
         try {
-            const auto feature = conversions::string_to_supported_feature_profiles(component.name);
-            if (const auto it = supported_feature_profiles.find(feature); it != supported_feature_profiles.end()) {
-                auto kv = get(variable.name);
-                if (kv) {
-                    all.push_back(std::move(kv.value()));
+            // ensure key is valid against the supported profiles
+            const auto v16_key = keys::convert_v2(component, variable);
+            if (!v16_key.empty()) {
+                const auto key = keys::convert(v16_key);
+                if (key) {
+                    const auto feature = keys::get_profile(*key);
+                    if (feature) {
+                        if (const auto it = supported_feature_profiles.find(*feature);
+                            it != supported_feature_profiles.end()) {
+                            auto kv = get(variable.name);
+                            if (kv) {
+                                all.push_back(std::move(kv.value()));
+                            }
+                        }
+                    }
                 }
             }
         } catch (std::exception& ex) {

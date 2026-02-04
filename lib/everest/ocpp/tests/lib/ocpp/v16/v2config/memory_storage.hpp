@@ -9,6 +9,7 @@
 #include <ocpp/v2/ocpp_enums.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 
+#include <map>
 #include <set>
 #include <string>
 #include <string_view>
@@ -16,10 +17,8 @@
 namespace ocpp::v16::stubs {
 
 class MemoryStorage : public ocpp::v2::DeviceModelInterface {
-private:
-    std::set<std::string> read_only;
-
 public:
+    using Storage = std::map<std::string, std::string>;
     using VariableAttribute = ocpp::v2::VariableAttribute;
     using Component = ocpp::v2::Component;
     using ComponentVariable = ocpp::v2::ComponentVariable;
@@ -43,6 +42,15 @@ public:
     using ReportData = ocpp::v2::ReportData;
     using ReportBaseEnum = ocpp::v2::ReportBaseEnum;
 
+private:
+    std::set<std::string> read_only;
+
+    std::optional<MemoryStorage::Storage::iterator> locate_v16(const std::string& name) const;
+    std::optional<std::string> get_v16(const std::string& name) const;
+    SetVariableStatusEnum set_v16(const std::string& name, const std::string& value);
+    SetVariableStatusEnum set_v16_custom(const std::string& name, const std::string& value);
+
+public:
     MemoryStorage();
 
     void apply_full_config();
@@ -139,65 +147,67 @@ public:
 
     GetVariableStatusEnum get_variable(const Component& component_id, const Variable& variable_id,
                                        const AttributeEnum& attribute_enum, std::string& value,
-                                       bool allow_write_only = false) const {
-        return storage.get_variable(component_id, variable_id, attribute_enum, value);
+                                       bool allow_write_only) const override {
+        return storage.get_variable(component_id, variable_id, attribute_enum, value, allow_write_only);
     }
 
     SetVariableStatusEnum set_value(const Component& component_id, const Variable& variable_id,
                                     const AttributeEnum& attribute_enum, const std::string& value,
-                                    const std::string& source, bool allow_read_only = false) {
-        return storage.set_value(component_id, variable_id, attribute_enum, value, source);
+                                    const std::string& source, bool allow_read_only) override {
+        return storage.set_value(component_id, variable_id, attribute_enum, value, source, allow_read_only);
     }
 
     SetVariableStatusEnum set_read_only_value(const Component& component_id, const Variable& variable_id,
                                               const AttributeEnum& attribute_enum, const std::string& value,
-                                              const std::string& source) {
+                                              const std::string& source) override {
         return storage.set_read_only_value(component_id, variable_id, attribute_enum, value, source);
     }
 
     std::optional<MutabilityEnum> get_mutability(const Component& component_id, const Variable& variable_id,
-                                                 const AttributeEnum& attribute_enum) {
+                                                 const AttributeEnum& attribute_enum) override {
         return storage.get_mutability(component_id, variable_id, attribute_enum);
     }
 
-    std::optional<VariableMetaData> get_variable_meta_data(const Component& component_id, const Variable& variable_id) {
+    std::optional<VariableMetaData> get_variable_meta_data(const Component& component_id,
+                                                           const Variable& variable_id) override {
         return storage.get_variable_meta_data(component_id, variable_id);
     }
 
-    std::vector<ReportData> get_base_report_data(const ReportBaseEnum& report_base) {
+    std::vector<ReportData> get_base_report_data(const ReportBaseEnum& report_base) override {
         return storage.get_base_report_data(report_base);
     }
 
-    std::vector<ReportData> get_custom_report_data(
-        const std::optional<std::vector<ComponentVariable>>& component_variables = std::nullopt,
-        const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria = std::nullopt) {
+    std::vector<ReportData>
+    get_custom_report_data(const std::optional<std::vector<ComponentVariable>>& component_variables,
+                           const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria) override {
         return storage.get_custom_report_data(component_variables, component_criteria);
     }
 
-    std::vector<SetMonitoringResult> set_monitors(const std::vector<SetMonitoringData>& requests,
-                                                  const VariableMonitorType type = VariableMonitorType::CustomMonitor) {
+    std::vector<SetMonitoringResult>
+    set_monitors(const std::vector<SetMonitoringData>& requests,
+                 const VariableMonitorType type = VariableMonitorType::CustomMonitor) override {
         return storage.set_monitors(requests);
     }
 
-    bool update_monitor_reference(std::int32_t monitor_id, const std::string& reference_value) {
+    bool update_monitor_reference(std::int32_t monitor_id, const std::string& reference_value) override {
         return storage.update_monitor_reference(monitor_id, reference_value);
     }
 
-    std::vector<VariableMonitoringPeriodic> get_periodic_monitors() {
+    std::vector<VariableMonitoringPeriodic> get_periodic_monitors() override {
         return storage.get_periodic_monitors();
     }
 
     std::vector<MonitoringData> get_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
-                                             const std::vector<ComponentVariable>& component_variables) {
+                                             const std::vector<ComponentVariable>& component_variables) override {
         return storage.get_monitors(criteria, component_variables);
     }
 
     std::vector<ClearMonitoringResult> clear_monitors(const std::vector<int>& request_ids,
-                                                      bool allow_protected = false) {
-        return storage.clear_monitors(request_ids);
+                                                      bool allow_protected) override {
+        return storage.clear_monitors(request_ids, allow_protected);
     }
 
-    std::int32_t clear_custom_monitors() {
+    std::int32_t clear_custom_monitors() override {
         return storage.clear_custom_monitors();
     }
 
@@ -205,18 +215,18 @@ public:
         std::function<void(const std::unordered_map<std::int64_t, VariableMonitoringMeta>& monitors,
                            const Component& component, const Variable& variable,
                            const VariableCharacteristics& characteristics, const VariableAttribute& attribute,
-                           const std::string& value_previous, const std::string& value_current)>&& listener) {
+                           const std::string& value_previous, const std::string& value_current)>&& listener) override {
         return storage.register_variable_listener(std::move(listener));
     }
 
     void register_monitor_listener(
         std::function<void(const VariableMonitoringMeta& updated_monitor, const Component& component,
                            const Variable& variable, const VariableCharacteristics& characteristics,
-                           const VariableAttribute& attribute, const std::string& current_value)>&& listener) {
+                           const VariableAttribute& attribute, const std::string& current_value)>&& listener) override {
         return storage.register_monitor_listener(std::move(listener));
     }
 
-    void check_integrity(const std::map<std::int32_t, std::int32_t>& evse_connector_structure) {
+    void check_integrity(const std::map<std::int32_t, std::int32_t>& evse_connector_structure) override {
         return storage.check_integrity(evse_connector_structure);
     }
 };
