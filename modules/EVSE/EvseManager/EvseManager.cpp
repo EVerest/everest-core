@@ -235,7 +235,7 @@ void EvseManager::init() {
 
         signalNrOfPhasesAvailable(ac_nr_phases_active);
 
-        bsp->set_three_phases(c.max_phase_count_import);
+        bsp->set_three_phases(c.max_phase_count_import != 1);
         charger->set_connector_type(c.connector_type);
         p_evse->publish_hw_capabilities(c);
         if (config.charge_mode == "AC" and hlc_enabled) {
