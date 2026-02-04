@@ -837,6 +837,12 @@ ocpp::v2::EnergyTransferModeEnum to_ocpp_energy_transfer_mode(const types::iso15
         return ocpp::v2::EnergyTransferModeEnum::DC_ACDP_BPT;
     case types::iso15118::EnergyTransferMode::WPT:
         return ocpp::v2::EnergyTransferModeEnum::WPT;
+
+    // revisit: OCPP does not yet know about MCS
+    case types::iso15118::EnergyTransferMode::MCS:
+        return ocpp::v2::EnergyTransferModeEnum::DC;
+    case types::iso15118::EnergyTransferMode::MCS_BPT:
+        return ocpp::v2::EnergyTransferModeEnum::DC_BPT;
     }
 
     throw std::out_of_range("Could not convert EnergyTransferMode");

@@ -21,6 +21,7 @@ private:
     json custom_schema;
     json internal_schema;
     bool core_schema_unlock_connector_on_ev_side_disconnect_ro_value;
+    fs::path ocpp_main_path;
     fs::path user_config_path;
 
     std::set<SupportedFeatureProfiles> supported_feature_profiles;
@@ -42,6 +43,8 @@ private:
 
     void setChargepointInformationProperty(json& user_config, const std::string& key,
                                            const std::optional<std::string>& value);
+
+    bool validate(const std::string_view& schema_file, const json& object);
 
 public:
     ChargePointConfiguration(const std::string& config, const fs::path& ocpp_main_path,

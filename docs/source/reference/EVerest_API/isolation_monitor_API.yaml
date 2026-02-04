@@ -27,17 +27,17 @@ defaultContentType: application/json
 
 channels:
   receive_start:
-    address: 'e2m/receive_start'
+    address: 'e2m/start'
     messages:
       receive_start:
         $ref: '#/components/messages/receive_start'
   receive_stop:
-    address: 'e2m/receive_stop'
+    address: 'e2m/stop'
     messages:
       receive_stop:
         $ref: '#/components/messages/receive_stop'
   receive_start_self_test:
-    address: 'e2m/receive_start_self_test'
+    address: 'e2m/start_self_test'
     messages:
       receive_start_self_test:
         $ref: '#/components/messages/receive_start_self_test'

@@ -105,6 +105,10 @@ types::iso15118::EnergyTransferMode get_energy_transfer_mode(const dt::ServiceCa
         requested_energy_transfer = EnergyTransferMode::DC_BPT;
     } else if (service_category == dt::ServiceCategory::DC_ACDP_BPT) {
         requested_energy_transfer = EnergyTransferMode::DC_ACDP_BPT;
+    } else if (service_category == dt::ServiceCategory::MCS) {
+        requested_energy_transfer = EnergyTransferMode::MCS;
+    } else if (service_category == dt::ServiceCategory::MCS_BPT) {
+        requested_energy_transfer = EnergyTransferMode::MCS_BPT;
     }
 
     return requested_energy_transfer;
@@ -545,6 +549,10 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
             selected_parameters.energy_transfer = types::iso15118::ServiceCategory::DC_BPT;
         } else if (parameters.selected_energy_service == dt::ServiceCategory::DC_ACDP_BPT) {
             selected_parameters.energy_transfer = types::iso15118::ServiceCategory::DC_ACDP_BPT;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::MCS) {
+            selected_parameters.energy_transfer = types::iso15118::ServiceCategory::MCS;
+        } else if (parameters.selected_energy_service == dt::ServiceCategory::MCS_BPT) {
+            selected_parameters.energy_transfer = types::iso15118::ServiceCategory::MCS_BPT;
         } else {
             EVLOG_critical << "Energy service is apparently no energy service!";
         }
@@ -562,6 +570,24 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
                 selected_parameters.connector = types::iso15118::Connector::Extended;
             } else if (*dc_connector == dt::DcConnector::Dual2) {
                 selected_parameters.connector = types::iso15118::Connector::Dual2;
+            } else {
+                selected_parameters.connector = types::iso15118::Connector::Dual4;
+            }
+        } else if (const auto* mcs_connector = std::get_if<dt::McsConnector>(&parameters.selected_connector)) {
+            if (*mcs_connector == dt::McsConnector::Mcs) {
+                selected_parameters.connector = types::iso15118::Connector::Mcs;
+            } else if (*mcs_connector == dt::McsConnector::Chaoji) {
+                selected_parameters.connector = types::iso15118::Connector::Chaoji;
+            } else if (*mcs_connector == dt::McsConnector::UltraChaoji) {
+                selected_parameters.connector = types::iso15118::Connector::UltraChaoji;
+            } else if (*mcs_connector == dt::McsConnector::rMcs) {
+                selected_parameters.connector = types::iso15118::Connector::rMcs;
+            } else if (*mcs_connector == dt::McsConnector::xMcs) {
+                selected_parameters.connector = types::iso15118::Connector::xMcs;
+            } else if (*mcs_connector == dt::McsConnector::Aviation) {
+                selected_parameters.connector = types::iso15118::Connector::Aviation;
+            } else if (*mcs_connector == dt::McsConnector::Marine) {
+                selected_parameters.connector = types::iso15118::Connector::Marine;
             } else {
                 selected_parameters.connector = types::iso15118::Connector::Dual4;
             }
@@ -855,6 +881,12 @@ void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
             break;
         case types::iso15118::EnergyTransferMode::WPT:
             services.push_back(dt::ServiceCategory::WPT);
+            break;
+        case types::iso15118::EnergyTransferMode::MCS:
+            services.push_back(dt::ServiceCategory::MCS);
+            break;
+        case types::iso15118::EnergyTransferMode::MCS_BPT:
+            services.push_back(dt::ServiceCategory::MCS_BPT);
             break;
         }
     }

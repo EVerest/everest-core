@@ -198,6 +198,8 @@ public:
     void cancel_reservation(bool signal_event);
     bool is_reserved();
 
+    std::optional<types::evse_manager::ConnectorTypeEnum> connector_type;
+
     ///
     /// \brief Reserve this evse.
     /// \param id                       The reservation id.

@@ -52,9 +52,75 @@ bool almost_eq(double a, double b) {
     return std::fabs(a - b) <= eps;
 }
 
+std::optional<float> min_optional(std::optional<float> a, std::optional<float> b) {
+    // if both a and b have values, return the smaller one.
+    if (a.has_value() and b.has_value()) {
+        return (b.value() < a.value() ? b.value() : a.value());
+    }
+    // if a has a value, return that one.
+    if (a.has_value()) {
+        return a;
+    }
+
+    // else return b. It is either the only value or empty.
+    return b;
+}
+
+float min_optional(float a, std::optional<float> b) {
+    // if both a and b have values, return the smaller one.
+    if (b.has_value()) {
+        return (b.value() < a ? b.value() : a);
+    }
+    // else return a
+    return a;
+}
+
+types::dc_external_derate::ExternalDerating
+get_dc_external_derate(std::optional<float> present_voltage,
+                       types::dc_external_derate::ExternalDerating dc_external_derate) {
+
+    if (!present_voltage.has_value()) {
+        return dc_external_derate;
+    }
+
+    const float voltage = present_voltage.value();
+
+    if (voltage <= 0.0f) {
+        return dc_external_derate;
+    }
+
+    types::dc_external_derate::ExternalDerating d = dc_external_derate;
+
+    // Derive power limits from current limits (only if power limit is not set)
+    if (!d.max_export_power_W.has_value() && d.max_export_current_A.has_value()) {
+        d.max_export_power_W = d.max_export_current_A.value() * voltage;
+    }
+    if (!d.max_import_power_W.has_value() && d.max_import_current_A.has_value()) {
+        d.max_import_power_W = d.max_import_current_A.value() * voltage;
+    }
+
+    // Derive current limits from power limits (only if current limit is not set)
+    if (!d.max_export_current_A.has_value() && d.max_export_power_W.has_value()) {
+        d.max_export_current_A = d.max_export_power_W.value() / voltage;
+    }
+    if (!d.max_import_current_A.has_value() && d.max_import_power_W.has_value()) {
+        d.max_import_current_A = d.max_import_power_W.value() / voltage;
+    }
+
+    return d;
+}
+
 } // namespace
 
 void EvseManager::init() {
+
+    if (!config.connector_type.empty()) {
+        try {
+            connector_type = types::evse_manager::string_to_connector_type_enum(config.connector_type);
+        } catch (const std::out_of_range& e) {
+            EVLOG_warning << "Unknown/invalid connector type: " << config.connector_type;
+        }
+    }
 
     store = std::unique_ptr<PersistentStore>(new PersistentStore(r_store, info.id));
 
@@ -129,10 +195,20 @@ void EvseManager::init() {
             // subscribe to run time updates for real initial values (and changes e.g. due to de-rating)
             r_powersupply_DC[0]->subscribe_capabilities([this](const auto& caps) {
                 update_powersupply_capabilities(caps);
-                const bool dc_was_updated = update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
+
+                auto mode = types::iso15118::EnergyTransferMode::DC;
+                auto bpt_mode = types::iso15118::EnergyTransferMode::DC_BPT;
+
+                if (connector_type.has_value() and
+                    connector_type.value() == types::evse_manager::ConnectorTypeEnum::cMCS) {
+                    mode = types::iso15118::EnergyTransferMode::MCS;
+                    bpt_mode = types::iso15118::EnergyTransferMode::MCS_BPT;
+                }
+
+                const bool dc_was_updated = update_supported_energy_transfers(mode);
                 const bool dc_bpt_was_updated =
-                    caps.bidirectional ? update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT)
-                                       : false;
+                    caps.bidirectional ? update_supported_energy_transfers(bpt_mode) : false;
+
                 if (dc_was_updated || dc_bpt_was_updated) {
                     this->p_evse->publish_supported_energy_transfer_modes(supported_energy_transfers);
                 }
@@ -424,15 +500,26 @@ void EvseManager::ready() {
             });
 
         } else if (config.charge_mode == "DC") {
-            transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_extended);
-            update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
+            if (connector_type.has_value() and connector_type.value() == types::evse_manager::ConnectorTypeEnum::cMCS) {
+                transfer_modes.push_back(types::iso15118::EnergyTransferMode::MCS);
+                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::MCS);
+            } else {
+                transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_extended);
+                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC);
+            }
 
             const auto caps = get_powersupply_capabilities();
             update_powersupply_capabilities(caps);
 
             if (caps.bidirectional) {
-                transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_BPT);
-                update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT);
+                if (connector_type.has_value() and
+                    connector_type.value() == types::evse_manager::ConnectorTypeEnum::cMCS) {
+                    transfer_modes.push_back(types::iso15118::EnergyTransferMode::MCS_BPT);
+                    update_supported_energy_transfers(types::iso15118::EnergyTransferMode::MCS_BPT);
+                } else {
+                    transfer_modes.push_back(types::iso15118::EnergyTransferMode::DC_BPT);
+                    update_supported_energy_transfers(types::iso15118::EnergyTransferMode::DC_BPT);
+                }
             }
 
             // Set present measurements on HLC to sane defaults
@@ -2421,29 +2508,6 @@ bool EvseManager::session_is_iso_d20_dc_bpt() {
            selected_d20_energy_service.value() == types::iso15118::ServiceCategory::DC_BPT;
 }
 
-static std::optional<float> min_optional(std::optional<float> a, std::optional<float> b) {
-    // if both a and b have values, return the smaller one.
-    if (a.has_value() and b.has_value()) {
-        return (b.value() < a.value() ? b.value() : a.value());
-    }
-    // if a has a value, return that one.
-    if (a.has_value()) {
-        return a;
-    }
-
-    // else return b. It is either the only value or empty.
-    return b;
-}
-
-static float min_optional(float a, std::optional<float> b) {
-    // if both a and b have values, return the smaller one.
-    if (b.has_value()) {
-        return (b.value() < a ? b.value() : a);
-    }
-    // else return a
-    return a;
-}
-
 types::power_supply_DC::Capabilities EvseManager::get_powersupply_capabilities() {
     types::power_supply_DC::Capabilities caps;
     types::dc_external_derate::ExternalDerating derate;
@@ -2454,7 +2518,7 @@ types::power_supply_DC::Capabilities EvseManager::get_powersupply_capabilities()
     }
     {
         std::scoped_lock lock(dc_external_derate_mutex);
-        derate = dc_external_derate;
+        derate = get_dc_external_derate(this->ev_info.present_voltage, dc_external_derate);
     }
 
     // Apply external derating if set

@@ -125,6 +125,8 @@ private:
     std::shared_ptr<EvseSecurity> evse_security;
     /// \brief Pointer to the logger
     std::shared_ptr<MessageLogging> logging;
+    /// \brief The share path
+    fs::path share_path;
     /// \brief Pointer to the websocket
     std::unique_ptr<Websocket> websocket;
     /// \brief The message callback
@@ -151,7 +153,7 @@ private:
 
 public:
     ConnectivityManager(DeviceModelAbstract& device_model, std::shared_ptr<EvseSecurity> evse_security,
-                        std::shared_ptr<MessageLogging> logging,
+                        std::shared_ptr<MessageLogging> logging, const fs::path& share_path,
                         const std::function<void(const std::string& message)>& message_callback);
 
     void set_websocket_authorization_key(const std::string& authorization_key) override;

@@ -2,6 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #include "ocpp/common/types.hpp"
 
+#include <fstream>
 #include <stdexcept>
 #include <thread>
 
@@ -51,6 +52,7 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
     firmware_status(FirmwareStatus::Idle),
     log_status(UploadLogStatusEnumType::Idle),
     message_log_path(message_log_path.string()), // .string() for compatibility with boost::filesystem
+    share_path(share_path),
     switch_security_profile_callback(nullptr) {
     this->configuration = std::make_shared<ocpp::v16::ChargePointConfiguration>(config, share_path, user_config_path);
     this->heartbeat_timer = std::make_unique<Everest::SteadyTimer>(&this->io_context, [this]() { this->heartbeat(); });
@@ -422,6 +424,20 @@ WebsocketConnectionOptions ChargePointImpl::get_ws_connection_options() {
                                                   this->configuration->getIFace(),
                                                   this->configuration->getEnableTLSKeylog(),
                                                   this->configuration->getTLSKeylogFile()};
+
+    // Read version file and add to connection_options
+    fs::path version_file_path = this->share_path.parent_path().parent_path() / "version_information.txt";
+    if (fs::exists(version_file_path)) {
+        std::ifstream ifs(version_file_path);
+        std::string version;
+        std::getline(ifs, version);                               // only get one line to avoid issues
+        std::string trimmed_version = ocpp::trim_string(version); // remove leading/trailing whitespace
+        trimmed_version.erase(std::remove(trimmed_version.begin(), trimmed_version.end(), '\n'),
+                              trimmed_version.end()); // remove unnecessary newline characters
+        if (!trimmed_version.empty()) {
+            connection_options.everest_version = trimmed_version;
+        }
+    }
     return connection_options;
 }
 
