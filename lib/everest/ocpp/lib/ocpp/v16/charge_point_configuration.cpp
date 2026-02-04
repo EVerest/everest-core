@@ -313,12 +313,12 @@ void ChargePointConfiguration::setChargepointInformationProperty(json& user_conf
 }
 
 bool ChargePointConfiguration::validate(const std::string_view& schema_file, const json& object) {
-    fs::path schema_path = ocpp_main_path / "profile_schemas" / schema_file;
-    std::ifstream ifs(schema_path);
-    auto schema_json = json::parse(ifs);
-    ocpp::Schemas schema(std::move(schema_json));
     bool result{false};
     try {
+        fs::path schema_path = ocpp_main_path / "profile_schemas" / schema_file;
+        std::ifstream ifs(schema_path);
+        auto schema_json = json::parse(ifs);
+        ocpp::Schemas schema(std::move(schema_json));
         auto validator = schema.get_validator();
         if (validator) {
             validator->validate(object);
@@ -327,7 +327,6 @@ bool ChargePointConfiguration::validate(const std::string_view& schema_file, con
     } catch (const std::exception& e) {
         EVLOG_error << "Error validating against schema " << schema_file << ": " << e.what();
     }
-
     return result;
 }
 
