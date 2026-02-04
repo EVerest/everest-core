@@ -84,6 +84,7 @@ if command -v compdef >/dev/null 2>&1; then
     compdef _devrd_completion devrd
     compdef _devrd_completion ./devrd
     compdef _devrd_completion ../devrd
+    compdef _devrd_completion ./applications/devrd/devrd
 else
     echo "Warning: zsh completion system not loaded. Add 'autoload -U compinit && compinit' to your .zshrc"
 fi

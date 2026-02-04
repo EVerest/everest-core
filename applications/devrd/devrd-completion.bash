@@ -94,3 +94,4 @@ _get_container_names() {
 complete -F _devrd_completion devrd
 complete -F _devrd_completion ./devrd
 complete -F _devrd_completion ../devrd
+complete -F _devrd_completion ./applications/devrd/devrd
