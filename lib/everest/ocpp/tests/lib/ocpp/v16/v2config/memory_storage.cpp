@@ -289,10 +289,10 @@ MemoryStorage::GetVariableStatusEnum MemoryStorage::get_variable(const Component
             value = it->second;
             result = GetVariableStatusEnum::Accepted;
         }
-    } else if (component_id.name == "Pnc") {
+    } else if (component_id.name == "PnC") {
         if (const auto it = vars_pnc.find(variable_id.name); it != vars_pnc.end()) {
             MemoryStorage::VariableAttribute va;
-            // std::cout << "Pnc[" << it->first << "]==" << it->second << '\n';
+            // std::cout << "PnC[" << it->first << "]==" << it->second << '\n';
             value = it->second;
             result = GetVariableStatusEnum::Accepted;
         }

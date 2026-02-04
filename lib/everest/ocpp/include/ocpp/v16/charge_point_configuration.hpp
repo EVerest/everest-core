@@ -29,13 +29,9 @@ private:
 
     std::recursive_mutex configuration_mutex;
 
-    std::vector<MeasurandWithPhase> csv_to_measurand_with_phase_vector(const std::string& csv);
     bool validate_measurands(const json& config);
-    bool measurands_supported(const std::string& csv);
     json get_user_config();
     void setInUserConfig(const std::string& profile, const std::string& key, json value);
-
-    bool isConnectorPhaseRotationValid(const std::string& str);
 
     void setChargepointInformationProperty(json& user_config, const std::string& key,
                                            const std::optional<std::string>& value);

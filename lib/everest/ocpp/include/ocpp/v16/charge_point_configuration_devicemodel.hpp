@@ -22,80 +22,77 @@ namespace v16 {
 class ChargePointConfigurationDeviceModel : private ChargePointConfigurationBase,
                                             public ChargePointConfigurationInterface {
 public:
-    using FearureProfilesSet = std::set<SupportedFeatureProfiles>;
-    using MeasurandsMap = std::map<Measurand, std::vector<Phase>>;
-    using MessagesSet = std::set<MessageType>;
     using SetResult = v2::SetVariableStatusEnum;
 
 protected:
     std::unique_ptr<v2::DeviceModelInterface> storage;
 
-    SetResult internalAllowChargingProfileWithoutStartSchedule(const std::string& value);
-    SetResult internalCentralSystemURI(const std::string& value);
-    SetResult internalCompositeScheduleDefaultLimitAmps(const std::string& value);
-    SetResult internalCompositeScheduleDefaultLimitWatts(const std::string& value);
-    SetResult internalCompositeScheduleDefaultNumberPhases(const std::string& value);
-    SetResult internalConnectorEvseIds(const std::string& value);
-    SetResult internalIgnoredProfilePurposesOffline(const std::string& value);
-    SetResult internalOcspRequestInterval(const std::string& value);
-    SetResult internalRetryBackoffRandomRange(const std::string& value);
-    SetResult internalRetryBackoffRepeatTimes(const std::string& value);
-    SetResult internalRetryBackoffWaitMinimum(const std::string& value);
-    SetResult internalSeccLeafSubjectCommonName(const std::string& value);
-    SetResult internalSeccLeafSubjectCountry(const std::string& value);
-    SetResult internalSeccLeafSubjectOrganization(const std::string& value);
-    SetResult internalStopTransactionIfUnlockNotSupported(const std::string& value);
-    SetResult internalSupplyVoltage(const std::string& value);
-    SetResult internalVerifyCsmsAllowWildcards(const std::string& value);
-    SetResult internalWaitForStopTransactionsOnResetTimeout(const std::string& value);
+    SetResult setInternalAllowChargingProfileWithoutStartSchedule(const std::string& value);
+    SetResult setInternalCentralSystemURI(const std::string& value);
+    SetResult setInternalCompositeScheduleDefaultLimitAmps(const std::string& value);
+    SetResult setInternalCompositeScheduleDefaultLimitWatts(const std::string& value);
+    SetResult setInternalCompositeScheduleDefaultNumberPhases(const std::string& value);
+    SetResult setInternalConnectorEvseIds(const std::string& value);
+    SetResult setInternalIgnoredProfilePurposesOffline(const std::string& value);
+    SetResult setInternalOcspRequestInterval(const std::string& value);
+    SetResult setInternalRetryBackoffRandomRange(const std::string& value);
+    SetResult setInternalRetryBackoffRepeatTimes(const std::string& value);
+    SetResult setInternalRetryBackoffWaitMinimum(const std::string& value);
+    SetResult setInternalSeccLeafSubjectCommonName(const std::string& value);
+    SetResult setInternalSeccLeafSubjectCountry(const std::string& value);
+    SetResult setInternalSeccLeafSubjectOrganization(const std::string& value);
+    SetResult setInternalStopTransactionIfUnlockNotSupported(const std::string& value);
+    SetResult setInternalSupplyVoltage(const std::string& value);
+    SetResult setInternalVerifyCsmsAllowWildcards(const std::string& value);
+    SetResult setInternalWaitForStopTransactionsOnResetTimeout(const std::string& value);
 
-    SetResult internalAllowOfflineTxForUnknownId(const std::string& value);
-    SetResult internalAuthorizationCacheEnabled(const std::string& value);
-    SetResult internalAuthorizeRemoteTxRequests(const std::string& value);
-    SetResult internalBlinkRepeat(const std::string& value);
-    SetResult internalClockAlignedDataInterval(const std::string& value);
-    SetResult internalConnectionTimeOut(const std::string& value);
-    SetResult internalConnectorPhaseRotation(const std::string& value);
-    SetResult internalHeartbeatInterval(const std::string& value);
-    SetResult internalLightIntensity(const std::string& value);
-    SetResult internalLocalAuthorizeOffline(const std::string& value);
-    SetResult internalLocalPreAuthorize(const std::string& value);
-    SetResult internalMaxEnergyOnInvalidId(const std::string& value);
-    SetResult internalMeterValuesAlignedData(const std::string& value);
-    SetResult internalMeterValuesSampledData(const std::string& value);
-    SetResult internalMeterValueSampleInterval(const std::string& value);
-    SetResult internalMinimumStatusDuration(const std::string& value);
-    SetResult internalResetRetries(const std::string& value);
-    SetResult internalStopTransactionOnInvalidId(const std::string& value);
-    SetResult internalStopTxnAlignedData(const std::string& value);
-    SetResult internalStopTxnSampledData(const std::string& value);
-    SetResult internalTransactionMessageAttempts(const std::string& value);
-    SetResult internalTransactionMessageRetryInterval(const std::string& value);
-    SetResult internalUnlockConnectorOnEVSideDisconnect(const std::string& value);
-    SetResult internalWebsocketPingInterval(const std::string& value);
+    SetResult setInternalAllowOfflineTxForUnknownId(const std::string& value);
+    SetResult setInternalAuthorizationCacheEnabled(const std::string& value);
+    SetResult setInternalAuthorizeRemoteTxRequests(const std::string& value);
+    SetResult setInternalBlinkRepeat(const std::string& value);
+    SetResult setInternalClockAlignedDataInterval(const std::string& value);
+    SetResult setInternalConnectionTimeOut(const std::string& value);
+    SetResult setInternalConnectorPhaseRotation(const std::string& value);
+    SetResult setInternalHeartbeatInterval(const std::string& value);
+    SetResult setInternalLightIntensity(const std::string& value);
+    SetResult setInternalLocalAuthorizeOffline(const std::string& value);
+    SetResult setInternalLocalPreAuthorize(const std::string& value);
+    SetResult setInternalMaxEnergyOnInvalidId(const std::string& value);
+    SetResult setInternalMeterValuesAlignedData(const std::string& value);
+    SetResult setInternalMeterValuesSampledData(const std::string& value);
+    SetResult setInternalMeterValueSampleInterval(const std::string& value);
+    SetResult setInternalMinimumStatusDuration(const std::string& value);
+    SetResult setInternalResetRetries(const std::string& value);
+    SetResult setInternalStopTransactionOnInvalidId(const std::string& value);
+    SetResult setInternalStopTxnAlignedData(const std::string& value);
+    SetResult setInternalStopTxnSampledData(const std::string& value);
+    SetResult setInternalTransactionMessageAttempts(const std::string& value);
+    SetResult setInternalTransactionMessageRetryInterval(const std::string& value);
+    SetResult setInternalUnlockConnectorOnEVSideDisconnect(const std::string& value);
+    SetResult setInternalWebsocketPingInterval(const std::string& value);
 
-    SetResult internalAuthorizationKey(const std::string& value);
-    SetResult internalCpoName(const std::string& value);
-    SetResult internalDisableSecurityEventNotifications(const std::string& value);
-    SetResult internalSecurityProfile(const std::string& value);
+    SetResult setInternalAuthorizationKey(const std::string& value);
+    SetResult setInternalCpoName(const std::string& value);
+    SetResult setInternalDisableSecurityEventNotifications(const std::string& value);
+    SetResult setInternalSecurityProfile(const std::string& value);
 
-    SetResult internalISO15118CertificateManagementEnabled(const std::string& value);
-    SetResult internalLocalAuthListEnabled(const std::string& value);
+    SetResult setInternalISO15118CertificateManagementEnabled(const std::string& value);
+    SetResult setInternalLocalAuthListEnabled(const std::string& value);
 
-    SetResult internalContractValidationOffline(const std::string& value);
-    SetResult internalCentralContractValidationAllowed(const std::string& value);
-    SetResult internalCertSigningRepeatTimes(const std::string& value);
-    SetResult internalCertSigningWaitMinimum(const std::string& value);
-    SetResult internalISO15118PnCEnabled(const std::string& value);
+    SetResult setInternalContractValidationOffline(const std::string& value);
+    SetResult setInternalCentralContractValidationAllowed(const std::string& value);
+    SetResult setInternalCertSigningRepeatTimes(const std::string& value);
+    SetResult setInternalCertSigningWaitMinimum(const std::string& value);
+    SetResult setInternalISO15118PnCEnabled(const std::string& value);
 
-    SetResult internalCustomIdleFeeAfterStop(const std::string& value);
-    SetResult internalDefaultPrice(const std::string& value);
-    SetResult internalDefaultPriceText(const std::string& key, const std::string& value);
-    SetResult internalDisplayTimeOffset(const std::string& value);
-    SetResult internalLanguage(const std::string& value);
-    SetResult internalNextTimeOffsetTransitionDateTime(const std::string& value);
-    SetResult internalTimeOffsetNextTransition(const std::string& value);
-    SetResult internalWaitForSetUserPriceTimeout(const std::string& value);
+    SetResult setInternalCustomIdleFeeAfterStop(const std::string& value);
+    SetResult setInternalDefaultPrice(const std::string& value);
+    SetResult setInternalDefaultPriceText(const std::string& key, const std::string& value);
+    SetResult setInternalDisplayTimeOffset(const std::string& value);
+    SetResult setInternalLanguage(const std::string& value);
+    SetResult setInternalNextTimeOffsetTransitionDateTime(const std::string& value);
+    SetResult setInternalTimeOffsetNextTransition(const std::string& value);
+    SetResult setInternalWaitForSetUserPriceTimeout(const std::string& value);
 
 public:
     explicit ChargePointConfigurationDeviceModel(std::unique_ptr<v2::DeviceModelInterface> device_model_interface);

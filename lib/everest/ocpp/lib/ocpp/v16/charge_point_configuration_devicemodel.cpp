@@ -129,7 +129,7 @@ std::optional<T> get_optional(DeviceModelInterface& storage, const std::string_v
     if (get_result == v2::GetVariableStatusEnum::Accepted) {
         try {
             if constexpr (std::is_same_v<bool, T>) {
-                return v16::ChargePointConfigurationBase::to_bool(value);
+                return v16::ChargePointConfigurationBase::toBool(value);
             } else if constexpr (std::is_same_v<std::string, T>) {
                 return value;
             } else {
@@ -364,12 +364,12 @@ namespace ocpp::v16 {
 // Protected methods
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalAllowChargingProfileWithoutStartSchedule(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalAllowChargingProfileWithoutStartSchedule(const std::string& value) {
     return set_value_check(isBool, *storage, keys::valid_keys::AllowChargingProfileWithoutStartSchedule, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalCentralSystemURI(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalCentralSystemURI(const std::string& value) {
     EVLOG_warning << "CentralSystemURI changed to: " << value;
     auto result = set_value(*storage, keys::valid_keys::CentralSystemURI, value);
     if (result == SetResult::Accepted) {
@@ -379,18 +379,18 @@ ChargePointConfigurationDeviceModel::internalCentralSystemURI(const std::string&
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalCompositeScheduleDefaultLimitAmps(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalCompositeScheduleDefaultLimitAmps(const std::string& value) {
     return set_value_check(isPositiveInteger, *storage, keys::valid_keys::CompositeScheduleDefaultLimitAmps, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalCompositeScheduleDefaultLimitWatts(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalCompositeScheduleDefaultLimitWatts(const std::string& value) {
     return set_value_check(isPositiveInteger, *storage, keys::valid_keys::CompositeScheduleDefaultLimitWatts, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalCompositeScheduleDefaultNumberPhases(const std::string& value) {
-    auto check = [this](const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalCompositeScheduleDefaultNumberPhases(const std::string& value) {
+    auto check = [](const std::string& value) {
         bool result{false};
         try {
             const auto [valid, num_phases] = is_positive_integer(value);
@@ -407,12 +407,12 @@ ChargePointConfigurationDeviceModel::internalCompositeScheduleDefaultNumberPhase
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalConnectorEvseIds(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalConnectorEvseIds(const std::string& value) {
     return set_value_check(areValidEvseIds, *storage, keys::valid_keys::ConnectorEvseIds, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalIgnoredProfilePurposesOffline(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalIgnoredProfilePurposesOffline(const std::string& value) {
     SetResult result{SetResult::UnknownVariable};
 
     if (key_exists(*storage, keys::valid_keys::IgnoredProfilePurposesOffline)) {
@@ -438,8 +438,8 @@ ChargePointConfigurationDeviceModel::internalIgnoredProfilePurposesOffline(const
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalOcspRequestInterval(const std::string& value) {
-    auto check = [this](const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalOcspRequestInterval(const std::string& value) {
+    auto check = [](const std::string& value) {
         bool result{false};
         try {
             const auto [valid, ocsp_request_interval] = is_positive_integer(value);
@@ -456,22 +456,22 @@ ChargePointConfigurationDeviceModel::internalOcspRequestInterval(const std::stri
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalRetryBackoffRandomRange(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalRetryBackoffRandomRange(const std::string& value) {
     return set_value(*storage, keys::valid_keys::RetryBackoffRandomRange, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalRetryBackoffRepeatTimes(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalRetryBackoffRepeatTimes(const std::string& value) {
     return set_value(*storage, keys::valid_keys::RetryBackoffRepeatTimes, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalRetryBackoffWaitMinimum(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalRetryBackoffWaitMinimum(const std::string& value) {
     return set_value(*storage, keys::valid_keys::RetryBackoffWaitMinimum, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalSeccLeafSubjectCommonName(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalSeccLeafSubjectCommonName(const std::string& value) {
     SetResult result{SetResult::Rejected};
     if (value.size() >= SECC_LEAF_SUBJECT_COMMON_NAME_MIN_LENGTH &&
         value.size() <= SECC_LEAF_SUBJECT_COMMON_NAME_MAX_LENGTH) {
@@ -483,7 +483,7 @@ ChargePointConfigurationDeviceModel::internalSeccLeafSubjectCommonName(const std
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalSeccLeafSubjectCountry(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalSeccLeafSubjectCountry(const std::string& value) {
     SetResult result{SetResult::Rejected};
     if (value.size() == SECC_LEAF_SUBJECT_COUNTRY_LENGTH) {
         result = set_value_check(*storage, keys::valid_keys::SeccLeafSubjectCountry, value);
@@ -494,7 +494,7 @@ ChargePointConfigurationDeviceModel::internalSeccLeafSubjectCountry(const std::s
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalSeccLeafSubjectOrganization(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalSeccLeafSubjectOrganization(const std::string& value) {
     SetResult result{SetResult::Rejected};
     if (value.size() <= SECC_LEAF_SUBJECT_ORGANIZATION_MAX_LENGTH) {
         result = set_value_check(*storage, keys::valid_keys::SeccLeafSubjectOrganization, value);
@@ -505,91 +505,91 @@ ChargePointConfigurationDeviceModel::internalSeccLeafSubjectOrganization(const s
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalStopTransactionIfUnlockNotSupported(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalStopTransactionIfUnlockNotSupported(const std::string& value) {
     return set_value_check(isBool, *storage, keys::valid_keys::StopTransactionIfUnlockNotSupported, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalSupplyVoltage(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalSupplyVoltage(const std::string& value) {
     return set_value_check(isPositiveInteger, *storage, keys::valid_keys::SupplyVoltage, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalVerifyCsmsAllowWildcards(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalVerifyCsmsAllowWildcards(const std::string& value) {
     return set_value(isBool, *storage, keys::valid_keys::VerifyCsmsAllowWildcards, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalWaitForStopTransactionsOnResetTimeout(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalWaitForStopTransactionsOnResetTimeout(const std::string& value) {
     return set_value(isPositiveInteger, *storage, keys::valid_keys::WaitForStopTransactionsOnResetTimeout, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalAllowOfflineTxForUnknownId(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalAllowOfflineTxForUnknownId(const std::string& value) {
     return set_value_check(isBool, *storage, keys::valid_keys::AllowOfflineTxForUnknownId, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalAuthorizationCacheEnabled(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalAuthorizationCacheEnabled(const std::string& value) {
     return set_value_check(isBool, *storage, keys::valid_keys::AuthorizationCacheEnabled, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalAuthorizeRemoteTxRequests(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalAuthorizeRemoteTxRequests(const std::string& value) {
     return set_value(*storage, keys::valid_keys::AuthorizeRemoteTxRequests, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalBlinkRepeat(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalBlinkRepeat(const std::string& value) {
     return set_value_check(isPositiveInteger, *storage, keys::valid_keys::BlinkRepeat, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalClockAlignedDataInterval(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalClockAlignedDataInterval(const std::string& value) {
     return set_value(isPositiveInteger, *storage, keys::valid_keys::ClockAlignedDataInterval, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalConnectionTimeOut(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalConnectionTimeOut(const std::string& value) {
     return set_value(isPositiveInteger, *storage, keys::valid_keys::ConnectionTimeOut, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalConnectorPhaseRotation(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalConnectorPhaseRotation(const std::string& value) {
     auto check = [this](const auto& v) { return isConnectorPhaseRotationValid(getNumberOfConnectors(), v); };
     return set_value(check, *storage, keys::valid_keys::ConnectorPhaseRotation, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalHeartbeatInterval(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalHeartbeatInterval(const std::string& value) {
     return set_value(isPositiveInteger, *storage, keys::valid_keys::HeartbeatInterval, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalLightIntensity(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalLightIntensity(const std::string& value) {
     return set_value_check(isPositiveInteger, *storage, keys::valid_keys::LightIntensity, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalLocalAuthorizeOffline(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalLocalAuthorizeOffline(const std::string& value) {
     return set_value(isBool, *storage, keys::valid_keys::LocalAuthorizeOffline, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalLocalPreAuthorize(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalLocalPreAuthorize(const std::string& value) {
     return set_value(isBool, *storage, keys::valid_keys::LocalPreAuthorize, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalMaxEnergyOnInvalidId(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalMaxEnergyOnInvalidId(const std::string& value) {
     return set_value_check(isPositiveInteger, *storage, keys::valid_keys::MaxEnergyOnInvalidId, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalMeterValuesAlignedData(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalMeterValuesAlignedData(const std::string& value) {
     SetResult result{SetResult::Rejected};
 
-    if (is_valid_supported_measurands(value)) {
+    if (isValidSupportedMeasurands(value)) {
         result = set_value(*storage, keys::valid_keys::MeterValuesAlignedData, value);
     }
 
@@ -597,10 +597,10 @@ ChargePointConfigurationDeviceModel::internalMeterValuesAlignedData(const std::s
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalMeterValuesSampledData(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalMeterValuesSampledData(const std::string& value) {
     SetResult result{SetResult::Rejected};
 
-    if (is_valid_supported_measurands(value)) {
+    if (isValidSupportedMeasurands(value)) {
         result = set_value(*storage, keys::valid_keys::MeterValuesSampledData, value);
     }
 
@@ -608,30 +608,30 @@ ChargePointConfigurationDeviceModel::internalMeterValuesSampledData(const std::s
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalMeterValueSampleInterval(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalMeterValueSampleInterval(const std::string& value) {
     return set_value(isPositiveInteger, *storage, keys::valid_keys::MeterValueSampleInterval, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalMinimumStatusDuration(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalMinimumStatusDuration(const std::string& value) {
     return set_value_check(isPositiveInteger, *storage, keys::valid_keys::MinimumStatusDuration, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalResetRetries(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalResetRetries(const std::string& value) {
     return set_value(isPositiveInteger, *storage, keys::valid_keys::ResetRetries, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalStopTransactionOnInvalidId(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalStopTransactionOnInvalidId(const std::string& value) {
     return set_value(isBool, *storage, keys::valid_keys::StopTransactionOnInvalidId, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalStopTxnAlignedData(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalStopTxnAlignedData(const std::string& value) {
     SetResult result{SetResult::Rejected};
 
-    if (is_valid_supported_measurands(value)) {
+    if (isValidSupportedMeasurands(value)) {
         result = set_value(*storage, keys::valid_keys::StopTxnAlignedData, value);
     }
 
@@ -639,10 +639,10 @@ ChargePointConfigurationDeviceModel::internalStopTxnAlignedData(const std::strin
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalStopTxnSampledData(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalStopTxnSampledData(const std::string& value) {
     SetResult result{SetResult::Rejected};
 
-    if (is_valid_supported_measurands(value)) {
+    if (isValidSupportedMeasurands(value)) {
         result = set_value(*storage, keys::valid_keys::StopTxnSampledData, value);
     }
 
@@ -650,27 +650,27 @@ ChargePointConfigurationDeviceModel::internalStopTxnSampledData(const std::strin
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalTransactionMessageAttempts(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalTransactionMessageAttempts(const std::string& value) {
     return set_value(isPositiveInteger, *storage, keys::valid_keys::TransactionMessageAttempts, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalTransactionMessageRetryInterval(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalTransactionMessageRetryInterval(const std::string& value) {
     return set_value(isPositiveInteger, *storage, keys::valid_keys::TransactionMessageRetryInterval, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalUnlockConnectorOnEVSideDisconnect(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalUnlockConnectorOnEVSideDisconnect(const std::string& value) {
     return set_value(isBool, *storage, keys::valid_keys::UnlockConnectorOnEVSideDisconnect, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalWebsocketPingInterval(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalWebsocketPingInterval(const std::string& value) {
     return set_value_check(isPositiveInteger, *storage, keys::valid_keys::WebSocketPingInterval, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalAuthorizationKey(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalAuthorizationKey(const std::string& value) {
     SetResult result{SetResult::Rejected};
 
     // TODO(piet): SecurityLog entry
@@ -692,28 +692,28 @@ ChargePointConfigurationDeviceModel::internalAuthorizationKey(const std::string&
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalCpoName(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalCpoName(const std::string& value) {
     return set_value(*storage, keys::valid_keys::CpoName, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalDisableSecurityEventNotifications(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalDisableSecurityEventNotifications(const std::string& value) {
     return set_value_check(*storage, keys::valid_keys::DisableSecurityEventNotifications, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalSecurityProfile(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalSecurityProfile(const std::string& value) {
     // TODO(piet): add boundaries for value of security profile
     return set_value_check(*storage, keys::valid_keys::SecurityProfile, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalISO15118CertificateManagementEnabled(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalISO15118CertificateManagementEnabled(const std::string& value) {
     return set_value(*storage, keys::valid_keys::ISO15118CertificateManagementEnabled, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalLocalAuthListEnabled(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalLocalAuthListEnabled(const std::string& value) {
     SetResult result{SetResult::UnknownVariable};
     if (supported_feature_profiles.find(SupportedFeatureProfiles::LocalAuthListManagement) !=
         supported_feature_profiles.end()) {
@@ -723,37 +723,37 @@ ChargePointConfigurationDeviceModel::internalLocalAuthListEnabled(const std::str
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalContractValidationOffline(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalContractValidationOffline(const std::string& value) {
     return set_value(*storage, keys::valid_keys::ContractValidationOffline, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalCentralContractValidationAllowed(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalCentralContractValidationAllowed(const std::string& value) {
     return set_value_check(*storage, keys::valid_keys::CentralContractValidationAllowed, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalCertSigningRepeatTimes(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalCertSigningRepeatTimes(const std::string& value) {
     return set_value_check(isPositiveInteger, *storage, keys::valid_keys::CertSigningRepeatTimes, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalCertSigningWaitMinimum(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalCertSigningWaitMinimum(const std::string& value) {
     return set_value_check(isPositiveInteger, *storage, keys::valid_keys::CertSigningWaitMinimum, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalISO15118PnCEnabled(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalISO15118PnCEnabled(const std::string& value) {
     return set_value(*storage, keys::valid_keys::ISO15118PnCEnabled, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalCustomIdleFeeAfterStop(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalCustomIdleFeeAfterStop(const std::string& value) {
     return set_value(isBool, *storage, keys::valid_keys::CustomIdleFeeAfterStop, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalDefaultPrice(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalDefaultPrice(const std::string& value) {
     SetResult result{SetResult::Rejected};
     try {
         json default_price = json::object();
@@ -766,7 +766,7 @@ ChargePointConfigurationDeviceModel::internalDefaultPrice(const std::string& val
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalDefaultPriceText(const std::string& key, const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalDefaultPriceText(const std::string& key, const std::string& value) {
     SetResult result{SetResult::Rejected};
     const auto default_prices = utils::split_string(',', key);
     std::string language;
@@ -861,17 +861,17 @@ ChargePointConfigurationDeviceModel::internalDefaultPriceText(const std::string&
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalDisplayTimeOffset(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalDisplayTimeOffset(const std::string& value) {
     return set_value(isTimeOffset, *storage, keys::valid_keys::TimeOffset, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalLanguage(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalLanguage(const std::string& value) {
     return set_value(*storage, keys::valid_keys::Language, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalNextTimeOffsetTransitionDateTime(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalNextTimeOffsetTransitionDateTime(const std::string& value) {
     SetResult result{SetResult::Rejected};
     DateTime dt(value);
     if (dt.to_time_point() > date::utc_clock::now()) {
@@ -881,13 +881,13 @@ ChargePointConfigurationDeviceModel::internalNextTimeOffsetTransitionDateTime(co
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalTimeOffsetNextTransition(const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalTimeOffsetNextTransition(const std::string& value) {
     return set_value(isTimeOffset, *storage, keys::valid_keys::TimeOffsetNextTransition, value);
 }
 
 ChargePointConfigurationDeviceModel::SetResult
-ChargePointConfigurationDeviceModel::internalWaitForSetUserPriceTimeout(const std::string& value) {
-    auto check = [this](const std::string& value) {
+ChargePointConfigurationDeviceModel::setInternalWaitForSetUserPriceTimeout(const std::string& value) {
+    auto check = [](const std::string& value) {
         bool result{false};
         try {
             const auto [valid, timeout] = is_positive_integer(value);
@@ -1265,7 +1265,7 @@ std::optional<KeyValue> ChargePointConfigurationDeviceModel::getPublicKeyKeyValu
         EVLOG_warning << "Cannot get MeterPublicKey for connector " << connector_id
                       << ", because the connector id does not exist.";
     } else {
-        auto key = MeterPublicKey_string(connector_id);
+        auto key = meterPublicKeyString(connector_id);
         auto value = get_optional<std::string>(*storage, "Internal", key);
         if (value) {
             KeyValue kv;
@@ -1482,36 +1482,36 @@ std::optional<KeyValue> ChargePointConfigurationDeviceModel::getSupplyVoltageKey
 }
 
 void ChargePointConfigurationDeviceModel::setAllowChargingProfileWithoutStartSchedule(bool allow) {
-    internalAllowChargingProfileWithoutStartSchedule(to_string(allow));
+    setInternalAllowChargingProfileWithoutStartSchedule(to_string(allow));
 }
 
 void ChargePointConfigurationDeviceModel::setAllowOfflineTxForUnknownId(bool enabled) {
-    internalAllowOfflineTxForUnknownId(to_string(enabled));
+    setInternalAllowOfflineTxForUnknownId(to_string(enabled));
 }
 
 void ChargePointConfigurationDeviceModel::setCentralSystemURI(const std::string& centralSystemUri) {
-    internalCentralSystemURI(centralSystemUri);
+    setInternalCentralSystemURI(centralSystemUri);
 }
 
 void ChargePointConfigurationDeviceModel::setCompositeScheduleDefaultLimitAmps(std::int32_t limit_amps) {
-    internalCompositeScheduleDefaultLimitAmps(std::to_string(limit_amps));
+    setInternalCompositeScheduleDefaultLimitAmps(std::to_string(limit_amps));
 }
 
 void ChargePointConfigurationDeviceModel::setCompositeScheduleDefaultLimitWatts(std::int32_t limit_watts) {
-    internalCompositeScheduleDefaultLimitWatts(std::to_string(limit_watts));
+    setInternalCompositeScheduleDefaultLimitWatts(std::to_string(limit_watts));
 }
 
 void ChargePointConfigurationDeviceModel::setCompositeScheduleDefaultNumberPhases(std::int32_t number_phases) {
-    internalCompositeScheduleDefaultNumberPhases(std::to_string(number_phases));
+    setInternalCompositeScheduleDefaultNumberPhases(std::to_string(number_phases));
 }
 
 void ChargePointConfigurationDeviceModel::setConnectorEvseIds(const std::string& connector_evse_ids) {
-    internalConnectorEvseIds(connector_evse_ids);
+    setInternalConnectorEvseIds(connector_evse_ids);
 }
 
 bool ChargePointConfigurationDeviceModel::setIgnoredProfilePurposesOffline(
     const std::string& ignored_profile_purposes_offline) {
-    return internalIgnoredProfilePurposesOffline(ignored_profile_purposes_offline) == SetResult::Accepted;
+    return setInternalIgnoredProfilePurposesOffline(ignored_profile_purposes_offline) == SetResult::Accepted;
 }
 
 bool ChargePointConfigurationDeviceModel::setMeterPublicKey(const std::int32_t connector_id,
@@ -1521,7 +1521,7 @@ bool ChargePointConfigurationDeviceModel::setMeterPublicKey(const std::int32_t c
         EVLOG_warning << "Cannot set MeterPublicKey for connector " << connector_id
                       << ", because the connector id does not exist.";
     } else {
-        const auto key = MeterPublicKey_string(connector_id);
+        const auto key = meterPublicKeyString(connector_id);
         const auto res = set_value(*storage, "Internal", key, public_key_pem);
         result = res == SetResult::Accepted;
     }
@@ -1529,51 +1529,51 @@ bool ChargePointConfigurationDeviceModel::setMeterPublicKey(const std::int32_t c
 }
 
 void ChargePointConfigurationDeviceModel::setOcspRequestInterval(const std::int32_t ocsp_request_interval) {
-    internalOcspRequestInterval(std::to_string(ocsp_request_interval));
+    setInternalOcspRequestInterval(std::to_string(ocsp_request_interval));
 }
 
 void ChargePointConfigurationDeviceModel::setRetryBackoffRandomRange(std::int32_t retry_backoff_random_range) {
-    internalRetryBackoffRandomRange(std::to_string(retry_backoff_random_range));
+    setInternalRetryBackoffRandomRange(std::to_string(retry_backoff_random_range));
 }
 
 void ChargePointConfigurationDeviceModel::setRetryBackoffRepeatTimes(std::int32_t retry_backoff_repeat_times) {
-    internalRetryBackoffRepeatTimes(std::to_string(retry_backoff_repeat_times));
+    setInternalRetryBackoffRepeatTimes(std::to_string(retry_backoff_repeat_times));
 }
 
 void ChargePointConfigurationDeviceModel::setRetryBackoffWaitMinimum(std::int32_t retry_backoff_wait_minimum) {
-    internalRetryBackoffWaitMinimum(std::to_string(retry_backoff_wait_minimum));
+    setInternalRetryBackoffWaitMinimum(std::to_string(retry_backoff_wait_minimum));
 }
 
 void ChargePointConfigurationDeviceModel::setSeccLeafSubjectCommonName(
     const std::string& secc_leaf_subject_common_name) {
-    internalSeccLeafSubjectCommonName(secc_leaf_subject_common_name);
+    setInternalSeccLeafSubjectCommonName(secc_leaf_subject_common_name);
 }
 
 void ChargePointConfigurationDeviceModel::setSeccLeafSubjectCountry(const std::string& secc_leaf_subject_country) {
-    internalSeccLeafSubjectCountry(secc_leaf_subject_country);
+    setInternalSeccLeafSubjectCountry(secc_leaf_subject_country);
 }
 
 void ChargePointConfigurationDeviceModel::setSeccLeafSubjectOrganization(
     const std::string& secc_leaf_subject_organization) {
-    internalSeccLeafSubjectOrganization(secc_leaf_subject_organization);
+    setInternalSeccLeafSubjectOrganization(secc_leaf_subject_organization);
 }
 
 void ChargePointConfigurationDeviceModel::setStopTransactionIfUnlockNotSupported(
     bool stop_transaction_if_unlock_not_supported) {
-    internalStopTransactionIfUnlockNotSupported(to_string(stop_transaction_if_unlock_not_supported));
+    setInternalStopTransactionIfUnlockNotSupported(to_string(stop_transaction_if_unlock_not_supported));
 }
 
 void ChargePointConfigurationDeviceModel::setSupplyVoltage(std::int32_t supply_voltage) {
-    internalSupplyVoltage(std::to_string(supply_voltage));
+    setInternalSupplyVoltage(std::to_string(supply_voltage));
 }
 
 void ChargePointConfigurationDeviceModel::setVerifyCsmsAllowWildcards(bool verify_csms_allow_wildcards) {
-    internalVerifyCsmsAllowWildcards(to_string(verify_csms_allow_wildcards));
+    setInternalVerifyCsmsAllowWildcards(to_string(verify_csms_allow_wildcards));
 }
 
 void ChargePointConfigurationDeviceModel::setWaitForStopTransactionsOnResetTimeout(
     const int32_t wait_for_stop_transactions_on_reset_timeout) {
-    internalWaitForStopTransactionsOnResetTimeout(std::to_string(wait_for_stop_transactions_on_reset_timeout));
+    setInternalWaitForStopTransactionsOnResetTimeout(std::to_string(wait_for_stop_transactions_on_reset_timeout));
 }
 
 // ----------------------------------------------------------------------------
@@ -1661,7 +1661,7 @@ std::int32_t ChargePointConfigurationDeviceModel::getTransactionMessageRetryInte
 
 std::vector<MeasurandWithPhase> ChargePointConfigurationDeviceModel::getMeterValuesAlignedDataVector() {
     std::vector<MeasurandWithPhase> result;
-    auto vec = csv_to_measurand_with_phase_vector(getMeterValuesAlignedData());
+    auto vec = csvToMeasurandWithPhaseVector(getMeterValuesAlignedData());
     if (vec) {
         result = std::move(vec.value());
     }
@@ -1670,7 +1670,7 @@ std::vector<MeasurandWithPhase> ChargePointConfigurationDeviceModel::getMeterVal
 
 std::vector<MeasurandWithPhase> ChargePointConfigurationDeviceModel::getMeterValuesSampledDataVector() {
     std::vector<MeasurandWithPhase> result;
-    auto vec = csv_to_measurand_with_phase_vector(getMeterValuesSampledData());
+    auto vec = csvToMeasurandWithPhaseVector(getMeterValuesSampledData());
     if (vec) {
         result = std::move(vec.value());
     }
@@ -1874,96 +1874,96 @@ std::optional<KeyValue> ChargePointConfigurationDeviceModel::getWebsocketPingInt
 }
 
 void ChargePointConfigurationDeviceModel::setAuthorizationCacheEnabled(bool enabled) {
-    internalAuthorizationCacheEnabled(to_string(enabled));
+    setInternalAuthorizationCacheEnabled(to_string(enabled));
 }
 
 void ChargePointConfigurationDeviceModel::setAuthorizeRemoteTxRequests(bool enabled) {
-    internalAuthorizeRemoteTxRequests(to_string(enabled));
+    setInternalAuthorizeRemoteTxRequests(to_string(enabled));
 }
 
 void ChargePointConfigurationDeviceModel::setBlinkRepeat(std::int32_t blink_repeat) {
-    internalBlinkRepeat(std::to_string(blink_repeat));
+    setInternalBlinkRepeat(std::to_string(blink_repeat));
 }
 
 void ChargePointConfigurationDeviceModel::setClockAlignedDataInterval(std::int32_t interval) {
-    internalClockAlignedDataInterval(std::to_string(interval));
+    setInternalClockAlignedDataInterval(std::to_string(interval));
 }
 
 void ChargePointConfigurationDeviceModel::setConnectionTimeOut(std::int32_t timeout) {
-    internalConnectionTimeOut(std::to_string(timeout));
+    setInternalConnectionTimeOut(std::to_string(timeout));
 }
 
 void ChargePointConfigurationDeviceModel::setConnectorPhaseRotation(const std::string& connector_phase_rotation) {
-    internalConnectorPhaseRotation(connector_phase_rotation);
+    setInternalConnectorPhaseRotation(connector_phase_rotation);
 }
 
 void ChargePointConfigurationDeviceModel::setHeartbeatInterval(std::int32_t interval) {
-    internalHeartbeatInterval(std::to_string(interval));
+    setInternalHeartbeatInterval(std::to_string(interval));
 }
 
 void ChargePointConfigurationDeviceModel::setLightIntensity(std::int32_t light_intensity) {
-    internalLightIntensity(std::to_string(light_intensity));
+    setInternalLightIntensity(std::to_string(light_intensity));
 }
 
 void ChargePointConfigurationDeviceModel::setLocalAuthorizeOffline(bool local_authorize_offline) {
-    internalLocalAuthorizeOffline(to_string(local_authorize_offline));
+    setInternalLocalAuthorizeOffline(to_string(local_authorize_offline));
 }
 
 void ChargePointConfigurationDeviceModel::setLocalPreAuthorize(bool local_pre_authorize) {
-    internalLocalPreAuthorize(to_string(local_pre_authorize));
+    setInternalLocalPreAuthorize(to_string(local_pre_authorize));
 }
 
 void ChargePointConfigurationDeviceModel::setMaxEnergyOnInvalidId(std::int32_t max_energy) {
-    internalMaxEnergyOnInvalidId(std::to_string(max_energy));
+    setInternalMaxEnergyOnInvalidId(std::to_string(max_energy));
 }
 
 bool ChargePointConfigurationDeviceModel::setMeterValuesAlignedData(const std::string& meter_values_aligned_data) {
-    return internalMeterValuesAlignedData(meter_values_aligned_data) == SetResult::Accepted;
+    return setInternalMeterValuesAlignedData(meter_values_aligned_data) == SetResult::Accepted;
 }
 
 bool ChargePointConfigurationDeviceModel::setMeterValuesSampledData(const std::string& meter_values_sampled_data) {
-    return internalMeterValuesSampledData(meter_values_sampled_data) == SetResult::Accepted;
+    return setInternalMeterValuesSampledData(meter_values_sampled_data) == SetResult::Accepted;
 }
 
 void ChargePointConfigurationDeviceModel::setMeterValueSampleInterval(std::int32_t interval) {
-    internalMeterValueSampleInterval(std::to_string(interval));
+    setInternalMeterValueSampleInterval(std::to_string(interval));
 }
 
 void ChargePointConfigurationDeviceModel::setMinimumStatusDuration(std::int32_t minimum_status_duration) {
-    internalMinimumStatusDuration(std::to_string(minimum_status_duration));
+    setInternalMinimumStatusDuration(std::to_string(minimum_status_duration));
 }
 
 void ChargePointConfigurationDeviceModel::setResetRetries(std::int32_t retries) {
-    internalResetRetries(std::to_string(retries));
+    setInternalResetRetries(std::to_string(retries));
 }
 
 void ChargePointConfigurationDeviceModel::setStopTransactionOnInvalidId(bool stop_transaction_on_invalid_id) {
-    internalStopTransactionOnInvalidId(to_string(stop_transaction_on_invalid_id));
+    setInternalStopTransactionOnInvalidId(to_string(stop_transaction_on_invalid_id));
 }
 
 bool ChargePointConfigurationDeviceModel::setStopTxnAlignedData(const std::string& stop_txn_aligned_data) {
-    return internalStopTxnAlignedData(stop_txn_aligned_data) == SetResult::Accepted;
+    return setInternalStopTxnAlignedData(stop_txn_aligned_data) == SetResult::Accepted;
 }
 
 bool ChargePointConfigurationDeviceModel::setStopTxnSampledData(const std::string& stop_txn_sampled_data) {
-    return internalStopTxnSampledData(stop_txn_sampled_data) == SetResult::Accepted;
+    return setInternalStopTxnSampledData(stop_txn_sampled_data) == SetResult::Accepted;
 }
 
 void ChargePointConfigurationDeviceModel::setTransactionMessageAttempts(std::int32_t attempts) {
-    internalTransactionMessageAttempts(std::to_string(attempts));
+    setInternalTransactionMessageAttempts(std::to_string(attempts));
 }
 
 void ChargePointConfigurationDeviceModel::setTransactionMessageRetryInterval(std::int32_t retry_interval) {
-    internalTransactionMessageRetryInterval(std::to_string(retry_interval));
+    setInternalTransactionMessageRetryInterval(std::to_string(retry_interval));
 }
 
 void ChargePointConfigurationDeviceModel::setUnlockConnectorOnEVSideDisconnect(
     bool unlock_connector_on_ev_side_disconnect) {
-    internalUnlockConnectorOnEVSideDisconnect(to_string(unlock_connector_on_ev_side_disconnect));
+    setInternalUnlockConnectorOnEVSideDisconnect(to_string(unlock_connector_on_ev_side_disconnect));
 }
 
 void ChargePointConfigurationDeviceModel::setWebsocketPingInterval(std::int32_t websocket_ping_interval) {
-    internalWebsocketPingInterval(std::to_string(websocket_ping_interval));
+    setInternalWebsocketPingInterval(std::to_string(websocket_ping_interval));
 }
 
 // ----------------------------------------------------------------------------
@@ -2111,20 +2111,20 @@ std::optional<KeyValue> ChargePointConfigurationDeviceModel::getCpoNameKeyValue(
 }
 
 void ChargePointConfigurationDeviceModel::setAuthorizationKey(const std::string& authorization_key) {
-    internalAuthorizationKey(authorization_key);
+    setInternalAuthorizationKey(authorization_key);
 }
 
 void ChargePointConfigurationDeviceModel::setCpoName(const std::string& cpo_name) {
-    internalCpoName(cpo_name);
+    setInternalCpoName(cpo_name);
 }
 
 void ChargePointConfigurationDeviceModel::setDisableSecurityEventNotifications(
     bool disable_security_event_notifications) {
-    internalDisableSecurityEventNotifications(to_string(disable_security_event_notifications));
+    setInternalDisableSecurityEventNotifications(to_string(disable_security_event_notifications));
 }
 
 void ChargePointConfigurationDeviceModel::setSecurityProfile(std::int32_t security_profile) {
-    internalSecurityProfile(std::to_string(security_profile));
+    setInternalSecurityProfile(std::to_string(security_profile));
 }
 
 // ----------------------------------------------------------------------------
@@ -2156,7 +2156,7 @@ KeyValue ChargePointConfigurationDeviceModel::getSendLocalListMaxLengthKeyValue(
 }
 
 void ChargePointConfigurationDeviceModel::setLocalAuthListEnabled(bool local_auth_list_enabled) {
-    internalLocalAuthListEnabled(to_string(local_auth_list_enabled));
+    setInternalLocalAuthListEnabled(to_string(local_auth_list_enabled));
 }
 
 // ----------------------------------------------------------------------------
@@ -2211,29 +2211,29 @@ std::optional<KeyValue> ChargePointConfigurationDeviceModel::getCertSigningWaitM
 }
 
 void ChargePointConfigurationDeviceModel::setContractValidationOffline(bool contract_validation_offline) {
-    internalContractValidationOffline(to_string(contract_validation_offline));
+    setInternalContractValidationOffline(to_string(contract_validation_offline));
 }
 
 void ChargePointConfigurationDeviceModel::setCentralContractValidationAllowed(
     bool central_contract_validation_allowed) {
-    internalCentralContractValidationAllowed(to_string(central_contract_validation_allowed));
+    setInternalCentralContractValidationAllowed(to_string(central_contract_validation_allowed));
 }
 
 void ChargePointConfigurationDeviceModel::setCertSigningRepeatTimes(std::int32_t cert_signing_repeat_times) {
-    internalCertSigningRepeatTimes(std::to_string(cert_signing_repeat_times));
+    setInternalCertSigningRepeatTimes(std::to_string(cert_signing_repeat_times));
 }
 
 void ChargePointConfigurationDeviceModel::setCertSigningWaitMinimum(std::int32_t cert_signing_wait_minimum) {
-    internalCertSigningWaitMinimum(std::to_string(cert_signing_wait_minimum));
+    setInternalCertSigningWaitMinimum(std::to_string(cert_signing_wait_minimum));
 }
 
 void ChargePointConfigurationDeviceModel::setISO15118CertificateManagementEnabled(
     bool iso15118_certificate_management_enabled) {
-    internalISO15118CertificateManagementEnabled(to_string(iso15118_certificate_management_enabled));
+    setInternalISO15118CertificateManagementEnabled(to_string(iso15118_certificate_management_enabled));
 }
 
 void ChargePointConfigurationDeviceModel::setISO15118PnCEnabled(bool iso15118_pnc_enabled) {
-    internalISO15118PnCEnabled(to_string(iso15118_pnc_enabled));
+    setInternalISO15118PnCEnabled(to_string(iso15118_pnc_enabled));
 }
 
 // ----------------------------------------------------------------------------
@@ -2464,37 +2464,37 @@ std::optional<std::vector<KeyValue>> ChargePointConfigurationDeviceModel::getAll
 }
 
 void ChargePointConfigurationDeviceModel::setCustomIdleFeeAfterStop(bool value) {
-    internalCustomIdleFeeAfterStop(to_string(value));
+    setInternalCustomIdleFeeAfterStop(to_string(value));
 }
 
 ConfigurationStatus ChargePointConfigurationDeviceModel::setDefaultPrice(const std::string& value) {
-    return convert(internalDefaultPrice(value));
+    return convert(setInternalDefaultPrice(value));
 }
 
 ConfigurationStatus ChargePointConfigurationDeviceModel::setDefaultPriceText(const CiString<50>& key,
                                                                              const CiString<500>& value) {
-    return convert(internalDefaultPriceText(key, value));
+    return convert(setInternalDefaultPriceText(key, value));
 }
 
 ConfigurationStatus ChargePointConfigurationDeviceModel::setDisplayTimeOffset(const std::string& offset) {
-    return convert(internalDisplayTimeOffset(offset));
+    return convert(setInternalDisplayTimeOffset(offset));
 }
 
 void ChargePointConfigurationDeviceModel::setLanguage(const std::string& language) {
-    internalLanguage(language);
+    setInternalLanguage(language);
 }
 
 ConfigurationStatus
 ChargePointConfigurationDeviceModel::setNextTimeOffsetTransitionDateTime(const std::string& date_time) {
-    return convert(internalNextTimeOffsetTransitionDateTime(date_time));
+    return convert(setInternalNextTimeOffsetTransitionDateTime(date_time));
 }
 
 ConfigurationStatus ChargePointConfigurationDeviceModel::setTimeOffsetNextTransition(const std::string& offset) {
-    return convert(internalTimeOffsetNextTransition(offset));
+    return convert(setInternalTimeOffsetNextTransition(offset));
 }
 
 void ChargePointConfigurationDeviceModel::setWaitForSetUserPriceTimeout(std::int32_t wait_for_set_user_price_timeout) {
-    internalWaitForSetUserPriceTimeout(std::to_string(wait_for_set_user_price_timeout));
+    setInternalWaitForSetUserPriceTimeout(std::to_string(wait_for_set_user_price_timeout));
 }
 
 // ----------------------------------------------------------------------------
@@ -2579,7 +2579,7 @@ std::optional<KeyValue> ChargePointConfigurationDeviceModel::get(const CiString<
         }
         // check keys starting MeterPublicKey[
         if (key_str.find("MeterPublicKey[") == 0) {
-            auto id = extract_connector_id(key_str);
+            auto id = extractConnectorId(key_str);
             if (id) {
                 result = getPublicKeyKeyValue(id.value());
             }
@@ -2633,169 +2633,169 @@ std::optional<ConfigurationStatus> ChargePointConfigurationDeviceModel::set(cons
 
         switch (sv_key) {
         case keys::valid_keys::AllowChargingProfileWithoutStartSchedule:
-            result = convert(internalAllowChargingProfileWithoutStartSchedule(value_str));
+            result = convert(setInternalAllowChargingProfileWithoutStartSchedule(value_str));
             break;
         case keys::valid_keys::AllowOfflineTxForUnknownId:
-            result = convert(internalAllowOfflineTxForUnknownId(value_str));
+            result = convert(setInternalAllowOfflineTxForUnknownId(value_str));
             break;
         case keys::valid_keys::CentralSystemURI:
-            result = convert(internalCentralSystemURI(value_str));
+            result = convert(setInternalCentralSystemURI(value_str));
             break;
         case keys::valid_keys::CompositeScheduleDefaultLimitAmps:
-            result = convert(internalCompositeScheduleDefaultLimitAmps(value_str));
+            result = convert(setInternalCompositeScheduleDefaultLimitAmps(value_str));
             break;
         case keys::valid_keys::CompositeScheduleDefaultLimitWatts:
-            result = convert(internalCompositeScheduleDefaultLimitWatts(value_str));
+            result = convert(setInternalCompositeScheduleDefaultLimitWatts(value_str));
             break;
         case keys::valid_keys::CompositeScheduleDefaultNumberPhases:
-            result = convert(internalCompositeScheduleDefaultNumberPhases(value_str));
+            result = convert(setInternalCompositeScheduleDefaultNumberPhases(value_str));
             break;
         case keys::valid_keys::ConnectorEvseIds:
-            result = convert(internalConnectorEvseIds(value_str));
+            result = convert(setInternalConnectorEvseIds(value_str));
             break;
         case keys::valid_keys::IgnoredProfilePurposesOffline:
-            result = convert(internalIgnoredProfilePurposesOffline(value_str));
+            result = convert(setInternalIgnoredProfilePurposesOffline(value_str));
             break;
         case keys::valid_keys::OcspRequestInterval:
-            result = convert(internalOcspRequestInterval(value_str));
+            result = convert(setInternalOcspRequestInterval(value_str));
             break;
         case keys::valid_keys::RetryBackoffRandomRange:
-            result = convert(internalRetryBackoffRandomRange(value_str));
+            result = convert(setInternalRetryBackoffRandomRange(value_str));
             break;
         case keys::valid_keys::RetryBackoffRepeatTimes:
-            result = convert(internalRetryBackoffRepeatTimes(value_str));
+            result = convert(setInternalRetryBackoffRepeatTimes(value_str));
             break;
         case keys::valid_keys::RetryBackoffWaitMinimum:
-            result = convert(internalRetryBackoffWaitMinimum(value_str));
+            result = convert(setInternalRetryBackoffWaitMinimum(value_str));
             break;
         case keys::valid_keys::SeccLeafSubjectCommonName:
-            result = convert(internalSeccLeafSubjectCommonName(value_str));
+            result = convert(setInternalSeccLeafSubjectCommonName(value_str));
             break;
         case keys::valid_keys::SeccLeafSubjectCountry:
-            result = convert(internalSeccLeafSubjectCountry(value_str));
+            result = convert(setInternalSeccLeafSubjectCountry(value_str));
             break;
         case keys::valid_keys::SeccLeafSubjectOrganization:
-            result = convert(internalSeccLeafSubjectOrganization(value_str));
+            result = convert(setInternalSeccLeafSubjectOrganization(value_str));
             break;
         case keys::valid_keys::StopTransactionIfUnlockNotSupported:
-            result = convert(internalStopTransactionIfUnlockNotSupported(value_str));
+            result = convert(setInternalStopTransactionIfUnlockNotSupported(value_str));
             break;
         case keys::valid_keys::SupplyVoltage:
-            result = convert(internalSupplyVoltage(value_str));
+            result = convert(setInternalSupplyVoltage(value_str));
             break;
         case keys::valid_keys::VerifyCsmsAllowWildcards:
-            result = convert(internalVerifyCsmsAllowWildcards(value_str));
+            result = convert(setInternalVerifyCsmsAllowWildcards(value_str));
             break;
         case keys::valid_keys::WaitForStopTransactionsOnResetTimeout:
-            result = convert(internalWaitForStopTransactionsOnResetTimeout(value_str));
+            result = convert(setInternalWaitForStopTransactionsOnResetTimeout(value_str));
             break;
         case keys::valid_keys::AuthorizationCacheEnabled:
-            result = convert(internalAuthorizationCacheEnabled(value_str));
+            result = convert(setInternalAuthorizationCacheEnabled(value_str));
             break;
         case keys::valid_keys::AuthorizeRemoteTxRequests:
-            result = convert(internalAuthorizeRemoteTxRequests(value_str));
+            result = convert(setInternalAuthorizeRemoteTxRequests(value_str));
             break;
         case keys::valid_keys::BlinkRepeat:
-            result = convert(internalBlinkRepeat(value_str));
+            result = convert(setInternalBlinkRepeat(value_str));
             break;
         case keys::valid_keys::ClockAlignedDataInterval:
-            result = convert(internalClockAlignedDataInterval(value_str));
+            result = convert(setInternalClockAlignedDataInterval(value_str));
             break;
         case keys::valid_keys::ConnectionTimeOut:
-            result = convert(internalConnectionTimeOut(value_str));
+            result = convert(setInternalConnectionTimeOut(value_str));
             break;
         case keys::valid_keys::ConnectorPhaseRotation:
-            result = convert(internalConnectorPhaseRotation(value_str));
+            result = convert(setInternalConnectorPhaseRotation(value_str));
             break;
         case keys::valid_keys::HeartbeatInterval:
-            result = convert(internalHeartbeatInterval(value_str));
+            result = convert(setInternalHeartbeatInterval(value_str));
             break;
         case keys::valid_keys::LightIntensity:
-            result = convert(internalLightIntensity(value_str));
+            result = convert(setInternalLightIntensity(value_str));
             break;
         case keys::valid_keys::LocalAuthorizeOffline:
-            result = convert(internalLocalAuthorizeOffline(value_str));
+            result = convert(setInternalLocalAuthorizeOffline(value_str));
             break;
         case keys::valid_keys::LocalPreAuthorize:
-            result = convert(internalLocalPreAuthorize(value_str));
+            result = convert(setInternalLocalPreAuthorize(value_str));
             break;
         case keys::valid_keys::MaxEnergyOnInvalidId:
-            result = convert(internalMaxEnergyOnInvalidId(value_str));
+            result = convert(setInternalMaxEnergyOnInvalidId(value_str));
             break;
         case keys::valid_keys::MeterValuesAlignedData:
-            result = convert(internalMeterValuesAlignedData(value_str));
+            result = convert(setInternalMeterValuesAlignedData(value_str));
             break;
         case keys::valid_keys::MeterValuesSampledData:
-            result = convert(internalMeterValuesSampledData(value_str));
+            result = convert(setInternalMeterValuesSampledData(value_str));
             break;
         case keys::valid_keys::MeterValueSampleInterval:
-            result = convert(internalMeterValueSampleInterval(value_str));
+            result = convert(setInternalMeterValueSampleInterval(value_str));
             break;
         case keys::valid_keys::MinimumStatusDuration:
-            result = convert(internalMinimumStatusDuration(value_str));
+            result = convert(setInternalMinimumStatusDuration(value_str));
             break;
         case keys::valid_keys::ResetRetries:
-            result = convert(internalResetRetries(value_str));
+            result = convert(setInternalResetRetries(value_str));
             break;
         case keys::valid_keys::StopTransactionOnInvalidId:
-            result = convert(internalStopTransactionOnInvalidId(value_str));
+            result = convert(setInternalStopTransactionOnInvalidId(value_str));
             break;
         case keys::valid_keys::StopTxnAlignedData:
-            result = convert(internalStopTxnAlignedData(value_str));
+            result = convert(setInternalStopTxnAlignedData(value_str));
             break;
         case keys::valid_keys::StopTxnSampledData:
-            result = convert(internalStopTxnAlignedData(value_str));
+            result = convert(setInternalStopTxnSampledData(value_str));
             break;
         case keys::valid_keys::TransactionMessageAttempts:
-            result = convert(internalTransactionMessageAttempts(value_str));
+            result = convert(setInternalTransactionMessageAttempts(value_str));
             break;
         case keys::valid_keys::TransactionMessageRetryInterval:
-            result = convert(internalTransactionMessageRetryInterval(value_str));
+            result = convert(setInternalTransactionMessageRetryInterval(value_str));
             break;
         case keys::valid_keys::UnlockConnectorOnEVSideDisconnect:
-            result = convert(internalUnlockConnectorOnEVSideDisconnect(value_str));
+            result = convert(setInternalUnlockConnectorOnEVSideDisconnect(value_str));
             break;
         case keys::valid_keys::WebSocketPingInterval:
-            result = convert(internalWebsocketPingInterval(value_str));
+            result = convert(setInternalWebsocketPingInterval(value_str));
             break;
         case keys::valid_keys::AuthorizationKey:
-            result = convert(internalAuthorizationKey(value_str));
+            result = convert(setInternalAuthorizationKey(value_str));
             break;
         case keys::valid_keys::CpoName:
-            result = convert(internalCpoName(value_str));
+            result = convert(setInternalCpoName(value_str));
             break;
         case keys::valid_keys::DisableSecurityEventNotifications:
-            result = convert(internalDisableSecurityEventNotifications(value_str));
+            result = convert(setInternalDisableSecurityEventNotifications(value_str));
             break;
         case keys::valid_keys::SecurityProfile:
-            result = convert(internalSecurityProfile(value_str));
+            result = convert(setInternalSecurityProfile(value_str));
             break;
         case keys::valid_keys::ISO15118CertificateManagementEnabled:
-            result = convert(internalISO15118CertificateManagementEnabled(value_str));
+            result = convert(setInternalISO15118CertificateManagementEnabled(value_str));
             break;
         case keys::valid_keys::LocalAuthListEnabled:
-            result = convert(internalLocalAuthListEnabled(value_str));
+            result = convert(setInternalLocalAuthListEnabled(value_str));
             break;
         case keys::valid_keys::ContractValidationOffline:
-            result = convert(internalContractValidationOffline(value_str));
+            result = convert(setInternalContractValidationOffline(value_str));
             break;
         case keys::valid_keys::CentralContractValidationAllowed:
-            result = convert(internalCentralContractValidationAllowed(value_str));
+            result = convert(setInternalCentralContractValidationAllowed(value_str));
             break;
         case keys::valid_keys::CertSigningRepeatTimes:
-            result = convert(internalCertSigningRepeatTimes(value_str));
+            result = convert(setInternalCertSigningRepeatTimes(value_str));
             break;
         case keys::valid_keys::CertSigningWaitMinimum:
-            result = convert(internalCertSigningWaitMinimum(value_str));
+            result = convert(setInternalCertSigningWaitMinimum(value_str));
             break;
         case keys::valid_keys::ISO15118PnCEnabled:
-            result = convert(internalISO15118PnCEnabled(value_str));
+            result = convert(setInternalISO15118PnCEnabled(value_str));
             break;
         case keys::valid_keys::CustomIdleFeeAfterStop:
-            result = convert(internalCustomIdleFeeAfterStop(value_str));
+            result = convert(setInternalCustomIdleFeeAfterStop(value_str));
             break;
         case keys::valid_keys::DefaultPrice:
-            result = convert(internalDefaultPrice(value_str));
+            result = convert(setInternalDefaultPrice(value_str));
             break;
         case keys::valid_keys::DefaultPriceText:
             // should never match - language expected: DefaultPriceText,de
@@ -2808,19 +2808,19 @@ std::optional<ConfigurationStatus> ChargePointConfigurationDeviceModel::set(cons
             result = ConfigurationStatus::NotSupported;
             break;
         case keys::valid_keys::TimeOffset:
-            result = convert(internalDisplayTimeOffset(value_str));
+            result = convert(setInternalDisplayTimeOffset(value_str));
             break;
         case keys::valid_keys::Language:
-            result = convert(internalLanguage(value_str));
+            result = convert(setInternalLanguage(value_str));
             break;
         case keys::valid_keys::NextTimeOffsetTransitionDateTime:
-            result = convert(internalNextTimeOffsetTransitionDateTime(value_str));
+            result = convert(setInternalNextTimeOffsetTransitionDateTime(value_str));
             break;
         case keys::valid_keys::TimeOffsetNextTransition:
-            result = convert(internalTimeOffsetNextTransition(value_str));
+            result = convert(setInternalTimeOffsetNextTransition(value_str));
             break;
         case keys::valid_keys::WaitForSetUserPriceTimeout:
-            result = convert(internalWaitForSetUserPriceTimeout(value_str));
+            result = convert(setInternalWaitForSetUserPriceTimeout(value_str));
             break;
 
         case keys::valid_keys::ChargeBoxSerialNumber:

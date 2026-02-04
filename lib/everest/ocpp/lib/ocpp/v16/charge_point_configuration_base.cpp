@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
+#include <cstddef>
 #include <ocpp/v16/charge_point_configuration_base.hpp>
 #include <ocpp/v16/utils.hpp>
 
@@ -156,7 +157,7 @@ void ChargePointConfigurationBase::initialise(const ProfilesSet& initial_set,
     }
 }
 
-bool ChargePointConfigurationBase::is_valid_supported_measurands(const std::string& csl) {
+bool ChargePointConfigurationBase::isValidSupportedMeasurands(const std::string& csl) const {
     const auto elements = utils::from_csl(csl);
     bool result{true};
 
@@ -179,7 +180,7 @@ bool ChargePointConfigurationBase::is_valid_supported_measurands(const std::stri
 }
 
 std::optional<ChargePointConfigurationBase::MeasurandWithPhaseList>
-ChargePointConfigurationBase::csv_to_measurand_with_phase_vector(const std::string& csl) {
+ChargePointConfigurationBase::csvToMeasurandWithPhaseVector(const std::string& csl) const {
     const auto elements = utils::from_csl(csl);
     bool element_error{false};
 
@@ -237,8 +238,8 @@ ChargePointConfigurationBase::csv_to_measurand_with_phase_vector(const std::stri
     return result;
 }
 
-std::optional<std::uint32_t> ChargePointConfigurationBase::extract_connector_id(const std::string& str) {
-    // expected string "MeterPublicKey[1]"
+std::optional<std::uint32_t> ChargePointConfigurationBase::extractConnectorId(const std::string& str) {
+    // example string "MeterPublicKey[1]"
 
     std::optional<std::uint32_t> result;
     const std::regex id_regex(R"(^.+\[(\d+)\]$)");
@@ -259,11 +260,11 @@ std::optional<std::uint32_t> ChargePointConfigurationBase::extract_connector_id(
     return result;
 }
 
-std::string ChargePointConfigurationBase::MeterPublicKey_string(std::uint32_t connector_id) {
+std::string ChargePointConfigurationBase::meterPublicKeyString(std::uint32_t connector_id) {
     return std::string{"MeterPublicKey["} + std::to_string(connector_id) + ']';
 }
 
-bool ChargePointConfigurationBase::to_bool(const std::string& value) {
+bool ChargePointConfigurationBase::toBool(const std::string& value) {
     std::string out = value;
     std::transform(out.begin(), out.end(), out.begin(), ::tolower);
     if ((out == "true") || out == "1") {
@@ -298,38 +299,28 @@ bool ChargePointConfigurationBase::isConnectorPhaseRotationValid(std::int32_t nu
     str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
     auto elements = v16::utils::from_csl(str);
 
-    // Filter per element of type 0.NotApplicable, 1.NotApplicable, or 0.Unknown etc
-    for (int connector_id = 0; connector_id <= num_connectors; connector_id++) {
-        std::string myNotApplicable = std::to_string(connector_id) + ".NotApplicable";
-        std::string myNotDefined = std::to_string(connector_id) + ".Unknown";
-        elements.erase(std::remove(elements.begin(), elements.end(), myNotApplicable), elements.end());
-        elements.erase(std::remove(elements.begin(), elements.end(), myNotDefined), elements.end());
-    }
-    // if all elements are hit, accept it, else check the remaining
-    if (elements.size() > 0) {
-        for (const std::string& e : elements) {
-            if (e.size() != 5) {
-                result = false;
-            } else {
-                try {
-                    auto connector = std::stoi(e.substr(0, 1));
-                    if (connector < 0 or connector > num_connectors) {
-                        result = false;
-                    } else {
-                        std::string phase_rotation = e.substr(2, 5);
-                        if (phase_rotation != "RST" and phase_rotation != "RTS" and phase_rotation != "SRT" and
-                            phase_rotation != "STR" and phase_rotation != "TRS" and phase_rotation != "TSR") {
-                            result = false;
-                        }
+    for (const auto& e : elements) {
+        const auto parts = utils::split_string('.', e);
+        result = false;
+        if (parts.size() == 2) {
+            try {
+                const std::string& connector_str = parts[0];
+                const std::string& rotation_str = parts[1];
+                std::size_t len;
+                auto connector = std::stoi(connector_str, &len);
+                if ((len == connector_str.size()) && (connector >= 0) && (connector <= num_connectors)) {
+                    if (rotation_str == "NotApplicable" || rotation_str == "Unknown" || rotation_str == "RST" ||
+                        rotation_str == "RTS" || rotation_str == "SRT" || rotation_str == "STR" ||
+                        rotation_str == "TRS" || rotation_str == "TSR") {
+                        result = true;
                     }
-                } catch (const std::invalid_argument&) {
-                    result = false;
                 }
+            } catch (const std::invalid_argument&) {
             }
+        }
 
-            if (!result) {
-                break;
-            }
+        if (!result) {
+            break;
         }
     }
     return result;

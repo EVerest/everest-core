@@ -887,51 +887,6 @@ KeyValue ChargePointConfiguration::getRetryBackoffWaitMinimumKeyValue() {
     return kv;
 }
 
-std::vector<MeasurandWithPhase> ChargePointConfiguration::csv_to_measurand_with_phase_vector(const std::string& csv) {
-    std::vector<std::string> components;
-
-    boost::split(components, csv, boost::is_any_of(","));
-    std::vector<MeasurandWithPhase> measurand_with_phase_vector;
-    if (csv.empty()) {
-        return measurand_with_phase_vector;
-    }
-    for (const auto& component : components) {
-        MeasurandWithPhase measurand_with_phase;
-        const Measurand measurand = conversions::string_to_measurand(component);
-        // check if this measurand can be provided on multiple phases
-        if ((this->supported_measurands.count(measurand) != 0) and !this->supported_measurands.at(measurand).empty()) {
-            // multiple phases are available
-            // also add the measurand without a phase as a total value
-            measurand_with_phase.measurand = measurand;
-            measurand_with_phase_vector.push_back(measurand_with_phase);
-
-            for (auto phase : this->supported_measurands[measurand]) {
-                measurand_with_phase.phase.emplace(phase);
-                if (std::find(measurand_with_phase_vector.begin(), measurand_with_phase_vector.end(),
-                              measurand_with_phase) == measurand_with_phase_vector.end()) {
-                    measurand_with_phase_vector.push_back(measurand_with_phase);
-                }
-            }
-        } else {
-            // this is a measurand without any phase support
-            measurand_with_phase.measurand = measurand;
-            if (std::find(measurand_with_phase_vector.begin(), measurand_with_phase_vector.end(),
-                          measurand_with_phase) == measurand_with_phase_vector.end()) {
-                measurand_with_phase_vector.push_back(measurand_with_phase);
-            }
-        }
-    }
-    for (auto m : measurand_with_phase_vector) {
-        if (!m.phase) {
-            EVLOG_debug << "measurand without phase: " << m.measurand;
-        } else {
-            EVLOG_debug << "measurand: " << m.measurand
-                        << " with phase: " << conversions::phase_to_string(m.phase.value());
-        }
-    }
-    return measurand_with_phase_vector;
-}
-
 bool ChargePointConfiguration::validate_measurands(const json& config) {
     std::vector<std::string> measurands_vector;
 
@@ -942,46 +897,8 @@ bool ChargePointConfiguration::validate_measurands(const json& config) {
     measurands_vector.push_back(config["Core"]["StopTxnSampledData"]);
 
     for (const auto& measurands : measurands_vector) {
-        if (!this->measurands_supported(measurands)) {
+        if (!this->isValidSupportedMeasurands(measurands)) {
             return false;
-        }
-    }
-    return true;
-}
-
-bool ChargePointConfiguration::measurands_supported(const std::string& csv) {
-
-    if (csv.empty()) {
-        return true;
-    }
-
-    std::vector<std::string> components;
-
-    boost::split(components, csv, boost::is_any_of(","));
-    for (auto component : components) {
-        try {
-            conversions::string_to_measurand(component);
-        } catch (const StringToEnumException& o) {
-            EVLOG_warning << "Measurand: " << component << " is not supported!";
-            return false;
-        }
-    }
-
-    auto requested_measurands = this->csv_to_measurand_with_phase_vector(csv);
-    // check if the requested measurands are supported, otherwise return false
-    for (auto req : requested_measurands) {
-        if (this->supported_measurands.count(req.measurand) == 0) {
-            return false;
-        }
-
-        if (req.phase) {
-            auto phase = req.phase.value();
-            auto measurand = this->supported_measurands[req.measurand];
-
-            if (std::find(measurand.begin(), measurand.end(), phase) == measurand.end()) {
-                // phase not found, this is an error
-                return false;
-            }
         }
     }
     return true;
@@ -1366,7 +1283,7 @@ std::string ChargePointConfiguration::getMeterValuesAlignedData() {
     return this->config["Core"]["MeterValuesAlignedData"];
 }
 bool ChargePointConfiguration::setMeterValuesAlignedData(const std::string& meter_values_aligned_data) {
-    if (!this->measurands_supported(meter_values_aligned_data)) {
+    if (!this->isValidSupportedMeasurands(meter_values_aligned_data)) {
         return false;
     }
     this->config["Core"]["MeterValuesAlignedData"] = meter_values_aligned_data;
@@ -1381,7 +1298,12 @@ KeyValue ChargePointConfiguration::getMeterValuesAlignedDataKeyValue() {
     return kv;
 }
 std::vector<MeasurandWithPhase> ChargePointConfiguration::getMeterValuesAlignedDataVector() {
-    return this->csv_to_measurand_with_phase_vector(this->getMeterValuesAlignedData());
+    std::vector<MeasurandWithPhase> result;
+    auto res = csvToMeasurandWithPhaseVector(getMeterValuesAlignedData());
+    if (res) {
+        result = std::move(res.value());
+    }
+    return result;
 }
 
 // Core Profile - optional
@@ -1410,7 +1332,7 @@ std::string ChargePointConfiguration::getMeterValuesSampledData() {
     return this->config["Core"]["MeterValuesSampledData"];
 }
 bool ChargePointConfiguration::setMeterValuesSampledData(const std::string& meter_values_sampled_data) {
-    if (!this->measurands_supported(meter_values_sampled_data)) {
+    if (!this->isValidSupportedMeasurands(meter_values_sampled_data)) {
         return false;
     }
     this->config["Core"]["MeterValuesSampledData"] = meter_values_sampled_data;
@@ -1425,7 +1347,12 @@ KeyValue ChargePointConfiguration::getMeterValuesSampledDataKeyValue() {
     return kv;
 }
 std::vector<MeasurandWithPhase> ChargePointConfiguration::getMeterValuesSampledDataVector() {
-    return this->csv_to_measurand_with_phase_vector(this->getMeterValuesSampledData());
+    std::vector<MeasurandWithPhase> result;
+    auto res = csvToMeasurandWithPhaseVector(getMeterValuesSampledData());
+    if (res) {
+        result = std::move(res.value());
+    }
+    return result;
 }
 
 // Core Profile - optional
@@ -1585,7 +1512,7 @@ std::string ChargePointConfiguration::getStopTxnAlignedData() {
     return this->config["Core"]["StopTxnAlignedData"];
 }
 bool ChargePointConfiguration::setStopTxnAlignedData(const std::string& stop_txn_aligned_data) {
-    if (!this->measurands_supported(stop_txn_aligned_data)) {
+    if (!this->isValidSupportedMeasurands(stop_txn_aligned_data)) {
         return false;
     }
     this->config["Core"]["StopTxnAlignedData"] = stop_txn_aligned_data;
@@ -1626,7 +1553,7 @@ std::string ChargePointConfiguration::getStopTxnSampledData() {
     return this->config["Core"]["StopTxnSampledData"];
 }
 bool ChargePointConfiguration::setStopTxnSampledData(const std::string& stop_txn_sampled_data) {
-    if (!this->measurands_supported(stop_txn_sampled_data)) {
+    if (!this->isValidSupportedMeasurands(stop_txn_sampled_data)) {
         return false;
     }
     this->config["Core"]["StopTxnSampledData"] = stop_txn_sampled_data;
@@ -1938,16 +1865,6 @@ std::optional<std::string> ChargePointConfiguration::getAuthorizationKey() {
     return authorization_key;
 }
 
-std::string hexToString(const std::string& s) {
-    std::string str;
-    for (size_t i = 0; i < s.length(); i += 2) {
-        const std::string byte = s.substr(i, 2);
-        const char chr = (char)(int)strtol(byte.c_str(), nullptr, 16);
-        str.push_back(chr);
-    }
-    return str;
-}
-
 void ChargePointConfiguration::setAuthorizationKey(const std::string& authorization_key) {
 
     // TODO(piet): SecurityLog entry
@@ -1961,46 +1878,6 @@ void ChargePointConfiguration::setAuthorizationKey(const std::string& authorizat
 
     this->config["Security"]["AuthorizationKey"] = str;
     this->setInUserConfig("Security", "AuthorizationKey", str);
-}
-
-bool ChargePointConfiguration::isConnectorPhaseRotationValid(const std::string& phase_rotation) {
-    std::string str(phase_rotation);
-    std::vector<std::string> elements;
-
-    str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
-    boost::split(elements, str, boost::is_any_of(","));
-
-    // Filter per element of type 0.NotApplicable, 1.NotApplicable, or 0.Unknown etc
-    for (int connector_id = 0; connector_id <= this->getNumberOfConnectors(); connector_id++) {
-        const std::string myNotApplicable = std::to_string(connector_id) + ".NotApplicable";
-        const std::string myNotDefined = std::to_string(connector_id) + ".Unknown";
-        elements.erase(std::remove(elements.begin(), elements.end(), myNotApplicable), elements.end());
-        elements.erase(std::remove(elements.begin(), elements.end(), myNotDefined), elements.end());
-    }
-    // if all elemens are hit, accept it, else check the remaining
-    if (elements.empty()) {
-        return true;
-    }
-
-    for (const std::string& e : elements) {
-        if (e.size() != 5) {
-            return false;
-        }
-        try {
-            auto connector = std::stoi(e.substr(0, 1));
-            if (connector < 0 or connector > this->getNumberOfConnectors()) {
-                return false;
-            }
-        } catch (const std::invalid_argument&) {
-            return false;
-        }
-        const std::string phase_rotation = e.substr(2, 5);
-        if (phase_rotation != "RST" and phase_rotation != "RTS" and phase_rotation != "SRT" and
-            phase_rotation != "STR" and phase_rotation != "TRS" and phase_rotation != "TSR") {
-            return false;
-        }
-    }
-    return true;
 }
 
 std::optional<KeyValue> ChargePointConfiguration::getAuthorizationKeyKeyValue() {
@@ -3707,7 +3584,8 @@ std::optional<ConfigurationStatus> ChargePointConfiguration::set(const CiString<
             return ConfigurationStatus::Rejected;
         }
     } else if (key == "ConnectorPhaseRotation") {
-        if (this->isConnectorPhaseRotationValid(value.get())) {
+        const auto max = getNumberOfConnectors();
+        if (this->isConnectorPhaseRotationValid(max, value.get())) {
             this->setConnectorPhaseRotation(value.get());
         } else {
             return ConfigurationStatus::Rejected;

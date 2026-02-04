@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #ifndef OCPP_V16_CHARGE_POINT_CONFIGURATION_INTERFACE_HPP
 #define OCPP_V16_CHARGE_POINT_CONFIGURATION_INTERFACE_HPP
 

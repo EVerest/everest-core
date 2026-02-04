@@ -44,13 +44,13 @@ protected:
                     const std::optional<std::string>& supported_measurands_csl);
 
 public:
-    bool is_valid_supported_measurands(const std::string& csl);
-    std::optional<MeasurandWithPhaseList> csv_to_measurand_with_phase_vector(const std::string& csl);
+    bool isValidSupportedMeasurands(const std::string& csl) const;
+    std::optional<MeasurandWithPhaseList> csvToMeasurandWithPhaseVector(const std::string& csl) const;
 
-    static std::optional<std::uint32_t> extract_connector_id(const std::string& str);
-    static std::string MeterPublicKey_string(std::uint32_t connector_id);
+    static std::optional<std::uint32_t> extractConnectorId(const std::string& str);
+    static std::string meterPublicKeyString(std::uint32_t connector_id);
 
-    static bool to_bool(const std::string& value);
+    static bool toBool(const std::string& value);
     static bool isBool(const std::string& str);
     static bool isPositiveInteger(const std::string& str);
     static bool isConnectorPhaseRotationValid(std::int32_t num_connectors, const std::string& value);
