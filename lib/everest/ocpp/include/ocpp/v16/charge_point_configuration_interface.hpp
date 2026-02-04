@@ -20,6 +20,7 @@ struct KeyValue;
 /// \brief contains the configuration of the charge point
 class ChargePointConfigurationInterface {
 public:
+    virtual ~ChargePointConfigurationInterface() = default;
     // UserConfig and Internal
     virtual std::string getChargeBoxSerialNumber() = 0;
     virtual std::optional<CiString<25>> getChargePointSerialNumber() = 0;

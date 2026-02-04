@@ -3,6 +3,7 @@
 
 #include "memory_storage.hpp"
 
+#include <iterator>
 #include <ocpp/v16/known_keys.hpp>
 #include <ocpp/v2/ocpp_enums.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
@@ -52,7 +53,6 @@ const std::map<std::string, std::string> required_vars_internal = {
     {"LogRotationMaximumFileSize", "0"},
     {"SupportedChargingProfilePurposeTypes", "ChargePointMaxProfile,TxDefaultProfile,TxProfile"},
     {"LogMessagesFormat", ""},
-    {"AllowChargingProfileWithoutStartSchedule", "true"},
     {"CompositeScheduleDefaultLimitAmps", "48"},
     {"CompositeScheduleDefaultLimitWatts", "33120"},
     {"CompositeScheduleDefaultNumberPhases", "3"},
@@ -134,6 +134,13 @@ const std::map<std::string, std::string> required_vars_california_pricing = {
 // Do not add additional values
 const std::map<std::string, std::string> required_vars_custom = {};
 
+// additional values for full config
+const std::map<std::string, std::string> full_vars_california_pricing = {
+    {"SupportedLanguages", "en, nl, de, nb_NO"},
+    {"CustomMultiLanguageMessages", "true"},
+    {"Language", "en"},
+};
+
 std::map<std::string, std::string> vars_internal;
 std::map<std::string, std::string> vars_core;
 std::map<std::string, std::string> vars_firmware_management;
@@ -189,6 +196,10 @@ MemoryStorage::MemoryStorage() {
     vars_custom = required_vars_custom;
 
     read_only.clear();
+}
+
+void MemoryStorage::apply_full_config() {
+    vars_california_pricing.insert(full_vars_california_pricing.begin(), full_vars_california_pricing.end());
 }
 
 void MemoryStorage::set_readonly(const std::string& key) {

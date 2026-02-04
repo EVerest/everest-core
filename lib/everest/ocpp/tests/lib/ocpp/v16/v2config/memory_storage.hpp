@@ -45,6 +45,8 @@ public:
 
     MemoryStorage();
 
+    void apply_full_config();
+
     void set_readonly(const std::string& key);
     void set(const std::string_view& component, const std::string_view& variable, const std::string_view& value);
     std::string get(const std::string_view& component, const std::string_view& variable);

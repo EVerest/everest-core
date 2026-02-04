@@ -2,10 +2,12 @@
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include <cstddef>
+#include <ocpp/common/schemas.hpp>
 #include <ocpp/v16/charge_point_configuration_base.hpp>
 #include <ocpp/v16/utils.hpp>
 
 #include <exception>
+#include <fstream>
 #include <regex>
 #include <string>
 
@@ -155,6 +157,24 @@ void ChargePointConfigurationBase::initialise(const ProfilesSet& initial_set,
             }
         }
     }
+}
+
+bool ChargePointConfigurationBase::validate(const std::string_view& schema_file, const json& object) const {
+    bool result{false};
+    try {
+        fs::path schema_path = ocpp_main_path / "profile_schemas" / schema_file;
+        std::ifstream ifs(schema_path);
+        auto schema_json = json::parse(ifs);
+        ocpp::Schemas schema(std::move(schema_json));
+        auto validator = schema.get_validator();
+        if (validator) {
+            validator->validate(object);
+            result = true;
+        }
+    } catch (const std::exception& e) {
+        EVLOG_error << "Error validating against schema " << schema_file << ": " << e.what();
+    }
+    return result;
 }
 
 bool ChargePointConfigurationBase::isValidSupportedMeasurands(const std::string& csl) const {

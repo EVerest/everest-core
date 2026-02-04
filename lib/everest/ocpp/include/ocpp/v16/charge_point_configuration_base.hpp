@@ -7,9 +7,11 @@
 #include <ocpp/v16/types.hpp>
 
 #include <cstddef>
+#include <filesystem>
 #include <map>
 #include <optional>
 #include <set>
+#include <string_view>
 
 namespace ocpp::v16 {
 
@@ -39,11 +41,20 @@ protected:
     MessagesSet supported_message_types_sending;
     ProfilesSet supported_feature_profiles;
     MeasurandsMap supported_measurands;
+    std::filesystem::path ocpp_main_path;
 
     void initialise(const ProfilesSet& initial_set, const std::optional<std::string>& supported_profiles_csl,
                     const std::optional<std::string>& supported_measurands_csl);
 
 public:
+    ChargePointConfigurationBase(const std::string_view& ocpp_main_path) : ocpp_main_path(ocpp_main_path) {
+    }
+    ChargePointConfigurationBase(const std::filesystem::path& ocpp_main_path) : ocpp_main_path(ocpp_main_path) {
+    }
+    virtual ~ChargePointConfigurationBase() = default;
+
+    bool validate(const std::string_view& schema_file, const json& object) const;
+
     bool isValidSupportedMeasurands(const std::string& csl) const;
     std::optional<MeasurandWithPhaseList> csvToMeasurandWithPhaseVector(const std::string& csl) const;
 

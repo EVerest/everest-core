@@ -95,7 +95,8 @@ protected:
     SetResult setInternalWaitForSetUserPriceTimeout(const std::string& value);
 
 public:
-    explicit ChargePointConfigurationDeviceModel(std::unique_ptr<v2::DeviceModelInterface> device_model_interface);
+    explicit ChargePointConfigurationDeviceModel(const std::string_view& ocpp_main_path,
+                                                 std::unique_ptr<v2::DeviceModelInterface> device_model_interface);
     virtual ~ChargePointConfigurationDeviceModel() = default;
 
     // UserConfig and Internal

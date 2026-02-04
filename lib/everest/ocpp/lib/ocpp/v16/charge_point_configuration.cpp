@@ -19,7 +19,7 @@ namespace ocpp::v16 {
 
 ChargePointConfiguration::ChargePointConfiguration(const std::string& config, const fs::path& ocpp_main_path,
                                                    const fs::path& user_config_path) :
-    ocpp_main_path(ocpp_main_path), user_config_path(user_config_path) {
+    ChargePointConfigurationBase(ocpp_main_path), user_config_path(user_config_path) {
 
     if (!fs::exists(this->user_config_path)) {
         EVLOG_critical << "User config file does not exist";
@@ -158,24 +158,6 @@ void ChargePointConfiguration::setChargepointInformationProperty(json& user_conf
         this->config["Internal"][key] = value.value();
         user_config["Internal"][key] = value.value();
     }
-}
-
-bool ChargePointConfiguration::validate(const std::string_view& schema_file, const json& object) {
-    bool result{false};
-    try {
-        fs::path schema_path = ocpp_main_path / "profile_schemas" / schema_file;
-        std::ifstream ifs(schema_path);
-        auto schema_json = json::parse(ifs);
-        ocpp::Schemas schema(std::move(schema_json));
-        auto validator = schema.get_validator();
-        if (validator) {
-            validator->validate(object);
-            result = true;
-        }
-    } catch (const std::exception& e) {
-        EVLOG_error << "Error validating against schema " << schema_file << ": " << e.what();
-    }
-    return result;
 }
 
 void ChargePointConfiguration::setChargepointInformation(const std::string& chargePointVendor,

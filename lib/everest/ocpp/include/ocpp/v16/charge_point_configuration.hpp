@@ -24,7 +24,6 @@ private:
     json custom_schema;
     json internal_schema;
     bool core_schema_unlock_connector_on_ev_side_disconnect_ro_value;
-    fs::path ocpp_main_path;
     fs::path user_config_path;
 
     std::recursive_mutex configuration_mutex;
@@ -36,11 +35,10 @@ private:
     void setChargepointInformationProperty(json& user_config, const std::string& key,
                                            const std::optional<std::string>& value);
 
-    bool validate(const std::string_view& schema_file, const json& object);
-
 public:
     ChargePointConfiguration(const std::string& config, const fs::path& ocpp_main_path,
                              const fs::path& user_config_path);
+    virtual ~ChargePointConfiguration() = default;
     void setChargepointInformation(const std::string& chargePointVendor, const std::string& chargePointModel,
                                    const std::optional<std::string>& chargePointSerialNumber,
                                    const std::optional<std::string>& chargeBoxSerialNumber,

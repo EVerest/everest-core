@@ -13,6 +13,7 @@ using namespace ocpp::v16::stubs;
 // run tests against V16 JSON and V2 database
 // gtest_filter: Config/Configuration.*
 INSTANTIATE_TEST_SUITE_P(Config, Configuration, testing::Values("sql", "json"));
+INSTANTIATE_TEST_SUITE_P(Config, ConfigurationFull, testing::Values("sql", "json"));
 
 TEST(ConnectorID, Extract) {
     using CPCB = ocpp::v16::ChargePointConfigurationBase;

@@ -12,7 +12,6 @@ using namespace ocpp::v16::stubs;
 // expected values extracted from the JSON configuration files
 // also see memory_storage.cpp
 const std::map<std::string, std::string> expected_key_value = {
-    {"AllowChargingProfileWithoutStartSchedule", "true"},
     {"AuthorizeConnectorZeroOnConnectorOne", "true"},
     {"CentralSystemURI", "127.0.0.1:8180/steve/websocket/CentralSystemService/"},
     {"ChargeBoxSerialNumber", "cp001"},

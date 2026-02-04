@@ -2,7 +2,6 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include <gtest/gtest.h>
-#include <string>
 
 #include "configuration_stub.hpp"
 
@@ -75,13 +74,20 @@ TEST_P(Configuration, DefaultPrice) {
     auto kv = get()->getDefaultPriceKeyValue();
     ASSERT_FALSE(kv);
 
-    auto status = get()->setDefaultPrice("{}");
+    const char* minimal = R"({"priceText":"Default"})";
+
+    auto status = get()->setDefaultPrice(minimal);
     EXPECT_EQ(status, ConfigurationStatus::Accepted);
-    EXPECT_EQ(get()->getDefaultPrice(), "{}");
+    auto json_result = json::parse(get()->getDefaultPrice().value_or(""));
+    auto result = json_result.dump();
+    EXPECT_EQ(result, minimal);
+
     kv = get()->getDefaultPriceKeyValue();
     ASSERT_TRUE(kv);
     EXPECT_EQ(kv.value().key, "DefaultPrice");
-    EXPECT_EQ(kv.value().value, "{}");
+    json_result = json::parse(std::string{kv.value().value.value()});
+    result = json_result.dump();
+    EXPECT_EQ(result, minimal);
     EXPECT_FALSE(kv.value().readonly);
 }
 
@@ -206,6 +212,97 @@ TEST_P(Configuration, PriceNumberOfDecimalsForCostValues) {
     EXPECT_FALSE(get()->getPriceNumberOfDecimalsForCostValues().has_value());
     auto kv = get()->getPriceNumberOfDecimalsForCostValuesKeyValue();
     ASSERT_FALSE(kv);
+}
+
+TEST_P(ConfigurationFull, BadPriceText) {
+    ASSERT_NE(get(), nullptr);
+    using ConfigurationStatus = ocpp::v16::ConfigurationStatus;
+
+    // PriceText value is JSON encoded - check that malformed and invalid
+    // messages are correctly handled
+    const char* valid = R"({"priceText":"default"})";
+    const char* invalid = R"({"priceText":null,"priceTextOffline":null,"chargingPrice":null})";
+
+    auto set_result = get()->set("DefaultPrice", valid);
+    EXPECT_TRUE(set_result.has_value());
+    EXPECT_EQ(set_result.value(), ConfigurationStatus::Accepted);
+
+    auto get_result = get()->getDefaultPrice();
+    ASSERT_TRUE(get_result.has_value());
+    auto get_json = json::parse(get_result.value());
+    EXPECT_EQ(get_json["priceText"], "default");
+
+    set_result = get()->set("DefaultPrice", invalid);
+    EXPECT_TRUE(set_result.has_value());
+    EXPECT_EQ(set_result.value(), ConfigurationStatus::Rejected);
+
+    auto get_result2 = get()->getDefaultPrice();
+    ASSERT_TRUE(get_result2.has_value());
+    EXPECT_EQ(get_result2, get_result);
+    get_json = json::parse(get_result.value());
+    EXPECT_EQ(get_json["priceText"], "default");
+
+    auto set_result2 = get()->setDefaultPrice(invalid);
+    EXPECT_EQ(set_result2, ConfigurationStatus::Rejected);
+
+    get_result2 = get()->getDefaultPrice();
+    ASSERT_TRUE(get_result2.has_value());
+    EXPECT_EQ(get_result2, get_result);
+    get_json = json::parse(get_result.value());
+    EXPECT_EQ(get_json["priceText"], "default");
+}
+
+TEST_P(ConfigurationFull, DefaultPriceTextEmptyArray) {
+    ASSERT_NE(get(), nullptr);
+    using ConfigurationStatus = ocpp::v16::ConfigurationStatus;
+    const char* empty = R"([])";
+    auto set_result = get()->set("DefaultPriceText,en", empty);
+    EXPECT_EQ(set_result, ConfigurationStatus::Rejected);
+    set_result = get()->setDefaultPriceText("DefaultPriceText,en", empty);
+    EXPECT_EQ(set_result, ConfigurationStatus::Rejected);
+}
+
+TEST_P(ConfigurationFull, DefaultPriceTextEmptyObject) {
+    ASSERT_NE(get(), nullptr);
+    using ConfigurationStatus = ocpp::v16::ConfigurationStatus;
+    const char* empty = R"({})";
+    auto set_result = get()->set("DefaultPriceText,en", empty);
+    EXPECT_EQ(set_result, ConfigurationStatus::Rejected);
+    set_result = get()->setDefaultPriceText("DefaultPriceText,en", empty);
+    EXPECT_EQ(set_result, ConfigurationStatus::Rejected);
+}
+
+TEST_P(ConfigurationFull, DefaultPriceInvalid) {
+    ASSERT_NE(get(), nullptr);
+    using ConfigurationStatus = ocpp::v16::ConfigurationStatus;
+    const char* minimal = R"("priceText":[])";
+
+    auto set_result = get()->set("DefaultPriceText,en", minimal);
+    EXPECT_EQ(set_result, ConfigurationStatus::Rejected);
+    set_result = get()->setDefaultPriceText("DefaultPriceText,en", minimal);
+    EXPECT_EQ(set_result, ConfigurationStatus::Rejected);
+}
+
+TEST_P(ConfigurationFull, DefaultPriceTextMinimal) {
+    ASSERT_NE(get(), nullptr);
+    using ConfigurationStatus = ocpp::v16::ConfigurationStatus;
+    const char* minimal = R"({"priceText":"Default"})";
+
+    auto set_result = get()->set("DefaultPriceText,en", minimal);
+    EXPECT_EQ(set_result, ConfigurationStatus::Accepted);
+    set_result = get()->setDefaultPriceText("DefaultPriceText,en", minimal);
+    EXPECT_EQ(set_result, ConfigurationStatus::Accepted);
+}
+
+TEST_P(ConfigurationFull, DefaultPriceTextFull) {
+    ASSERT_NE(get(), nullptr);
+    using ConfigurationStatus = ocpp::v16::ConfigurationStatus;
+    const char* minimal = R"({"priceText":"Default","priceTextOffline":"Offline"})";
+
+    auto set_result = get()->set("DefaultPriceText,en", minimal);
+    EXPECT_EQ(set_result, ConfigurationStatus::Accepted);
+    set_result = get()->setDefaultPriceText("DefaultPriceText,en", minimal);
+    EXPECT_EQ(set_result, ConfigurationStatus::Accepted);
 }
 
 // -----------------------------------------------------------------------------

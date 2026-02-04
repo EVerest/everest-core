@@ -758,7 +758,17 @@ ChargePointConfigurationDeviceModel::setInternalDefaultPrice(const std::string& 
     try {
         json default_price = json::object();
         default_price = json::parse(value);
-        result = set_value(*storage, keys::valid_keys::DefaultPrice, value);
+
+        // perform schema validation on value
+        json test_value;
+        test_value["CustomDisplayCostAndPrice"] = true;
+        test_value["DefaultPrice"] = default_price;
+
+        if (validate("CostAndPrice.json", test_value)) {
+            result = set_value(*storage, keys::valid_keys::DefaultPrice, value);
+        } else {
+            EVLOG_error << "DefaultPrice is invalid: " << value;
+        }
     } catch (const std::exception& e) {
         EVLOG_error << "Default price json not correct, can not store default price : " << e.what();
     }
@@ -844,7 +854,17 @@ ChargePointConfigurationDeviceModel::setInternalDefaultPriceText(const std::stri
                         // add new info
                         default_price_json["priceTexts"].push_back(value_json);
                     }
-                    result = set_value(*storage, keys::valid_keys::DefaultPriceText, default_price_json.dump(2));
+
+                    // perform schema validation on default_price
+                    json test_value;
+                    test_value["CustomDisplayCostAndPrice"] = true;
+                    test_value["DefaultPriceText"] = default_price_json;
+
+                    if (validate("CostAndPrice.json", test_value)) {
+                        result = set_value(*storage, keys::valid_keys::DefaultPriceText, default_price_json.dump(2));
+                    } else {
+                        EVLOG_error << "DefaultPriceText value is invalid: " << value;
+                    }
                 } else {
                     EVLOG_error << "Error while setting default price: 'priceTexts' is not an array";
                 }
@@ -907,8 +927,8 @@ ChargePointConfigurationDeviceModel::setInternalWaitForSetUserPriceTimeout(const
 // Public methods
 
 ChargePointConfigurationDeviceModel::ChargePointConfigurationDeviceModel(
-    std::unique_ptr<v2::DeviceModelInterface> device_model_interface) :
-    ChargePointConfigurationBase(), storage(std::move(device_model_interface)) {
+    const std::string_view& ocpp_main_path, std::unique_ptr<v2::DeviceModelInterface> device_model_interface) :
+    ChargePointConfigurationBase(ocpp_main_path), storage(std::move(device_model_interface)) {
     const auto profiles = get_optional<std::string>(*storage, keys::valid_keys::SupportedFeatureProfiles);
     const auto measurands = get_optional<std::string>(*storage, keys::valid_keys::SupportedMeasurands);
     ProfilesSet initial;
