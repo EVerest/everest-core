@@ -26,11 +26,8 @@ SessionInfo::SessionInfo() :
 }
 
 bool SessionInfo::is_state_charging(const SessionInfo::State current_state) {
-    if (current_state == State::AuthRequired || current_state == State::Charging ||
-        current_state == State::ChargingPausedEV || current_state == State::ChargingPausedEVSE) {
-        return true;
-    }
-    return false;
+    return current_state == State::AuthRequired || current_state == State::Charging ||
+           current_state == State::ChargingPausedEV || current_state == State::ChargingPausedEVSE;
 }
 
 void SessionInfo::reset() {
@@ -278,7 +275,7 @@ SessionInfo::operator std::string() {
 
     auto charged_energy_wh = this->end_energy_import_wh - this->start_energy_import_wh;
     int32_t discharged_energy_wh{0};
-    if ((this->start_energy_export_wh_was_set == true) && (this->end_energy_export_wh_was_set == true)) {
+    if (this->start_energy_export_wh_was_set && this->end_energy_export_wh_was_set) {
         discharged_energy_wh = this->end_energy_export_wh - this->start_energy_export_wh;
     }
     auto now = date::utc_clock::now();
@@ -333,8 +330,8 @@ void API::init() {
 
     evse_manager_check.set_total(r_evse_manager.size());
 
-    int evse_id = 1;
-    for (auto& evse : this->r_evse_manager) {
+    for (const auto& evse : this->r_evse_manager) {
+
         auto& session_info = this->info.emplace_back(std::make_unique<SessionInfo>());
         auto& hw_caps = this->hw_capabilities_str.emplace_back("");
         std::string evse_base = this->api_base + evse->module_id;
@@ -391,8 +388,8 @@ void API::init() {
 
         evse->subscribe_error(
             "evse_manager/Inoperative",
-            [this, &session_info](const Everest::error::Error& error) { session_info->set_permanent_fault(true); },
-            [this, &session_info](const Everest::error::Error& error) { session_info->set_permanent_fault(false); });
+            [this, &session_info](const Everest::error::Error&) { session_info->set_permanent_fault(true); },
+            [this, &session_info](const Everest::error::Error&) { session_info->set_permanent_fault(false); });
 
         std::string var_datetime = var_base + "datetime";
         std::string var_session_info = var_base + "session_info";
@@ -544,19 +541,19 @@ void API::init() {
         });
 
         std::string cmd_pause_charging = cmd_base + "pause_charging";
-        this->mqtt.subscribe(cmd_pause_charging, [this, &evse](const std::string& data) {
+        this->mqtt.subscribe(cmd_pause_charging, [this, &evse](const std::string&) {
             this->evse_manager_check.wait_ready();
             evse->call_pause_charging(); //
         });
 
         std::string cmd_resume_charging = cmd_base + "resume_charging";
-        this->mqtt.subscribe(cmd_resume_charging, [this, &evse](const std::string& data) {
+        this->mqtt.subscribe(cmd_resume_charging, [this, &evse](const std::string&) {
             this->evse_manager_check.wait_ready();
             evse->call_resume_charging(); //
         });
 
         std::string cmd_stop_charging = cmd_base + "stop_charging";
-        this->mqtt.subscribe(cmd_stop_charging, [this, &evse](const std::string& data) {
+        this->mqtt.subscribe(cmd_stop_charging, [this, &evse](const std::string&) {
             this->evse_manager_check.wait_ready();
 
             types::evse_manager::StopTransactionRequest request;
@@ -564,71 +561,6 @@ void API::init() {
 
             evse->call_stop_transaction(request);
         });
-
-        std::string cmd_set_limit = cmd_base + "set_limit_amps";
-
-        if (external_energy_limits::is_evse_sink_configured(this->r_evse_energy_sink, evse_id)) {
-            auto& evse_energy_sink =
-                external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, evse_id);
-
-            this->mqtt.subscribe(cmd_set_limit, [&evse_manager_check = this->evse_manager_check,
-                                                 &evse_energy_sink = evse_energy_sink](const std::string& data) {
-                try {
-                    const auto external_limits = get_external_limits(data, false);
-                    evse_manager_check.wait_ready();
-                    evse_energy_sink.call_set_external_limits(external_limits);
-                } catch (const std::invalid_argument& e) {
-                    EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
-                }
-            });
-
-            std::string cmd_set_limit_watts = cmd_base + "set_limit_watts";
-
-            this->mqtt.subscribe(cmd_set_limit_watts, [&evse_manager_check = this->evse_manager_check,
-                                                       &evse_energy_sink = evse_energy_sink](const std::string& data) {
-                try {
-                    const auto external_limits = get_external_limits(data, true);
-                    evse_manager_check.wait_ready();
-                    evse_energy_sink.call_set_external_limits(external_limits);
-                } catch (const std::invalid_argument& e) {
-                    EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
-                }
-            });
-
-            std::string cmd_set_limit_phases = cmd_base + "set_limit_amps_phases";
-
-            this->mqtt.subscribe(cmd_set_limit_phases, [&evse_manager_check = this->evse_manager_check,
-                                                        &evse_energy_sink = evse_energy_sink](const std::string& data) {
-                int32_t phases;
-                float amps;
-                try {
-                    auto arg = json::parse(data);
-                    if (arg.contains("amps") && arg.contains("phases")) {
-                        amps = arg.at("amps");
-                        phases = arg.at("phases");
-                    } else {
-                        EVLOG_error << "Invalid limit: Missing amps or phases.";
-                        return;
-                    }
-                } catch (const std::exception& e) {
-                    EVLOG_error << "set_limit_amps_phases: Cannot parse argument, command ignored: " << e.what();
-                    return;
-                }
-                try {
-                    const auto external_limits = get_external_limits(phases, amps);
-                    evse_manager_check.wait_ready();
-                    evse_energy_sink.call_set_external_limits(external_limits);
-                } catch (const std::invalid_argument& e) {
-                    EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
-                } catch (const std::out_of_range& e) {
-                    EVLOG_warning << "Invalid limit: Out of range "
-                                  << ", error: " << e.what();
-                }
-            });
-        } else {
-            EVLOG_warning << "No evse energy sink configured for evse_id: " << evse_id
-                          << ". API module does therefore not allow control of amps or power limits for this EVSE";
-        }
 
         std::string cmd_force_unlock = cmd_base + "force_unlock";
         this->mqtt.subscribe(cmd_force_unlock, [this, &evse](const std::string& data) {
@@ -652,7 +584,7 @@ void API::init() {
         });
 
         // Check if a uk_random_delay is connected that matches this evse_manager
-        for (auto& random_delay : this->r_random_delay) {
+        for (const auto& random_delay : this->r_random_delay) {
             if (random_delay->module_id == evse->module_id) {
 
                 random_delay->subscribe_countdown([&session_info](const types::uk_random_delay::CountDown& s) {
@@ -684,14 +616,12 @@ void API::init() {
                 });
             }
         }
-        evse_id++;
     }
 
     std::string var_ocpp_connection_status = this->api_base + "ocpp/var/connection_status";
     std::string var_ocpp_schedule = this->api_base + "ocpp/var/charging_schedules";
 
     if (this->r_ocpp.size() == 1) {
-
         this->r_ocpp.at(0)->subscribe_is_connected([this](bool is_connected) {
             std::scoped_lock lock(ocpp_data_mutex);
             if (is_connected) {
@@ -703,7 +633,7 @@ void API::init() {
 
         this->r_ocpp.at(0)->subscribe_charging_schedules([this, &var_ocpp_schedule](json schedule) {
             std::scoped_lock lock(ocpp_data_mutex);
-            this->ocpp_charging_schedule = schedule;
+            this->ocpp_charging_schedule = std::move(schedule);
             this->ocpp_charging_schedule_updated = true;
         });
     }
@@ -726,8 +656,8 @@ void API::init() {
         }
     }
 
-    this->api_threads.push_back(
-        std::thread([this, var_connectors, connectors, var_info, var_ocpp_connection_status, var_ocpp_schedule]() {
+    this->api_threads.emplace_back(
+        [this, var_connectors, connectors, var_info, var_ocpp_connection_status, var_ocpp_schedule]() {
             auto next_tick = std::chrono::steady_clock::now();
             while (this->running) {
                 json connectors_array = connectors;
@@ -747,7 +677,7 @@ void API::init() {
                 next_tick += NOTIFICATION_PERIOD;
                 std::this_thread::sleep_until(next_tick);
             }
-        }));
+        });
 }
 
 void API::ready() {
@@ -757,12 +687,72 @@ void API::ready() {
         this->charger_information = r_charger_information.at(0)->call_get_charger_information();
     }
 
+    // The following API commands require the EVSE managers to be initialized
+    for (const auto& evse : this->r_evse_manager) {
+        std::string evse_base = this->api_base + evse->module_id;
+        std::string cmd_base = evse_base + "/cmd/";
+        auto evse_id = evse->call_get_evse().id;
+
+        if (external_energy_limits::is_evse_sink_configured(this->r_evse_energy_sink, evse_id)) {
+            auto& evse_energy_sink =
+                external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, evse_id);
+
+            std::string cmd_set_limit = cmd_base + "set_limit_amps";
+            this->mqtt.subscribe(cmd_set_limit, [&evse_energy_sink = evse_energy_sink](const std::string& data) {
+                try {
+                    const auto external_limits = get_external_limits(data, false);
+                    evse_energy_sink.call_set_external_limits(external_limits);
+                } catch (const std::invalid_argument& e) {
+                    EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+                }
+            });
+
+            std::string cmd_set_limit_watts = cmd_base + "set_limit_watts";
+            this->mqtt.subscribe(cmd_set_limit_watts, [&evse_energy_sink = evse_energy_sink](const std::string& data) {
+                try {
+                    const auto external_limits = get_external_limits(data, true);
+                    evse_energy_sink.call_set_external_limits(external_limits);
+                } catch (const std::invalid_argument& e) {
+                    EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+                }
+            });
+
+            std::string cmd_set_limit_phases = cmd_base + "set_limit_amps_phases";
+            this->mqtt.subscribe(cmd_set_limit_phases, [&evse_energy_sink = evse_energy_sink](const std::string& data) {
+                int32_t phases{};
+                float amps{};
+                try {
+                    auto arg = json::parse(data);
+                    if (arg.contains("amps") && arg.contains("phases")) {
+                        amps = arg.at("amps");
+                        phases = arg.at("phases");
+                    } else {
+                        EVLOG_error << "Invalid limit: Missing amps or phases.";
+                        return;
+                    }
+                } catch (const std::exception& e) {
+                    EVLOG_error << "set_limit_amps_phases: Cannot parse argument, command ignored: " << e.what();
+                    return;
+                }
+                try {
+                    const auto external_limits = get_external_limits(phases, amps);
+                    evse_energy_sink.call_set_external_limits(external_limits);
+                } catch (const std::invalid_argument& e) {
+                    EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+                } catch (const std::out_of_range& e) {
+                    EVLOG_warning << "Invalid limit: Out of range " << ", error: " << e.what();
+                }
+            });
+        } else {
+            EVLOG_warning << "No evse energy sink configured for evse_id: " << evse_id
+                          << ". API module does therefore not allow control of amps or power limits for this EVSE";
+        }
+    }
+
     std::string var_active_errors = this->api_base + "errors/var/active_errors";
-    this->api_threads.push_back(std::thread([this, var_active_errors]() {
+    this->api_threads.emplace_back([this, var_active_errors]() {
         auto next_tick = std::chrono::steady_clock::now();
         while (this->running) {
-            std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
-
             if (not r_error_history.empty()) {
                 // request active errors
                 types::error_history::FilterArguments filter;
@@ -776,7 +766,7 @@ void API::ready() {
             next_tick += NOTIFICATION_PERIOD;
             std::this_thread::sleep_until(next_tick);
         }
-    }));
+    });
 }
 
 } // namespace module
