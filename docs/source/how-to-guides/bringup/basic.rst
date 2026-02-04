@@ -48,7 +48,7 @@ that you can modify to use the correct BSP driver for your hardware:
    config/bringup/config-bringup-yetidriver.yaml
 
 Before you start the bring-up, make sure there is no other EVerest
-instance running (e.g. do a *systemctl stop everest*).
+instance running (e.g. do a ``systemctl stop everest``).
 
 On the target, start it the following way:
 
@@ -78,113 +78,113 @@ Now go through the following checklist step by step:
    This should output constant +12 V on the CP line.
 
 - Select AC coupling on the scope and verify the ripple noise. There
-   is no hard limit, but we recommend keeping it below 100 mV VPP.
+  is no hard limit, but we recommend keeping it below 100 mV VPP.
    
-   .. image:: images/constant-cp-line.png
-      :alt: Constant CP Line
-      :width: 560px
+  .. image:: images/constant-cp-line.png
+     :alt: Constant CP Line
+     :width: 560px
 
 - Switch to DC coupling, measure DC voltage range. It must be +12 V
-   +/- 5% (11.4 V to 12.6 V). Use a multimeter if your scope does not
-   provide sufficient DC accuracy.
+  +/- 5% (11.4 V to 12.6 V). Use a multimeter if your scope does not
+  provide sufficient DC accuracy.
 
 Now select PWM State F. This outputs constant -12 V on the CP line.
 
 - Select AC coupling on the scope and verify the ripple noise. There
-   is no hard limit, but we recommend keeping it below 100 mV.
+  is no hard limit, but we recommend keeping it below 100 mV.
 
 - Switch back to DC coupling, measure DC voltage range. It must be
-   -12 V +/- 5% (-12.6 V to -11.4 V). Use a multimeter if your scope
-   does not provide sufficient DC accuracy.
+  -12 V +/- 5% (-12.6 V to -11.4 V). Use a multimeter if your scope
+  does not provide sufficient DC accuracy.
 
 Select *PWM on* with a duty cycle of 5%, and connect the EV on the
 simulator (State B). Note that the images below were done in state A,
 but you should use state B.
 
 - PWM frequency: Must be in the range 980 Hz - 1020 Hz. It should be
-   1000 Hz.
+  1000 Hz.
    
-   .. image:: images/pwm-freq-1.png
-      :alt: PWM Frequency
-      :width: 560px
+  .. image:: images/pwm-freq-1.png
+     :alt: PWM Frequency
+     :width: 560px
 
 - Measure the (high) pulse length for the 5% duty cycle. Measure the
-   time between the zero crossings. It should be 50 µs.
+  time between the zero crossings. It should be 50 µs.
    
-   .. image:: images/pwm-freq-2.png
-      :alt: PWM Frequency
-      :width: 560px
+  .. image:: images/pwm-freq-2.png
+     :alt: PWM Frequency
+     :width: 560px
 
 - Equivalent source resistance: 970 - 1030 Ohm. Using a 1% 1-kOhm
-   resistor should be sufficient to fulfill this requirement if the
-   output of the PWM generator is low impedance.
+  resistor should be sufficient to fulfill this requirement if the
+  output of the PWM generator is low impedance.
 
 - Set state B and verify that the PWM duty cycle can be set to any
-   value between 5% (HLC) and the maximum current value your EVSE
-   supports (e.g. 53.3% for 32 A for AC). For AC, the maximum PWM for
-   your application can be calculated with:
+  value between 5% (HLC) and the maximum current value your EVSE
+  supports (e.g. 53.3% for 32 A for AC). For AC, the maximum PWM for
+  your application can be calculated with:
    
-   .. math::
+  .. math::
 
-      dutycyclePercent = maxAmpere / (0.6 * 100)
+     dutycyclePercent = maxAmpere / (0.6 * 100)
    
-   For DC, it is always 5%. The range from 5% to
-   10% is not used and it is ok to not support PWM in that range.
+  For DC, it is always 5%. The range from 5% to
+  10% is not used and it is ok to not support PWM in that range.
 
 - Set state B, which will have a PWM voltage range from +9 V to -12
-   V. Verify rise time is below 10 µs from 10% (-9.9 V) to 90% (6.9 V)
-   of the signal. The example has a rise time of 4.3 µs.
+  V. Verify rise time is below 10 µs from 10% (-9.9 V) to 90% (6.9 V)
+  of the signal. The example has a rise time of 4.3 µs.
    
-   .. image:: images/pwm-freq-3.png
-      :alt: PWM Frequency
-      :width: 560px
+  .. image:: images/pwm-freq-3.png
+     :alt: PWM Frequency
+     :width: 560px
 
 - State B: Verify fall time is less than 13 µs. As you can see in the
-   screenshot, the fall time is 10.68 µs, which is longer than the open
-   circuit time due to the diode in the EV simulator.
+  screenshot, the fall time is 10.68 µs, which is longer than the open
+  circuit time due to the diode in the EV simulator.
    
-   .. image:: images/pwm-freq-4.png
-      :alt: PWM Frequency
-      :width: 560px
+  .. image:: images/pwm-freq-4.png
+     :alt: PWM Frequency
+     :width: 560px
 
 - Set state C. Verify rise time is below 7 µs from 10% (-10.2 V) to
-   90% (4.2 V) of the signal. The example has a rise time of 3.08 µs.
+  90% (4.2 V) of the signal. The example has a rise time of 3.08 µs.
    
-   .. image:: images/pwm-freq-5.png
-      :alt: PWM Frequency
-      :width: 560px
+  .. image:: images/pwm-freq-5.png
+     :alt: PWM Frequency
+     :width: 560px
 
 - State C: Fall time must be less than 13 µs from 90% (4.2 V) to 10%
-   (-10.2 V) of the signal. The example has a fall time of 12 µs which
-   is in range.
+  (-10.2 V) of the signal. The example has a fall time of 12 µs which
+  is in range.
    
-   .. image:: images/pwm-freq-6.png
-      :alt: PWM Frequency
-      :width: 560px
+  .. image:: images/pwm-freq-6.png
+     :alt: PWM Frequency
+     :width: 560px
 
 - Set State E (sometimes called *CP Error* or so). The CP signal
-   should be at 0 V constantly according to the norm. Some EV simulators
-   only short after the diode as seen in the screenshot. Make sure that
-   your CP detection circuitry also treats that as state E.
+  should be at 0 V constantly according to the norm. Some EV simulators
+  only short after the diode as seen in the screenshot. Make sure that
+  your CP detection circuitry also treats that as state E.
    
-   .. image:: images/pwm-freq-7.png
-      :alt: PWM Frequency
-      :width: 560px
+  .. image:: images/pwm-freq-7.png
+     :alt: PWM Frequency
+     :width: 560px
 
 - Test diode failure detection: Short the diode on the EV side. Many
-   off-the-shelf EV simulators can be easily modified with an extra push
-   button if it is not included already. Verify that the BSP throws an
-   error (DiodeFault)
+  off-the-shelf EV simulators can be easily modified with an extra push
+  button if it is not included already. Verify that the BSP throws an
+  error (DiodeFault)
 
 - Test short state changes: Toggle between states B, C, B quickly to
-   produce a short time in state C (about 200 ms or less). The short
-   state C should be reliably reported to EVerest. It is a common issue
-   that the safety MCU filters out state durations that are too short.
-   This will cause issues with the BCB toggle wakeup sequence detection
-   of ISO 15118-3.
+  produce a short time in state C (about 200 ms or less). The short
+  state C should be reliably reported to EVerest. It is a common issue
+  that the safety MCU filters out state durations that are too short.
+  This will cause issues with the BCB toggle wakeup sequence detection
+  of ISO 15118-3.
 
 - Disconnect PE between EV and EVSE. This should be detected as an
-   error or state A.
+  error or state A.
 
 Now that the basic functionality is working, test stability of the state
 detection. Most cheap EV simulators only use the nominal resistor values
@@ -288,36 +288,36 @@ open the relay immediately.
 
 Complete the following checklist:
 
--  | ☐ State A, PWM off, force power off. Set State B then enable PWM 5%
-     and then C.
-   | Then allow power on. Relays should switch on within a short period
-     of time after sending allow power on. You should see a “Power On”
-     event (the time between “Allow power on” and the “Power On”
-     feedback event should be short, e.g. less than 300 ms or so, no
-     hard limit here). Click on “Force power off”. You should see a
-     “Power Off” (same timings as above). These timings should be short
-     - see below. You can click “Power On/Off” a couple of times and
-     verify the timing of the feedback.
+- State A, PWM off, force power off. Set State B then enable PWM 5%
+  and then C.
+  Then allow power on. Relays should switch on within a short period
+  of time after sending allow power on. You should see a “Power On”
+  event (the time between “Allow power on” and the “Power On”
+  feedback event should be short, e.g. less than 300 ms or so, no
+  hard limit here). Click on “Force power off”. You should see a
+  “Power Off” (same timings as above). These timings should be short
+  - see below. You can click “Power On/Off” a couple of times and
+  verify the timing of the feedback.
 
 - Toggle the relay on and off a couple of times and observe the
-   PowerOn/PowerOff events. There should be exactly one event for each
-   on or off switching of the relay. Make sure that there are not
-   multiple PowerOn/PowerOff/PowerOn events being generated because the
-   relay is bouncing.
+  PowerOn/PowerOff events. There should be exactly one event for each
+  on or off switching of the relay. Make sure that there are not
+  multiple PowerOn/PowerOff/PowerOn events being generated because the
+  relay is bouncing.
 
 - State A, PWM off, state State B. Then enable PWM 5%, allow *power on*.
-   Relay should not close. Wait a few seconds, then set state C.
-   Relay should close immediately after entering state C. Ignore the
-   time shown on the “Power On” event. It measures the time from the
-   last “Allow power on” command to feedback.
+  Relay should not close. Wait a few seconds, then set state C.
+  Relay should close immediately after entering state C. Ignore the
+  time shown on the “Power On” event. It measures the time from the
+  last “Allow power on” command to feedback.
 
 - State C, PWM 5%, Relay closed. Then set state B. Relay should open
-   immediately (max 100 ms). Go back to state C. Relay should close
-   again. (IEC 61851-1:2017 Table A.6: Sequence 8.1)
+  immediately (max 100 ms). Go back to state C. Relay should close
+  again. (IEC 61851-1:2017 Table A.6: Sequence 8.1)
 
 - State C, PWM 5%, Relay closed. Then stop PWM but stay in state C.
-   Relay should open after a minimum of 6 seconds. (IEC 61851-1:2017
-   Table A.6: Sequence 10.2)
+  Relay should open after a minimum of 6 seconds. (IEC 61851-1:2017
+  Table A.6: Sequence 10.2)
 
 Timing on closing relays is quite relaxed, but ISO 15118 has a limit of
 one second from the ISO command to switch on to the ISO feedback that it

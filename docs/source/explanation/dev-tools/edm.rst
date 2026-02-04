@@ -34,6 +34,16 @@ before executing the commands below.
 
   python3 -m pip install --upgrade pip setuptools wheel jstyleson jsonschema
 
+Python packages needed to run edm
+*********************************
+
+The following Python3 packages are needed to run **edm**. If you install edm
+using this guide they will be installed automatically.
+
++ Python >= 3.6
++ Jinja2 >= 3.0
++ PyYAML >= 5.4
+
 Installing edm
 **************
 
@@ -46,7 +56,7 @@ Now you can clone this repository and install **edm**:
   python3 -m pip install .
   edm init --workspace ~/checkout/everest-workspace
 
-The last command creates a workspace in the *~/checkout/everest-workspace*
+The last command creates a workspace in the ``~/checkout/everest-workspace``
 directory from the most recent release of EVerest. If you want the most recent
 main you can use:
 
@@ -87,7 +97,7 @@ Enabling CPM_SOURCE_CACHE and setting PATH
 The EVerest dependency manager uses
 `CPM <https://github.com/cpm-cmake/CPM.cmake>`_
 for its CMake integration. This means you *can* and **should** set the
-*CPM_SOURCE_CACHE* environment variable. This makes sure that dependencies
+``CPM_SOURCE_CACHE`` environment variable. This makes sure that dependencies
 that you do not manage in the workspace are not re-downloaded multiple times.
 For detailed information and other useful environment variables please
 refer to the `CPM Documentation <https://github.com/cpm-cmake/CPM.cmake/blob/master/README.md#CPM_SOURCE_CACHE>`_.
@@ -112,16 +122,6 @@ You can now use the following commands to build the repository everest-core:
   cd build
   cmake ..
   make -j$(nproc) install
-
-Python packages needed to run edm
-*********************************
-
-The following Python3 packages are needed to run **edm**. If you installed edm
-using the guide above they were already installed automatically.
-
-+ Python >= 3.6
-+ Jinja2 >= 3.0
-+ PyYAML >= 5.4
 
 .. _cmake_integration_setup:
 
@@ -159,7 +159,7 @@ CMakeLists.txt file in the respective source repository:
 
 .. code-block:: bash
 
-  find_package(EDM REQUIRED)
+   find_package(EDM REQUIRED)
 
 To define dependencies you can now add a dependencies.yaml file to your source
 repository. It should look like this:
@@ -188,27 +188,27 @@ do this in the following way:
 
 Here *cmake_condition* can be any string that CMake can use in an if() block.
 Please be aware that any variables you use here must be defined before a call to
-*evc_setup_edm()* is made in your CMakeLists.txt
+*evc_setup_edm()* is made in your ``CMakeLists.txt``
 
-Additionally you can set the *EVEREST_MODIFY_DEPENDENCIES* environment variable
-to a file containing modifications to the projects dependencies.yaml files when
+Additionally you can set the ``EVEREST_MODIFY_DEPENDENCIES`` environment variable
+to a file containing modifications to the projects ``dependencies.yaml`` files when
 running cmake:
 
 .. code-block:: bash
 
   EVEREST_MODIFY_DEPENDENCIES=../dependencies_modified.yaml cmake -S . -B build
 
-The *dependencies_modified.yaml* file can contain something along these lines:
+The ``dependencies_modified.yaml`` file can contain something along these lines:
 
 .. code-block:: bash
 
 	nlohmann_json:
-	  git: null # this makes edm look for nlohmann_json via find_package
+	  git: null       # this makes edm look for nlohmann_json via find_package
 	libfmt:
-	  rename: fmt # if find_package needs a different dependency name you can rename it
+	  rename: fmt     # if find_package needs a different dependency name you can rename it
 	  git: null
 	catch2:
-	  git_tag: v1.2.3 # if you want to select a different git tag for a build this is also possible
+	  git_tag: v1.2.3 # select a different git tag for a build
 
 Create a workspace config from an existing directory tree
 #########################################################

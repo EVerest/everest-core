@@ -23,8 +23,8 @@ Before we start, we recommend to set up the following development
 environment:
 
 - Working cross compiler on your PC to do fast updates of your code
-  (e.g. with *rsync* to the target). On Yocto, use *bitbake -c
-  populate_sdk my-image* to generate the SDK.
+  (e.g. with *rsync* to the target). On Yocto, use ``bitbake -c
+  populate_sdk my-image`` to generate the SDK.
 - SSH to the target
 - Ensure the hardware interfaces to all components are up and running
 - Include “tmux” in your image
@@ -62,8 +62,8 @@ Later, on the embedded target, it can be used like this:
 
 The second argument now points to the EVerest version installed in the
 base Yocto system. If you use a cross-compiled development version
-installed under */var/everest*, simply set the second argument to
-*/var/everest*.
+installed under ``/var/everest``, simply set the second argument to
+``/var/everest``.
 
 You should see a split-screen setup (using tmux) similar to this:
 
@@ -77,13 +77,13 @@ should be working and you can click on the buttons.
 E.g., click on “Start Measurements” and check that new isolation
 measurements are coming in roughly every second.
 
-To exit the tmux session, press *Ctrl+B* and then *d*. Normally with
+To exit the tmux session, press ``Ctrl+B`` and then ``d``. Normally with
 tmux, this puts the session running into the background but it keeps
-running. The *run_tmux_helper.sh* script will take care of ending the
+running. The ``run_tmux_helper.sh`` script will take care of ending the
 session properly here and cleaning up.
 
 Have a look at the config file that it is using
-(*config/bringup/config-bringup-isolation-monitor-sil.yaml*):
+(``config/bringup/config-bringup-isolation-monitor-sil.yaml``):
 
 .. code-block:: yaml
 

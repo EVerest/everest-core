@@ -135,7 +135,7 @@ We can now continue to build ``everest-core``.
 
   git clone https://github.com/EVerest/everest-core
   mkdir build && cd build
-  cmake ..
+  cmake ../everest-core/
   make -j$(nproc) install
 
 .. _htg_getting_started_sw_simulate:
@@ -162,7 +162,7 @@ simple NODERED user interface running.
 
 In order for custom or local containers being able to talk to the services,
 provided by the docker-compose containers, we need to create a common docker
-network. It is called `infranet_network` and needs to be created by the
+network. It is called ``infranet_network`` and needs to be created by the
 following command (IPv6 is enabled for containers which might need it):
 
 .. code-block:: bash
@@ -188,7 +188,7 @@ software-in-the-loop configuration. This means that all hardware related
 parts like Powermeter, RFID-Reader are loaded as simulated modules.
 Also the Electric Vehicle simulations run as part of EVerest.
 
-Change to the directory `everest-core/build`, which has been created during
+Change to the directory ``everest-core/build``, which has been created during
 EVerest install.
 
 Since the EVerest config we are going to use includes ISO15118 functionality on the EV 
@@ -323,7 +323,7 @@ Of course, you can change the functionality of those modules or add your
 custom ones to the whole module stack.
 
 In simple terms, a new module can be created by describing its structure
-via a manifest file and interface files. After that, an EVerest helper tool (ev-cli)
+via a manifest file and interface files. After that, an EVerest helper tool (:ref:`ev-cli <exp_dev_tools_evcli>`)
 will create the necessary files as stub files, so that you can implement the
 details. The EVerest framework will also know how the modules can be connected
 by the restrictions you set in the manifest.
@@ -380,7 +380,7 @@ Line 11 starts with the requirements of your own module. This is the other
 side: Your module tells the EVerest module framework which implementations it
 will require to work.
 
-With the `min_connections` and `max_connections` keys you can configure how
+With the ``min_connections`` and ``max_connections`` keys you can configure how
 many connections are required or allowed for your module.
 
 In EVerest, you find a manifest file for each module. See the module
@@ -450,8 +450,8 @@ of simple data-types grouped inside of one logical unit) for publishing.
 .. note::
 
   In some yaml interface files in the EVerest GitHub project, you will still
-  find an additional type attribute besides a `$ref` attribute. In most cases,
-  the type will be of value `object`. This is considered bad practice and will
+  find an additional type attribute besides a ``$ref`` attribute. In most cases,
+  the type will be of value ``object``. This is considered bad practice and will
   be deprecated in future versions.
 
 Let's have a look at a type definition in the next section.
@@ -492,16 +492,16 @@ You can see one defined type here. It has two properties. A property could
 again be another type reference.
 
 Now, as we have defined everything, it is time to let the EVerest command line
-interface - the ev-cli tool - generate the implementation stubs.
+interface - the :ref:`ev-cli tool <exp_dev_tools_evcli>` - generate the implementation stubs.
 
 Generate the stub files
 ---------------------------
 
 You can use ``ev-cli`` to generate stub files for a module. Everything that you need
-is a module directory within `everest-core/modules` containing a `manifest.yaml` file
+is a module directory within ``everest-core/modules`` containing a ``manifest.yaml`` file
 described above.
 
-Assuming the module is defined inside the `EVSE` directory you can use ev-cli to create
+Assuming the module is defined inside the ``EVSE`` directory you can use :ref:`ev-cli <exp_dev_tools_evcli>` to create
 the module skeleton like this:
 
 .. code-block:: bash
@@ -515,13 +515,13 @@ Your main cpp file will have two special functions:
   void MyModuleName::init() {}
   void MyModuleName::ready() {}
 
-When initialising, the EVerest framework will call all init() functions of all
+When initialising, the EVerest framework will call all ``init()`` functions of all
 modules one after the other. After having initialised all modules in that way,
-the framework calls the ready() functions.
+the framework calls the ``ready()`` functions.
 
 This allows you to do setup things that relate only to your current module in
-the init() function and all stuff requiring other modules being initialised in
-your ready() function.
+the ``init()`` function and all stuff requiring other modules being initialised in
+your ``ready()`` function.
 
 Furthermore, you will get generated files for all interfaces that you
 declared to be implemented in your module. Those interface files will contain

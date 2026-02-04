@@ -200,7 +200,7 @@ Check the following specifications:
 - Self-test should be quick (e.g. < 10 s), long self-tests may lead to
   timeout issues with certain vehicles
 
-- Time needed to detect a fault should be short (e.g. <5s)
+- Time needed to detect a fault should be short (e.g. <5 s)
 
 - Measures the voltage between DC positive and negative wire and report
   via communication interface

@@ -1,12 +1,12 @@
 .. _tutorial-ocpp2:
 
-*************************************
-How To: OCPP 2.0.1 and 2.1 in EVerest
-*************************************
+*****************************
+OCPP 2.0.1 and 2.1 in EVerest
+*****************************
 
 .. note::
 
-  EVerest has an implementation of OCPP 1.6, 2.0.1 and 2.1. This tutorial is about
+  EVerest has an implementation of OCPP 1.6J and 2.0.1 and 2.1. This tutorial is about
   the 2.0.1 and 2.1 implementation. To get documentation about all implemented versions,
   see `the GitHub repository of libocpp <https://github.com/EVerest/libocpp>`_.
 

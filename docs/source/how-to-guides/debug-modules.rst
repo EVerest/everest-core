@@ -15,7 +15,7 @@ debugging enabled. One easy way to achieve this is to call
   cmake -B build -DCMAKE_BUILD_TYPE=Debug
 
 from the root folder of everest-core, assuming you have already created the
-*build* directory.
+``build`` directory.
 
 Execution
 =========
@@ -23,9 +23,9 @@ Execution
 It is possible to use the GNU Debugger (GDB) to debug a single EVerest module.
 
 The easiest way is to run the module in standalone mode. Say, for example, you
-want to debug the Auth module for the SIL config (config-sil.yaml).
+want to debug the Auth module for the SIL config (``config-sil.yaml``).
 
-Let's assume you are in directory *build/dist*.
+Let's assume you are in directory ``build/dist``.
 
 Start the manager with
 
@@ -34,12 +34,12 @@ Start the manager with
   ./bin/manager --config config-sil --standalone auth
 
 This will start EVerest with the config-sil.yaml as configuration, but it
-won't start the Auth module (note *auth* is written small because it is the
+won't start the Auth module (note ``auth`` is written small because it is the
 *module instance id* - this way there can be multiple Auth module instances
 in your config).
 
 Now you need to start the Auth module manual using gdb. When using
-Visual Studio Code, the debug configuration (launch.json) looks like this:
+Visual Studio Code, the debug configuration (``launch.json``) looks like this:
 
 .. code-block:: bash
 
@@ -75,7 +75,7 @@ Visual Studio Code, the debug configuration (launch.json) looks like this:
 
 This will then start the Auth module instance.
 
-Also note the argument *--module auth*, which again specifies the module
+Also note the argument ``--module auth``, which again specifies the module
 instance id and needs to match the one you've used for standalone.
 
 Now, EVerest will continue to start and breakpoints set in the source file of

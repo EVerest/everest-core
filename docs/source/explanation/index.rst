@@ -71,6 +71,12 @@ Below that, you will be presented with a categorized list of all articles.
 
       Some ideas and guidance on the general architecture of AC or DC chargers.
 
+   .. grid-item-card:: Powermeter OCMF Handling
+      :link: powermeter-ocmf
+      :link-type: doc
+
+      How OCMF records are expected to be handled by modules implementing powermeters.
+
    .. grid-item-card:: A Selection of included Hardware Drivers
       :link: hardware-drivers
       :link-type: doc

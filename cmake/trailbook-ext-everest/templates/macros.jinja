@@ -208,7 +208,7 @@
 {%      else %}
 {%          set type_string = 'void' %}
 {%      endif %}
-**{{ cmd_name }}**:*{{ type_string }}*
+**{{ cmd_name }}**: *{{ type_string }}*
  {{ cmd_data.description }}
 {%      if 'arguments' in cmd_data %}
 {{ cmd_arguments(cmd_data.arguments.items()) | indent(1, True) -}}
