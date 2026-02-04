@@ -62,6 +62,10 @@ private:
     void execute_handlers_from_vector(HandlerMap& handlers, const std::string& topic, ExecuteFn execute_fn);
 
     template <typename HandlerMap, typename ExecuteFn>
+    void execute_handlers_from_vector_with_wildcards(HandlerMap& handlers, const std::string& topic,
+                                                     ExecuteFn execute_fn);
+
+    template <typename HandlerMap, typename ExecuteFn>
     void execute_single_handler(HandlerMap& handlers, const std::string& topic, ExecuteFn execute_fn);
 
     // Threads
@@ -94,7 +98,8 @@ private:
     std::map<MqttTopic, std::vector<std::shared_ptr<TypedHandler>>> var_handlers; // var handlers of module
     std::map<MqttTopic, std::shared_ptr<TypedHandler>> cmd_handlers;              // cmd handlers of module
     std::map<CmdId, std::shared_ptr<TypedHandler>> cmd_result_handlers;           // cmd result handlers of module
-    std::map<MqttTopic, std::shared_ptr<TypedHandler>> error_handlers;            // error handlers of module
+    std::map<MqttTopic, std::vector<std::shared_ptr<TypedHandler>>>
+        error_handlers; // error handlers with wildcard support
     std::map<MqttTopic, std::shared_ptr<TypedHandler>>
         get_module_config_handlers;                        // get module config handler of manager
     std::shared_ptr<TypedHandler> config_response_handler; // get module config response handler of module
