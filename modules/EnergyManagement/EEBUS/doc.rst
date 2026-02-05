@@ -11,25 +11,23 @@ This document describes the EVerest EEBUS module. This module acts as a bridge b
 Architecture
 ============
 
-Below is a diagram showing the architecture of the EEBUS module and its interaction with other components. You can render this diagram using a PlantUML renderer.
+Below is a diagram showing the architecture of the EEBUS module and its interaction with other components.
 
-.. code-block:: plantuml
+.. code-block:: mermaid
 
-   @startuml
-   !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+   graph TD
+       subgraph EVerest
+           energy_manager["Energy Manager<br><div style='font-size: 80%;'>EVerest Module</div><div style='font-size: 70%;'>Manages energy distribution</div>"]
+           eebus_module["EEBUS Module<br><div style='font-size: 80%;'>EVerest C++ Module</div><div style='font-size: 70%;'>Bridge to EEBUS service for LPC</div>"]
+       end
+       subgraph External Systems
+           eebus_grpc_api["eebus-grpc-api<br><div style='font-size: 80%;'>External Go binary, gRPC server/client</div>"]
+           eebus_service["EEBUS Service (HEMS)<br><div style='font-size: 80%;'>External System</div><div style='font-size: 70%;'>Implements EEBUS standard, e.g. LPC</div>"]
+       end
 
-   title Architecture Diagram for EEBUS Module
-
-   Container(energy_manager, "Energy Manager", "EVerest Module", "Manages energy distribution")
-   Container(eebus_module, "EEBUS Module", "EVerest C++ Module", "Bridge to EEBUS service for LPC")
-   System_Ext(eebus_grpc_api, "eebus-grpc-api", "External Go binary, gRPC server/client")
-   System_Ext(eebus_service, "EEBUS Service (HEMS)", "External System", "Implements EEBUS standard, e.g. LPC")
-
-   Rel(eebus_module, energy_manager, "Publishes ExternalLimits", "everest-interface")
-   Rel(eebus_module, eebus_grpc_api, "Connects and receives events", "gRPC")
-   Rel(eebus_grpc_api, eebus_service, "Communicates", "EEBUS (SHIP)")
-
-   @enduml
+       eebus_module -- "Publishes ExternalLimits<br><div style='font-size: 70%;'>everest-interface</div>" --> energy_manager
+       eebus_module -- "Connects and receives events<br><div style='font-size: 70%;'>gRPC</div>" --> eebus_grpc_api
+       eebus_grpc_api -- "Communicates<br><div style='font-size: 70%;'>EEBUS (SHIP)</div>" --> eebus_service
 
 How it works
 ============
@@ -57,39 +55,34 @@ State Machine Diagram
 
 The following diagram shows the state machine of the `LpcUseCaseHandler`, which is responsible for the "Limitation of Power Consumption" (LPC) logic.
 
-.. code-block:: plantuml
+.. code-block:: mermaid
 
-   @startuml
-   title State Machine for LpcUseCaseHandler
+   stateDiagram-v2
+       [*] --> Init
+       Init: Init
+       UnlimitedControlled: Unlimited / Controlled
+       Limited: Limited
+       Failsafe: Failsafe
+       UnlimitedAutonomous: Unlimited / Autonomous
 
-   state "Init" as Init
-   state "Unlimited / Controlled" as UnlimitedControlled
-   state "Limited" as Limited
-   state "Failsafe" as Failsafe
-   state "Unlimited / Autonomous" as UnlimitedAutonomous
+       Init --> Limited : on DataUpdateLimit (active)
+       Init --> UnlimitedControlled : on DataUpdateLimit (not active)
+       Init --> UnlimitedAutonomous : on LPC Timeout (120s)
+       Init --> Failsafe : on Heartbeat Timeout
 
-   [*] --> Init
+       Limited --> UnlimitedControlled : on DataUpdateLimit (not active) or Limit expired
+       Limited --> Failsafe : on Heartbeat Timeout
 
-   Init --> Limited : on DataUpdateLimit (active)
-   Init --> UnlimitedControlled : on DataUpdateLimit (not active)
-   Init --> UnlimitedAutonomous : on LPC Timeout (120s)
-   Init --> Failsafe : on Heartbeat Timeout
+       UnlimitedControlled --> Limited : on DataUpdateLimit (active)
+       UnlimitedControlled --> Failsafe : on Heartbeat Timeout
 
-   Limited --> UnlimitedControlled : on DataUpdateLimit (not active) or Limit expired
-   Limited --> Failsafe : on Heartbeat Timeout
+       UnlimitedAutonomous --> Limited : on DataUpdateLimit (active)
+       UnlimitedAutonomous --> UnlimitedControlled : on DataUpdateLimit (not active) or Limit expired
+       UnlimitedAutonomous --> Failsafe : on Heartbeat Timeout
 
-   UnlimitedControlled --> Limited : on DataUpdateLimit (active)
-   UnlimitedControlled --> Failsafe : on Heartbeat Timeout
-
-   UnlimitedAutonomous --> Limited : on DataUpdateLimit (active)
-   UnlimitedAutonomous --> UnlimitedControlled : on DataUpdateLimit (not active) or Limit expired
-   UnlimitedAutonomous --> Failsafe : on Heartbeat Timeout
-
-   Failsafe --> Limited : on Heartbeat restored AND new active limit received
-   Failsafe --> UnlimitedControlled : on Heartbeat restored AND new inactive limit received
-   Failsafe --> UnlimitedAutonomous : on Failsafe Duration Timeout + LPC Timeout
-
-   @enduml
+       Failsafe --> Limited : on Heartbeat restored AND new active limit received
+       Failsafe --> UnlimitedControlled : on Heartbeat restored AND new inactive limit received
+       Failsafe --> UnlimitedAutonomous : on Failsafe Duration Timeout + LPC Timeout
 
 The handler processes the following events:
 
@@ -107,146 +100,136 @@ Code Flow Diagram
 
 This sequence diagram illustrates the code flow when an event is received from the EEBUS service.
 
-.. code-block:: plantuml
+.. code-block:: mermaid
 
-   @startuml
-   title Code Flow Diagram
+   sequenceDiagram
+       participant EEBUS
+       participant EebusConnectionHandler
+       participant LpcUseCaseHandler
+       participant UseCaseEventReader
+       participant GrpcService as gRPC Service
 
-   participant EEBUS
-   participant EebusConnectionHandler
-   participant LpcUseCaseHandler
-   participant UseCaseEventReader
-   participant "gRPC Service" as GrpcService
+       EEBUS ->> EebusConnectionHandler: create()
+       activate EebusConnectionHandler
+       EebusConnectionHandler ->> EebusConnectionHandler: initialize_connection()
+       deactivate EebusConnectionHandler
 
-   EEBUS ->> EebusConnectionHandler : create()
-   activate EebusConnectionHandler
-   EebusConnectionHandler -> EebusConnectionHandler : initialize_connection()
-   deactivate EebusConnectionHandler
+       EEBUS ->> EebusConnectionHandler: add_use_case(LPC)
+       activate EebusConnectionHandler
+       EebusConnectionHandler ->> LpcUseCaseHandler: create()
+       EebusConnectionHandler ->> UseCaseEventReader: create()
+       EebusConnectionHandler ->> GrpcService: AddUseCase()
+       EebusConnectionHandler ->> UseCaseEventReader: start()
+       activate UseCaseEventReader
+       UseCaseEventReader ->> GrpcService: SubscribeUseCaseEvents()
+       deactivate UseCaseEventReader
+       deactivate EebusConnectionHandler
 
-   EEBUS ->> EebusConnectionHandler : add_use_case(LPC)
-   activate EebusConnectionHandler
-   EebusConnectionHandler ->> LpcUseCaseHandler : create()
-   EebusConnectionHandler ->> UseCaseEventReader : create()
-   EebusConnectionHandler ->> GrpcService : AddUseCase()
-   EebusConnectionHandler ->> UseCaseEventReader : start()
-   activate UseCaseEventReader
-   UseCaseEventReader ->> GrpcService : SubscribeUseCaseEvents()
-   deactivate UseCaseEventReader
-   deactivate EebusConnectionHandler
+       EEBUS ->> EebusConnectionHandler: done_adding_use_case()
+       activate EebusConnectionHandler
+       EebusConnectionHandler ->> EebusConnectionHandler: start_service()
+       EebusConnectionHandler ->> GrpcService: StartService()
+       EebusConnectionHandler ->> LpcUseCaseHandler: start()
+       deactivate EebusConnectionHandler
 
-   EEBUS ->> EebusConnectionHandler : done_adding_use_case()
-   activate EebusConnectionHandler
-   EebusConnectionHandler -> EebusConnectionHandler : start_service()
-   EebusConnectionHandler ->> GrpcService : StartService()
-   EebusConnectionHandler ->> LpcUseCaseHandler : start()
-   deactivate EebusConnectionHandler
+       Note over GrpcService, EebusConnectionHandler: event arrives
+       
+       GrpcService ->> UseCaseEventReader: OnReadDone(event)
+       activate UseCaseEventReader
+       UseCaseEventReader ->> EebusConnectionHandler: event_callback(event)
+       deactivate UseCaseEventReader
+       activate EebusConnectionHandler
+       EebusConnectionHandler ->> EebusConnectionHandler: m_handler.add_action()
+       Note right of EebusConnectionHandler: Event is queued in the event loop
 
-   ... event arrives ...
+       Note over EebusConnectionHandler, LpcUseCaseHandler: event loop runs
 
-   GrpcService ->> UseCaseEventReader : OnReadDone(event)
-   activate UseCaseEventReader
-   UseCaseEventReader ->> EebusConnectionHandler : event_callback(event)
-   deactivate UseCaseEventReader
-   activate EebusConnectionHandler
-   EebusConnectionHandler -> EebusConnectionHandler : m_handler.add_action()
-   note right: Event is queued in the event loop
-
-   ... event loop runs ...
-
-   EebusConnectionHandler ->> LpcUseCaseHandler : handle_event(event)
-   activate LpcUseCaseHandler
-   LpcUseCaseHandler -> LpcUseCaseHandler : run_state_machine()
-   LpcUseCaseHandler -> LpcUseCaseHandler : apply_limit_for_current_state()
-   LpcUseCaseHandler ->> EEBUS : callbacks.update_limits_callback()
-   deactivate LpcUseCaseHandler
-   deactivate EebusConnectionHandler
-
-
-   @enduml
+       EebusConnectionHandler ->> LpcUseCaseHandler: handle_event(event)
+       activate LpcUseCaseHandler
+       LpcUseCaseHandler ->> LpcUseCaseHandler: run_state_machine()
+       LpcUseCaseHandler ->> LpcUseCaseHandler: apply_limit_for_current_state()
+       LpcUseCaseHandler ->> EEBUS: callbacks.update_limits_callback()
+       deactivate LpcUseCaseHandler
+       deactivate EebusConnectionHandler
 
 Class Diagram
 =============
 
 This diagram shows the main classes within the EEBUS module and their relationships.
 
-.. code-block:: plantuml
+.. code-block:: mermaid
 
-   @startuml
-   title Class Diagram for EEBUS Module
+   classDiagram
+       class EEBUS {
+           +unique_ptr~emptyImplBase~ p_main
+           +unique_ptr~external_energy_limitsIntf~ r_eebus_energy_sink
+           +Conf config
+           -thread eebus_grpc_api_thread
+           -unique_ptr~EebusConnectionHandler~ connection_handler
+           -eebus::EEBusCallbacks callbacks
+           -fd_event_handler event_handler
+           -thread event_handler_thread
+           +init()
+           +ready()
+       }
 
-   class EEBUS {
-     + p_main: unique_ptr<emptyImplBase>
-     + r_eebus_energy_sink: unique_ptr<external_energy_limitsIntf>
-     + config: Conf
-     - eebus_grpc_api_thread: thread
-     - connection_handler: unique_ptr<EebusConnectionHandler>
-     - callbacks: eebus::EEBusCallbacks
-     - event_handler: fd_event_handler
-     - event_handler_thread: thread
-     + init()
-     + ready()
-   }
+       class EebusConnectionHandler {
+           -shared_ptr~ConfigValidator~ config
+           -unique_ptr~LpcUseCaseHandler~ lpc_handler
+           -unique_ptr~UseCaseEventReader~ event_reader
+           -shared_ptr~control_service::ControlService::Stub~ control_service_stub
+           -fd_event_handler m_handler
+           -timer_fd state_machine_timer
+           -timer_fd reconnection_timer
+           -EEBusUseCase last_use_case
+           -EEBusCallbacks last_callbacks
+           -bool use_case_added
+           +add_use_case()
+           +stop()
+           -initialize_connection()
+           -configure_service()
+           -create_channel_and_stub()
+           -reconnect()
+           -reset()
+       }
 
-   class EebusConnectionHandler {
-     - config: shared_ptr<ConfigValidator>
-     - lpc_handler: unique_ptr<LpcUseCaseHandler>
-     - event_reader: unique_ptr<UseCaseEventReader>
-     - control_service_stub: shared_ptr<control_service::ControlService::Stub>
-     - m_handler: fd_event_handler
-     - state_machine_timer: timer_fd
-     - reconnection_timer: timer_fd
-     - last_use_case: EEBusUseCase
-     - last_callbacks: EEBusCallbacks
-     - use_case_added: bool
-     + add_use_case()
-     + stop()
-     - initialize_connection()
-     - configure_service()
-     - create_channel_and_stub()
-     - reconnect()
-     - reset()
-   }
+       class LpcUseCaseHandler {
+           -shared_ptr~ConfigValidator~ config
+           -eebus::EEBusCallbacks callbacks
+           -shared_ptr~cs_lpc::ControllableSystemLPCControl::Stub~ stub
+           -State state
+           +start()
+           +handle_event()
+           +run_state_machine()
+           -set_state()
+           -apply_limit_for_current_state()
+       }
 
-   class LpcUseCaseHandler {
-     - config: shared_ptr<ConfigValidator>
-     - callbacks: eebus::EEBusCallbacks
-     - stub: shared_ptr<cs_lpc::ControllableSystemLPCControl::Stub>
-     - state: State
-     + start()
-     + handle_event()
-     + run_state_machine()
-     - set_state()
-     - apply_limit_for_current_state()
-   }
+       class UseCaseEventReader {
+           -shared_ptr~control_service::ControlService::Stub~ stub
+           -function event_callback
+           +start()
+           +stop()
+           +OnReadDone()
+       }
 
-   class UseCaseEventReader {
-     - stub: shared_ptr<control_service::ControlService::Stub>
-     - event_callback: function
-     + start()
-     + stop()
-     + OnReadDone()
-   }
+       class ConfigValidator {
+           -Conf config
+           +validate()
+       }
 
-   class ConfigValidator {
-     - config: Conf
-     + validate()
-   }
+       class Conf {
+           // ... fields
+       }
 
-   struct Conf {
-     // ... fields
-   }
-
-   EEBUS o-- EebusConnectionHandler
-   EEBUS ..> Conf
-   EebusConnectionHandler o-- LpcUseCaseHandler
-   EebusConnectionHandler o-- UseCaseEventReader
-   EebusConnectionHandler *-- ConfigValidator
-   LpcUseCaseHandler *-- ConfigValidator
-   LpcUseCaseHandler ..> eebus.EEBusCallbacks
-   UseCaseEventReader ..> EebusConnectionHandler : event_callback
-   EebusConnectionHandler ..> LpcUseCaseHandler
-
-   @enduml
+       EEBUS o-- EebusConnectionHandler
+       EEBUS ..> Conf
+       EebusConnectionHandler o-- LpcUseCaseHandler
+       EebusConnectionHandler o-- UseCaseEventReader
+       EebusConnectionHandler *-- ConfigValidator
+       LpcUseCaseHandler *-- ConfigValidator
+       LpcUseCaseHandler ..> eebus.EEBusCallbacks
+       UseCaseEventReader ..> EebusConnectionHandler : event_callback
 
 Robustness
 ==========
