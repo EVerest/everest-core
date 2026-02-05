@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <optional>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
@@ -111,6 +112,15 @@ constexpr std::int32_t MODBUS_OCMF_TIME_SYNC_STATUS_ADDRESS = 328769;    // 7060
 
 namespace modbus_utils {
 
+inline void check_bounds_or_throw(const transport::DataVector& data, transport::DataVector::size_type offset,
+                                  transport::DataVector::size_type needed_bytes, const char* what) {
+    if (offset > data.size() || needed_bytes > (data.size() - offset)) {
+        throw std::out_of_range(std::string(what) + ": offset/length out of range (offset=" + std::to_string(offset) +
+                                ", needed=" + std::to_string(needed_bytes) +
+                                ", size=" + std::to_string(data.size()) + ")");
+    }
+}
+
 // Strong type wrappers to prevent parameter swapping
 struct ByteOffset {
     explicit ByteOffset(transport::DataVector::size_type val) : value(val) {
@@ -136,16 +146,19 @@ private:
 
 inline std::uint32_t to_uint32(const transport::DataVector& data, ByteOffset offset) {
     const auto off = static_cast<transport::DataVector::size_type>(offset);
+    check_bounds_or_throw(data, off, 4, "to_uint32");
     return static_cast<std::uint32_t>(data[off] << 24 | data[off + 1] << 16 | data[off + 2] << 8 | data[off + 3]);
 }
 
 inline std::int32_t to_int32(const transport::DataVector& data, ByteOffset offset) {
     const auto off = static_cast<transport::DataVector::size_type>(offset);
+    check_bounds_or_throw(data, off, 4, "to_int32");
     return static_cast<std::int32_t>(data[off + 2] << 24 | data[off + 3] << 16 | data[off] << 8 | data[off + 1]);
 }
 
 inline std::uint16_t to_uint16(const transport::DataVector& data, ByteOffset offset) {
     const auto off = static_cast<transport::DataVector::size_type>(offset);
+    check_bounds_or_throw(data, off, 2, "to_uint16");
     return static_cast<std::uint16_t>(data[off] << 8 | data[off + 1]);
 }
 
@@ -157,6 +170,7 @@ inline std::int16_t to_int16(const transport::DataVector& data, ByteOffset offse
 inline std::string to_hex_string(const transport::DataVector& data, ByteOffset offset, ByteLength length) {
     const auto off = static_cast<transport::DataVector::size_type>(offset);
     const auto len = static_cast<transport::DataVector::size_type>(length);
+    check_bounds_or_throw(data, off, len, "to_hex_string");
     std::stringstream ss;
     for (std::size_t index = 0; index < len; ++index) {
         ss << std::uppercase << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(data[off + index]);
