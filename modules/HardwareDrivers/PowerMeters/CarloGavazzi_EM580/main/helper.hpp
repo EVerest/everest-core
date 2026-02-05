@@ -116,8 +116,8 @@ inline void check_bounds_or_throw(const transport::DataVector& data, transport::
                                   transport::DataVector::size_type needed_bytes, const char* what) {
     if (offset > data.size() || needed_bytes > (data.size() - offset)) {
         throw std::out_of_range(std::string(what) + ": offset/length out of range (offset=" + std::to_string(offset) +
-                                ", needed=" + std::to_string(needed_bytes) +
-                                ", size=" + std::to_string(data.size()) + ")");
+                                ", needed=" + std::to_string(needed_bytes) + ", size=" + std::to_string(data.size()) +
+                                ")");
     }
 }
 
