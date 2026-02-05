@@ -43,7 +43,7 @@ To install ``ev_cli`` manually from github repository:
 
 .. code-block:: bash
 
-    python3 -m pip install git+https://github.com/everest/everest-utils.git@main#subdirectory=ev-dev-tools
+    python3 -m pip install git+https://github.com/everest/everest-core.git@main#subdirectory=applications/utils/ev-dev-tools
 
 *****************************
 ev-cli command line interface

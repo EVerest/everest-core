@@ -95,22 +95,28 @@ libraries and tools that are distributed across multiple EVerest repositories.
 The EVerest Dependency Manager - short ``edm`` - helps you with orchestrating and pulling in
 the dependencies in the build process of ``everest-core``.
 
-To start with that, let's get `edm` ready to work.
+To start with that, let's get ``edm`` ready to work.
 
-You will first of all need to pull `everest-dev-environment` to your
+You will first of all need to pull ``everest-dev-environment`` to your
 development environment.
 
 .. code-block:: bash
 
-  git clone https://github.com/EVerest/everest-dev-environment
-  cd everest-dev-environment/dependency_manager
+  git clone https://github.com/everest/everest-core.git
+  cd everest-core/applications/dev-environment/dependency_manager
   python3 -m pip install . --break-system-packages
+
+or in short
+
+.. code-block:: bash
+
+  python3 -m pip install git+https://github.com/everest/everest-core.git@main#subdirectory=applications/dev-environment/dependency_manager --break-system-packages
 
 .. note::
 
-  Alternatively, you can also install `edm` in a python virtual environment.
+  Alternatively, you can also install ``edm`` in a python virtual environment.
   Make sure edm is available in your PATH after the installation.You can verify
-  this by running `edm --version`.
+  this by running ``edm --version``.
 
 ``edm`` uses `CPM <https://github.com/cpm-cmake/CPM.cmake>`_ for its CMake
 integration. This means you can and should set the `CPM_SOURCE_CACHE` environment

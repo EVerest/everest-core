@@ -51,9 +51,10 @@ Now you can clone this repository and install **edm**:
 
 .. code-block:: bash
 
-  git clone https://github.com/EVerest/everest-dev-environment
-  cd everest-dev-environment/dependency_manager
-  python3 -m pip install .
+  git clone https://github.com/EVerest/everest-core
+  cd everest-core/applications/dev-environment/dependency_manager
+  python3 -m pip install . --break-system-packages
+
   edm init --workspace ~/checkout/everest-workspace
 
 The last command creates a workspace in the ``~/checkout/everest-workspace``
@@ -166,15 +167,18 @@ repository. It should look like this:
 
 .. code-block:: bash
 
-	---
-	liblog:
-	  git: https://github.com/EVerest/liblog
-	  git_tag: main
-	  options: ["BUILD_EXAMPLES OFF"]
-	libtimer:
-	  git: https://github.com/EVerest/libtimer
-	  git_tag: main
-	  options: ["BUILD_EXAMPLES OFF"]
+    ---
+    sigslot:
+      git: https://github.com/palacaze/sigslot
+      git_tag: v1.2.3
+      cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SIGSLOT"
+      options:
+        - "SIGSLOT_COMPILE_EXAMPLES OFF"
+        - "SIGSLOT_COMPILE_TESTS OFF"
+    pugixml:
+      git: https://github.com/zeux/pugixml
+      git_tag: v1.15
+      cmake_condition: "EVEREST_DEPENDENCY_ENABLED_PUGIXML"
 
 If you want to conditionally include some dependencies, e.g. for testing, you can
 do this in the following way:
@@ -234,7 +238,7 @@ following command.
 
 .. code-block:: bash
 
-  edm --create-config custom-config.yaml --include-remotes https://github.com/EVerest/everest* https://github.com/EVerest/liblog.git
+  edm --create-config custom-config.yaml --include-remotes https://github.com/EVerest/everest* https://github.com/EVerest/ext-switchev-iso15118.git
 
 If you want to include all repositories, including external dependencies, in
 the config you can use the following command:

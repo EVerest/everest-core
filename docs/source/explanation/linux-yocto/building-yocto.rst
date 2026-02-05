@@ -58,6 +58,11 @@ want to have on your base system. This image can be based e.g. on
            tmux \
        "
 
+.. note::
+
+   libocpp is part of everest-core as of today (2026), whereas older version
+   still rely on libocpp being hosted separately.
+
 The minimal required packages are ``everest-core`` and ``mosquitto``. The
 package ``tmux`` is only needed for the BringUp & Qualification tools.
 Other debugging tools that may be useful during development phase are:
