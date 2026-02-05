@@ -5,8 +5,12 @@
 
 namespace module {
 
-void CarloGavazzi_EM580::init() { invoke_init(*p_main); }
+void CarloGavazzi_EM580::init() {
+    invoke_init(*p_main);
+}
 
-void CarloGavazzi_EM580::ready() { invoke_ready(*p_main); }
+void CarloGavazzi_EM580::ready() {
+    invoke_ready(*p_main);
+}
 
 } // namespace module
