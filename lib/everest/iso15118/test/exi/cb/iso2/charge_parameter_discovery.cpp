@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <iso15118/message/d2/charge_parameter_discovery.hpp>
 #include <iso15118/message/d2/variant.hpp>
+#include <variant>
 
 #include "helper.hpp"
 
@@ -30,10 +31,9 @@ SCENARIO("Ser/Deserialize d2 charge parameter discovery messages") {
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D});
 
             REQUIRE(msg.requested_energy_transfer_mode == dt::EnergyTransferMode::DcExtended);
-            REQUIRE(msg.ac_ev_charge_parameter.has_value());
-            REQUIRE_FALSE(msg.dc_ev_charge_parameter.has_value());
 
-            const auto& param = msg.ac_ev_charge_parameter.value();
+            REQUIRE(std::holds_alternative<dt::AcEvChargeParameter>(msg.ev_charge_parameter));
+            const auto& param = std::get<dt::AcEvChargeParameter>(msg.ev_charge_parameter);
             REQUIRE(dt::from_PhysicalValue(param.e_amount) == 100000);
             REQUIRE(dt::from_PhysicalValue(param.ev_max_voltage) == 10000);
             REQUIRE(dt::from_PhysicalValue(param.ev_max_current) == 100);
@@ -62,10 +62,8 @@ SCENARIO("Ser/Deserialize d2 charge parameter discovery messages") {
             REQUIRE(msg.max_entries_sa_schedule_tuple.has_value());
             REQUIRE(msg.max_entries_sa_schedule_tuple == 5);
 
-            REQUIRE(msg.ac_ev_charge_parameter.has_value());
-            REQUIRE_FALSE(msg.dc_ev_charge_parameter.has_value());
-
-            const auto& param = msg.ac_ev_charge_parameter.value();
+            REQUIRE(std::holds_alternative<dt::AcEvChargeParameter>(msg.ev_charge_parameter));
+            const auto& param = std::get<dt::AcEvChargeParameter>(msg.ev_charge_parameter);
             REQUIRE(dt::from_PhysicalValue(param.e_amount) == 100000);
             REQUIRE(dt::from_PhysicalValue(param.ev_max_voltage) == 10000);
             REQUIRE(dt::from_PhysicalValue(param.ev_max_current) == 100);
@@ -93,10 +91,8 @@ SCENARIO("Ser/Deserialize d2 charge parameter discovery messages") {
 
             REQUIRE(msg.requested_energy_transfer_mode == dt::EnergyTransferMode::DcExtended);
 
-            REQUIRE(msg.dc_ev_charge_parameter.has_value());
-            REQUIRE_FALSE(msg.ac_ev_charge_parameter.has_value());
-
-            const auto& param = msg.dc_ev_charge_parameter.value();
+            REQUIRE(std::holds_alternative<dt::DcEvChargeParameter>(msg.ev_charge_parameter));
+            const auto& param = std::get<dt::DcEvChargeParameter>(msg.ev_charge_parameter);
             REQUIRE(param.dc_ev_status.ev_error_code == dt::DcEvErrorCode::NO_ERROR);
             REQUIRE(param.dc_ev_status.ev_ready == true);
             REQUIRE(param.dc_ev_status.ev_ress_soc == 50);
@@ -128,10 +124,8 @@ SCENARIO("Ser/Deserialize d2 charge parameter discovery messages") {
             REQUIRE(msg.max_entries_sa_schedule_tuple.has_value());
             REQUIRE(msg.max_entries_sa_schedule_tuple == 5);
 
-            REQUIRE(msg.dc_ev_charge_parameter.has_value());
-            REQUIRE_FALSE(msg.ac_ev_charge_parameter.has_value());
-
-            const auto& param = msg.dc_ev_charge_parameter.value();
+            REQUIRE(std::holds_alternative<dt::DcEvChargeParameter>(msg.ev_charge_parameter));
+            const auto& param = std::get<dt::DcEvChargeParameter>(msg.ev_charge_parameter);
             REQUIRE(param.dc_ev_status.ev_error_code == dt::DcEvErrorCode::NO_ERROR);
             REQUIRE(param.dc_ev_status.ev_ready == true);
             REQUIRE(param.dc_ev_status.ev_ress_soc == 50);
@@ -167,7 +161,7 @@ SCENARIO("Ser/Deserialize d2 charge parameter discovery messages") {
         param.ac_evse_status.rcd = true;
         param.evse_nominal_voltage = dt::PhysicalValue{400, 0, dt::UnitSymbol::V};
         param.evse_max_current = dt::PhysicalValue{100, 0, dt::UnitSymbol::A};
-        res.ac_evse_charge_parameter = param;
+        res.evse_charge_parameter = param;
 
         std::vector<uint8_t> expected = {0x80, 0x98, 0x02, 0x00, 0xB6, 0xC8, 0x81, 0xCE, 0xC2, 0x13, 0x4B, 0x50, 0xA0,
                                          0x00, 0x20, 0x14, 0x01, 0x03, 0x10, 0x24, 0x00, 0xC0, 0xC3, 0x06, 0x40, 0x00};
@@ -195,7 +189,7 @@ SCENARIO("Ser/Deserialize d2 charge parameter discovery messages") {
         param.evse_minimum_current_limit = dt::PhysicalValue{1, 0, dt::UnitSymbol::A};
         param.evse_minimum_voltage_limit = dt::PhysicalValue{150, 0, dt::UnitSymbol::V};
         param.evse_peak_current_ripple = dt::PhysicalValue{1, 0, dt::UnitSymbol::A};
-        res.dc_evse_charge_parameter = param;
+        res.evse_charge_parameter = param;
 
         std::vector<uint8_t> expected = {0x80, 0x98, 0x02, 0x00, 0xB6, 0xC8, 0x81, 0xCE, 0xC2, 0x13,
                                          0x4B, 0x50, 0xA0, 0x00, 0x30, 0x14, 0x02, 0x10, 0x30, 0xC1,
@@ -228,7 +222,7 @@ SCENARIO("Ser/Deserialize d2 charge parameter discovery messages") {
         param.evse_peak_current_ripple = dt::PhysicalValue{1, 0, dt::UnitSymbol::A};
         param.evse_current_regulation_tolerance = dt::PhysicalValue{5, -1, dt::UnitSymbol::A};
         param.evse_energy_to_be_delivered = dt::PhysicalValue{100, 3, dt::UnitSymbol::Wh};
-        res.dc_evse_charge_parameter = param;
+        res.evse_charge_parameter = param;
 
         std::vector<uint8_t> expected = {0x80, 0x98, 0x02, 0x00, 0xB6, 0xC8, 0x81, 0xCE, 0xC2, 0x13, 0x4B, 0x50,
                                          0xA0, 0x00, 0x30, 0x14, 0x00, 0x20, 0x40, 0xC3, 0x06, 0x40, 0x61, 0x41,
@@ -254,7 +248,7 @@ SCENARIO("Ser/Deserialize d2 charge parameter discovery messages") {
         param.ac_evse_status.rcd = true;
         param.evse_nominal_voltage = dt::PhysicalValue{400, 0, dt::UnitSymbol::V};
         param.evse_max_current = dt::PhysicalValue{100, 0, dt::UnitSymbol::A};
-        res.ac_evse_charge_parameter = param;
+        res.evse_charge_parameter = param;
 
         auto tuple = dt::SaScheduleTuple{};
         tuple.sa_schedule_tuple_id = 99;

@@ -9,6 +9,7 @@
 #include <cbv2g/iso_2/iso2_msgDefEncoder.h>
 
 #include <iso15118/detail/helper.hpp>
+#include <variant>
 
 namespace iso15118::d2::msg {
 
@@ -71,7 +72,7 @@ template <> void convert(const data_types::ConsumptionCost& in, struct iso2_Cons
         entry_out.amount = entry_in.amount;
         CPP2CB_ASSIGN_IF_USED(entry_in.amount_multiplier, entry_out.amountMultiplier);
     }
-    out.Cost.arrayLen = in.cost.size();
+    out.Cost.arrayLen = cost_type_max_length;
 }
 
 template <> void convert(const data_types::SalesTariffEntry& in, struct iso2_SalesTariffEntryType& out) {
@@ -87,7 +88,7 @@ template <> void convert(const data_types::SalesTariffEntry& in, struct iso2_Sal
         auto& cost_out = out.ConsumptionCost.array[i];
         convert(cost_in, cost_out);
     }
-    out.ConsumptionCost.arrayLen = in.consumption_cost.size();
+    out.ConsumptionCost.arrayLen = consumption_cost_max_length;
 }
 
 template <> void convert(const data_types::SaScheduleTuple& in, struct iso2_SAScheduleTupleType& out) {
@@ -104,7 +105,7 @@ template <> void convert(const data_types::SaScheduleTuple& in, struct iso2_SASc
         entry_out.RelativeTimeInterval_isUsed = true;
         convert(entry_in.p_max, entry_out.PMax);
     }
-    out.PMaxSchedule.PMaxScheduleEntry.arrayLen = in.pmax_schedule.size();
+    out.PMaxSchedule.PMaxScheduleEntry.arrayLen = pmax_schedule_max_length;
 
     if (in.sales_tariff.has_value()) {
         init_iso2_SalesTariffType(&out.SalesTariff);
@@ -121,15 +122,22 @@ template <> void convert(const data_types::SaScheduleTuple& in, struct iso2_SASc
             auto& entry_out = out.SalesTariff.SalesTariffEntry.array[i];
             convert(entry_in, entry_out);
         }
-        out.SalesTariff.SalesTariffEntry.arrayLen = in.sales_tariff->sales_tariff_entry.size();
+        out.SalesTariff.SalesTariffEntry.arrayLen = sales_tariff_entry_max_length;
     }
 }
 
 template <> void convert(const struct iso2_ChargeParameterDiscoveryReqType& in, ChargeParameterDiscoveryRequest& out) {
     CB2CPP_ASSIGN_IF_USED(in.MaxEntriesSAScheduleTuple, out.max_entries_sa_schedule_tuple);
     cb_convert_enum(in.RequestedEnergyTransferMode, out.requested_energy_transfer_mode);
-    CB2CPP_CONVERT_IF_USED(in.AC_EVChargeParameter, out.ac_ev_charge_parameter);
-    CB2CPP_CONVERT_IF_USED(in.DC_EVChargeParameter, out.dc_ev_charge_parameter);
+    if (in.AC_EVChargeParameter_isUsed) {
+        data_types::AcEvChargeParameter param;
+        convert(in.AC_EVChargeParameter, param);
+        out.ev_charge_parameter = param;
+    } else if (in.DC_EVChargeParameter_isUsed) {
+        data_types::DcEvChargeParameter param;
+        convert(in.DC_EVChargeParameter, param);
+        out.ev_charge_parameter = param;
+    }
 }
 
 template <>
@@ -152,12 +160,19 @@ template <> void convert(const ChargeParameterDiscoveryResponse& in, struct iso2
             auto& schedule_out = out.SAScheduleList.SAScheduleTuple.array[i];
             convert(schedule_in, schedule_out);
         }
-        out.SAScheduleList.SAScheduleTuple.arrayLen = in.sa_schedule_list->size();
+        out.SAScheduleList.SAScheduleTuple.arrayLen = sa_schedule_list_max_length;
         out.SAScheduleList_isUsed = true;
     }
 
-    CPP2CB_CONVERT_IF_USED(in.ac_evse_charge_parameter, out.AC_EVSEChargeParameter);
-    CPP2CB_CONVERT_IF_USED(in.dc_evse_charge_parameter, out.DC_EVSEChargeParameter);
+    if (std::holds_alternative<data_types::AcEvseChargeParameter>(in.evse_charge_parameter)) {
+        const auto& param = std::get<data_types::AcEvseChargeParameter>(in.evse_charge_parameter);
+        convert(param, out.AC_EVSEChargeParameter);
+        CB_SET_USED(out.AC_EVSEChargeParameter);
+    } else if (std::holds_alternative<data_types::DcEvseChargeParameter>(in.evse_charge_parameter)) {
+        const auto& param = std::get<data_types::DcEvseChargeParameter>(in.evse_charge_parameter);
+        convert(param, out.DC_EVSEChargeParameter);
+        CB_SET_USED(out.DC_EVSEChargeParameter);
+    }
 }
 
 template <> int serialize_to_exi(const ChargeParameterDiscoveryResponse& in, exi_bitstream_t& out) {

@@ -5,6 +5,7 @@
 #include <iso15118/message/d2/msg_data_types.hpp>
 
 #include <optional>
+#include <variant>
 #include <vector>
 
 namespace iso15118::d2::msg {
@@ -119,8 +120,7 @@ struct ChargeParameterDiscoveryRequest {
     Header header;
     std::optional<uint16_t> max_entries_sa_schedule_tuple;
     data_types::EnergyTransferMode requested_energy_transfer_mode;
-    std::optional<data_types::AcEvChargeParameter> ac_ev_charge_parameter;
-    std::optional<data_types::DcEvChargeParameter> dc_ev_charge_parameter;
+    std::variant<data_types::AcEvChargeParameter, data_types::DcEvChargeParameter> ev_charge_parameter;
 };
 
 struct ChargeParameterDiscoveryResponse {
@@ -129,8 +129,7 @@ struct ChargeParameterDiscoveryResponse {
     data_types::EvseProcessing evse_processing;
     std::optional<data_types::SaSchedules> sa_schedule_list; // The SECC shall only omit the parameter 'SAScheduleList'
                                                              // in case EVSEProcessing is set to 'Ongoing'.
-    std::optional<data_types::AcEvseChargeParameter> ac_evse_charge_parameter;
-    std::optional<data_types::DcEvseChargeParameter> dc_evse_charge_parameter;
+    std::variant<data_types::AcEvseChargeParameter, data_types::DcEvseChargeParameter> evse_charge_parameter;
 };
 
 } // namespace iso15118::d2::msg
