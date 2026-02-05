@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #ifndef POWERMETER_TRANSPORT_HPP
 #define POWERMETER_TRANSPORT_HPP
@@ -14,6 +14,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <everest/logging.hpp>
 #include <functional>
 #include <generated/interfaces/serial_communication_hub/Interface.hpp>
@@ -21,6 +22,7 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 namespace transport {
 
@@ -49,8 +51,8 @@ public:
     AbstractModbusTransport(AbstractModbusTransport&&) = delete;
     AbstractModbusTransport& operator=(AbstractModbusTransport&&) = delete;
 
-    virtual transport::DataVector fetch(int address, int register_count) = 0;
-    virtual void write_multiple_registers(int address, const std::vector<uint16_t>& data) = 0;
+    virtual transport::DataVector fetch(std::int32_t address, std::uint16_t register_count) = 0;
+    virtual void write_multiple_registers(std::int32_t address, const std::vector<std::uint16_t>& data) = 0;
 };
 
 /**
@@ -61,14 +63,14 @@ class SerialCommHubTransport : public AbstractModbusTransport {
 
 private:
     serial_communication_hubIntf& m_serial_hub;
-    int m_device_id;
-    int m_base_address;
+    std::int32_t m_device_id;
+    std::int32_t m_base_address;
 
     // Retry configuration
-    int m_initial_retry_count;
-    int m_initial_retry_delay_ms;
-    int m_normal_retry_count;
-    int m_normal_retry_delay_ms;
+    std::int32_t m_initial_retry_count;
+    std::int32_t m_initial_retry_delay_ms;
+    std::int32_t m_normal_retry_count;
+    std::int32_t m_normal_retry_delay_ms;
 
     // State tracking
     std::atomic_bool m_initial_connection_mode{true};
@@ -209,15 +211,15 @@ private:
 
 public:
     struct RetryConfig {
-        int initial_retry_count;
-        int initial_retry_delay_ms;
-        int normal_retry_count;
-        int normal_retry_delay_ms;
+        std::int32_t initial_retry_count;
+        std::int32_t initial_retry_delay_ms;
+        std::int32_t normal_retry_count;
+        std::int32_t normal_retry_delay_ms;
     };
 
     struct TransportConfig {
-        int device_id;
-        int base_address;
+        std::int32_t device_id;
+        std::int32_t base_address;
         RetryConfig retry;
     };
 
@@ -238,8 +240,8 @@ public:
         m_clear_error_handler(std::move(clear_error_handler)) {
     }
 
-    transport::DataVector fetch(int address, int register_count) override;
-    void write_multiple_registers(int address, const std::vector<uint16_t>& data) override;
+    transport::DataVector fetch(std::int32_t address, std::uint16_t register_count) override;
+    void write_multiple_registers(std::int32_t address, const std::vector<std::uint16_t>& data) override;
 };
 
 } // namespace transport

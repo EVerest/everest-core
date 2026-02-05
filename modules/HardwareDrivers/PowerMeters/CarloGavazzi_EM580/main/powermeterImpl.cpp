@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include <algorithm>
 #include <atomic>
@@ -69,36 +69,36 @@ using em580::registers::MODBUS_UTC_TIMESTAMP_ADDRESS;
 // Each INT32 register is 4 bytes, each INT16 register is 2 bytes
 namespace Offsets {
 // Voltage registers (INT32, 4 bytes each)
-constexpr size_t V_L1_N = 0; // 300001 (0000h)
-constexpr size_t V_L2_N = 4; // 300003 (0002h)
-constexpr size_t V_L3_N = 8; // 300005 (0004h)
+constexpr std::size_t V_L1_N = 0; // 300001 (0000h)
+constexpr std::size_t V_L2_N = 4; // 300003 (0002h)
+constexpr std::size_t V_L3_N = 8; // 300005 (0004h)
 
 // Current registers (INT32, 4 bytes each)
-constexpr size_t A_L1 = 24; // 300013 (000Ch)
-constexpr size_t A_L2 = 28; // 300015 (000Eh)
-constexpr size_t A_L3 = 32; // 300017 (0010h)
+constexpr std::size_t A_L1 = 24; // 300013 (000Ch)
+constexpr std::size_t A_L2 = 28; // 300015 (000Eh)
+constexpr std::size_t A_L3 = 32; // 300017 (0010h)
 
 // Power registers (INT32, 4 bytes each)
-constexpr size_t W_L1 = 36;  // 300019 (0012h)
-constexpr size_t W_L2 = 40;  // 300021 (0014h)
-constexpr size_t W_L3 = 44;  // 300023 (0016h)
-constexpr size_t W_SYS = 80; // 300041 (0028h)
+constexpr std::size_t W_L1 = 36;  // 300019 (0012h)
+constexpr std::size_t W_L2 = 40;  // 300021 (0014h)
+constexpr std::size_t W_L3 = 44;  // 300023 (0016h)
+constexpr std::size_t W_SYS = 80; // 300041 (0028h)
 
 // Reactive power registers (INT32, 4 bytes each)
-constexpr size_t VAR_L1 = 60;  // 300031 (001Eh)
-constexpr size_t VAR_L2 = 64;  // 300033 (0020h)
-constexpr size_t VAR_L3 = 68;  // 300035 (0022h)
-constexpr size_t VAR_SYS = 88; // 300045 (002Ch)
+constexpr std::size_t VAR_L1 = 60;  // 300031 (001Eh)
+constexpr std::size_t VAR_L2 = 64;  // 300033 (0020h)
+constexpr std::size_t VAR_L3 = 68;  // 300035 (0022h)
+constexpr std::size_t VAR_SYS = 88; // 300045 (002Ch)
 
 // Phase sequence register (INT16, 2 bytes)
-constexpr size_t PHASE_SEQUENCE = 100; // 300051 (0032h)
+constexpr std::size_t PHASE_SEQUENCE = 100; // 300051 (0032h)
 
 // Frequency register (INT16, 2 bytes)
-constexpr size_t FREQUENCY = 102; // 300052 (0033h)
+constexpr std::size_t FREQUENCY = 102; // 300052 (0033h)
 
 // Energy registers (INT32, 4 bytes each) - within extended read range (300001-300080)
-constexpr size_t ENERGY_IMPORT = 104; // 300053 (0034h) - kWh (+) TOT, byte offset 104 (52*2)
-constexpr size_t ENERGY_EXPORT = 156; // 300079 (004Eh) - kWh (-) TOT, byte offset 156 (78*2)
+constexpr std::size_t ENERGY_IMPORT = 104; // 300053 (0034h) - kWh (+) TOT, byte offset 104 (52*2)
+constexpr std::size_t ENERGY_EXPORT = 156; // 300079 (004Eh) - kWh (-) TOT, byte offset 156 (78*2)
 } // namespace Offsets
 
 // Scaling factors from Modbus document
@@ -180,13 +180,13 @@ void powermeterImpl::read_signature_config() {
 
     auto read_public_key_in_hex = [this](int lengthInBits) {
         const transport::DataVector data =
-            p_modbus_transport->fetch(MODBUS_PUBLIC_KEY_ADDRESS, (lengthInBits >> 3) + 1);
+            p_modbus_transport->fetch(MODBUS_PUBLIC_KEY_ADDRESS, static_cast<std::uint16_t>((lengthInBits >> 3) + 1));
         // Table 4.18/4.19: last byte is unused and always 0x00; keep the 0x04 prefix, drop the unused byte.
         return modbus_utils::to_hex_string(data, modbus_utils::ByteOffset{0},
                                            modbus_utils::ByteLength{data.size() - 1});
     };
 
-    auto read_public_key_der_in_hex = [this](int der_word_count) {
+    auto read_public_key_der_in_hex = [this](std::uint16_t der_word_count) {
         // Table 4.20/4.21: mandatory to read whole block starting at 2600h.
         const transport::DataVector der_data = p_modbus_transport->fetch(MODBUS_PUBLIC_KEY_DER_ADDRESS, der_word_count);
         std::size_t der_len = der_data.size();
@@ -199,7 +199,7 @@ void powermeterImpl::read_signature_config() {
 
     const SignatureType signature_type = read_signature_type();
     std::string signature_type_string;
-    int der_word_count = 0;
+    std::uint16_t der_word_count = 0;
 
     switch (signature_type) {
     case SIGNATURE_256_BIT:
@@ -231,20 +231,20 @@ void powermeterImpl::read_firmware_versions() {
 
     // Read measure module firmware version/revision (register 300771)
     transport::DataVector measure_fw_data = p_modbus_transport->fetch(MODBUS_FIRMWARE_MEASURE_MODULE_ADDRESS, 1);
-    uint16_t measure_fw_value = modbus_utils::to_uint16(measure_fw_data, modbus_utils::ByteOffset{0});
+    std::uint16_t measure_fw_value = modbus_utils::to_uint16(measure_fw_data, modbus_utils::ByteOffset{0});
 
     // Parse firmware version: MSB bits 0-3 = Minor, bits 4-7 = Major, LSB = Revision
-    uint8_t major = (measure_fw_value >> 8) & 0xF0;
+    std::uint8_t major = (measure_fw_value >> 8) & 0xF0;
     major = major >> 4; // Shift right to get actual major version (0-15)
-    uint8_t minor = (measure_fw_value >> 8) & 0x0F;
-    uint8_t revision = measure_fw_value & 0xFF;
+    std::uint8_t minor = (measure_fw_value >> 8) & 0x0F;
+    std::uint8_t revision = measure_fw_value & 0xFF;
 
     m_measure_module_firmware_version = fmt::format("{}.{}.{}", major, minor, revision);
     EVLOG_info << "Measure module firmware version: " << m_measure_module_firmware_version;
 
     // Read communication module firmware version/revision (register 300772)
     transport::DataVector comm_fw_data = p_modbus_transport->fetch(MODBUS_FIRMWARE_COMMUNICATION_MODULE_ADDRESS, 1);
-    uint16_t comm_fw_value = modbus_utils::to_uint16(comm_fw_data, modbus_utils::ByteOffset{0});
+    std::uint16_t comm_fw_value = modbus_utils::to_uint16(comm_fw_data, modbus_utils::ByteOffset{0});
 
     // Parse firmware version: MSB bits 0-3 = Minor, bits 4-7 = Major, LSB = Revision
     major = (comm_fw_value >> 8) & 0xF0;
@@ -279,7 +279,7 @@ void powermeterImpl::read_serial_number() {
 
     // Read production year (register 320488, 1 UINT16 register)
     transport::DataVector year_data = p_modbus_transport->fetch(MODBUS_PRODUCTION_YEAR_ADDRESS, 1);
-    uint16_t production_year = modbus_utils::to_uint16(year_data, modbus_utils::ByteOffset{0});
+    std::uint16_t production_year = modbus_utils::to_uint16(year_data, modbus_utils::ByteOffset{0});
 
     // Combine serial number and production year with a dot separator
     m_serial_number = serial_str + "." + std::to_string(production_year);
@@ -288,7 +288,7 @@ void powermeterImpl::read_serial_number() {
 
 void powermeterImpl::read_transaction_state_and_id() {
     transport::DataVector state_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_ADDRESS, 1);
-    uint16_t ocmf_state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
+    std::uint16_t ocmf_state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
     if (ocmf_state == MODBUS_OCMF_STATE_READY) {
         m_pending_closed_transaction = true;
         EVLOG_info << "Detected a closed transaction with data pending to be read";
@@ -356,21 +356,21 @@ void powermeterImpl::ready() {
 void powermeterImpl::write_transaction_registers(const types::powermeter::TransactionReq& transaction_req) {
     // 1. Write OCMF Identification Status (register 328673, 7000h)
     // 0 = NOT_ASSIGNED (False), 1 = ASSIGNED (True)
-    uint16_t identification_status_value =
+    std::uint16_t identification_status_value =
         (transaction_req.identification_status == types::powermeter::OCMFUserIdentificationStatus::ASSIGNED) ? 1 : 0;
-    std::vector<uint16_t> status_data = {identification_status_value};
+    std::vector<std::uint16_t> status_data = {identification_status_value};
     p_modbus_transport->write_multiple_registers(MODBUS_OCMF_IDENTIFICATION_STATUS_ADDRESS, status_data);
 
     // 2. Write OCMF Identification Level (register 328674, 7001h) - optional
-    uint16_t identification_level_value = 0; // Default: NONE
+    std::uint16_t identification_level_value = 0; // Default: NONE
     if (transaction_req.identification_level.has_value()) {
         identification_level_value = ocmf::level_to_value(transaction_req.identification_level.value());
     }
-    std::vector<uint16_t> level_data = {identification_level_value};
+    std::vector<std::uint16_t> level_data = {identification_level_value};
     p_modbus_transport->write_multiple_registers(MODBUS_OCMF_IDENTIFICATION_LEVEL_ADDRESS, level_data);
 
     // 3. Write OCMF Identification Flags (registers 328675-328678, 7002h-7005h) - up to 4 flags
-    std::vector<uint16_t> flags_data(MODBUS_OCMF_IDENTIFICATION_FLAGS_COUNT, 0);
+    std::vector<std::uint16_t> flags_data(MODBUS_OCMF_IDENTIFICATION_FLAGS_COUNT, 0);
     for (size_t i = 0; i < transaction_req.identification_flags.size() && i < MODBUS_OCMF_IDENTIFICATION_FLAGS_COUNT;
          ++i) {
         flags_data[i] = ocmf::flag_to_value(transaction_req.identification_flags[i]);
@@ -378,8 +378,8 @@ void powermeterImpl::write_transaction_registers(const types::powermeter::Transa
     p_modbus_transport->write_multiple_registers(MODBUS_OCMF_IDENTIFICATION_FLAGS_START_ADDRESS, flags_data);
 
     // 4. Write OCMF Identification Type (register 328679, 7006h)
-    uint16_t identification_type_value = ocmf::type_to_value(transaction_req.identification_type);
-    std::vector<uint16_t> type_data = {identification_type_value};
+    std::uint16_t identification_type_value = ocmf::type_to_value(transaction_req.identification_type);
+    std::vector<std::uint16_t> type_data = {identification_type_value};
     p_modbus_transport->write_multiple_registers(MODBUS_OCMF_IDENTIFICATION_TYPE_ADDRESS, type_data);
 
     // 5. Write OCMF Identification Data (registers 328680-328699, 7007h-701Ah) - CHAR[40] = 20 words
@@ -388,20 +388,20 @@ void powermeterImpl::write_transaction_registers(const types::powermeter::Transa
     std::string client_id_str = transaction_req.identification_data.value_or("");
     modbus_utils::log_truncation_warning_if_needed("OCMF Identification Data", client_id_str,
                                                    MODBUS_OCMF_IDENTIFICATION_DATA_WORD_COUNT);
-    std::vector<uint16_t> id_data =
+    std::vector<std::uint16_t> id_data =
         modbus_utils::string_to_modbus_char_array(client_id_str, MODBUS_OCMF_IDENTIFICATION_DATA_WORD_COUNT);
     p_modbus_transport->write_multiple_registers(MODBUS_OCMF_IDENTIFICATION_DATA_START_ADDRESS, id_data);
 
     // 6. Write OCMF Charging point identifier type (register 328700, 701Bh)
     // 0 = EVSEID, 1 = CBIDC (default to EVSEID)
-    uint16_t charging_point_id_type = 0; // EVSEID
-    std::vector<uint16_t> id_type_data = {charging_point_id_type};
+    std::uint16_t charging_point_id_type = 0; // EVSEID
+    std::vector<std::uint16_t> id_type_data = {charging_point_id_type};
     p_modbus_transport->write_multiple_registers(MODBUS_OCMF_CHARGING_POINT_ID_TYPE_ADDRESS, id_type_data);
 
     // 7. Write OCMF Charging point identifier (registers 328701-328720, 701Ch-702Fh) - CHAR[40] = 20 words (evse_id)
     modbus_utils::log_truncation_warning_if_needed("OCMF Charging Point Identifier (EVSE ID)", transaction_req.evse_id,
                                                    MODBUS_OCMF_CHARGING_POINT_ID_WORD_COUNT);
-    std::vector<uint16_t> evse_id_data =
+    std::vector<std::uint16_t> evse_id_data =
         modbus_utils::string_to_modbus_char_array(transaction_req.evse_id, MODBUS_OCMF_CHARGING_POINT_ID_WORD_COUNT);
     p_modbus_transport->write_multiple_registers(MODBUS_OCMF_CHARGING_POINT_ID_START_ADDRESS, evse_id_data);
 
@@ -412,14 +412,14 @@ void powermeterImpl::write_transaction_registers(const types::powermeter::Transa
         transaction_req.tariff_text.value_or("") + tt_marker + transaction_req.transaction_id;
     modbus_utils::log_truncation_warning_if_needed("OCMF Tariff Text (TT)", tariff_text,
                                                    MODBUS_OCMF_TARIFF_TEXT_WORD_COUNT);
-    const std::vector<uint16_t> tariff_text_data =
+    const std::vector<std::uint16_t> tariff_text_data =
         modbus_utils::string_to_modbus_char_array(tariff_text, MODBUS_OCMF_TARIFF_TEXT_WORD_COUNT);
     p_modbus_transport->write_multiple_registers(MODBUS_OCMF_TARIFF_TEXT_ADDRESS, tariff_text_data);
 }
 
 std::string powermeterImpl::read_ocmf_file() {
     transport::DataVector size_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_SIZE_ADDRESS, 1);
-    uint16_t size = modbus_utils::to_uint16(size_data, modbus_utils::ByteOffset{0});
+    std::uint16_t size = modbus_utils::to_uint16(size_data, modbus_utils::ByteOffset{0});
     if (size == 0) {
         throw std::runtime_error("OCMF file size is 0");
     }
@@ -429,14 +429,14 @@ std::string powermeterImpl::read_ocmf_file() {
 
 void powermeterImpl::clear_transaction_states() {
     transport::DataVector state_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_ADDRESS, 1);
-    uint16_t ocmf_state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
+    std::uint16_t ocmf_state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
 
     if (ocmf_state == MODBUS_OCMF_STATE_READY) {
         EVLOG_info << "OCMF state before starting transaction: " << ocmf_state;
         EVLOG_info << "Cleanup necessary ...";
         read_ocmf_file();
         // write 0 to the OCMF state to confirm the reading of the OCMF file
-        std::vector<uint16_t> ocmf_confirmation_data = {MODBUS_OCMF_STATE_NOT_READY};
+        std::vector<std::uint16_t> ocmf_confirmation_data = {MODBUS_OCMF_STATE_NOT_READY};
         p_modbus_transport->write_multiple_registers(MODBUS_OCMF_STATE_ADDRESS, ocmf_confirmation_data);
         EVLOG_info << "Cleanup done.";
     }
@@ -457,7 +457,7 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& treq
         // Check OCMF state and ensure it's NOT_READY before starting a transaction
         // According to the Modbus document, the OCMF state must be NOT_READY (0) to start a new transaction
         transport::DataVector state_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_ADDRESS, 1);
-        uint16_t ocmf_state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
+        std::uint16_t ocmf_state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
         EVLOG_info << "OCMF state before starting transaction: " << ocmf_state;
 
         if (ocmf_state != MODBUS_OCMF_STATE_NOT_READY) {
@@ -472,11 +472,11 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& treq
         write_transaction_registers(treq);
 
         EVLOG_info << "Write session modality ... to charging vehicle";
-        std::vector<uint16_t> session_modality_data = {MODBUS_OCMF_SESSION_MODALITY_CHARGING_VEHICLE};
+        std::vector<std::uint16_t> session_modality_data = {MODBUS_OCMF_SESSION_MODALITY_CHARGING_VEHICLE};
         p_modbus_transport->write_multiple_registers(MODBUS_OCMF_SESSION_MODALITY_ADDRESS, session_modality_data);
 
         // Write 'B' command to start transaction (Table 4.35, register 328737)
-        std::vector<uint16_t> command_data1 = {MODBUS_OCMF_COMMAND_START};
+        std::vector<std::uint16_t> command_data1 = {MODBUS_OCMF_COMMAND_START};
         p_modbus_transport->write_multiple_registers(MODBUS_OCMF_COMMAND_ADDRESS, command_data1);
         EVLOG_info << "Transaction " << treq.transaction_id << " started";
 
@@ -498,7 +498,7 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
         EVLOG_info << "Cleaning up the transaction request.";
         try {
             if (!m_pending_closed_transaction and m_transaction_active.load()) {
-                std::vector<uint16_t> command_data = {MODBUS_OCMF_COMMAND_END};
+                std::vector<std::uint16_t> command_data = {MODBUS_OCMF_COMMAND_END};
                 p_modbus_transport->write_multiple_registers(MODBUS_OCMF_COMMAND_ADDRESS, command_data);
                 EVLOG_info << "Transaction " << transaction_id << " stopped";
             }
@@ -542,7 +542,7 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
         } else if (m_transaction_id == transaction_id) {
             EVLOG_info << "Sending the end transaction command to the device";
             // Write 'E' command to end transaction (Table 4.35, register 328737)
-            std::vector<uint16_t> command_data = {MODBUS_OCMF_COMMAND_END};
+            std::vector<std::uint16_t> command_data = {MODBUS_OCMF_COMMAND_END};
             p_modbus_transport->write_multiple_registers(MODBUS_OCMF_COMMAND_ADDRESS, command_data);
             EVLOG_info << "Transaction " << transaction_id << " stopped";
             m_transaction_active.store(false);
@@ -665,7 +665,7 @@ void powermeterImpl::read_powermeter_values() {
 
     // Phase sequence (INT16) - register 300051 (0032h)
     // Value -1 = L1-L3-L2 sequence, value 1 = L1-L2-L3 sequence
-    int16_t phase_sequence = modbus_utils::to_int16(data, modbus_utils::ByteOffset{Offsets::PHASE_SEQUENCE});
+    std::int16_t phase_sequence = modbus_utils::to_int16(data, modbus_utils::ByteOffset{Offsets::PHASE_SEQUENCE});
     if (phase_sequence == -1) {
         powermeter.phase_seq_error = true; // L1-L3-L2 is considered an error (counter-clockwise)
     } else if (phase_sequence == 1) {
@@ -706,11 +706,11 @@ void powermeterImpl::dump_device_state() {
     try {
         // 1. OCMF state
         transport::DataVector state_data = p_modbus_transport->fetch(MODBUS_OCMF_STATE_ADDRESS, 1);
-        uint16_t state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
+        std::uint16_t state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
 
         // 2. Charging status (register 328742 / 7045h)
         transport::DataVector charging_status_data = p_modbus_transport->fetch(MODBUS_OCMF_CHARGING_STATUS_ADDRESS, 1);
-        uint16_t charging_status = modbus_utils::to_uint16(charging_status_data, modbus_utils::ByteOffset{0});
+        std::uint16_t charging_status = modbus_utils::to_uint16(charging_status_data, modbus_utils::ByteOffset{0});
 
         // 3. Last transaction id (register 328723 / 7059h, CHAR[])
         transport::DataVector last_tx_data = p_modbus_transport->fetch(MODBUS_OCMF_LAST_TRANSACTION_ID_ADDRESS,
@@ -721,17 +721,17 @@ void powermeterImpl::dump_device_state() {
         // 4. Time synchronization status (register 328769 / 7060h)
         transport::DataVector time_sync_status_data =
             p_modbus_transport->fetch(MODBUS_OCMF_TIME_SYNC_STATUS_ADDRESS, 1);
-        uint16_t time_sync_status = modbus_utils::to_uint16(time_sync_status_data, modbus_utils::ByteOffset{0});
+        std::uint16_t time_sync_status = modbus_utils::to_uint16(time_sync_status_data, modbus_utils::ByteOffset{0});
 
         // 5. OCMF command (last written command value)
         transport::DataVector cmd_data = p_modbus_transport->fetch(MODBUS_OCMF_COMMAND_ADDRESS, 1);
-        uint16_t raw_cmd = modbus_utils::to_uint16(cmd_data, modbus_utils::ByteOffset{0});
+        std::uint16_t raw_cmd = modbus_utils::to_uint16(cmd_data, modbus_utils::ByteOffset{0});
         // ASCII code is stored in the low byte
         char cmd_char = static_cast<char>(raw_cmd & 0xFFU);
 
         // 6. Transaction ID definition (OCMF transaction ID generation)
         transport::DataVector tx_def_data = p_modbus_transport->fetch(MODBUS_OCMF_TRANSACTION_ID_GENERATION_ADDRESS, 1);
-        uint16_t tx_def = modbus_utils::to_uint16(tx_def_data, modbus_utils::ByteOffset{0});
+        std::uint16_t tx_def = modbus_utils::to_uint16(tx_def_data, modbus_utils::ByteOffset{0});
 
         EVLOG_info << "EM580 device state dump:";
         EVLOG_info << "  OCMF state: " << state;
@@ -755,17 +755,17 @@ void powermeterImpl::synchronize_time() {
     // Convert to system_clock for time_t conversion
     auto sys_now = std::chrono::system_clock::now();
     auto time_since_epoch = sys_now.time_since_epoch();
-    int64_t seconds_since_epoch = std::chrono::duration_cast<std::chrono::seconds>(time_since_epoch).count();
+    std::int64_t seconds_since_epoch = std::chrono::duration_cast<std::chrono::seconds>(time_since_epoch).count();
 
     // Convert to UINT64 and split into 4 words
     // According to EM580 Modbus spec: for INT64, word order is LSW->MSW (little-endian word order)
     // So we write: [LSW, LSW+1, MSW-1, MSW] = [bits 0-15, bits 16-31, bits 32-47, bits 48-63]
-    uint64_t timestamp = static_cast<uint64_t>(seconds_since_epoch);
-    std::vector<uint16_t> data;
-    data.push_back(static_cast<uint16_t>(timestamp & 0xFFFF));         // LSW: bits 0-15
-    data.push_back(static_cast<uint16_t>((timestamp >> 16) & 0xFFFF)); // bits 16-31
-    data.push_back(static_cast<uint16_t>((timestamp >> 32) & 0xFFFF)); // bits 32-47
-    data.push_back(static_cast<uint16_t>((timestamp >> 48) & 0xFFFF)); // MSW: bits 48-63
+    std::uint64_t timestamp = static_cast<std::uint64_t>(seconds_since_epoch);
+    std::vector<std::uint16_t> data;
+    data.push_back(static_cast<std::uint16_t>(timestamp & 0xFFFF));         // LSW: bits 0-15
+    data.push_back(static_cast<std::uint16_t>((timestamp >> 16) & 0xFFFF)); // bits 16-31
+    data.push_back(static_cast<std::uint16_t>((timestamp >> 32) & 0xFFFF)); // bits 32-47
+    data.push_back(static_cast<std::uint16_t>((timestamp >> 48) & 0xFFFF)); // MSW: bits 48-63
 
     // Write UTC timestamp to register 328723 (4 words for INT64)
     p_modbus_transport->write_multiple_registers(MODBUS_UTC_TIMESTAMP_ADDRESS, data);
@@ -779,9 +779,9 @@ void powermeterImpl::set_timezone(int offset_minutes) {
 
     // Convert to INT16 (signed 16-bit integer)
     // Timezone offset range: -1440 to +1440 minutes is validated by the manifest.
-    int16_t offset_int16 = static_cast<int16_t>(offset_minutes);
-    std::vector<uint16_t> data;
-    data.push_back(static_cast<uint16_t>(offset_int16));
+    std::int16_t offset_int16 = static_cast<std::int16_t>(offset_minutes);
+    std::vector<std::uint16_t> data;
+    data.push_back(static_cast<std::uint16_t>(offset_int16));
     p_modbus_transport->write_multiple_registers(MODBUS_TIMEZONE_OFFSET_ADDRESS, data);
 
     EVLOG_info << "Timezone set to: " << (offset_minutes >= 0 ? "+" : "") << offset_minutes << " minutes";
@@ -825,7 +825,7 @@ void powermeterImpl::read_device_state() {
     // Read device state register (Table 4.30, Section 4.3.6)
     // Register 320499 (5012h): Device state (UINT16 bitfield)
     transport::DataVector state_data = p_modbus_transport->fetch(MODBUS_DEVICE_STATE_ADDRESS, 1);
-    uint16_t device_state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
+    std::uint16_t device_state = modbus_utils::to_uint16(state_data, modbus_utils::ByteOffset{0});
 
     // Check for error bits and raise VendorError if any are set
     const auto error_messages = device_state_utils::decode_device_state_errors(device_state);

@@ -17,18 +17,18 @@ constexpr std::size_t kFetchCallAlignmentBytes = 8;
 constexpr std::size_t kWriteCallAlignmentBytes = 32;
 
 struct alignas(kFetchCallAlignmentBytes) FetchCall {
-    int address;
-    int register_count;
+    std::int32_t address;
+    std::uint16_t register_count;
 };
 
 struct alignas(kWriteCallAlignmentBytes) WriteCall {
-    int address;
-    std::vector<uint16_t> data;
+    std::int32_t address;
+    std::vector<std::uint16_t> data;
 };
 
 class FakeModbusTransport : public transport::AbstractModbusTransport {
 public:
-    void push_fetch_response(int address, int register_count, transport::DataVector response) {
+    void push_fetch_response(std::int32_t address, std::uint16_t register_count, transport::DataVector response) {
         scripted_fetch_[Key{address, register_count}].push_back(std::move(response));
     }
 
@@ -40,7 +40,7 @@ public:
         return write_calls_;
     }
 
-    transport::DataVector fetch(int address, int register_count) override {
+    transport::DataVector fetch(std::int32_t address, std::uint16_t register_count) override {
         fetch_calls_.push_back(FetchCall{address, register_count});
 
         const Key key{address, register_count};
@@ -53,22 +53,22 @@ public:
         return out;
     }
 
-    void write_multiple_registers(int address, const std::vector<uint16_t>& data) override {
+    void write_multiple_registers(std::int32_t address, const std::vector<std::uint16_t>& data) override {
         write_calls_.push_back(WriteCall{address, data});
     }
 
 private:
-    using Key = std::tuple<int, int>;
+    using Key = std::tuple<std::int32_t, std::uint16_t>;
     std::map<Key, std::deque<transport::DataVector>> scripted_fetch_;
     std::vector<FetchCall> fetch_calls_;
     std::vector<WriteCall> write_calls_;
 };
 
-transport::DataVector u16_be(uint16_t value) {
-    constexpr uint32_t kByteBits = 8U;
-    constexpr uint32_t kByteMask = 0xFFU;
-    const auto high = static_cast<uint8_t>((static_cast<uint32_t>(value) >> kByteBits) & kByteMask);
-    const auto low = static_cast<uint8_t>(static_cast<uint32_t>(value) & kByteMask);
+transport::DataVector u16_be(std::uint16_t value) {
+    constexpr std::uint32_t kByteBits = 8U;
+    constexpr std::uint32_t kByteMask = 0xFFU;
+    const auto high = static_cast<std::uint8_t>((static_cast<std::uint32_t>(value) >> kByteBits) & kByteMask);
+    const auto low = static_cast<std::uint8_t>(static_cast<std::uint32_t>(value) & kByteMask);
     return transport::DataVector{high, low};
 }
 
