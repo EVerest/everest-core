@@ -180,7 +180,7 @@ protected:
     std::map<std::int32_t, std::shared_ptr<Connector>> connectors;
     std::shared_ptr<DatabaseHandler> database_handler;
     std::shared_ptr<EvseSecurityMock> evse_security;
-    std::unique_ptr<ChargePointConfigurationInterface> configuration;
+    std::unique_ptr<ChargePointConfiguration> configuration;
 };
 
 TEST_F(CompositeScheduleTestFixture, CalculateEnhancedCompositeSchedule_ValidatedBaseline) {

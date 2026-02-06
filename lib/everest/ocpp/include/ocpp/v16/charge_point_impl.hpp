@@ -87,7 +87,6 @@ namespace v16 {
 /// \brief Contains a ChargePoint implementation compatible with OCPP-J 1.6
 class ChargePointImpl : ocpp::ChargingStationBase {
 private:
-    std::unique_ptr<ChargePointConfigurationInterface> configuration;
     BootReasonEnum bootreason;
     ChargePointConnectionState connection_state;
     bool boot_notification_callerror;
@@ -113,6 +112,7 @@ private:
     std::set<MessageType> allowed_message_types;
     std::mutex allowed_message_types_mutex;
     std::unique_ptr<ChargePointStates> status;
+    ChargePointConfigurationInterface& configuration;
     std::shared_ptr<ocpp::v16::DatabaseHandler> database_handler;
     std::unique_ptr<Everest::SteadyTimer> boot_notification_timer;
     std::unique_ptr<Everest::SteadyTimer> heartbeat_timer;
@@ -400,7 +400,7 @@ private:
 
 public:
     /// \brief The main entrypoint for libOCPP for OCPP 1.6
-    /// \param config unique pointer to a configuration object
+    /// \param cfg a reference to the configuration provider
     /// \param database_path this points to the location of the sqlite database that libocpp uses to keep track of
     /// connector availability, the authorization cache and auth list, charging profiles and transaction data
     /// \param sql_init_path this points to the init.sql file which contains the database schema used by libocpp for its
@@ -411,7 +411,7 @@ public:
     /// also available) configuration keys in the "Internal" section of the config file. Please note that this is
     /// intended for debugging purposes only as it logs all communication, including authentication messages.
     /// \param evse_security Pointer to evse_security that manages security related operations
-    explicit ChargePointImpl(std::unique_ptr<ChargePointConfigurationInterface> config, const fs::path& database_path,
+    explicit ChargePointImpl(ChargePointConfigurationInterface& cfg, const fs::path& database_path,
                              const fs::path& sql_init_path, const fs::path& message_log_path,
                              const std::shared_ptr<EvseSecurity> evse_security,
                              const std::optional<SecurityConfiguration> security_configuration);

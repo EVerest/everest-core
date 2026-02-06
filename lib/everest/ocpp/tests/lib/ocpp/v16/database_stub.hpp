@@ -4,9 +4,9 @@
 #ifndef DATABASE_STUB_HPP
 #define DATABASE_STUB_HPP
 
-#include "ocpp/v16/charge_point_configuration.hpp"
 #include <gtest/gtest.h>
 
+#include <ocpp/v16/charge_point_configuration.hpp>
 #include <ocpp/v16/connector.hpp>
 #include <ocpp/v16/database_handler.hpp>
 #include <ocpp/v16/smart_charging.hpp>
@@ -141,7 +141,7 @@ protected:
     std::map<std::int32_t, std::shared_ptr<Connector>> connectors;
     std::shared_ptr<stubs::DatabaseHandlerTest> database_handler;
     std::unique_ptr<ConnectionInterface> database_interface;
-    std::unique_ptr<ChargePointConfigurationInterface> configuration;
+    std::unique_ptr<ChargePointConfiguration> configuration;
 
     void add_connectors(unsigned int n) {
         for (unsigned int i = 0; i <= n; i++) {

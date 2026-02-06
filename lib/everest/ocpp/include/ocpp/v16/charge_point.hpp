@@ -53,14 +53,7 @@ private:
 
 public:
     /// \brief The main entrypoint for libOCPP for OCPP 1.6
-    /// \param config a nlohmann json config object that contains the libocpp 1.6 config. There are example configs that
-    /// work with a SteVe installation running in Docker, for example: config/v16/config-docker.json
-    /// \param share_path This path contains the following files and directories and is installed by the libocpp install
-    /// target
-    /// \param user_config_path this points to a "user config", which we call a configuration file that's merged with
-    /// the config that's provided in the "config" parameter. Here you can add, remove and overwrite settings without
-    /// modifying the config passed in the first parameter directly. This is also used by libocpp to persistently modify
-    /// config entries that are changed by the CSMS that should persist across restarts
+    /// \param cfg a reference to the configuration provider
     /// \param database_path this points to the location of the sqlite database that libocpp uses to keep track of
     /// connector availability, the authorization cache and auth list, charging profiles and transaction data
     /// \param sql_init_path this points to the init.sql file which contains the database schema used by libocpp for its
@@ -74,27 +67,7 @@ public:
     /// security_configuration must be set
     /// \param security_configuration specifies the file paths that are required to set up the internal evse_security
     /// implementation
-    explicit ChargePoint(const std::string& config, const fs::path& share_path, const fs::path& user_config_path,
-                         const fs::path& database_path, const fs::path& sql_init_path, const fs::path& message_log_path,
-                         const std::shared_ptr<EvseSecurity> evse_security,
-                         const std::optional<SecurityConfiguration> security_configuration = std::nullopt);
-
-    /// \brief The main entrypoint for libOCPP for OCPP 1.6
-    /// \param config unique pointer to a configuration object
-    /// \param database_path this points to the location of the sqlite database that libocpp uses to keep track of
-    /// connector availability, the authorization cache and auth list, charging profiles and transaction data
-    /// \param sql_init_path this points to the init.sql file which contains the database schema used by libocpp for its
-    /// sqlite database
-    /// \param message_log_path this points to the directory in which libocpp can put OCPP communication logfiles for
-    /// debugging purposes. This behavior can be controlled by the "LogMessages" (set to true by default) and
-    /// "LogMessagesFormat" (set to ["log", "html", "session_logging"] by default, "console" and "console_detailed" are
-    /// also available) configuration keys in the "Internal" section of the config file. Please note that this is
-    /// intended for debugging purposes only as it logs all communication, including authentication messages.
-    /// \param evse_security Pointer to evse_security that manages security related operations; if nullptr
-    /// security_configuration must be set
-    /// \param security_configuration specifies the file paths that are required to set up the internal evse_security
-    /// implementation
-    explicit ChargePoint(std::unique_ptr<ChargePointConfigurationInterface> config, const fs::path& database_path,
+    explicit ChargePoint(ChargePointConfigurationInterface& cfg, const fs::path& database_path,
                          const fs::path& sql_init_path, const fs::path& message_log_path,
                          const std::shared_ptr<EvseSecurity> evse_security,
                          const std::optional<SecurityConfiguration> security_configuration = std::nullopt);

@@ -43,6 +43,7 @@
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/charge_point.hpp>
+#include <ocpp/v16/charge_point_configuration.hpp>
 #include <ocpp/v16/types.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 
@@ -141,6 +142,7 @@ public:
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     std::unique_ptr<ocpp::v16::ChargePoint> charge_point;
+    std::unique_ptr<ocpp::v16::ChargePointConfiguration> charge_point_config;
     std::unique_ptr<Everest::SteadyTimer> charging_schedules_timer;
     bool ocpp_stopped = false;
 

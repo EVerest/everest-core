@@ -258,7 +258,7 @@ protected:
     // Default values used within the tests
     std::map<std::int32_t, std::shared_ptr<Connector>> connectors;
     std::shared_ptr<DatabaseHandler> database_handler;
-    std::unique_ptr<ChargePointConfigurationInterface> configuration;
+    std::unique_ptr<ChargePointConfiguration> configuration;
 
     const int connector_id = 1;
     bool ignore_no_transaction = true;

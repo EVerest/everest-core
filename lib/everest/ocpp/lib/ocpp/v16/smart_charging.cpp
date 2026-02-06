@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#include "ocpp/v16/charge_point_configuration_interface.hpp"
 #include <chrono>
 #include <ocpp/common/constants.hpp>
 #include <ocpp/common/types.hpp>
