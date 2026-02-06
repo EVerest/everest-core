@@ -38,7 +38,13 @@ private:
 public:
     ChargePointConfiguration(const std::string& config, const fs::path& ocpp_main_path,
                              const fs::path& user_config_path);
+    ChargePointConfiguration() = delete;
+    ChargePointConfiguration(const ChargePointConfiguration&) = delete;
+    ChargePointConfiguration(ChargePointConfiguration&&) = delete;
+    ChargePointConfiguration& operator=(const ChargePointConfiguration&) = delete;
+    ChargePointConfiguration& operator=(ChargePointConfiguration&&) = delete;
     virtual ~ChargePointConfiguration() = default;
+
     void setChargepointInformation(const std::string& chargePointVendor, const std::string& chargePointModel,
                                    const std::optional<std::string>& chargePointSerialNumber,
                                    const std::optional<std::string>& chargeBoxSerialNumber,

@@ -29,8 +29,8 @@ public:
     /// security_configuration must be set
     /// \param security_configuration specifies the file paths that are required to set up the internal evse_security
     /// implementation
-    explicit ChargingStationBase(const std::shared_ptr<EvseSecurity> evse_security,
-                                 const std::optional<SecurityConfiguration> security_configuration = std::nullopt);
+    explicit ChargingStationBase(const std::shared_ptr<EvseSecurity>& evse_security,
+                                 const std::optional<SecurityConfiguration>& security_configuration = std::nullopt);
     virtual ~ChargingStationBase();
 };
 

@@ -51,6 +51,12 @@ public:
     }
     ChargePointConfigurationBase(const std::filesystem::path& ocpp_main_path) : ocpp_main_path(ocpp_main_path) {
     }
+    ChargePointConfigurationBase() = delete;
+    ChargePointConfigurationBase(const ChargePointConfigurationBase&) = delete;
+    ChargePointConfigurationBase(ChargePointConfigurationBase&&) = delete;
+    ChargePointConfigurationBase& operator=(const ChargePointConfigurationBase&) = delete;
+    ChargePointConfigurationBase& operator=(ChargePointConfigurationBase&&) = delete;
+
     virtual ~ChargePointConfigurationBase() = default;
 
     bool validate(const std::string_view& schema_file, const json& object) const;

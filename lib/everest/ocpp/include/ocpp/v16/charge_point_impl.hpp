@@ -87,16 +87,21 @@ namespace v16 {
 /// \brief Contains a ChargePoint implementation compatible with OCPP-J 1.6
 class ChargePointImpl : ocpp::ChargingStationBase {
 private:
-    BootReasonEnum bootreason;
-    ChargePointConnectionState connection_state;
-    bool boot_notification_callerror;
-    std::atomic<RegistrationStatus> registration_status;
-    DiagnosticsStatus diagnostics_status;
-    FirmwareStatus firmware_status;
-    bool firmware_update_is_pending = false;
-    UploadLogStatusEnumType log_status;
+    ChargePointConfigurationInterface& configuration;
+    BootReasonEnum bootreason{BootReasonEnum::PowerUp};
+    bool initialized{false};
+    bool InvalidCSMSCertificate_logged{false};
+    ChargePointConnectionState connection_state{ChargePointConnectionState::Disconnected};
+    DiagnosticsStatus diagnostics_status{DiagnosticsStatus::Idle};
+    UploadLogStatusEnumType log_status{UploadLogStatusEnumType::Idle};
+    std::atomic<RegistrationStatus> registration_status{RegistrationStatus::Pending};
+
     std::string message_log_path;
     fs::path share_path;
+
+    bool boot_notification_callerror;
+    FirmwareStatus firmware_status;
+    bool firmware_update_is_pending = false;
 
     std::unique_ptr<Websocket> websocket;
     std::unique_ptr<ocpp::MessageDispatcherInterface<MessageType>> message_dispatcher;
@@ -106,13 +111,10 @@ private:
     std::unique_ptr<SmartChargingHandler> smart_charging_handler;
     std::int32_t heartbeat_interval;
     bool stopped;
-    bool initialized;
-    bool InvalidCSMSCertificate_logged;
     std::chrono::time_point<date::utc_clock> boot_time;
     std::set<MessageType> allowed_message_types;
     std::mutex allowed_message_types_mutex;
     std::unique_ptr<ChargePointStates> status;
-    ChargePointConfigurationInterface& configuration;
     std::shared_ptr<ocpp::v16::DatabaseHandler> database_handler;
     std::unique_ptr<Everest::SteadyTimer> boot_notification_timer;
     std::unique_ptr<Everest::SteadyTimer> heartbeat_timer;
@@ -402,21 +404,22 @@ public:
     /// \brief The main entrypoint for libOCPP for OCPP 1.6
     /// \param cfg a reference to the configuration provider
     /// \param database_path this points to the location of the sqlite database that libocpp uses to keep track of
-    /// connector availability, the authorization cache and auth list, charging profiles and transaction data
-    /// \param sql_init_path this points to the init.sql file which contains the database schema used by libocpp for its
-    /// sqlite database
-    /// \param message_log_path this points to the directory in which libocpp can put OCPP communication logfiles for
-    /// debugging purposes. This behavior can be controlled by the "LogMessages" (set to true by default) and
-    /// "LogMessagesFormat" (set to ["log", "html", "session_logging"] by default, "console" and "console_detailed" are
-    /// also available) configuration keys in the "Internal" section of the config file. Please note that this is
-    /// intended for debugging purposes only as it logs all communication, including authentication messages.
-    /// \param evse_security Pointer to evse_security that manages security related operations
-    explicit ChargePointImpl(ChargePointConfigurationInterface& cfg, const fs::path& database_path,
-                             const fs::path& sql_init_path, const fs::path& message_log_path,
-                             const std::shared_ptr<EvseSecurity> evse_security,
-                             const std::optional<SecurityConfiguration> security_configuration);
+    /// \param share_path This path contains the following files and directories and is installed by the libocpp install
+    /// target
+    /// connector availability, the authorization cache and auth list, charging profiles and transaction
+    /// data \param sql_init_path this points to the init.sql file which contains the database schema used by libocpp
+    /// for its sqlite database \param message_log_path this points to the directory in which libocpp can put OCPP
+    /// communication logfiles for debugging purposes. This behavior can be controlled by the "LogMessages" (set to true
+    /// by default) and "LogMessagesFormat" (set to ["log", "html", "session_logging"] by default, "console" and
+    /// "console_detailed" are also available) configuration keys in the "Internal" section of the config file. Please
+    /// note that this is intended for debugging purposes only as it logs all communication, including authentication
+    /// messages. \param evse_security Pointer to evse_security that manages security related operations
+    explicit ChargePointImpl(ChargePointConfigurationInterface& cfg, const fs::path& share_path,
+                             const fs::path& database_path, const fs::path& sql_init_path,
+                             const fs::path& message_log_path, const std::shared_ptr<EvseSecurity>& evse_security,
+                             const std::optional<SecurityConfiguration>& security_configuration);
 
-    ~ChargePointImpl() override = default;
+    virtual ~ChargePointImpl() override = default;
 
     /// \brief Allow to update the ChargePoint core information which will be sent in BootNotification.req
     void update_chargepoint_information(const std::string& vendor, const std::string& model,

@@ -603,11 +603,12 @@ void OCPP::init() {
         }
     }
 
-    this->charge_point_config = std::make_unique<ocpp::v16::ChargePointConfiguration>(
-        json_config.dump(), this->ocpp_share_path, user_config_path);
-    this->charge_point = std::make_unique<ocpp::v16::ChargePoint>(
-        *this->charge_point_config, std::filesystem::path(this->config.DatabasePath), sql_init_path,
-        std::filesystem::path(this->config.MessageLogPath), std::make_shared<EvseSecurity>(*this->r_security));
+    const auto charge_point_config_json = json_config.dump();
+    charge_point_config = std::make_unique<ocpp::v16::ChargePointConfiguration>(charge_point_config_json,
+                                                                                ocpp_share_path, user_config_path);
+    std::shared_ptr<ocpp::EvseSecurity> security = std::make_shared<EvseSecurity>(*r_security);
+    charge_point = std::make_unique<ocpp::v16::ChargePoint>(*charge_point_config, ocpp_share_path, config.DatabasePath,
+                                                            sql_init_path, config.MessageLogPath, security);
 
     this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(config.MessageQueueResumeDelay));
 

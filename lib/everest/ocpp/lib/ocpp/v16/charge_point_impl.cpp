@@ -37,20 +37,12 @@ const auto DEFAULT_BOOT_NOTIFICATION_INTERVAL_S = 60; // fallback interval if Bo
 const auto DEFAULT_PRICE_NUMBER_OF_DECIMALS = 3;
 const auto DEFAULT_WAIT_FOR_SET_USER_PRICE_TIMEOUT_MS = 0;
 
-ChargePointImpl::ChargePointImpl(ChargePointConfigurationInterface& cfg, const fs::path& database_path,
-                                 const fs::path& sql_init_path, const fs::path& message_log_path,
-                                 const std::shared_ptr<EvseSecurity> evse_security,
-                                 const std::optional<SecurityConfiguration> security_configuration) :
+ChargePointImpl::ChargePointImpl(ChargePointConfigurationInterface& cfg, const fs::path& share_path,
+                                 const fs::path& database_path, const fs::path& sql_init_path,
+                                 const fs::path& message_log_path, const std::shared_ptr<EvseSecurity>& evse_security,
+                                 const std::optional<SecurityConfiguration>& security_configuration) :
     ocpp::ChargingStationBase(evse_security, security_configuration),
-    bootreason(BootReasonEnum::PowerUp),
-    initialized(false),
-    InvalidCSMSCertificate_logged(false),
     configuration(cfg),
-    connection_state(ChargePointConnectionState::Disconnected),
-    registration_status(RegistrationStatus::Pending),
-    diagnostics_status(DiagnosticsStatus::Idle),
-    firmware_status(FirmwareStatus::Idle),
-    log_status(UploadLogStatusEnumType::Idle),
     message_log_path(message_log_path.string()), // .string() for compatibility with boost::filesystem
     share_path(share_path),
     switch_security_profile_callback(nullptr) {
