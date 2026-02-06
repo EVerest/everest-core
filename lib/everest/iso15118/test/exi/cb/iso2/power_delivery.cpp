@@ -69,7 +69,7 @@ SCENARIO("Ser/Deserialize d2 power delivery messages") {
         status.rcd = true;
         status.evse_notification = dt::EvseNotification::None;
         status.notification_max_delay = 10;
-        res.ac_evse_status = status;
+        res.evse_status = status;
 
         std::vector<uint8_t> expected = {0x80, 0x98, 0x02, 0x00, 0xB6, 0xC8, 0x81, 0xCE, 0xC2,
                                          0x13, 0x4B, 0x51, 0x60, 0x00, 0x0A, 0x00, 0x80};
@@ -89,7 +89,7 @@ SCENARIO("Ser/Deserialize d2 power delivery messages") {
         status.evse_status_code = dt::DcEvseStatusCode::EVSE_Ready;
         status.evse_notification = dt::EvseNotification::None;
         status.notification_max_delay = 10;
-        res.dc_evse_status = status;
+        res.evse_status = status;
 
         std::vector<uint8_t> expected = {0x80, 0x98, 0x02, 0x00, 0xB6, 0xC8, 0x81, 0xCE, 0xC2,
                                          0x13, 0x4B, 0x51, 0x60, 0x04, 0x0A, 0x01, 0x08, 0x00};

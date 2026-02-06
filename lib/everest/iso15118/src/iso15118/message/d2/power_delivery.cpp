@@ -8,6 +8,7 @@
 #include <cbv2g/iso_2/iso2_msgDefEncoder.h>
 
 #include <iso15118/detail/helper.hpp>
+#include <variant>
 
 namespace iso15118::d2::msg {
 
@@ -16,7 +17,8 @@ template <> void convert(const struct iso2_PowerDeliveryReqType& in, PowerDelive
     out.sa_schedule_tuple_id = in.SAScheduleTupleID;
 
     if (in.ChargingProfile_isUsed) {
-        out.charging_profile = {};
+        out.charging_profile.emplace();
+        out.charging_profile->reserve(data_types::ChargingProfileMaxLength);
         for (int i = 0; i < in.ChargingProfile.ProfileEntry.arrayLen; i++) {
             const auto& entry = in.ChargingProfile.ProfileEntry.array[i];
             auto entry_out = data_types::ProfileEntry{};
@@ -49,8 +51,15 @@ template <> void convert(const PowerDeliveryResponse& in, struct iso2_PowerDeliv
     init_iso2_PowerDeliveryResType(&out);
 
     cb_convert_enum(in.response_code, out.ResponseCode);
-    CPP2CB_CONVERT_IF_USED(in.ac_evse_status, out.AC_EVSEStatus);
-    CPP2CB_CONVERT_IF_USED(in.dc_evse_status, out.DC_EVSEStatus);
+    if (std::holds_alternative<data_types::AcEvseStatus>(in.evse_status)) {
+        const auto& status = std::get<data_types::AcEvseStatus>(in.evse_status);
+        convert(status, out.AC_EVSEStatus);
+        CB_SET_USED(out.AC_EVSEStatus);
+    } else if (std::holds_alternative<data_types::DcEvseStatus>(in.evse_status)) {
+        const auto& status = std::get<data_types::DcEvseStatus>(in.evse_status);
+        convert(status, out.DC_EVSEStatus);
+        CB_SET_USED(out.DC_EVSEStatus);
+    }
 }
 
 template <> int serialize_to_exi(const PowerDeliveryResponse& in, exi_bitstream_t& out) {

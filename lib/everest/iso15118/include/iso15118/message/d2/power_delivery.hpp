@@ -5,7 +5,7 @@
 #include <iso15118/message/d2/msg_data_types.hpp>
 
 #include <optional>
-#include <string>
+#include <variant>
 #include <vector>
 
 namespace iso15118::d2::msg {
@@ -23,6 +23,7 @@ struct ProfileEntry {
     std::optional<uint8_t> max_number_of_phases_in_use{std::nullopt};
 };
 using ChargingProfile = std::vector<ProfileEntry>; // [1 - 24]
+constexpr auto ChargingProfileMaxLength = 24;
 
 struct DcEvPowerDeliveryParameter {
     DcEvStatus dc_ev_status;
@@ -42,8 +43,7 @@ struct PowerDeliveryRequest {
 struct PowerDeliveryResponse {
     Header header;
     data_types::ResponseCode response_code;
-    std::optional<data_types::AcEvseStatus> ac_evse_status;
-    std::optional<data_types::DcEvseStatus> dc_evse_status;
+    std::variant<data_types::AcEvseStatus, data_types::DcEvseStatus> evse_status;
 };
 
 } // namespace iso15118::d2::msg
