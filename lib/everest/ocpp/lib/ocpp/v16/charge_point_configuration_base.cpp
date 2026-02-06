@@ -336,6 +336,7 @@ bool ChargePointConfigurationBase::isConnectorPhaseRotationValid(std::int32_t nu
                     }
                 }
             } catch (const std::invalid_argument&) {
+            } catch (const std::out_of_range&) {
             }
         }
 
