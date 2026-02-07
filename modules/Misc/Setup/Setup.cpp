@@ -88,8 +88,6 @@ static void to_json(json& j, const WifiConfigureClass::WifiScan& k) {
 
 //------------------------------------------------------------------------------
 void Setup::init() {
-    invoke_init(*p_main);
-
     // Set default locale "C" when no locale is set at all
     try {
         std::locale loc("");
@@ -99,8 +97,6 @@ void Setup::init() {
 }
 
 void Setup::ready() {
-    invoke_ready(*p_main);
-
     this->discover_network_thread = std::thread([this]() {
         while (true) {
             if ((this->config.setup_wifi) && (wifi_scan_enabled)) {

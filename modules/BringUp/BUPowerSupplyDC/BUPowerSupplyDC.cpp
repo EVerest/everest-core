@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "BUPowerSupplyDC.hpp"
 #include "ftxui/component/component.hpp"
@@ -30,12 +30,9 @@ static std::vector<std::vector<std::string>> to_string(types::power_supply_DC::C
 }
 
 void BUPowerSupplyDC::init() {
-    invoke_init(*p_main);
 }
 
 void BUPowerSupplyDC::ready() {
-    invoke_ready(*p_main);
-
     auto screen = ScreenInteractive::Fullscreen();
 
     r_psu->subscribe_voltage_current([this, &screen](const types::power_supply_DC::VoltageCurrent v) {

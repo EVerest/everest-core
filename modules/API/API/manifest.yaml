@@ -171,10 +171,6 @@ config:
     description: Round plug_temperature_C in telemetry to the nearest step. Ignored if value is 0
     type: number
     default: 0
-provides:
-  main:
-    description: EVerest API
-    interface: empty
 requires:
   charger_information:
     interface: charger_information

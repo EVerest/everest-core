@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "BUEvseBoardSupport.hpp"
 #include "ftxui/component/component.hpp"
@@ -28,12 +28,9 @@ static std::vector<std::vector<std::string>> to_string(types::evse_board_support
 }
 
 void BUEvseBoardSupport::init() {
-    invoke_init(*p_main);
 }
 
 void BUEvseBoardSupport::ready() {
-    invoke_ready(*p_main);
-
     auto screen = ScreenInteractive::Fullscreen();
 
     r_bsp->subscribe_event([this, &screen](const types::board_support_common::BspEvent e) {

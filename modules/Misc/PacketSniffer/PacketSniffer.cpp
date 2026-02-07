@@ -13,8 +13,6 @@ const int WAIT_FOR_MS = 10;
 const int BUFFERSIZE = 8192;
 
 void PacketSniffer::init() {
-    invoke_init(*p_main);
-
     p_handle = pcap_open_live(config.device.c_str(), BUFFERSIZE, PROMISC_MODE, PACKET_BUFFER_TIMEOUT_MS, errbuf);
     std::string errb{errbuf};
     if (p_handle == nullptr) {
@@ -53,7 +51,6 @@ void PacketSniffer::init() {
 }
 
 void PacketSniffer::ready() {
-    invoke_ready(*p_main);
 }
 
 void PacketSniffer::capture(const std::string& logpath, const std::string& session_id) {

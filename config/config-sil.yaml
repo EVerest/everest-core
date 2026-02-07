@@ -194,10 +194,7 @@ active_modules:
         - id: evse_manager
           interface: evse_manager
           type: requirement
-      right:
-        - id: main
-          interface: empty
-          type: provide
+      right: []
       top: []
   auth:
     position:
@@ -365,10 +362,7 @@ active_modules:
           interface: ISO15118_ev
           type: provide
       left: []
-      right:
-        - id: main
-          interface: empty
-          type: provide
+      right: []
       top: []
   iso15118_charger:
     position:
@@ -404,10 +398,7 @@ active_modules:
         - id: store
           interface: kvs
           type: requirement
-      right:
-        - id: main
-          interface: empty
-          type: provide
+      right: []
       top: []
   slac:
     position:

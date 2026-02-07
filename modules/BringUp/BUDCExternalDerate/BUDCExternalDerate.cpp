@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #include "BUDCExternalDerate.hpp"
 #include "ftxui/component/component.hpp"
 #include "ftxui/component/component_base.hpp"
@@ -16,12 +16,9 @@ namespace module {
 using namespace ftxui;
 
 void BUDCExternalDerate::init() {
-    invoke_init(*p_main);
 }
 
 void BUDCExternalDerate::ready() {
-    invoke_ready(*p_main);
-
     auto screen = ScreenInteractive::Fullscreen();
 
     auto msg_component = Container::Vertical({Renderer([] { return text(""); })});

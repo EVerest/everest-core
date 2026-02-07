@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #ifndef BUDISPLAY_MESSAGE_HPP
 #define BUDISPLAY_MESSAGE_HPP
 
@@ -9,9 +9,6 @@
 //
 
 #include "ld-ev.hpp"
-
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/display_message/Interface.hpp>
@@ -27,11 +24,9 @@ struct Conf {};
 class BUDisplayMessage : public Everest::ModuleBase {
 public:
     BUDisplayMessage() = delete;
-    BUDisplayMessage(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
-                     std::unique_ptr<display_messageIntf> r_dm, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_dm(std::move(r_dm)), config(config){};
+    BUDisplayMessage(const ModuleInfo& info, std::unique_ptr<display_messageIntf> r_dm, Conf& config) :
+        ModuleBase(info), r_dm(std::move(r_dm)), config(config){};
 
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<display_messageIntf> r_dm;
     const Conf& config;
 

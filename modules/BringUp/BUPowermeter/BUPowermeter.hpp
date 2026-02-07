@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #ifndef BUPOWERMETER_HPP
 #define BUPOWERMETER_HPP
 
@@ -9,9 +9,6 @@
 //
 
 #include "ld-ev.hpp"
-
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/powermeter/Interface.hpp>
@@ -32,11 +29,9 @@ struct Conf {
 class BUPowermeter : public Everest::ModuleBase {
 public:
     BUPowermeter() = delete;
-    BUPowermeter(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
-                 std::unique_ptr<powermeterIntf> r_powermeter, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_powermeter(std::move(r_powermeter)), config(config){};
+    BUPowermeter(const ModuleInfo& info, std::unique_ptr<powermeterIntf> r_powermeter, Conf& config) :
+        ModuleBase(info), r_powermeter(std::move(r_powermeter)), config(config){};
 
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<powermeterIntf> r_powermeter;
     const Conf& config;
 

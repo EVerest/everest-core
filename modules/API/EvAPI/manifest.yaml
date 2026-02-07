@@ -2,10 +2,6 @@ description: >-
   The EVerest EV API module, exposing some internal functionality on an external
   MQTT connection.
 config: {}
-provides:
-  main:
-    description: EVerest EV API
-    interface: empty
 requires:
   ev_manager:
     interface: ev_manager

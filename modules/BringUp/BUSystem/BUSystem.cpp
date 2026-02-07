@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "BUSystem.hpp"
 #include "ftxui/component/component.hpp"
@@ -11,11 +11,9 @@ using namespace ftxui;
 namespace module {
 
 void BUSystem::init() {
-    invoke_init(*p_main);
 }
 
 void BUSystem::ready() {
-    invoke_ready(*p_main);
     auto screen = ScreenInteractive::Fullscreen();
 
     r_system->subscribe_firmware_update_status([this, &screen](const types::system::FirmwareUpdateStatus fus) {

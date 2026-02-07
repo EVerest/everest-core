@@ -813,9 +813,6 @@ x-module-layout:
         - id: error_history
           interface: error_history
           type: requirement
-        - id: main
-          interface: empty
-          type: provide
       bottom: []
       left:
         - id: evse_energy_sink

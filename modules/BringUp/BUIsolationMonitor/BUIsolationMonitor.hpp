@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
-
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #ifndef BUISOLATION_MONITOR_HPP
 #define BUISOLATION_MONITOR_HPP
 
@@ -10,9 +9,6 @@
 //
 
 #include "ld-ev.hpp"
-
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/isolation_monitor/Interface.hpp>
@@ -28,11 +24,9 @@ struct Conf {};
 class BUIsolationMonitor : public Everest::ModuleBase {
 public:
     BUIsolationMonitor() = delete;
-    BUIsolationMonitor(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
-                       std::unique_ptr<isolation_monitorIntf> r_imd, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_imd(std::move(r_imd)), config(config){};
+    BUIsolationMonitor(const ModuleInfo& info, std::unique_ptr<isolation_monitorIntf> r_imd, Conf& config) :
+        ModuleBase(info), r_imd(std::move(r_imd)), config(config){};
 
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<isolation_monitorIntf> r_imd;
     const Conf& config;
 

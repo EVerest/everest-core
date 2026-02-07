@@ -1,8 +1,4 @@
 description: Interactive bring up helper for Isolation Monitor interface
-provides:
-  main:
-    interface: empty
-    description: This module does not provide anything
 requires:
   imd:
     interface: isolation_monitor

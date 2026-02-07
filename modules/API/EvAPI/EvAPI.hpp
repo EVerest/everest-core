@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef EVAPI_HPP
-#define EVAPI_HPP
+#ifndef EV_API_HPP
+#define EV_API_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -9,9 +9,6 @@
 //
 
 #include "ld-ev.hpp"
-
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/ev_manager/Interface.hpp>
@@ -57,16 +54,11 @@ struct Conf {};
 class EvAPI : public Everest::ModuleBase {
 public:
     EvAPI() = delete;
-    EvAPI(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
+    EvAPI(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
           std::vector<std::unique_ptr<ev_managerIntf>> r_ev_manager, Conf& config) :
-        ModuleBase(info),
-        mqtt(mqtt_provider),
-        p_main(std::move(p_main)),
-        r_ev_manager(std::move(r_ev_manager)),
-        config(config){};
+        ModuleBase(info), mqtt(mqtt_provider), r_ev_manager(std::move(r_ev_manager)), config(config){};
 
     Everest::MqttProvider& mqtt;
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::vector<std::unique_ptr<ev_managerIntf>> r_ev_manager;
     const Conf& config;
 
@@ -101,4 +93,4 @@ private:
 
 } // namespace module
 
-#endif // EVAPI_HPP
+#endif // EV_API_HPP

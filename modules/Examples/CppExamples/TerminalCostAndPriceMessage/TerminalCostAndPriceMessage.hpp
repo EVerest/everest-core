@@ -10,9 +10,6 @@
 
 #include "ld-ev.hpp"
 
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
-
 // headers for required interface implementations
 #include <generated/interfaces/session_cost/Interface.hpp>
 
@@ -27,11 +24,10 @@ struct Conf {};
 class TerminalCostAndPriceMessage : public Everest::ModuleBase {
 public:
     TerminalCostAndPriceMessage() = delete;
-    TerminalCostAndPriceMessage(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
-                                std::unique_ptr<session_costIntf> r_session_cost, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_session_cost(std::move(r_session_cost)), config(config){};
+    TerminalCostAndPriceMessage(const ModuleInfo& info, std::unique_ptr<session_costIntf> r_session_cost,
+                                Conf& config) :
+        ModuleBase(info), r_session_cost(std::move(r_session_cost)), config(config){};
 
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<session_costIntf> r_session_cost;
     const Conf& config;
 

@@ -10,9 +10,6 @@
 
 #include "ld-ev.hpp"
 
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
-
 // headers for required interface implementations
 #include <generated/interfaces/charger_information/Interface.hpp>
 #include <generated/interfaces/error_history/Interface.hpp>
@@ -159,7 +156,7 @@ struct Conf {
 class API : public Everest::ModuleBase {
 public:
     API() = delete;
-    API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
+    API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
         std::vector<std::unique_ptr<charger_informationIntf>> r_charger_information,
         std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::vector<std::unique_ptr<ocppIntf>> r_ocpp,
         std::vector<std::unique_ptr<uk_random_delayIntf>> r_random_delay,
@@ -167,7 +164,6 @@ public:
         std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
-        p_main(std::move(p_main)),
         r_charger_information(std::move(r_charger_information)),
         r_evse_manager(std::move(r_evse_manager)),
         r_ocpp(std::move(r_ocpp)),
@@ -177,7 +173,6 @@ public:
         config(config){};
 
     Everest::MqttProvider& mqtt;
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::vector<std::unique_ptr<charger_informationIntf>> r_charger_information;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<ocppIntf>> r_ocpp;

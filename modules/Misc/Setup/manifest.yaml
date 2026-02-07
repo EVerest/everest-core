@@ -34,10 +34,6 @@ config:
     description: IPv4 address of the AP
     type: string
     default: "192.168.1.1/24"
-provides:
-  main:
-    description: EVerest Setup
-    interface: empty
 requires:
   store:
     interface: kvs

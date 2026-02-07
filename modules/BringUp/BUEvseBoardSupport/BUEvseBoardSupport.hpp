@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #ifndef BUEVSE_BOARD_SUPPORT_HPP
 #define BUEVSE_BOARD_SUPPORT_HPP
 
@@ -9,9 +9,6 @@
 //
 
 #include "ld-ev.hpp"
-
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/ac_rcd/Interface.hpp>
@@ -29,18 +26,15 @@ struct Conf {};
 class BUEvseBoardSupport : public Everest::ModuleBase {
 public:
     BUEvseBoardSupport() = delete;
-    BUEvseBoardSupport(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
-                       std::unique_ptr<evse_board_supportIntf> r_bsp,
+    BUEvseBoardSupport(const ModuleInfo& info, std::unique_ptr<evse_board_supportIntf> r_bsp,
                        std::vector<std::unique_ptr<connector_lockIntf>> r_lock_motor,
                        std::vector<std::unique_ptr<ac_rcdIntf>> r_ac_rcd, Conf& config) :
         ModuleBase(info),
-        p_main(std::move(p_main)),
         r_bsp(std::move(r_bsp)),
         r_lock_motor(std::move(r_lock_motor)),
         r_ac_rcd(std::move(r_ac_rcd)),
         config(config){};
 
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<evse_board_supportIntf> r_bsp;
     const std::vector<std::unique_ptr<connector_lockIntf>> r_lock_motor;
     const std::vector<std::unique_ptr<ac_rcdIntf>> r_ac_rcd;

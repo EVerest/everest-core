@@ -7,6 +7,7 @@ ev_setup_cpp_module()
 
 {{ insert_block(info.blocks.add_general) }}
 
+{% if provides %}
 target_sources(${MODULE_NAME}
     PRIVATE
         {% for impl in provides %}
@@ -14,4 +15,5 @@ target_sources(${MODULE_NAME}
         {% endfor %}
 )
 
+{% endif %}
 {{ insert_block(info.blocks.add_other) }}

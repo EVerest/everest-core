@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include <memory>
 #include <sstream>
@@ -280,12 +280,9 @@ Component MessageInputMaskComponent(const std::string& heading, MessageContentPa
 namespace module {
 
 void BUDisplayMessage::init() {
-    invoke_init(*p_main);
 }
 
 void BUDisplayMessage::ready() {
-    invoke_ready(*p_main);
-
     // Prepare Enum-String to be used for Dropdown GUI elements
     for (auto msgPriority : MessagePriorityEnumValues) {
         MessagePriorityEnumStrings.push_back(message_priority_enum_to_string(msgPriority));

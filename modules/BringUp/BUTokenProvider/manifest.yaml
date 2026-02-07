@@ -1,8 +1,4 @@
 description: Interactive bring up helper for Token Provider interface
-provides:
-  main:
-    interface: empty
-    description: This module does not provide anything
 requires:
   token_provider:
     interface: auth_token_provider
