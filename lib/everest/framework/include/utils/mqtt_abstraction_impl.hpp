@@ -18,11 +18,11 @@
 #include <everest/io/event/timer_fd.hpp>
 #include <everest/io/mqtt/mqtt_client.hpp>
 
+#include <utils/config/mqtt_settings.hpp>
 #include <utils/message_handler.hpp>
 #include <utils/message_queue.hpp>
-#include <utils/types.hpp>
-
 #include <utils/thread.hpp>
+#include <utils/types.hpp>
 
 namespace Everest {
 /// \brief Contains a payload and the topic it was received on with additional QOS
@@ -38,10 +38,7 @@ struct MessageWithQOS : Message {
 ///
 class MQTTAbstractionImpl {
 public:
-    MQTTAbstractionImpl(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
-                        const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix);
-    MQTTAbstractionImpl(const std::string& mqtt_server_socket_path, const std::string& mqtt_everest_prefix,
-                        const std::string& mqtt_external_prefix);
+    MQTTAbstractionImpl(const MQTTSettings& mqtt_settings);
 
     ~MQTTAbstractionImpl();
 
@@ -161,7 +158,6 @@ private:
 
     std::unique_ptr<everest::lib::io::mqtt::mqtt_client> mqtt_client;
 
-    void init();
     void on_mqtt_message(const Message& message);
     void on_mqtt_connect();
     static void on_mqtt_disconnect();
