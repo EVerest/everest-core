@@ -38,29 +38,31 @@ MessageWithQOS::MessageWithQOS(const std::string& topic, const std::string& payl
     Message{topic, payload}, qos(qos), retain(retain) {
 }
 
-MQTTAbstractionImpl::MQTTAbstractionImpl(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
-                                         const std::string& mqtt_everest_prefix,
-                                         const std::string& mqtt_external_prefix) :
+MQTTAbstractionImpl::MQTTAbstractionImpl(const MQTTSettings& mqtt_settings) :
     message_queue(([this](const Message& message) { this->on_mqtt_message(message); })),
-    mqtt_server_address(mqtt_server_address),
-    mqtt_server_port(mqtt_server_port),
-    mqtt_everest_prefix(mqtt_everest_prefix),
-    mqtt_external_prefix(mqtt_external_prefix) {
+    mqtt_everest_prefix(mqtt_settings.everest_prefix),
+    mqtt_external_prefix(mqtt_settings.external_prefix),
+    running(true) {
     BOOST_LOG_FUNCTION();
 
-    init();
-}
+    EVLOG_debug << "Initializing MQTT abstraction layer...";
 
-MQTTAbstractionImpl::MQTTAbstractionImpl(const std::string& mqtt_server_socket_path,
-                                         const std::string& mqtt_everest_prefix,
-                                         const std::string& mqtt_external_prefix) :
-    message_queue(([this](const Message& message) { this->on_mqtt_message(message); })),
-    mqtt_server_socket_path(mqtt_server_socket_path),
-    mqtt_everest_prefix(mqtt_everest_prefix),
-    mqtt_external_prefix(mqtt_external_prefix) {
-    BOOST_LOG_FUNCTION();
+    if (mqtt_settings.uses_socket()) {
+        this->mqtt_server_socket_path = mqtt_settings.broker_socket_path;
+    } else {
+        this->mqtt_server_address = mqtt_settings.broker_host;
+        this->mqtt_server_port = std::to_string(mqtt_settings.broker_port);
+    }
 
-    init();
+    this->mqtt_is_connected = false;
+
+    this->mqtt_client = std::make_unique<everest::lib::io::mqtt::mqtt_client>(mqtt_reconnect_timeout_ms);
+    this->mqtt_client->set_error_handler([&](int error, std::string const& msg) {
+        if (error) {
+            EVLOG_error << fmt::format("MQTT error: {}", msg);
+        }
+    });
+    this->mqtt_client->set_callback_connect([this](auto& mqtt, auto, auto, auto const&) { this->on_mqtt_connect(); });
 }
 
 MQTTAbstractionImpl::~MQTTAbstractionImpl() {
@@ -69,23 +71,6 @@ MQTTAbstractionImpl::~MQTTAbstractionImpl() {
         disconnect();
     }
     // this->mqtt_mainloop_thread.join();
-}
-
-void MQTTAbstractionImpl::init() {
-    {
-        EVLOG_debug << "Initializing MQTT abstraction layer...";
-
-        this->mqtt_is_connected = false;
-
-        this->mqtt_client = std::make_unique<everest::lib::io::mqtt::mqtt_client>(mqtt_reconnect_timeout_ms);
-        this->mqtt_client->set_error_handler([&](int error, std::string const& msg) {
-            if (error) {
-                EVLOG_error << fmt::format("MQTT error: {}", msg);
-            }
-        });
-        this->mqtt_client->set_callback_connect(
-            [this](auto& mqtt, auto, auto, auto const&) { this->on_mqtt_connect(); });
-    }
 }
 
 bool MQTTAbstractionImpl::connect() {
