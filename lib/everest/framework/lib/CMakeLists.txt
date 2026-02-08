@@ -82,7 +82,7 @@ target_link_libraries(framework
         ${EVEREST_FRAMEWORK_BOOST_SYSTEM_LINK_LIBRARY}
         Boost::thread
         Boost::program_options
-        mqttc
+        everest::io
         ryml::ryml
 )
 
