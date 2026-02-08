@@ -372,8 +372,10 @@ ErrorCode mosquitto_cpp::connect(const std::string_view& unix_domain_socket, std
 
 ErrorCode mosquitto_cpp::connect_impl(const std::string_view& bind_address, const std::string_view& host,
                                       std::uint16_t port, std::uint16_t keepalive_seconds) {
-    const char* bind_to = bind_address.empty() ? nullptr : bind_address.data();
-    return convertEC(mosquitto_connect_bind_async(client.get(), host.data(), port, keepalive_seconds, bind_to));
+    if (bind_address.empty()) {
+        return convertEC(mosquitto_connect_async(client.get(), host.data(), port, keepalive_seconds));
+    }
+    return convertEC(mosquitto_connect_bind_async(client.get(), host.data(), port, keepalive_seconds, bind_address.data()));
 }
 
 ErrorCode mosquitto_cpp::reconnect() {
