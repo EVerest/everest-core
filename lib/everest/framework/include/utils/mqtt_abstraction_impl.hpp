@@ -152,6 +152,7 @@ private:
 
     std::string mqtt_server_socket_path;
     std::string mqtt_server_address;
+    std::string mqtt_bind_address;
     std::string mqtt_server_port;
     std::string mqtt_everest_prefix;
     std::string mqtt_external_prefix;

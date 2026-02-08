@@ -215,6 +215,7 @@ void ManagerSettings::init_settings(const everest::config::Settings& settings) {
 
     std::string mqtt_broker_socket_path;
     std::string mqtt_broker_host;
+    std::string mqtt_bind_address;
     int mqtt_broker_port = 0;
     std::string mqtt_everest_prefix;
     std::string mqtt_external_prefix;
@@ -237,6 +238,12 @@ void ManagerSettings::init_settings(const everest::config::Settings& settings) {
         }
     } else {
         mqtt_broker_host = defaults::MQTT_BROKER_HOST;
+    }
+
+    if (settings.mqtt_bind_address.has_value()) {
+        mqtt_bind_address = settings.mqtt_bind_address.value();
+    } else {
+        mqtt_bind_address = defaults::MQTT_BIND_ADDRESS;
     }
 
     // overwrite mqtt broker host with environment variable
@@ -297,7 +304,7 @@ void ManagerSettings::init_settings(const everest::config::Settings& settings) {
         populate_mqtt_settings(this->mqtt_settings, mqtt_broker_socket_path, mqtt_everest_prefix, mqtt_external_prefix);
     } else {
         populate_mqtt_settings(this->mqtt_settings, mqtt_broker_host, mqtt_broker_port, mqtt_everest_prefix,
-                               mqtt_external_prefix);
+                               mqtt_external_prefix, mqtt_bind_address);
     }
 
     run_as_user = settings.run_as_user.value_or("");
@@ -635,6 +642,7 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
     desc.add_options()("log_config", po::value<std::string>(), "The path to a custom logging config");
     desc.add_options()("mqtt_broker_socket_path", po::value<std::string>(), "The MQTT broker socket path");
     desc.add_options()("mqtt_broker_host", po::value<std::string>(), "The MQTT broker hostname");
+    desc.add_options()("mqtt_bind_address", po::value<std::string>(), "The MQTT bind address");
     desc.add_options()("mqtt_broker_port", po::value<int>(), "The MQTT broker port");
     desc.add_options()("mqtt_everest_prefix", po::value<std::string>(), "The MQTT everest prefix");
     desc.add_options()("mqtt_external_prefix", po::value<std::string>(), "The external MQTT prefix");
@@ -686,6 +694,13 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
         }
     } else {
         mqtt_broker_host = defaults::MQTT_BROKER_HOST;
+    }
+
+    std::string mqtt_bind_address;
+    if (vm.count("mqtt_bind_address") != 0) {
+        mqtt_bind_address = vm["mqtt_bind_address"].as<std::string>();
+    } else {
+        mqtt_bind_address = defaults::MQTT_BIND_ADDRESS;
     }
 
     // overwrite mqtt broker host with environment variable
@@ -743,7 +758,7 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
         populate_mqtt_settings(this->mqtt_settings, mqtt_broker_socket_path, mqtt_everest_prefix, mqtt_external_prefix);
     } else {
         populate_mqtt_settings(this->mqtt_settings, mqtt_broker_host, mqtt_broker_port, mqtt_everest_prefix,
-                               mqtt_external_prefix);
+                               mqtt_external_prefix, mqtt_bind_address);
     }
 
     if (vm.count("log_config") != 0) {

@@ -55,7 +55,7 @@ private:
 
 const Module& create_module(rust::Str module_id, rust::Str prefix, rust::Str mqtt_broker_socket_path,
                             rust::Str mqtt_broker_host, const unsigned int& mqtt_broker_port,
-                            rust::Str mqtt_everest_prefix, rust::Str mqtt_external_prefix);
+                            rust::Str mqtt_everest_prefix, rust::Str mqtt_external_prefix, rust::Str mqtt_bind_address);
 
 int init_logging(rust::Str module_id, rust::Str prefix, rust::Str logging_config_file);
 void log2cxx(int level, int line, rust::Str file, rust::Str message);

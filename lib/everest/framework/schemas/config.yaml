@@ -53,6 +53,8 @@ properties:
         type: string
       mqtt_broker_host:
         type: string
+      mqtt_bind_address:
+        type: string
       mqtt_broker_port:
         type: integer
       mqtt_everest_prefix:

@@ -109,6 +109,7 @@ void setup_environment(const ModuleStartInfo& module_info, const RuntimeSettings
     } else {
         setenv(EV_MQTT_BROKER_HOST, mqtt_settings.broker_host.c_str(), 0);
         setenv(EV_MQTT_BROKER_PORT, std::to_string(mqtt_settings.broker_port).c_str(), 0);
+        setenv(EV_MQTT_BIND_ADDRESS, mqtt_settings.bind_address.c_str(), 0);
     }
 
     if (rs.validate_schema) {
@@ -150,7 +151,8 @@ void exec_cpp_module(system::SubProcess& proc_handle, const ModuleStartInfo& mod
         arguments.insert(arguments.end(), {"--mqtt_broker_socket_path", mqtt_settings.broker_socket_path});
     } else {
         arguments.insert(arguments.end(), {"--mqtt_broker_host", mqtt_settings.broker_host, "--mqtt_broker_port",
-                                           std::to_string(mqtt_settings.broker_port)});
+                                           std::to_string(mqtt_settings.broker_port), "--mqtt_bind_address",
+                                           mqtt_settings.bind_address});
     }
 
     exec_module(module_info.path.string(), arguments, proc_handle);

@@ -88,6 +88,9 @@ Settings parse_settings(const json& settings_json) {
     if (auto it = settings_json.find("mqtt_broker_host"); it != settings_json.end()) {
         settings.mqtt_broker_host = it->get<std::string>();
     }
+    if (auto it = settings_json.find("mqtt_bind_address"); it != settings_json.end()) {
+        settings.mqtt_bind_address = it->get<std::string>();
+    }
     if (auto it = settings_json.find("mqtt_broker_port"); it != settings_json.end()) {
         settings.mqtt_broker_port = it->get<int>();
     }
