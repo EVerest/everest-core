@@ -79,7 +79,8 @@ std::unique_ptr<Module> mod;
 
 const Module& create_module(rust::Str module_id, rust::Str prefix, rust::Str mqtt_broker_socket_path,
                             rust::Str mqtt_broker_host, const unsigned int& mqtt_broker_port,
-                            rust::Str mqtt_everest_prefix, rust::Str mqtt_external_prefix) {
+                            rust::Str mqtt_everest_prefix, rust::Str mqtt_external_prefix,
+                            rust::Str mqtt_bind_address) {
     std::call_once(mod_flag, [&]() {
         auto socket_path = std::string(mqtt_broker_socket_path);
         Everest::MQTTSettings mqtt_settings;
@@ -88,7 +89,8 @@ const Module& create_module(rust::Str module_id, rust::Str prefix, rust::Str mqt
                                             std::string(mqtt_external_prefix));
         } else {
             Everest::populate_mqtt_settings(mqtt_settings, std::string(mqtt_broker_host), mqtt_broker_port,
-                                            std::string(mqtt_everest_prefix), std::string(mqtt_external_prefix));
+                                            std::string(mqtt_everest_prefix), std::string(mqtt_external_prefix),
+                                            std::string(mqtt_bind_address));
         }
         mod = std::make_unique<Module>(std::string(module_id), std::string(prefix), mqtt_settings);
     });
