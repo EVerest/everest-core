@@ -10,7 +10,7 @@ necessary for charging.
 
 Write a bring-up config for your power meter and start it the same way
 as described in :ref:`htg_bring_up`. There are a few examples you can copy
-and modify, e.g. ``onfig-bringup-DZG.yaml`` or ``config-bringup-LEM.yaml``.
+and modify, e.g. ``config-bringup-DZG.yaml`` or ``config-bringup-LEM.yaml``.
 
 .. code-block:: bash
 
