@@ -23,6 +23,7 @@ EEBUS::~EEBUS() {
             this->eebus_grpc_api_thread.join();
         }
     }
+    running_flag = false;
 }
 
 void EEBUS::init() {
@@ -42,10 +43,10 @@ void EEBUS::init() {
 
     if (this->config.manage_eebus_grpc_api_binary) {
         this->eebus_grpc_api_thread_active.store(true);
-        this->eebus_grpc_api_thread = std::thread(
-            &EEBUS::start_eebus_grpc_api, this, config_validator->get_eebus_grpc_api_binary_path(),
-            config_validator->get_grpc_port(), config_validator->get_certificate_path(),
-            config_validator->get_private_key_path(), config_validator->get_restart_delay_s());
+        this->eebus_grpc_api_thread =
+            std::thread(&EEBUS::start_eebus_grpc_api, this, config_validator->get_eebus_grpc_api_binary_path(),
+                        config_validator->get_grpc_port(), config_validator->get_certificate_path(),
+                        config_validator->get_private_key_path(), config_validator->get_restart_delay_s());
     }
 
     this->connection_handler = std::make_unique<EebusConnectionHandler>(config_validator);
@@ -101,11 +102,6 @@ void EEBUS::ready() {
 
     // Start the event handler in its own thread
     event_handler_thread = std::thread([this]() { event_handler.run(running_flag); });
-
-    // Main application loop
-    while (running_flag) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
 }
 
 } // namespace module
