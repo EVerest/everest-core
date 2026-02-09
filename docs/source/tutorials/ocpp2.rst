@@ -14,7 +14,7 @@ OCPP2.0.1 and OCPP2.1 in EVerest
 =================================
 
 EVerest provides an implementation of OCPP 2.0.1 and 2.1 based on
-`libocpp` which is hosted as part of the `everest-core repository<https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp>`_. Since OCPP 2.0.1 and 2.1
+`libocpp` which is hosted as part of the `everest-core repository <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp>`_. Since OCPP 2.0.1 and 2.1
 is mostly backwards compatible, the implementation of OCPP 2.1 is based on the
 2.0.1 implementation. Every functionality that is provided as part of OCPP 2.0.1
 is also available in OCPP 2.1.
