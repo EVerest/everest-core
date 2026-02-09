@@ -2,6 +2,7 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #ifndef OCPP_V16_CHARGE_POINT_IMPL_HPP
 #define OCPP_V16_CHARGE_POINT_IMPL_HPP
+#include "ocpp/v16/ocpp_enums.hpp"
 #include <atomic>
 #include <chrono>
 #include <date/date.h>
@@ -92,15 +93,15 @@ private:
     bool initialized{false};
     bool InvalidCSMSCertificate_logged{false};
     ChargePointConnectionState connection_state{ChargePointConnectionState::Disconnected};
-    DiagnosticsStatus diagnostics_status{DiagnosticsStatus::Idle};
-    UploadLogStatusEnumType log_status{UploadLogStatusEnumType::Idle};
     std::atomic<RegistrationStatus> registration_status{RegistrationStatus::Pending};
+    DiagnosticsStatus diagnostics_status{DiagnosticsStatus::Idle};
+    FirmwareStatus firmware_status{FirmwareStatus::Idle};
+    UploadLogStatusEnumType log_status{UploadLogStatusEnumType::Idle};
 
     std::string message_log_path;
     fs::path share_path;
 
     bool boot_notification_callerror;
-    FirmwareStatus firmware_status;
     bool firmware_update_is_pending = false;
 
     std::unique_ptr<Websocket> websocket;
