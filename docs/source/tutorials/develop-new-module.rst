@@ -371,7 +371,7 @@ Here, we added two instructions to cmake:
 - Specifying the ``--install-prefix`` allows you to specify where the finished
   binaries will be placed, e.g. into the ``dist/`` folder in the modules repository.
   EVerest can be installed system wide (e.g. into ``users/local/bin``), but this
-  usually requires ``sud` permissions.
+  usually requires ``sudo`` permissions.
 
 
 Then, build and install the project::
