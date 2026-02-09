@@ -67,7 +67,7 @@ It has the following subcommands
 
 To see a list of all subcommands and options, simply call:
 
-.. code-block::bash
+.. code-block:: bash
 
     ev-cli --help
 
