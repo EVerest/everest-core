@@ -20,6 +20,7 @@ struct FeedbackResults {
     iso15118::d20::EVInformation ev_information;
     uint16_t id;
     dt::VasSelectedServiceList selected_vas;
+    dt::ResponseCode response_code;
 };
 
 SCENARIO("Feedback Tests") {
@@ -61,6 +62,7 @@ SCENARIO("Feedback Tests") {
     callbacks.selected_vas_services = [&feedback_results](dt::VasSelectedServiceList selected_vas_) {
         feedback_results.selected_vas = selected_vas_;
     };
+    callbacks.response_code = [&feedback_results](dt::ResponseCode code) { feedback_results.response_code = code; };
 
     const auto feedback = Feedback(callbacks);
 
@@ -70,6 +72,27 @@ SCENARIO("Feedback Tests") {
 
         THEN("signal should be like expected") {
             REQUIRE(feedback_results.signal == expected);
+        }
+    }
+
+    GIVEN("Test feedback response_code publishing") {
+        WHEN("Feedback publishes response_code OK") {
+            feedback.response_code(dt::ResponseCode::OK);
+            THEN("FeedbackResults should contain OK") {
+                REQUIRE(feedback_results.response_code == dt::ResponseCode::OK);
+            }
+        }
+        WHEN("Feedback publishes response_code FAILED") {
+            feedback.response_code(dt::ResponseCode::FAILED);
+            THEN("FeedbackResults should contain FAILED") {
+                REQUIRE(feedback_results.response_code == dt::ResponseCode::FAILED);
+            }
+        }
+        WHEN("Feedback publishes response_code FAILED_SequenceError") {
+            feedback.response_code(dt::ResponseCode::FAILED_SequenceError);
+            THEN("FeedbackResults should contain FAILED_SequenceError") {
+                REQUIRE(feedback_results.response_code == dt::ResponseCode::FAILED_SequenceError);
+            }
         }
     }
 
