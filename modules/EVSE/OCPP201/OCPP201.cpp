@@ -922,8 +922,13 @@ void OCPP201::ready() {
         [this](const std::vector<ocpp::v2::EnergyTransferModeEnum>& allowed_energy_transfer_modes,
                const ocpp::CiString<36>& transaction_id) -> bool {
         const int evse_id = transaction_handler->get_evse_id(transaction_id);
-        if (evse_id != -1 and this->r_evse_manager[evse_id] != nullptr) {
-            return this->r_evse_manager[evse_id]->call_update_allowed_energy_transfer_modes(
+        if (evse_id == -1 || evse_id > this->r_evse_manager.size()) {
+            return false;
+        }
+        auto& evse = this->r_evse_manager.at(evse_id - 1); // evse_id starts at 1 if valid
+
+        if (evse != nullptr) {
+            return evse->call_update_allowed_energy_transfer_modes(
                        conversions::to_everest_allowed_energy_transfer_modes(allowed_energy_transfer_modes)) ==
                    types::evse_manager::UpdateAllowedEnergyTransferModesResult::Accepted;
         }
