@@ -81,6 +81,7 @@ target_sources(iso15118
         message/d2/service_detail.cpp
         message/d2/service_discovery.cpp
         message/d2/session_setup.cpp
+        message/d2/session_stop.cpp
 
         tbd_controller.cpp    
 )

@@ -21,4 +21,5 @@ create_exi_test_target(payment_service_selection)
 create_exi_test_target(power_delivery)
 create_exi_test_target(session_setup)
 create_exi_test_target(authorization)
+create_exi_test_target(session_stop)
 
