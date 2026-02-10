@@ -698,16 +698,17 @@ void Charger::run_state_machine() {
             }
 
             if (not power_available()) {
-                const bool hlc_session_active =
-                    shared_context.hlc_charging_active or hlc_use_5percent_current_session;
+                const bool hlc_session_active = shared_context.hlc_charging_active or hlc_use_5percent_current_session;
                 if (hlc_session_active) {
                     if (config_context.hlc_charge_loop_without_energy_timeout_s > 0) {
                         if (not internal_context.hlc_charge_loop_no_energy_timeout_running) {
                             internal_context.hlc_charge_loop_no_energy_timeout_running = true;
                             internal_context.iso_charge_loop_no_energy_timeout_started =
                                 std::chrono::steady_clock::now();
-                            session_log.evse(false, fmt::format("No energy available, starting ISO charge loop timeout of {} seconds",
-                                                                config_context.hlc_charge_loop_without_energy_timeout_s));
+                            session_log.evse(
+                                false,
+                                fmt::format("No energy available, starting ISO charge loop timeout of {} seconds",
+                                            config_context.hlc_charge_loop_without_energy_timeout_s));
                         } else {
                             const auto no_energy_duration_ms =
                                 std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -716,15 +717,15 @@ void Charger::run_state_machine() {
                                     .count();
                             if (no_energy_duration_ms >=
                                 config_context.hlc_charge_loop_without_energy_timeout_s * 1000) {
-                                session_log.evse(false,
-                                                 "No energy available, ISO charge loop timeout reached");
+                                session_log.evse(false, "No energy available, ISO charge loop timeout reached");
                                 internal_context.hlc_charge_loop_no_energy_timeout_running = false;
                                 set_state(EvseState::StoppingCharging);
                                 break;
                             }
                         }
                     } else {
-                        session_log.evse(false, "No energy available, but no timeout configured, stopping charging immediately");
+                        session_log.evse(
+                            false, "No energy available, but no timeout configured, stopping charging immediately");
                         set_state(EvseState::StoppingCharging);
                         break;
                     }
@@ -773,6 +774,7 @@ void Charger::run_state_machine() {
 
             if (not shared_context.flag_transaction_active or not shared_context.flag_authorized or
                 not shared_context.flag_ev_plugged_in) {
+                EVLOG_warning << "going to stop from pause 1";
                 set_state(EvseState::StoppingCharging);
                 break;
             }
@@ -803,8 +805,11 @@ void Charger::run_state_machine() {
                 // be shut down before SessionStop.req)
 
                 if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Terminate) {
-                    // EV wants to terminate session
-                    shared_context.current_state = EvseState::StoppingCharging;
+                    // EV wants to terminate session. We still stay in PausedEV since it could restart a session as long as it is not unplugged.
+                    if (shared_context.pwm_running) {
+                        pwm_off();
+                    }
+
                 } else if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Pause) {
                     // EV wants an actual pause
                     if (shared_context.pwm_running) {
@@ -886,12 +891,15 @@ void Charger::run_state_machine() {
 
             /*
             Stopping Charging:
-            - stops an ongoing charging session actively from EVSE side if it is still ongoing (hard stop)
-            - switch to this state to stop charging
-            - DC: When EV stops charging, remain in Charging state until WeldingCheck etc is really done, otherwise PWM
-            will switch off too early
-            - after charging is stopped, it switches to PausedEVSE or Finished depending on whether it may restart or
-            not (only a short transitional state)
+            - stops an ongoing charging session actively from EVSE side if it is still ongoing
+            - switch to this state to stop charging gracefully
+            - DC/AC ISO: Sends a stop request via ISO first.
+            - BC: Disables PWM
+            - After that trigger to stop the charging, it waits for the EV to go to state B (it tracks if the relays
+            open up).
+            - If they don't after a timeout, it performs a hard stop (open relays, stop DC power supplies)
+            - after charging is stopped, it switches to PausedEVSE/PausedEV or Finished depending on whether it may
+            restart or not (only a short transitional state)
             */
         case EvseState::StoppingCharging:
             if (initialize_state) {
@@ -901,16 +909,24 @@ void Charger::run_state_machine() {
                 signal_simple_event(types::evse_manager::SessionEventEnum::StoppingCharging);
 
                 if (shared_context.hlc_charging_active) {
+                    // Request stop via ISO protocol, EV is expected to shut down session
                     signal_hlc_stop_charging();
-                    if (config_context.charge_mode == ChargeMode::DC) {
-                        // DC supply off - actually this is after relais switched off
-                        // this is a backup switch off, normally it should be switched off earlier by ISO protocol.
-                        signal_dc_supply_off();
-                    }
-                    // Car is maybe not unplugged yet, so for HLC(AC/DC) wait in this state. We will go to Finished
-                    // once car is unplugged.
+                } else {
+                    pwm_off();
                 }
+            }
+
+            // Now the EV is informed and we need to wait until the relays open or a timeout occurs.
+            if (time_in_current_state > STOPPING_CHARGING_TIMEOUT_MS) {
+                EVLOG_warning << "StoppingCharging: EV did not stop within timeout, forcing hard stop.";
+                // Perform hard stop
+                signal_dc_supply_off();
                 bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
+            }
+
+            // Relays still closed? Wait here.
+            if (not shared_context.contactor_open) {
+                break;
             }
 
             // Those are fatal, so we can not recover without replugging.
@@ -920,12 +936,16 @@ void Charger::run_state_machine() {
                 break;
             }
 
-            if (not power_available() or shared_context.flag_paused_by_evse or stop_charging_on_fatal_error_internal()) {
+            // Charging is stopped now, move on to paused state
+            if (not power_available() or shared_context.flag_paused_by_evse or
+                stop_charging_on_fatal_error_internal()) {
                 // Paused was initiated by EVSE, continue to PausedEVSE
                 set_state(EvseState::ChargingPausedEVSE);
                 break;
+            } else {
+                // If the reason was not the EVSE, go to paused by EV
+                set_state(EvseState::ChargingPausedEV);
             }
-
             break;
 
         // Final state that may only wait for unplug, but does not allow session restart.
@@ -1092,11 +1112,6 @@ void Charger::process_cp_events_independent(CPEvent cp_event) {
         break;
     case CPEvent::PowerOff:
         shared_context.contactor_open = true;
-        // stop transaction if active and not authorized anymore (e.g. due to Remote Stop or Local Stop)
-        if (shared_context.flag_transaction_active and !shared_context.authorized_pnc and
-            !shared_context.flag_authorized) {
-            stop_transaction();
-        }
         break;
     case CPEvent::PowerOn:
         shared_context.contactor_open = false;
@@ -1247,22 +1262,12 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
             } else if (request.reason == types::evse_manager::StopTransactionReason::PowerLoss) {
                 signal_hlc_error(types::iso15118::EvseError::Error_UtilityInterruptEvent);
             }
-
-            signal_hlc_stop_charging();
-        } else {
-            pwm_off();
         }
 
         shared_context.flag_authorized = false;
         shared_context.authorized_pnc = false;
         shared_context.last_stop_transaction_reason = request.reason;
         shared_context.stop_transaction_id_token = request.id_tag;
-
-        // Stop transaction now only if contactor is already open. Transaction is stopped on contactor open event
-        // otherwise.
-        if (shared_context.contactor_open) {
-            stop_transaction();
-        }
         return true;
     }
     return false;

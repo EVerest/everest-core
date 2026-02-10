@@ -442,6 +442,7 @@ private:
     static constexpr int STAY_IN_X1_AFTER_TSTEP_EF_MS = 750;
     static constexpr int WAIT_FOR_ENERGY_IN_AUTHLOOP_TIMEOUT_MS = 5000;
     static constexpr int AC_X1_FALLBACK_TO_NOMINAL_TIMEOUT_MS = 10000; // TODO: is this reasonable?
+    static constexpr int STOPPING_CHARGING_TIMEOUT_MS = 20000;
 
     types::evse_manager::EnableDisableSource active_enable_disable_source{
         types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Unassigned, 10000};
