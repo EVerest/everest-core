@@ -35,8 +35,8 @@ active_modules:
     module: EnergyManager
   connector_1:
     config_module:
-      ac_enforce_hlc: false
-      ac_hlc_enabled: false
+      ac_enforce_hlc: true
+      ac_hlc_enabled: true
       ac_hlc_use_5percent: true
       ac_nominal_voltage: 230
       charge_mode: AC
@@ -128,9 +128,3 @@ active_modules:
   cb_bsp:
     connections: {}
     module: evse_board_support_API
-  evse_api:
-    connections:
-      evse_manager:
-        - implementation_id: evse
-          module_id: connector_1
-    module: evse_manager_consumer_API
