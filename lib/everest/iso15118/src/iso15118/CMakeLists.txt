@@ -77,6 +77,7 @@ target_sources(iso15118
         message/d2/variant.cpp
         message/d2/msg_data_types.cpp
         message/d2/payment_service_selection.cpp
+        message/d2/power_delivery.cpp
         message/d2/service_detail.cpp
         message/d2/service_discovery.cpp
         message/d2/session_setup.cpp
