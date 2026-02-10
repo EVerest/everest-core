@@ -260,7 +260,7 @@ void MessageHandler::register_handler(const std::string& topic, std::shared_ptr<
     }
     case HandlerType::SubscribeError: {
         std::lock_guard<std::mutex> lg(handler_mutex);
-        error_handlers[topic] = handler;
+        error_handlers[topic].push_back(handler);
         break;
     }
     case HandlerType::ExternalMQTT: {
@@ -305,23 +305,13 @@ void MessageHandler::handle_cmd_message(const std::string& topic, const json& da
 }
 
 void MessageHandler::handle_external_mqtt_message(const std::string& topic, const json& data) {
-    execute_handlers_from_vector(external_var_handlers, topic,
-                                 [&](const auto& handler) { (*handler->handler)(topic, data); });
+    execute_handlers_from_vector_with_wildcards(external_var_handlers, topic,
+                                                [&](const auto& handler) { (*handler->handler)(topic, data); });
 }
 
 void MessageHandler::handle_error_message(const std::string& topic, const json& data) {
-    std::vector<std::pair<std::string, std::shared_ptr<TypedHandler>>> matching_handlers;
-    {
-        std::lock_guard<std::mutex> lock(handler_mutex);
-        for (const auto& [_topic, error_handler] : error_handlers) {
-            if (check_topic_matches(topic, _topic)) {
-                matching_handlers.emplace_back(_topic, error_handler);
-            }
-        }
-    }
-    for (const auto& [_topic, handler] : matching_handlers) {
-        (*handler->handler)(topic, data);
-    }
+    execute_handlers_from_vector_with_wildcards(error_handlers, topic,
+                                                [&](const auto& handler) { (*handler->handler)(topic, data); });
 }
 
 void MessageHandler::handle_get_config_message(const std::string& topic, const json& data) {
@@ -376,6 +366,23 @@ void MessageHandler::execute_handlers_from_vector(HandlerMap& handlers, const st
         const auto it = handlers.find(topic);
         if (it != handlers.end()) {
             handlers_copy = it->second;
+        }
+    }
+    for (const auto& handler : handlers_copy) {
+        execute_fn(handler);
+    }
+}
+
+template <typename HandlerMap, typename ExecuteFn>
+void MessageHandler::execute_handlers_from_vector_with_wildcards(HandlerMap& handlers, const std::string& topic,
+                                                                 ExecuteFn execute_fn) {
+    std::vector<std::shared_ptr<TypedHandler>> handlers_copy;
+    {
+        std::lock_guard<std::mutex> lock(handler_mutex);
+        for (const auto& [wildcard_topic, handlers_vec] : handlers) {
+            if (check_topic_matches(topic, wildcard_topic)) {
+                handlers_copy.insert(handlers_copy.end(), handlers_vec.begin(), handlers_vec.end());
+            }
         }
     }
     for (const auto& handler : handlers_copy) {
