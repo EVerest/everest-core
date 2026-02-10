@@ -373,7 +373,7 @@ After modifying the configuration, restart the everest service.
 Next, connect via SSH into your Yak board. The credentials are:
 
 * User: root
-* Password: everest
+* Password: belaybox
 
 Check the currently booted slot:
 
@@ -467,7 +467,7 @@ Then log into the BelayBox and stop the systemd service:
 
 .. code-block:: bash
 
-  systemctl stop EVerest
+  systemctl stop everest
 
 Then you can run your self-compiled version like this:
 
@@ -479,11 +479,11 @@ How to flash the Yeti board
 ===========================
 
 Connect via SSH into the Yak board and run these two commands (the first one
-is very important - do not update while EVerest/EVerest is running!):
+is very important - do not update while everest is running!):
 
 .. code-block:: bash
 
-  systemctl stop EVerest
+  systemctl stop everest
   yeti_fwupdate /dev/serial0 /usr/share/everest/modules/YetiDriver/firmware/yetiR1_2.1_firmware.bin
 
 **Important**
@@ -527,7 +527,7 @@ If you want to test OCPP with a local backend,
 Configuration on the BelayBox
 -----------------------------
 
-1. Connect via SSH to the BelayBox (credentials are "root/everest").
+1. Connect via SSH to the BelayBox (credentials are "root/belaybox").
 
 2. Open the file /etc/everest/ocpp201-pnc-config.json in a text or code editor
   and check the CentralSystemURI. Set your own local IP address of the machine
@@ -713,7 +713,7 @@ The new ssh login credentials for the Yocto image are:
 .. code-block:: bash
 
   user: root
-  pw: everest
+  pw: belaybox
 
 The default config file being used by the everest.service is the symlink
 in
