@@ -85,11 +85,6 @@ config:
       Special mode that switches between AC and DC charging to get SoC percentage with AC charging
     type: boolean
     default: false
-  dc_isolation_voltage_V:
-    description: Override DC voltage used to test isolation in CableCheck.
-      Default is 0, which means the voltage will be determined according to IEC 61851-23 (2023) CC.4.1.2
-    type: integer
-    default: 0
   internal_over_voltage_duration_ms:
     description: >-
       Time in milliseconds the internal software over voltage monitor waits before raising MREC5 once the measured
@@ -102,26 +97,48 @@ config:
       Special mode: send HLC auth ok only after t_step_XX is finished (true) or directly when available (false)
     type: boolean
     default: false
-  hack_sleep_in_cable_check:
-    description: "Hack: Sleep for n seconds at the end of cable check."
-    type: integer
-    default: 0
-  hack_sleep_in_cable_check_volkswagen:
-    description: "Hack: Additional sleep for Volkswagen cars for n seconds at the end of cable check"
+  dc_isolation_voltage_V:
+    description: Override DC voltage used to test isolation in CableCheck.
+      Default is 0, which means the voltage will be determined according to IEC 61851-23 (2023) CC.4.1.2
     type: integer
     default: 0
   cable_check_wait_number_of_imd_measurements:
     description: >-
       Amount of isolation measurement samples to collect before the value can be trusted. This does not average,
       it will evaluate the last measurement. Some IMDs (e.g. from Bender) need to measure for 10s to really get a trustable result.
-      In this case, at 1 Hz sample rate, specify 10 samples here.
+      In this case, at 1 Hz sample rate, specify 10 samples here. If the self test includes the isolation resistance checking
+      you may also set this to 0.
     type: integer
     default: 1
   cable_check_enable_imd_self_test:
     description: >-
-      Enable self testing of IMD in cable check. This is required for IEC 61851-23 (2023) compliance.
+      Enable self testing of IMD in cable check with the voltage calculated from ev_max_voltage and with relays closed.
+      This is required e.g. for Bender IMDs which also perform an isolation measurement during the self test.
+      A self test is required for IEC 61851-23 (2023) compliance.
     type: boolean
     default: true
+  cable_check_enable_imd_self_test_relays_open:
+    description: >-
+      Enable self testing of IMD at the beginning of cable check where the relays may still be open.
+      The voltage is set by the cable_check_relays_open_voltage_V config option and may differ from the 
+      voltage that is later used to perform the isolation resistance sample.
+      cable_check_wait_number_of_imd_measurements needs to be >=1 in this case as no isolation resistance checking
+      can be performed at this stage.
+      A self test is required for IEC 61851-23 (2023) compliance.
+    type: boolean
+    default: false
+  cable_check_relays_open_voltage_V:
+    description: >-
+      Voltage to set for the self test using cable_check_enable_imd_self_test_relays_open option.
+    type: integer
+    default: 48
+  cable_check_relays_closed_timeout_s:
+    description: >-
+      Timeout in seconds to wait for the relays to close at the beginning of cablecheck.
+      Normally they should be closed right away, but when cable_check_enable_imd_self_test_relays_open option,
+      the relays may close may be delayed by the self test.
+    type: integer
+    default: 5
   cable_check_wait_below_60V_before_finish:
     description: >-
       Switch off power supply and wait until output voltage drops below 60V before cable check is finished.
