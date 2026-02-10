@@ -170,3 +170,9 @@ active_modules:
       cfg_heartbeat_interval_ms: 1000
       cfg_communication_check_to_s: 0
     module: external_energy_limits_consumer_API
+  evse_api:
+    connections:
+      evse_manager:
+        - implementation_id: evse
+          module_id: connector_1
+    module: evse_manager_consumer_API

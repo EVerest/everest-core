@@ -1,6 +1,6 @@
 charge_bridge:
   name: cb_sat_ac
-  ip: ANY_EVSE
+  ip: 10.10.10.81
   fw_file: ./firmware/charge-bridge-fw_complete.cbfw
   fw_update_on_start: true
   mdns_name: ""

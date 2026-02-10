@@ -119,6 +119,7 @@ struct Conf {
     std::string bpt_generator_mode;
     std::string bpt_grid_code_island_method;
     int hlc_charge_loop_without_energy_timeout_s;
+    int dc_ramp_ampere_per_second;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -336,8 +337,10 @@ private:
     static constexpr std::chrono::seconds MIN_TIME_BETWEEN_FIRST_AND_LAST_FAILURE{2};
     static constexpr int REQUIRED_CONSECUTIVE_FAILURES{2};
 
-    double latest_target_voltage;
-    double latest_target_current;
+    double latest_target_voltage{0.};
+    double latest_target_current{0.};
+    double latest_target_current_low_pass{0.};
+    std::chrono::steady_clock::time_point latest_target_current_low_pass_last_update{};
 
     types::authorization::ProvidedIdToken autocharge_token;
 

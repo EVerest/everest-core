@@ -404,6 +404,11 @@ config:
       when energy is available again.
     type: integer
     default: 5
+  dc_ramp_ampere_per_second:
+    description: >-
+      Maximum ampere per second limit for up/down ramping of current in charging loop.
+    type: integer
+    default: 5
 provides:
   evse:
     interface: evse_manager

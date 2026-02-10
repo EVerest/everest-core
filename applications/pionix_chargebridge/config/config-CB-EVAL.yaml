@@ -1,6 +1,6 @@
 charge_bridge:
   name: cb_eval
-  ip: ANY_EVSE
+  ip: 10.10.10.194
   #ip: chargebridge-44b7d0c9bcc0.local^
   #ip: chargebridge-44b7d0c99629.local
   fw_file: ./firmware/charge-bridge-fw_complete.cbfw
