@@ -277,8 +277,7 @@ struct v2g_context {
         struct iso2_SAScheduleListType evse_sa_schedule_list;
         bool evse_sa_schedule_list_is_used;
 
-        iso2_paymentOptionType payment_option_list[iso2_paymentOptionType_2_ARRAY_SIZE];
-        uint8_t payment_option_list_len;
+        std::vector<iso2_paymentOptionType> payment_option_list;
         bool central_contract_validation_allowed;
 
         bool cert_install_status;

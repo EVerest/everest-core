@@ -615,18 +615,19 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     res->ChargeService = conn->ctx->evse_v2g_data.charge_service;
 
     // Checking of the payment options
-    if ((!conn->is_tls_connection) &&
-        ((conn->ctx->evse_v2g_data.payment_option_list[0] == iso2_paymentOptionType_Contract) ||
-         (conn->ctx->evse_v2g_data.payment_option_list[1] == iso2_paymentOptionType_Contract))) {
-        conn->ctx->evse_v2g_data.payment_option_list[0] = iso2_paymentOptionType_ExternalPayment;
-        conn->ctx->evse_v2g_data.payment_option_list_len = 1;
+    const auto pnc_enabled =
+        std::find(conn->ctx->evse_v2g_data.payment_option_list.begin(),
+                  conn->ctx->evse_v2g_data.payment_option_list.end(),
+                  iso2_paymentOptionType_Contract) != conn->ctx->evse_v2g_data.payment_option_list.end();
+    if (not conn->is_tls_connection and pnc_enabled) {
+        conn->ctx->evse_v2g_data.payment_option_list = {iso2_paymentOptionType_ExternalPayment};
         dlog(DLOG_LEVEL_WARNING,
              "PnC is not allowed without TLS-communication. Correcting value to '1' (ExternalPayment)");
     }
 
-    memcpy(res->PaymentOptionList.PaymentOption.array, conn->ctx->evse_v2g_data.payment_option_list,
-           conn->ctx->evse_v2g_data.payment_option_list_len * sizeof(iso2_paymentOptionType));
-    res->PaymentOptionList.PaymentOption.arrayLen = conn->ctx->evse_v2g_data.payment_option_list_len;
+    memcpy(res->PaymentOptionList.PaymentOption.array, conn->ctx->evse_v2g_data.payment_option_list.data(),
+           conn->ctx->evse_v2g_data.payment_option_list.size() * sizeof(iso2_paymentOptionType));
+    res->PaymentOptionList.PaymentOption.arrayLen = conn->ctx->evse_v2g_data.payment_option_list.size();
 
     // ensure a "clean" service list
     res->ServiceList.Service.arrayLen = 0;
@@ -812,8 +813,8 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
      * this also covers the case that the peer sends any invalid/unknown payment option
      * in the message; if we are not happy -> bail out
      */
-    for (idx = 0; idx < conn->ctx->evse_v2g_data.payment_option_list_len; idx++) {
-        if (conn->ctx->evse_v2g_data.payment_option_list[idx] == req->SelectedPaymentOption) {
+    for (idx = 0; idx < conn->ctx->evse_v2g_data.payment_option_list.size(); idx++) {
+        if (conn->ctx->evse_v2g_data.payment_option_list.at(idx) == req->SelectedPaymentOption) {
             list_element_found = true;
             conn->ctx->p_charger->publish_selected_payment_option(
                 static_cast<types::iso15118::PaymentOption>(req->SelectedPaymentOption));
