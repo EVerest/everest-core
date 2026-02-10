@@ -393,7 +393,7 @@ void EvseManager::ready() {
 
             const auto no_energy_pause_mode = config.zero_power_allow_ev_to_ignore_pause
                                                   ? types::iso15118::NoEnergyPauseMode::AllowEvToIgnorePause
-                                                  : types::iso15118::NoEnergyPauseMode::PauseAfterPrecharge;
+                                                  : types::iso15118::NoEnergyPauseMode::PauseBeforeCableCheck;
             r_hlc[0]->call_no_energy_pause_charging(no_energy_pause_mode);
         });
 
