@@ -2017,10 +2017,8 @@ void EvseManager::cable_check() {
                 fail_cable_check(
                     "CableCheck: Could not set DC power supply voltage and current for early IMD self test.");
                 return;
-            } else {
-                EVLOG_info << "CableCheck early IMD self test: Using " << config.cable_check_relays_open_voltage_V
-                           << " V";
             }
+            EVLOG_info << "CableCheck early IMD self test: Using " << config.cable_check_relays_open_voltage_V << " V";
 
             powersupply_DC_on();
 
