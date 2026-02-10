@@ -124,14 +124,19 @@ public:
     void setVerifyCsmsAllowWildcards(bool verify_csms_allow_wildcards) override;
     KeyValue getVerifyCsmsAllowWildcardsKeyValue() override;
     bool getUseTPM() override;
+    KeyValue getUseTPMKeyValue() override;
     bool getUseTPMSeccLeafCertificate() override;
+    KeyValue getUseTPMSeccLeafCertificateKeyValue() override;
+
     std::string getSupportedMeasurands() override;
     KeyValue getSupportedMeasurandsKeyValue() override;
     int getMaxMessageSize() override;
     KeyValue getMaxMessageSizeKeyValue() override;
 
     bool getEnableTLSKeylog() override;
+    KeyValue getEnableTLSKeylogKeyValue() override;
     std::string getTLSKeylogFile() override;
+    KeyValue getTLSKeylogFileKeyValue() override;
 
     bool getStopTransactionIfUnlockNotSupported() override;
     void setStopTransactionIfUnlockNotSupported(bool stop_transaction_if_unlock_not_supported) override;

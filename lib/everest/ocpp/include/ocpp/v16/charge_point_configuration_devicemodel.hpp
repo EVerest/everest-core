@@ -192,6 +192,7 @@ public:
     KeyValue getChargePointIdKeyValue() override;
     KeyValue getChargePointModelKeyValue() override;
     KeyValue getChargePointVendorKeyValue() override;
+    KeyValue getEnableTLSKeylogKeyValue() override;
     KeyValue getLogMessagesFormatKeyValue() override;
     KeyValue getLogMessagesKeyValue() override;
     KeyValue getLogMessagesRawKeyValue() override;
@@ -210,7 +211,10 @@ public:
     KeyValue getSupportedCiphers12KeyValue() override;
     KeyValue getSupportedCiphers13KeyValue() override;
     KeyValue getSupportedMeasurandsKeyValue() override;
+    KeyValue getTLSKeylogFileKeyValue() override;
     KeyValue getUseSslDefaultVerifyPathsKeyValue() override;
+    KeyValue getUseTPMKeyValue() override;
+    KeyValue getUseTPMSeccLeafCertificateKeyValue() override;
     KeyValue getVerifyCsmsAllowWildcardsKeyValue() override;
     KeyValue getVerifyCsmsCommonNameKeyValue() override;
     KeyValue getWaitForStopTransactionsOnResetTimeoutKeyValue() override;

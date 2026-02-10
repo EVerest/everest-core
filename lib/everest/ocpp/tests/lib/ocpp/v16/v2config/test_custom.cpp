@@ -81,6 +81,14 @@ const std::map<std::string, std::string> expected_key_value = {
     {"ContractValidationOffline", "true"},
     {"ISO15118CertificateManagementEnabled", "true"},
     {"ISO15118PnCEnabled", "true"},
+    {"UseTPM", "false"},
+    {"UseTPMSeccLeafCertificate", "false"},
+    {"LogRotationMaximumFileCount", "0"},
+    {"LogRotationMaximumFileSize", "0"},
+    {"TLSKeylogFile", "/tmp/ocpp_tls_keylog.txt"},
+    {"LogRotation", "false"},
+    {"LogRotationDateSuffix", "false"},
+    {"EnableTLSKeylog", "false"},
 };
 
 TEST_P(Configuration, CustomKey) {
@@ -120,14 +128,15 @@ TEST_P(Configuration, Get) {
     EXPECT_EQ(kv.value().value, "900");
     EXPECT_FALSE(kv.value().readonly);
 
-    // hidden key
-
     // check key exists and has a value
     EXPECT_EQ(get()->getTLSKeylogFile(), "/tmp/ocpp_tls_keylog.txt");
 
-    // check it is not available via this call
+    // check it is available via this call (read-only)
     kv = get()->get("TLSKeylogFile");
-    ASSERT_FALSE(kv);
+    ASSERT_TRUE(kv);
+    EXPECT_EQ(kv.value().key, "TLSKeylogFile");
+    EXPECT_EQ(kv.value().value, "/tmp/ocpp_tls_keylog.txt");
+    EXPECT_TRUE(kv.value().readonly);
 
     // custom key (none defined)
 }
@@ -177,10 +186,13 @@ TEST_P(Configuration, Set) {
     EXPECT_EQ(kv.value().value, "1201");
     EXPECT_FALSE(kv.value().readonly);
 
-    // hidden key - these are read-only
-
-    // check key exists and has a value
+    // check if read-only key exists and has a value
     EXPECT_EQ(get()->getTLSKeylogFile(), "/tmp/ocpp_tls_keylog.txt");
+    kv = get()->get("TLSKeylogFile");
+    ASSERT_TRUE(kv);
+    EXPECT_EQ(kv.value().key, "TLSKeylogFile");
+    EXPECT_EQ(kv.value().value, "/tmp/ocpp_tls_keylog.txt");
+    EXPECT_TRUE(kv.value().readonly);
     EXPECT_EQ(get()->set("TLSKeylogFile", "1201"), std::nullopt);
     EXPECT_EQ(get()->getTLSKeylogFile(), "/tmp/ocpp_tls_keylog.txt");
 
@@ -296,13 +308,6 @@ TEST_F(Configuration, SetV2) {
     EXPECT_EQ(kv.value().key, "ClockAlignedDataInterval");
     EXPECT_EQ(kv.value().value, "1201");
     EXPECT_FALSE(kv.value().readonly);
-
-    // hidden key - these are read-only
-
-    // check key exists and has a value
-    EXPECT_EQ(v2_config->getTLSKeylogFile(), "/tmp/ocpp_tls_keylog.txt");
-    EXPECT_EQ(v2_config->set("TLSKeylogFile", "1201"), std::nullopt);
-    EXPECT_EQ(v2_config->getTLSKeylogFile(), "/tmp/ocpp_tls_keylog.txt");
 
     // custom key (read only)
     kv = v2_config->get("ACustomKey");
