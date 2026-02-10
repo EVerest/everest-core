@@ -18,7 +18,7 @@ enum ChargeProgress {
 };
 
 struct ProfileEntry {
-    unsigned int start; // Seconds from NOW
+    uint32_t start; // Seconds from NOW
     PhysicalValue max_power;
     std::optional<uint8_t> max_number_of_phases_in_use{std::nullopt};
 };

@@ -17,8 +17,8 @@ template <> void convert(const struct iso2_PowerDeliveryReqType& in, PowerDelive
     out.sa_schedule_tuple_id = in.SAScheduleTupleID;
 
     if (in.ChargingProfile_isUsed) {
-        out.charging_profile.emplace();
-        out.charging_profile->reserve(data_types::ChargingProfileMaxLength);
+        auto& charging_profile = out.charging_profile.emplace();
+        charging_profile.reserve(data_types::ChargingProfileMaxLength);
         for (int i = 0; i < in.ChargingProfile.ProfileEntry.arrayLen; i++) {
             const auto& entry = in.ChargingProfile.ProfileEntry.array[i];
             auto entry_out = data_types::ProfileEntry{};
@@ -27,17 +27,16 @@ template <> void convert(const struct iso2_PowerDeliveryReqType& in, PowerDelive
             CB2CPP_ASSIGN_IF_USED(entry.ChargingProfileEntryMaxNumberOfPhasesInUse,
                                   entry_out.max_number_of_phases_in_use);
 
-            out.charging_profile->push_back(entry_out);
+            charging_profile.push_back(entry_out);
         }
     }
 
     if (in.DC_EVPowerDeliveryParameter_isUsed) {
         const auto& param = in.DC_EVPowerDeliveryParameter;
-        auto& param_out = out.dc_ev_power_delivery_parameter;
-        param_out = {};
-        convert(param.DC_EVStatus, param_out->dc_ev_status);
-        CB2CPP_ASSIGN_IF_USED(param.BulkChargingComplete, param_out->bulk_charging_complete);
-        param_out->charging_complete = param.ChargingComplete;
+        auto& param_out = out.dc_ev_power_delivery_parameter.emplace();
+        convert(param.DC_EVStatus, param_out.dc_ev_status);
+        CB2CPP_ASSIGN_IF_USED(param.BulkChargingComplete, param_out.bulk_charging_complete);
+        param_out.charging_complete = param.ChargingComplete;
     }
 }
 

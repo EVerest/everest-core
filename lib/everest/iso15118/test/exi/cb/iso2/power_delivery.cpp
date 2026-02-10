@@ -50,6 +50,7 @@ SCENARIO("Ser/Deserialize d2 power delivery messages") {
 
             REQUIRE(msg.charge_progress == dt::ChargeProgress::Start);
             REQUIRE(msg.sa_schedule_tuple_id == 1);
+            REQUIRE(msg.dc_ev_power_delivery_parameter.has_value());
             REQUIRE(msg.dc_ev_power_delivery_parameter->bulk_charging_complete.has_value());
             REQUIRE(msg.dc_ev_power_delivery_parameter->bulk_charging_complete == true);
             REQUIRE(msg.dc_ev_power_delivery_parameter->charging_complete == true);
