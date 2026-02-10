@@ -31,12 +31,16 @@ endif()
 add_compile_definitions(BUILD_TESTING_EVSE_SECURITY)
 add_compile_definitions(DEBUG_MODE_EVSE_SECURITY)
 
-add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
-
 set(LIBEVSE_SECURITY_TEST_DIR "${CMAKE_BINARY_DIR}")
 if (EVEREST_CORE_BUILD_TESTING)
     set(LIBEVSE_SECURITY_TEST_DIR "${CMAKE_BINARY_DIR}/lib/everest/evse_security")
 endif()
+
+add_test(
+    NAME ${TEST_TARGET_NAME}
+    COMMAND ${TEST_TARGET_NAME}
+    WORKING_DIRECTORY "${LIBEVSE_SECURITY_TEST_DIR}/tests"
+)
 
 file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs.sh"
