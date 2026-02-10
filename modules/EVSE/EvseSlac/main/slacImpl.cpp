@@ -3,11 +3,13 @@
 
 #include "slacImpl.hpp"
 
+#include <chrono>
 #include <future>
 
 #include <everest/slac/io.hpp>
 #include <fmt/core.h>
 #include <slac/channel.hpp>
+#include <thread>
 
 #include "fsm_controller.hpp"
 
@@ -38,6 +40,12 @@ void slacImpl::ready() {
 void slacImpl::run() {
     // wait until ready
     module_ready.get_future().get();
+
+    if (config.startup_delay_ms > 0) {
+        EVLOG_info << "Delaying SLAC startup by " << config.startup_delay_ms << "ms";
+        std::this_thread::sleep_for(std::chrono::milliseconds(config.startup_delay_ms));
+        EVLOG_info << "Continuing with SLAC initialization";
+    }
 
     // initialize slac i/o
     SlacIO slac_io;
