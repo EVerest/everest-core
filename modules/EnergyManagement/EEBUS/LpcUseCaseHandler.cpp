@@ -75,7 +75,8 @@ void LpcUseCaseHandler::handle_data_update_failsafe_duration_minimum() {
         this->failsafe_duration_timeout = std::chrono::nanoseconds(read_duration_res.duration_nanoseconds());
         EVLOG_info << "FailsafeDurationMinimum updated to " << read_duration_res.duration_nanoseconds() << "ns";
     } else {
-        EVLOG_warning << "Could not re-read FailsafeDurationMinimum after update event: " << read_status.error_message();
+        EVLOG_warning << "Could not re-read FailsafeDurationMinimum after update event: "
+                      << read_status.error_message();
     }
 }
 
