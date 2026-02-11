@@ -9,6 +9,18 @@ if (DISABLE_EDM)
     find_package(pybind11_json REQUIRED)
 endif()
 
+# support overriding where the include files are to be found.
+# Used for Yocto where the pybind11 libraries may have come from a cache and the
+# full path is no longer the same
+if (PYBIND11_INTERFACE_INCLUDE_DIRECTORIES)
+    set_target_properties(pybind11::pybind11 PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${PYBIND11_INTERFACE_INCLUDE_DIRECTORIES}
+    )
+    set_target_properties(pybind11_json PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES ${PYBIND11_INTERFACE_INCLUDE_DIRECTORIES}
+    )
+endif()
+
 pybind11_add_module(everestpy misc.cpp module.cpp everestpy.cpp)
 
 target_compile_options(everestpy PRIVATE ${COMPILER_WARNING_OPTIONS})
