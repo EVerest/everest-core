@@ -76,6 +76,12 @@ provides:
           To react to this message and restart the SLAC process, the EVSE go to the reset state here.
         type: boolean
         default: true
+      startup_delay_ms:
+        description: >-
+          Delay initialization of SLAC I/O by the given amount.
+          On some hardware platforms with multiple EvseSlac modules loaded this can be necessary to ensure that the initial query of the device information does not happen at the same time.
+        type: integer
+        default: 0
 metadata:
   base_license: https://directory.fsf.org/wiki/License:BSD-3-Clause-Clear
   license: https://opensource.org/licenses/Apache-2.0

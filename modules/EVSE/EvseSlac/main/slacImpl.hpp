@@ -35,6 +35,7 @@ struct Conf {
     int link_status_timeout_ms;
     bool debug_simulate_failed_matching;
     bool reset_instead_of_fail;
+    int startup_delay_ms;
 };
 
 class slacImpl : public slacImplBase {
