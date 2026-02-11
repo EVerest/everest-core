@@ -1560,6 +1560,12 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
 
     case iso2_chargeProgressType_Renegotiate:
         conn->ctx->session.renegotiation_required = true;
+        // For DC charging, CurrentDemand is stopped. In AC mode, charging is still possible, so we should
+        // remain in charging state and not communicate any changes externally.
+        if (conn->ctx->is_dc_charger == true) {
+            conn->ctx->p_charger->publish_current_demand_finished(nullptr);
+            conn->ctx->p_charger->publish_dc_open_contactor(nullptr);
+        }
         break;
 
     default:
