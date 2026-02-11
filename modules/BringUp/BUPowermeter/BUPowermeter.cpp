@@ -205,6 +205,7 @@ void BUPowermeter::ready() {
         types::units::Voltage vd = {};
         types::units_signed::SignedMeterValue svd = {};
         types::units::Current cd = {};
+        types::units::Frequency fd = {};
 
         optional_add(table_content, "Transaction start response: status",
                      types::powermeter::transaction_request_status_to_string(tr_start.status));
@@ -236,9 +237,6 @@ void BUPowermeter::ready() {
         optional_add(table_content, "Powermeter: imported energy in Wh (from grid): L3",
                      powermeter.energy_Wh_import.L3);
 
-        optional_add(table_content, "Powermeter: user defined meter ID", powermeter.meter_id);
-        optional_add(table_content, "Powermeter: 3 phase rotation error (ccw)", powermeter.phase_seq_error);
-
         optional_add(table_content, "Powermeter: exported energy in Wh (to grid), total",
                      std::to_string(powermeter.energy_Wh_export.value_or(ed).total));
         optional_add(table_content, "Powermeter: exported energy in Wh (to grid): L1",
@@ -248,6 +246,9 @@ void BUPowermeter::ready() {
         optional_add(table_content, "Powermeter: exported energy in Wh (to grid): L3",
                      powermeter.energy_Wh_export.value_or(ed).L3);
 
+        optional_add(table_content, "Powermeter: user defined meter ID", powermeter.meter_id);
+        optional_add(table_content, "Powermeter: 3 phase rotation error (ccw)", powermeter.phase_seq_error);
+
         optional_add(table_content, "Powermeter: voltage in V, DC", powermeter.voltage_V.value_or(vd).DC);
         optional_add(table_content, "Powermeter: voltage in V: L1", powermeter.voltage_V.value_or(vd).L1);
         optional_add(table_content, "Powermeter: voltage in V: L2", powermeter.voltage_V.value_or(vd).L2);
@@ -256,6 +257,9 @@ void BUPowermeter::ready() {
         optional_add(table_content, "Powermeter: current in A: L1", powermeter.current_A.value_or(cd).L1);
         optional_add(table_content, "Powermeter: current in A: L2", powermeter.current_A.value_or(cd).L2);
         optional_add(table_content, "Powermeter: current in A: L3", powermeter.current_A.value_or(cd).L3);
+        optional_add(table_content, "Powermeter: frequency in Hz: L1", powermeter.frequency_Hz.value_or(fd).L1);
+        optional_add(table_content, "Powermeter: frequency in Hz: L2", powermeter.frequency_Hz.value_or(fd).L2);
+        optional_add(table_content, "Powermeter: frequency in Hz: L3", powermeter.frequency_Hz.value_or(fd).L3);
         optional_add(table_content, "Public key", public_key);
 
         size_t max_width = 120;

@@ -1,0 +1,375 @@
+settings:
+  telemetry_enabled: false
+  # mqtt_broker_socket_path: /run/mosquitto/mosquitto.sock
+
+active_modules:
+  # 4x Carlo Gavazzi EM580 powermeters on the same Modbus/serial line (unit IDs 1..4)
+  cgem580_1:
+    module: CarloGavazzi_EM580
+    config_implementation:
+      main:
+        powermeter_device_id: 1
+        communication_retry_count: 1
+        communication_retry_delay_ms: 10
+        communication_error_pause_delay_s: 20   # pause 20 seconds on communication error before retry
+        initial_connection_retry_count: 1
+        initial_connection_retry_delay_ms: 100
+        timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000      # once per second
+        device_state_read_interval_ms: 10000    # once per 10 seconds
+    connections:
+      modbus:                         # required interface: serial_communication_hub
+        - module_id: comm_hub
+          implementation_id: main
+
+  cgem580_2:
+    module: CarloGavazzi_EM580
+    config_implementation:
+      main:
+        powermeter_device_id: 2
+        communication_retry_count: 1
+        communication_retry_delay_ms: 10
+        communication_error_pause_delay_s: 20
+        initial_connection_retry_count: 1
+        initial_connection_retry_delay_ms: 100
+        timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000
+        device_state_read_interval_ms: 10000
+    connections:
+      modbus:
+        - module_id: comm_hub
+          implementation_id: main
+
+  cgem580_3:
+    module: CarloGavazzi_EM580
+    config_implementation:
+      main:
+        powermeter_device_id: 3
+        communication_retry_count: 1
+        communication_retry_delay_ms: 10
+        communication_error_pause_delay_s: 20
+        initial_connection_retry_count: 1
+        initial_connection_retry_delay_ms: 100
+        timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000
+        device_state_read_interval_ms: 10000
+    connections:
+      modbus:
+        - module_id: comm_hub
+          implementation_id: main
+
+  cgem580_4:
+    module: CarloGavazzi_EM580
+    config_implementation:
+      main:
+        powermeter_device_id: 4
+        communication_retry_count: 1
+        communication_retry_delay_ms: 10
+        communication_error_pause_delay_s: 20
+        initial_connection_retry_count: 1
+        initial_connection_retry_delay_ms: 100
+        timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000
+        device_state_read_interval_ms: 10000
+    connections:
+      modbus:
+        - module_id: comm_hub
+          implementation_id: main
+
+  cgem580_5:
+    module: CarloGavazzi_EM580
+    config_implementation:
+      main:
+        powermeter_device_id: 5
+        communication_retry_count: 1
+        communication_retry_delay_ms: 10
+        communication_error_pause_delay_s: 20
+        initial_connection_retry_count: 1
+        initial_connection_retry_delay_ms: 100
+        timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000
+        device_state_read_interval_ms: 10000
+    connections:
+      modbus:
+        - module_id: comm_hub
+          implementation_id: main
+
+  cgem580_6:
+    module: CarloGavazzi_EM580
+    config_implementation:
+      main:
+        powermeter_device_id: 6
+        communication_retry_count: 1
+        communication_retry_delay_ms: 10
+        communication_error_pause_delay_s: 20
+        initial_connection_retry_count: 1
+        initial_connection_retry_delay_ms: 100
+        timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000
+        device_state_read_interval_ms: 10000
+    connections:
+      modbus:
+        - module_id: comm_hub
+          implementation_id: main
+
+  cgem580_7:
+    module: CarloGavazzi_EM580
+    config_implementation:
+      main:
+        powermeter_device_id: 7
+        communication_retry_count: 1
+        communication_retry_delay_ms: 10
+        communication_error_pause_delay_s: 20
+        initial_connection_retry_count: 1
+        initial_connection_retry_delay_ms: 100
+        timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000
+        device_state_read_interval_ms: 10000
+    connections:
+      modbus:
+        - module_id: comm_hub
+          implementation_id: main
+
+  cgem580_8:
+    module: CarloGavazzi_EM580
+    config_implementation:
+      main:
+        powermeter_device_id: 8
+        communication_retry_count: 1
+        communication_retry_delay_ms: 10
+        communication_error_pause_delay_s: 20
+        initial_connection_retry_count: 1
+        initial_connection_retry_delay_ms: 100
+        timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000
+        device_state_read_interval_ms: 10000
+    connections:
+      modbus:
+        - module_id: comm_hub
+          implementation_id: main
+
+  cgem580_9:
+    module: CarloGavazzi_EM580
+    config_implementation:
+      main:
+        powermeter_device_id: 9
+        communication_retry_count: 1
+        communication_retry_delay_ms: 10
+        communication_error_pause_delay_s: 20
+        initial_connection_retry_count: 1
+        initial_connection_retry_delay_ms: 100
+        timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000
+        device_state_read_interval_ms: 10000
+    connections:
+      modbus:
+        - module_id: comm_hub
+          implementation_id: main
+
+  cgem580_10:
+    module: CarloGavazzi_EM580
+    config_implementation:
+      main:
+        powermeter_device_id: 10
+        communication_retry_count: 1
+        communication_retry_delay_ms: 10
+        communication_error_pause_delay_s: 20
+        initial_connection_retry_count: 1
+        initial_connection_retry_delay_ms: 100
+        timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000
+        device_state_read_interval_ms: 10000
+    connections:
+      modbus:
+        - module_id: comm_hub
+          implementation_id: main
+
+  cgem580_11:
+    module: CarloGavazzi_EM580
+    config_implementation:
+      main:
+        powermeter_device_id: 11
+        communication_retry_count: 1
+        communication_retry_delay_ms: 10
+        communication_error_pause_delay_s: 20
+        initial_connection_retry_count: 1
+        initial_connection_retry_delay_ms: 100
+        timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000
+        device_state_read_interval_ms: 10000
+    connections:
+      modbus:
+        - module_id: comm_hub
+          implementation_id: main
+
+  cgem580_12:
+    module: CarloGavazzi_EM580
+    config_implementation:
+      main:
+        powermeter_device_id: 12
+        communication_retry_count: 1
+        communication_retry_delay_ms: 10
+        communication_error_pause_delay_s: 20
+        initial_connection_retry_count: 1
+        initial_connection_retry_delay_ms: 100
+        timezone_offset_minutes: 60
+        live_measurement_interval_ms: 1000
+        device_state_read_interval_ms: 10000
+    connections:
+      modbus:
+        - module_id: comm_hub
+          implementation_id: main
+
+  comm_hub:
+    module: SerialCommHub
+    config_implementation:
+      main:
+        serial_port: /dev/ttyUSB0     # adjust to your device path
+        baudrate: 115200
+        parity: 0                    # 0=None,1=Odd,2=Even (match your device)
+        within_message_timeout_ms: 5
+
+  # 4x BringUp powermeters, one per EM580 instance
+  cli_1:
+    config_module:
+      evse_id: "DE*ENBW*BER001*EVSE01"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
+      identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: cgem580_1
+          implementation_id: main
+
+  cli_2:
+    config_module:
+      evse_id: "DE*ENBW*BER001*EVSE02"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
+      identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: cgem580_2
+          implementation_id: main
+
+  cli_3:
+    config_module:
+      evse_id: "DE*ENBW*BER001*EVSE03"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
+      identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: cgem580_3
+          implementation_id: main
+
+  cli_4:
+    config_module:
+      evse_id: "DE*ENBW*BER001*EVSE04"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
+      identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: cgem580_4
+          implementation_id: main
+
+  cli_5:
+    config_module:
+      evse_id: "DE*ENBW*BER001*EVSE04"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
+      identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: cgem580_5
+          implementation_id: main
+
+  cli_6:
+    config_module:
+      evse_id: "DE*ENBW*BER001*EVSE04"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
+      identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: cgem580_6
+          implementation_id: main
+
+  cli_7:
+    config_module:
+      evse_id: "DE*ENBW*BER001*EVSE04"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
+      identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: cgem580_7
+          implementation_id: main
+
+  cli_8:
+    config_module:
+      evse_id: "DE*ENBW*BER001*EVSE04"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
+      identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: cgem580_8
+          implementation_id: main
+
+  cli_9:
+    config_module:
+      evse_id: "DE*ENBW*BER001*EVSE04"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
+      identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: cgem580_9
+          implementation_id: main
+
+  cli_10:
+    config_module:
+      evse_id: "DE*ENBW*BER001*EVSE04"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
+      identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: cgem580_10
+          implementation_id: main
+
+  cli_11:
+    config_module:
+      evse_id: "DE*ENBW*BER001*EVSE04"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
+      identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: cgem580_11
+          implementation_id: main
+
+  cli_12:
+    config_module:
+      evse_id: "DE*ENBW*BER001*EVSE04"
+      tariff_text: "This-is-just-a-long-string-to-test-the-tariff-text-functionality. The-kWh-price-is-2.30-EUR/kWh"
+      identification_data: "A1z */-+.()[]{}$%^&*_+-=[];',"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: cgem580_12
+          implementation_id: main
