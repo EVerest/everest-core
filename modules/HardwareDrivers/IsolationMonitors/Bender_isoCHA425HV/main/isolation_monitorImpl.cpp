@@ -181,14 +181,30 @@ void isolation_monitorImpl::ready() {
 
 void isolation_monitorImpl::handle_start() {
     enable_publishing = true;
+    if (config.disable_device_on_stop) {
+        if (true == send_to_imd(3026, 1)) {
+            EVLOG_error << "Can't enable the device: " << read_device_name();
+        }
+    }
 }
 
 void isolation_monitorImpl::handle_stop() {
     enable_publishing = false;
+    if (config.disable_device_on_stop) {
+        if (true == send_to_imd(3026, 0)) {
+            EVLOG_error << "Can't disable the device: " << read_device_name();
+        }
+    }
 }
 
 void isolation_monitorImpl::handle_start_self_test(double& test_voltage_V) {
     EVLOG_info << "IMD Starting self-test...";
+    // make sure that the device is on
+    if (config.disable_device_on_stop) {
+        if (true == send_to_imd(3026, 1)) {
+            EVLOG_error << "Can't enable the device: " << read_device_name();
+        }
+    }
     start_self_test();
 }
 
