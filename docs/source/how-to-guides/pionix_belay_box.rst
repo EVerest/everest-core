@@ -16,7 +16,7 @@ following the instructions in this documentation. Part of the kit is a
 Raspberry Pi CM4 compute module. PIONIX is officially part of the "Powered by
 Raspberry Pi" scheme:
 
-.. image:: img/powered-by-pi.png
+.. image:: images/powered-by-pi.png
   :width: 300
   :alt: Logo Powered by Raspberry Pi for Charging Development Kit BelayBox
   :align: center
@@ -94,7 +94,7 @@ Assembling the Yak Board
 Starting assembling the Yak Board, you should have the following parts
 available:
 
-.. image:: img/yak-assembly-1-overview-w600.png
+.. image:: images/yak-assembly-1-overview-w600.png
 
 And you will need the following tools:
 
@@ -119,11 +119,11 @@ Glue on the heatsinks as shown in the following image using the double
 sided tape that comes with the heatsinks. Plug in the small clips into
 the mounting holes of the CM4 board as shown.
 
-.. image:: img/yak-assembly-2-w500.png
+.. image:: images/yak-assembly-2-w500.png
 
 Turn around the CM4 and put on the gray spacers as shown here:
 
-.. image:: img/yak-assembly-3-w500.png
+.. image:: images/yak-assembly-3-w500.png
 
 Plug the CM4 board in both connectors and make sure the clips go all the way
 through the Yak board and hold the CM4 securely without any gaps between the
@@ -131,11 +131,11 @@ spacers and both boards. Make sure to remove the metal part (if there is one)
 out of the board-to-board connector as shown in the upper left corner in the
 following image:
 
-.. image:: img/yak-assembly-4-w600.png
+.. image:: images/yak-assembly-4-w600.png
 
 This is how it looks from the top side:
 
-.. image:: img/yak-assembly-5-w600.png
+.. image:: images/yak-assembly-5-w600.png
 
 .. _belaybox_flashing_yak_board:
 
@@ -228,7 +228,7 @@ After roughly nine minutes the flashing should have finished.
 Disconnect the eMMC device, power off and unplug the "boot" jumper from the
 Yak board.
 
-.. image:: img/yak-assembly-9.jpg
+.. image:: images/yak-assembly-9.jpg
 
 With the raspberry CM4, it can be that the overlay filesystem sometimes does
 not get mounted in the right order; so you might have to reboot twice if some
@@ -240,7 +240,7 @@ Assembling the Yeti Board
 
 Here's what you should have:
 
-.. image:: img/yeti-assembly-1-overview-w550.png
+.. image:: images/yeti-assembly-1-overview-w550.png
 
 Tools needed:
 
@@ -250,33 +250,33 @@ Tools needed:
 Clip on the touch protection cage and make sure all clips are correctly seated
 as shown here:
 
-.. image:: img/yeti-assembly-2-w500.png
+.. image:: images/yeti-assembly-2-w500.png
 
 Clip in the smaller part of the touch protection and make sure all clips are
 correctly seated as shown here:
 
-.. image:: img/yeti-assembly-3-w500.png
+.. image:: images/yeti-assembly-3-w500.png
 
 Clip in the bigger part of the touch protection and make sure all clips are
 correctly seated as shown in the following image:
 
-.. image:: img/yeti-assembly-4-w425.png
+.. image:: images/yeti-assembly-4-w425.png
 
 Your mission can be seen as accomplished if your Yeti looks like that:
 
-.. image:: img/yeti-assembly-5-w500.png
+.. image:: images/yeti-assembly-5-w500.png
 
 Preparing the cable set
 =======================
 
 That's how we start:
 
-.. image:: img/cable-set-1-overview-w500.png
+.. image:: images/cable-set-1-overview-w500.png
 
 The **10-position cable between Yeti and Yak** is mandatory to connect Yak to
 Yeti and to power the Yak board from the Yeti power supply.
 
-.. image:: img/cable-set-2-w400.png
+.. image:: images/cable-set-2-w400.png
 
 Plug in one of the crimped cables with one end into the 10-position plug. Make
 sure to plug in the crimp in the exact same orientation as shown in the
@@ -291,18 +291,18 @@ Plug in the other crimped end of the cable into the second plug. It is very
 important to plug in the crimps in the shown “1:1” fashion. Doing otherwise
 will permanently damage the Yak and/or Yeti board.
 
-.. image:: img/cable-set-3-w500.png
+.. image:: images/cable-set-3-w500.png
 
 Continue with plugging in all ten cables one after the other as there is less
 chance of getting it wrong this way.
 
 This is how the cable looks when assembly is done:
 
-.. image:: img/cable-set-4-w500.png
+.. image:: images/cable-set-4-w500.png
 
 Let's continue with the **6-position CAN + RS485 cable**.
 
-.. image:: img/cable-set-5-w550.png
+.. image:: images/cable-set-5-w550.png
 
 Plug in a crimped cable with one end into the 6-position plug.
 Make sure to plug in the crimp in the exact same orientation as shown in the
@@ -314,11 +314,11 @@ cables are isolated to prevent damage to the Yak board.
 
 This is how the assembled cable looks like:
 
-.. image:: img/cable-set-6-w500.png
+.. image:: images/cable-set-6-w500.png
 
 This is the pin description of the Yak board's 4-, 6- and 10-position sockets:
 
-.. image:: img/cable-set-7-w550.png
+.. image:: images/cable-set-7-w550.png
 
 Final Yak-Yeti-Cable-Setup
 ==========================
@@ -329,7 +329,7 @@ Tools needed:
 * ESD underlay mat
 * Preassembled Yak, Yeti kits and cable-set as shown in sections above
 
-.. image:: img/final-assembly-425.png
+.. image:: images/final-assembly-425.png
 
 Plug in the 10-pin cable into the corresponding sockets on both ends.
 Plug in the 4-pin RFID/NFC reader cable.
