@@ -68,6 +68,7 @@ target_sources(iso15118
         message/dc_welding_detection.cpp
         message/session_stop.cpp
 
+        message/d2/ac_charging_status.cpp
         message/d2/authorization.cpp
         message/d2/charge_parameter_discovery.cpp
         message/d2/dc_cable_check.cpp
