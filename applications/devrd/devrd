@@ -7,7 +7,7 @@ EVEREST_TOOL_BRANCH="main"
 # Script directory - where devrd is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # .devcontainer directory is always relative to the script location
-DEVCONTAINER_DIR="${SCRIPT_DIR}/.devcontainer"
+DEVCONTAINER_DIR="${SCRIPT_DIR}/../../.devcontainer"
 # .env file is always in the .devcontainer directory (relative to script)
 ENV_FILE="${DEVCONTAINER_DIR}/.env"
 
@@ -250,8 +250,7 @@ start_compose_profile() {
     fi
 
     # Display workspace mapping
-    local workspace_folder=$(load_workspace_from_env "$(pwd)")
-    echo "Workspace mapping: $workspace_folder → /workspace"
+    echo "Workspace mapping: $HOST_WORKSPACE_FOLDER → /workspace"
     echo ""
 
     # Display container links

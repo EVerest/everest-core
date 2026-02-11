@@ -1337,7 +1337,7 @@ def release_handler(args):
 
     metadata_yaml = {}
     metadata_file = os.environ.get('EVEREST_METADATA_FILE', None)
-    metadata_url = "https://raw.githubusercontent.com/EVerest/everest-dev-environment/main/everest-metadata.yaml"
+    metadata_url = "https://raw.githubusercontent.com/EVerest/everest-core/main/everest-metadata.yaml"
 
     if not metadata_file:
         metadata_path = build_path / "everest-metadata.yaml"
