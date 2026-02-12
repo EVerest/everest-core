@@ -6,6 +6,7 @@ add_executable(everest_util_tests
   enum/EnumFlagsTest_B.cpp
   queue/simple_queue_tests.cpp
   queue/thread_safe_queue_tests.cpp
+  vector/fixed_vector_tests.cpp
 )
 
 target_link_libraries(everest_util_tests
