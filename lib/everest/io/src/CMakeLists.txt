@@ -55,7 +55,9 @@ target_compile_options(everest_io
 include(CMakePackageConfigHelpers)
 
 set_target_properties(everest_io
-    PROPERTIES EXPORT_NAME io
+    PROPERTIES
+        EXPORT_NAME io
+        POSITION_INDEPENDENT_CODE ON
 )
 
 if(DISABLE_EDM)

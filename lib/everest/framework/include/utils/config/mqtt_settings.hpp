@@ -12,6 +12,7 @@ struct MQTTSettings {
     std::string broker_socket_path; ///< A path to a socket the MQTT broker uses in socket mode. If this is set
                                     ///< broker_host and broker_port are ignored
     std::string broker_host;        ///< The hostname of the MQTT broker
+    std::string bind_address;       ///< Bind address of the MQTT client
     int broker_port = 0;            ///< The port the MQTT broker listens on
     std::string everest_prefix;     ///< MQTT topic prefix for the "everest" topic
     std::string external_prefix;    ///< MQTT topic prefix for external topics
@@ -29,7 +30,8 @@ MQTTSettings create_mqtt_settings(const std::string& mqtt_broker_socket_path, co
 /// \brief Creates MQTTSettings for IP based connections with the provided \p mqtt_broker_host
 /// and \p mqtt_broker_port using the \p mqtt_everest_prefix and \p mqtt_external_prefix
 MQTTSettings create_mqtt_settings(const std::string& mqtt_broker_host, int mqtt_broker_port,
-                                  const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix);
+                                  const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix,
+                                  const std::string& mqtt_bind_address);
 
 /// \brief Populates the given MQTTSettings \p mqtt_settings with a Unix Domain Socket with the provided \p
 /// mqtt_broker_socket_path using the \p mqtt_everest_prefix and \p mqtt_external_prefix
@@ -39,7 +41,8 @@ void populate_mqtt_settings(MQTTSettings& mqtt_settings, const std::string& mqtt
 /// \brief  Populates the given MQTTSettings \p mqtt_settings for IP based connections with the provided \p
 /// mqtt_broker_host and \p mqtt_broker_port using the \p mqtt_everest_prefix and \p mqtt_external_prefix
 void populate_mqtt_settings(MQTTSettings& mqtt_settings, const std::string& mqtt_broker_host, int mqtt_broker_port,
-                            const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix);
+                            const std::string& mqtt_everest_prefix, const std::string& mqtt_external_prefix,
+                            const std::string& mqtt_bind_address);
 
 } // namespace Everest
 
