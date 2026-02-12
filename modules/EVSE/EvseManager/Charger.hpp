@@ -346,7 +346,8 @@ private:
         int sleep_before_enabling_pwm_hlc_mode_ms{1000};
         // type used to generate session ids
         utils::SessionIdType session_id_type{utils::SessionIdType::UUID};
-        // Timeout in seconds that defines for how long the EVSE allows the ISO charge loop (AC: ChargingStatus, DC: CurrentDemand)
+        // Timeout in seconds that defines for how long the EVSE allows the ISO charge loop (AC: ChargingStatus, DC:
+        // CurrentDemand)
         int hlc_charge_loop_without_energy_timeout_s{300};
     } config_context;
 

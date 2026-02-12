@@ -774,7 +774,6 @@ void Charger::run_state_machine() {
 
             if (not shared_context.flag_transaction_active or not shared_context.flag_authorized or
                 not shared_context.flag_ev_plugged_in) {
-                EVLOG_warning << "going to stop from pause 1";
                 set_state(EvseState::StoppingCharging);
                 break;
             }
@@ -805,11 +804,11 @@ void Charger::run_state_machine() {
                 // be shut down before SessionStop.req)
 
                 if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Terminate) {
-                    // EV wants to terminate session. We still stay in PausedEV since it could restart a session as long as it is not unplugged.
+                    // EV wants to terminate session. We still stay in PausedEV since it could restart a session as long
+                    // as it is not unplugged.
                     if (shared_context.pwm_running) {
                         pwm_off();
                     }
-
                 } else if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Pause) {
                     // EV wants an actual pause
                     if (shared_context.pwm_running) {
@@ -965,8 +964,6 @@ void Charger::run_state_machine() {
                 }
                 bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
             }
-
-            // FIXME: wait here for SLAC to become available again
 
             // If unplugged, stop session and proceed to Idle, otherwise wait here and do nothing
             if (not shared_context.flag_ev_plugged_in) {
@@ -1238,14 +1235,19 @@ bool Charger::set_max_current(float c, std::chrono::time_point<std::chrono::stea
 
 // set pausing flag, it will be picked up by the state machine.
 bool Charger::pause_charging() {
-    shared_context.flag_paused_by_evse = true;
-    // FIXME: this now always works. Does this cause problems?
-    return true;
+    if (shared_context.flag_transaction_active) {
+        shared_context.flag_paused_by_evse = true;
+        return true;
+    }
+    return false;
 }
 
 bool Charger::resume_charging() {
-    shared_context.flag_paused_by_evse = false;
-    // FIXME: this now always works. Does this cause problems?
+    if (shared_context.flag_transaction_active) {
+        shared_context.flag_paused_by_evse = false;
+        return true;
+    }
+    return false;
     return true;
 }
 
