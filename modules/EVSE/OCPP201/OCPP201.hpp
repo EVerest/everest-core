@@ -35,6 +35,7 @@
 #include <variant>
 
 #include <device_model/everest_device_model_storage.hpp>
+#include <everest/util/async/monitor.hpp>
 #include <generated/types/evse_board_support.hpp>
 #include <ocpp/v2/charge_point.hpp>
 #include <transaction_handler.hpp>
@@ -140,7 +141,7 @@ private:
 
     // key represents evse_id, value indicates if ready
     std::map<int32_t, bool> evse_ready_map;
-    std::map<int32_t, std::optional<float>> evse_soc_map;
+    everest::lib::util::monitor<std::map<int32_t, std::optional<float>>> evse_soc_map;
     std::map<int32_t, types::evse_board_support::HardwareCapabilities> evse_hardware_capabilities_map;
     std::map<int32_t, std::vector<types::iso15118::EnergyTransferMode>> evse_supported_energy_transfer_modes;
     std::map<int32_t, bool> evse_service_renegotiation_supported;

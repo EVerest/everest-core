@@ -174,7 +174,7 @@ void OCPP201::init_evse_maps() {
     std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
         this->evse_ready_map[evse_id] = false;
-        this->evse_soc_map[evse_id] = std::nullopt;
+        (*this->evse_soc_map.handle())[evse_id] = std::nullopt;
         this->evse_hardware_capabilities_map[evse_id] = types::evse_board_support::HardwareCapabilities{};
         this->evse_supported_energy_transfer_modes[evse_id] = {};
         this->evse_service_renegotiation_supported[evse_id] = false;
@@ -1137,11 +1137,12 @@ void OCPP201::init_evse_subscriptions() {
                 this->event_queue[evse_id].push(meter_value);
                 return;
             }
-            if (this->evse_soc_map[evse_id].has_value()) {
+            auto evse_soc_map_handle = this->evse_soc_map.handle();
+            if (evse_soc_map_handle->at(evse_id).has_value()) {
                 auto sampled_soc_value = conversions::to_ocpp_sampled_value(
                     ocpp::v2::ReadingContextEnum::Sample_Periodic, ocpp::v2::MeasurandEnum::SoC, "Percent",
                     std::nullopt, ocpp::v2::LocationEnum::EV);
-                sampled_soc_value.value = this->evse_soc_map[evse_id].value();
+                sampled_soc_value.value = evse_soc_map_handle->at(evse_id).value();
                 meter_value.sampledValue.push_back(sampled_soc_value);
             }
             this->charge_point->on_meter_value(evse_id, meter_value);
@@ -1158,7 +1159,7 @@ void OCPP201::init_evse_subscriptions() {
                 return;
             }
             if (ev_info.soc.has_value()) {
-                this->evse_soc_map[evse_id] = ev_info.soc;
+                this->evse_soc_map.handle()->at(evse_id) = ev_info.soc;
             }
             if (ev_info.evcc_id.has_value()) {
                 this->evse_evcc_id[evse_id] = ev_info.evcc_id.value();
@@ -1435,7 +1436,7 @@ void OCPP201::process_session_started(const int32_t evse_id, const int32_t conne
 
 void OCPP201::process_session_finished(const int32_t evse_id, const int32_t connector_id,
                                        const types::evse_manager::SessionEvent& session_event) {
-    this->evse_soc_map[evse_id].reset();
+    this->evse_soc_map.handle()->at(evse_id).reset();
     auto transaction_data = this->transaction_handler->get_transaction_data(evse_id);
     if (transaction_data != nullptr) {
         transaction_data->charging_state = ocpp::v2::ChargingStateEnum::Idle;
