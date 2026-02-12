@@ -338,6 +338,7 @@ void OCPP::init_evse_subscriptions() {
         });
 
         evse->subscribe_powermeter_public_key_ocmf([this, evse_id](std::string public_key_ocmf) {
+            std::lock_guard<std::mutex> lg(this->event_mutex);
             if (!this->started) {
                 this->event_queue.emplace(evse_id, PowermeterPublicKey{public_key_ocmf});
                 return;
