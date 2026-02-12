@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
+#include <chrono>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -1630,7 +1631,9 @@ TEST_F(AuthTest, test_plug_in_time_out) {
     std::vector<int32_t> connectors{1};
     ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
 
-    std::this_thread::sleep_for(std::chrono::seconds(CONNECTION_TIMEOUT));
+    // ensure that the timeout has elapsed
+    const auto delay = std::chrono::milliseconds(250) + std::chrono::seconds(CONNECTION_TIMEOUT);
+    std::this_thread::sleep_for(delay);
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));

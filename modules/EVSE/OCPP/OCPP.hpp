@@ -43,6 +43,7 @@
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/charge_point.hpp>
+#include <ocpp/v16/charge_point_configuration.hpp>
 #include <ocpp/v16/types.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 
@@ -141,10 +142,12 @@ public:
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     std::unique_ptr<ocpp::v16::ChargePoint> charge_point;
+    std::unique_ptr<ocpp::v16::ChargePointConfiguration> charge_point_config;
     std::unique_ptr<Everest::SteadyTimer> charging_schedules_timer;
     bool ocpp_stopped = false;
 
-    // Return the OCPP connector id from a pair of EVerest EVSE id and connector id
+    // Return the OCPP connector id from a pair of EVerest EVSE id and connector
+    // id
     int32_t get_ocpp_connector_id(int32_t evse_id, int32_t connector_id);
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
@@ -165,14 +168,16 @@ private:
     void set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules);
     void publish_charging_schedules(const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules);
 
-    void init_evse_subscriptions(); // initialize subscriptions to all EVSEs provided by r_evse_manager
+    void init_evse_subscriptions(); // initialize subscriptions to all EVSEs
+                                    // provided by r_evse_manager
     void init_evse_connector_map();
     void init_evse_maps();
     void init_module_configuration();
     void handle_config_key(const ocpp::v16::KeyValue& kv);
-    EvseConnectorMap evse_connector_map; // provides access to OCPP connector id by using EVerests evse and connector id
-    std::map<int32_t, int32_t>
-        connector_evse_index_map; // provides access to r_evse_manager index by using OCPP connector id
+    EvseConnectorMap evse_connector_map;                 // provides access to OCPP connector id by using
+                                                         // EVerests evse and connector id
+    std::map<int32_t, int32_t> connector_evse_index_map; // provides access to r_evse_manager index by
+                                                         // using OCPP connector id
     std::map<int32_t, bool> evse_ready_map;
     std::map<int32_t, std::optional<float>> evse_soc_map;
     std::set<std::string> resuming_session_ids;

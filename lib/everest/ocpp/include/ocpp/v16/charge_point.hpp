@@ -7,6 +7,7 @@
 #include <ocpp/common/evse_security.hpp>
 #include <ocpp/common/evse_security_impl.hpp>
 #include <ocpp/common/support_older_cpp_versions.hpp>
+#include <ocpp/v16/charge_point_configuration_interface.hpp>
 #include <ocpp/v16/charge_point_state_machine.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
 #include <ocpp/v16/smart_charging.hpp>
@@ -52,14 +53,9 @@ private:
 
 public:
     /// \brief The main entrypoint for libOCPP for OCPP 1.6
-    /// \param config a nlohmann json config object that contains the libocpp 1.6 config. There are example configs that
-    /// work with a SteVe installation running in Docker, for example: config/v16/config-docker.json
+    /// \param cfg a reference to the configuration provider
     /// \param share_path This path contains the following files and directories and is installed by the libocpp install
     /// target
-    /// \param user_config_path this points to a "user config", which we call a configuration file that's merged with
-    /// the config that's provided in the "config" parameter. Here you can add, remove and overwrite settings without
-    /// modifying the config passed in the first parameter directly. This is also used by libocpp to persistently modify
-    /// config entries that are changed by the CSMS that should persist across restarts
     /// \param database_path this points to the location of the sqlite database that libocpp uses to keep track of
     /// connector availability, the authorization cache and auth list, charging profiles and transaction data
     /// \param sql_init_path this points to the init.sql file which contains the database schema used by libocpp for its
@@ -73,12 +69,12 @@ public:
     /// security_configuration must be set
     /// \param security_configuration specifies the file paths that are required to set up the internal evse_security
     /// implementation
-    explicit ChargePoint(const std::string& config, const fs::path& share_path, const fs::path& user_config_path,
+    explicit ChargePoint(ChargePointConfigurationInterface& cfg, const fs::path& share_path,
                          const fs::path& database_path, const fs::path& sql_init_path, const fs::path& message_log_path,
                          const std::shared_ptr<EvseSecurity> evse_security,
                          const std::optional<SecurityConfiguration> security_configuration = std::nullopt);
 
-    ~ChargePoint();
+    virtual ~ChargePoint();
 
     /// @}  // End constructors 1.6 group
     /// @}  // End chargepoint constructors topic

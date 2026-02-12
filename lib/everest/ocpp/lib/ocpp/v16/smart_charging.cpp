@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#include "ocpp/v16/charge_point_configuration_interface.hpp"
 #include <chrono>
 #include <ocpp/common/constants.hpp>
 #include <ocpp/common/types.hpp>
@@ -101,7 +102,7 @@ bool validate_schedule(const ChargingSchedule& schedule, const int charging_sche
 
 SmartChargingHandler::SmartChargingHandler(std::map<std::int32_t, std::shared_ptr<Connector>>& connectors,
                                            std::shared_ptr<DatabaseHandler> database_handler,
-                                           ChargePointConfiguration& configuration) :
+                                           ChargePointConfigurationInterface& configuration) :
     connectors(connectors), database_handler(database_handler), configuration(configuration) {
     this->clear_profiles_timer = std::make_unique<Everest::SteadyTimer>();
     this->clear_profiles_timer->interval([this]() { this->clear_expired_profiles(date::utc_clock::now()); },
@@ -148,7 +149,7 @@ struct CompositeScheduleConfig {
     std::int32_t default_number_phases{};
     float supply_voltage{};
 
-    CompositeScheduleConfig(ChargePointConfiguration& configuration, bool is_offline) {
+    CompositeScheduleConfig(ChargePointConfigurationInterface& configuration, bool is_offline) {
 
         if (is_offline) {
             const auto _purposes_to_ignore = configuration.getIgnoredProfilePurposesOffline();

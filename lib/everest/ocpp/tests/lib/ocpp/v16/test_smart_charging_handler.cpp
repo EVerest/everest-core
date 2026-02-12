@@ -7,6 +7,7 @@ namespace fs = std::filesystem;
 #include <database_handler_mock.hpp>
 #include <evse_security_mock.hpp>
 #include <ocpp/common/call_types.hpp>
+#include <ocpp/v16/charge_point_configuration.hpp>
 #include <ocpp/v16/smart_charging.hpp>
 #include <optional>
 

@@ -3,11 +3,14 @@
 #ifndef OCPP_V16_CHARGE_POINT_CONFIGURATION_HPP
 #define OCPP_V16_CHARGE_POINT_CONFIGURATION_HPP
 
+#include <map>
 #include <mutex>
 #include <optional>
 #include <set>
 
 #include <ocpp/common/support_older_cpp_versions.hpp>
+#include <ocpp/v16/charge_point_configuration_base.hpp>
+#include <ocpp/v16/charge_point_configuration_interface.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
 #include <ocpp/v16/types.hpp>
 
@@ -15,526 +18,517 @@ namespace ocpp {
 namespace v16 {
 
 /// \brief contains the configuration of the charge point
-class ChargePointConfiguration {
+class ChargePointConfiguration : private ChargePointConfigurationBase, public ChargePointConfigurationInterface {
 private:
     json config;
     json custom_schema;
     json internal_schema;
     bool core_schema_unlock_connector_on_ev_side_disconnect_ro_value;
-    fs::path ocpp_main_path;
     fs::path user_config_path;
 
-    std::set<SupportedFeatureProfiles> supported_feature_profiles;
-    std::map<Measurand, std::vector<Phase>> supported_measurands;
-    std::map<SupportedFeatureProfiles, std::set<MessageType>> supported_message_types_from_charge_point;
-    std::map<SupportedFeatureProfiles, std::set<MessageType>> supported_message_types_from_central_system;
-    std::set<MessageType> supported_message_types_sending;
-    std::set<MessageType> supported_message_types_receiving;
     std::recursive_mutex configuration_mutex;
 
-    std::vector<MeasurandWithPhase> csv_to_measurand_with_phase_vector(std::string csv);
     bool validate_measurands(const json& config);
-    bool measurands_supported(std::string csv);
     json get_user_config();
-    void setInUserConfig(std::string profile, std::string key, json value);
-    void init_supported_measurands();
-
-    bool isConnectorPhaseRotationValid(std::string str);
+    void setInUserConfig(const std::string& profile, const std::string& key, json value);
 
     void setChargepointInformationProperty(json& user_config, const std::string& key,
                                            const std::optional<std::string>& value);
 
-    bool validate(const std::string_view& schema_file, const json& object);
-
 public:
     ChargePointConfiguration(const std::string& config, const fs::path& ocpp_main_path,
                              const fs::path& user_config_path);
+    ChargePointConfiguration() = delete;
+    ChargePointConfiguration(const ChargePointConfiguration&) = delete;
+    ChargePointConfiguration(ChargePointConfiguration&&) = delete;
+    ChargePointConfiguration& operator=(const ChargePointConfiguration&) = delete;
+    ChargePointConfiguration& operator=(ChargePointConfiguration&&) = delete;
+    virtual ~ChargePointConfiguration() = default;
+
     void setChargepointInformation(const std::string& chargePointVendor, const std::string& chargePointModel,
                                    const std::optional<std::string>& chargePointSerialNumber,
                                    const std::optional<std::string>& chargeBoxSerialNumber,
-                                   const std::optional<std::string>& firmwareVersion);
+                                   const std::optional<std::string>& firmwareVersion) override;
     void setChargepointModemInformation(const std::optional<std::string>& ICCID,
-                                        const std::optional<std::string>& IMSI);
+                                        const std::optional<std::string>& IMSI) override;
     void setChargepointMeterInformation(const std::optional<std::string>& meterSerialNumber,
-                                        const std::optional<std::string>& meterType);
+                                        const std::optional<std::string>& meterType) override;
     // Internal config options
-    std::string getChargePointId();
-    KeyValue getChargePointIdKeyValue();
-    std::string getCentralSystemURI();
-    void setCentralSystemURI(std::string ocpp_uri);
-    KeyValue getCentralSystemURIKeyValue();
-    std::string getChargeBoxSerialNumber();
-    KeyValue getChargeBoxSerialNumberKeyValue();
-    CiString<20> getChargePointModel();
-    KeyValue getChargePointModelKeyValue();
-    std::optional<CiString<25>> getChargePointSerialNumber();
-    std::optional<KeyValue> getChargePointSerialNumberKeyValue();
-    CiString<20> getChargePointVendor();
-    KeyValue getChargePointVendorKeyValue();
-    CiString<50> getFirmwareVersion();
-    KeyValue getFirmwareVersionKeyValue();
-    std::optional<CiString<20>> getICCID();
-    std::optional<KeyValue> getICCIDKeyValue();
-    std::optional<CiString<20>> getIMSI();
-    std::optional<KeyValue> getIMSIKeyValue();
-    std::optional<CiString<25>> getMeterSerialNumber();
-    std::optional<KeyValue> getMeterSerialNumberKeyValue();
-    std::optional<CiString<25>> getMeterType();
-    std::optional<KeyValue> getMeterTypeKeyValue();
-    std::int32_t getWebsocketReconnectInterval();
-    KeyValue getWebsocketReconnectIntervalKeyValue();
-    bool getAuthorizeConnectorZeroOnConnectorOne();
-    KeyValue getAuthorizeConnectorZeroOnConnectorOneKeyValue();
-    bool getLogMessages();
-    KeyValue getLogMessagesKeyValue();
-    bool getLogMessagesRaw();
-    KeyValue getLogMessagesRawKeyValue();
-    std::vector<std::string> getLogMessagesFormat();
-    KeyValue getLogMessagesFormatKeyValue();
-    bool getLogRotation();
-    KeyValue getLogRotationKeyValue();
-    bool getLogRotationDateSuffix();
-    KeyValue getLogRotationDateSuffixKeyValue();
-    std::uint64_t getLogRotationMaximumFileSize();
-    KeyValue getLogRotationMaximumFileSizeKeyValue();
-    std::uint64_t getLogRotationMaximumFileCount();
-    KeyValue getLogRotationMaximumFileCountKeyValue();
-    std::vector<ChargingProfilePurposeType> getSupportedChargingProfilePurposeTypes();
-    KeyValue getSupportedChargingProfilePurposeTypesKeyValue();
-    std::vector<ChargingProfilePurposeType> getIgnoredProfilePurposesOffline();
-    std::optional<KeyValue> getIgnoredProfilePurposesOfflineKeyValue();
-    bool setIgnoredProfilePurposesOffline(const std::string& ignored_profile_purposes_offline);
-    std::int32_t getMaxCompositeScheduleDuration();
-    KeyValue getMaxCompositeScheduleDurationKeyValue();
-    std::optional<std::int32_t> getCompositeScheduleDefaultLimitAmps();
-    std::optional<KeyValue> getCompositeScheduleDefaultLimitAmpsKeyValue();
-    void setCompositeScheduleDefaultLimitAmps(std::int32_t limit_amps);
-    std::optional<std::int32_t> getCompositeScheduleDefaultLimitWatts();
-    std::optional<KeyValue> getCompositeScheduleDefaultLimitWattsKeyValue();
-    void setCompositeScheduleDefaultLimitWatts(std::int32_t limit_watts);
-    std::optional<std::int32_t> getCompositeScheduleDefaultNumberPhases();
-    std::optional<KeyValue> getCompositeScheduleDefaultNumberPhasesKeyValue();
-    void setCompositeScheduleDefaultNumberPhases(std::int32_t number_phases);
-    std::optional<std::int32_t> getSupplyVoltage();
-    std::optional<KeyValue> getSupplyVoltageKeyValue();
-    void setSupplyVoltage(std::int32_t supply_voltage);
-    std::string getSupportedCiphers12();
-    KeyValue getSupportedCiphers12KeyValue();
-    std::string getSupportedCiphers13();
-    KeyValue getSupportedCiphers13KeyValue();
-    bool getUseSslDefaultVerifyPaths();
-    KeyValue getUseSslDefaultVerifyPathsKeyValue();
-    bool getVerifyCsmsCommonName();
-    KeyValue getVerifyCsmsCommonNameKeyValue();
-    bool getVerifyCsmsAllowWildcards();
-    void setVerifyCsmsAllowWildcards(bool verify_csms_allow_wildcards);
-    KeyValue getVerifyCsmsAllowWildcardsKeyValue();
-    bool getUseTPM();
-    bool getUseTPMSeccLeafCertificate();
-    std::string getSupportedMeasurands();
-    KeyValue getSupportedMeasurandsKeyValue();
-    int getMaxMessageSize();
-    KeyValue getMaxMessageSizeKeyValue();
+    std::string getChargePointId() override;
+    KeyValue getChargePointIdKeyValue() override;
+    std::string getCentralSystemURI() override;
+    void setCentralSystemURI(const std::string& ocpp_uri) override;
+    KeyValue getCentralSystemURIKeyValue() override;
+    std::string getChargeBoxSerialNumber() override;
+    KeyValue getChargeBoxSerialNumberKeyValue() override;
+    CiString<20> getChargePointModel() override;
+    KeyValue getChargePointModelKeyValue() override;
+    std::optional<CiString<25>> getChargePointSerialNumber() override;
+    std::optional<KeyValue> getChargePointSerialNumberKeyValue() override;
+    CiString<20> getChargePointVendor() override;
+    KeyValue getChargePointVendorKeyValue() override;
+    CiString<50> getFirmwareVersion() override;
+    KeyValue getFirmwareVersionKeyValue() override;
+    std::optional<CiString<20>> getICCID() override;
+    std::optional<KeyValue> getICCIDKeyValue() override;
+    std::optional<CiString<20>> getIMSI() override;
+    std::optional<KeyValue> getIMSIKeyValue() override;
+    std::optional<CiString<25>> getMeterSerialNumber() override;
+    std::optional<KeyValue> getMeterSerialNumberKeyValue() override;
+    std::optional<CiString<25>> getMeterType() override;
+    std::optional<KeyValue> getMeterTypeKeyValue() override;
+    bool getAuthorizeConnectorZeroOnConnectorOne() override;
+    KeyValue getAuthorizeConnectorZeroOnConnectorOneKeyValue() override;
+    bool getLogMessages() override;
+    KeyValue getLogMessagesKeyValue() override;
+    bool getLogMessagesRaw() override;
+    KeyValue getLogMessagesRawKeyValue() override;
+    std::vector<std::string> getLogMessagesFormat() override;
+    KeyValue getLogMessagesFormatKeyValue() override;
+    bool getLogRotation() override;
+    KeyValue getLogRotationKeyValue() override;
+    bool getLogRotationDateSuffix() override;
+    KeyValue getLogRotationDateSuffixKeyValue() override;
+    uint64_t getLogRotationMaximumFileSize() override;
+    KeyValue getLogRotationMaximumFileSizeKeyValue() override;
+    uint64_t getLogRotationMaximumFileCount() override;
+    KeyValue getLogRotationMaximumFileCountKeyValue() override;
+    std::vector<ChargingProfilePurposeType> getSupportedChargingProfilePurposeTypes() override;
+    KeyValue getSupportedChargingProfilePurposeTypesKeyValue() override;
+    std::vector<ChargingProfilePurposeType> getIgnoredProfilePurposesOffline() override;
+    std::optional<KeyValue> getIgnoredProfilePurposesOfflineKeyValue() override;
+    bool setIgnoredProfilePurposesOffline(const std::string& ignored_profile_purposes_offline) override;
+    std::int32_t getMaxCompositeScheduleDuration() override;
+    KeyValue getMaxCompositeScheduleDurationKeyValue() override;
+    std::optional<std::int32_t> getCompositeScheduleDefaultLimitAmps() override;
+    std::optional<KeyValue> getCompositeScheduleDefaultLimitAmpsKeyValue() override;
+    void setCompositeScheduleDefaultLimitAmps(std::int32_t limit_amps) override;
+    std::optional<std::int32_t> getCompositeScheduleDefaultLimitWatts() override;
+    std::optional<KeyValue> getCompositeScheduleDefaultLimitWattsKeyValue() override;
+    void setCompositeScheduleDefaultLimitWatts(std::int32_t limit_watts) override;
+    std::optional<std::int32_t> getCompositeScheduleDefaultNumberPhases() override;
+    std::optional<KeyValue> getCompositeScheduleDefaultNumberPhasesKeyValue() override;
+    void setCompositeScheduleDefaultNumberPhases(std::int32_t number_phases) override;
+    std::optional<std::int32_t> getSupplyVoltage() override;
+    std::optional<KeyValue> getSupplyVoltageKeyValue() override;
+    void setSupplyVoltage(std::int32_t supply_voltage) override;
+    std::string getSupportedCiphers12() override;
+    KeyValue getSupportedCiphers12KeyValue() override;
+    std::string getSupportedCiphers13() override;
+    KeyValue getSupportedCiphers13KeyValue() override;
+    bool getUseSslDefaultVerifyPaths() override;
+    KeyValue getUseSslDefaultVerifyPathsKeyValue() override;
+    bool getVerifyCsmsCommonName() override;
+    KeyValue getVerifyCsmsCommonNameKeyValue() override;
+    bool getVerifyCsmsAllowWildcards() override;
+    void setVerifyCsmsAllowWildcards(bool verify_csms_allow_wildcards) override;
+    KeyValue getVerifyCsmsAllowWildcardsKeyValue() override;
+    bool getUseTPM() override;
+    bool getUseTPMSeccLeafCertificate() override;
+    std::string getSupportedMeasurands() override;
+    KeyValue getSupportedMeasurandsKeyValue() override;
+    int getMaxMessageSize() override;
+    KeyValue getMaxMessageSizeKeyValue() override;
 
-    bool getEnableTLSKeylog();
-    std::string getTLSKeylogFile();
+    bool getEnableTLSKeylog() override;
+    std::string getTLSKeylogFile() override;
 
-    bool getStopTransactionIfUnlockNotSupported();
-    void setStopTransactionIfUnlockNotSupported(bool stop_transaction_if_unlock_not_supported);
-    KeyValue getStopTransactionIfUnlockNotSupportedKeyValue();
+    bool getStopTransactionIfUnlockNotSupported() override;
+    void setStopTransactionIfUnlockNotSupported(bool stop_transaction_if_unlock_not_supported) override;
+    KeyValue getStopTransactionIfUnlockNotSupportedKeyValue() override;
 
-    std::int32_t getRetryBackoffRandomRange();
-    void setRetryBackoffRandomRange(std::int32_t retry_backoff_random_range);
-    KeyValue getRetryBackoffRandomRangeKeyValue();
+    std::int32_t getRetryBackoffRandomRange() override;
+    void setRetryBackoffRandomRange(std::int32_t retry_backoff_random_range) override;
+    KeyValue getRetryBackoffRandomRangeKeyValue() override;
 
-    std::int32_t getRetryBackoffRepeatTimes();
-    void setRetryBackoffRepeatTimes(std::int32_t retry_backoff_repeat_times);
-    KeyValue getRetryBackoffRepeatTimesKeyValue();
+    std::int32_t getRetryBackoffRepeatTimes() override;
+    void setRetryBackoffRepeatTimes(std::int32_t retry_backoff_repeat_times) override;
+    KeyValue getRetryBackoffRepeatTimesKeyValue() override;
 
-    std::int32_t getRetryBackoffWaitMinimum();
-    void setRetryBackoffWaitMinimum(std::int32_t retry_backoff_wait_minimum);
-    KeyValue getRetryBackoffWaitMinimumKeyValue();
+    std::int32_t getRetryBackoffWaitMinimum() override;
+    void setRetryBackoffWaitMinimum(std::int32_t retry_backoff_wait_minimum) override;
+    KeyValue getRetryBackoffWaitMinimumKeyValue() override;
 
-    std::set<MessageType> getSupportedMessageTypesSending();
-    std::set<MessageType> getSupportedMessageTypesReceiving();
+    std::set<MessageType> getSupportedMessageTypesSending() override;
+    std::set<MessageType> getSupportedMessageTypesReceiving() override;
 
-    std::string getWebsocketPingPayload();
-    KeyValue getWebsocketPingPayloadKeyValue();
+    std::string getWebsocketPingPayload() override;
+    KeyValue getWebsocketPingPayloadKeyValue() override;
 
-    std::int32_t getWebsocketPongTimeout();
-    KeyValue getWebsocketPongTimeoutKeyValue();
+    std::int32_t getWebsocketPongTimeout() override;
+    KeyValue getWebsocketPongTimeoutKeyValue() override;
 
-    std::optional<std::string> getHostName();
-    std::optional<KeyValue> getHostNameKeyValue();
+    std::optional<std::string> getHostName() override;
+    std::optional<KeyValue> getHostNameKeyValue() override;
 
-    std::optional<std::string> getIFace();
-    std::optional<KeyValue> getIFaceKeyValue();
+    std::optional<std::string> getIFace() override;
+    std::optional<KeyValue> getIFaceKeyValue() override;
 
-    std::optional<bool> getQueueAllMessages();
-    std::optional<KeyValue> getQueueAllMessagesKeyValue();
+    std::optional<bool> getQueueAllMessages() override;
+    std::optional<KeyValue> getQueueAllMessagesKeyValue() override;
 
-    std::optional<std::string> getMessageTypesDiscardForQueueing();
-    std::optional<KeyValue> getMessageTypesDiscardForQueueingKeyValue();
+    std::optional<std::string> getMessageTypesDiscardForQueueing() override;
+    std::optional<KeyValue> getMessageTypesDiscardForQueueingKeyValue() override;
 
-    std::optional<int> getMessageQueueSizeThreshold();
-    std::optional<KeyValue> getMessageQueueSizeThresholdKeyValue();
+    std::optional<int> getMessageQueueSizeThreshold() override;
+    std::optional<KeyValue> getMessageQueueSizeThresholdKeyValue() override;
 
     // Core Profile - optional
-    std::optional<bool> getAllowOfflineTxForUnknownId();
-    void setAllowOfflineTxForUnknownId(bool enabled);
-    std::optional<KeyValue> getAllowOfflineTxForUnknownIdKeyValue();
+    std::optional<bool> getAllowOfflineTxForUnknownId() override;
+    void setAllowOfflineTxForUnknownId(bool enabled) override;
+    std::optional<KeyValue> getAllowOfflineTxForUnknownIdKeyValue() override;
 
     // Core Profile - optional
-    std::optional<bool> getAuthorizationCacheEnabled();
-    void setAuthorizationCacheEnabled(bool enabled);
-    std::optional<KeyValue> getAuthorizationCacheEnabledKeyValue();
+    std::optional<bool> getAuthorizationCacheEnabled() override;
+    void setAuthorizationCacheEnabled(bool enabled) override;
+    std::optional<KeyValue> getAuthorizationCacheEnabledKeyValue() override;
 
     // Core Profile
-    bool getAuthorizeRemoteTxRequests();
-    void setAuthorizeRemoteTxRequests(bool enabled);
-    KeyValue getAuthorizeRemoteTxRequestsKeyValue();
+    bool getAuthorizeRemoteTxRequests() override;
+    void setAuthorizeRemoteTxRequests(bool enabled) override;
+    KeyValue getAuthorizeRemoteTxRequestsKeyValue() override;
 
     // Core Profile - optional
-    std::optional<std::int32_t> getBlinkRepeat();
-    void setBlinkRepeat(std::int32_t blink_repeat);
-    std::optional<KeyValue> getBlinkRepeatKeyValue();
+    std::optional<std::int32_t> getBlinkRepeat() override;
+    void setBlinkRepeat(std::int32_t blink_repeat) override;
+    std::optional<KeyValue> getBlinkRepeatKeyValue() override;
 
     // Core Profile
-    std::int32_t getClockAlignedDataInterval();
-    void setClockAlignedDataInterval(std::int32_t interval);
-    KeyValue getClockAlignedDataIntervalKeyValue();
+    std::int32_t getClockAlignedDataInterval() override;
+    void setClockAlignedDataInterval(std::int32_t interval) override;
+    KeyValue getClockAlignedDataIntervalKeyValue() override;
 
     // Core Profile
-    std::int32_t getConnectionTimeOut();
-    void setConnectionTimeOut(std::int32_t timeout);
-    KeyValue getConnectionTimeOutKeyValue();
+    std::int32_t getConnectionTimeOut() override;
+    void setConnectionTimeOut(std::int32_t timeout) override;
+    KeyValue getConnectionTimeOutKeyValue() override;
 
     // Core Profile
-    std::string getConnectorPhaseRotation();
-    void setConnectorPhaseRotation(std::string connector_phase_rotation);
-    KeyValue getConnectorPhaseRotationKeyValue();
+    std::string getConnectorPhaseRotation() override;
+    void setConnectorPhaseRotation(const std::string& connector_phase_rotation) override;
+    KeyValue getConnectorPhaseRotationKeyValue() override;
 
     // Core Profile - optional
-    std::optional<std::int32_t> getConnectorPhaseRotationMaxLength();
-    std::optional<KeyValue> getConnectorPhaseRotationMaxLengthKeyValue();
+    std::optional<std::int32_t> getConnectorPhaseRotationMaxLength() override;
+    std::optional<KeyValue> getConnectorPhaseRotationMaxLengthKeyValue() override;
 
     // Core Profile
-    std::int32_t getGetConfigurationMaxKeys();
-    KeyValue getGetConfigurationMaxKeysKeyValue();
+    std::int32_t getGetConfigurationMaxKeys() override;
+    KeyValue getGetConfigurationMaxKeysKeyValue() override;
 
     // Core Profile
-    std::int32_t getHeartbeatInterval();
-    void setHeartbeatInterval(std::int32_t interval);
-    KeyValue getHeartbeatIntervalKeyValue();
+    std::int32_t getHeartbeatInterval() override;
+    void setHeartbeatInterval(std::int32_t interval) override;
+    KeyValue getHeartbeatIntervalKeyValue() override;
 
     // Core Profile - optional
-    std::optional<std::int32_t> getLightIntensity();
-    void setLightIntensity(std::int32_t light_intensity);
-    std::optional<KeyValue> getLightIntensityKeyValue();
+    std::optional<std::int32_t> getLightIntensity() override;
+    void setLightIntensity(std::int32_t light_intensity) override;
+    std::optional<KeyValue> getLightIntensityKeyValue() override;
 
     // Core Profile
-    bool getLocalAuthorizeOffline();
-    void setLocalAuthorizeOffline(bool local_authorize_offline);
-    KeyValue getLocalAuthorizeOfflineKeyValue();
+    bool getLocalAuthorizeOffline() override;
+    void setLocalAuthorizeOffline(bool local_authorize_offline) override;
+    KeyValue getLocalAuthorizeOfflineKeyValue() override;
 
     // Core Profile
-    bool getLocalPreAuthorize();
-    void setLocalPreAuthorize(bool local_pre_authorize);
-    KeyValue getLocalPreAuthorizeKeyValue();
+    bool getLocalPreAuthorize() override;
+    void setLocalPreAuthorize(bool local_pre_authorize) override;
+    KeyValue getLocalPreAuthorizeKeyValue() override;
 
     // Core Profile - optional
-    std::optional<std::int32_t> getMaxEnergyOnInvalidId();
-    void setMaxEnergyOnInvalidId(std::int32_t max_energy);
-    std::optional<KeyValue> getMaxEnergyOnInvalidIdKeyValue();
+    std::optional<std::int32_t> getMaxEnergyOnInvalidId() override;
+    void setMaxEnergyOnInvalidId(std::int32_t max_energy) override;
+    std::optional<KeyValue> getMaxEnergyOnInvalidIdKeyValue() override;
 
     // Core Profile
-    std::string getMeterValuesAlignedData();
-    bool setMeterValuesAlignedData(std::string meter_values_aligned_data);
-    KeyValue getMeterValuesAlignedDataKeyValue();
-    std::vector<MeasurandWithPhase> getMeterValuesAlignedDataVector();
+    std::string getMeterValuesAlignedData() override;
+    bool setMeterValuesAlignedData(const std::string& meter_values_aligned_data) override;
+    KeyValue getMeterValuesAlignedDataKeyValue() override;
+    std::vector<MeasurandWithPhase> getMeterValuesAlignedDataVector() override;
 
     // Core Profile - optional
-    std::optional<std::int32_t> getMeterValuesAlignedDataMaxLength();
-    std::optional<KeyValue> getMeterValuesAlignedDataMaxLengthKeyValue();
+    std::optional<std::int32_t> getMeterValuesAlignedDataMaxLength() override;
+    std::optional<KeyValue> getMeterValuesAlignedDataMaxLengthKeyValue() override;
 
     // Core Profile
-    std::string getMeterValuesSampledData();
-    bool setMeterValuesSampledData(std::string meter_values_sampled_data);
-    KeyValue getMeterValuesSampledDataKeyValue();
-    std::vector<MeasurandWithPhase> getMeterValuesSampledDataVector();
+    std::string getMeterValuesSampledData() override;
+    bool setMeterValuesSampledData(const std::string& meter_values_sampled_data) override;
+    KeyValue getMeterValuesSampledDataKeyValue() override;
+    std::vector<MeasurandWithPhase> getMeterValuesSampledDataVector() override;
 
     // Core Profile - optional
-    std::optional<std::int32_t> getMeterValuesSampledDataMaxLength();
-    std::optional<KeyValue> getMeterValuesSampledDataMaxLengthKeyValue();
+    std::optional<std::int32_t> getMeterValuesSampledDataMaxLength() override;
+    std::optional<KeyValue> getMeterValuesSampledDataMaxLengthKeyValue() override;
 
     // Core Profile
-    std::int32_t getMeterValueSampleInterval();
-    void setMeterValueSampleInterval(std::int32_t interval);
-    KeyValue getMeterValueSampleIntervalKeyValue();
+    std::int32_t getMeterValueSampleInterval() override;
+    void setMeterValueSampleInterval(std::int32_t interval) override;
+    KeyValue getMeterValueSampleIntervalKeyValue() override;
 
     // Core Profile - optional
-    std::optional<std::int32_t> getMinimumStatusDuration();
-    void setMinimumStatusDuration(std::int32_t minimum_status_duration);
-    std::optional<KeyValue> getMinimumStatusDurationKeyValue();
+    std::optional<std::int32_t> getMinimumStatusDuration() override;
+    void setMinimumStatusDuration(std::int32_t minimum_status_duration) override;
+    std::optional<KeyValue> getMinimumStatusDurationKeyValue() override;
 
     // Core Profile
-    std::int32_t getNumberOfConnectors();
-    KeyValue getNumberOfConnectorsKeyValue();
+    std::int32_t getNumberOfConnectors() override;
+    KeyValue getNumberOfConnectorsKeyValue() override;
 
     // Reservation Profile
-    std::optional<bool> getReserveConnectorZeroSupported();
-    std::optional<KeyValue> getReserveConnectorZeroSupportedKeyValue();
+    std::optional<bool> getReserveConnectorZeroSupported() override;
+    std::optional<KeyValue> getReserveConnectorZeroSupportedKeyValue() override;
 
     // Core Profile
-    std::int32_t getResetRetries();
-    void setResetRetries(std::int32_t retries);
-    KeyValue getResetRetriesKeyValue();
+    std::int32_t getResetRetries() override;
+    void setResetRetries(std::int32_t retries) override;
+    KeyValue getResetRetriesKeyValue() override;
 
     // Core Profile - optional
-    std::optional<bool> getStopTransactionOnEVSideDisconnect();
-    std::optional<KeyValue> getStopTransactionOnEVSideDisconnectKeyValue();
+    std::optional<bool> getStopTransactionOnEVSideDisconnect() override;
+    std::optional<KeyValue> getStopTransactionOnEVSideDisconnectKeyValue() override;
 
     // Core Profile
-    bool getStopTransactionOnInvalidId();
-    void setStopTransactionOnInvalidId(bool stop_transaction_on_invalid_id);
-    KeyValue getStopTransactionOnInvalidIdKeyValue();
+    bool getStopTransactionOnInvalidId() override;
+    void setStopTransactionOnInvalidId(bool stop_transaction_on_invalid_id) override;
+    KeyValue getStopTransactionOnInvalidIdKeyValue() override;
 
     // Core Profile
-    std::string getStopTxnAlignedData();
-    bool setStopTxnAlignedData(std::string stop_txn_aligned_data);
-    KeyValue getStopTxnAlignedDataKeyValue();
+    std::string getStopTxnAlignedData() override;
+    bool setStopTxnAlignedData(const std::string& stop_txn_aligned_data) override;
+    KeyValue getStopTxnAlignedDataKeyValue() override;
 
     // Core Profile - optional
-    std::optional<std::int32_t> getStopTxnAlignedDataMaxLength();
-    std::optional<KeyValue> getStopTxnAlignedDataMaxLengthKeyValue();
+    std::optional<std::int32_t> getStopTxnAlignedDataMaxLength() override;
+    std::optional<KeyValue> getStopTxnAlignedDataMaxLengthKeyValue() override;
 
     // Core Profile
-    std::string getStopTxnSampledData();
-    bool setStopTxnSampledData(std::string stop_txn_sampled_data);
-    KeyValue getStopTxnSampledDataKeyValue();
+    std::string getStopTxnSampledData() override;
+    bool setStopTxnSampledData(const std::string& stop_txn_sampled_data) override;
+    KeyValue getStopTxnSampledDataKeyValue() override;
 
     // Core Profile - optional
-    std::optional<std::int32_t> getStopTxnSampledDataMaxLength();
-    std::optional<KeyValue> getStopTxnSampledDataMaxLengthKeyValue();
+    std::optional<std::int32_t> getStopTxnSampledDataMaxLength() override;
+    std::optional<KeyValue> getStopTxnSampledDataMaxLengthKeyValue() override;
 
     // Core Profile
-    std::string getSupportedFeatureProfiles();
-    KeyValue getSupportedFeatureProfilesKeyValue();
-    std::set<SupportedFeatureProfiles> getSupportedFeatureProfilesSet();
+    std::string getSupportedFeatureProfiles() override;
+    KeyValue getSupportedFeatureProfilesKeyValue() override;
+    std::set<SupportedFeatureProfiles> getSupportedFeatureProfilesSet() override;
 
     // Core Profile - optional
-    std::optional<std::int32_t> getSupportedFeatureProfilesMaxLength();
-    std::optional<KeyValue> getSupportedFeatureProfilesMaxLengthKeyValue();
+    std::optional<std::int32_t> getSupportedFeatureProfilesMaxLength() override;
+    std::optional<KeyValue> getSupportedFeatureProfilesMaxLengthKeyValue() override;
 
     // Core Profile
-    std::int32_t getTransactionMessageAttempts();
-    void setTransactionMessageAttempts(std::int32_t attempts);
-    KeyValue getTransactionMessageAttemptsKeyValue();
+    std::int32_t getTransactionMessageAttempts() override;
+    void setTransactionMessageAttempts(std::int32_t attempts) override;
+    KeyValue getTransactionMessageAttemptsKeyValue() override;
 
     // Core Profile
-    std::int32_t getTransactionMessageRetryInterval();
-    void setTransactionMessageRetryInterval(std::int32_t retry_interval);
-    KeyValue getTransactionMessageRetryIntervalKeyValue();
+    std::int32_t getTransactionMessageRetryInterval() override;
+    void setTransactionMessageRetryInterval(std::int32_t retry_interval) override;
+    KeyValue getTransactionMessageRetryIntervalKeyValue() override;
 
     // Core Profile
-    bool getUnlockConnectorOnEVSideDisconnect();
-    void setUnlockConnectorOnEVSideDisconnect(bool unlock_connector_on_ev_side_disconnect);
-    KeyValue getUnlockConnectorOnEVSideDisconnectKeyValue();
+    bool getUnlockConnectorOnEVSideDisconnect() override;
+    void setUnlockConnectorOnEVSideDisconnect(bool unlock_connector_on_ev_side_disconnect) override;
+    KeyValue getUnlockConnectorOnEVSideDisconnectKeyValue() override;
 
     // Core Profile - optional
-    std::optional<std::int32_t> getWebsocketPingInterval();
-    void setWebsocketPingInterval(std::int32_t websocket_ping_interval);
-    std::optional<KeyValue> getWebsocketPingIntervalKeyValue();
+    std::optional<std::int32_t> getWebsocketPingInterval() override;
+    void setWebsocketPingInterval(std::int32_t websocket_ping_interval) override;
+    std::optional<KeyValue> getWebsocketPingIntervalKeyValue() override;
 
     // Core Profile end
 
     // Firmware Management Profile
 
-    std::optional<std::string> getSupportedFileTransferProtocols();
-    std::optional<KeyValue> getSupportedFileTransferProtocolsKeyValue();
+    std::optional<std::string> getSupportedFileTransferProtocols() override;
+    std::optional<KeyValue> getSupportedFileTransferProtocolsKeyValue() override;
 
     // SmartCharging Profile
-    std::int32_t getChargeProfileMaxStackLevel();
-    KeyValue getChargeProfileMaxStackLevelKeyValue();
+    std::int32_t getChargeProfileMaxStackLevel() override;
+    KeyValue getChargeProfileMaxStackLevelKeyValue() override;
 
     // SmartCharging Profile
-    std::string getChargingScheduleAllowedChargingRateUnit();
-    KeyValue getChargingScheduleAllowedChargingRateUnitKeyValue();
-    std::vector<ChargingRateUnit> getChargingScheduleAllowedChargingRateUnitVector();
+    std::string getChargingScheduleAllowedChargingRateUnit() override;
+    KeyValue getChargingScheduleAllowedChargingRateUnitKeyValue() override;
+    std::vector<ChargingRateUnit> getChargingScheduleAllowedChargingRateUnitVector() override;
 
     // SmartCharging Profile
-    std::int32_t getChargingScheduleMaxPeriods();
-    KeyValue getChargingScheduleMaxPeriodsKeyValue();
+    std::int32_t getChargingScheduleMaxPeriods() override;
+    KeyValue getChargingScheduleMaxPeriodsKeyValue() override;
 
     // SmartCharging Profile - optional
-    std::optional<bool> getConnectorSwitch3to1PhaseSupported();
-    std::optional<KeyValue> getConnectorSwitch3to1PhaseSupportedKeyValue();
+    std::optional<bool> getConnectorSwitch3to1PhaseSupported() override;
+    std::optional<KeyValue> getConnectorSwitch3to1PhaseSupportedKeyValue() override;
 
     // SmartCharging Profile
-    std::int32_t getMaxChargingProfilesInstalled();
-    KeyValue getMaxChargingProfilesInstalledKeyValue();
+    std::int32_t getMaxChargingProfilesInstalled() override;
+    KeyValue getMaxChargingProfilesInstalledKeyValue() override;
 
     // SmartCharging Profile end
 
     // Security profile - optional
-    std::optional<bool> getAdditionalRootCertificateCheck();
-    std::optional<KeyValue> getAdditionalRootCertificateCheckKeyValue();
+    std::optional<bool> getAdditionalRootCertificateCheck() override;
+    std::optional<KeyValue> getAdditionalRootCertificateCheckKeyValue() override;
 
     // Security profile - optional
-    std::optional<std::string> getAuthorizationKey();
-    void setAuthorizationKey(std::string authorization_key);
-    std::optional<KeyValue> getAuthorizationKeyKeyValue();
+    std::optional<std::string> getAuthorizationKey() override;
+    void setAuthorizationKey(const std::string& authorization_key) override;
+    std::optional<KeyValue> getAuthorizationKeyKeyValue() override;
 
     // Security profile - optional
-    std::optional<std::int32_t> getCertificateSignedMaxChainSize();
-    std::optional<KeyValue> getCertificateSignedMaxChainSizeKeyValue();
+    std::optional<std::int32_t> getCertificateSignedMaxChainSize() override;
+    std::optional<KeyValue> getCertificateSignedMaxChainSizeKeyValue() override;
 
     // Security profile - optional
-    std::optional<std::int32_t> getCertificateStoreMaxLength();
-    std::optional<KeyValue> getCertificateStoreMaxLengthKeyValue();
+    std::optional<std::int32_t> getCertificateStoreMaxLength() override;
+    std::optional<KeyValue> getCertificateStoreMaxLengthKeyValue() override;
 
     // Security profile - optional
-    std::optional<std::string> getCpoName();
-    void setCpoName(std::string cpo_name);
-    std::optional<KeyValue> getCpoNameKeyValue();
+    std::optional<std::string> getCpoName() override;
+    void setCpoName(const std::string& cpo_name) override;
+    std::optional<KeyValue> getCpoNameKeyValue() override;
 
     // // Security profile - optional in ocpp but mandatory websocket connection
-    std::int32_t getSecurityProfile();
-    void setSecurityProfile(std::int32_t security_profile);
-    KeyValue getSecurityProfileKeyValue();
+    std::int32_t getSecurityProfile() override;
+    void setSecurityProfile(std::int32_t security_profile) override;
+    KeyValue getSecurityProfileKeyValue() override;
 
     // // Security profile - optional with default
-    bool getDisableSecurityEventNotifications();
-    void setDisableSecurityEventNotifications(bool disable_security_event_notifications);
-    KeyValue getDisableSecurityEventNotificationsKeyValue();
+    bool getDisableSecurityEventNotifications() override;
+    void setDisableSecurityEventNotifications(bool disable_security_event_notifications) override;
+    KeyValue getDisableSecurityEventNotificationsKeyValue() override;
 
     // Local Auth List Management Profile
-    bool getLocalAuthListEnabled();
-    void setLocalAuthListEnabled(bool local_auth_list_enabled);
-    KeyValue getLocalAuthListEnabledKeyValue();
+    bool getLocalAuthListEnabled() override;
+    void setLocalAuthListEnabled(bool local_auth_list_enabled) override;
+    KeyValue getLocalAuthListEnabledKeyValue() override;
 
     // Local Auth List Management Profile
-    std::int32_t getLocalAuthListMaxLength();
-    KeyValue getLocalAuthListMaxLengthKeyValue();
+    std::int32_t getLocalAuthListMaxLength() override;
+    KeyValue getLocalAuthListMaxLengthKeyValue() override;
 
     // Local Auth List Management Profile
-    std::int32_t getSendLocalListMaxLength();
-    KeyValue getSendLocalListMaxLengthKeyValue();
+    std::int32_t getSendLocalListMaxLength() override;
+    KeyValue getSendLocalListMaxLengthKeyValue() override;
 
     // PnC
-    bool getISO15118CertificateManagementEnabled();
-    void setISO15118CertificateManagementEnabled(const bool iso15118_certificate_management_enabled);
-    KeyValue getISO15118CertificateManagementEnabledKeyValue();
+    bool getISO15118CertificateManagementEnabled() override;
+    void setISO15118CertificateManagementEnabled(bool iso15118_certificate_management_enabled) override;
+    KeyValue getISO15118CertificateManagementEnabledKeyValue() override;
 
-    bool getISO15118PnCEnabled();
-    void setISO15118PnCEnabled(const bool iso15118_pnc_enabled);
-    KeyValue getISO15118PnCEnabledKeyValue();
+    bool getISO15118PnCEnabled() override;
+    void setISO15118PnCEnabled(bool iso15118_pnc_enabled) override;
+    KeyValue getISO15118PnCEnabledKeyValue() override;
 
-    std::optional<bool> getCentralContractValidationAllowed();
-    void setCentralContractValidationAllowed(const bool central_contract_validation_allowed);
-    std::optional<KeyValue> getCentralContractValidationAllowedKeyValue();
+    std::optional<bool> getCentralContractValidationAllowed() override;
+    void setCentralContractValidationAllowed(bool central_contract_validation_allowed) override;
+    std::optional<KeyValue> getCentralContractValidationAllowedKeyValue() override;
 
-    std::optional<std::int32_t> getCertSigningWaitMinimum();
-    void setCertSigningWaitMinimum(const std::int32_t cert_signing_wait_minimum);
-    std::optional<KeyValue> getCertSigningWaitMinimumKeyValue();
+    std::optional<std::int32_t> getCertSigningWaitMinimum() override;
+    void setCertSigningWaitMinimum(std::int32_t cert_signing_wait_minimum) override;
+    std::optional<KeyValue> getCertSigningWaitMinimumKeyValue() override;
 
-    std::optional<std::int32_t> getCertSigningRepeatTimes();
-    void setCertSigningRepeatTimes(const std::int32_t cert_signing_repeat_times);
-    std::optional<KeyValue> getCertSigningRepeatTimesKeyValue();
+    std::optional<std::int32_t> getCertSigningRepeatTimes() override;
+    void setCertSigningRepeatTimes(std::int32_t cert_signing_repeat_times) override;
+    std::optional<KeyValue> getCertSigningRepeatTimesKeyValue() override;
 
-    bool getContractValidationOffline();
-    void setContractValidationOffline(const bool contract_validation_offline);
-    KeyValue getContractValidationOfflineKeyValue();
+    bool getContractValidationOffline() override;
+    void setContractValidationOffline(bool contract_validation_offline) override;
+    KeyValue getContractValidationOfflineKeyValue() override;
 
-    std::int32_t getOcspRequestInterval();
-    void setOcspRequestInterval(const std::int32_t ocsp_request_interval);
-    KeyValue getOcspRequestIntervalKeyValue();
+    std::int32_t getOcspRequestInterval() override;
+    void setOcspRequestInterval(std::int32_t ocsp_request_interval) override;
+    KeyValue getOcspRequestIntervalKeyValue() override;
 
-    std::optional<std::string> getSeccLeafSubjectCommonName();
-    void setSeccLeafSubjectCommonName(const std::string& secc_leaf_subject_common_name);
-    std::optional<KeyValue> getSeccLeafSubjectCommonNameKeyValue();
+    std::optional<std::string> getSeccLeafSubjectCommonName() override;
+    void setSeccLeafSubjectCommonName(const std::string& secc_leaf_subject_common_name) override;
+    std::optional<KeyValue> getSeccLeafSubjectCommonNameKeyValue() override;
 
-    std::optional<std::string> getSeccLeafSubjectCountry();
-    void setSeccLeafSubjectCountry(const std::string& secc_leaf_subject_country);
-    std::optional<KeyValue> getSeccLeafSubjectCountryKeyValue();
+    std::optional<std::string> getSeccLeafSubjectCountry() override;
+    void setSeccLeafSubjectCountry(const std::string& secc_leaf_subject_country) override;
+    std::optional<KeyValue> getSeccLeafSubjectCountryKeyValue() override;
 
-    std::optional<std::string> getSeccLeafSubjectOrganization();
-    void setSeccLeafSubjectOrganization(const std::string& secc_leaf_subject_organization);
-    std::optional<KeyValue> getSeccLeafSubjectOrganizationKeyValue();
+    std::optional<std::string> getSeccLeafSubjectOrganization() override;
+    void setSeccLeafSubjectOrganization(const std::string& secc_leaf_subject_organization) override;
+    std::optional<KeyValue> getSeccLeafSubjectOrganizationKeyValue() override;
 
-    std::optional<std::string> getConnectorEvseIds();
-    void setConnectorEvseIds(const std::string& connector_evse_ids);
-    std::optional<KeyValue> getConnectorEvseIdsKeyValue();
+    std::optional<std::string> getConnectorEvseIds() override;
+    void setConnectorEvseIds(const std::string& connector_evse_ids) override;
+    std::optional<KeyValue> getConnectorEvseIdsKeyValue() override;
 
-    std::optional<bool> getAllowChargingProfileWithoutStartSchedule();
-    void setAllowChargingProfileWithoutStartSchedule(const bool allow);
-    std::optional<KeyValue> getAllowChargingProfileWithoutStartScheduleKeyValue();
+    std::optional<bool> getAllowChargingProfileWithoutStartSchedule() override;
+    void setAllowChargingProfileWithoutStartSchedule(bool allow) override;
+    std::optional<KeyValue> getAllowChargingProfileWithoutStartScheduleKeyValue() override;
 
-    std::int32_t getWaitForStopTransactionsOnResetTimeout();
-    void setWaitForStopTransactionsOnResetTimeout(const std::int32_t wait_for_stop_transactions_on_reset_timeout);
-    KeyValue getWaitForStopTransactionsOnResetTimeoutKeyValue();
+    std::int32_t getWaitForStopTransactionsOnResetTimeout() override;
+    void setWaitForStopTransactionsOnResetTimeout(std::int32_t wait_for_stop_transactions_on_reset_timeout) override;
+    KeyValue getWaitForStopTransactionsOnResetTimeoutKeyValue() override;
 
     // California Pricing Requirements
-    bool getCustomDisplayCostAndPriceEnabled();
-    KeyValue getCustomDisplayCostAndPriceEnabledKeyValue();
+    bool getCustomDisplayCostAndPriceEnabled() override;
+    KeyValue getCustomDisplayCostAndPriceEnabledKeyValue() override;
 
-    std::optional<std::uint32_t> getPriceNumberOfDecimalsForCostValues();
-    std::optional<KeyValue> getPriceNumberOfDecimalsForCostValuesKeyValue();
+    std::optional<std::uint32_t> getPriceNumberOfDecimalsForCostValues() override;
+    std::optional<KeyValue> getPriceNumberOfDecimalsForCostValuesKeyValue() override;
 
-    std::optional<std::string> getDefaultPriceText(const std::string& language);
-    TariffMessage getDefaultTariffMessage(bool offline);
-    ConfigurationStatus setDefaultPriceText(const CiString<50>& key, const CiString<500>& value);
-    KeyValue getDefaultPriceTextKeyValue(const std::string& language);
-    std::optional<std::vector<KeyValue>> getAllDefaultPriceTextKeyValues();
+    std::optional<std::string> getDefaultPriceText(const std::string& language) override;
+    TariffMessage getDefaultTariffMessage(bool offline) override;
+    ConfigurationStatus setDefaultPriceText(const CiString<50>& key, const CiString<500>& value) override;
+    KeyValue getDefaultPriceTextKeyValue(const std::string& language) override;
+    std::optional<std::vector<KeyValue>> getAllDefaultPriceTextKeyValues() override;
 
-    std::optional<std::string> getDefaultPrice();
-    ConfigurationStatus setDefaultPrice(const std::string& value);
-    std::optional<KeyValue> getDefaultPriceKeyValue();
+    std::optional<std::string> getDefaultPrice() override;
+    ConfigurationStatus setDefaultPrice(const std::string& value) override;
+    std::optional<KeyValue> getDefaultPriceKeyValue() override;
 
-    std::optional<std::string> getDisplayTimeOffset();
-    ConfigurationStatus setDisplayTimeOffset(const std::string& offset);
-    std::optional<KeyValue> getDisplayTimeOffsetKeyValue();
+    std::optional<std::string> getDisplayTimeOffset() override;
+    ConfigurationStatus setDisplayTimeOffset(const std::string& offset) override;
+    std::optional<KeyValue> getDisplayTimeOffsetKeyValue() override;
 
-    std::optional<std::string> getNextTimeOffsetTransitionDateTime();
-    ConfigurationStatus setNextTimeOffsetTransitionDateTime(const std::string& date_time);
-    std::optional<KeyValue> getNextTimeOffsetTransitionDateTimeKeyValue();
+    std::optional<std::string> getNextTimeOffsetTransitionDateTime() override;
+    ConfigurationStatus setNextTimeOffsetTransitionDateTime(const std::string& date_time) override;
+    std::optional<KeyValue> getNextTimeOffsetTransitionDateTimeKeyValue() override;
 
-    std::optional<std::string> getTimeOffsetNextTransition();
-    ConfigurationStatus setTimeOffsetNextTransition(const std::string& offset);
-    std::optional<KeyValue> getTimeOffsetNextTransitionKeyValue();
+    std::optional<std::string> getTimeOffsetNextTransition() override;
+    ConfigurationStatus setTimeOffsetNextTransition(const std::string& offset) override;
+    std::optional<KeyValue> getTimeOffsetNextTransitionKeyValue() override;
 
-    std::optional<bool> getCustomIdleFeeAfterStop();
-    void setCustomIdleFeeAfterStop(const bool& value);
-    std::optional<KeyValue> getCustomIdleFeeAfterStopKeyValue();
+    std::optional<bool> getCustomIdleFeeAfterStop() override;
+    void setCustomIdleFeeAfterStop(bool value) override;
+    std::optional<KeyValue> getCustomIdleFeeAfterStopKeyValue() override;
 
-    std::optional<bool> getCustomMultiLanguageMessagesEnabled();
-    std::optional<KeyValue> getCustomMultiLanguageMessagesEnabledKeyValue();
+    std::optional<bool> getCustomMultiLanguageMessagesEnabled() override;
+    std::optional<KeyValue> getCustomMultiLanguageMessagesEnabledKeyValue() override;
 
-    std::optional<std::string> getMultiLanguageSupportedLanguages();
-    std::optional<KeyValue> getMultiLanguageSupportedLanguagesKeyValue();
+    std::optional<std::string> getMultiLanguageSupportedLanguages() override;
+    std::optional<KeyValue> getMultiLanguageSupportedLanguagesKeyValue() override;
 
-    std::optional<std::string> getLanguage();
-    void setLanguage(const std::string& language);
-    std::optional<KeyValue> getLanguageKeyValue();
+    std::optional<std::string> getLanguage() override;
+    void setLanguage(const std::string& language) override;
+    std::optional<KeyValue> getLanguageKeyValue() override;
 
-    std::optional<std::int32_t> getWaitForSetUserPriceTimeout();
-    void setWaitForSetUserPriceTimeout(const std::int32_t wait_for_set_user_price_timeout);
-    std::optional<KeyValue> getWaitForSetUserPriceTimeoutKeyValue();
+    std::optional<std::int32_t> getWaitForSetUserPriceTimeout() override;
+    void setWaitForSetUserPriceTimeout(std::int32_t wait_for_set_user_price_timeout) override;
+    std::optional<KeyValue> getWaitForSetUserPriceTimeoutKeyValue() override;
 
     // Signed Meter Values
-    std::optional<KeyValue> getPublicKeyKeyValue(const uint32_t connector_id);
-    std::optional<std::vector<KeyValue>> getAllMeterPublicKeyKeyValues();
-    bool setMeterPublicKey(const int32_t connector_id, const std::string& public_key_pem);
+    std::optional<KeyValue> getPublicKeyKeyValue(std::uint32_t connector_id) override;
+    std::optional<std::vector<KeyValue>> getAllMeterPublicKeyKeyValues() override;
+    bool setMeterPublicKey(std::int32_t connector_id, const std::string& public_key_pem) override;
 
     // custom
-    std::optional<KeyValue> getCustomKeyValue(CiString<50> key);
-    ConfigurationStatus setCustomKey(CiString<50> key, CiString<500> value, bool force);
+    std::optional<KeyValue> getCustomKeyValue(const CiString<50>& key) override;
+    ConfigurationStatus setCustomKey(const CiString<50>& key, const CiString<500>& value, bool force) override;
 
-    std::optional<KeyValue> get(CiString<50> key);
+    std::optional<KeyValue> get(const CiString<50>& key) override;
 
-    std::vector<KeyValue> get_all_key_value();
+    std::vector<KeyValue> get_all_key_value() override;
 
-    std::optional<ConfigurationStatus> set(CiString<50> key, CiString<500> value);
+    std::optional<ConfigurationStatus> set(const CiString<50>& key, const CiString<500>& value) override;
 };
 
 } // namespace v16

@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <ocpp/v16/charge_point_configuration.hpp>
 #include <ocpp/v16/connector.hpp>
 #include <ocpp/v16/database_handler.hpp>
 #include <ocpp/v16/smart_charging.hpp>

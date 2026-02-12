@@ -16,6 +16,7 @@ namespace fs = std::filesystem;
 #include <ocpp/common/call_types.hpp>
 #include <ocpp/common/constants.hpp>
 #include <ocpp/common/evse_security_impl.hpp>
+#include <ocpp/v16/charge_point_configuration.hpp>
 #include <ocpp/v16/charge_point_state_machine.hpp>
 #include <ocpp/v16/smart_charging.hpp>
 #include <optional>

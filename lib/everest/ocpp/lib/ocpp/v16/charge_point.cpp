@@ -1,22 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
-#include <thread>
 
 #include <everest/logging.hpp>
 #include <ocpp/v16/charge_point.hpp>
-#include <ocpp/v16/charge_point_configuration.hpp>
+#include <ocpp/v16/charge_point_configuration_interface.hpp>
 #include <ocpp/v16/charge_point_impl.hpp>
 
 namespace ocpp {
 namespace v16 {
 
-ChargePoint::ChargePoint(const std::string& config, const fs::path& share_path, const fs::path& user_config_path,
+ChargePoint::ChargePoint(ChargePointConfigurationInterface& cfg, const fs::path& share_path,
                          const fs::path& database_path, const fs::path& sql_init_path, const fs::path& message_log_path,
                          const std::shared_ptr<EvseSecurity> evse_security,
                          const std::optional<SecurityConfiguration> security_configuration) {
-    this->charge_point =
-        std::make_unique<ChargePointImpl>(config, share_path, user_config_path, database_path, sql_init_path,
-                                          message_log_path, evse_security, security_configuration);
+    this->charge_point = std::make_unique<ChargePointImpl>(cfg, share_path, database_path, sql_init_path,
+                                                           message_log_path, evse_security, security_configuration);
 }
 
 ChargePoint::~ChargePoint() = default;

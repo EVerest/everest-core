@@ -5,8 +5,8 @@
 #include <ocpp/common/charging_station_base.hpp>
 
 namespace ocpp {
-ChargingStationBase::ChargingStationBase(const std::shared_ptr<EvseSecurity> evse_security,
-                                         const std::optional<SecurityConfiguration> security_configuration) {
+ChargingStationBase::ChargingStationBase(const std::shared_ptr<EvseSecurity>& evse_security,
+                                         const std::optional<SecurityConfiguration>& security_configuration) {
 
     if (evse_security != nullptr) {
         this->evse_security = evse_security;
