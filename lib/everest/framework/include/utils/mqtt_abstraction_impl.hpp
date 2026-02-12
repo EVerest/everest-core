@@ -26,9 +26,10 @@ constexpr auto MQTT_BUF_SIZE = 500 * std::size_t{1024};
 namespace Everest {
 /// \brief Contains a payload and the topic it was received on with additional QOS
 struct MessageWithQOS : Message {
-    QOS qos; ///< The Quality of Service level
+    QOS qos;     ///< The Quality of Service level
+    bool retain; ///< If the retain flag should be set on publishing this message
 
-    MessageWithQOS(const std::string& topic, const std::string& payload, QOS qos);
+    MessageWithQOS(const std::string& topic, const std::string& payload, QOS qos, bool retain);
 };
 
 ///

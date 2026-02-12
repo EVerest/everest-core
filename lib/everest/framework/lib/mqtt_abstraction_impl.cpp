@@ -29,8 +29,8 @@ namespace Everest {
 const auto mqtt_keep_alive = 600;
 const auto mqtt_get_timeout_ms = 5000; ///< Timeout for MQTT get in milliseconds
 
-MessageWithQOS::MessageWithQOS(const std::string& topic, const std::string& payload, QOS qos) :
-    Message{topic, payload}, qos(qos) {
+MessageWithQOS::MessageWithQOS(const std::string& topic, const std::string& payload, QOS qos, bool retain) :
+    Message{topic, payload}, qos(qos), retain(retain) {
 }
 
 MQTTAbstractionImpl::MQTTAbstractionImpl(const std::string& mqtt_server_address, const std::string& mqtt_server_port,
@@ -166,7 +166,7 @@ void MQTTAbstractionImpl::publish(const std::string& topic, const std::string& d
 
     if (!this->mqtt_is_connected) {
         const std::lock_guard<std::mutex> lock(messages_before_connected_mutex);
-        this->messages_before_connected.push_back(std::make_shared<MessageWithQOS>(topic, data, qos));
+        this->messages_before_connected.push_back(std::make_shared<MessageWithQOS>(topic, data, qos, retain));
         return;
     }
 
@@ -447,7 +447,7 @@ void MQTTAbstractionImpl::on_mqtt_connect() {
         const std::lock_guard<std::mutex> lock(messages_before_connected_mutex);
         this->mqtt_is_connected = true;
         for (auto& message : this->messages_before_connected) {
-            this->publish(message->topic, message->payload, message->qos);
+            this->publish(message->topic, message->payload, message->qos, message->retain);
         }
         this->messages_before_connected.clear();
     }
