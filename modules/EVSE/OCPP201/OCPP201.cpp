@@ -178,7 +178,7 @@ void OCPP201::init_evse_maps() {
         this->evse_hardware_capabilities_map[evse_id] = types::evse_board_support::HardwareCapabilities{};
         this->evse_supported_energy_transfer_modes[evse_id] = {};
         this->evse_service_renegotiation_supported[evse_id] = false;
-        this->evse_evcc_id[evse_id] = "";
+        (*this->evse_evcc_id.handle())[evse_id] = "";
     }
 }
 
@@ -1162,7 +1162,7 @@ void OCPP201::init_evse_subscriptions() {
                 this->evse_soc_map.handle()->at(evse_id) = ev_info.soc;
             }
             if (ev_info.evcc_id.has_value()) {
-                this->evse_evcc_id[evse_id] = ev_info.evcc_id.value();
+                this->evse_evcc_id.handle()->at(evse_id) = ev_info.evcc_id.value();
                 this->everest_device_model_storage->update_connected_ev_vehicle_id(evse_id, ev_info.evcc_id.value());
             }
         });
@@ -1337,8 +1337,12 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
     // yet been authorized by the CSMS
     auto authorized_id_token = get_authorized_id_token(session_event);
     if (authorized_id_token.has_value()) {
-        if (!this->evse_evcc_id[evse_id].empty()) {
-            update_evcc_id_token(authorized_id_token.value(), this->evse_evcc_id[evse_id], ocpp_protocol_version);
+        {
+            auto evse_evcc_id_handle = this->evse_evcc_id.handle();
+            if (!evse_evcc_id_handle->at(evse_id).empty()) {
+                update_evcc_id_token(authorized_id_token.value(), evse_evcc_id_handle->at(evse_id),
+                                     ocpp_protocol_version);
+            }
         }
         this->charge_point->on_authorized(evse_id, connector_id, authorized_id_token.value());
     }
@@ -1401,8 +1405,9 @@ void OCPP201::process_session_started(const int32_t evse_id, const int32_t conne
                          "session event";
     } else {
         id_token = conversions::to_ocpp_id_token(session_started.id_tag.value().id_token);
-        if (!this->evse_evcc_id[evse_id].empty()) {
-            update_evcc_id_token(id_token.value(), this->evse_evcc_id[evse_id], ocpp_protocol_version);
+        auto evse_evcc_id_handle = this->evse_evcc_id.handle();
+        if (!evse_evcc_id_handle->at(evse_id).empty()) {
+            update_evcc_id_token(id_token.value(), evse_evcc_id_handle->at(evse_id), ocpp_protocol_version);
         }
         remote_start_id = session_started.id_tag.value().request_id;
         if (session_started.id_tag.value().parent_id_token.has_value()) {
@@ -1444,7 +1449,7 @@ void OCPP201::process_session_finished(const int32_t evse_id, const int32_t conn
         transaction_data->trigger_reason = ocpp::v2::TriggerReasonEnum::EVCommunicationLost;
     }
     const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::EV_DISCONNECTED);
-    this->evse_evcc_id[evse_id] = "";
+    this->evse_evcc_id.handle()->at(evse_id) = "";
     this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
     this->charge_point->on_session_finished(evse_id, connector_id);
     this->everest_device_model_storage->update_connected_ev_available(evse_id, false);
@@ -1481,8 +1486,9 @@ void OCPP201::process_transaction_started(const int32_t evse_id, const int32_t c
     }
     transaction_data->remote_start_id = transaction_started.id_tag.request_id;
     auto id_token = conversions::to_ocpp_id_token(transaction_started.id_tag.id_token);
-    if (!this->evse_evcc_id[evse_id].empty()) {
-        update_evcc_id_token(id_token, this->evse_evcc_id[evse_id], ocpp_protocol_version);
+    auto evse_evcc_id_handle = this->evse_evcc_id.handle();
+    if (!evse_evcc_id_handle->at(evse_id).empty()) {
+        update_evcc_id_token(id_token, evse_evcc_id_handle->at(evse_id), ocpp_protocol_version);
     }
     transaction_data->id_token = id_token;
 
@@ -1530,8 +1536,9 @@ void OCPP201::process_transaction_finished(const int32_t evse_id, const int32_t 
         std::optional<ocpp::v2::IdToken> id_token = std::nullopt;
         if (transaction_finished.id_tag.has_value()) {
             id_token = conversions::to_ocpp_id_token(transaction_finished.id_tag.value().id_token);
-            if (!this->evse_evcc_id[evse_id].empty()) {
-                update_evcc_id_token(id_token.value(), this->evse_evcc_id[evse_id], ocpp_protocol_version);
+            auto evse_evcc_id_handle = this->evse_evcc_id.handle();
+            if (!evse_evcc_id_handle->at(evse_id).empty()) {
+                update_evcc_id_token(id_token.value(), evse_evcc_id_handle->at(evse_id), ocpp_protocol_version);
             }
         }
 

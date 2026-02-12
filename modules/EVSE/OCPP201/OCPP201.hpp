@@ -145,7 +145,7 @@ private:
     std::map<int32_t, types::evse_board_support::HardwareCapabilities> evse_hardware_capabilities_map;
     std::map<int32_t, std::vector<types::iso15118::EnergyTransferMode>> evse_supported_energy_transfer_modes;
     std::map<int32_t, bool> evse_service_renegotiation_supported;
-    std::map<int32_t, std::string> evse_evcc_id;
+    everest::lib::util::monitor<std::map<int32_t, std::string>> evse_evcc_id;
     std::atomic<ocpp::OcppProtocolVersion> ocpp_protocol_version{ocpp::OcppProtocolVersion::Unknown};
     int32_t event_id_counter{0};
     std::mutex evse_ready_mutex;
