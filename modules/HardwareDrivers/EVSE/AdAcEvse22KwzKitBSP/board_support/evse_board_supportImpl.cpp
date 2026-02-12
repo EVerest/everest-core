@@ -185,10 +185,6 @@ void evse_board_supportImpl::handle_ac_switch_three_phases_while_charging(bool& 
     EVLOG_warning << "AdAdEvse22KwzKitBSP doesn't support ac_switch_three_phases_while_charging, ignoring command.";
 }
 
-void evse_board_supportImpl::handle_evse_replug(int& value) {
-    EVLOG_warning << "AdAdEvse22KwzKitBSP doesn't support evse_replug, ignoring command.";
-}
-
 void evse_board_supportImpl::handle_enable(bool& value) {
     enabled = true;
     // Publish CP state once on enable

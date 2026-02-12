@@ -122,6 +122,8 @@ void EvseManager::init() {
         }
     }
 
+    latest_target_current_low_pass_last_update = std::chrono::steady_clock::now();
+
     store = std::unique_ptr<PersistentStore>(new PersistentStore(r_store, info.id));
 
     random_delay_enabled = config.uk_smartcharging_random_delay_enable;
@@ -391,7 +393,7 @@ void EvseManager::ready() {
 
             const auto no_energy_pause_mode = config.zero_power_allow_ev_to_ignore_pause
                                                   ? types::iso15118::NoEnergyPauseMode::AllowEvToIgnorePause
-                                                  : types::iso15118::NoEnergyPauseMode::PauseAfterPrecharge;
+                                                  : types::iso15118::NoEnergyPauseMode::PauseBeforeCableCheck;
             r_hlc[0]->call_no_energy_pause_charging(no_energy_pause_mode);
         });
 
@@ -721,8 +723,10 @@ void EvseManager::ready() {
                         target_changed = true;
                     }
 
+                    apply_new_target_voltage_current();
+
                     if (target_changed) {
-                        apply_new_target_voltage_current();
+
                         if (not contactor_open) {
                             powersupply_DC_on();
                         }
@@ -1357,7 +1361,8 @@ void EvseManager::ready() {
                        config.switch_3ph1ph_delay_s, config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms,
                        config.state_F_after_fault_ms, config.fail_on_powermeter_errors, config.raise_mrec9,
                        config.sleep_before_enabling_pwm_hlc_mode_ms,
-                       utils::get_session_id_type_from_string(config.session_id_type));
+                       utils::get_session_id_type_from_string(config.session_id_type),
+                       config.hlc_charge_loop_without_energy_timeout_s);
     }
 
     telemetryThreadHandle = std::thread([this]() {
@@ -1531,12 +1536,10 @@ int32_t EvseManager::get_reservation_id() {
 }
 
 void EvseManager::switch_DC_mode() {
-    charger->evse_replug();
     setup_fake_DC_mode();
 }
 
 void EvseManager::switch_AC_mode() {
-    charger->evse_replug();
     setup_AC_mode();
 }
 
@@ -1548,7 +1551,8 @@ void EvseManager::setup_fake_DC_mode() {
                    config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
                    config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms, config.state_F_after_fault_ms,
                    config.fail_on_powermeter_errors, config.raise_mrec9, config.sleep_before_enabling_pwm_hlc_mode_ms,
-                   utils::get_session_id_type_from_string(config.session_id_type));
+                   utils::get_session_id_type_from_string(config.session_id_type),
+                   config.hlc_charge_loop_without_energy_timeout_s);
 
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
@@ -1589,7 +1593,8 @@ void EvseManager::setup_AC_mode() {
                    config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
                    config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms, config.state_F_after_fault_ms,
                    config.fail_on_powermeter_errors, config.raise_mrec9, config.sleep_before_enabling_pwm_hlc_mode_ms,
-                   utils::get_session_id_type_from_string(config.session_id_type));
+                   utils::get_session_id_type_from_string(config.session_id_type),
+                   config.hlc_charge_loop_without_energy_timeout_s);
 
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
@@ -2491,8 +2496,25 @@ types::evse_manager::EVInfo EvseManager::get_ev_info() {
 }
 
 void EvseManager::apply_new_target_voltage_current() {
+
     if (latest_target_voltage > 0) {
-        powersupply_DC_set(latest_target_voltage, latest_target_current);
+        const double time_since_last_update =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
+                                                                  latest_target_current_low_pass_last_update)
+                .count();
+        if (time_since_last_update > 0) {
+            double diff_amp = (latest_target_current - latest_target_current_low_pass);
+            if (diff_amp > time_since_last_update / 1000. * config.dc_ramp_ampere_per_second) {
+                diff_amp = time_since_last_update / 1000. * config.dc_ramp_ampere_per_second;
+                latest_target_current_low_pass += diff_amp;
+            } else {
+                latest_target_current_low_pass = latest_target_current;
+            }
+        } else {
+            latest_target_current_low_pass = latest_target_current;
+        }
+
+        powersupply_DC_set(latest_target_voltage, latest_target_current_low_pass);
     }
 }
 

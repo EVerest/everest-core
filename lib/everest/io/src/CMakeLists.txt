@@ -19,11 +19,14 @@ target_sources(everest_io
         serial/serial.cpp
         serial/pty_handler.cpp
         serial/event_pty.cpp
+        mdns/mdns.cpp
+        mdns/mdns_socket.cpp
         mqtt/mosquitto_cpp.cpp
         mqtt/mqtt_client.cpp
         tun_tap/tap_handler.cpp
         tcp/tcp_socket.cpp
         netlink/vcan_netlink_manager.cpp
+        raw/raw_socket.cpp
 )
 
 target_include_directories(everest_io

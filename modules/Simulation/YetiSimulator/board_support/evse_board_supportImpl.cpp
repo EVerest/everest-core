@@ -65,10 +65,6 @@ void evse_board_supportImpl::handle_ac_switch_three_phases_while_charging(bool& 
     mod->module_state->use_three_phases_confirmed = value;
 }
 
-void evse_board_supportImpl::handle_evse_replug(int& _) {
-    EVLOG_error << "Replugging not supported";
-}
-
 void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
 }
 

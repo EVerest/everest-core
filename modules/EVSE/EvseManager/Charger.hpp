@@ -72,7 +72,6 @@ public:
         Idle,
         WaitingForAuthentication,
         PrepareCharging,
-        WaitingForEnergy,
         Charging,
         ChargingPausedEV,
         ChargingPausedEVSE,
@@ -80,8 +79,7 @@ public:
         Finished,
         T_step_EF,
         T_step_X1,
-        SwitchPhases,
-        Replug
+        SwitchPhases
     };
 
     enum class HlcTerminatePause {
@@ -107,7 +105,8 @@ public:
                float soft_over_current_measurement_noise_A, const int switch_3ph1ph_delay_s,
                const std::string switch_3ph1ph_cp_state, const int soft_over_current_timeout_ms,
                const int _state_F_after_fault_ms, const bool fail_on_powermeter_errors, const bool raise_mrec9,
-               const int sleep_before_enabling_pwm_hlc_mode_ms, const utils::SessionIdType session_id_type);
+               const int sleep_before_enabling_pwm_hlc_mode_ms, const utils::SessionIdType session_id_type,
+               const int hlc_charge_loop_without_energy_timeout_s);
 
     void enable_disable_initial_state_publish();
     bool enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source);
@@ -136,17 +135,10 @@ public:
     bool switch_three_phases_while_charging(bool n);
 
     bool pause_charging();
-    bool pause_charging_wait_for_power();
     bool resume_charging();
-    bool resume_charging_power_available();
 
     bool cancel_transaction(const types::evse_manager::StopTransactionRequest&
                                 request); // cancel transaction ahead of time when car is still plugged
-
-    // execute a virtual replug sequence. Does NOT generate a Car plugged in event etc,
-    // since the session is not restarted. It can be used to e.g. restart the ISO session
-    // and switch between AC and DC mode within a session.
-    bool evse_replug();
 
     void set_current_drawn_by_vehicle(float l1, float l2, float l3);
 
@@ -158,6 +150,7 @@ public:
     sigslot::signal<types::authorization::ProvidedIdToken> signal_transaction_started_event;
     sigslot::signal<types::evse_manager::StopTransactionReason, std::optional<types::authorization::ProvidedIdToken>>
         signal_transaction_finished_event;
+    sigslot::signal<types::evse_manager::ChargingPausedEVSEReasons> signal_charging_paused_evse_event;
 
     sigslot::signal<> signal_ac_with_soc_timeout;
 
@@ -277,6 +270,8 @@ private:
 
     void process_event(CPEvent event);
 
+    void set_state(EvseState s);
+
     // This mutex locks all variables related to the state machine
     Everest::timed_mutex_traceable state_machine_mutex;
 
@@ -296,14 +291,16 @@ private:
             stop_transaction_id_token; // only set in case transaction was stopped locally
         types::authorization::ProvidedIdToken id_token;
         types::authorization::ValidationResult validation_result;
-        bool authorized;
+        std::atomic_bool flag_authorized{false};
+        std::atomic_bool flag_paused_by_evse{false};
+        std::atomic_bool flag_ev_plugged_in{false};
         // set to true if auth is from PnC, otherwise to false (EIM)
         bool authorized_pnc;
         bool matching_started;
         float max_current;
         std::chrono::time_point<std::chrono::steady_clock> max_current_valid_until;
         float max_current_cable{0.};
-        bool transaction_active;
+        std::atomic_bool flag_transaction_active;
         bool session_active;
         std::string session_uuid;
         bool connector_enabled;
@@ -349,6 +346,9 @@ private:
         int sleep_before_enabling_pwm_hlc_mode_ms{1000};
         // type used to generate session ids
         utils::SessionIdType session_id_type{utils::SessionIdType::UUID};
+        // Timeout in seconds that defines for how long the EVSE allows the ISO charge loop (AC: ChargingStatus, DC:
+        // CurrentDemand)
+        int hlc_charge_loop_without_energy_timeout_s{300};
     } config_context;
 
     // Used by different threads, but requires no complete state machine locking
@@ -394,8 +394,13 @@ private:
         std::chrono::time_point<std::chrono::steady_clock> ac_x1_fallback_nominal_timeout_started;
         bool auth_received_printed{false};
 
+        bool hlc_charge_loop_no_energy_timeout_running{false};
+        std::chrono::time_point<std::chrono::steady_clock> iso_charge_loop_no_energy_timeout_started;
+
         std::chrono::time_point<std::chrono::steady_clock> fatal_error_became_active;
         bool fatal_error_timer_running{false};
+
+        types::evse_manager::ChargingPausedEVSEReasons last_charging_paused_evse_reasons;
     } internal_context;
 
     // main Charger thread
@@ -437,7 +442,8 @@ private:
     // after the wake-up sequence.
     static constexpr int STAY_IN_X1_AFTER_TSTEP_EF_MS = 750;
     static constexpr int WAIT_FOR_ENERGY_IN_AUTHLOOP_TIMEOUT_MS = 5000;
-    static constexpr int AC_X1_FALLBACK_TO_NOMINAL_TIMEOUT_MS = 3000;
+    static constexpr int AC_X1_FALLBACK_TO_NOMINAL_TIMEOUT_MS = 10000; // TODO: is this reasonable?
+    static constexpr int STOPPING_CHARGING_TIMEOUT_MS = 20000;
 
     types::evse_manager::EnableDisableSource active_enable_disable_source{
         types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Unassigned, 10000};

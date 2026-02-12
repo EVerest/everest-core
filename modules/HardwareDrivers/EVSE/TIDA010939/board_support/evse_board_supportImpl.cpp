@@ -172,9 +172,6 @@ void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
 void evse_board_supportImpl::handle_ac_switch_three_phases_while_charging(bool& value) {
 }
 
-void evse_board_supportImpl::handle_evse_replug(int& value) {
-}
-
 void evse_board_supportImpl::handle_enable(bool& value) {
     enabled = true;
     // Publish CP state once on enable

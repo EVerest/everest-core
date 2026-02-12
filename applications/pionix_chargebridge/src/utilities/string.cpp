@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 #include <charge_bridge/utilities/string.hpp>
+#include <sstream>
 
 namespace charge_bridge::utilities {
 bool string_starts_with(std::string_view const& str, std::string_view const& pattern) {
@@ -39,6 +40,20 @@ std::string& replace_all_in_place(std::string& source, std::string const& placeh
 std::string replace_all(std::string const& source, std::string const& placeholder, std::string const& substitute) {
     std::string result = source;
     return replace_all_in_place(result, placeholder, substitute);
+}
+
+std::set<std::string> csv_to_set(std::string const& str) {
+    std::set<std::string> result;
+    std::stringstream ss(str);
+    std::string item;
+
+    while (std::getline(ss, item, ',')) {
+        if (!item.empty()) {
+            result.insert(item);
+        }
+    }
+
+    return result;
 }
 
 } // namespace charge_bridge::utilities

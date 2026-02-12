@@ -223,8 +223,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
                     << "Received ChargingPausedEV";
         this->charge_point->on_suspend_charging_ev(ocpp_connector_id);
-    } else if (session_event.event == types::evse_manager::SessionEventEnum::ChargingPausedEVSE or
-               session_event.event == types::evse_manager::SessionEventEnum::WaitingForEnergy) {
+    } else if (session_event.event == types::evse_manager::SessionEventEnum::ChargingPausedEVSE) {
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
                     << "Received ChargingPausedEVSE";
         this->charge_point->on_suspend_charging_evse(ocpp_connector_id);
@@ -232,10 +231,9 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
                     << "Received SwitchingPhases";
         this->charge_point->on_suspend_charging_evse(ocpp_connector_id, SWITCHING_PHASES_REASON);
-    } else if (session_event.event == types::evse_manager::SessionEventEnum::ChargingStarted ||
-               session_event.event == types::evse_manager::SessionEventEnum::ChargingResumed) {
+    } else if (session_event.event == types::evse_manager::SessionEventEnum::ChargingStarted) {
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
-                    << "Received ChargingResumed";
+                    << "Received ChargingStarted";
         this->charge_point->on_resume_charging(ocpp_connector_id);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::TransactionFinished) {
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "

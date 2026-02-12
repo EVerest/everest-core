@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include <everest/io/event/unique_fd.hpp>
 
@@ -30,6 +31,34 @@ event::unique_fd open_udp_server_socket(std::uint16_t port);
 event::unique_fd open_udp_client_socket(std::string const& host, std::uint16_t port);
 
 /**
+ * @brief Open a UDP socket with <a href="https://man7.org/linux/man-pages/man7/ip.7.html">multicast</a>
+ * enabled
+ * @details Description
+ * @param[in] multicast_group The multicast group to join
+ * @param[in] port Port to listen to.
+ * @param[in] interface_address The IP address of the interface
+ * @param[in] listen_address IP adress to listen for incoming traffic
+ * @param[in] reuse_address 'True' if reuse of address is required
+ * @param[in] reuse_port 'True' if reuse of port is required
+ * @return The managed file descriptor of the socket
+ * @throws std::runtime_error if the operation fails.
+ */
+event::unique_fd open_udp_multicast_socket(std::string const& multicast_group, std::uint16_t port,
+                                           std::string interface_address, std::string listen_address,
+                                           bool reuse_address, bool reuse_port);
+
+/**
+ * @brief Open a UDP socket for
+ * <a href="https://datatracker.ietf.org/doc/html/rfc6762">Multicast DNS</a>
+ * @details This creates a UDP socket for mDNS discovery. The socket is bound
+ * to the specified interface and messages are only send on that interface.
+ * @param[in] interface_name The name of interface
+ * @return The managed file descriptor of the socket
+ * @throws std::runtime_error if the operation fails.
+ */
+event::unique_fd open_mdns_socket(std::string const& interface_name);
+
+/**
  * @brief Open a TCP socket in client mode
  * @param[in] host The host to connect to
  * @param[in] port The port to listen to
@@ -47,6 +76,14 @@ event::unique_fd open_tcp_socket(const std::string& host, std::uint16_t port);
  * @throws std::runtime_error if the operation fails.
  */
 event::unique_fd open_tcp_socket_with_timeout(const std::string& host, std::uint16_t port, unsigned int timeout_ms);
+
+/**
+ * @brief Open a raw socket in promiscuous mode
+ * @param[in] if_name The name of the interface
+ * @return The managed file descriptor of the socket
+ * @throws std::runtime_error if the operation fails.
+ */
+event::unique_fd open_raw_promiscuous_socket(std::string const& if_name);
 
 /**
  * @brief Enable <a href="https://man7.org/linux/man-pages/man7/tcp.7.html">TCP_NODELAY</a> on a socket
@@ -255,5 +292,65 @@ int poll_until_timeout(int fd, uint32_t timeout_ms);
  * @return '0' on success, '-1' on error. In the error case, errno is set accordingly
  */
 int connect_with_timeout(int fd, const struct sockaddr* addr, uint32_t addrlen, unsigned int timeout_ms);
+
+/**
+ * @brief Set <a href="https://man7.org/linux/man-pages/man7/socket.7.html">reuse address<a>
+ * flag on socket
+ * @param[in] fd The filedescriptor of a socket.
+ */
+void set_reuse_address(int fd);
+
+/**
+ * @brief Set <a href="https://man7.org/linux/man-pages/man7/socket.7.html">reuse port<a>
+ * flag on socket
+ * @param[in] fd The filedescriptor of a socket.
+ */
+void set_reuse_port(int fd);
+
+/**
+ * @brief Uses <a href="https://man7.org/linux/man-pages/man2/bind.2.html">bind</a> to
+ * to adding an address and port to the socket.
+ * @details Description
+ * @param[in] fd The filedescriptor of the socket
+ * @param[in] ip IP address
+ * @param[in] port Port
+ */
+void bind_socket_ip4(int fd, std::string const& ip, std::uint16_t port);
+
+/**
+ * @brief Enable <a href="https://man7.org/linux/man-pages/man7/ip.7.html">multicast</a> for a UDP socket
+ * @details This sets the local device for the multicast socket and joins the multicast group
+ * @param[in] fd The filedescriptor of the socket
+ * @param[in] multicast_ip The IP of the multicast group to be joined.
+ * @param[in] interface_ip The IP of the local interface
+ */
+void set_udp_multicast(int fd, std::string const& multicast_ip, std::string const& interface_ip);
+
+/**
+ * @brief Convert string representation of an IP to numeric representation
+ * @param[in] ip The string representation
+ * @return The numeric representation
+ */
+std::uint32_t ip_to_s_addr(std::string const& ip);
+
+struct if_info {
+    std::string name;
+    std::string ipv4;
+};
+
+/**
+ * @brief Get the address of the supplied interface
+ * @param[in] name The name of the interface
+ * @return The IP adress of the interface
+ * @throws std::runtime_error if the operation fails.
+ */
+std::string get_interface_address(std::string const& name);
+
+/**
+ * @brief Get all interfaces and their adresses
+ * @return The list of interfaces and adresses.
+ * @throws std::runtime_error if the operation fails.
+ */
+std::vector<if_info> get_all_interaces();
 
 } // namespace everest::lib::io::socket

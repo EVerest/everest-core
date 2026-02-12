@@ -234,6 +234,26 @@ void evse_managerImpl::ready() {
             publish_session_event(se);
         });
 
+    mod->charger->signal_charging_paused_evse_event.connect(
+        [this](types::evse_manager::ChargingPausedEVSEReasons reason) {
+            types::evse_manager::SessionEvent se;
+
+            se.event = types::evse_manager::SessionEventEnum::ChargingPausedEVSE;
+            se.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+
+            const auto session_uuid = this->mod->charger->get_session_id();
+
+            types::evse_manager::ChargingStateChangedEvent charging_state_changed_event;
+            charging_state_changed_event.meter_value = mod->get_latest_powermeter_data_billing();
+            se.charging_state_changed_event = charging_state_changed_event;
+
+            se.uuid = session_uuid;
+
+            se.charging_paused_evse = reason;
+
+            publish_session_event(se);
+        });
+
     mod->charger->signal_simple_event.connect([this](const types::evse_manager::SessionEventEnum& e) {
         types::evse_manager::SessionEvent se;
 
@@ -261,8 +281,7 @@ void evse_managerImpl::ready() {
             se.source = mod->charger->get_last_enable_disable_source();
         } else if (e == types::evse_manager::SessionEventEnum::ChargingPausedEV or
                    e == types::evse_manager::SessionEventEnum::ChargingPausedEVSE or
-                   e == types::evse_manager::SessionEventEnum::ChargingStarted or
-                   e == types::evse_manager::SessionEventEnum::ChargingResumed) {
+                   e == types::evse_manager::SessionEventEnum::ChargingStarted) {
             types::evse_manager::ChargingStateChangedEvent charging_state_changed_event;
             charging_state_changed_event.meter_value = mod->get_latest_powermeter_data_billing();
             se.charging_state_changed_event = charging_state_changed_event;

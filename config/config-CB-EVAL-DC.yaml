@@ -113,7 +113,6 @@ active_modules:
     config_module:
       device: cb_plc
       tls_security: prohibit
-      supported_DIN70121: false
     connections: {}
     module: EvseV2G
     connections:

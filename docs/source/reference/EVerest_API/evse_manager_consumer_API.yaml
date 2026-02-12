@@ -1314,7 +1314,7 @@ components:
         charging_state_changed_event:
           description: >-
             Data for ChargingStateChangedEvent. Shall be set for the following SessionEventEnums:
-              ChargingStarted, ChargingResumed, ChargingPausedEV, Charging
+              ChargingStarted, ChargingPausedEV, Charging
           type: object
           $ref: '#/components/schemas/ChargingStateChangedEvent'
         authorization_event:
@@ -1343,7 +1343,6 @@ components:
         - ChargingPausedEV: Signaled when charging is paused by the EV
         - WaitingForEnergy: Waiting for ernergy manager
         - ChargingPausedEVSE: Signaled when charging is paused by the EVSE
-        - ChargingResumed: Charging has resumed from a pause
         - StoppingCharging: EVSE has started to stop the charging process. DC: CurrentDemand has finished, now doing WeldingCheck etc, AC: Wait for car to return to state B or A
         - ChargingFinished: Charging is finished. Essentially the same as TransactionFinished, but emitted for clarity
         - TransactionFinished: Signaled when the transaction finished. Transaction finishes at the point where one of the preconditions for charging irrevocably becomes false: When a user swipes to stop the transaction and the stop is authorized.
@@ -1369,7 +1368,6 @@ components:
         - ChargingPausedEV
         - ChargingPausedEVSE
         - WaitingForEnergy
-        - ChargingResumed
         - StoppingCharging
         - ChargingFinished
         - TransactionFinished

@@ -51,7 +51,6 @@ void SessionInfo::update_state(const types::evse_manager::SessionEvent& session_
         case Event::TransactionStarted:
             this->handle_transaction_started(session_event);
             break;
-        case Event::ChargingResumed:
         case Event::ChargingStarted:
             this->ext.state = EvseStateEnum::Charging;
             break;
@@ -60,9 +59,6 @@ void SessionInfo::update_state(const types::evse_manager::SessionEvent& session_
             break;
         case Event::ChargingPausedEVSE:
             this->ext.state = EvseStateEnum::ChargingPausedEVSE;
-            break;
-        case Event::WaitingForEnergy:
-            this->ext.state = EvseStateEnum::WaitingForEnergy;
             break;
         case Event::ChargingFinished:
             this->ext.state = EvseStateEnum::Finished;
@@ -82,8 +78,6 @@ void SessionInfo::update_state(const types::evse_manager::SessionEvent& session_
             break;
         case Event::ReservationStart:
         case Event::ReservationEnd:
-        case Event::ReplugStarted:
-        case Event::ReplugFinished:
         default:
             break;
         }

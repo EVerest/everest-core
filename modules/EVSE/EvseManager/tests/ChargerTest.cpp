@@ -675,8 +675,6 @@ void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reas
 double IECStateMachine::read_pp_ampacity() {
     return 0.0;
 }
-void IECStateMachine::evse_replug(int ms) {
-}
 void IECStateMachine::switch_three_phases_while_charging(bool n) {
 }
 void IECStateMachine::setup(bool has_ventilation) {

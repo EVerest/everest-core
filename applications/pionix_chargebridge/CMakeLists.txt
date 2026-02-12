@@ -11,6 +11,7 @@ add_executable(pionix_chargebridge
   src/everest_api/api_connector.cpp
   src/everest_api/evse_bsp_api.cpp
   src/everest_api/ovm_api.cpp
+  src/everest_api/ev_bsp_api.cpp
 
   src/firmware_update/sync_fw_updater.cpp
 
@@ -25,11 +26,12 @@ add_executable(pionix_chargebridge
 
   src/can_bridge.cpp
   src/charge_bridge.cpp
-  src/evse_bridge.cpp
+  src/bsp_bridge.cpp
   src/gpio_bridge.cpp
   src/heartbeat_service.cpp
   src/plc_bridge.cpp
   src/serial_bridge.cpp
+  src/discovery.cpp
 
   main.cpp
 )
@@ -62,3 +64,5 @@ install (TARGETS pionix_chargebridge)
 install (FILES "${CMAKE_CURRENT_SOURCE_DIR}/${cb_firmware_binary}" DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/chargebridge/firmware)
 install (FILES "${CMAKE_CURRENT_SOURCE_DIR}/config/config-CB-EVAL.yaml" DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/chargebridge RENAME "config-CB-EVAL.yaml-example")
 install (FILES "${CMAKE_CURRENT_SOURCE_DIR}/config/config-CB-SAT-AC.yaml" DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/chargebridge RENAME "config-CB-SAT-AC.yaml-example")
+install (FILES "${CMAKE_CURRENT_SOURCE_DIR}/config/config-CB-EVAL-EV.yaml" DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/chargebridge RENAME "config-CB-EVAL-EV.yaml-example")
+install (FILES "${CMAKE_CURRENT_SOURCE_DIR}/config/config-CB-EVAL-SIM.yaml" DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/chargebridge RENAME "config-CB-EVAL-SIM.yaml-example")

@@ -185,9 +185,6 @@ void evse_board_supportImpl::handle_ac_switch_three_phases_while_charging(bool& 
     mod->serial.set_number_of_phases(value);
 }
 
-void evse_board_supportImpl::handle_evse_replug(int& value) {
-}
-
 void evse_board_supportImpl::handle_enable(bool& value) {
     enabled = true;
     // Publish CP state once on enable
