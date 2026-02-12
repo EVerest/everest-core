@@ -231,5 +231,5 @@ properties:
     default: {}
     # don't allow arbitrary additional properties
     additionalProperties: false
-  
+
   x-module-layout: {}
