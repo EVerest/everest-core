@@ -3,7 +3,6 @@
 #pragma once
 
 #include <optional>
-#include <vector>
 
 #include "common_types.hpp"
 
@@ -21,7 +20,7 @@ struct VasSelectedService {
     uint16_t parameter_set_id;
 };
 
-using VasSelectedServiceList = std::vector<VasSelectedService>; // Max: 16
+using VasSelectedServiceList = everest::lib::util::fixed_vector<VasSelectedService, 16>; // Max: 16
 
 } // namespace datatypes
 

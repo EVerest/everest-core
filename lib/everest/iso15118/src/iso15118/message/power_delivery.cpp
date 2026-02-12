@@ -33,7 +33,6 @@ template <> void convert(const struct iso20_EVPowerProfileType& in, datatypes::P
     }
 
     auto& entries_in = in.EVPowerProfileEntries.EVPowerProfileEntry;
-    out.entries.reserve(entries_in.arrayLen);
     for (auto i = 0; i < entries_in.arrayLen; ++i) {
         auto& entry_out = out.entries.emplace_back();
         const auto& entry_in = entries_in.array[i];

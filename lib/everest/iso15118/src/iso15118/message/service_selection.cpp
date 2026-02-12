@@ -18,7 +18,6 @@ template <> void convert(const struct iso20_ServiceSelectionReqType& in, Service
 
     if (in.SelectedVASList_isUsed == true) {
         auto& vas_list_out = out.selected_vas_list.emplace();
-        vas_list_out.reserve(in.SelectedVASList.SelectedService.arrayLen);
 
         for (size_t i = 0; i < in.SelectedVASList.SelectedService.arrayLen; i++) {
             const auto& item_in = in.SelectedVASList.SelectedService.array[i];

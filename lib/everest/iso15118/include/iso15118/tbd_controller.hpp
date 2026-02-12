@@ -35,8 +35,9 @@ public:
 
     void send_control_event(const d20::ControlEvent&);
 
-    void update_authorization_services(const std::vector<message_20::datatypes::Authorization>& services,
-                                       bool cert_install_service);
+    void update_authorization_services(
+        const everest::lib::util::fixed_vector<message_20::datatypes::Authorization, 2>& services,
+        bool cert_install_service);
     void update_dc_limits(const d20::DcTransferLimits&);
     void update_powersupply_limits(const d20::DcTransferLimits&);
     void update_energy_modes(const std::vector<message_20::datatypes::ServiceCategory>&);

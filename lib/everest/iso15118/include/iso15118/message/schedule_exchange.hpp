@@ -79,7 +79,7 @@ struct EVPowerScheduleEntry {
 
 struct EVPowerSchedule {
     uint64_t time_anchor;
-    std::vector<EVPowerScheduleEntry> entries; // max 1024
+    everest::lib::util::fixed_vector<EVPowerScheduleEntry, 1024> entries; // max 1024
 };
 
 struct EVPriceRule {
@@ -89,14 +89,14 @@ struct EVPriceRule {
 
 struct EVPriceRuleStack {
     uint32_t duration;
-    std::vector<EVPriceRule> price_rules; // max 8
+    everest::lib::util::fixed_vector<EVPriceRule, 8> price_rules; // max 8
 };
 
 struct EVAbsolutePriceSchedule {
     uint64_t time_anchor;
     Curreny currency;
     Identifier price_algorithm;
-    std::vector<EVPriceRuleStack> price_rule_stacks; // max 1024
+    everest::lib::util::fixed_vector<EVPriceRuleStack, 1024> price_rule_stacks; // max 1024
 };
 
 struct EVEnergyOffer {

@@ -15,9 +15,9 @@ namespace iso15118::d20::state {
 
 namespace dt = message_20::datatypes;
 
-message_20::AuthorizationSetupResponse handle_request(const message_20::AuthorizationSetupRequest& req,
-                                                      d20::Session& session, bool cert_install_service,
-                                                      const std::vector<dt::Authorization>& authorization_services) {
+message_20::AuthorizationSetupResponse
+handle_request(const message_20::AuthorizationSetupRequest& req, d20::Session& session, bool cert_install_service,
+               const everest::lib::util::fixed_vector<dt::Authorization, 2>& authorization_services) {
 
     auto res = message_20::AuthorizationSetupResponse(); // default mandatory values [V2G20-736]
 

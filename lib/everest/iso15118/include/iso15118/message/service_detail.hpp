@@ -2,7 +2,7 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 #pragma once
 
-#include <string>
+#include <variant>
 #include <vector>
 
 #include "common_types.hpp"
@@ -31,7 +31,7 @@ struct ParameterSet {
     ParameterSet(uint16_t _id, const ParkingParameterList& list);
 };
 
-using ServiceParameterList = std::vector<ParameterSet>; // Max: 32
+using ServiceParameterList = everest::lib::util::fixed_vector<ParameterSet, 32>; // Max: 32
 
 } // namespace datatypes
 

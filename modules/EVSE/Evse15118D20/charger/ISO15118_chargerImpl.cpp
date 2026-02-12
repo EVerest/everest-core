@@ -704,7 +704,7 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
                                                 [[maybe_unused]] bool& central_contract_validation_allowed) {
     std::scoped_lock lock(GEL);
 
-    std::vector<dt::Authorization> auth_services;
+    everest::lib::util::fixed_vector<dt::Authorization, 2> auth_services;
 
     for (auto& option : payment_options) {
         if (option == types::iso15118::PaymentOption::ExternalPayment) {

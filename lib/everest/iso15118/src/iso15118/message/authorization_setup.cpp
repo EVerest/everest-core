@@ -18,8 +18,6 @@ template <> void convert(const struct iso20_AuthorizationSetupResType& in, Autho
 
     cb_convert_enum(in.ResponseCode, out.response_code);
 
-    out.authorization_services.resize(in.AuthorizationServices.arrayLen);
-
     for (uint8_t element = 0; element < in.AuthorizationServices.arrayLen; element++) {
         cb_convert_enum(in.AuthorizationServices.array[element], out.authorization_services.at(element));
     }
@@ -45,7 +43,7 @@ template <> void convert(const AuthorizationSetupRequest& in, iso20_Authorizatio
 }
 
 struct AuthorizationModeVisitor {
-    AuthorizationModeVisitor(iso20_AuthorizationSetupResType& out_) : out(out_){};
+    AuthorizationModeVisitor(iso20_AuthorizationSetupResType& out_) : out(out_) {};
     void operator()([[maybe_unused]] const datatypes::EIM_ASResAuthorizationMode& in) {
         CB_SET_USED(out.EIM_ASResAuthorizationMode);
         init_iso20_EIM_ASResAuthorizationModeType(&out.EIM_ASResAuthorizationMode);

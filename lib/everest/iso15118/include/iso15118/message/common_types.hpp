@@ -6,8 +6,9 @@
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <variant>
 #include <vector>
+
+#include <everest/util/vector/fixed_vector.hpp>
 
 namespace iso15118::message_20 {
 
@@ -34,8 +35,8 @@ using MeterSignature = std::string; // Base64 encoded, MaxLength: 64
 static constexpr auto GEN_CHALLENGE_LENGTH = 16;
 using GenChallenge = std::array<uint8_t, GEN_CHALLENGE_LENGTH>; // Base64 encoded, MaxLength: 16
 
-using Certificate = std::string;                 // Base64 encoded, MaxLength: 1600
-using SubCertificate = std::vector<Certificate>; // Max: 3
+using Certificate = std::string;                                         // Base64 encoded, MaxLength: 1600
+using SubCertificate = everest::lib::util::fixed_vector<Certificate, 3>; // Max: 3
 
 enum class ResponseCode {
     OK = 0,
@@ -322,7 +323,7 @@ struct Receipt {
     std::optional<DetailedCost> occupancy_costs;
     std::optional<DetailedCost> additional_service_costs;
     std::optional<DetailedCost> overstay_costs;
-    std::vector<DetailedTax> tax_costs; // 0 to 10 elements! // FIXME(sl): optional?
+    everest::lib::util::fixed_vector<DetailedTax, 10> tax_costs; // 0 to 10 elements! // FIXME(sl): optional?
 };
 
 struct X509IssuerSerial {

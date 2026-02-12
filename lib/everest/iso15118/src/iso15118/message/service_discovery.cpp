@@ -28,7 +28,6 @@ template <> void convert(const struct iso20_ServiceDiscoveryResType& in, Service
 
     // remove the default AC service
     out.energy_transfer_service_list.clear();
-    out.energy_transfer_service_list.reserve(in.EnergyTransferServiceList.Service.arrayLen);
 
     for (auto i = 0; i < in.EnergyTransferServiceList.Service.arrayLen; i++) {
         const auto& service = in.EnergyTransferServiceList.Service.array[i];

@@ -168,7 +168,6 @@ template <> void convert(const struct iso20_ac_ReceiptType& in, datatypes::Recei
     if (in.TaxCosts.arrayLen > 10) {
         throw std::runtime_error("tax costs array is too large");
     }
-    out.tax_costs.resize(in.TaxCosts.arrayLen);
     for (std::size_t i = 0; i < in.TaxCosts.arrayLen; ++i) {
         convert(in.TaxCosts.array[i], out.tax_costs[i]);
     }
@@ -343,7 +342,7 @@ struct ControlModeVisitor {
     using DynamicCM = datatypes::Dynamic_AC_CLResControlMode;
     using BPT_DynamicCM = datatypes::BPT_Dynamic_AC_CLResControlMode;
 
-    ControlModeVisitor(iso20_ac_AC_ChargeLoopResType& res_) : res(res_){};
+    ControlModeVisitor(iso20_ac_AC_ChargeLoopResType& res_) : res(res_) {};
 
     void operator()(const ScheduledCM& in) {
         auto& out = res.Scheduled_AC_CLResControlMode;
@@ -433,7 +432,7 @@ struct ModeRequestVisitor {
     using BPT_DynamicCM = datatypes::BPT_Dynamic_AC_CLReqControlMode;
 
 public:
-    ModeRequestVisitor(iso20_ac_AC_ChargeLoopReqType& req_) : req(req_){};
+    ModeRequestVisitor(iso20_ac_AC_ChargeLoopReqType& req_) : req(req_) {};
 
     void operator()(const ScheduledCM in) {
         init_iso20_ac_Scheduled_AC_CLReqControlModeType(&req.Scheduled_AC_CLReqControlMode);

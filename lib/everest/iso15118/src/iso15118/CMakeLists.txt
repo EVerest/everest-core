@@ -43,11 +43,11 @@ target_sources(iso15118
         d20/state/dc_cable_check.cpp
         d20/state/dc_pre_charge.cpp
         d20/state/power_delivery.cpp
-        d20/state/dc_charge_loop.cpp        
+        d20/state/dc_charge_loop.cpp
         d20/state/dc_welding_detection.cpp
         d20/state/ac_charge_loop.cpp
         d20/state/session_stop.cpp
-        
+
         message/variant.cpp
         message/supported_app_protocol.cpp
         message/session_setup.cpp
@@ -68,7 +68,7 @@ target_sources(iso15118
         message/dc_welding_detection.cpp
         message/session_stop.cpp
 
-        tbd_controller.cpp    
+        tbd_controller.cpp
 )
 
 target_link_libraries(iso15118
@@ -76,6 +76,7 @@ target_link_libraries(iso15118
         # FIXME (aw): would be nice if we could make this private!
         cbv2g::tp
         cbv2g::iso20
+        everest::util
     PRIVATE
         Threads::Threads
 )

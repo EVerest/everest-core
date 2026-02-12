@@ -2,18 +2,17 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 #pragma once
 
-#include <array>
 #include <optional>
-#include <string>
 #include <variant>
-#include <vector>
+
+#include <everest/util/vector/fixed_vector.hpp>
 
 #include "common_types.hpp"
 
 namespace iso15118::message_20 {
 
 namespace datatypes {
-using SupportedProvidersList = std::vector<Name>; // [0 - 128]
+using SupportedProvidersList = everest::lib::util::fixed_vector<Name, 128>; // [0 - 128]
 
 struct EIM_ASResAuthorizationMode {};
 struct PnC_ASResAuthorizationMode {
@@ -31,7 +30,7 @@ struct AuthorizationSetupResponse {
     Header header;
     datatypes::ResponseCode response_code;
 
-    std::vector<datatypes::Authorization> authorization_services{datatypes::Authorization::EIM};
+    everest::lib::util::fixed_vector<datatypes::Authorization, 2> authorization_services{datatypes::Authorization::EIM};
     bool certificate_installation_service{false};
     std::variant<datatypes::EIM_ASResAuthorizationMode, datatypes::PnC_ASResAuthorizationMode> authorization_mode =
         datatypes::EIM_ASResAuthorizationMode();

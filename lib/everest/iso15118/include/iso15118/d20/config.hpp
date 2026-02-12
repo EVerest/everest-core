@@ -30,7 +30,7 @@ struct BptSetupConfig {
 struct EvseSetupConfig {
     std::string evse_id;
     std::vector<message_20::datatypes::ServiceCategory> supported_energy_services;
-    std::vector<message_20::datatypes::Authorization> authorization_services;
+    everest::lib::util::fixed_vector<message_20::datatypes::Authorization, 2> authorization_services;
     std::vector<uint16_t> supported_vas_services;
     bool enable_certificate_install_service;
     d20::DcTransferLimits dc_limits;
@@ -49,7 +49,7 @@ struct SessionConfig {
     std::string evse_id;
 
     bool cert_install_service;
-    std::vector<message_20::datatypes::Authorization> authorization_services;
+    everest::lib::util::fixed_vector<message_20::datatypes::Authorization, 2> authorization_services;
 
     std::vector<message_20::datatypes::ServiceCategory> supported_energy_transfer_services;
     std::vector<std::uint16_t> supported_vas_services;

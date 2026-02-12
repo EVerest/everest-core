@@ -21,7 +21,6 @@ template <> void convert(const struct iso20_EVPowerScheduleEntryType& in, dataty
 template <> void convert(const struct iso20_EVPowerScheduleType& in, datatypes::EVPowerSchedule& out) {
     out.time_anchor = in.TimeAnchor;
     const auto& entries_in = in.EVPowerScheduleEntries.EVPowerScheduleEntry;
-    out.entries.reserve(entries_in.arrayLen);
     for (auto i = 0; i < entries_in.arrayLen; ++i) {
         const auto& entry_in = entries_in.array[i];
         auto& entry_out = out.entries.emplace_back();
@@ -38,7 +37,6 @@ template <> void convert(const struct iso20_EVPriceRuleStackType& in, datatypes:
     out.duration = in.Duration;
 
     const auto& rules_in = in.EVPriceRule;
-    out.price_rules.reserve(rules_in.arrayLen);
     for (auto i = 0; i < rules_in.arrayLen; ++i) {
         const auto& rule_in = rules_in.array[i];
         auto& rule_out = out.price_rules.emplace_back();
@@ -52,7 +50,6 @@ template <> void convert(const struct iso20_EVAbsolutePriceScheduleType& in, dat
     out.price_algorithm = CB2CPP_STRING(in.PriceAlgorithm);
 
     const auto& stacks_in = in.EVPriceRuleStacks.EVPriceRuleStack;
-    out.price_rule_stacks.reserve(stacks_in.arrayLen);
     for (auto i = 0; i < stacks_in.arrayLen; ++i) {
         const auto& stack_in = stacks_in.array[i];
         auto& stack_out = out.price_rule_stacks.emplace_back();
@@ -500,7 +497,7 @@ template <> void convert(const datatypes::ScheduleTuple& in, struct iso20_Schedu
 }
 
 struct ModeResponseVisitor {
-    ModeResponseVisitor(iso20_ScheduleExchangeResType& res_) : res(res_){};
+    ModeResponseVisitor(iso20_ScheduleExchangeResType& res_) : res(res_) {};
     void operator()(const datatypes::Dynamic_SEResControlMode& in) {
         init_iso20_Dynamic_SEResControlModeType(&res.Dynamic_SEResControlMode);
         CB_SET_USED(res.Dynamic_SEResControlMode);
@@ -623,7 +620,7 @@ template <> void convert(const datatypes::EVEnergyOffer& in, struct iso20_EVEner
 }
 
 struct ModeRequestVisitor {
-    ModeRequestVisitor(iso20_ScheduleExchangeReqType& req_) : req(req_){};
+    ModeRequestVisitor(iso20_ScheduleExchangeReqType& req_) : req(req_) {};
     void operator()(const datatypes::Dynamic_SEReqControlMode& in) {
         init_iso20_Dynamic_SEReqControlModeType(&req.Dynamic_SEReqControlMode);
         CB_SET_USED(req.Dynamic_SEReqControlMode);

@@ -22,7 +22,7 @@ using CustomVasList = std::map<std::uint16_t, std::vector<uint16_t>>;
 
 struct OfferedServices {
 
-    std::vector<dt::Authorization> auth_services;
+    everest::lib::util::fixed_vector<dt::Authorization, 2> auth_services;
     std::vector<dt::ServiceCategory> energy_services;
     std::vector<uint16_t> vas_services;
 

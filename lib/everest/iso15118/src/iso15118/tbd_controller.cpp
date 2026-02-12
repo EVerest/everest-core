@@ -86,8 +86,9 @@ void TbdController::send_control_event(const d20::ControlEvent& event) {
     }
 }
 
-void TbdController::update_authorization_services(const std::vector<message_20::datatypes::Authorization>& services,
-                                                  bool cert_install_service) {
+void TbdController::update_authorization_services(
+    const everest::lib::util::fixed_vector<message_20::datatypes::Authorization, 2>& services,
+    bool cert_install_service) {
 
     evse_setup.enable_certificate_install_service = cert_install_service;
 
