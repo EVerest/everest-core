@@ -415,6 +415,7 @@ void OCPP201::init() {
             this->charge_point->on_firmware_update_status_notification(
                 status.request_id, conversions::to_ocpp_firmware_status_enum(status.firmware_update_status));
         } else {
+            std::scoped_lock lock(this->session_event_mutex);
             this->event_queue[0].push(status);
         }
     });
@@ -424,6 +425,7 @@ void OCPP201::init() {
             this->charge_point->on_log_status_notification(
                 conversions::to_ocpp_upload_logs_status_enum(status.log_status), status.request_id);
         } else {
+            std::scoped_lock lock(this->session_event_mutex);
             this->event_queue[0].push(status);
         }
     });
