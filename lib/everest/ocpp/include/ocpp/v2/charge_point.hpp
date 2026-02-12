@@ -492,7 +492,8 @@ public:
     /// \param message_log_path Path to where logfiles are written to
     /// \param callbacks Callbacks that will be registered for ChargePoint
     ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
-                std::shared_ptr<DeviceModelAbstract> device_model, std::shared_ptr<DatabaseHandler> database_handler,
+                const std::shared_ptr<DeviceModelAbstract> device_model,
+                const std::shared_ptr<DatabaseHandler> database_handler,
                 const std::shared_ptr<EvseSecurity> evse_security,
                 const std::shared_ptr<ConnectivityManagerInterface> connectivity_manager,
                 const std::string& message_log_path, const Callbacks& callbacks);
