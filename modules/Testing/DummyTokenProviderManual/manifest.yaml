@@ -3,6 +3,11 @@ provides:
   main:
     description: Main implementation of dummy token provider always returning one configured token
     interface: auth_token_provider
+    config:
+      token_topic:
+        description: MQTT topic to subscribe to for providing tokens. Override this to run multiple instances with independent token providers.
+        type: string
+        default: everest_api/dummy_token_provider/cmd/provide
 enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
