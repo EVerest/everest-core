@@ -1,8 +1,8 @@
 .. _tutorial_bazel:
 
-=======================================
-Experimental Bazel Support in EVerest
-=======================================
+==========================
+Experimental Bazel Support
+==========================
 
 
 Introduction

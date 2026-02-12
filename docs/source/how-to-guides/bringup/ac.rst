@@ -41,7 +41,7 @@ A connector lock is required for AC charging in case your charging station
 has a socket outlet. Verify that the lock is working correctly by
 commanding it to lock and unlock via your BSP driver.
 
-Milestone: First charging of a real car
+Milestone: First Charging of a Real Car
 =======================================
 
 Now that all individual components have been verified, it is time to
@@ -96,7 +96,7 @@ prototype!**
 
 Two more things that should be tested before trying a real car:
 
-Stop EVerest with *Ctrl+C*. Switch the EV simulator to state B and
+Stop EVerest with ``Ctrl+C``. Switch the EV simulator to state B and
 start EVerest again. Ideally, the plug-in should be detected right
 after “Ready for charging” and PWM should be enabled. Switch to state C
 after PWM is on and the relay should close.

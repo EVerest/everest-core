@@ -1,20 +1,21 @@
 .. _tutorial-ocpp16:
 
-###########################
-How To: OCPP 1.6 in EVerest
-###########################
+###################
+OCPP 1.6 in EVerest
+###################
 
 .. note::
 
   EVerest has an implementation of OCPP 1.6J and 2.0.1 and 2.1. This tutorial is about
   the 1.6 implementation. To get documentation about all implemented versions,
-  see `the GitHub repository of libocpp <https://github.com/EVerest/libocpp>`_.
+  see `lib/ocpp in the everest-core repository <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp>`_.
 
 EVerest provides a complete implementation of Open Charge Point Protocol
 (OCPP) 1.6J, supporting all feature profiles including Plug&Charge and the
 Security Extensions.
 
-The source code of `libocpp` is at `<https://github.com/EVerest/libocpp>`_.
+The source code of `libocpp` is hosted as part of the everest-core repository:
+`<https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp>`_.
 
 This is a tutorial about how to set up and configure OCPP 1.6 in EVerest.
 
@@ -75,7 +76,7 @@ In addition to the EVerest configuration yaml file, OCPP 1.6 is configured
 using a JSON configuration file.
 This configuration file can contain all configuration keys from the OCPP 1.6
 specification.
-Examples for that can be found `here <https://github.com/EVerest/libocpp/tree/main/config/v16>`__.
+Examples for that can be found `here <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp/config/v16>`_.
 
 This is the one we used to connect to SteVe:
 
@@ -180,7 +181,7 @@ tailored to your specific charging station.
 
   There is a lot to configure with OCPP. Make sure to thoroughly read through
   the OCPP 1.6 specification and the
-  `profile schemas <https://github.com/EVerest/libocpp/tree/main/config/v16/profile_schemas>`_ 
+  `profile schemas <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp/config/v16/profile_schemas>`_
   and configure OCPP according to your needs.
 
 .. _tutorial_ocpp16_connect_different_csms:
@@ -224,7 +225,7 @@ and it might also include to change the parameters ``AuthorizationKey`` and
   - Minimal length: 16 bytes
 
 Modify these parameters according to the connection requirements of the CSMS. Find all available configuration keys
-and their descriptions in `here <https://github.com/EVerest/libocpp/tree/main/config/v16/profile_schemas>`__
+and their descriptions in `here <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp/config/v16/profile_schemas>`_
 
 .. note::
 

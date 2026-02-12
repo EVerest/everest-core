@@ -37,7 +37,7 @@ Before you can cross-compile EVerest for your target system, you will
 have to acquire a Yocto SDK that is based on the Yocto image that is
 currently running on the target you want to cross-compile for.
 
-You can either `build one yourself <exp_cross_compilation_building_an_sdk>` or be supplied
+You can either :ref:`build one yourself <exp_cross_compilation_building_an_sdk>` or be supplied
 with one by the organization that is building and maintaining the Yocto
 image you are using.
 
@@ -76,7 +76,7 @@ To source the cross-toolchain environment use the following syntax:
 image/SDK.
 
 Use ``ls`` or tab-completion to find the full name of the
-environment-setup-\*.sh you want to use.
+``environment-setup-\*.sh`` you want to use.
 
 Now that the SDK is installed on your development machine and you know
 how to source the cross-toolchain, we can start fetch the EVerest

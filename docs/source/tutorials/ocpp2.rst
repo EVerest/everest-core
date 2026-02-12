@@ -1,20 +1,20 @@
 .. _tutorial-ocpp2:
 
-*************************************
-How To: OCPP 2.0.1 and 2.1 in EVerest
-*************************************
+*****************************
+OCPP 2.0.1 and 2.1 in EVerest
+*****************************
 
 .. note::
 
-  EVerest has an implementation of OCPP 1.6, 2.0.1 and 2.1. This tutorial is about
+  EVerest has an implementation of OCPP 1.6J and 2.0.1 and 2.1. This tutorial is about
   the 2.0.1 and 2.1 implementation. To get documentation about all implemented versions,
-  see `the GitHub repository of libocpp <https://github.com/EVerest/libocpp>`_.
+  see `lib/ocpp in the everest-core repository <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp>`_.
 
 OCPP2.0.1 and OCPP2.1 in EVerest
 =================================
 
 EVerest provides an implementation of OCPP 2.0.1 and 2.1 based on
-`libocpp <https://github.com/EVerest/libocpp>`_. Since OCPP 2.0.1 and 2.1
+`libocpp` which is hosted as part of the `everest-core repository <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp>`_. Since OCPP 2.0.1 and 2.1
 is mostly backwards compatible, the implementation of OCPP 2.1 is based on the
 2.0.1 implementation. Every functionality that is provided as part of OCPP 2.0.1
 is also available in OCPP 2.1.
@@ -292,11 +292,11 @@ in functional requirements of the specification. Please have
 a look at the OCPP 2.x specifications for more information about each of the
 standardized components and variables.
 For this reason, it is recommended to use the
-`device device model definitions of libocpp <https://github.com/EVerest/libocpp/tree/main/config/v2/component_config>`_
+`device device model definitions of libocpp <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp/config/v2/component_config>`_
 as a starting point. This is an examplary device model configuration for two
 EVSEs.
 
-The `device model setup from libocpp <https://github.com/EVerest/libocpp/tree/main/config/v2/component_config>`_
+The `device model setup from libocpp <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp/config/v2/component_config>`_
 serves as a good example. 
 
 The split between the two directories only has semantic reasons.

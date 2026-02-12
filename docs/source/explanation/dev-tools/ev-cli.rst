@@ -43,7 +43,7 @@ To install ``ev_cli`` manually from github repository:
 
 .. code-block:: bash
 
-    python3 -m pip install git+https://github.com/everest/everest-utils.git@main#subdirectory=ev-dev-tools
+    python3 -m pip install git+https://github.com/everest/everest-core.git@main#subdirectory=applications/utils/ev-dev-tools
 
 *****************************
 ev-cli command line interface
@@ -52,40 +52,42 @@ ev-cli command line interface
 The ``ev_cli`` package comes with a command line tool, named ``ev-cli``.
 It has the following subcommands
 
-- module:
+- ``module``:
   auto generation and update of EVerest modules from its interface and
   manifest definitions
 
-- interface:
+- ``interface``:
   auto generation of C++ header files for defined interfaces
 
-- helpers:
+- ``helpers``:
   utility commands
 
-- types:
+- ``types``:
   auto generation of C++ header files for types
 
 To see a list of all subcommands and options, simply call:
+
+.. code-block:: bash
 
     ev-cli --help
 
 The `module`, `interface` and `types` commands have the following options in
 common:
 
-- `--work-dir`:
+- ``--work-dir``:
   work directory which also contains the manifest definitions (default: ``.``)
 
-- `--everest-dir`:
+- ``--everest-dir``:
   root directory of EVerest core or any directory containing interface
   and module definitions (default: ``.``)
 
-- `--schemas-dir`:
+- ``--schemas-dir``:
   schemas directory of the EVerest framework, containing the schema
   definitions (default: ``../everest-framework/schemas``)
 
-- `--clang-format-file`:
+- ``--clang-format-file``:
   if C++ output should be formatted, set this to the path of the
-  .clang-format file
+  ``.clang-format`` file
 
 
 Generating C++ header files for defined interfaces

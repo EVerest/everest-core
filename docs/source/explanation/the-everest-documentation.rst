@@ -158,4 +158,4 @@ Examples:
   - ``applications/utils/everest-testing/README.md``: How to use pytest with EVerest
 
 - md/general doc files in other repos (`everest-admin-panel <https://github.com/EVerest/everest-admin-panel>`_,
-  `libocpp <https://github.com/EVerest/libocpp>`_, ...)
+  `ext-switchev-iso15118 <https://github.com/EVerest/ext-switchev-iso15118>`_, ...)

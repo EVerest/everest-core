@@ -40,8 +40,8 @@ no-load conditions.
 Create a simple BringUp configuration file that contains only the
 BUPowerSupplyDC module and the actual driver module / bridge module to
 your external driver. There are a couple of examples that you can
-modify: *config-bringup-huawei.yaml*, *config-bringup-uugreen.yaml*,
-*config-bringup-api-powersupply.yaml*.
+modify: ``config-bringup-huawei.yaml``, ``config-bringup-uugreen.yaml``,
+``config-bringup-api-powersupply.yaml``.
 
 Start the BringUp & Qualification session with the following command in
 the build folder:
@@ -364,22 +364,22 @@ There are many error cases that should be tested now. Listing all goes
 beyond the scope of this manual. A few examples that should be tested:
 
 - Place a 100 kOhm resistor from minus wire to PE. Start a charging
-   session. It should also fail in *CableCheck* state.
+  session. It should also fail in *CableCheck* state.
 
 - Test short circuit under full load.
 
 - Test load dump: Charge at maximum power and open the relays to zero
-   load. Watch the voltage overshoot. The power supplies need to survive
-   that multiple times. This does happen in the field with some EVs that
-   open their contactors during charging when the onboard controller
-   firmware resets.
+  load. Watch the voltage overshoot. The power supplies need to survive
+  that multiple times. This does happen in the field with some EVs that
+  open their contactors during charging when the onboard controller
+  firmware resets.
 
 - AC under-/over-voltage input
 
 - Over-temperature shutdown
 
 - On three-phase AC/DC converters, switch off one phase on the input
-   at full load.
+  at full load.
 
 ----
 

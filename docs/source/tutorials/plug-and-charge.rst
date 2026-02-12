@@ -1,7 +1,7 @@
 .. _tutorial_plug_and_charge:
 
-Plug&Charge with EVerest Software in the loop
-==============================================
+Plug&Charge with EVerest Software in the Loop
+=============================================
 
 EVerest provides support for Plug&Charge within ISO15118-2 and OCPP1.6 and
 OCPP2.0.1. This tutorial explains how you can set up and configure EVerest
@@ -42,15 +42,15 @@ certificates:
    ./create_certs.sh -v iso-2 -i {EVerest Workspace Directory}/everest-core
 
 This will enable ISO 15118 communication including Plug&Charge and install the
-required CA certificates inside `config/certs/ca` and the client certificates,
-private keys and password files inside `config/certs/client`.
+required CA certificates inside ``config/certs/ca`` and the client certificates,
+private keys and password files inside ``config/certs/client``.
 
 .. attention::
 
   This will generate an example PKI setup that can only be used for testing
   and simulation. It will not work and is not recommended for production.
 
-  As the shell script uses the Java `keytool`, it is required for this
+  As the shell script uses the Java ``keytool``, it is required for this
   procedure to have Java installed.
 
 The script for setting up PKI can also be used with the EvseV2G module.
@@ -82,14 +82,14 @@ Let's get started step by step
 1. Prerequisites must be fullfilled: EVerest must be installed on your system.
    By default, the installation of everest-core includes a complete and
    automatic installation of a test PKI. The certificates and keys are located
-   under `dist/etc/everest/certs`.
+   under ``dist/etc/everest/certs``.
 
 2. Let's prepare the central system that we are going to use. Follow the
    instructions described here to set it up:
    https://github.com/EVerest/ocpp-csms
 
 3. Run everest-core with either OCPP1.6, OCPP2.x using the prepared run-scripts.
-   Make sure the the endpoint `localhost:9000/<id>` is specified in the respective 
+   Make sure the the endpoint ``localhost:9000/<id>`` is specified in the respective 
    ocpp configuration file (OCPP2.x config defaults to this address, while for
    OCPP1.6 the default is different).
 
@@ -103,11 +103,11 @@ or
 
    ./run-scripts/run-sil-ocpp-pnc.sh 
 
-Make sure Node-RED is running and access the UI on `localhost:1880/ui`.
+Make sure Node-RED is running and access the UI on ``localhost:1880/ui``.
 
 In Node-RED select ``AC ISO 15118-2`` from the Car Simulation dropdown and click "Car Plugin". This will initiate the EV plugin and start the Plug&Charge process.
 
-Check the EVerest console and OCPP logs. By default OCPP logs are located in /tmp/everest_ocpp_logs .
+Check the EVerest console and OCPP logs. By default OCPP logs are located in ``/tmp/everest_ocpp_logs`` .
 
 Troubleshooting
 ---------------

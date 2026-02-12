@@ -1,7 +1,7 @@
 .. _tutorial_develop_new_everest_module:
 
-Develop New EVerest Modules
-***************************
+Develop New Modules
+*******************
 
 .. hint::
 
@@ -65,16 +65,20 @@ benefit of allowing your to select a specific snapshot (see the corresponding
 :ref:`docs <exp_dev_tools_edm>` for details), as well as it is a single command::
 
     edm init --workspace $EVEREST_WORKSPACE
+    cd $EVEREST_WORKSPACE
 
+As of 2026 the EVerest dependency manager layouts the workspace to be compatible with
+older non-mono-repository versions of everest-core. Assuming you want to build a recent
+version of everest, you can delete the dependencies which are part of the mono-repo today::
+
+    rm -rf everest-dev-environment/ everest-utils/
 
 Alternative 2: Clone required repositories
 ------------------------------------------
 
-If you want to restrict yourself only to the required dependencies, you may also just clone those::
+If you want to restrict yourself only to the required dependencies, you may also just clone this::
 
     git clone https:///github.com/EVerest/everest-cmake ${EVEREST_WORKSPACE}/everest-cmake
-    git clone https:///github.com/EVerest/everest-framework ${EVEREST_WORKSPACE}/everest-framework
-    git clone https:///github.com/EVerest/everest-utils ${EVEREST_WORKSPACE}/everest-utils
 
 
 Create Module Skeleton
@@ -111,7 +115,7 @@ just always return the string "everest" as result. We will later give some
 ideas how to extend this minimal example.
 
 We store the following interface configuration in form of a .yaml file in
-`$EVEREST_TUTORIAL_DIR/interfaces/interface_tutorial_module.yaml`:
+``$EVEREST_TUTORIAL_DIR/interfaces/interface_tutorial_module.yaml``:
 
 ..  code-block:: yaml
 
@@ -130,7 +134,7 @@ We store the following interface configuration in form of a .yaml file in
 Second, we use the  `ev-cli` tool to auto-generate header files for this
 interface::
 
-     cd $EVEREST_TUTORIAL_DIR && ev-cli interface generate-headers --schemas-dir $EVEREST_WORKSPACE/everest-framework/schemas interface_tutorial_module
+     cd $EVEREST_TUTORIAL_DIR && ev-cli interface generate-headers --schemas-dir $EVEREST_WORKSPACE/everest-core/lib/everest/framework/schemas interface_tutorial_module
 
 
 After this, you should find the following file tree structure in your module::
@@ -199,7 +203,7 @@ In particular, this manifest declares the following:
 Again, we use the EVerest cli tool to auto-generate code from this
 configuration::
 
-    cd $EVEREST_TUTORIAL_DIR && ev-cli module create --schemas-dir $EVEREST_WORKSPACE/everest-framework/schemas TutorialModule --licenses $EVEREST_WORKSPACE/everest-utils/ev-dev-tools/src/ev_cli/licenses
+    cd $EVEREST_TUTORIAL_DIR && ev-cli module create --schemas-dir $EVEREST_WORKSPACE/everest-core/lib/everest/framework/schemas TutorialModule --licenses $EVEREST_WORKSPACE/everest-core/applications/utils/ev-dev-tools/src/ev_cli/licenses
 
 
 After that, you should have the following file structure::
@@ -362,12 +366,12 @@ You can also build the project there - go to it, and configure the build::
 
 Here, we added two instructions to cmake:
 
- - Setting `CMAKE_PREFIX_PATH=$EVEREST_WORKSPACE` allows cmake to find the
-   ``everest-cmake`` repository in the workspace.
- - Specifying the `--install-prefix` allows you to specify where the finished
-   binaries will be placed, e.g. into the ``dist/`` folder in the modules repository.
-   EVerest can be installed system wide (e.g. into ``users/local/bin``), but this
-   usually requires `sudo` permissions.
+- Setting ``CMAKE_PREFIX_PATH=$EVEREST_WORKSPACE`` allows cmake to find the
+  ``everest-cmake`` repository in the workspace.
+- Specifying the ``--install-prefix`` allows you to specify where the finished
+  binaries will be placed, e.g. into the ``dist/`` folder in the modules repository.
+  EVerest can be installed system wide (e.g. into ``users/local/bin``), but this
+  usually requires ``sudo`` permissions.
 
 
 Then, build and install the project::
@@ -415,14 +419,14 @@ In order to achieve this, create the file ``$EVEREST_TUTORIAL_DIR/config/CMakeLi
         generate_config_run_script(CONFIG modules-tutorial)
 
 
-Here, the `generate_config_run_script(<CONFIG_NAME>)` expects the existence of
+Here, the ``generate_config_run_script(<CONFIG_NAME>)`` expects the existence of
 a file ``config-<CONFIG_NAME>.yaml``.
 
 It will then generate a run script for this configuration.
 
 You must then "activate" this configuraton by adapting the
-``$EVEREST_TUTORIAL_DIR/CMakeLists.txt`` file removing the commenting `#`
-before the `add_subdirectory(config)` instruction, i.e.:
+``$EVEREST_TUTORIAL_DIR/CMakeLists.txt`` file removing the commenting ``#``
+before the ``add_subdirectory(config)`` instruction, i.e.::
 
     # config
     # (not needed if you do not need a run script for your configuration)
@@ -508,7 +512,7 @@ and publish the JSON::
     }
 
 Our module should return with a "everest" response (you may have to reselect
-the `everest/tutorial_module_instance/interface_impl_tutorial_module/cmd`
+the ``everest/tutorial_module_instance/interface_impl_tutorial_module/cmd``
 on the left to refresh this view.
 
 .. image:: images/mqtt_explorer_example.png
@@ -581,8 +585,10 @@ Exemplary Module Customizations
 
 Having prepared a buildable and runnable module, we can now extend the logic
 of our implementation:
-* Add a variable to your interface, and publish it;
-* Add a second module which requires the ``interface_tutorial_module`` interface and sends commands or subscribes to variables.
+
+- Add a variable to your interface, and publish it;
+- Add a second module which requires the ``interface_tutorial_module`` interface and sends commands or subscribes to variables.
+- ...
 
 .. hint::
     This section is yet to come. Want to help us with that? Feel free and create
@@ -590,4 +596,4 @@ of our implementation:
 
 --------------------------------
 
-**Authors**: Valentin Dimov, Manuel Ziegler, Andreas Heinrich, Lukas Mertens, Martin Litre, Piet Gömpel
+**Authors**: Valentin Dimov, Manuel Ziegler, Andreas Heinrich, Lukas Mertens, Martin Litre, Piet Gömpel, Christoph Burandt

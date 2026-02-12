@@ -58,11 +58,11 @@ Panel.
 
 EVerest OCPP 2.0.1 setup
 ------------------------
-After successfully setting up EVerest and configured the
-`libocpp module <https://github.com/EVerest/libocpp>`_, I get errors about
+After successfully setting up EVerest and configuring the
+:doc:`OCPP201 module <everest_modules_OCPP201:>`, I get errors about
 a failed websocket connection.
 
-The `libocpp` module of EVerest operates - for now - as an OCPP client.
+The :doc:`OCPP module <everest_modules_OCPP201:>` of EVerest operates - for now - as an OCPP client.
 You will need to choose a backend system capable of OCPP 2.0.1 (like SteVe
 for OCPP 1.6).
 
