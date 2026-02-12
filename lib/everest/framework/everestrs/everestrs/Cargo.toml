@@ -13,11 +13,11 @@ serde_yaml = "0.9.34"
 thiserror = "1.0.48"
 
 # Note: the version must be kept in sync with the `cxxbridge-cmd` version installed in `everestrs/CMakeLists.txt`.
-cxx = { version = "1.0.189", features = ["c++17"] }
+# The `=` before the version number ensures that Cargo uses exactly this version when generating new lockfiles.
+cxx = { version = "=1.0.189", features = ["c++17"] }
 
 [features]
 build_bazel = []
-link_gcov = []
 
 # We use this for the integration tests in this project.
 [dev-dependencies]

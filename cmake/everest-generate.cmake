@@ -263,12 +263,6 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         message(STATUS "Creating rust workspace at ${RUST_WORKSPACE_DIR}")
     endif ()
 
-    if (EVEREST_CORE_BUILD_TESTING)
-        set(EVERESTRS_FEATURE_FLAGS ",features = [\"link_gcov\"]")
-    else()
-        set(EVERESTRS_FEATURE_FLAGS "")
-    endif()
-
     # NOTE (aw): we could also write a small python script, which would do that for us
     add_custom_command(OUTPUT ${RUST_WORKSPACE_CARGO_FILE}
         COMMAND
@@ -284,13 +278,9 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         COMMAND
             echo "[workspace.dependencies]" >> Cargo.toml
         COMMAND
-            echo "everestrs = { path = \"$<TARGET_PROPERTY:everest::everestrs_sys,EVERESTRS_DIR>\" ${EVERESTRS_FEATURE_FLAGS} }" >> Cargo.toml
+            echo "everestrs = { path = \"$<TARGET_PROPERTY:everest::everestrs_sys,EVERESTRS_DIR>\" }" >> Cargo.toml
         COMMAND
             echo "everestrs-build = { path = \"$<TARGET_PROPERTY:everest::everestrs_sys,EVERESTRS_BUILD_DIR>\" }" >> Cargo.toml
-        COMMAND
-            echo $<TARGET_FILE:everest::framework> > .everestrs_link_dependencies
-        COMMAND
-            echo $<TARGET_FILE:everest::log> >> .everestrs_link_dependencies
         WORKING_DIRECTORY
             ${RUST_WORKSPACE_DIR}
         VERBATIM
@@ -298,9 +288,21 @@ if (EVEREST_ENABLE_RS_SUPPORT)
             ${RUST_WORKSPACE_DIR}
     )
 
+    # Put the resulting file in the top-level build directory so that it can be easily accessed without CMake
+    set(RUST_LINK_DEPENDENCIES_FILE ${CMAKE_BINARY_DIR}/everestrs-link-dependencies.txt)
+    set(RUST_LINK_DEPENDENCIES "$<TARGET_GENEX_EVAL:everest::everestrs_sys,$<TARGET_PROPERTY:everest::everestrs_sys,EVERESTRS_LINK_DEPENDENCIES>>")
+
+    add_custom_command(OUTPUT ${RUST_LINK_DEPENDENCIES_FILE}
+        COMMAND_EXPAND_LISTS
+        VERBATIM
+        COMMAND
+            echo -e $<LIST:JOIN,${RUST_LINK_DEPENDENCIES},\\n> > "${RUST_LINK_DEPENDENCIES_FILE}"
+    )
+
     add_custom_target(generate_rust
         DEPENDS
             ${RUST_WORKSPACE_CARGO_FILE}
+            ${RUST_LINK_DEPENDENCIES_FILE}
     )
 
     # Store the workspace directory as a target property so that it is accessible in different scopes
@@ -311,13 +313,13 @@ if (EVEREST_ENABLE_RS_SUPPORT)
 
     # FIXME (aw): use generator expressions here, but this first needs to be fixed in the build.rs file ...
     add_custom_target(build_rust_modules ALL
+        USES_TERMINAL
         COMMENT
             "Build rust modules"
         COMMAND
             ${CMAKE_COMMAND} -E env
             EVEREST_CORE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
-            EVEREST_RS_FRAMEWORK_SOURCE_LOCATION="${everest-framework_SOURCE_DIR}"
-            EVEREST_RS_FRAMEWORK_BINARY_LOCATION="${everest-framework_BINARY_DIR}"
+            EVEREST_RS_LINK_DEPENDENCIES="${RUST_LINK_DEPENDENCIES_FILE}"
             ${CARGO_EXECUTABLE} build
             $<IF:$<STREQUAL:$<CONFIG>,Release>,--release,>
             # explicitly set the linker to match what we're using for C++ to avoid the following issue when cross compiling:
@@ -327,7 +329,7 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         WORKING_DIRECTORY
             ${RUST_WORKSPACE_DIR}
         DEPENDS
-            everestrs_sys
+            everest::everestrs_sys
             generate_rust
     )
 
