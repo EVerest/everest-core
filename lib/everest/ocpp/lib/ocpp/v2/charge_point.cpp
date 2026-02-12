@@ -57,10 +57,6 @@ ChargePoint::ChargePoint(const std::map<std::int32_t, std::int32_t>& evse_connec
     device_model(device_model),
     database_handler(database_handler),
     connectivity_manager(connectivity_manager),
-    registration_status(RegistrationStatusEnum::Rejected),
-    skip_invalid_csms_certificate_notifications(false),
-    upload_log_status(UploadLogStatusEnum::Idle),
-    bootreason(BootReasonEnum::PowerUp),
     ocsp_updater(make_ocsp_updater()),
     callbacks(callbacks) {
     initialize(evse_connector_structure, message_log_path);
@@ -76,10 +72,6 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     message_queue(message_queue),
     device_model(device_model),
     database_handler(database_handler),
-    registration_status(RegistrationStatusEnum::Rejected),
-    skip_invalid_csms_certificate_notifications(false),
-    upload_log_status(UploadLogStatusEnum::Idle),
-    bootreason(BootReasonEnum::PowerUp),
     ocsp_updater(make_ocsp_updater()),
     callbacks(callbacks) {
     initialize(evse_connector_structure, message_log_path);
@@ -205,6 +197,7 @@ void ChargePoint::on_websocket_connected(const int configuration_slot,
             this->security->init_certificate_expiration_check_timers(); // re-init as timers are stopped on disconnect
         }
     }
+    // set time_disconnected to zero
     this->time_disconnected = std::chrono::time_point<std::chrono::steady_clock>();
 
     // We have a connection again so next time it fails we should send the notification again
@@ -243,13 +236,16 @@ void ChargePoint::on_websocket_connection_failed(ConnectionFailedReason reason) 
         } else {
             EVLOG_debug << "Skipping InvalidCsmsCertificate SecurityEvent since it has been sent already";
         }
-        break;
+        return;
     case ConnectionFailedReason::FailedToAuthenticateAtCsms:
         const auto& security_event = ocpp::security_events::FAILEDTOAUTHENTICATEATCSMS;
         this->security->security_event_notification_req(CiString<50>(security_event), std::nullopt, true,
                                                         utils::is_critical(security_event));
-        break;
+        return;
     }
+    const auto security_event = "WebsocketConnectionFailedWithUnknownReason";
+    EVLOG_error << "Websocket connection failed with unknown reason";
+    this->security->security_event_notification_req(CiString<50>(security_event), std::nullopt, true, false);
 }
 
 void ChargePoint::on_network_disconnected(OCPPInterfaceEnum ocpp_interface) {

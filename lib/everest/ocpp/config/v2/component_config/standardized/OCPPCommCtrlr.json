@@ -165,7 +165,8 @@
       "characteristics": {
         "unit": "s",
         "supportsMonitoring": true,
-        "dataType": "integer"
+        "dataType": "integer",
+        "minLimit": 0
       },
       "attributes": [
         {

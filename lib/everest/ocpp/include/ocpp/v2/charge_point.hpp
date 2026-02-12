@@ -395,13 +395,13 @@ private:
     fs::path share_path;
 
     // states
-    std::atomic<RegistrationStatusEnum> registration_status;
-    std::atomic<OcppProtocolVersion> ocpp_version =
-        OcppProtocolVersion::Unknown; // version that is currently in use, selected by CSMS in websocket handshake
-    std::atomic<UploadLogStatusEnum> upload_log_status;
+    std::atomic<RegistrationStatusEnum> registration_status{RegistrationStatusEnum::Rejected};
+    std::atomic<OcppProtocolVersion> ocpp_version{
+        OcppProtocolVersion::Unknown}; // version that is currently in use, selected by CSMS in websocket handshake
+    std::atomic<UploadLogStatusEnum> upload_log_status{UploadLogStatusEnum::Idle};
     std::atomic<std::int32_t> upload_log_status_id;
-    BootReasonEnum bootreason;
-    bool skip_invalid_csms_certificate_notifications;
+    BootReasonEnum bootreason{BootReasonEnum::PowerUp};
+    bool skip_invalid_csms_certificate_notifications{false};
 
     /// \brief Component responsible for maintaining and persisting the operational status of CS, EVSEs, and connectors.
     std::shared_ptr<ComponentStateManagerInterface> component_state_manager;
