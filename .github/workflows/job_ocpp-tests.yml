@@ -33,9 +33,24 @@ on:
       ocpp_tests_artifact_name:
         description: 'The name of the OCPP tests artifact'
         value: ${{ jobs.ocpp-tests.outputs.ocpp_tests_artifact_name }}
-    
+
 
 jobs:
+  ci:
+    name: Build, Lint and Test
+    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@feature/eebus
+    permissions:
+      contents: read
+    secrets:
+      coverage_deploy_token: ${{ secrets.SA_GITHUB_PAT }}
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-22.04' }}
+      artifact_deploy_target_repo: EVerest/everest.github.io
+      run_coverage: false
+      do_not_run_coverage_badge_creation: true
+      run_install_wheels: true
+      run_integration_tests: true
+      build_kit_base_image_tag: feature-eebus
   ocpp-tests:
     name: Run OCPP Tests
     runs-on: ${{ inputs.runner }}

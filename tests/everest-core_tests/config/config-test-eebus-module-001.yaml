@@ -1,0 +1,18 @@
+active_modules:
+  eebus:
+    module: EEBUS
+    connections:
+      eebus_energy_sink:
+        - module_id: probe
+          implementation_id: eebus_energy_sink
+    config_module:
+      manage_eebus_grpc_api_binary: false
+      vendor_code: "EVerest"
+      device_brand: "EVerest"
+      device_model: "SIL"
+      serial_number: "123456789"
+      eebus_service_port: 4715
+      grpc_port: 50051
+      eebus_ems_ski: "this-is-a-ski-42"
+  probe:
+    module: ProbeModule
