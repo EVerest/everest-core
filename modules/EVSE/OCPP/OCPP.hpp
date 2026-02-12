@@ -179,12 +179,9 @@ private:
                                                          // EVerests evse and connector id
     std::map<int32_t, int32_t> connector_evse_index_map; // provides access to r_evse_manager index by
                                                          // using OCPP connector id
-    std::map<int32_t, bool> evse_ready_map;
+    everest::lib::util::monitor<std::map<int32_t, bool>> evse_ready_map;
     everest::lib::util::monitor<std::map<int32_t, std::optional<float>>> evse_soc_map;
     std::set<std::string> resuming_session_ids;
-    std::mutex evse_ready_mutex;
-    std::condition_variable evse_ready_cv;
-    bool all_evse_ready();
 
     std::mutex event_mutex;
     bool started{false};
