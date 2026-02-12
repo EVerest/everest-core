@@ -140,7 +140,7 @@ private:
     std::string source_ext_limit;
 
     // key represents evse_id, value indicates if ready
-    std::map<int32_t, bool> evse_ready_map;
+    everest::lib::util::monitor<std::map<int32_t, bool>> evse_ready_map;
     everest::lib::util::monitor<std::map<int32_t, std::optional<float>>> evse_soc_map;
     std::map<int32_t, types::evse_board_support::HardwareCapabilities> evse_hardware_capabilities_map;
     std::map<int32_t, std::vector<types::iso15118::EnergyTransferMode>> evse_supported_energy_transfer_modes;
@@ -148,15 +148,12 @@ private:
     everest::lib::util::monitor<std::map<int32_t, std::string>> evse_evcc_id;
     std::atomic<ocpp::OcppProtocolVersion> ocpp_protocol_version{ocpp::OcppProtocolVersion::Unknown};
     int32_t event_id_counter{0};
-    std::mutex evse_ready_mutex;
     std::mutex session_event_mutex;
-    std::condition_variable evse_ready_cv;
     std::atomic_bool started{false};
     EventQueue event_queue;
     void init_evse_maps();
     void init_evse_subscriptions();
     void init_module_configuration();
-    bool all_evse_ready();
     std::map<int32_t, int32_t> get_connector_structure();
     void process_session_event(const int32_t evse_id, const types::evse_manager::SessionEvent& session_event);
     void process_tx_event_effect(const int32_t evse_id, const TxEventEffect tx_event_effect,

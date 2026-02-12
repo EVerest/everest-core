@@ -171,9 +171,8 @@ int32_t get_connector_id_from_error(const Everest::error::Error& error) {
 }
 
 void OCPP201::init_evse_maps() {
-    std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
-        this->evse_ready_map[evse_id] = false;
+        (*this->evse_ready_map.handle())[evse_id] = false;
         (*this->evse_soc_map.handle())[evse_id] = std::nullopt;
         this->evse_hardware_capabilities_map[evse_id] = types::evse_board_support::HardwareCapabilities{};
         this->evse_supported_energy_transfer_modes[evse_id] = {};
@@ -350,16 +349,6 @@ ocpp::v2::ChargingRateUnitEnum get_unit_or_default(const std::string& unit_strin
                       << ". Defaulting to using Amps.";
         return ocpp::v2::ChargingRateUnitEnum::A;
     }
-}
-
-bool OCPP201::all_evse_ready() {
-    for (auto const& [evse, ready] : this->evse_ready_map) {
-        if (!ready) {
-            return false;
-        }
-    }
-    EVLOG_info << "All EVSE ready. Starting OCPP2.X service";
-    return true;
 }
 
 void OCPP201::init() {
@@ -937,14 +926,18 @@ void OCPP201::ready() {
         return false;
     };
 
-    // wait for all EVSE to be ready before we can initialize libocpp before being able to trigger enable/disable
-    // connector callbacks
-    std::unique_lock lk(this->evse_ready_mutex);
-    while (!this->all_evse_ready()) {
-        this->evse_ready_cv.wait(lk);
+    {
+        auto ready_handle = this->evse_ready_map.handle();
+        ready_handle.wait([this, &ready_handle]() {
+            for (const auto& [evse, ready] : *ready_handle) {
+                if (!ready) {
+                    return false;
+                }
+            }
+            EVLOG_info << "All EVSE ready. Starting OCPP2.X service";
+            return true;
+        });
     }
-    // In case (for some reason) EvseManager ready signals are sent after this point, this will prevent a hang
-    lk.unlock();
 
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
@@ -1094,19 +1087,17 @@ void OCPP201::init_evse_subscriptions() {
     int evse_id = 1;
     for (const auto& evse : this->r_evse_manager) {
         evse->subscribe_waiting_for_external_ready([this, evse_id](bool ready) {
-            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
             if (ready) {
-                this->evse_ready_map[evse_id] = true;
-                this->evse_ready_cv.notify_one();
+                this->evse_ready_map.handle()->at(evse_id) = true;
+                this->evse_ready_map.notify_one();
             }
         });
 
         evse->subscribe_ready([this, evse_id](bool ready) {
-            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
             if (ready) {
                 EVLOG_info << "EVSE " << evse_id << " ready.";
-                this->evse_ready_map[evse_id] = true;
-                this->evse_ready_cv.notify_one();
+                this->evse_ready_map.handle()->at(evse_id) = true;
+                this->evse_ready_map.notify_one();
             }
         });
 
