@@ -36,12 +36,25 @@ void PacketSniffer::init() {
         if (session_event.event == types::evse_manager::SessionEventEnum::SessionStarted) {
             if (!already_started) {
 
-                capturing_stopped = false;
-                if (session_event.session_started && session_event.session_started->logging_path) {
-                    std::thread(&PacketSniffer::capture, this, session_event.session_started->logging_path.value(),
-                                session_event.uuid)
-                        .detach();
+                if (!session_event.session_started.has_value()) {
+                    EVLOG_warning
+                        << "SessionStarted event type doesn't contain session_started data. Ignoring this event.";
+                    return;
                 }
+
+                std::string logging_path;
+                if (!config.session_logging_path.empty()) {
+                    logging_path = config.session_logging_path;
+                } else if (session_event.session_started->logging_path.has_value()) {
+                    logging_path = session_event.session_started->logging_path.value();
+                } else {
+                    EVLOG_warning << "No logging path configured and none provided in SessionStarted event. "
+                                     "Skipping capture.";
+                    return;
+                }
+
+                capturing_stopped = false;
+                std::thread(&PacketSniffer::capture, this, logging_path, session_event.uuid).detach();
             } else {
                 EVLOG_warning << fmt::format("Capturing already started. Ignoring this SessionStarted event");
             }
