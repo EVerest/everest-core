@@ -9,7 +9,7 @@ namespace module {
 namespace main {
 
 void auth_token_providerImpl::init() {
-    mod->mqtt.subscribe("everest_api/dummy_token_provider/cmd/provide", [this](const std::string& msg) {
+    mod->mqtt.subscribe(config.token_topic, [this](const std::string& msg) {
         try {
             types::authorization::ProvidedIdToken token = json::parse(msg);
             EVLOG_info << "Publishing new dummy token: " << everest::helpers::redact(token);
