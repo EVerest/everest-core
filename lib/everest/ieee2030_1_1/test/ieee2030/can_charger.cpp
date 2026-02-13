@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2022 - 2026 Pionix GmbH and Contributors to EVerest
 #include <ieee2030/charger/io/can_broker_charger.hpp>
 
 #include <chrono>

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2022 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2022 - 2026 Pionix GmbH and Contributors to EVerest
 #include <iostream>
 
 #include <ieee2030/common/detail/conversions.hpp>
