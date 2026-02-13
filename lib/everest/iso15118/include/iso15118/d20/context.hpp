@@ -54,6 +54,12 @@ public:
     }
 
     std::tuple<bool, size_t, io::v2gtp::PayloadType, message_20::Type> check_and_clear_response();
+    bool has_response() const {
+        return response_available;
+    }
+    std::tuple<io::v2gtp::PayloadType, message_20::Type> peek_response_meta() const {
+        return {payload_type, response_type};
+    }
 
 private:
     // input
