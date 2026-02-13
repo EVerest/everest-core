@@ -581,6 +581,69 @@ static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
     return next_event;
 }
 
+static bool validate_service_discovery_res(struct iso2_ServiceDiscoveryResType* res) {
+    bool valid = true;
+
+    // Check PaymentOptionList bounds
+    if (res->PaymentOptionList.PaymentOption.arrayLen > iso2_paymentOptionType_2_ARRAY_SIZE) {
+        dlog(DLOG_LEVEL_ERROR, "VALIDATION: PaymentOption arrayLen=%d exceeds max=%d",
+             res->PaymentOptionList.PaymentOption.arrayLen, iso2_paymentOptionType_2_ARRAY_SIZE);
+        valid = false;
+    }
+
+    // Check each payment option value is in range
+    for (int i = 0; i < res->PaymentOptionList.PaymentOption.arrayLen; i++) {
+        auto val = res->PaymentOptionList.PaymentOption.array[i];
+        if (val != iso2_paymentOptionType_Contract && val != iso2_paymentOptionType_ExternalPayment) {
+            dlog(DLOG_LEVEL_ERROR, "VALIDATION: PaymentOption[%d] = %d (invalid)", i, val);
+            valid = false;
+        }
+    }
+
+    if (res->PaymentOptionList.PaymentOption.arrayLen == 0) {
+        dlog(DLOG_LEVEL_ERROR, "VALIDATION: At least one PaymentOption must be provided");
+        valid = false;
+    }
+
+    // Check ServiceList bounds
+    if (res->ServiceList_isUsed) {
+        if (res->ServiceList.Service.arrayLen > iso2_ServiceType_8_ARRAY_SIZE) {
+            dlog(DLOG_LEVEL_ERROR, "VALIDATION: ServiceList arrayLen=%d exceeds max=%d",
+                 res->ServiceList.Service.arrayLen, iso2_ServiceType_8_ARRAY_SIZE);
+            valid = false;
+        }
+
+        for (int i = 0; i < res->ServiceList.Service.arrayLen; i++) {
+            auto& svc = res->ServiceList.Service.array[i];
+            if (svc.ServiceName_isUsed && svc.ServiceName.charactersLen > iso2_ServiceName_CHARACTER_SIZE) {
+                dlog(DLOG_LEVEL_ERROR, "VALIDATION: Service[%d] ServiceName.charactersLen=%d exceeds max",
+                     i, svc.ServiceName.charactersLen);
+                valid = false;
+            }
+            if (svc.ServiceScope_isUsed && svc.ServiceScope.charactersLen > iso2_ServiceScope_CHARACTER_SIZE) {
+                dlog(DLOG_LEVEL_ERROR, "VALIDATION: Service[%d] ServiceScope.charactersLen=%d exceeds max",
+                     i, svc.ServiceScope.charactersLen);
+                valid = false;
+            }
+        }
+    }
+
+    // Check ChargeService
+    if (res->ChargeService.SupportedEnergyTransferMode.EnergyTransferMode.arrayLen >
+        iso2_EnergyTransferModeType_6_ARRAY_SIZE) {
+        dlog(DLOG_LEVEL_ERROR, "VALIDATION: EnergyTransferMode arrayLen=%d exceeds max",
+             res->ChargeService.SupportedEnergyTransferMode.EnergyTransferMode.arrayLen);
+        valid = false;
+    }
+
+    if (res->ChargeService.SupportedEnergyTransferMode.EnergyTransferMode.arrayLen == 0) {
+        dlog(DLOG_LEVEL_ERROR, "VALIDATION: ChargeService must support at least one EnergyTransferMode");
+        valid = false;
+    }
+
+    return valid;
+}
+
 /*!
  * \brief handle_iso_service_discovery This function handles the iso service discovery msg pair. It analyzes the request
  * msg and fills the response msg. The request and response msg based on the open V2G structures. This structures must
@@ -655,6 +718,8 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
 
     /* Set next expected req msg */
     conn->ctx->state = (int)iso_dc_state_id::WAIT_FOR_SVCDETAIL_PAYMENTSVCSEL; // [V2G-545]
+
+    validate_service_discovery_res(res);
 
     return nextEvent;
 }
