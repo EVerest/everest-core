@@ -171,13 +171,29 @@ int32_t get_connector_id_from_error(const Everest::error::Error& error) {
 }
 
 void OCPP201::init_evse_maps() {
+    {
+        auto ready_handle = this->evse_ready_map.handle();
+        for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+            (*ready_handle)[evse_id] = false;
+        }
+    }
+    {
+        auto soc_handle = this->evse_soc_map.handle();
+        for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+            (*soc_handle)[evse_id] = std::nullopt;
+        }
+    }
+    {
+        auto evse_evcc_id_handle = this->evse_evcc_id.handle();
+        for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+            (*evse_evcc_id_handle)[evse_id] = "";
+        }
+    }
+
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
-        (*this->evse_ready_map.handle())[evse_id] = false;
-        (*this->evse_soc_map.handle())[evse_id] = std::nullopt;
         this->evse_hardware_capabilities_map[evse_id] = types::evse_board_support::HardwareCapabilities{};
         this->evse_supported_energy_transfer_modes[evse_id] = {};
         this->evse_service_renegotiation_supported[evse_id] = false;
-        (*this->evse_evcc_id.handle())[evse_id] = "";
     }
 }
 

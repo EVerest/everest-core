@@ -403,9 +403,17 @@ void OCPP::init_evse_connector_map() {
 }
 
 void OCPP::init_evse_maps() {
-    for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
-        (*this->evse_ready_map.handle())[evse_id] = false;
-        (*this->evse_soc_map.handle())[evse_id] = std::nullopt;
+    {
+        auto ready_handle = this->evse_ready_map.handle();
+        for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+            (*ready_handle)[evse_id] = false;
+        }
+    }
+    {
+        auto soc_handle = this->evse_soc_map.handle();
+        for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+            (*soc_handle)[evse_id] = std::nullopt;
+        }
     }
 }
 
