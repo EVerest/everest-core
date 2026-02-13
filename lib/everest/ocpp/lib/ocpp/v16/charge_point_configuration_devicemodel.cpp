@@ -1128,6 +1128,38 @@ bool ChargePointConfigurationDeviceModel::getUseTPMSeccLeafCertificate() {
     return get_value<bool>(*storage, keys::valid_keys::UseTPMSeccLeafCertificate);
 }
 
+KeyValue ChargePointConfigurationDeviceModel::getEnableTLSKeylogKeyValue() {
+    KeyValue kv;
+    kv.key = "EnableTLSKeylog";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getEnableTLSKeylog()));
+    return kv;
+}
+
+KeyValue ChargePointConfigurationDeviceModel::getTLSKeylogFileKeyValue() {
+    KeyValue kv;
+    kv.key = "TLSKeylogFile";
+    kv.readonly = true;
+    kv.value.emplace(this->getTLSKeylogFile());
+    return kv;
+}
+
+KeyValue ChargePointConfigurationDeviceModel::getUseTPMKeyValue() {
+    KeyValue kv;
+    kv.key = "UseTPM";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getUseTPM()));
+    return kv;
+}
+
+KeyValue ChargePointConfigurationDeviceModel::getUseTPMSeccLeafCertificateKeyValue() {
+    KeyValue kv;
+    kv.key = "UseTPMSeccLeafCertificate";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getUseTPMSeccLeafCertificate()));
+    return kv;
+}
+
 bool ChargePointConfigurationDeviceModel::getVerifyCsmsAllowWildcards() {
     return get_value<bool>(*storage, keys::valid_keys::VerifyCsmsAllowWildcards);
 }
