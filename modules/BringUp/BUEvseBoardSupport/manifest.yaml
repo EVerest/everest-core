@@ -1,8 +1,4 @@
 description: Interactive bring up helper for EVSE Board support interface
-provides:
-  main:
-    interface: empty
-    description: This module does not provide anything
 requires:
   bsp:
     interface: evse_board_support

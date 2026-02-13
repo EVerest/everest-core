@@ -12,12 +12,9 @@ using namespace ftxui;
 namespace module {
 
 void BUSlac::init() {
-    invoke_init(*p_main);
 }
 
 void BUSlac::ready() {
-    invoke_ready(*p_main);
-
     auto screen = ScreenInteractive::Fullscreen();
 
     r_slac->subscribe_state([this, &screen](const std::string& new_state) {

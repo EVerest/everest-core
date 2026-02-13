@@ -1,8 +1,4 @@
 description: Example cost and price message module
-provides:
-  main:
-    description: EVerest API
-    interface: empty
 requires:
   session_cost:
     interface: session_cost

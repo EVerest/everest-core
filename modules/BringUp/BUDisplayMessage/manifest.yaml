@@ -1,8 +1,4 @@
 description: Interactive bring up helper for Display Message interface
-provides:
-  main:
-    interface: empty
-    description: This module does not provide anything
 requires:
   dm:
     interface: display_message

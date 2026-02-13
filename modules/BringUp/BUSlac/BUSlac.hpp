@@ -10,9 +10,6 @@
 
 #include "ld-ev.hpp"
 
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
-
 // headers for required interface implementations
 #include <generated/interfaces/slac/Interface.hpp>
 
@@ -27,11 +24,9 @@ struct Conf {};
 class BUSlac : public Everest::ModuleBase {
 public:
     BUSlac() = delete;
-    BUSlac(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main, std::unique_ptr<slacIntf> r_slac,
-           Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_slac(std::move(r_slac)), config(config){};
+    BUSlac(const ModuleInfo& info, std::unique_ptr<slacIntf> r_slac, Conf& config) :
+        ModuleBase(info), r_slac(std::move(r_slac)), config(config){};
 
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<slacIntf> r_slac;
     const Conf& config;
 

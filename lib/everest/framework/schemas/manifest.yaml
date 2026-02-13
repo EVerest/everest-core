@@ -33,7 +33,6 @@ $defs:
 type: object
 required:
   - description
-  - provides
   - metadata
 properties:
   description:

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #ifndef BUDCEXTERNAL_DERATE_HPP
 #define BUDCEXTERNAL_DERATE_HPP
 
@@ -9,9 +9,6 @@
 //
 
 #include "ld-ev.hpp"
-
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/dc_external_derate/Interface.hpp>
@@ -28,11 +25,9 @@ struct Conf {};
 class BUDCExternalDerate : public Everest::ModuleBase {
 public:
     BUDCExternalDerate() = delete;
-    BUDCExternalDerate(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
-                       std::unique_ptr<dc_external_derateIntf> r_derate, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_derate(std::move(r_derate)), config(config){};
+    BUDCExternalDerate(const ModuleInfo& info, std::unique_ptr<dc_external_derateIntf> r_derate, Conf& config) :
+        ModuleBase(info), r_derate(std::move(r_derate)), config(config){};
 
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<dc_external_derateIntf> r_derate;
     const Conf& config;
 

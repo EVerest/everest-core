@@ -477,10 +477,7 @@ x-module-layout:
       'y': 13
     terminals:
       top: []
-      right:
-        - id: main
-          interface: empty
-          type: provide
+      right: []
       bottom: []
       left:
         - id: evse_energy_sink

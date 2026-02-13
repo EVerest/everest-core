@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "BUPowermeter.hpp"
 #include "ftxui/component/component.hpp"
@@ -28,7 +28,6 @@ void optional_add(std::vector<std::vector<std::string>>& table, std::string text
 }
 
 void BUPowermeter::init() {
-    invoke_init(*p_main);
 }
 
 // Helper function to wrap long text into multiple lines
@@ -95,7 +94,6 @@ std::vector<std::vector<Element>> FormatTableContent(const std::vector<std::vect
 }
 
 void BUPowermeter::ready() {
-    invoke_ready(*p_main);
     auto screen = ScreenInteractive::Fullscreen();
 
     r_powermeter->subscribe_public_key_ocmf([this, &screen](std::string pk) {

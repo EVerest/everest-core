@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "BUIsolationMonitor.hpp"
 #include "ftxui/component/component.hpp" // for Checkbox, Renderer, Horizontal, Vertical, Input, Menu, Radiobox, ResizableSplitLeft, Tab
@@ -41,16 +41,12 @@ static std::vector<std::vector<std::string>> to_table(types::isolation_monitor::
 }
 
 void BUIsolationMonitor::init() {
-    invoke_init(*p_main);
-
     types::isolation_monitor::IsolationMeasurement m;
     m.resistance_F_Ohm = 0;
     last_measurement = to_table(m);
 }
 
 void BUIsolationMonitor::ready() {
-    invoke_ready(*p_main);
-
     auto screen = ScreenInteractive::Fullscreen();
 
     r_imd->subscribe_isolation_measurement([this, &screen](const types::isolation_monitor::IsolationMeasurement m) {

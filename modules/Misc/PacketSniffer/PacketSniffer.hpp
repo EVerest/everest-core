@@ -10,9 +10,6 @@
 
 #include "ld-ev.hpp"
 
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
-
 // headers for required interface implementations
 #include <generated/interfaces/evse_manager/Interface.hpp>
 
@@ -31,11 +28,9 @@ struct Conf {
 class PacketSniffer : public Everest::ModuleBase {
 public:
     PacketSniffer() = delete;
-    PacketSniffer(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
-                  std::unique_ptr<evse_managerIntf> r_evse_manager, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_evse_manager(std::move(r_evse_manager)), config(config){};
+    PacketSniffer(const ModuleInfo& info, std::unique_ptr<evse_managerIntf> r_evse_manager, Conf& config) :
+        ModuleBase(info), r_evse_manager(std::move(r_evse_manager)), config(config){};
 
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<evse_managerIntf> r_evse_manager;
     const Conf& config;
 

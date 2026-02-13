@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include <chrono>
 
@@ -28,8 +28,6 @@ static std::vector<std::vector<std::string>> to_table(types::authorization::Prov
 }
 
 void BUTokenProvider::init() {
-    invoke_init(*p_main);
-
     types::authorization::ProvidedIdToken t;
     t.id_token.type = types::authorization::IdTokenType::NoAuthorization;
     t.id_token.value = std::string("0");
@@ -37,8 +35,6 @@ void BUTokenProvider::init() {
 }
 
 void BUTokenProvider::ready() {
-    invoke_ready(*p_main);
-
     auto screen = ScreenInteractive::Fullscreen();
 
     r_token_provider->subscribe_provided_token([this, &screen](const types::authorization::ProvidedIdToken t) {

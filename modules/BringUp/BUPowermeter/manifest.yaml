@@ -16,10 +16,6 @@ config:
     description: "Tariff Text"
     type: string
     default: "custom"
-provides:
-  main:
-    interface: empty
-    description: This module does not provide anything
 requires:
   powermeter:
     interface: powermeter

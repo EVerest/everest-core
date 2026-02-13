@@ -11,10 +11,6 @@ config:
     description: Output directory for session capture dump files
     type: string
     default: /tmp
-provides:
-  main:
-    description: EVerest API
-    interface: empty
 requires:
   evse_manager:
     interface: evse_manager

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "BUOverVoltageMonitor.hpp"
 #include "ftxui/component/component.hpp"
@@ -12,12 +12,9 @@ namespace module {
 using namespace ftxui;
 
 void BUOverVoltageMonitor::init() {
-    invoke_init(*p_main);
 }
 
 void BUOverVoltageMonitor::ready() {
-    invoke_ready(*p_main);
-
     auto screen = ScreenInteractive::Fullscreen();
 
     auto msg_component = Container::Vertical({Renderer([] { return text(""); })});

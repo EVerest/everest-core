@@ -1,8 +1,4 @@
 description: Interactive bring up helper for System component
-provides:
-  main:
-    interface: empty
-    description: This module does not provide anything
 requires:
   system:
     interface: system

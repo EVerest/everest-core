@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
-
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #ifndef BUSYSTEM_HPP
 #define BUSYSTEM_HPP
 
@@ -10,9 +9,6 @@
 //
 
 #include "ld-ev.hpp"
-
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/system/Interface.hpp>
@@ -28,11 +24,9 @@ struct Conf {};
 class BUSystem : public Everest::ModuleBase {
 public:
     BUSystem() = delete;
-    BUSystem(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main, std::unique_ptr<systemIntf> r_system,
-             Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_system(std::move(r_system)), config(config){};
+    BUSystem(const ModuleInfo& info, std::unique_ptr<systemIntf> r_system, Conf& config) :
+        ModuleBase(info), r_system(std::move(r_system)), config(config){};
 
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<systemIntf> r_system;
     const Conf& config;
 

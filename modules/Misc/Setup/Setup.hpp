@@ -10,9 +10,6 @@
 
 #include "ld-ev.hpp"
 
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
-
 // headers for required interface implementations
 #include <generated/interfaces/kvs/Interface.hpp>
 
@@ -117,12 +114,11 @@ struct Conf {
 class Setup : public Everest::ModuleBase {
 public:
     Setup() = delete;
-    Setup(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
-          std::unique_ptr<kvsIntf> r_store, Conf& config) :
-        ModuleBase(info), mqtt(mqtt_provider), p_main(std::move(p_main)), r_store(std::move(r_store)), config(config){};
+    Setup(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<kvsIntf> r_store,
+          Conf& config) :
+        ModuleBase(info), mqtt(mqtt_provider), r_store(std::move(r_store)), config(config){};
 
     Everest::MqttProvider& mqtt;
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<kvsIntf> r_store;
     const Conf& config;
 

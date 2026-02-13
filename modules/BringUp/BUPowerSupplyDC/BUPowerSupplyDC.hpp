@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
-
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #ifndef BUPOWER_SUPPLY_DC_HPP
 #define BUPOWER_SUPPLY_DC_HPP
 
@@ -10,9 +9,6 @@
 //
 
 #include "ld-ev.hpp"
-
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/power_supply_DC/Interface.hpp>
@@ -28,11 +24,9 @@ struct Conf {};
 class BUPowerSupplyDC : public Everest::ModuleBase {
 public:
     BUPowerSupplyDC() = delete;
-    BUPowerSupplyDC(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
-                    std::unique_ptr<power_supply_DCIntf> r_psu, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_psu(std::move(r_psu)), config(config){};
+    BUPowerSupplyDC(const ModuleInfo& info, std::unique_ptr<power_supply_DCIntf> r_psu, Conf& config) :
+        ModuleBase(info), r_psu(std::move(r_psu)), config(config){};
 
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<power_supply_DCIntf> r_psu;
     const Conf& config;
 

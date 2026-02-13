@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
-
-#ifndef BUNFCREADER_MONITOR_HPP
-#define BUNFCREADER_MONITOR_HPP
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
+#ifndef BUTOKEN_PROVIDER_HPP
+#define BUTOKEN_PROVIDER_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -10,9 +9,6 @@
 //
 
 #include "ld-ev.hpp"
-
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/auth_token_provider/Interface.hpp>
@@ -28,11 +24,9 @@ struct Conf {};
 class BUTokenProvider : public Everest::ModuleBase {
 public:
     BUTokenProvider() = delete;
-    BUTokenProvider(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
-                    std::unique_ptr<auth_token_providerIntf> r_token_provider, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_token_provider(std::move(r_token_provider)), config(config){};
+    BUTokenProvider(const ModuleInfo& info, std::unique_ptr<auth_token_providerIntf> r_token_provider, Conf& config) :
+        ModuleBase(info), r_token_provider(std::move(r_token_provider)), config(config){};
 
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<auth_token_providerIntf> r_token_provider;
     const Conf& config;
 
@@ -63,4 +57,4 @@ private:
 
 } // namespace module
 
-#endif // BUNFCREADER_MONITOR_HPP
+#endif // BUTOKEN_PROVIDER_HPP

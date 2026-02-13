@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #ifndef BUOVER_VOLTAGE_MONITOR_HPP
 #define BUOVER_VOLTAGE_MONITOR_HPP
 
@@ -9,9 +9,6 @@
 //
 
 #include "ld-ev.hpp"
-
-// headers for provided interface implementations
-#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/over_voltage_monitor/Interface.hpp>
@@ -28,11 +25,9 @@ struct Conf {};
 class BUOverVoltageMonitor : public Everest::ModuleBase {
 public:
     BUOverVoltageMonitor() = delete;
-    BUOverVoltageMonitor(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
-                         std::unique_ptr<over_voltage_monitorIntf> r_ovm, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), r_ovm(std::move(r_ovm)), config(config){};
+    BUOverVoltageMonitor(const ModuleInfo& info, std::unique_ptr<over_voltage_monitorIntf> r_ovm, Conf& config) :
+        ModuleBase(info), r_ovm(std::move(r_ovm)), config(config){};
 
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<over_voltage_monitorIntf> r_ovm;
     const Conf& config;
 

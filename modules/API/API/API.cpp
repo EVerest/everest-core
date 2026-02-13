@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #include "API.hpp"
 #include <everest/external_energy_limits/external_energy_limits.hpp>
 #include <utils/date.hpp>
@@ -315,8 +315,6 @@ SessionInfo::operator std::string() {
 }
 
 void API::init() {
-    invoke_init(*p_main);
-
     // ensure all evse_energy_sink(s) that are connected have an evse id mapping
     for (const auto& evse_sink : this->r_evse_energy_sink) {
         if (not evse_sink->get_mapping().has_value()) {
@@ -751,8 +749,6 @@ void API::init() {
 }
 
 void API::ready() {
-    invoke_ready(*p_main);
-
     if (not r_charger_information.empty()) {
         this->charger_information = r_charger_information.at(0)->call_get_charger_information();
     }

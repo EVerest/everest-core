@@ -36,8 +36,6 @@ EvSessionInfo::operator std::string() {
 }
 
 void EvAPI::init() {
-    invoke_init(*p_main);
-
     std::vector<std::string> ev_connectors;
     std::string var_ev_connectors = this->api_base + "ev_connectors";
 
@@ -91,7 +89,6 @@ void EvAPI::init() {
 }
 
 void EvAPI::ready() {
-    invoke_ready(*p_main);
 }
 
 } // namespace module
