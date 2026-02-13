@@ -1321,6 +1321,10 @@ KeyValue ChargePointConfigurationDeviceModel::getChargePointVendorKeyValue() {
     return get_key_value(*storage, keys::valid_keys::ChargePointVendor);
 }
 
+KeyValue ChargePointConfigurationDeviceModel::getEnableTLSKeylogKeyValue() {
+    return get_key_value(*storage, keys::valid_keys::EnableTLSKeylog);
+}
+
 KeyValue ChargePointConfigurationDeviceModel::getLogMessagesFormatKeyValue() {
     return get_key_value(*storage, keys::valid_keys::LogMessagesFormat);
 }
@@ -1393,8 +1397,20 @@ KeyValue ChargePointConfigurationDeviceModel::getSupportedMeasurandsKeyValue() {
     return get_key_value(*storage, keys::valid_keys::SupportedMeasurands);
 }
 
+KeyValue ChargePointConfigurationDeviceModel::getTLSKeylogFileKeyValue() {
+    return get_key_value(*storage, keys::valid_keys::TLSKeylogFile);
+}
+
 KeyValue ChargePointConfigurationDeviceModel::getUseSslDefaultVerifyPathsKeyValue() {
     return get_key_value(*storage, keys::valid_keys::UseSslDefaultVerifyPaths);
+}
+
+KeyValue ChargePointConfigurationDeviceModel::getUseTPMKeyValue() {
+    return get_key_value(*storage, keys::valid_keys::UseTPM);
+}
+
+KeyValue ChargePointConfigurationDeviceModel::getUseTPMSeccLeafCertificateKeyValue() {
+    return get_key_value(*storage, keys::valid_keys::UseTPMSeccLeafCertificate);
 }
 
 KeyValue ChargePointConfigurationDeviceModel::getVerifyCsmsAllowWildcardsKeyValue() {

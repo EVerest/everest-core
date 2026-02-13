@@ -478,8 +478,24 @@ bool ChargePointConfiguration::getUseTPM() {
     return this->config["Internal"]["UseTPM"];
 }
 
+KeyValue ChargePointConfiguration::getUseTPMKeyValue() {
+    KeyValue kv;
+    kv.key = "UseTPM";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getUseTPM()));
+    return kv;
+}
+
 bool ChargePointConfiguration::getUseTPMSeccLeafCertificate() {
     return this->config["Internal"]["UseTPMSeccLeafCertificate"];
+}
+
+KeyValue ChargePointConfiguration::getUseTPMSeccLeafCertificateKeyValue() {
+    KeyValue kv;
+    kv.key = "UseTPMSeccLeafCertificate";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getUseTPMSeccLeafCertificate()));
+    return kv;
 }
 
 bool ChargePointConfiguration::getVerifyCsmsAllowWildcards() {
@@ -780,8 +796,24 @@ bool ChargePointConfiguration::getEnableTLSKeylog() {
     return this->config["Internal"]["EnableTLSKeylog"];
 }
 
+KeyValue ChargePointConfiguration::getEnableTLSKeylogKeyValue() {
+    KeyValue kv;
+    kv.key = "EnableTLSKeylog";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getEnableTLSKeylog()));
+    return kv;
+}
+
 std::string ChargePointConfiguration::getTLSKeylogFile() {
     return this->config["Internal"]["TLSKeylogFile"];
+}
+
+KeyValue ChargePointConfiguration::getTLSKeylogFileKeyValue() {
+    KeyValue kv;
+    kv.key = "TLSKeylogFile";
+    kv.readonly = true;
+    kv.value.emplace(this->getTLSKeylogFile());
+    return kv;
 }
 
 bool ChargePointConfiguration::getStopTransactionIfUnlockNotSupported() {
@@ -3110,6 +3142,18 @@ std::optional<KeyValue> ChargePointConfiguration::get(const CiString<50>& key) {
     if (key == "LogMessagesFormat") {
         return this->getLogMessagesFormatKeyValue();
     }
+    if (key == "LogRotation") {
+        return this->getLogRotationKeyValue();
+    }
+    if (key == "LogRotationDateSuffix") {
+        return this->getLogRotationDateSuffixKeyValue();
+    }
+    if (key == "LogRotationMaximumFileCount") {
+        return this->getLogRotationMaximumFileCountKeyValue();
+    }
+    if (key == "LogRotationMaximumFileSize") {
+        return this->getLogRotationMaximumFileSizeKeyValue();
+    }
     if (key == "SupportedChargingProfilePurposeTypes") {
         return this->getSupportedChargingProfilePurposeTypesKeyValue();
     }
@@ -3188,7 +3232,18 @@ std::optional<KeyValue> ChargePointConfiguration::get(const CiString<50>& key) {
     if (key == "StopTransactionIfUnlockNotSupported") {
         return this->getStopTransactionIfUnlockNotSupportedKeyValue();
     }
-
+    if (key == "TLSKeylogFile") {
+        return this->getTLSKeylogFileKeyValue();
+    }
+    if (key == "EnableTLSKeylog") {
+        return this->getEnableTLSKeylogKeyValue();
+    }
+    if (key == "UseTPM") {
+        return this->getUseTPMKeyValue();
+    }
+    if (key == "UseTPMSeccLeafCertificate") {
+        return this->getUseTPMSeccLeafCertificateKeyValue();
+    }
     // Core Profile
     if (key == "AllowOfflineTxForUnknownId") {
         return this->getAllowOfflineTxForUnknownIdKeyValue();

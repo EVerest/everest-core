@@ -28,8 +28,8 @@ using ocpp::v16::keys::valid_keys;
     key(LogMessagesFormat) \
     key(LogRotation) \
     key(LogRotationDateSuffix) \
-    key(LogRotationMaximumFileSize) \
     key(LogRotationMaximumFileCount) \
+    key(LogRotationMaximumFileSize) \
     key(SupportedChargingProfilePurposeTypes) \
     key(MaxCompositeScheduleDuration) \
     key(SupportedCiphers12) \
@@ -72,23 +72,17 @@ using ocpp::v16::keys::valid_keys;
     key(NumberOfDecimalsForCostValues) \
     key(CustomMultiLanguageMessages) \
     key(SupportedLanguages) \
-    key(Language)
-
-// Hidden keys are ones that are not made available over OCPP
-//  AuthorizationKey because it contains the connection secret
-//  <others> because they are not in ChargePointConfiguration::get()
-//  (which could be a bug)
-
-#define FOR_ALL_HIDDEN(key) \
-    key(AuthorizationKey) \
+    key(Language) \
     key(EnableTLSKeylog) \
-    key(LogRotation) \
-    key(LogRotationDateSuffix) \
-    key(LogRotationMaximumFileCount) \
-    key(LogRotationMaximumFileSize) \
     key(TLSKeylogFile) \
     key(UseTPM) \
     key(UseTPMSeccLeafCertificate)
+
+// Hidden keys are ones that are not made available over OCPP
+//  AuthorizationKey because it contains the connection secret
+
+#define FOR_ALL_HIDDEN(key) \
+    key(AuthorizationKey)
 
 // clang-format on
 
