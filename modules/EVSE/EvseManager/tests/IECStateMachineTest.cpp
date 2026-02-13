@@ -26,7 +26,7 @@ struct BspStub : public module::stub::ModuleAdapterStub {
     BspStub() : module::stub::ModuleAdapterStub() {
         _bsp["allow_power_on"] = &BspStub::call_allow_power_on;
         _bsp["enable"] = &BspStub::call_enable;
-        _bsp["pwm_off"] = &BspStub::call_pwm_off;
+        _bsp["cp_state_X1"] = &BspStub::call_cp_state_X1;
         _bsp["pwm_on"] = &BspStub::call_pwm_on;
     }
 
@@ -54,8 +54,8 @@ struct BspStub : public module::stub::ModuleAdapterStub {
         return std::nullopt;
     }
 
-    virtual Result call_pwm_off(Parameters p) {
-        std::cout << "call_pwm_off(" << p << ")" << std::endl;
+    virtual Result call_cp_state_X1(Parameters p) {
+        std::cout << "call_cp_state_X1(" << p << ")" << std::endl;
         return std::nullopt;
     }
 
@@ -122,13 +122,13 @@ TEST(IECStateMachine, init_subscribe) {
 #endif
 
 struct BspStubDeadlock : public BspStub {
-    std::vector<std::chrono::time_point<std::chrono::steady_clock>> call_pwm_off_times;
+    std::vector<std::chrono::time_point<std::chrono::steady_clock>> call_cp_state_X1_times;
     std::vector<std::chrono::time_point<std::chrono::steady_clock>> call_allow_power_on_times;
     int count = 0;
     enum class events_t : std::uint8_t {
         call_allow_power_on,
         call_enable,
-        call_pwm_off,
+        call_cp_state_X1,
         call_pwm_on,
         signal_lock,
         sleeping,
@@ -170,16 +170,16 @@ struct BspStubDeadlock : public BspStub {
         return std::nullopt;
     }
 
-    virtual Result call_pwm_off(Parameters p) {
-        std::cout << "call_pwm_off(" << p << ")" << std::endl;
-        call_pwm_off_times.push_back(std::chrono::steady_clock::now());
+    virtual Result call_cp_state_X1(Parameters p) {
+        std::cout << "call_cp_state_X1(" << p << ")" << std::endl;
+        call_cp_state_X1_times.push_back(std::chrono::steady_clock::now());
         if (count == 2) {
             std::cout << "sleeping ..." << std::endl;
             events.push(events_t::sleeping);
             std::this_thread::sleep_for(7s);
         }
         count++;
-        events.push(events_t::call_pwm_off);
+        events.push(events_t::call_cp_state_X1);
         return std::nullopt;
     }
 
@@ -190,10 +190,10 @@ struct BspStubDeadlock : public BspStub {
     }
 
     auto elapsed() const {
-        auto last_call_pwm_off_time = call_pwm_off_times.back();
+        auto last_call_cp_state_X1_time = call_cp_state_X1_times.back();
         auto last_call_allow_power_on_time = call_allow_power_on_times.back();
         return std::chrono::duration_cast<std::chrono::milliseconds>(last_call_allow_power_on_time -
-                                                                     last_call_pwm_off_time)
+                                                                     last_call_cp_state_X1_time)
             .count();
     }
 };
@@ -232,7 +232,7 @@ TEST(IECStateMachine, deadlock_test) {
 
     bsp.raise_event(Event::A);
     actions = bsp.wait();
-    ASSERT_TRUE(bsp.contains(actions, BspStubDeadlock::events_t::call_pwm_off));
+    ASSERT_TRUE(bsp.contains(actions, BspStubDeadlock::events_t::call_cp_state_X1));
 
     bsp.raise_event(Event::B);
     actions = bsp.wait();
@@ -255,7 +255,7 @@ TEST(IECStateMachine, deadlock_test) {
     // std::cout << bsp.to_string(actions) << std::endl;
     ASSERT_TRUE(bsp.contains(actions, BspStubDeadlock::events_t::call_allow_power_on));
 
-    state_machine.set_pwm_off();
+    state_machine.set_cp_state_X1();
     // expect state_machine to run once and then again when the
     // timer expires
 
@@ -299,7 +299,7 @@ TEST(IECStateMachine, deadlock_fix) {
     bsp.raise_event(Event::A);
     actions = bsp.wait();
     // std::cout << bsp.to_string(actions) << std::endl;
-    ASSERT_TRUE(bsp.contains(actions, BspStubDeadlock::events_t::call_pwm_off));
+    ASSERT_TRUE(bsp.contains(actions, BspStubDeadlock::events_t::call_cp_state_X1));
 
     bsp.raise_event(Event::B);
     actions = bsp.wait();
@@ -317,12 +317,12 @@ TEST(IECStateMachine, deadlock_fix) {
     actions = bsp.wait();
     ASSERT_TRUE(bsp.contains(actions, BspStubDeadlock::events_t::call_allow_power_on));
 
-    state_machine.set_pwm_off();
+    state_machine.set_cp_state_X1();
     // expect state_machine to run once and then again when the
     // timer expires
 
     actions = bsp.wait();
-    ASSERT_TRUE(bsp.contains(actions, BspStubDeadlock::events_t::call_pwm_off));
+    ASSERT_TRUE(bsp.contains(actions, BspStubDeadlock::events_t::call_cp_state_X1));
 
     // this would previously trigger the deadlock
     bsp.raise_event(Event::A);

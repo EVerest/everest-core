@@ -111,10 +111,10 @@ void evse_bsp_api::dispatch(std::string const& operation, std::string const& pay
         receive_enable(payload);
     } else if (operation == "pwm_on") {
         receive_pwm_on(payload);
-    } else if (operation == "pwm_off") {
-        receive_pwm_off(payload);
-    } else if (operation == "pwm_F") {
-        receive_pwm_F(payload);
+    } else if (operation == "cp_state_X1") {
+        receive_cp_state_X1(payload);
+    } else if (operation == "cp_state_F") {
+        receive_cp_state_F(payload);
     } else if (operation == "allow_power_on") {
         receive_allow_power_on(payload);
     } else if (operation == "ac_switch_three_phases_while_charging") {
@@ -370,12 +370,12 @@ void evse_bsp_api::receive_pwm_on(std::string const& payload) {
     }
 }
 
-void evse_bsp_api::receive_pwm_off([[maybe_unused]] std::string const& payload) {
+void evse_bsp_api::receive_cp_state_X1([[maybe_unused]] std::string const& payload) {
     host_status.pwm_duty_cycle = 10001;
     tx(host_status);
 }
 
-void evse_bsp_api::receive_pwm_F([[maybe_unused]] std::string const& payload) {
+void evse_bsp_api::receive_cp_state_F([[maybe_unused]] std::string const& payload) {
     host_status.pwm_duty_cycle = 0;
     tx(host_status);
 }

@@ -687,9 +687,9 @@ void IECStateMachine::set_overcurrent_limit(double amps) {
 
 void IECStateMachine::set_pwm(double value) {
 }
-void IECStateMachine::set_pwm_off() {
+void IECStateMachine::set_cp_state_X1() {
 }
-void IECStateMachine::set_pwm_F() {
+void IECStateMachine::set_cp_state_F() {
 }
 
 void IECStateMachine::enable(bool en) {

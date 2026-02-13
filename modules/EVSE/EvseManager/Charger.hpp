@@ -250,8 +250,8 @@ private:
     void update_pwm_now_if_changed(float duty_cycle);
     void update_pwm_now_if_changed_ampere(float duty_cycle);
     void update_pwm_max_every_5seconds_ampere(float duty_cycle);
-    void pwm_off();
-    void pwm_F();
+    void cp_state_X1();
+    void cp_state_F();
 
     void process_cp_events_independent(CPEvent cp_event);
     void process_cp_events_state(CPEvent cp_event);
@@ -388,7 +388,7 @@ private:
         bool no_energy_warning_printed{false};
         float pwm_set_last_ampere{0};
         bool t_step_ef_x1_pause{false};
-        bool pwm_F_active{false};
+        bool cp_state_F_active{false};
 
         bool ac_x1_fallback_nominal_timeout_running{false};
         std::chrono::time_point<std::chrono::steady_clock> ac_x1_fallback_nominal_timeout_started;
