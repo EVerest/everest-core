@@ -33,7 +33,7 @@ struct StateBase {
     using ContainerType = BasePointerType;
     using EventType = Event;
 
-    StateBase(Context& ctx, StateID id) : m_ctx(ctx), m_id(id) {};
+    StateBase(Context& ctx, StateID id) : m_ctx(ctx), m_id(id){};
 
     virtual ~StateBase() = default;
 
@@ -41,9 +41,9 @@ struct StateBase {
         return m_id;
     }
 
-    virtual void enter() {};
+    virtual void enter(){};
     virtual Result feed(Event) = 0;
-    virtual void leave() {};
+    virtual void leave(){};
 
 protected:
     Context& m_ctx;

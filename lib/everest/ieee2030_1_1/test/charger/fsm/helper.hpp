@@ -25,7 +25,8 @@ public:
 
     v20::Context& get_context();
 
-    void handle_can_message(const ieee2030::messages::EV100& message_100_, const ieee2030::messages::EV101& message_101_,
+    void handle_can_message(const ieee2030::messages::EV100& message_100_,
+                            const ieee2030::messages::EV101& message_101_,
                             const ieee2030::messages::EV102& message_102_) {
 
         this->message_100 = message_100_;

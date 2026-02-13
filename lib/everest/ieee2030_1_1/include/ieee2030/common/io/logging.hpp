@@ -8,5 +8,4 @@
 namespace ieee2030::io {
 void set_logging_callback(const std::function<void(std::string)>&);
 
-
-} // namespace iso15118::io
+} // namespace ieee2030::io

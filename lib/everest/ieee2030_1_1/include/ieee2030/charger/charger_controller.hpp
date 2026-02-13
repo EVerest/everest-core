@@ -6,8 +6,8 @@
 
 #include <ieee2030/charger/session/callback.hpp>
 #include <ieee2030/charger/session/session.hpp>
-#include <ieee2030/common/v20/event_queue.hpp>
 #include <ieee2030/charger/v20/control_event.hpp>
+#include <ieee2030/common/v20/event_queue.hpp>
 
 namespace ieee2030::charger {
 
@@ -51,7 +51,7 @@ private:
 
     // HW Signals: Enable/disable CS1 & CS2 done
     // EV Target voltage & current done
-    // EV min & max battery voltage 
+    // EV min & max battery voltage
     // Debug infos (protocol, soc)
     // Fault
     // Lock enable/disable?

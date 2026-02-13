@@ -21,7 +21,6 @@ enum class CanEvent {
 
 using CanEventCallback = std::function<void(CanEvent)>;
 
-
 // Todo(sl): Check if refactoring with CanBrokerCharger is possible
 class CanBrokerEv {
 
