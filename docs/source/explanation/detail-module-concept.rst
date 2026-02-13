@@ -231,10 +231,6 @@ Here is the ``modules/PingClientModule/manifest.yaml`` file:
 ..  code-block:: yaml
 
     description: Example ping-pong client module
-    provides: # list of interface implementations
-      if_impl_id_empty: # there must be at least one, so we add a dummy interface
-        interface: empty # the definition of this interface is in everest-core
-        description: Dummy interface
     requires: # list of interface requirements
       requirement_ping_server: # requirement ID
         interface: interface_ping # interface name
@@ -361,11 +357,8 @@ the following new files (we omit the ``manifest.yaml here``)::
             ├── PingClientModule.cpp
             ├── PingClientModule.hpp
             ├── doc.rst
-            ├── docs
-            │   └── index.rst
-            └── if_impl_id_empty
-                ├── emptyImpl.cpp
-                └── emptyImpl.hpp
+            └── docs
+                └── index.rst
 
 Focusing on the source and header files, generally, the tool generates:
 
