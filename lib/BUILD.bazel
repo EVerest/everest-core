@@ -36,3 +36,8 @@ alias(
     actual = "//lib/everest/external_energy_limits:external_energy_limits",
     visibility = ["//visibility:public"],
 )
+alias(
+    name = "util",
+    actual = "//lib/everest/util:util",
+    visibility = ["//visibility:public"],
+)
