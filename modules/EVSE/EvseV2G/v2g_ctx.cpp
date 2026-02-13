@@ -193,8 +193,8 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
         ctx->evse_v2g_data.rcd = (int)0; // 0 if RCD has not detected an error
         ctx->contactor_is_closed = false;
 
-        ctx->evse_v2g_data.payment_option_list[0] = iso2_paymentOptionType_ExternalPayment;
-        ctx->evse_v2g_data.payment_option_list_len = (uint8_t)1; // One option must be set
+        ctx->evse_v2g_data.payment_option_list.reserve(iso2_paymentOptionType_2_ARRAY_SIZE);
+        ctx->evse_v2g_data.payment_option_list = {iso2_paymentOptionType_ExternalPayment};
 
         ctx->evse_v2g_data.evse_service_list.clear();
         ctx->evse_v2g_data.evse_service_list.reserve(iso2_ServiceType_8_ARRAY_SIZE);
@@ -261,8 +261,7 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     if (ctx->hlc_pause_active != true) {
         ctx->session.iso_selected_payment_option = iso2_paymentOptionType_ExternalPayment;
     } else {
-        ctx->evse_v2g_data.payment_option_list[0] = ctx->session.iso_selected_payment_option;
-        ctx->evse_v2g_data.payment_option_list_len = (uint8_t)1; // One option must be set
+        ctx->evse_v2g_data.payment_option_list = {ctx->session.iso_selected_payment_option};
     }
     memset(ctx->session.gen_challenge, 0, sizeof(ctx->session.gen_challenge));
 
