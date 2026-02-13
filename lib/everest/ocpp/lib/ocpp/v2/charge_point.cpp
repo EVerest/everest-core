@@ -493,7 +493,7 @@ void ChargePoint::on_ev_charging_needs(const NotifyEVChargingNeedsRequest& reque
 
 void ChargePoint::initialize(const std::map<std::int32_t, std::int32_t>& evse_connector_structure,
                              const std::string& message_log_path) {
-    if (!this->device_model) {
+    if (this->device_model == nullptr) {
         EVLOG_AND_THROW(std::invalid_argument("Device model should not be null"));
     }
 
@@ -502,7 +502,7 @@ void ChargePoint::initialize(const std::map<std::int32_t, std::int32_t>& evse_co
         EVLOG_AND_THROW(std::invalid_argument("All non-optional callbacks must be supplied"));
     }
 
-    if (!this->database_handler) {
+    if (this->database_handler == nullptr) {
         EVLOG_AND_THROW(std::invalid_argument("Database handler should not be null"));
     }
 
