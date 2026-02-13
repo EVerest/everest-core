@@ -21,6 +21,7 @@ struct CB_COMPILER_ATTR_PACK evse_bsp_cb_to_host {
     uint32_t hv_mV;
     // still define handling set for
     uint8_t stop_charging;
+    uint16_t cp_duty_cycle;
 };
 
 /* Enum definitions */

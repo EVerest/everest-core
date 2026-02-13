@@ -1,0 +1,170 @@
+settings:
+  telemetry_enabled: false
+active_modules:
+  auth:
+    config_module:
+      connection_timeout: 60
+      prioritize_authorization_over_stopping_transaction: true
+      selection_algorithm: FindFirst
+      ignore_connector_faults: true
+    connections:
+      evse_manager:
+        - implementation_id: evse
+          module_id: connector_1
+      token_provider:
+        - implementation_id: main
+          module_id: token_provider
+      token_validator:
+        - implementation_id: main
+          module_id: token_validator
+    module: Auth
+  energy_manager:
+    config_module:
+      switch_3ph1ph_while_charging_mode: Never
+      schedule_interval_duration: 60
+      schedule_total_duration: 10
+      debug: false
+    connections:
+      energy_trunk:
+        - implementation_id: energy_grid
+          module_id: grid_connection_point
+    module: EnergyManager
+  connector_1:
+    config_module:
+      ac_enforce_hlc: true
+      ac_hlc_enabled: true
+      ac_hlc_use_5percent: true
+      ac_nominal_voltage: 230
+      charge_mode: DC
+      connector_id: 1
+      ev_receipt_required: false
+      evse_id: DE*PNX*E12345*1
+      has_ventilation: true
+      max_current_import_A: 16
+      max_current_export_A: 16
+      payment_enable_contract: false
+      payment_enable_eim: true
+      session_logging: true
+      session_logging_path: /tmp/everest-logs
+      session_logging_xml: false
+      switch_3ph1ph_delay_s: 5
+      switch_3ph1ph_cp_state: X1
+      cable_check_wait_below_60V_before_finish: false
+      hack_allow_bpt_with_iso2: true
+    connections:
+      bsp:
+        - implementation_id: main
+          module_id: cb_bsp
+      hlc:
+        - implementation_id: charger
+          module_id: iso15118_charger
+      slac:
+        - implementation_id: main
+          module_id: slac
+      powersupply_DC:
+        - module_id: powersupply_dc
+          implementation_id: main
+      imd:
+        - module_id: iso_monitor
+          implementation_id: main
+      over_voltage_monitor:
+        - module_id: cb_ovm
+          implementation_id: main
+    module: EvseManager
+    telemetry:
+      id: 1
+  iso_monitor:
+    config_implementation:
+      main:
+        selftest_success: true
+        resistance_F_Ohm: 900000
+    module: IMDSimulator
+  comm_hub:
+    config_implementation:
+      main:
+        serial_port: /dev/cb_rs485
+        baudrate: 19200
+        parity: 2
+    module: SerialCommHub
+  powersupply_dc:
+    module: DCSupplySimulator
+  grid_connection_point:
+    config_module:
+      fuse_limit_A: 16
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - implementation_id: energy_grid
+          module_id: external_limits_node
+    module: EnergyNode
+  external_limits_node:
+    config_module:
+      fuse_limit_A: 16
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - implementation_id: energy_grid
+          module_id: connector_1
+    module: EnergyNode
+  iso15118_charger:
+    config_module:
+      device: cb_plc
+      tls_security: prohibit
+      supported_DIN70121: false
+    connections: {}
+    module: EvseV2G
+    connections:
+      security:
+        - module_id: evse_security
+          implementation_id: main
+  evse_security:
+    module: EvseSecurity
+    config_module:
+      private_key_password: "123456"
+  persistent_store:
+    config_module:
+      sqlite_db_file_path: everest_persistent_store.db
+    connections: {}
+    module: PersistentStore
+  slac:
+    module: EvseSlac
+    config_implementation:
+      main:
+        device: cb_plc
+  token_provider:
+    config_implementation:
+      main:
+        timeout: 10
+        token: DEADBEEF
+    connections:
+      evse:
+        - implementation_id: evse
+          module_id: connector_1
+    module: DummyTokenProvider
+  token_validator:
+    config_implementation:
+      main:
+        sleep: 0.25
+        validation_reason: Token seems valid
+        validation_result: Accepted
+    connections: {}
+    module: DummyTokenValidator
+  cb_bsp:
+    connections: {}
+    config_module:
+      cfg_heartbeat_interval_ms: 500
+    module: evse_board_support_API
+  cb_ovm:
+    connections: {}
+    config_module:
+      cfg_heartbeat_interval_ms: 500
+    module: over_voltage_monitor_API
+  external_limits:
+    connections:
+      energy_node:
+        - implementation_id: external_limits
+          module_id: external_limits_node
+    config_module:
+      cfg_heartbeat_interval_ms: 1000
+      cfg_communication_check_to_s: 0
+    module: external_energy_limits_consumer_API
