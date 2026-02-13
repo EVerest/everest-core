@@ -102,7 +102,7 @@ private:
         FinishedEV
     } state;
 
-    bool is_state_charging(const SessionInfo::State current_state);
+    static bool is_state_charging(SessionInfo::State current_state);
 
     std::string state_to_string(State s);
 
