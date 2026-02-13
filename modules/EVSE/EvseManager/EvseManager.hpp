@@ -49,6 +49,7 @@
 #include "VarContainer.hpp"
 #include "over_voltage/OverVoltageMonitor.hpp"
 #include "scoped_lock_timeout.hpp"
+#include "voltage_plausibility/VoltagePlausibilityMonitor.hpp"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -118,6 +119,8 @@ struct Conf {
     std::string bpt_channel;
     std::string bpt_generator_mode;
     std::string bpt_grid_code_island_method;
+    double voltage_plausibility_max_spread_threshold_V;
+    int voltage_plausibility_fault_duration_ms;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -346,6 +349,9 @@ private:
     bool reserved;
     int32_t reservation_id;
     Everest::timed_mutex_traceable reservation_mutex;
+
+    // Voltage plausibility monitor
+    std::unique_ptr<VoltagePlausibilityMonitor> voltage_plausibility_monitor;
 
     void setup_AC_mode();
     void setup_fake_DC_mode();

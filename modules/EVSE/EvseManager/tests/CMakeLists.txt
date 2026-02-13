@@ -19,10 +19,12 @@ target_sources(${TEST_TARGET_NAME} PRIVATE
     ErrorHandlingTest.cpp
     IECStateMachineTest.cpp
     OverVoltageMonitorTest.cpp
+    VoltagePlausibilityMonitorTest.cpp
     ../ErrorHandling.cpp
     ../IECStateMachine.cpp
     ../backtrace.cpp
     ../over_voltage/OverVoltageMonitor.cpp
+    ../voltage_plausibility/VoltagePlausibilityMonitor.cpp
 )
 
 target_compile_definitions(${TEST_TARGET_NAME} PRIVATE
