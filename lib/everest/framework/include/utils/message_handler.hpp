@@ -14,6 +14,7 @@
 #include <thread>
 #include <vector>
 
+#include <everest/util/async/thread_pool.hpp>
 #include <utils/message_queue.hpp>
 #include <utils/types.hpp>
 
@@ -21,6 +22,8 @@ using MqttTopic = std::string;
 using CmdId = std::string;
 
 namespace Everest {
+
+constexpr int MESSAGE_HANDLER_THREAD_POOL_SIZE = 2;
 
 /// \brief Handles message dispatching and thread-safe queuing of different message types. This class uses two separate
 /// threads and message queues: one for operation messages (vars, cmds, errors, GetConfig, ModuleReady) and one for
@@ -40,7 +43,7 @@ public:
     void register_handler(const std::string& topic, std::shared_ptr<TypedHandler> handler);
 
 private:
-    void run_operation_message_worker();
+    void run_operation_dispatcher();
     void run_result_message_worker();
     void run_external_mqtt_worker();
 
@@ -69,13 +72,14 @@ private:
     void execute_single_handler(HandlerMap& handlers, const std::string& topic, ExecuteFn execute_fn);
 
     // Threads
-    std::thread
-        operation_worker_thread; // processes vars, commands, external MQTT, errors, GetConfig and ModuleReady messages
+    std::thread operation_dispatcher_thread; // processes vars, commands, external MQTT, errors, GetConfig and
+                                             // ModuleReady messages
     std::thread result_worker_thread;        // processes cmd results and GetConfig responses
     std::thread external_mqtt_worker_thread; // processes external MQTT messages
     std::thread ready_thread;                // runs the modules ready function
 
     // Queues and sync primitives
+    std::unique_ptr<everest::lib::util::thread_pool> operation_thread_pool;
     std::queue<ParsedMessage> operation_message_queue;
     std::queue<ParsedMessage> result_message_queue;
     std::queue<ParsedMessage> external_mqtt_message_queue;

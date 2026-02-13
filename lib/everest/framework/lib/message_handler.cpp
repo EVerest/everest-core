@@ -62,7 +62,8 @@ bool check_topic_matches(const std::string& full_topic, const std::string& wildc
 } // namespace
 
 MessageHandler::MessageHandler() {
-    operation_worker_thread = std::thread([this] { run_operation_message_worker(); });
+    operation_thread_pool = std::make_unique<everest::lib::util::thread_pool>(MESSAGE_HANDLER_THREAD_POOL_SIZE);
+    operation_dispatcher_thread = std::thread([this] { run_operation_dispatcher(); });
     result_worker_thread = std::thread([this] { run_result_message_worker(); });
     external_mqtt_worker_thread = std::thread([this] { run_external_mqtt_worker(); });
 }
@@ -120,8 +121,12 @@ void MessageHandler::stop() {
     result_cv.notify_all();
     external_mqtt_cv.notify_all();
 
-    if (operation_worker_thread.joinable()) {
-        operation_worker_thread.join();
+    if (operation_thread_pool) {
+        // The thread_pool destructor will handle stopping and joining.
+        operation_thread_pool.reset();
+    }
+    if (operation_dispatcher_thread.joinable()) {
+        operation_dispatcher_thread.join();
     }
     if (result_worker_thread.joinable()) {
         result_worker_thread.join();
@@ -134,7 +139,7 @@ void MessageHandler::stop() {
     }
 }
 
-void MessageHandler::run_operation_message_worker() {
+void MessageHandler::run_operation_dispatcher() {
     while (true) {
         std::unique_lock<std::mutex> lock(operation_queue_mutex);
         operation_cv.wait(lock, [this] { return !operation_message_queue.empty() || !running; });
@@ -145,9 +150,15 @@ void MessageHandler::run_operation_message_worker() {
         operation_message_queue.pop();
         lock.unlock();
 
-        handle_operation_message(message.topic, message.data);
+        if (operation_thread_pool) {
+            operation_thread_pool->run(
+                [this, message = std::move(message)]() { handle_operation_message(message.topic, message.data); });
+        } else {
+            // Process synchronously if no thread pool
+            handle_operation_message(message.topic, message.data);
+        }
     }
-    EVLOG_info << "Main worker thread stopped";
+    EVLOG_info << "Operation dispatcher thread stopped";
 }
 
 void MessageHandler::run_result_message_worker() {
