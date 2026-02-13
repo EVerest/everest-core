@@ -599,13 +599,6 @@ void Provisioning::handle_variable_changed(const SetVariableData& set_variable_d
         }
     }
 
-    if (component_variable == ControllerComponentVariables::MessageTimeout) {
-        if (component_variable.variable.has_value()) {
-            this->message_queue.update_message_timeout(
-                this->context.device_model.get_value<int>(ControllerComponentVariables::MessageTimeout));
-        }
-    }
-
     // TODO(piet): other special handling of changed variables can be added here...
 }
 

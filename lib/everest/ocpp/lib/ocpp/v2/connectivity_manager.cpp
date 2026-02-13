@@ -345,10 +345,10 @@ ConnectivityManager::get_ws_connection_options(const std::int32_t configuration_
             this->device_model.get_value<std::string>(ControllerComponentVariables::SupportedOcppVersions));
 
         WebsocketConnectionOptions connection_options{
-            ocpp_versions,
-            uri,
-            network_connection_profile.securityProfile,
+            ocpp_versions, uri, network_connection_profile.securityProfile,
             this->device_model.get_optional_value<std::string>(ControllerComponentVariables::BasicAuthPassword),
+            // Always use a minimum of 1 second otherwise each message would timeout immediately
+            std::chrono::seconds(std::max(network_connection_profile.messageTimeout, 1)),
             this->device_model.get_value<int>(ControllerComponentVariables::RetryBackOffRandomRange),
             this->device_model.get_value<int>(ControllerComponentVariables::RetryBackOffRepeatTimes),
             this->device_model.get_value<int>(ControllerComponentVariables::RetryBackOffWaitMinimum),

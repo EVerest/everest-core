@@ -3,6 +3,7 @@
 #ifndef OCPP_COMMON_MESSAGE_QUEUE_HPP
 #define OCPP_COMMON_MESSAGE_QUEUE_HPP
 
+#include <algorithm>
 #include <chrono>
 #include <condition_variable>
 #include <deque>
@@ -286,6 +287,115 @@ private:
         EVLOG_debug << "Notified message queue worker";
     }
 
+    /// \brief Handles a message timeout or a CALLERROR. \p enhanced_message_opt is set only in case of CALLERROR
+    void handle_timeout_or_callerror(const std::optional<EnhancedMessage<M>>& enhanced_message_opt) {
+        const std::lock_guard<std::recursive_mutex> lk(this->message_mutex);
+
+        if (this->in_flight == nullptr) {
+            EVLOG_warning << "Message timeout or CALLERROR occurred, but there is no message in flight";
+            return;
+        }
+
+        // We got a timeout iff enhanced_message_opt is empty. Otherwise, enhanced_message_opt contains the CallError.
+        const bool timeout = !enhanced_message_opt.has_value();
+        if (timeout) {
+            EVLOG_warning << "Message timeout for: " << this->in_flight->messageType << " ("
+                          << this->in_flight->uniqueId() << ")";
+        } else {
+            EVLOG_warning << "CALLERROR for: " << this->in_flight->messageType << " (" << this->in_flight->uniqueId()
+                          << ")";
+        }
+
+        const auto queue_type = is_transaction_message(*this->in_flight) ? QueueType::Transaction : QueueType::Normal;
+        if (is_transaction_message(*this->in_flight) or this->config.check_queue(this->in_flight->messageType)) {
+            if (this->in_flight->message_attempts < this->config.transaction_message_attempts) {
+                EVLOG_warning << "Message shall be persisted and will therefore be sent again";
+                // Generate a new message ID for the retry
+                const auto old_message_id = this->in_flight->message[MESSAGE_ID];
+                this->in_flight->message[MESSAGE_ID] = ocpp::create_message_id();
+                if (this->config.transaction_message_retry_interval > 0) {
+                    // exponential backoff
+                    this->in_flight->timestamp =
+                        DateTime(this->in_flight->timestamp.to_time_point() +
+                                 (std::chrono::seconds(this->config.transaction_message_retry_interval) *
+                                  this->in_flight->message_attempts));
+                    EVLOG_debug << "Retry interval > 0: " << this->config.transaction_message_retry_interval
+                                << " attempting to retry message at: " << this->in_flight->timestamp;
+                } else {
+                    // immediate retry
+                    this->in_flight->timestamp = DateTime();
+                    EVLOG_debug << "Retry interval of 0 means immediate retry";
+                }
+
+                EVLOG_warning << "Attempt: " << this->in_flight->message_attempts + 1 << "/"
+                              << this->config.transaction_message_attempts << " will be sent at "
+                              << this->in_flight->timestamp;
+
+                if (queue_type == QueueType::Transaction) {
+                    this->transaction_message_queue.push_front(this->in_flight);
+                } else if (queue_type == QueueType::Normal) {
+                    this->normal_message_queue.push_front(this->in_flight);
+                }
+                if (is_start_transaction_message(*this->in_flight)) {
+                    this->start_transaction_message_retry_callback(this->in_flight->message[MESSAGE_ID],
+                                                                   old_message_id);
+                }
+                this->notify_queue_timer.at(
+                    [this]() {
+                        this->new_message = true;
+                        this->cv.notify_all();
+                    },
+                    this->in_flight->timestamp.to_time_point());
+            } else {
+                EVLOG_error << "Could not deliver message within the configured amount of attempts, "
+                               "dropping message";
+                if (enhanced_message_opt) {
+                    this->in_flight->promise.set_value(enhanced_message_opt.value());
+                } else {
+                    EnhancedMessage<M> enhanced_message;
+                    enhanced_message.offline = true;
+                    this->in_flight->promise.set_value(enhanced_message);
+                }
+                try {
+                    // also drop the message from the database
+                    this->database_handler->remove_message_queue_message(this->in_flight->initial_unique_id,
+                                                                         queue_type);
+                } catch (const everest::db::QueryExecutionException& e) {
+                    EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
+                } catch (const std::exception& e) {
+                    EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
+                }
+            }
+        } else if (is_boot_notification_message(this->in_flight->messageType)) {
+            EVLOG_warning << "Message is BootNotification.req and will therefore be sent again";
+            // Generate a new message ID for the retry
+            this->in_flight->message[MESSAGE_ID] = ocpp::create_message_id();
+            // Spec does not define how to handle retries for BootNotification.req: We use the
+            // the boot_notification_retry_interval_seconds
+            this->in_flight->timestamp =
+                DateTime(this->in_flight->timestamp.to_time_point() +
+                         std::chrono::seconds(this->config.boot_notification_retry_interval_seconds));
+            this->normal_message_queue.push_front(this->in_flight);
+            this->notify_queue_timer.at(
+                [this]() {
+                    this->new_message = true;
+                    this->cv.notify_all();
+                },
+                this->in_flight->timestamp.to_time_point());
+        } else {
+            EVLOG_warning << "Message is not transaction related, dropping it";
+            if (enhanced_message_opt) {
+                this->in_flight->promise.set_value(enhanced_message_opt.value());
+            } else {
+                EnhancedMessage<M> enhanced_message;
+                enhanced_message.offline = true;
+                this->in_flight->promise.set_value(enhanced_message);
+            }
+        }
+        this->reset_in_flight();
+        this->cv.notify_all();
+    }
+
     void check_queue_sizes() {
         if (this->transaction_message_queue.size() + this->normal_message_queue.size() <=
             this->config.queues_total_size_threshold) {
@@ -416,7 +526,6 @@ public:
 
     void start() {
         this->worker_thread = std::thread([this]() {
-            // TODO(kai): implement message timeout
             while (this->running) {
                 EVLOG_debug << "Waiting for a message from the message queue";
 
@@ -426,10 +535,6 @@ public:
                 this->cv.wait(lk, [this]() {
                     return !this->running || (!this->paused && this->new_message && this->in_flight == nullptr);
                 });
-                if (this->transaction_message_queue.empty() && this->normal_message_queue.empty()) {
-                    // There is nothing in the message queue, not progressing further
-                    continue;
-                }
                 EVLOG_debug << "There are " << this->normal_message_queue.size()
                             << " messages in the normal message queue.";
                 EVLOG_debug << "There are " << this->transaction_message_queue.size()
@@ -524,43 +629,29 @@ public:
                     this->message_id_transaction_id_map.erase(this->in_flight->message.at(1));
                 }
 
+                // we drop the message from the in-memory queue in any case
+                // retries will be scheduled through handle_timeout or error
+                // in case the send_callback return false
+                switch (queue_type) {
+                case QueueType::Normal:
+                    this->normal_message_queue.erase(selected_normal_message_it);
+                    break;
+                case QueueType::Transaction:
+                    this->transaction_message_queue.erase(selected_transaction_message_it);
+                    break;
+                case QueueType::None:
+                    // do nothing
+                    break;
+                }
+
                 if (!this->send_callback(this->in_flight->message)) {
-                    this->paused = true;
-                    EVLOG_error << "Could not send message, this is most likely because the charge point is offline.";
-                    if (this->in_flight && is_transaction_message(*this->in_flight)) {
-                        EVLOG_info << "The message in flight is transaction related and will be sent again once the "
-                                      "connection can be established again.";
-                        if (this->in_flight->message.at(CALL_ACTION) == "TransactionEvent") {
-                            this->in_flight->message.at(CALL_PAYLOAD)["offline"] = true;
-                        }
-                    } else if (this->config.check_queue(this->in_flight->messageType)) {
-                        EVLOG_info << "The message in flight  will be sent again once the connection can be "
-                                      "established again since QueueAllMessages is set to 'true'.";
-                    } else {
-                        EVLOG_info << "The message in flight is not transaction related and will be dropped";
-                        if (queue_type == QueueType::Normal) {
-                            EnhancedMessage<M> enhanced_message;
-                            enhanced_message.offline = true;
-                            this->in_flight->promise.set_value(enhanced_message);
-                            this->normal_message_queue.pop_front();
-                        }
-                    }
-                    this->reset_in_flight();
+                    EVLOG_error
+                        << "Could not send message, this can occur due to a connection error or a very large message";
+                    this->handle_timeout_or_callerror(std::nullopt);
                 } else {
                     EVLOG_debug << "Successfully sent message. UID: " << this->in_flight->uniqueId();
                     this->in_flight_timeout_timer.timeout([this]() { this->handle_timeout_or_callerror(std::nullopt); },
                                                           this->current_message_timeout(message->message_attempts));
-                    switch (queue_type) {
-                    case QueueType::Normal:
-                        this->normal_message_queue.erase(selected_normal_message_it);
-                        break;
-                    case QueueType::Transaction:
-                        this->transaction_message_queue.erase(selected_transaction_message_it);
-                        break;
-                    case QueueType::None:
-                        // do nothing
-                        break;
-                    }
                 }
                 if (this->transaction_message_queue.empty() && this->normal_message_queue.empty()) {
                     this->new_message = false;
@@ -768,7 +859,6 @@ public:
                 EVLOG_error << "Received a CALLERROR for message with UID: " << enhanced_message.uniqueId;
                 // make sure the original call message is attached to the callerror
                 enhanced_message.call_message = this->in_flight->message;
-                lk.unlock();
                 this->handle_timeout_or_callerror(enhanced_message);
             } else {
                 this->handle_call_result(enhanced_message);
@@ -784,6 +874,11 @@ public:
     }
 
     void handle_call_result(EnhancedMessage<M>& enhanced_message) {
+        if (this->in_flight == nullptr) {
+            EVLOG_error << "Received a CALLRESULT without a message in flight";
+            return;
+        }
+
         if (this->in_flight->uniqueId() == enhanced_message.uniqueId) {
             enhanced_message.call_message = this->in_flight->message;
             enhanced_message.messageType = this->string_to_messagetype(
@@ -816,116 +911,19 @@ public:
         }
     }
 
-    /// \brief Handles a message timeout or a CALLERROR. \p enhanced_message_opt is set only in case of CALLERROR
-    void handle_timeout_or_callerror(const std::optional<EnhancedMessage<M>>& enhanced_message_opt) {
-        const std::lock_guard<std::recursive_mutex> lk(this->message_mutex);
-        // We got a timeout iff enhanced_message_opt is empty. Otherwise, enhanced_message_opt contains the CallError.
-        const bool timeout = !enhanced_message_opt.has_value();
-        if (timeout) {
-            EVLOG_warning << "Message timeout for: " << this->in_flight->messageType << " ("
-                          << this->in_flight->uniqueId() << ")";
-        } else {
-            EVLOG_warning << "CALLERROR for: " << this->in_flight->messageType << " (" << this->in_flight->uniqueId()
-                          << ")";
-        }
-
-        const auto queue_type = is_transaction_message(*this->in_flight) ? QueueType::Transaction : QueueType::Normal;
-        if (is_transaction_message(*this->in_flight) or this->config.check_queue(this->in_flight->messageType)) {
-            if (this->in_flight->message_attempts < this->config.transaction_message_attempts) {
-                EVLOG_warning << "Message shall be persisted and will therefore be sent again";
-                // Generate a new message ID for the retry
-                const auto old_message_id = this->in_flight->message[MESSAGE_ID];
-                this->in_flight->message[MESSAGE_ID] = ocpp::create_message_id();
-                if (this->config.transaction_message_retry_interval > 0) {
-                    // exponential backoff
-                    this->in_flight->timestamp =
-                        DateTime(this->in_flight->timestamp.to_time_point() +
-                                 (std::chrono::seconds(this->config.transaction_message_retry_interval) *
-                                  this->in_flight->message_attempts));
-                    EVLOG_debug << "Retry interval > 0: " << this->config.transaction_message_retry_interval
-                                << " attempting to retry message at: " << this->in_flight->timestamp;
-                } else {
-                    // immediate retry
-                    this->in_flight->timestamp = DateTime();
-                    EVLOG_debug << "Retry interval of 0 means immediate retry";
-                }
-
-                EVLOG_warning << "Attempt: " << this->in_flight->message_attempts + 1 << "/"
-                              << this->config.transaction_message_attempts << " will be sent at "
-                              << this->in_flight->timestamp;
-
-                if (queue_type == QueueType::Transaction) {
-                    this->transaction_message_queue.push_front(this->in_flight);
-                } else if (queue_type == QueueType::Normal) {
-                    this->normal_message_queue.push_front(this->in_flight);
-                }
-                if (is_start_transaction_message(*this->in_flight)) {
-                    this->start_transaction_message_retry_callback(this->in_flight->message[MESSAGE_ID],
-                                                                   old_message_id);
-                }
-                this->notify_queue_timer.at(
-                    [this]() {
-                        this->new_message = true;
-                        this->cv.notify_all();
-                    },
-                    this->in_flight->timestamp.to_time_point());
-            } else {
-                EVLOG_error << "Could not deliver message within the configured amount of attempts, "
-                               "dropping message";
-                if (enhanced_message_opt) {
-                    this->in_flight->promise.set_value(enhanced_message_opt.value());
-                } else {
-                    EnhancedMessage<M> enhanced_message;
-                    enhanced_message.offline = true;
-                    this->in_flight->promise.set_value(enhanced_message);
-                }
-                try {
-                    // also drop the message from the database
-                    this->database_handler->remove_message_queue_message(this->in_flight->initial_unique_id,
-                                                                         queue_type);
-                } catch (const everest::db::QueryExecutionException& e) {
-                    EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
-                } catch (const std::exception& e) {
-                    EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
-                }
-            }
-        } else if (is_boot_notification_message(this->in_flight->messageType)) {
-            EVLOG_warning << "Message is BootNotification.req and will therefore be sent again";
-            // Generate a new message ID for the retry
-            this->in_flight->message[MESSAGE_ID] = ocpp::create_message_id();
-            // Spec does not define how to handle retries for BootNotification.req: We use the
-            // the boot_notification_retry_interval_seconds
-            this->in_flight->timestamp =
-                DateTime(this->in_flight->timestamp.to_time_point() +
-                         std::chrono::seconds(this->config.boot_notification_retry_interval_seconds));
-            this->normal_message_queue.push_front(this->in_flight);
-            this->notify_queue_timer.at(
-                [this]() {
-                    this->new_message = true;
-                    this->cv.notify_all();
-                },
-                this->in_flight->timestamp.to_time_point());
-        } else {
-            EVLOG_warning << "Message is not transaction related, dropping it";
-            if (enhanced_message_opt) {
-                this->in_flight->promise.set_value(enhanced_message_opt.value());
-            } else {
-                EnhancedMessage<M> enhanced_message;
-                enhanced_message.offline = true;
-                this->in_flight->promise.set_value(enhanced_message);
-            }
-        }
-        this->reset_in_flight();
-        this->cv.notify_all();
-    }
-
     /// \brief Stops the message queue
     void stop() {
         EVLOG_debug << "stop()";
         // stop the running thread
-        this->running = false;
+        {
+            const std::lock_guard<std::recursive_mutex> lk(this->message_mutex);
+            this->running = false;
+        }
         this->cv.notify_one();
         this->worker_thread.join();
+        this->in_flight_timeout_timer.stop();
+        this->notify_queue_timer.stop();
+        this->resume_timer.stop();
         EVLOG_debug << "stop() notified message queue";
     }
 
