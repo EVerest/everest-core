@@ -84,6 +84,12 @@ Have a look at this categorized list of all guides:
       :link-type: doc
 
       How to bring up all hard and software components of a charger in isolated test cases.
+   
+   .. grid-item-card:: Use the EVerest Development Container
+      :link: devcontainer-usage/index
+      :link-type: doc
+
+      How to use a development container for EVerest development and sil testing.
 
    .. grid-item-card:: Choosing EVerest Version and Upgrading
       :link: choosing-version-and-upgrading
@@ -108,3 +114,4 @@ Have a look at this categorized list of all guides:
     security-best-practices
     bringup/index
     choosing-version-and-upgrading
+    devcontainer-usage/index

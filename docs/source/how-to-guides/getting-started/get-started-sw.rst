@@ -21,6 +21,12 @@ System Requirements and Dependencies
 This section lists all dependencies and supported environments required to set up 
 your development environment and build EVerest.
 
+.. attention::
+
+  As an alternative approach you can make use of development containers.
+  EVerest comes with a ready to use configuration. Consult the associated
+  :doc:`tutorial </tutorials/setup-devcontainer/index>` to find out how.
+
 General Requirements
 --------------------
 
