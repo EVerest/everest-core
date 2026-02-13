@@ -132,7 +132,11 @@ public:
     virtual KeyValue getSupportedCiphers12KeyValue() = 0;
     virtual KeyValue getSupportedCiphers13KeyValue() = 0;
     virtual KeyValue getSupportedMeasurandsKeyValue() = 0;
+    virtual KeyValue getEnableTLSKeylogKeyValue() = 0;
+    virtual KeyValue getTLSKeylogFileKeyValue() = 0;
     virtual KeyValue getUseSslDefaultVerifyPathsKeyValue() = 0;
+    virtual KeyValue getUseTPMKeyValue() = 0;
+    virtual KeyValue getUseTPMSeccLeafCertificateKeyValue() = 0;
     virtual KeyValue getVerifyCsmsAllowWildcardsKeyValue() = 0;
     virtual KeyValue getVerifyCsmsCommonNameKeyValue() = 0;
     virtual KeyValue getWaitForStopTransactionsOnResetTimeoutKeyValue() = 0;

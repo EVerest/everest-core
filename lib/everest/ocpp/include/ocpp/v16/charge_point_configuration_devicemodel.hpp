@@ -210,7 +210,11 @@ public:
     KeyValue getSupportedCiphers12KeyValue() override;
     KeyValue getSupportedCiphers13KeyValue() override;
     KeyValue getSupportedMeasurandsKeyValue() override;
+    KeyValue getEnableTLSKeylogKeyValue() override;
+    KeyValue getTLSKeylogFileKeyValue() override;
     KeyValue getUseSslDefaultVerifyPathsKeyValue() override;
+    KeyValue getUseTPMKeyValue() override;
+    KeyValue getUseTPMSeccLeafCertificateKeyValue() override;
     KeyValue getVerifyCsmsAllowWildcardsKeyValue() override;
     KeyValue getVerifyCsmsCommonNameKeyValue() override;
     KeyValue getWaitForStopTransactionsOnResetTimeoutKeyValue() override;

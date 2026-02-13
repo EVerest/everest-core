@@ -784,6 +784,38 @@ std::string ChargePointConfiguration::getTLSKeylogFile() {
     return this->config["Internal"]["TLSKeylogFile"];
 }
 
+KeyValue ChargePointConfiguration::getEnableTLSKeylogKeyValue() {
+    KeyValue kv;
+    kv.key = "EnableTLSKeylog";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getEnableTLSKeylog()));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getTLSKeylogFileKeyValue() {
+    KeyValue kv;
+    kv.key = "TLSKeylogFile";
+    kv.readonly = true;
+    kv.value.emplace(this->getTLSKeylogFile());
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getUseTPMKeyValue() {
+    KeyValue kv;
+    kv.key = "UseTPM";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getUseTPM()));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getUseTPMSeccLeafCertificateKeyValue() {
+    KeyValue kv;
+    kv.key = "UseTPMSeccLeafCertificate";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getUseTPMSeccLeafCertificate()));
+    return kv;
+}
+
 bool ChargePointConfiguration::getStopTransactionIfUnlockNotSupported() {
     return this->config["Internal"]["StopTransactionIfUnlockNotSupported"];
 }
@@ -3187,6 +3219,30 @@ std::optional<KeyValue> ChargePointConfiguration::get(const CiString<50>& key) {
     }
     if (key == "StopTransactionIfUnlockNotSupported") {
         return this->getStopTransactionIfUnlockNotSupportedKeyValue();
+    }
+    if (key == "EnableTLSKeylog") {
+        return this->getEnableTLSKeylogKeyValue();
+    }
+    if (key == "LogRotation") {
+        return this->getLogRotationKeyValue();
+    }
+    if (key == "LogRotationDateSuffix") {
+        return this->getLogRotationDateSuffixKeyValue();
+    }
+    if (key == "LogRotationMaximumFileCount") {
+        return this->getLogRotationMaximumFileCountKeyValue();
+    }
+    if (key == "LogRotationMaximumFileSize") {
+        return this->getLogRotationMaximumFileSizeKeyValue();
+    }
+    if (key == "TLSKeylogFile") {
+        return this->getTLSKeylogFileKeyValue();
+    }
+    if (key == "UseTPM") {
+        return this->getUseTPMKeyValue();
+    }
+    if (key == "UseTPMSeccLeafCertificate") {
+        return this->getUseTPMSeccLeafCertificateKeyValue();
     }
 
     // Core Profile

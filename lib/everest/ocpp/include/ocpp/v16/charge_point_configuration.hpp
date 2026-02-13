@@ -132,6 +132,10 @@ public:
 
     bool getEnableTLSKeylog() override;
     std::string getTLSKeylogFile() override;
+    KeyValue getEnableTLSKeylogKeyValue() override;
+    KeyValue getTLSKeylogFileKeyValue() override;
+    KeyValue getUseTPMKeyValue() override;
+    KeyValue getUseTPMSeccLeafCertificateKeyValue() override;
 
     bool getStopTransactionIfUnlockNotSupported() override;
     void setStopTransactionIfUnlockNotSupported(bool stop_transaction_if_unlock_not_supported) override;
