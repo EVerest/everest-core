@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 
 #include "configuration_stub.hpp"
+#include "ocpp/v16/known_keys.hpp"
+#include "ocpp/v2/ocpp_types.hpp"
 #include <ocpp/v16/charge_point_configuration_base.hpp>
 #include <optional>
 
@@ -65,6 +67,39 @@ TEST(ConnectorID, PhaseRotation) {
     EXPECT_FALSE(CPCB::isConnectorPhaseRotationValid(5, "11."));
     EXPECT_FALSE(CPCB::isConnectorPhaseRotationValid(5, "111."));
     EXPECT_FALSE(CPCB::isConnectorPhaseRotationValid(5, "1a.RST"));
+}
+
+using namespace ocpp;
+
+TEST(V2Mapping, V16ToV2) {
+    using namespace ocpp::v16::keys;
+    using namespace ocpp::v2;
+
+    auto res = convert_v2(valid_keys::CpoName);
+    ASSERT_TRUE(res);
+    auto component = std::get<Component>(res.value());
+    auto variable = std::get<Variable>(res.value());
+    EXPECT_EQ(component.name, "SecurityCtrlr");
+    EXPECT_EQ(variable.name, "OrganizationName");
+
+    res = convert_v2("CpoName");
+    ASSERT_TRUE(res);
+    component = std::get<Component>(res.value());
+    variable = std::get<Variable>(res.value());
+    EXPECT_EQ(component.name, "SecurityCtrlr");
+    EXPECT_EQ(variable.name, "OrganizationName");
+}
+
+TEST(V2Mapping, V2ToV16) {
+    using namespace ocpp::v16::keys;
+    using namespace ocpp::v2;
+
+    Component comp;
+    comp.name = "SecurityCtrlr";
+    Variable var;
+    var.name = "OrganizationName";
+    auto res = convert_v2(comp, var);
+    EXPECT_EQ(res, "CpoName");
 }
 
 } // namespace
