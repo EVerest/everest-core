@@ -2,7 +2,7 @@ LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
 # ev-cli move to everest-core, include the version from there in this recipe
-require ../everest/everest-core_2025.12.1.inc
+require ../everest/everest-core_git.inc
 
 SETUPTOOLS_SETUP_PATH = "${S}/applications/utils/ev-dev-tools"
 
