@@ -113,6 +113,7 @@ cc_everest_module(
         "@openssl//:ssl",
         "@openssl//:crypto",
         "@libcap//:libcap",
+        "@everest-core//lib:util",
         "@everest-core//lib:ocpp",
         "@everest-core//lib:ocpp_evse_security",
         "@everest-core//lib:ocpp_conversions",

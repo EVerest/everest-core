@@ -15,6 +15,7 @@ target_link_libraries(${MODULE_NAME}
     PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto
+        everest::util
         everest::ocpp
         everest::ocpp_evse_security
         everest::ocpp_conversions

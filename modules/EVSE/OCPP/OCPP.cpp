@@ -278,7 +278,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
                     << "Received SessionFinished";
         // ev side disconnect
-        this->evse_soc_map[evse_id].reset();
+        this->evse_soc_map.handle()->at(evse_id).reset();
         this->charge_point->on_session_stopped(ocpp_connector_id, session_event.uuid);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::ReservationStart) {
         this->charge_point->on_reservation_start(ocpp_connector_id);
@@ -295,9 +295,10 @@ void OCPP::init_evse_subscriptions() {
         evse->subscribe_powermeter([this, evse_id](types::powermeter::Powermeter powermeter) {
             ocpp::Measurement measurement;
             measurement.power_meter = conversions::to_ocpp_power_meter(powermeter);
-            if (this->evse_soc_map[evse_id].has_value()) {
+            auto evse_soc_map_handle = this->evse_soc_map.handle();
+            if (evse_soc_map_handle->at(evse_id).has_value()) {
                 // soc is present, so add this to the measurement
-                measurement.soc_Percent = ocpp::StateOfCharge{this->evse_soc_map[evse_id].value()};
+                measurement.soc_Percent = ocpp::StateOfCharge{evse_soc_map_handle->at(evse_id).value()};
             }
             if (powermeter.temperatures.has_value()) {
                 measurement.temperature_C = conversions::to_ocpp_temperatures(powermeter.temperatures.value());
@@ -307,7 +308,7 @@ void OCPP::init_evse_subscriptions() {
 
         evse->subscribe_ev_info([this, evse_id](const types::evse_manager::EVInfo& ev_info) {
             if (ev_info.soc.has_value()) {
-                this->evse_soc_map[evse_id] = ev_info.soc.value();
+                this->evse_soc_map.handle()->at(evse_id) = ev_info.soc.value();
             }
         });
 
@@ -346,6 +347,7 @@ void OCPP::init_evse_subscriptions() {
         });
 
         evse->subscribe_powermeter_public_key_ocmf([this, evse_id](std::string public_key_ocmf) {
+            std::lock_guard<std::mutex> lg(this->event_mutex);
             if (!this->started) {
                 this->event_queue.emplace(evse_id, PowermeterPublicKey{public_key_ocmf});
                 return;
@@ -401,10 +403,17 @@ void OCPP::init_evse_connector_map() {
 }
 
 void OCPP::init_evse_maps() {
-    std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
-    for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
-        this->evse_ready_map[evse_id] = false;
-        this->evse_soc_map[evse_id] = std::nullopt;
+    {
+        auto ready_handle = this->evse_ready_map.handle();
+        for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+            (*ready_handle)[evse_id] = false;
+        }
+    }
+    {
+        auto soc_handle = this->evse_soc_map.handle();
+        for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
+            (*soc_handle)[evse_id] = std::nullopt;
+        }
     }
 }
 
@@ -452,16 +461,6 @@ void OCPP::handle_config_key(const ocpp::v16::KeyValue& kv) {
         pnc_config.central_contract_validation_allowed = ocpp::conversions::string_to_bool(kv.value.value());
         set_pnc_config(pnc_config);
     }
-}
-
-bool OCPP::all_evse_ready() {
-    for (auto const& [evse, ready] : this->evse_ready_map) {
-        if (!ready) {
-            return false;
-        }
-    }
-    EVLOG_info << "All EVSE ready. Starting OCPP1.6 service";
-    return true;
 }
 
 ocpp::v16::ChargingRateUnit get_unit_or_default(const std::string& unit_string) {
@@ -522,27 +521,28 @@ void OCPP::init() {
 
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
         this->r_evse_manager.at(evse_id - 1)->subscribe_waiting_for_external_ready([this, evse_id](bool ready) {
-            std::lock_guard<std::mutex> lg(this->evse_ready_mutex);
             if (ready) {
-                this->evse_ready_map[evse_id] = true;
-                this->evse_ready_cv.notify_one();
+                this->evse_ready_map.handle()->at(evse_id) = true;
+                this->evse_ready_map.notify_one();
             }
         });
 
         // also use the the ready signal, TODO(kai): maybe warn about it's usage
         // here`
         this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {
-            std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
             if (ready) {
-                if (!this->evse_ready_map[evse_id]) {
-                    EVLOG_error << "Received EVSE ready without receiving "
-                                   "waiting_for_external_ready first, this is "
-                                   "probably a bug in your evse_manager "
-                                   "implementation / configuration. evse_id: "
-                                << evse_id;
+                {
+                    auto ready_handle = this->evse_ready_map.handle();
+                    if (!ready_handle->at(evse_id)) {
+                        EVLOG_error << "Received EVSE ready without receiving "
+                                       "waiting_for_external_ready first, this is "
+                                       "probably a bug in your evse_manager "
+                                       "implementation / configuration. evse_id: "
+                                    << evse_id;
+                    }
+                    ready_handle->at(evse_id) = true;
                 }
-                this->evse_ready_map[evse_id] = true;
-                this->evse_ready_cv.notify_one();
+                this->evse_ready_map.notify_one();
             }
         });
     }
@@ -1056,9 +1056,17 @@ void OCPP::ready() {
 
     // We must wait for EVSEs to be marked as ready before initializing ocpp since
     // we will potentially update the operative status of the connectors
-    std::unique_lock lk(this->evse_ready_mutex);
-    while (!this->all_evse_ready()) {
-        this->evse_ready_cv.wait(lk);
+    {
+        auto ready_handle = this->evse_ready_map.handle();
+        ready_handle.wait([this, &ready_handle]() {
+            for (const auto& [evse, ready] : *ready_handle) {
+                if (!ready) {
+                    return false;
+                }
+            }
+            EVLOG_info << "All EVSE ready. Starting OCPP1.6 service";
+            return true;
+        });
     }
 
     this->charge_point->register_generic_configuration_key_changed_callback(
