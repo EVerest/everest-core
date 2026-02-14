@@ -28,6 +28,13 @@ files, EVerest config files, recipes for your own software etc. Look at
 *meta-everest* as an example and refer to the Yocto documentation:
 
 https://docs.yoctoproject.org/dev/dev-manual/layers.html
+
+You can find *meta-everest* in a subdirectory of everest-core:
+*everest-core/yocto/<yocto-release>/meta-everest*
+
+Currently this includes support for the yocto *scarthgap* release.
+Support for the older *kirkstone* release can be found at:
+
 https://github.com/EVerest/meta-everest
 
 Then - in case you have not done it yet - create a custom image file
