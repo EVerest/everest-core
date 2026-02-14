@@ -49,6 +49,7 @@ void ErrorManagerImpl::raise_error(const Error& error) {
             return;
         }
     }
+    const std::lock_guard<std::mutex> lock(mutex);
     if (!can_be_raised(error.type, error.sub_type)) {
         std::stringstream ss;
         ss << "Error can't be raised, because type " << error.type << ", sub_type " << error.sub_type
@@ -69,6 +70,7 @@ std::list<ErrorPtr> ErrorManagerImpl::clear_error(const ErrorType& type) {
 }
 
 std::list<ErrorPtr> ErrorManagerImpl::clear_error(const ErrorType& type, const ErrorSubType& sub_type) {
+    const std::lock_guard<std::mutex> lock(mutex);
     if (!can_be_cleared(type, sub_type)) {
         EVLOG_debug << "Error can't be cleared, because type " << type << ", sub_type " << sub_type
                     << " is not active.";
@@ -93,6 +95,7 @@ std::list<ErrorPtr> ErrorManagerImpl::clear_error(const ErrorType& type, const E
 }
 
 std::list<ErrorPtr> ErrorManagerImpl::clear_all_errors() {
+    const std::lock_guard<std::mutex> lock(mutex);
     const std::list<ErrorFilter> filters = {};
     std::list<ErrorPtr> res = database->remove_errors(filters);
     if (res.empty()) {
@@ -111,6 +114,7 @@ std::list<ErrorPtr> ErrorManagerImpl::clear_all_errors() {
 }
 
 std::list<ErrorPtr> ErrorManagerImpl::clear_all_errors(const ErrorType& error_type) {
+    const std::lock_guard<std::mutex> lock(mutex);
     if (!can_be_cleared(error_type)) {
         EVLOG_debug << "Errors can't be cleared, because type " << error_type << " is not active.";
         return {};
