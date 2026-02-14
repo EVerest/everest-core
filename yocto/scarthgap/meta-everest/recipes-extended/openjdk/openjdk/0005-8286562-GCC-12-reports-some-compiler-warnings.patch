@@ -1,0 +1,164 @@
+From 410a25d59a11b6a627bbb0a2c405c2c2be19f464 Mon Sep 17 00:00:00 2001
+From: Yasumasa Suenaga <ysuenaga@openjdk.org>
+Date: Sat, 28 May 2022 02:09:05 +0000
+Subject: [PATCH] 8286562: GCC 12 reports some compiler warnings
+
+Reviewed-by: ihse, kbarrett, prr
+---
+ .../java.desktop/lib/Awt2dLibraries.gmk       |  2 +-
+ .../types/traceid/jfrTraceIdBits.inline.hpp   | 10 +++++++-
+ src/hotspot/share/oops/array.hpp              | 24 +++++++++++++------
+ .../share/utilities/globalDefinitions.hpp     |  8 +++++--
+ .../unix/native/libjli/java_md_common.c       | 11 +++++----
+ 5 files changed, 40 insertions(+), 15 deletions(-)
+
+diff --git a/make/modules/java.desktop/lib/Awt2dLibraries.gmk b/make/modules/java.desktop/lib/Awt2dLibraries.gmk
+index 96273fd0a2e..07aede3d8ac 100644
+--- a/make/modules/java.desktop/lib/Awt2dLibraries.gmk
++++ b/make/modules/java.desktop/lib/Awt2dLibraries.gmk
+@@ -459,7 +459,7 @@ else
+ 
+    HARFBUZZ_DISABLED_WARNINGS_gcc := type-limits missing-field-initializers strict-aliasing
+    HARFBUZZ_DISABLED_WARNINGS_CXX_gcc := reorder delete-non-virtual-dtor strict-overflow \
+-        maybe-uninitialized class-memaccess unused-result extra
++        maybe-uninitialized class-memaccess unused-result extra use-after-free
+    HARFBUZZ_DISABLED_WARNINGS_clang := unused-value incompatible-pointer-types \
+         tautological-constant-out-of-range-compare int-to-pointer-cast \
+         undef missing-field-initializers range-loop-analysis \
+diff --git a/src/hotspot/share/jfr/recorder/checkpoint/types/traceid/jfrTraceIdBits.inline.hpp b/src/hotspot/share/jfr/recorder/checkpoint/types/traceid/jfrTraceIdBits.inline.hpp
+index 22dc54a9109..4bbd0c8ae18 100644
+--- a/src/hotspot/share/jfr/recorder/checkpoint/types/traceid/jfrTraceIdBits.inline.hpp
++++ b/src/hotspot/share/jfr/recorder/checkpoint/types/traceid/jfrTraceIdBits.inline.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -132,7 +132,15 @@ inline void set(jbyte bits, jbyte* dest) {
+ template <typename T>
+ inline void JfrTraceIdBits::store(jbyte bits, const T* ptr) {
+   assert(ptr != NULL, "invariant");
++  // gcc12 warns "writing 1 byte into a region of size 0" when T == Klass.
++  // The warning seems to be a false positive.  And there is no warning for
++  // other types that use the same mechanisms.  The warning also sometimes
++  // goes away with minor code perturbations, such as replacing function calls
++  // with equivalent code directly inlined.
++  PRAGMA_DIAG_PUSH
++  PRAGMA_DISABLE_GCC_WARNING("-Wstringop-overflow")
+   set(bits, traceid_tag_byte(ptr));
++  PRAGMA_DIAG_POP
+ }
+ 
+ template <typename T>
+diff --git a/src/hotspot/share/oops/array.hpp b/src/hotspot/share/oops/array.hpp
+index 428c2e63384..d03517b7735 100644
+--- a/src/hotspot/share/oops/array.hpp
++++ b/src/hotspot/share/oops/array.hpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2000, 2021, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2000, 2022, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -91,7 +91,7 @@ class Array: public MetaspaceObj {
+   Array(int length, T init) : _length(length) {
+     assert(length >= 0, "illegal length");
+     for (int i = 0; i < length; i++) {
+-      _data[i] = init;
++      data()[i] = init;
+     }
+   }
+ 
+@@ -99,12 +99,22 @@ class Array: public MetaspaceObj {
+ 
+   // standard operations
+   int  length() const                 { return _length; }
+-  T* data()                           { return _data; }
++
++  T* data() {
++    return reinterpret_cast<T*>(
++      reinterpret_cast<char*>(this) + base_offset_in_bytes());
++  }
++
++  const T* data() const {
++    return reinterpret_cast<const T*>(
++      reinterpret_cast<const char*>(this) + base_offset_in_bytes());
++  }
++
+   bool is_empty() const               { return length() == 0; }
+ 
+   int index_of(const T& x) const {
+     int i = length();
+-    while (i-- > 0 && _data[i] != x) ;
++    while (i-- > 0 && data()[i] != x) ;
+ 
+     return i;
+   }
+@@ -112,9 +122,9 @@ class Array: public MetaspaceObj {
+   // sort the array.
+   bool contains(const T& x) const      { return index_of(x) >= 0; }
+ 
+-  T    at(int i) const                 { assert(i >= 0 && i< _length, "oob: 0 <= %d < %d", i, _length); return _data[i]; }
+-  void at_put(const int i, const T& x) { assert(i >= 0 && i< _length, "oob: 0 <= %d < %d", i, _length); _data[i] = x; }
+-  T*   adr_at(const int i)             { assert(i >= 0 && i< _length, "oob: 0 <= %d < %d", i, _length); return &_data[i]; }
++  T    at(int i) const                 { assert(i >= 0 && i< _length, "oob: 0 <= %d < %d", i, _length); return data()[i]; }
++  void at_put(const int i, const T& x) { assert(i >= 0 && i< _length, "oob: 0 <= %d < %d", i, _length); data()[i] = x; }
++  T*   adr_at(const int i)             { assert(i >= 0 && i< _length, "oob: 0 <= %d < %d", i, _length); return &data()[i]; }
+   int  find(const T& x)                { return index_of(x); }
+ 
+   T at_acquire(const int i)            { return Atomic::load_acquire(adr_at(i)); }
+diff --git a/src/hotspot/share/utilities/globalDefinitions.hpp b/src/hotspot/share/utilities/globalDefinitions.hpp
+index aa4530d1ff7..a0a87ea28b8 100644
+--- a/src/hotspot/share/utilities/globalDefinitions.hpp
++++ b/src/hotspot/share/utilities/globalDefinitions.hpp
+@@ -728,10 +728,14 @@ inline bool is_floating_point_type(BasicType t) {
+ extern char type2char_tab[T_CONFLICT+1];     // Map a BasicType to a jchar
+ inline char type2char(BasicType t) { return (uint)t < T_CONFLICT+1 ? type2char_tab[t] : 0; }
+ extern int type2size[T_CONFLICT+1];         // Map BasicType to result stack elements
+-extern const char* type2name_tab[T_CONFLICT+1];     // Map a BasicType to a jchar
+-inline const char* type2name(BasicType t) { return (uint)t < T_CONFLICT+1 ? type2name_tab[t] : NULL; }
++extern const char* type2name_tab[T_CONFLICT+1];     // Map a BasicType to a char*
+ extern BasicType name2type(const char* name);
+ 
++inline const char* type2name(BasicType t) {
++  assert((uint)t < T_CONFLICT + 1, "invalid type");
++  return type2name_tab[t];
++}
++
+ inline jlong max_signed_integer(BasicType bt) {
+   if (bt == T_INT) {
+     return max_jint;
+diff --git a/src/java.base/unix/native/libjli/java_md_common.c b/src/java.base/unix/native/libjli/java_md_common.c
+index b335263fd8f..c71ddd4313a 100644
+--- a/src/java.base/unix/native/libjli/java_md_common.c
++++ b/src/java.base/unix/native/libjli/java_md_common.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2012, 2022, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -126,10 +126,13 @@ ProgramExists(char *name)
+ static char *
+ Resolve(char *indir, char *cmd)
+ {
+-    char name[PATH_MAX + 2], *real;
++    char name[PATH_MAX + 1], *real;
++    int snprintf_result;
+ 
+-    if ((JLI_StrLen(indir) + JLI_StrLen(cmd) + 1)  > PATH_MAX) return 0;
+-    JLI_Snprintf(name, sizeof(name), "%s%c%s", indir, FILE_SEPARATOR, cmd);
++    snprintf_result = JLI_Snprintf(name, sizeof(name), "%s%c%s", indir, FILE_SEPARATOR, cmd);
++    if ((snprintf_result < 0) || (snprintf_result >= (int)sizeof(name))) {
++      return NULL;
++    }
+     if (!ProgramExists(name)) return 0;
+     real = JLI_MemAlloc(PATH_MAX + 2);
+     if (!realpath(name, real))
+-- 
+2.43.0
+

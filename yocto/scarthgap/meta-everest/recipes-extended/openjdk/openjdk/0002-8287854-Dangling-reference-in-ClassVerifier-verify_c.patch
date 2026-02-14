@@ -1,0 +1,73 @@
+From 3fa99844a69401f84677e7d512ffd937f7f16898 Mon Sep 17 00:00:00 2001
+From: Harold Seigel <hseigel@openjdk.org>
+Date: Thu, 9 Jun 2022 12:03:54 +0000
+Subject: [PATCH] 8287854: Dangling reference in ClassVerifier::verify_class
+
+Reviewed-by: dholmes, coleenp
+---
+ src/hotspot/share/classfile/verifier.cpp |  8 ++------
+ src/hotspot/share/classfile/verifier.hpp | 10 +++-------
+ 2 files changed, 5 insertions(+), 13 deletions(-)
+
+diff --git a/src/hotspot/share/classfile/verifier.cpp b/src/hotspot/share/classfile/verifier.cpp
+index ade508bac5e..f93ca7830b3 100644
+--- a/src/hotspot/share/classfile/verifier.cpp
++++ b/src/hotspot/share/classfile/verifier.cpp
+@@ -594,7 +594,7 @@ void ErrorContext::stackmap_details(outputStream* ss, const Method* method) cons
+ 
+ ClassVerifier::ClassVerifier(JavaThread* current, InstanceKlass* klass)
+     : _thread(current), _previous_symbol(NULL), _symbols(NULL), _exception_type(NULL),
+-      _message(NULL), _method_signatures_table(NULL), _klass(klass) {
++      _message(NULL), _klass(klass) {
+   _this_type = VerificationType::reference_type(klass->name());
+ }
+ 
+@@ -625,16 +625,12 @@ void ClassVerifier::verify_class(TRAPS) {
+   // Either verifying both local and remote classes or just remote classes.
+   assert(BytecodeVerificationRemote, "Should not be here");
+ 
+-  // Create hash table containing method signatures.
+-  method_signatures_table_type method_signatures_table;
+-  set_method_signatures_table(&method_signatures_table);
+-
+   Array<Method*>* methods = _klass->methods();
+   int num_methods = methods->length();
+ 
+   for (int index = 0; index < num_methods; index++) {
+     // Check for recursive re-verification before each method.
+-    if (was_recursively_verified())  return;
++    if (was_recursively_verified()) return;
+ 
+     Method* m = methods->at(index);
+     if (m->is_native() || m->is_abstract() || m->is_overpass()) {
+diff --git a/src/hotspot/share/classfile/verifier.hpp b/src/hotspot/share/classfile/verifier.hpp
+index b640b63c17d..c50e2f7c217 100644
+--- a/src/hotspot/share/classfile/verifier.hpp
++++ b/src/hotspot/share/classfile/verifier.hpp
+@@ -285,7 +285,7 @@ class ClassVerifier : public StackObj {
+   Symbol* _exception_type;
+   char* _message;
+ 
+-  method_signatures_table_type* _method_signatures_table;
++  method_signatures_table_type _method_signatures_table;
+ 
+   ErrorContext _error_context;  // contains information about an error
+ 
+@@ -437,12 +437,8 @@ class ClassVerifier : public StackObj {
+ 
+   Klass* load_class(Symbol* name, TRAPS);
+ 
+-  method_signatures_table_type* method_signatures_table() const {
+-    return _method_signatures_table;
+-  }
+-
+-  void set_method_signatures_table(method_signatures_table_type* method_signatures_table) {
+-    _method_signatures_table = method_signatures_table;
++  method_signatures_table_type* method_signatures_table() {
++    return &_method_signatures_table;
+   }
+ 
+   int change_sig_to_verificationType(
+-- 
+2.43.0
+

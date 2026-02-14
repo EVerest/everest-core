@@ -1,0 +1,13 @@
+{
+    "name": "everest-node-red-dependencies",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {},
+    "dependencies": {
+        "node-red-dashboard": "^3.2.3",
+        "node-red-contrib-ui-actions": "^0.1.8",
+        "node-red-node-ui-table": "^0.4.3",
+        "node-red-contrib-ui-level": "^0.1.46"
+    },
+    "devDependencies": {}
+}

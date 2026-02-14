@@ -1,0 +1,78 @@
+From 0e4bece5b5143b8505496ea7430bbfa11e151aff Mon Sep 17 00:00:00 2001
+From: Yasumasa Suenaga <ysuenaga@openjdk.org>
+Date: Sun, 15 May 2022 01:32:40 +0000
+Subject: [PATCH] 8286705: GCC 12 reports use-after-free potential bugs
+
+Reviewed-by: kbarrett
+---
+ src/java.base/share/native/libjli/parse_manifest.c       | 4 ++--
+ src/jdk.jpackage/linux/native/applauncher/LinuxPackage.c | 7 +++++--
+ 2 files changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/src/java.base/share/native/libjli/parse_manifest.c b/src/java.base/share/native/libjli/parse_manifest.c
+index 2889fab0686..a0d87b8bb9e 100644
+--- a/src/java.base/share/native/libjli/parse_manifest.c
++++ b/src/java.base/share/native/libjli/parse_manifest.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2022, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -288,8 +288,8 @@ find_positions(int fd, Byte *eb, jlong* base_offset, jlong* censtart)
+     for (cp = &buffer[bytes - ENDHDR]; cp >= &buffer[0]; cp--)
+         if (ENDSIG_AT(cp) && (cp + ENDHDR + ENDCOM(cp) == endpos)) {
+             (void) memcpy(eb, cp, ENDHDR);
+-            free(buffer);
+             pos = flen - (endpos - cp);
++            free(buffer);
+             return find_positions64(fd, eb, pos, base_offset, censtart);
+         }
+     free(buffer);
+diff --git a/src/jdk.jpackage/linux/native/applauncher/LinuxPackage.c b/src/jdk.jpackage/linux/native/applauncher/LinuxPackage.c
+index 5e3ef362d2e..26d65f8061c 100644
+--- a/src/jdk.jpackage/linux/native/applauncher/LinuxPackage.c
++++ b/src/jdk.jpackage/linux/native/applauncher/LinuxPackage.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -25,6 +25,7 @@
+ 
+ #include <stdio.h>
+ #include <string.h>
++#include <stddef.h>
+ #include <stdlib.h>
+ #include <errno.h>
+ #include <linux/limits.h>
+@@ -123,6 +124,7 @@ static int popenCommand(const char* cmdlineFormat, const char* arg,
+     int callbackMode = POPEN_CALLBACK_USE;
+     int exitCode = -1;
+     int c;
++    ptrdiff_t char_offset;
+ 
+     cmdline = malloc(cmdlineLenth + 1 /* \0 */);
+     if (!cmdline) {
+@@ -171,13 +173,14 @@ static int popenCommand(const char* cmdlineFormat, const char* arg,
+         if (strBufNextChar == strBufEnd) {
+             /* Double buffer size */
+             strBufCapacity = strBufCapacity * 2 + 1;
++            char_offset = strBufNextChar - strBufBegin;
+             strNewBufBegin = realloc(strBufBegin, strBufCapacity);
+             if (!strNewBufBegin) {
+                 JP_LOG_ERRNO;
+                 goto cleanup;
+             }
+ 
+-            strBufNextChar = strNewBufBegin + (strBufNextChar - strBufBegin);
++            strBufNextChar = strNewBufBegin + char_offset;
+             strBufEnd = strNewBufBegin + strBufCapacity;
+             strBufBegin = strNewBufBegin;
+         }
+-- 
+2.43.0
+

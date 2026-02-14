@@ -35,10 +35,9 @@ Where:
 - ``mm`` - Two-digit month of the release (01-12)
 - ``x`` - Incremental patch number within the stable release line, starting at 0
 
-Releases are made available through Github Releases and tags in the following repositories:
+Releases are made available through Github Releases and tags in the everest-core repository:
 
 - `everest-core <https://github.com/EVerest/everest-core>`_
-- `meta-everest <https://github.com/EVerest/meta-everest>`_
 
 Stable Releases
 ---------------
