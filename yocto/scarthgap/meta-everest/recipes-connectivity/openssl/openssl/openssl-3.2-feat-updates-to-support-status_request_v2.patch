@@ -1,0 +1,141 @@
+From 00465a2b81c9308e8b7a44e76e08989504f3babb Mon Sep 17 00:00:00 2001
+From: Kai-Uwe Hermann <kai-uwe.hermann@pionix.de>
+Date: Fri, 7 Feb 2025 10:45:21 +0100
+Subject: [PATCH] feat: updates to support status_request_v2
+
+Upstream-Status: Pending
+
+Co-authored-by: James Chapman <james.chapman@pionix.de>
+Co-authored-by: Kai-Uwe Hermann <kai-uwe.hermann@pionix.de>
+
+Signed-off-by: Kai-Uwe Hermann <kai-uwe.hermann@pionix.de>
+---
+ include/openssl/ssl.h.in     | 2 ++
+ include/openssl/tls1.h       | 7 +++++++
+ ssl/s3_lib.c                 | 8 ++++++++
+ ssl/statem/extensions_clnt.c | 3 ++-
+ ssl/statem/extensions_srvr.c | 4 ++++
+ ssl/statem/statem_clnt.c     | 3 ++-
+ 6 files changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/include/openssl/ssl.h.in b/include/openssl/ssl.h.in
+index 9f91039..f9f42a5 100644
+--- a/include/openssl/ssl.h.in
++++ b/include/openssl/ssl.h.in
+@@ -1276,6 +1276,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
+ # define SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS      69
+ # define SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP        70
+ # define SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP        71
++# define SSL_CTRL_GET_TLSEXT_STATUS_EXPECTED        270
++# define SSL_CTRL_SET_TLSEXT_STATUS_EXPECTED        271
+ # ifndef OPENSSL_NO_DEPRECATED_3_0
+ #  define SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB      72
+ # endif
+diff --git a/include/openssl/tls1.h b/include/openssl/tls1.h
+index 7e3d1a7..86121a2 100644
+--- a/include/openssl/tls1.h
++++ b/include/openssl/tls1.h
+@@ -172,6 +172,7 @@ extern "C" {
+ # define TLSEXT_NAMETYPE_host_name 0
+ /* status request value from RFC3546 */
+ # define TLSEXT_STATUSTYPE_ocsp 1
++# define TLSEXT_STATUSTYPE_ocsp_multi 2
+ 
+ /* ECPointFormat values from RFC4492 */
+ # define TLSEXT_ECPOINTFORMAT_first                      0
+@@ -321,6 +322,12 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
+ # define SSL_set_tlsext_status_ocsp_resp(ssl, arg, arglen) \
+         SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP,arglen,arg)
+ 
++# define SSL_get_tlsext_status_expected(ssl) \
++        SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_EXPECTED,0,NULL)
++
++# define SSL_set_tlsext_status_expected(ssl, arg) \
++        SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_EXPECTED,arg,NULL)
++
+ # define SSL_CTX_set_tlsext_servername_callback(ctx, cb) \
+         SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,\
+                 (void (*)(void))cb)
+diff --git a/ssl/s3_lib.c b/ssl/s3_lib.c
+index e8ec98c..61b1058 100644
+--- a/ssl/s3_lib.c
++++ b/ssl/s3_lib.c
+@@ -3586,6 +3586,14 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
+         sc->ext.ocsp.resp_len = larg;
+         ret = 1;
+         break;
++    
++    case SSL_CTRL_GET_TLSEXT_STATUS_EXPECTED:
++        return (long)sc->ext.status_expected;
++
++    case SSL_CTRL_SET_TLSEXT_STATUS_EXPECTED:
++        sc->ext.status_expected = larg;
++        ret = 1;
++        break;
+ 
+     case SSL_CTRL_CHAIN:
+         if (larg)
+diff --git a/ssl/statem/extensions_clnt.c b/ssl/statem/extensions_clnt.c
+index 381a6c9..d061af5 100644
+--- a/ssl/statem/extensions_clnt.c
++++ b/ssl/statem/extensions_clnt.c
+@@ -8,6 +8,7 @@
+  */
+ 
+ #include <openssl/ocsp.h>
++#include <openssl/tls1.h>
+ #include "../ssl_local.h"
+ #include "internal/cryptlib.h"
+ #include "statem_local.h"
+@@ -1421,7 +1422,7 @@ int tls_parse_stoc_status_request(SSL_CONNECTION *s, PACKET *pkt,
+      * MUST only be sent if we've requested a status
+      * request message. In TLS <= 1.2 it must also be empty.
+      */
+-    if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp) {
++    if ((s->ext.status_type != TLSEXT_STATUSTYPE_ocsp) && (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp_multi)) {
+         SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION, SSL_R_BAD_EXTENSION);
+         return 0;
+     }
+diff --git a/ssl/statem/extensions_srvr.c b/ssl/statem/extensions_srvr.c
+index 64ccb3e..3858715 100644
+--- a/ssl/statem/extensions_srvr.c
++++ b/ssl/statem/extensions_srvr.c
+@@ -8,6 +8,7 @@
+  */
+ 
+ #include <openssl/ocsp.h>
++#include <openssl/tls1.h>
+ #include "../ssl_local.h"
+ #include "statem_local.h"
+ #include "internal/cryptlib.h"
+@@ -1445,6 +1446,9 @@ EXT_RETURN tls_construct_stoc_status_request(SSL_CONNECTION *s, WPACKET *pkt,
+     if (!s->ext.status_expected)
+         return EXT_RETURN_NOT_SENT;
+ 
++    if (s->ext.status_type == TLSEXT_STATUSTYPE_ocsp_multi)
++        return EXT_RETURN_NOT_SENT;
++
+     if (SSL_CONNECTION_IS_TLS13(s) && chainidx != 0)
+         return EXT_RETURN_NOT_SENT;
+ 
+diff --git a/ssl/statem/statem_clnt.c b/ssl/statem/statem_clnt.c
+index cbf5a57..809baa5 100644
+--- a/ssl/statem/statem_clnt.c
++++ b/ssl/statem/statem_clnt.c
+@@ -9,6 +9,7 @@
+  * https://www.openssl.org/source/license.html
+  */
+ 
++#include <openssl/tls1.h>
+ #include <stdio.h>
+ #include <time.h>
+ #include <assert.h>
+@@ -2868,7 +2869,7 @@ int tls_process_cert_status_body(SSL_CONNECTION *s, PACKET *pkt)
+     unsigned int type;
+ 
+     if (!PACKET_get_1(pkt, &type)
+-        || type != TLSEXT_STATUSTYPE_ocsp) {
++        || (type != TLSEXT_STATUSTYPE_ocsp) && (type != TLSEXT_STATUSTYPE_ocsp_multi)) {
+         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_UNSUPPORTED_STATUS_TYPE);
+         return 0;
+     }

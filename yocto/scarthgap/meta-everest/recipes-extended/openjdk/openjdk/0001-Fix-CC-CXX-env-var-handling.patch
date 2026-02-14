@@ -1,0 +1,54 @@
+From fb9ecb5343cae629bf8adc9cd77e3b5ee6638d62 Mon Sep 17 00:00:00 2001
+From: aw <aw@pionix.de>
+Date: Fri, 2 Sep 2022 17:39:04 +0200
+Subject: [PATCH] Fix CC/CXX env var handling
+
+Signed-off-by: aw <aw@pionix.de>
+---
+ make/autoconf/toolchain.m4 | 17 +++++++++++------
+ 1 file changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/make/autoconf/toolchain.m4 b/make/autoconf/toolchain.m4
+index 78895888095..edee3ea1df3 100644
+--- a/make/autoconf/toolchain.m4
++++ b/make/autoconf/toolchain.m4
+@@ -477,18 +477,23 @@ AC_DEFUN([TOOLCHAIN_FIND_COMPILER],
+   if test "x[$]$1" != x; then
+     # User has supplied compiler name already, always let that override.
+     AC_MSG_NOTICE([Will use user supplied compiler $1=[$]$1])
+-    if test "x`basename [$]$1`" = "x[$]$1"; then
++
++    # Splitting the passed command into first part (command) and rest (args)
++    COMPILER_CMD_$1=`$ECHO [$]$1 | $SED -e 's/\s.*$//'`
++    COMPILER_ARGS_$1=`$ECHO [$]$1 | $SED -e 's/^\S*//'`
++
++    if test "x`basename [$]COMPILER_CMD_$1`" = "x[$]COMPILER_CMD_$1"; then
+       # A command without a complete path is provided, search $PATH.
+ 
+-      UTIL_LOOKUP_PROGS(POTENTIAL_$1, [$]$1)
++      UTIL_LOOKUP_PROGS(POTENTIAL_$1, [$]COMPILER_CMD_$1)
+       if test "x$POTENTIAL_$1" != x; then
+-        $1=$POTENTIAL_$1
++        $1=$POTENTIAL_$1$COMPILER_ARGS_$1
+       else
+         AC_MSG_ERROR([User supplied compiler $1=[$]$1 could not be found])
+       fi
+     else
+       # Otherwise it might already be a complete path
+-      if test ! -x "[$]$1"; then
++      if test ! -x "[$]COMPILER_CMD_$1"; then
+         AC_MSG_ERROR([User supplied compiler $1=[$]$1 does not exist])
+       fi
+     fi
+@@ -512,9 +517,9 @@ AC_DEFUN([TOOLCHAIN_FIND_COMPILER],
+   fi
+ 
+   # Now we have a compiler binary in $1. Make sure it's okay.
+-  TEST_COMPILER="[$]$1"
++  TEST_COMPILER="[$]COMPILER_CMD_$1"
+ 
+-  AC_MSG_CHECKING([resolved symbolic links for $1])
++  AC_MSG_CHECKING([resolved symbolic links for COMPILER_CMD_$1])
+   SYMLINK_ORIGINAL="$TEST_COMPILER"
+   UTIL_REMOVE_SYMBOLIC_LINKS(SYMLINK_ORIGINAL)
+   if test "x$TEST_COMPILER" = "x$SYMLINK_ORIGINAL"; then
