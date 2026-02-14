@@ -122,6 +122,11 @@ provides:
           3000 Enable over voltage to earth monitoring alarm
         type: boolean
         default: false
+      disable_device_on_stop:
+        description: >-
+          Disable the device upon stop measurement
+        type: boolean
+        default: false
 requires:
   serial_comm_hub:
     interface: serial_communication_hub

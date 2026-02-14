@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "isolation_monitorImpl.hpp"
+#include "everest/logging.hpp"
 #include <chrono>
 #include <fmt/core.h>
 #include <thread>
@@ -16,6 +17,11 @@ void isolation_monitorImpl::init() {
 void isolation_monitorImpl::configure_device() {
     // Query device name and version
     bool successful = true;
+    int selftest_enable_at_start_value = config.selftest_enable_at_start ? 1 : 0;
+    if (config.disable_device_on_stop and config.selftest_enable_at_start) {
+        EVLOG_warning << "disable_device_on_stop configuration option and selftest_enable_at_start are incompatible. Self test at start will be disabled.";
+        selftest_enable_at_start_value = 0;
+    }
     do {
         successful = true;
         successful &= send_to_imd(3000, (config.voltage_to_earth_monitoring_alarm_enable ? 1 : 0));
@@ -48,14 +54,16 @@ void isolation_monitorImpl::configure_device() {
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3024, (config.selftest_enable_gridconnection ? 1 : 0));
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        successful &= send_to_imd(3025, (config.selftest_enable_at_start ? 1 : 0));
+        successful &= send_to_imd(3025, selftest_enable_at_start_value);
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3027, config.relay_k1_alarm_assignment);
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         successful &= send_to_imd(3028, config.relay_k2_alarm_assignment);
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        // start up
-        successful &= send_to_imd(3026, 1);
+        // start up enable the device if the configuration option is not set
+        if (!config.disable_device_on_stop) {
+            successful &= send_to_imd(3026, 1);
+        }
         // Give device time to process startup command
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
@@ -181,15 +189,44 @@ void isolation_monitorImpl::ready() {
 
 void isolation_monitorImpl::handle_start() {
     enable_publishing = true;
+    if (config.disable_device_on_stop) {
+        if (false == send_to_imd(3026, 1)) {
+            EVLOG_error << "Can't enable the device: " << read_device_name();
+        } else {
+            EVLOG_info << "Device enabled for measurements";
+        }
+    }
 }
 
 void isolation_monitorImpl::handle_stop() {
     enable_publishing = false;
+    if (config.disable_device_on_stop) {
+        if (false == send_to_imd(3026, 0)) {
+            EVLOG_error << "Can't disable the device: " << read_device_name();
+        } else {
+            EVLOG_info << "Device disabled after measurements";
+        }
+    }
 }
 
 void isolation_monitorImpl::handle_start_self_test(double& test_voltage_V) {
     EVLOG_info << "IMD Starting self-test...";
+    // make sure that the device is on
+    if (config.disable_device_on_stop) {
+        if (false == send_to_imd(3026, 1)) {
+            EVLOG_error << "Can't enable the device: " << read_device_name();
+        } else {
+            EVLOG_info << "Device enabled for self test";
+        }
+    }
     start_self_test();
+    if (config.disable_device_on_stop) {
+        if (false == send_to_imd(3026, 0)) {
+            EVLOG_error << "Can't disable the device: " << read_device_name();
+        } else {
+            EVLOG_info << "Device disabled after self test";
+        }
+    }
 }
 
 void isolation_monitorImpl::read_imd_values() {
