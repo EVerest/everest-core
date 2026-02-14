@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <memory>
 
-#include <ocpp/v2/connectivity_manager.hpp>
+#include <ocpp/common/connectivity_manager.hpp>
 #include <ocpp/v2/device_model.hpp>
 
 #include <ocpp/v2/messages/BootNotification.hpp>

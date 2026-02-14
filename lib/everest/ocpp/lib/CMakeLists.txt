@@ -21,6 +21,7 @@ target_sources(ocpp
     PRIVATE
         ocpp/common/call_types.cpp
         ocpp/common/charging_station_base.cpp
+        ocpp/common/connectivity_manager.cpp
         ocpp/common/ocpp_logging.cpp
         ocpp/common/schemas.cpp
         ocpp/common/types.cpp
@@ -92,7 +93,6 @@ if(LIBOCPP_ENABLE_V2)
             ocpp/v2/types.cpp
             ocpp/v2/utils.cpp
             ocpp/v2/component_state_manager.cpp
-            ocpp/v2/connectivity_manager.cpp
             ocpp/v2/message_dispatcher.cpp
             ocpp/v2/functional_blocks/authorization.cpp
             ocpp/v2/functional_blocks/availability.cpp
