@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <ocpp/v16/known_keys.hpp>
 #include <ocpp/v2/device_model_interface.hpp>
 #include <ocpp/v2/ocpp_enums.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
@@ -42,13 +43,25 @@ public:
     using ReportData = ocpp::v2::ReportData;
     using ReportBaseEnum = ocpp::v2::ReportBaseEnum;
 
+    static std::optional<std::string> set_connector_id(std::int32_t id, const std::string& current,
+                                                       const std::string& value);
+    static std::optional<std::string> get_connector_id(std::int32_t id, const std::string& current);
+
 private:
     std::set<std::string> read_only;
 
     std::optional<MemoryStorage::Storage::iterator> locate_v16(const std::string& name) const;
     std::optional<std::string> get_v16(const std::string& name) const;
+    std::optional<std::string> get_v16(ocpp::v16::keys::valid_keys key) const;
     SetVariableStatusEnum set_v16(const std::string& name, const std::string& value);
     SetVariableStatusEnum set_v16_custom(const std::string& name, const std::string& value);
+    std::optional<MutabilityEnum> get_mutability(const std::string& key_str);
+    void add_supported_measureands_values_list(ocpp::v2::ReportData& data);
+    void add_to_report(std::vector<ocpp::v2::ReportData>& report, const std::string_view& name,
+                       const std::string_view& value);
+    void add_to_report(std::vector<ocpp::v2::ReportData>& report, const std::string_view& name,
+                       const std::map<std::string, std::string>& vars);
+    void generate_report(std::vector<ocpp::v2::ReportData>& report);
 
 public:
     MemoryStorage();

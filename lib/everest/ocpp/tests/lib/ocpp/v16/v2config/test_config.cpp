@@ -5,6 +5,7 @@
 
 #include "configuration_stub.hpp"
 #include "ocpp/v16/known_keys.hpp"
+#include "ocpp/v2/ocpp_enums.hpp"
 #include "ocpp/v2/ocpp_types.hpp"
 #include <ocpp/v16/charge_point_configuration_base.hpp>
 #include <optional>
@@ -99,8 +100,14 @@ TEST(V2Mapping, V2ToV16) {
     comp.name = "SecurityCtrlr";
     Variable var;
     var.name = "OrganizationName";
-    auto res = convert_v2(comp, var);
+    auto res = convert_v2(comp, var, ocpp::v2::AttributeEnum::Actual);
     EXPECT_EQ(res, "CpoName");
+
+    comp.name = "SmartChargingCtrlr";
+    var.name = "Entries";
+    var.instance = "ChargingProfiles";
+    res = convert_v2(comp, var, ocpp::v2::AttributeEnum::Actual);
+    EXPECT_EQ(res, "MaxChargingProfilesInstalled");
 }
 
 } // namespace

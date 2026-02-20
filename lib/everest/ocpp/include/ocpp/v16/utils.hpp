@@ -8,6 +8,8 @@
 #include <ocpp/v16/ocpp_types.hpp>
 #include <ocpp/v16/types.hpp>
 
+#include <cstddef>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -31,6 +33,38 @@ std::string to_csl(const std::vector<std::string>& vec);
 /// \brief convert a comma separated list in a string to a vector of strings
 /// \note will not contain empty strings when a comma is repeated
 std::vector<std::string> from_csl(const std::string& csl);
+
+class OrderedUniqueStringList {
+private:
+    using Store = std::map<std::string, std::size_t>;
+    std::size_t count{0};
+    Store list{};
+
+    void do_insert(std::string&& s);
+
+public:
+    void insert(const std::string& s) {
+        do_insert(std::string{s});
+    }
+    void insert(std::string&& s) {
+        do_insert(std::move(s));
+    }
+
+    void clear() {
+        count = 0;
+        list.clear();
+    }
+
+    std::vector<std::string> get();
+
+    bool empty() const {
+        return list.empty();
+    }
+
+    auto size() const {
+        return list.size();
+    }
+};
 
 } // namespace ocpp::v16::utils
 

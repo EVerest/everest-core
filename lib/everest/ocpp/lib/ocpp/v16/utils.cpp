@@ -94,4 +94,17 @@ std::vector<std::string> split_string(char separator, const std::string& csl) {
     return vec;
 }
 
+void OrderedUniqueStringList::do_insert(std::string&& s) {
+    if (const auto it = list.find(s); it == list.end()) {
+        list.insert({std::move(s), count++});
+    }
+}
+std::vector<std::string> OrderedUniqueStringList::get() {
+    std::vector<std::string> result(list.size());
+    for (const auto& i : list) {
+        result[i.second] = i.first;
+    }
+    return result;
+}
+
 } // namespace ocpp::v16::utils

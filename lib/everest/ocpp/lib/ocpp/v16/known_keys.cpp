@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
+#include "ocpp/v2/ocpp_enums.hpp"
 #include <everest/logging.hpp>
 #include <ocpp/v16/known_keys.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
@@ -10,6 +11,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <utility>
 
 namespace {
@@ -99,46 +101,93 @@ constexpr valid_keys hidden[] = {FOR_ALL_HIDDEN(VALUE)};
 
 #undef VALUE
 
+constexpr char convert(ocpp::v2::AttributeEnum attribute) {
+    char result{'.'};
+    switch (attribute) {
+    case ocpp::v2::AttributeEnum::Actual:
+        result = 'A';
+        break;
+    case ocpp::v2::AttributeEnum::MaxSet:
+        result = '+';
+        break;
+    case ocpp::v2::AttributeEnum::MinSet:
+        result = '-';
+        break;
+    case ocpp::v2::AttributeEnum::Target:
+        result = '=';
+        break;
+    default:
+        break;
+    }
+    return result;
+}
+
+inline std::string mapping_name(const ocpp::v2::Component& component, const ocpp::v2::Variable& variable,
+                                ocpp::v2::AttributeEnum attribute) {
+    return std::string{component.name} + std::string{variable.name} + std::string{variable.instance.value_or("")} +
+           convert(attribute);
+}
+
 class V2ConfigMap {
 private:
     bool configured{false};
-    std::map<std::string_view, const ocpp::v2::ComponentVariable*> map;
+    using v2details = std::pair<const ocpp::v2::ComponentVariable*, ocpp::v2::AttributeEnum>;
+
+    std::map<std::string_view, v2details> map;
     std::map<std::string, std::string_view> reverse_map;
 
-    void configure(const std::string_view& v16, const ocpp::v2::ComponentVariable& cv);
+    void configure(const std::string_view& v16, const ocpp::v2::ComponentVariable& cv,
+                   ocpp::v2::AttributeEnum attribute);
     void configure();
+    void warn_no_mapping(const std::string_view& v16);
+    void check();
 
 public:
     ocpp::v16::keys::DeviceModel_CV convert_v2(const std::string_view& v16_key);
-    std::string convert_v2(const ocpp::v2::Component& component, const ocpp::v2::Variable& variable);
+    std::optional<std::string> convert_v2(const ocpp::v2::Component& component, const ocpp::v2::Variable& variable,
+                                          ocpp::v2::AttributeEnum attribute);
 };
 
-void V2ConfigMap::configure(const std::string_view& v16, const ocpp::v2::ComponentVariable& cv) {
-    const auto& variable = cv.variable;
-    if (variable) {
+void V2ConfigMap::configure(const std::string_view& v16, const ocpp::v2::ComponentVariable& cv,
+                            ocpp::v2::AttributeEnum attribute) {
+    if (cv.variable) {
         if (const auto it = map.find(v16); it != map.end()) {
-            if (it->second->variable) {
-                EVLOG_warning << "V16 " << v16 << ": '" << it->second->variable->name << "' replaced with '"
-                              << variable->name << '\'';
+            const auto& tmp_cv = std::get<const ocpp::v2::ComponentVariable*>(it->second);
+            if (tmp_cv->variable) {
+                EVLOG_warning << "V16 " << v16 << ": '" << tmp_cv->variable->name << "' replaced with '"
+                              << cv.variable->name << '\'';
             }
         }
-        map.insert({v16, &cv});
-        std::string name = std::string{cv.component.name} + std::string{variable->name};
-        if (variable->instance) {
-            name += std::string{variable->instance.value()};
-        }
+        map.insert({v16, {&cv, attribute}});
+        std::string name = mapping_name(cv.component, cv.variable.value(), attribute);
         if (const auto it = reverse_map.find(name); it != reverse_map.end()) {
-            std::cerr << "V2 " << name << ": '" << it->second << "' replaced with '" << v16 << '\'';
+            EVLOG_error << "V2 " << name << ": '" << it->second << "' replaced with '" << v16 << '\'';
         }
         reverse_map.insert({std::move(name), v16});
     }
 }
 
-#define VALUE(a, b) configure(#a, ocpp::v2::ControllerComponentVariables::b);
+#define VALUE(a, b, c) configure(#a, ocpp::v2::ControllerComponentVariables::b, ocpp::v2::AttributeEnum::c);
 void V2ConfigMap::configure() {
     if (!configured) {
         configured = true;
         MAPPING_ALL(VALUE)
+        check();
+    }
+}
+#undef VALUE
+
+void V2ConfigMap::warn_no_mapping(const std::string_view& v16) {
+    const auto it = map.find(v16);
+    if (it == map.end()) {
+        EVLOG_error << "No V2 mapping for " << v16;
+    }
+}
+
+#define VALUE(a, b) warn_no_mapping(#b);
+void V2ConfigMap::check() {
+    if (configured) {
+        FOR_ALL_MAPPED_KEYS(VALUE);
     }
 }
 #undef VALUE
@@ -148,17 +197,21 @@ ocpp::v16::keys::DeviceModel_CV V2ConfigMap::convert_v2(const std::string_view& 
     ocpp::v16::keys::DeviceModel_CV result;
     std::string name{v16_key};
     if (const auto it = map.find(name); it != map.end()) {
-        if (it->second->variable) {
-            result = std::make_pair(it->second->component, it->second->variable.value());
+        const auto& cv = std::get<const ocpp::v2::ComponentVariable*>(it->second);
+        const auto attribute = std::get<ocpp::v2::AttributeEnum>(it->second);
+        if (cv->variable) {
+            result = std::make_tuple(cv->component, cv->variable.value(), attribute);
         }
     }
     return result;
 }
 
-std::string V2ConfigMap::convert_v2(const ocpp::v2::Component& component, const ocpp::v2::Variable& variable) {
+std::optional<std::string> V2ConfigMap::convert_v2(const ocpp::v2::Component& component,
+                                                   const ocpp::v2::Variable& variable,
+                                                   ocpp::v2::AttributeEnum attribute) {
     configure();
-    std::string result = variable.name;
-    const std::string name = std::string{component.name} + std::string{variable.name};
+    std::optional<std::string> result;
+    std::string name = mapping_name(component, variable, attribute);
     if (const auto it = reverse_map.find(name); it != reverse_map.end()) {
         result = it->second;
     }
@@ -257,8 +310,9 @@ DeviceModel_CV convert_v2(valid_keys key) {
     return convert_v2(convert(key));
 }
 
-std::string convert_v2(const ocpp::v2::Component& component, const ocpp::v2::Variable& variable) {
-    return v2_map.convert_v2(component, variable);
+std::optional<std::string> convert_v2(const ocpp::v2::Component& component, const ocpp::v2::Variable& variable,
+                                      ocpp::v2::AttributeEnum attribute) {
+    return v2_map.convert_v2(component, variable, attribute);
 }
 
 } // namespace ocpp::v16::keys

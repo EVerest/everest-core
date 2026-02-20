@@ -209,6 +209,7 @@ TEST_P(Configuration, GetAllKeyValue) {
     std::map<std::string, std::string> missing = expected_key_value;
 
     for (const auto& i : values) {
+        // std::cout << "Looking for: " << i << '\n';
         if (const auto& search = expected_key_value.find(i.key); search == expected_key_value.end()) {
             not_found.insert({i.key, i.value.value_or("")});
         } else {

@@ -89,7 +89,7 @@ extern const Component SmartChargingCtrlr;
 extern const Component TariffCostCtrlr;
 extern const Component TxCtrlr;
 extern const Component
-    OCPP16MavericksCtrlr; // This controller contains OCPP1.6 configuration keys without a clear mapping to OCPP2.x.
+    OCPP16LegacyCtrlr; // This controller contains OCPP1.6 configuration keys without a clear mapping to OCPP2.x.
 } // namespace ControllerComponents
 
 namespace StandardizedVariables {
@@ -317,6 +317,7 @@ extern const ComponentVariable ISO15118CtrlrAvailable;
 // do not map to any existing component variable combination in OCPP2.x. The following definitions only control the
 // OCPP1.6 implementation
 extern const ComponentVariable BlinkRepeat;
+extern const ComponentVariable ConnectorPhaseRotation;
 extern const ComponentVariable ConnectorPhaseRotationMaxLength;
 extern const RequiredComponentVariable GetConfigurationMaxKeys;
 extern const ComponentVariable LightIntensity;
@@ -342,43 +343,6 @@ extern const ComponentVariable SupportedLanguages;
 extern const ComponentVariable CustomMultiLanguageMessages;
 extern const ComponentVariable Language;
 extern const ComponentVariable WaitForSetUserPriceTimeout;
-
-// Additional OCPP1.6 Mavericks - Configuration keys without direct OCPP 2.x equivalents
-// TODO(james-ctc): double check there is no V2 mapping
-
-extern const ComponentVariable AuthorizeRemoteTxRequests;
-extern const ComponentVariable CentralSystemURI;
-extern const ComponentVariable CertificateStoreMaxLength;
-extern const ComponentVariable ChargeProfileMaxStackLevel;
-extern const ComponentVariable ChargingScheduleAllowedChargingRateUnit;
-extern const ComponentVariable ChargingScheduleMaxPeriods;
-extern const ComponentVariable ClockAlignedDataInterval;
-extern const ComponentVariable ConnectionTimeOut;
-extern const ComponentVariable ConnectorEvseIds;
-extern const ComponentVariable ConnectorPhaseRotation;
-extern const ComponentVariable ISO15118PnCEnabled;
-extern const ComponentVariable LocalAuthListEnabled;
-extern const ComponentVariable LocalAuthListMaxLength;
-extern const ComponentVariable MaxChargingProfilesInstalled;
-extern const ComponentVariable MeterValueSampleInterval;
-extern const ComponentVariable MeterValuesAlignedData;
-extern const ComponentVariable MeterValuesAlignedDataMaxLength;
-extern const ComponentVariable MeterValuesSampledData;
-extern const ComponentVariable MeterValuesSampledDataMaxLength;
-extern const ComponentVariable RetryBackoffRandomRange;
-extern const ComponentVariable RetryBackoffRepeatTimes;
-extern const ComponentVariable RetryBackoffWaitMinimum;
-extern const ComponentVariable SendLocalListMaxLength;
-extern const ComponentVariable StopTransactionOnInvalidId;
-extern const ComponentVariable StopTxnAlignedData;
-extern const ComponentVariable StopTxnAlignedDataMaxLength;
-extern const ComponentVariable StopTxnSampledData;
-extern const ComponentVariable StopTxnSampledDataMaxLength;
-extern const ComponentVariable SupportedFileTransferProtocols;
-extern const ComponentVariable SupportedMeasurands;
-extern const ComponentVariable TransactionMessageAttempts;
-extern const ComponentVariable TransactionMessageRetryInterval;
-
 } // namespace ControllerComponentVariables
 
 namespace EvseComponentVariables {
