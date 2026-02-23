@@ -1,0 +1,15 @@
+description: A OCPP debug module
+config: {}
+provides:
+  ocpp_debug:
+    description: Debug OCPP interface.
+    interface: ocpp_debug
+requires:
+  ocpp_debug:
+    interface: ocpp_debug
+    min_connections: 0
+    max_connections: 1
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Kai-Uwe Hermann

@@ -187,6 +187,9 @@ active_modules:
           implementation_id: external_limits
         - module_id: evse_manager_2_ocpp_sink
           implementation_id: external_limits
+      ocpp_debug:
+        - implementation_id: ocpp_debug
+          module_id: ocpp_debug
   ocpp_api:
     module: ocpp_consumer_API
     config_module:
@@ -321,5 +324,11 @@ active_modules:
         database_path: /tmp/error_history.db
   system:
     module: System
+  ocpp_debug:
+    module: OCPPDebug
+    connections:
+      ocpp_debug:
+        - implementation_id: ocpp_debug
+          module_id: ocpp
 
 x-module-layout: {}

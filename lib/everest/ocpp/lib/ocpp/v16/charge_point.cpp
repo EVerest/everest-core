@@ -12,9 +12,11 @@ namespace v16 {
 ChargePoint::ChargePoint(ChargePointConfigurationInterface& cfg, const fs::path& share_path,
                          const fs::path& database_path, const fs::path& sql_init_path, const fs::path& message_log_path,
                          const std::shared_ptr<EvseSecurity> evse_security,
-                         const std::optional<SecurityConfiguration> security_configuration) {
-    this->charge_point = std::make_unique<ChargePointImpl>(cfg, share_path, database_path, sql_init_path,
-                                                           message_log_path, evse_security, security_configuration);
+                         const std::optional<SecurityConfiguration> security_configuration,
+                         const std::function<void(const std::string& message, MessageDirection direction)>& message_callback) {
+    this->charge_point =
+        std::make_unique<ChargePointImpl>(cfg, share_path, database_path, sql_init_path, message_log_path,
+                                          evse_security, security_configuration, message_callback);
 }
 
 ChargePoint::~ChargePoint() = default;
@@ -201,6 +203,10 @@ void ChargePoint::on_security_event(const CiString<50>& event_type, const std::o
 
 ChangeAvailabilityResponse ChargePoint::on_change_availability(const ChangeAvailabilityRequest& request) {
     return this->charge_point->on_change_availability(request);
+}
+
+void ChargePoint::on_ocpp_message(const std::string& message) {
+    this->charge_point->on_ocpp_message(message);
 }
 
 void ChargePoint::register_data_transfer_callback(

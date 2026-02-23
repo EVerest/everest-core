@@ -84,6 +84,9 @@ provides:
   session_cost:
     description: Send session cost
     interface: session_cost
+  ocpp_debug:
+    description: Debug OCPP interface.
+    interface: ocpp_debug
 requires:
   charger_information:
     interface: charger_information
@@ -125,6 +128,10 @@ requires:
     interface: iso15118_extensions
     min_connections: 0
     max_connections: 128
+  ocpp_debug:
+    interface: ocpp_debug
+    min_connections: 0
+    max_connections: 1
 enable_external_mqtt: true
 enable_global_errors: true
 metadata:

@@ -607,8 +607,33 @@ void OCPP::init() {
     charge_point_config = std::make_unique<ocpp::v16::ChargePointConfiguration>(charge_point_config_json,
                                                                                 ocpp_share_path, user_config_path);
     std::shared_ptr<ocpp::EvseSecurity> security = std::make_shared<EvseSecurity>(*r_security);
+    std::function<void(const std::string& message, ocpp::MessageDirection direction)> message_callback = nullptr;
+    // FIXME: add a configuration option for this
+    if (!r_ocpp_debug.empty()) {
+        message_callback = [this](const std::string& message, ocpp::MessageDirection direction) {
+            types::ocpp::Message ocpp_message;
+            ocpp_message.message = message;
+            switch (direction) {
+            case ocpp::MessageDirection::CSMSToChargingStation:
+                ocpp_message.direction = types::ocpp::MessageDirection::CSMSToChargingStation;
+                p_ocpp_debug->publish_ocpp_message(ocpp_message);
+                break;
+            case ocpp::MessageDirection::ChargingStationToCSMS:
+                ocpp_message.direction = types::ocpp::MessageDirection::ChargingStationToCSMS;
+                p_ocpp_debug->publish_ocpp_message(ocpp_message);
+                break;
+            default:
+                EVLOG_info << "unknown message direction (ignored)";
+                break;
+            }
+        };
+        r_ocpp_debug.at(0)->subscribe_ocpp_message([this](types::ocpp::Message message) {
+            this->charge_point->on_ocpp_message(message.message); // FIXME: filter direction ChargePoint?
+        });
+    }
     charge_point = std::make_unique<ocpp::v16::ChargePoint>(*charge_point_config, ocpp_share_path, config.DatabasePath,
-                                                            sql_init_path, config.MessageLogPath, security);
+                                                            sql_init_path, config.MessageLogPath, security,
+                                                            std::nullopt, message_callback);
 
     this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(config.MessageQueueResumeDelay));
 

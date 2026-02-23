@@ -776,3 +776,23 @@ types:
         description: Detailed status information.
         type: object
         $ref: /ocpp#/StatusInfoType
+  MessageDirection:
+    description: OCPP message direction
+    type: string
+    enum:
+      - CSMSToChargingStation
+      - ChargingStationToCSMS
+  Message:
+    description: OCPP message with direction
+    type: object
+    required:
+      - message
+      - direction
+    properties:
+      message:
+        description: Serialized OCPP-J message
+        type: string
+      direction:
+        description: OCPP message direction
+        type: string
+        $ref: /ocpp#/MessageDirection

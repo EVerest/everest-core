@@ -16,6 +16,7 @@
 #include <generated/interfaces/ocpp/Implementation.hpp>
 #include <generated/interfaces/ocpp_1_6_charge_point/Implementation.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
+#include <generated/interfaces/ocpp_debug/Implementation.hpp>
 #include <generated/interfaces/session_cost/Implementation.hpp>
 
 // headers for required interface implementations
@@ -27,6 +28,7 @@
 #include <generated/interfaces/external_energy_limits/Interface.hpp>
 #include <generated/interfaces/iso15118_extensions/Interface.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Interface.hpp>
+#include <generated/interfaces/ocpp_debug/Interface.hpp>
 #include <generated/interfaces/reservation/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
 
@@ -92,7 +94,7 @@ public:
          std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
          std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
          std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppImplBase> p_ocpp_generic,
-         std::unique_ptr<session_costImplBase> p_session_cost,
+         std::unique_ptr<session_costImplBase> p_session_cost, std::unique_ptr<ocpp_debugImplBase> p_ocpp_debug,
          std::vector<std::unique_ptr<charger_informationIntf>> r_charger_information,
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
          std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink,
@@ -100,7 +102,8 @@ public:
          std::unique_ptr<systemIntf> r_system, std::unique_ptr<evse_securityIntf> r_security,
          std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer,
          std::vector<std::unique_ptr<display_messageIntf>> r_display_message,
-         std::vector<std::unique_ptr<iso15118_extensionsIntf>> r_extensions_15118, Conf& config) :
+         std::vector<std::unique_ptr<iso15118_extensionsIntf>> r_extensions_15118,
+         std::vector<std::unique_ptr<ocpp_debugIntf>> r_ocpp_debug, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -109,6 +112,7 @@ public:
         p_data_transfer(std::move(p_data_transfer)),
         p_ocpp_generic(std::move(p_ocpp_generic)),
         p_session_cost(std::move(p_session_cost)),
+        p_ocpp_debug(std::move(p_ocpp_debug)),
         r_charger_information(std::move(r_charger_information)),
         r_evse_manager(std::move(r_evse_manager)),
         r_evse_energy_sink(std::move(r_evse_energy_sink)),
@@ -119,7 +123,8 @@ public:
         r_data_transfer(std::move(r_data_transfer)),
         r_display_message(std::move(r_display_message)),
         r_extensions_15118(std::move(r_extensions_15118)),
-        config(config){};
+        r_ocpp_debug(std::move(r_ocpp_debug)),
+        config(config) {};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main;
@@ -128,6 +133,7 @@ public:
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
     const std::unique_ptr<ocppImplBase> p_ocpp_generic;
     const std::unique_ptr<session_costImplBase> p_session_cost;
+    const std::unique_ptr<ocpp_debugImplBase> p_ocpp_debug;
     const std::vector<std::unique_ptr<charger_informationIntf>> r_charger_information;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;
@@ -138,6 +144,7 @@ public:
     const std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer;
     const std::vector<std::unique_ptr<display_messageIntf>> r_display_message;
     const std::vector<std::unique_ptr<iso15118_extensionsIntf>> r_extensions_15118;
+    const std::vector<std::unique_ptr<ocpp_debugIntf>> r_ocpp_debug;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

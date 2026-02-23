@@ -1,0 +1,8 @@
+description: >-
+  This interface allows to send/receive OCPP debug mnessages
+cmds: {}
+vars:
+  ocpp_message:
+    description: A serialized OCPP message
+    type: object
+    $ref: /ocpp#/Message
