@@ -74,6 +74,17 @@ void ErrorManagerReq::on_error_raised(const Error& error) {
         EVLOG_error << ss.str();
         return;
     }
+    std::list<ErrorPtr> errors =
+        database->get_errors({ErrorFilter(TypeFilter(error.type)), ErrorFilter(SubTypeFilter(error.sub_type)),
+                              ErrorFilter(OriginFilter(error.origin))});
+    if (!errors.empty()) {
+        std::stringstream ss;
+        ss << "Error of type '" << error.type << "' and sub type '" << error.sub_type
+           << "' is already raised, ignoring new error";
+        ss << std::endl << "Error object: " << nlohmann::json(error).dump(2);
+        EVLOG_error << ss.str();
+        return;
+    }
     database->add_error(std::make_shared<Error>(error));
     on_error(error, true);
 }
