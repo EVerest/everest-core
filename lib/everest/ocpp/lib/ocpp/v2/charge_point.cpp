@@ -277,7 +277,7 @@ void ChargePoint::configure_message_logging_format(const std::string& message_lo
         this->device_model->get_optional_value<bool>(ControllerComponentVariables::LogMessagesRaw).value_or(false);
     const bool log_security = log_formats.find("security") != std::string::npos;
     const bool session_logging = log_formats.find("session_logging") != std::string::npos;
-    const bool message_callback = log_formats.find("callback") != std::string::npos;
+    const bool log_callback = log_formats.find("callback") != std::string::npos;
     std::function<void(const std::string& message, MessageDirection direction)> logging_callback = nullptr;
     const bool log_rotation =
         this->device_model->get_optional_value<bool>(ControllerComponentVariables::LogRotation).value_or(false);
@@ -291,7 +291,7 @@ void ChargePoint::configure_message_logging_format(const std::string& message_lo
         this->device_model->get_optional_value<std::uint64_t>(ControllerComponentVariables::LogRotationMaximumFileCount)
             .value_or(0);
 
-    if (message_callback) {
+    if (log_callback) {
         logging_callback = this->callbacks.ocpp_messages_callback.value_or(nullptr);
     }
 

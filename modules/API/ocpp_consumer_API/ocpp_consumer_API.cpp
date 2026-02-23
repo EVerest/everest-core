@@ -44,6 +44,7 @@ void ocpp_consumer_API::ready() {
     generate_api_var_ocpp_transaction_event();
     generate_api_var_event_data();
     generate_api_var_charging_schedules();
+    generate_api_var_ocpp_message();
 
     generate_api_var_communication_check();
 
@@ -153,6 +154,10 @@ void ocpp_consumer_API::generate_api_var_event_data() {
 
 void ocpp_consumer_API::generate_api_var_charging_schedules() {
     r_ocpp->subscribe_charging_schedules(forward_api_var("charging_schedules"));
+}
+
+void ocpp_consumer_API::generate_api_var_ocpp_message() {
+    r_ocpp->subscribe_ocpp_message(forward_api_var("ocpp_message"));
 }
 
 void ocpp_consumer_API::generate_api_var_communication_check() {

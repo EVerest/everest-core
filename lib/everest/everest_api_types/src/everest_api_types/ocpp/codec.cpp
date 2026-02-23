@@ -62,6 +62,8 @@ create_serialize_impl(ChargingSchedulePeriod);
 create_serialize_impl(OperationMode);
 create_serialize_impl(V2XSignalWattPointCurve);
 create_serialize_impl(V2XFreqWattPointType);
+create_serialize_impl(MessageDirection);
+create_serialize_impl(Message);
 
 #undef create_serialize_impl
 
