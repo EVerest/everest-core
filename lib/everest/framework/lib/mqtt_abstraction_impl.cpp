@@ -204,7 +204,7 @@ void MQTTAbstractionImpl::subscribe(const std::string& topic, QOS qos) {
     const auto result = this->mqtt_client->subscribe(
         topic,
         [this, topic](everest::lib::io::mqtt::mosquitto_cpp& client,
-               everest::lib::io::mqtt::mosquitto_cpp::message const& message) {
+                      everest::lib::io::mqtt::mosquitto_cpp::message const& message) {
             this->message_queue.add(std::make_unique<Message>(topic, message.payload));
         },
         max_qos_level);

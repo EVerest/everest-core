@@ -375,7 +375,8 @@ ErrorCode mosquitto_cpp::connect_impl(const std::string_view& bind_address, cons
     if (bind_address.empty()) {
         return convertEC(mosquitto_connect_async(client.get(), host.data(), port, keepalive_seconds));
     }
-    return convertEC(mosquitto_connect_bind_async(client.get(), host.data(), port, keepalive_seconds, bind_address.data()));
+    return convertEC(
+        mosquitto_connect_bind_async(client.get(), host.data(), port, keepalive_seconds, bind_address.data()));
 }
 
 ErrorCode mosquitto_cpp::reconnect() {
