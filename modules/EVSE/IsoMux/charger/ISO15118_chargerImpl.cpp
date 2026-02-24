@@ -629,7 +629,11 @@ void ISO15118_chargerImpl::handle_no_energy_pause_charging(types::iso15118::NoEn
 
 bool ISO15118_chargerImpl::handle_update_supported_app_protocols(
     types::iso15118::SupportedAppProtocols& supported_app_protocols) {
+    bool iso20_configured = false;
+
     if (supported_app_protocols.app_protocols.empty()) {
+        v2g_ctx->iso20_proxy_enabled = false;
+        EVLOG_info << "No protocols configured, disabling ISO-20 proxy routing";
         // Forward empty updates to both implementations
         const bool ok_iso2 = mod->r_iso2->call_update_supported_app_protocols(supported_app_protocols);
         return ok_iso2;
@@ -654,6 +658,7 @@ bool ISO15118_chargerImpl::handle_update_supported_app_protocols(
             }
 
             if (source_it->second == ProtocolSource::Iso20) {
+                iso20_configured = true;
                 iso20_payload.app_protocols.push_back(protocol);
             } else {
                 iso2_payload.app_protocols.push_back(protocol);
@@ -668,6 +673,12 @@ bool ISO15118_chargerImpl::handle_update_supported_app_protocols(
     }
     if (!iso20_payload.app_protocols.empty()) {
         ok = mod->r_iso20->call_update_supported_app_protocols(iso20_payload) && ok;
+    }
+
+    /* route to ISO-20 proxy only when ISO15118-20 is explicitly configured. */
+    v2g_ctx->iso20_proxy_enabled = iso20_configured;
+    if (!iso20_configured) {
+        EVLOG_debug << "Disabling ISO-20 proxy routing since no ISO15118-20 protocol is configured";
     }
 
     return ok;
