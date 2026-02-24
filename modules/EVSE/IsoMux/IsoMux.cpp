@@ -42,6 +42,7 @@ void IsoMux::init() {
     v2g_ctx->proxy_port_iso2 = config.proxy_port_iso2;
     v2g_ctx->proxy_port_iso20 = config.proxy_port_iso20;
     v2g_ctx->selected_iso20 = false;
+    v2g_ctx->iso20_proxy_enabled = true;
 
     v2g_ctx->tls_key_logging = config.tls_key_logging;
 
