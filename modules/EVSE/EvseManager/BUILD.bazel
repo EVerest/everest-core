@@ -1,3 +1,4 @@
+load("@rules_cc//cc:defs.bzl", "cc_test")
 load("//modules:module.bzl", "cc_everest_module")
 
 IMPLS = [
@@ -7,22 +8,97 @@ IMPLS = [
     "random_delay",
     "dc_external_derate",
     "over_voltage",
-    "voltage_plausibility"
+    "voltage_plausibility",
 ]
 
 cc_everest_module(
     name = "EvseManager",
-    deps = [
-        "@pugixml//:pugixml",
-        "@sigslot//:sigslot",
-        "//lib/everest/helpers",
-        "//lib/everest/util",
-    ],
-    impls = IMPLS,
     srcs = glob(
         [
             "*.cpp",
             "*.hpp",
         ],
     ),
+    impls = IMPLS,
+    deps = [
+        "//lib/everest/helpers",
+        "//lib/everest/util",
+        "@pugixml",
+        "@sigslot",
+    ],
+)
+
+cc_test(
+    name = "EvseManager_tests",
+    srcs = [
+        # Test sources
+        "tests/EventQueueTest.cpp",
+        "tests/ErrorHandlingTest.cpp",
+        "tests/IECStateMachineTest.cpp",
+        "tests/OverVoltageMonitorTest.cpp",
+        "tests/VoltagePlausibilityMonitorTest.cpp",
+        # Test stub headers
+        "tests/evse_board_supportIntfStub.hpp",
+        "tests/EvseManagerStub.hpp",
+        # Module sources needed by tests
+        "ErrorHandling.cpp",
+        "IECStateMachine.cpp",
+        "backtrace.cpp",
+        "over_voltage/OverVoltageMonitor.cpp",
+        "voltage_plausibility/VoltagePlausibilityMonitor.cpp",
+        # Module headers
+    ] + glob([
+        "*.hpp",
+        "over_voltage/*.hpp",
+        "voltage_plausibility/*.hpp",
+    ]) + [
+        # Generated ld-ev header only (not ld-ev.cpp which pulls in impl files)
+        "generated/modules/EvseManager/ld-ev.hpp",
+    ],
+    copts = ["-std=c++17"],
+    defines = ["BUILD_TESTING_MODULE_EVSE_MANAGER"],
+    includes = [
+        ".",
+        "generated/modules/EvseManager",
+        "tests",
+    ],
+    deps = [
+        "//interfaces:interfaces_lib",
+        "//lib/everest/framework",
+        "//lib/everest/helpers",
+        "//tests:module_adapter_stub",
+        "@googletest//:gtest_main",
+        "@sigslot",
+    ],
+)
+
+cc_test(
+    name = "EvseManagerCharger_tests",
+    srcs = [
+        # Test source
+        "tests/ChargerTest.cpp",
+        # Module source
+        "Charger.cpp",
+    ] + glob([
+        "*.hpp",
+    ]) + [
+        # Generated ld-ev header only
+        "generated/modules/EvseManager/ld-ev.hpp",
+    ],
+    copts = ["-std=c++17"],
+    defines = ["BUILD_TESTING_MODULE_EVSE_MANAGER"],
+    includes = [
+        ".",
+        "generated/modules/EvseManager",
+        "tests",
+    ],
+    deps = [
+        "//interfaces:interfaces_lib",
+        "//lib/everest/framework",
+        "//lib/everest/helpers",
+        "//tests:module_adapter_stub",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@sigslot",
+    ],
 )

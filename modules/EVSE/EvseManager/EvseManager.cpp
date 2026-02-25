@@ -317,7 +317,7 @@ void EvseManager::init() {
 }
 
 void EvseManager::ready() {
-    bsp = std::make_unique<IECStateMachine>(r_bsp, config.lock_connector_in_state_b);
+    bsp = std::make_unique<IECStateMachine>(r_bsp, config.unlock_when_deauthorized);
 
     if (config.hack_simplified_mode_limit_10A) {
         bsp->set_ev_simplified_mode_evse_limit(true);
@@ -341,9 +341,9 @@ void EvseManager::ready() {
         },
         std::chrono::milliseconds(config.internal_over_voltage_duration_ms));
 
-    if (not config.lock_connector_in_state_b) {
-        EVLOG_warning << "Unlock connector in CP state B. This violates IEC61851-1:2019 D.6.5 Table D.9 line 4 and "
-                         "should not be used in public environments!";
+    if (config.unlock_when_deauthorized) {
+        EVLOG_warning << "The config `unlock_when_deauthorized` is set to true. This violates "
+                         "IEC61851-1:2019 D.6.5 Table D.9 line 4 and should not be used in public environments!";
     }
 
     const auto hw_caps = *hw_capabilities.handle();
@@ -1529,7 +1529,8 @@ void EvseManager::ready_to_start_charging() {
     charger->enable_disable_initial_state_publish();
 
     this->p_evse->publish_ready(true);
-    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
+    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
+                              "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
     if (!initial_powermeter_value_received) {
         EVLOG_warning << "No powermeter value received yet!";
     }

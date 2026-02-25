@@ -1306,6 +1306,7 @@ void Charger::start_session(bool authfirst) {
         provided_id_token = shared_context.id_token;
     } else {
         shared_context.last_start_session_reason = types::evse_manager::StartSessionReason::EVConnected;
+        bsp->set_authorized(false);
     }
     signal_session_started_event(shared_context.last_start_session_reason, provided_id_token);
 }
@@ -1315,6 +1316,7 @@ void Charger::stop_session() {
     shared_context.flag_authorized = false;
     shared_context.flag_externally_cancelled = false;
     shared_context.flag_paused_by_evse = false;
+    bsp->set_authorized(false);
     signal_simple_event(types::evse_manager::SessionEventEnum::SessionFinished);
     shared_context.session_uuid.clear();
 }
@@ -1359,6 +1361,7 @@ bool Charger::start_transaction() {
 
 void Charger::stop_transaction() {
     shared_context.flag_transaction_active = false;
+    bsp->set_authorized(false);
 
     if (!shared_context.last_stop_transaction_reason.has_value()) {
         // if the stop transaction reason was already set (e.g. by cancel_transaction), we keep it, else we know it is
@@ -1560,6 +1563,7 @@ void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& tok
             start_session(true);
         }
         signal_simple_event(types::evse_manager::SessionEventEnum::Authorized);
+        bsp->set_authorized(true);
         shared_context.flag_authorized = true;
         shared_context.authorized_pnc =
             token.authorization_type == types::authorization::AuthorizationType::PlugAndCharge;
@@ -1567,6 +1571,7 @@ void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& tok
         if (shared_context.session_active) {
             stop_session();
         }
+        bsp->set_authorized(false);
         shared_context.flag_authorized = false;
     }
 }

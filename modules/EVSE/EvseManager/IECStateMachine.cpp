@@ -71,9 +71,8 @@ const std::string cpevent_to_string(CPEvent e) {
     throw std::out_of_range("No known string conversion for provided enum of type CPEvent");
 }
 
-IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_,
-                                 bool lock_connector_in_state_b_) :
-    r_bsp(r_bsp_), lock_connector_in_state_b(lock_connector_in_state_b_) {
+IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_, bool use_authorized_) :
+    r_bsp(r_bsp_), use_authorized(use_authorized_), authorized(!use_authorized_) {
     // feed the state machine whenever the timer expires
     timeout_state_c1.signal_reached.connect([this]() { feed_state_machine(std::nullopt); });
     timeout_unlock_state_F.signal_reached.connect([this]() { feed_state_machine(std::nullopt); });
@@ -181,11 +180,7 @@ std::queue<CPEvent> IECStateMachine::state_machine(std::optional<RawCPState> cp_
             // Table A.6: Sequence 7 EV stops charging
             // Table A.6: Sequence 8.2 EV supply equipment
             // responds to EV opens S2 (w/o PWM)
-            if (lock_connector_in_state_b) {
-                connector_lock();
-            } else {
-                connector_unlock();
-            }
+            connector_lock();
 
             if (last_cp_state != RawCPState::A && last_cp_state != RawCPState::B) {
 
@@ -509,7 +504,8 @@ void IECStateMachine::connector_force_unlock() {
 }
 
 void IECStateMachine::check_connector_lock() {
-    bool should_be_locked_considering_relais_and_force = relais_on or (should_be_locked and not force_unlocked);
+    bool should_be_locked_considering_relais_and_force =
+        relais_on or (should_be_locked and not force_unlocked and authorized);
 
     if (not is_locked and should_be_locked_considering_relais_and_force) {
         signal_lock();
@@ -518,6 +514,15 @@ void IECStateMachine::check_connector_lock() {
         signal_unlock();
         is_locked = false;
     }
+}
+
+void IECStateMachine::set_authorized(bool a) {
+    EVLOG_debug << "set_authorized - " << a;
+    if (!use_authorized) {
+        return;
+    }
+    authorized = a;
+    feed_state_machine(std::nullopt);
 }
 
 } // namespace module

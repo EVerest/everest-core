@@ -74,7 +74,7 @@ enum class AcPhases {
 class IECStateMachine {
 public:
     // We need the r_bsp reference to be able to talk to the bsp driver module
-    IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_, bool lock_connector_in_state_b_);
+    IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_, bool use_authorized_);
     // Call when new events from BSP requirement come in. Will signal internal events
     void process_bsp_event(const types::board_support_common::BspEvent bsp_event);
     // Allow power on from Charger state machine
@@ -99,6 +99,8 @@ public:
 
     void connector_force_unlock();
 
+    void set_authorized(bool a);
+
     void set_ev_simplified_mode_evse_limit(bool l) {
         ev_simplified_mode_evse_limit = l;
     }
@@ -113,7 +115,6 @@ private:
     void connector_unlock();
     void check_connector_lock();
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
-    bool lock_connector_in_state_b{true};
 
     bool pwm_running{false};
     bool last_pwm_running{false};
@@ -141,6 +142,10 @@ private:
 
     types::evse_board_support::Reason power_on_reason{types::evse_board_support::Reason::PowerOff};
     void call_allow_power_on_bsp(bool value);
+
+    // If to pay attention to the authorized flag.
+    bool use_authorized{false};
+    std::atomic_bool authorized{false};
 
     std::atomic_bool is_locked{false};
     std::atomic_bool should_be_locked{false};

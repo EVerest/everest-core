@@ -334,4 +334,174 @@ TEST(IECStateMachine, deadlock_fix) {
     // if there is a deadlock the test won't finish
 }
 
+// ---------------------------------------------------------------------------
+// Tests for auth-aware connector locking
+//
+// When use_authorized is true, the connector should only lock in State B/C
+// once the session is authorized. This prevents trapping cables before
+// authorization while still keeping them locked during BMS pauses.
+
+struct ConnectorLockTest : public testing::Test {
+    BspStub bsp;
+    std::unique_ptr<evse_board_supportIntf> bsp_if;
+    int lock_count{0};
+    int unlock_count{0};
+
+    void reset_counts() {
+        lock_count = 0;
+        unlock_count = 0;
+    }
+
+    std::unique_ptr<module::IECStateMachine> create_state_machine(bool use_authorized) {
+        bsp_if = std::make_unique<module::stub::evse_board_supportIntfStub>(bsp);
+        auto sm = std::make_unique<module::IECStateMachine>(bsp_if, use_authorized);
+        sm->signal_lock.connect([this]() { lock_count++; });
+        sm->signal_unlock.connect([this]() { unlock_count++; });
+        sm->enable(true);
+        return sm;
+    }
+
+    // Drive the state machine to State B via A→B (simulates plug-in)
+    void plug_in() {
+        bsp.raise_event(Event::A);
+        bsp.raise_event(Event::B);
+    }
+
+    void plug_out() {
+        bsp.raise_event(Event::A);
+    }
+};
+
+TEST_F(ConnectorLockTest, use_authorized_false_always_locks) {
+    // Default behavior: use_authorized=false locks immediately in B
+    auto sm = create_state_machine(false);
+
+    plug_in();
+
+    EXPECT_GT(lock_count, 0) << "connector should lock in State B when use_authorized is false";
+}
+
+TEST_F(ConnectorLockTest, use_authorized_true_no_auth_stays_unlocked) {
+    // With use_authorized=true and no authorization,
+    // State B should NOT lock the connector (cable free to unplug)
+    auto sm = create_state_machine(true);
+
+    plug_in();
+
+    EXPECT_EQ(lock_count, 0) << "connector should not lock without authorization";
+
+    // Re-enter B to re-trigger the state machine evaluation
+    bsp.raise_event(Event::B);
+
+    EXPECT_EQ(lock_count, 0) << "connector should not lock in State B without authorization";
+}
+
+TEST_F(ConnectorLockTest, set_authorized_in_state_b_locks) {
+    // Car plugs in → State B → no lock → authorize → lock engages
+    auto sm = create_state_machine(true);
+
+    plug_in();
+
+    EXPECT_EQ(lock_count, 0) << "connector should not lock without authorization";
+
+    sm->set_authorized(true);
+
+    EXPECT_GT(lock_count, 0) << "connector should lock when authorized in State B";
+}
+
+TEST_F(ConnectorLockTest, set_authorized_first) {
+    // Car plugs in → State B → no lock → authorize → lock engages
+    auto sm = create_state_machine(true);
+
+    sm->set_authorized(true);
+
+    EXPECT_EQ(lock_count, 0) << "connector should not lock without authorization";
+
+    plug_in();
+
+    EXPECT_GT(lock_count, 0) << "connector should lock when authorized in State B";
+}
+
+TEST_F(ConnectorLockTest, set_deauthorized_in_state_b_unlocks) {
+    // After authorization, deauthorizing in State B should unlock
+    auto sm = create_state_machine(true);
+
+    sm->set_authorized(true);
+    plug_in();
+    reset_counts();
+
+    sm->set_authorized(false);
+
+    EXPECT_GT(unlock_count, 0) << "connector should unlock when deauthorized in State B";
+}
+
+TEST_F(ConnectorLockTest, bms_pause_stays_locked) {
+    // Authorized session: C→B (BMS pause) should keep the connector locked
+    auto sm = create_state_machine(true);
+
+    plug_in();
+    sm->set_authorized(true);
+
+    // Transition to State C (car requests power)
+    bsp.raise_event(Event::C);
+    reset_counts();
+
+    // BMS pause: car goes back to B
+    bsp.raise_event(Event::B);
+
+    // Lock should re-engage (or stay engaged), no unlock should fire
+    EXPECT_EQ(unlock_count, 0) << "connector should not unlock during BMS pause (C->B) while authorized";
+    EXPECT_EQ(lock_count, 0) << "connector already locked";
+}
+
+TEST_F(ConnectorLockTest, set_authorized_outside_state_b_no_lock_change) {
+    // Setting authorized while in State A should not trigger lock/unlock
+    auto sm = create_state_machine(true);
+
+    bsp.raise_event(Event::A);
+    reset_counts();
+
+    sm->set_authorized(true);
+
+    EXPECT_EQ(lock_count, 0) << "set_authorized in State A should not trigger lock";
+    EXPECT_EQ(unlock_count, 0) << "set_authorized in State A should not trigger unlock";
+}
+
+TEST_F(ConnectorLockTest, use_authorized_false_ignores_auth_state) {
+    // With use_authorized=false, authorization state is irrelevant
+    auto sm = create_state_machine(false);
+
+    plug_in();
+    EXPECT_GT(lock_count, 0);
+    reset_counts();
+
+    // Deauthorize should not unlock when use_authorized is false
+    sm->set_authorized(false);
+
+    EXPECT_EQ(unlock_count, 0) << "use_authorized=false should keep lock regardless of auth state";
+
+    // Authorize should also be a no-op (and not double-fire signal_lock)
+    sm->set_authorized(true);
+
+    EXPECT_EQ(lock_count, 0) << "use_authorized=false: set_authorized(true) should not re-fire lock";
+    EXPECT_EQ(unlock_count, 0) << "use_authorized=false: set_authorized(true) should not unlock";
+
+    plug_out();
+    EXPECT_GT(unlock_count, 0);
+}
+
+TEST_F(ConnectorLockTest, force_unlock_overrides_authorized) {
+    // connector_force_unlock must release the connector even while authorized
+    auto sm = create_state_machine(true);
+
+    plug_in();
+    sm->set_authorized(true);
+    ASSERT_GT(lock_count, 0) << "precondition: connector locked when authorized in State B";
+    reset_counts();
+
+    sm->connector_force_unlock();
+
+    EXPECT_GT(unlock_count, 0) << "connector_force_unlock should unlock even when authorized";
+}
+
 } // namespace
