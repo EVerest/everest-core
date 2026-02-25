@@ -142,9 +142,9 @@ inline bool is_same(const ocpp::v2::RequiredComponentVariable& var, const ocpp::
 
 template <typename T>
 std::optional<T> get_optional(DeviceModelInterface& storage, const v2::Component& component,
-                              const v2::Variable& variable, v2::AttributeEnum attribute) {
+                              const v2::Variable& variable, v2::AttributeEnum attribute, bool writeOnly = false) {
     std::string value;
-    const auto get_result = storage.get_variable(component, variable, attribute, value);
+    const auto get_result = storage.get_variable(component, variable, attribute, value, writeOnly);
     if (get_result == v2::GetVariableStatusEnum::Accepted) {
         try {
             if constexpr (std::is_same_v<bool, T>) {
@@ -163,29 +163,31 @@ std::optional<T> get_optional(DeviceModelInterface& storage, const v2::Component
 }
 
 template <typename T, typename C>
-std::optional<T> get_optional(DeviceModelInterface& storage, const C& var, v2::AttributeEnum attribute) {
+std::optional<T> get_optional(DeviceModelInterface& storage, const C& var, v2::AttributeEnum attribute,
+                              bool writeOnly = false) {
     if (var.variable) {
-        return get_optional<T>(storage, var.component, var.variable.value(), attribute);
+        return get_optional<T>(storage, var.component, var.variable.value(), attribute, writeOnly);
     }
     return std::nullopt;
 }
 
 template <typename T>
 std::optional<T> get_optional(DeviceModelInterface& storage, const std::string_view& component,
-                              const std::string_view& variable, v2::AttributeEnum attribute) {
+                              const std::string_view& variable, v2::AttributeEnum attribute, bool writeOnly = false) {
     const v2::Component component_v{std::string{component}};
     const v2::Variable variable_v{std::string{variable}};
-    return get_optional<T>(storage, component_v, variable_v, attribute);
+    return get_optional<T>(storage, component_v, variable_v, attribute, writeOnly);
 }
 
-template <typename T> std::optional<T> get_optional(DeviceModelInterface& storage, v16::keys::valid_keys key) {
+template <typename T>
+std::optional<T> get_optional(DeviceModelInterface& storage, v16::keys::valid_keys key, bool writeOnly = false) {
     std::optional<T> result;
     const auto cv = v16::keys::convert_v2(key);
     if (cv) {
         const auto& component = std::get<v2::Component>(*cv);
         const auto& variable = std::get<v2::Variable>(*cv);
         const auto& attribute = std::get<v2::AttributeEnum>(*cv);
-        result = get_optional<T>(storage, component, variable, attribute);
+        result = get_optional<T>(storage, component, variable, attribute, writeOnly);
     }
     return result;
 }
@@ -2324,7 +2326,7 @@ std::int32_t ChargePointConfigurationDeviceModel::getSecurityProfile() {
 }
 
 std::optional<std::string> ChargePointConfigurationDeviceModel::getAuthorizationKey() {
-    return get_optional<std::string>(*storage, keys::valid_keys::AuthorizationKey);
+    return get_optional<std::string>(*storage, keys::valid_keys::AuthorizationKey, true);
 }
 
 std::optional<std::string> ChargePointConfigurationDeviceModel::getCpoName() {
