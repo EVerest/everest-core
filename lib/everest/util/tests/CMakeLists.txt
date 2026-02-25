@@ -4,6 +4,7 @@ add_executable(everest_util_tests
   async/wrapper_tests.cpp
   enum/EnumFlagsTest.cpp
   enum/EnumFlagsTest_B.cpp
+  math/comparison_tests.cpp
   queue/simple_queue_tests.cpp
   queue/thread_safe_queue_tests.cpp
   vector/fixed_vector_tests.cpp
