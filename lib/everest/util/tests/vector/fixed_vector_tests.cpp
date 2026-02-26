@@ -399,30 +399,6 @@ TEST(FixedVectorTest, TryEmplaceBack) {
     EXPECT_EQ(vec.size(), 3);
 }
 
-struct ThrowsOnMoveConstruct {
-    ThrowsOnMoveConstruct() = default;
-    ThrowsOnMoveConstruct(ThrowsOnMoveConstruct&&) {
-        if (should_throw) {
-            throw std::runtime_error("Throwing on move construction");
-        }
-    }
-    static bool should_throw;
-};
-bool ThrowsOnMoveConstruct::should_throw = false;
-
-TEST(FixedVectorTest, TryEmplaceBackException) {
-    fixed_vector<ThrowsOnMoveConstruct, 5> vec;
-    vec.emplace_back(); // ensure there's at least one element for size check
-    EXPECT_EQ(vec.size(), 1);
-
-    ThrowsOnMoveConstruct::should_throw = true;
-    auto val = ThrowsOnMoveConstruct{}; // create an rvalue that will be moved
-    auto* elem = vec.try_emplace_back(std::move(val));
-    EXPECT_EQ(elem, nullptr);
-    EXPECT_EQ(vec.size(), 1); // should not have changed
-    ThrowsOnMoveConstruct::should_throw = false;
-}
-
 struct ThrowsOnDefaultConstruct {
     ThrowsOnDefaultConstruct() {
         if (should_throw) {
@@ -585,56 +561,29 @@ TEST(FixedVectorTest, ComparisonOperators) {
     EXPECT_TRUE(vec1 != empty1);
 }
 
-struct ThrowsAt_Nth_Move {
-    ThrowsAt_Nth_Move() = default;
-    ThrowsAt_Nth_Move(const ThrowsAt_Nth_Move&) = default;
-    ThrowsAt_Nth_Move& operator=(const ThrowsAt_Nth_Move&) = default;
-    ThrowsAt_Nth_Move(const ThrowsAt_Nth_Move&&) {
-        move_countdown -= 1;
-        if (move_countdown == -1) {
-            throw std::runtime_error("Throwing on move construction");
-        }
-    }
-    ThrowsAt_Nth_Move& operator=(const ThrowsAt_Nth_Move&&) {
-        move_countdown -= 1;
-        if (move_countdown == -1) {
-            throw std::runtime_error("Throwing on move construction");
-        }
-        return *this;
-    }
-    static int move_countdown;
+// Verify that fixed_vector enforces nothrow move requirements at compile time.
+// Types with throwing move constructors/assignments are rejected by static_assert.
+struct NothrowMovable {
+    NothrowMovable() = default;
+    NothrowMovable(NothrowMovable&&) noexcept = default;
+    NothrowMovable& operator=(NothrowMovable&&) noexcept = default;
+    NothrowMovable(const NothrowMovable&) = default;
+    NothrowMovable& operator=(const NothrowMovable&) = default;
 };
-int ThrowsAt_Nth_Move::move_countdown = -1;
 
-TEST(FixedVectorTest, FailToMoveConstruct) {
-    ThrowsAt_Nth_Move::move_countdown = 2;
-    fixed_vector<ThrowsAt_Nth_Move, 5> vec;
+TEST(FixedVectorTest, NothrowMoveConstraint) {
+    // Verify that fixed_vector works with nothrow-movable types
+    fixed_vector<NothrowMovable, 5> vec;
     vec.emplace_back();
-    vec.emplace_back();
-    vec.emplace_back();
-    vec.emplace_back();
+    EXPECT_EQ(vec.size(), 1);
 
-    auto moved_to = fixed_vector<ThrowsAt_Nth_Move, 5>(std::move(vec));
-
-    EXPECT_EQ(moved_to.size(), 0);
-    EXPECT_EQ(vec.size(), 4);
-}
-
-TEST(FixedVectorTest, FailToMoveAssign) {
-    ThrowsAt_Nth_Move::move_countdown = 2;
-    fixed_vector<ThrowsAt_Nth_Move, 5> vec;
-    vec.emplace_back();
-    vec.emplace_back();
-    vec.emplace_back();
-    vec.emplace_back();
-
-    fixed_vector<ThrowsAt_Nth_Move, 5> moved_to;
-
-    EXPECT_EQ(moved_to.size(), 0);
-
-    moved_to = std::move(vec);
-
-    EXPECT_EQ(vec.size(), 4);
+    // Move construction should be noexcept
+    static_assert(std::is_nothrow_move_constructible_v<fixed_vector<NothrowMovable, 5>>);
+    static_assert(std::is_nothrow_move_assignable_v<fixed_vector<NothrowMovable, 5>>);
+    static_assert(std::is_nothrow_move_constructible_v<fixed_vector<int, 5>>);
+    static_assert(std::is_nothrow_move_assignable_v<fixed_vector<int, 5>>);
+    static_assert(std::is_nothrow_move_constructible_v<fixed_vector<std::string, 5>>);
+    static_assert(std::is_nothrow_move_assignable_v<fixed_vector<std::string, 5>>);
 }
 
 TEST(FixedVectorTest, InitializerListConstructor) {
