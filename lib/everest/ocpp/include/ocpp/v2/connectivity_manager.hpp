@@ -175,7 +175,7 @@ public:
     std::optional<std::int32_t> get_priority_from_configuration_slot(const int configuration_slot) const override;
     const std::vector<int>& get_network_connection_slots() const override;
     bool is_websocket_connected() override;
-    std::optional<std::chrono::time_point<std::chrono::steady_clock>> get_time_disconnected() const;
+    std::optional<std::chrono::time_point<std::chrono::steady_clock>> get_time_disconnected() const override;
     void connect(std::optional<std::int32_t> network_profile_slot = std::nullopt) override;
     void disconnect() override;
     bool send_to_websocket(const std::string& message) override;
