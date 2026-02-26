@@ -23,7 +23,6 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
-#include <vector>
 
 namespace {
 using namespace ocpp;
@@ -31,7 +30,16 @@ using SetResult = v16::ChargePointConfigurationDeviceModel::SetResult;
 using DeviceModelInterface = v2::DeviceModelInterface;
 using SupportedFeatureProfiles = v16::SupportedFeatureProfiles;
 
-constexpr const char* custom_component = "Custom";
+constexpr const char* cost_and_price_component = "OCPP16LegacyCtrlr";
+constexpr const char* cost_and_price_feature = "CostAndPrice";
+constexpr const char* custom_component = "CustomizationCtrlr";
+constexpr const char* custom_feature = "Custom";
+constexpr const char* pnc_component = "ISO15118Ctrlr";
+constexpr const char* pnc_feature = "PnC";
+
+constexpr bool starts_with(const std::string_view& str, const std::string_view& looking_for) {
+    return str.rfind(looking_for, 0) == 0;
+}
 
 constexpr v16::ConfigurationStatus convert(SetResult res) {
     switch (res) {
@@ -1144,32 +1152,40 @@ ChargePointConfigurationDeviceModel::ChargePointConfigurationDeviceModel(
     const auto measurands = calculateSupportedMeasurands();
     ProfilesSet initial;
 
-    // TODO(james-ctc): check how to determine this for v2
-    // get from the device model e.g. perhaps:
-    // CustomizationCtrlr, ISO15118Ctrlr, TariffCostCtrlr
+    bool PnC_found{false};
+    bool CostAndPrice_found{false};
+    bool Custom_found{false};
 
-#if 0
-    // If supported add to initial set
+    // check the device model to identify other supported feature profiles
+    const auto report = storage->get_base_report_data(v2::ReportBaseEnum::ConfigurationInventory);
+    for (const auto& entry : report) {
+        const std::string component = entry.component.name;
+        const std::string variable = entry.variable.name;
+        EVLOG_debug << "Component: " << component << " Variable: " << variable;
+        if (component == custom_component && variable == "CustomImplementationEnabled") {
+            Custom_found = true;
+        } else if (component == pnc_component && variable == "PnCEnabled") {
+            PnC_found = true;
+        } else if (component == cost_and_price_component &&
+                   (variable == "CustomDisplayCostAndPrice" || starts_with(variable, "DefaultPrice"))) {
+            CostAndPrice_found = true;
+        }
+    }
 
-    if (config.contains("PnC")) {
+    if (PnC_found) {
         // add PnC behind the scenes as supported feature profile
-        initial.insert(conversions::string_to_supported_feature_profiles("PnC"));
+        initial.insert(conversions::string_to_supported_feature_profiles(pnc_feature));
     }
 
-    if (config.contains("CostAndPrice")) {
+    if (CostAndPrice_found) {
         // Add California Pricing Requirements behind the scenes as supported feature profile
-        initial.insert(conversions::string_to_supported_feature_profiles("CostAndPrice"));
+        initial.insert(conversions::string_to_supported_feature_profiles(cost_and_price_feature));
     }
 
-    if (config.contains(custom_component)) {
+    if (Custom_found) {
         // add Custom behind the scenes as supported feature profile
-        initial.insert(conversions::string_to_supported_feature_profiles(custom_component));
+        initial.insert(conversions::string_to_supported_feature_profiles(custom_feature));
     }
-#else
-    // TODO(james-ctc): remove these - just added for unit tests
-    initial.insert(SupportedFeatureProfiles::PnC);
-    initial.insert(SupportedFeatureProfiles::CostAndPrice);
-#endif
 
     initialise(initial, profiles, measurands);
 }
