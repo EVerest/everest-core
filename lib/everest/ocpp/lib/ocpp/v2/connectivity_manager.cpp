@@ -405,12 +405,12 @@ void ConnectivityManager::on_websocket_connected(OcppProtocolVersion protocol) {
     const int actual_configuration_slot = get_active_network_configuration_slot();
     std::optional<NetworkConnectionProfile> network_connection_profile =
         this->get_network_connection_profile(actual_configuration_slot);
-    this->time_disconnected = std::nullopt;
 
     if (this->websocket_connected_callback.has_value() and network_connection_profile.has_value()) {
         this->websocket_connected_callback.value()(actual_configuration_slot, network_connection_profile.value(),
                                                    this->connected_ocpp_version);
     }
+    this->time_disconnected = std::nullopt;
 }
 
 void ConnectivityManager::on_websocket_disconnected() {
