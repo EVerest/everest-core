@@ -352,8 +352,8 @@ std::pair<bool, bool> SmartCharging::validate_profile_with_offline_time(const Ch
     }
 
     // Not being offline for long enough means profile is valid
-    if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - *time_disconnected)
-            .count() <= *profile.maxOfflineDuration) {
+    if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - time_disconnected.value())
+            .count() <= profile.maxOfflineDuration.value()) {
         return {true, false};
     }
 
