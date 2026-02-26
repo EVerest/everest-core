@@ -1096,7 +1096,7 @@ void ChargePoint::websocket_connected_callback(const int configuration_slot,
             time_disconnected.has_value()) {
             // handle offline threshold
             //  Get the current time point using steady_clock
-            const auto offline_duration = std::chrono::steady_clock::now() - *time_disconnected;
+            const auto offline_duration = std::chrono::steady_clock::now() - time_disconnected.value();
 
             // B04.FR.01
             // If offline period exceeds offline threshold then send the status notification for all connectors
