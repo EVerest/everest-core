@@ -1424,7 +1424,7 @@ SmartCharging::get_valid_profiles_for_evse(std::int32_t evse_id,
             if (clear) {
                 // Q12
                 EVLOG_debug << "Clearing profile with ID: " << profile.id
-                            << ", because of it is invalid after offline duration";
+                            << ", because it is invalid after offline duration";
                 this->context.database_handler.clear_charging_profiles_matching_criteria(profile.id, std::nullopt);
             }
             continue;
