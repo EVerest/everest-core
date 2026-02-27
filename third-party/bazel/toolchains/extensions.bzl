@@ -11,6 +11,12 @@ load("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
 _GNU_CONSTRAINT = str(Label("//third-party/bazel/toolchains:gnu"))
 _MUSL_CONSTRAINT = str(Label("//third-party/bazel/toolchains:musl"))
 
+# Derive the canonical repo name prefix so that "external/<prefix>+toolchains+<name>"
+# resolves correctly whether everest-core is the root module or a dependency.
+# Label resolves to e.g. "@@everest-core+//..." (dep) or "@@//..." (root).
+_MODULE_REPO_PREFIX = _GNU_CONSTRAINT.split("//")[0][2:]  # strip "@@"
+_EXTERNAL_PREFIX = "external/" + _MODULE_REPO_PREFIX + "+toolchains+"
+
 def _create_cpp_toolchains():
     """Experiment to create a glibc cross-compilation toolchain."""
     repo_names = []
@@ -28,7 +34,7 @@ load("@bazel_tools//tools/cpp:unix_cc_toolchain_config.bzl", "cc_toolchain_confi
 
 BIN_PREFIX = "bin/aarch64-buildroot-linux-gnu-"
 
-REPO = "external/+toolchains+cc_toolchain_aarch64-linux-gnu-x86_64-linux"
+REPO = "{repo_path}"
 SYSROOT = REPO + "/aarch64-buildroot-linux-gnu/sysroot"
 
 cc_toolchain_config(
@@ -64,6 +70,7 @@ cc_toolchain_config(
         "strip": BIN_PREFIX + "strip",
         "llvm-cov": BIN_PREFIX + "llvm-cov",
     },
+    link_flags = ["-Wl,--start-group"],
     link_libs = ["-lstdc++", "-lm", "-ldl"],
 )
 
@@ -101,7 +108,7 @@ toolchain(
     toolchain = ":aarch64-linux-glibc_toolchain",
     toolchain_type = "@rules_cc//cc:toolchain_type",
 )
-""".replace("{gnu_constraint}", _GNU_CONSTRAINT),
+""".replace("{gnu_constraint}", _GNU_CONSTRAINT).replace("{repo_path}", _EXTERNAL_PREFIX + "cc_toolchain_aarch64-linux-gnu-x86_64-linux"),
     )
 
     repo_names.append("cc_toolchain_aarch64-linux-gnu-x86_64-linux")
@@ -117,7 +124,7 @@ load("@bazel_tools//tools/cpp:unix_cc_toolchain_config.bzl", "cc_toolchain_confi
 
 BIN_PREFIX = "bin/aarch64-buildroot-linux-musl-"
 
-REPO = "external/+toolchains+cc_toolchain_aarch64-linux-musl-x86_64-linux"
+REPO = "{repo_path}"
 SYSROOT = REPO + "/aarch64-buildroot-linux-musl/sysroot"
 
 cc_toolchain_config(
@@ -190,7 +197,7 @@ toolchain(
     toolchain = ":aarch64-linux-musl_toolchain",
     toolchain_type = "@rules_cc//cc:toolchain_type",
 )
-""".replace("{musl_constraint}", _MUSL_CONSTRAINT),
+""".replace("{musl_constraint}", _MUSL_CONSTRAINT).replace("{repo_path}", _EXTERNAL_PREFIX + "cc_toolchain_aarch64-linux-musl-x86_64-linux"),
     )
 
     repo_names.append("cc_toolchain_aarch64-linux-musl-x86_64-linux")
@@ -206,7 +213,7 @@ load("@bazel_tools//tools/cpp:unix_cc_toolchain_config.bzl", "cc_toolchain_confi
 
 BIN_PREFIX = "bin/arm-buildroot-linux-gnueabihf-"
 
-REPO = "external/+toolchains+cc_toolchain_armv7-linux-gnu-x86_64-linux"
+REPO = "{repo_path}"
 
 cc_toolchain_config(
     name = "armv7-linux-gnu_toolchain_config",
@@ -244,6 +251,7 @@ cc_toolchain_config(
         "strip": BIN_PREFIX + "strip",
         "llvm-cov": BIN_PREFIX + "llvm-cov",
     },
+    link_flags = ["-Wl,--start-group"],
     link_libs = ["-lstdc++", "-lm", "-ldl"],
 )
 
@@ -279,7 +287,7 @@ toolchain(
     toolchain = ":armv7-linux-gnu_toolchain",
     toolchain_type = "@rules_cc//cc:toolchain_type",
 )
-""".replace("{gnu_constraint}", _GNU_CONSTRAINT),
+""".replace("{gnu_constraint}", _GNU_CONSTRAINT).replace("{repo_path}", _EXTERNAL_PREFIX + "cc_toolchain_armv7-linux-gnu-x86_64-linux"),
     )
 
     repo_names.append("cc_toolchain_armv7-linux-gnu-x86_64-linux")
@@ -295,7 +303,7 @@ load("@bazel_tools//tools/cpp:unix_cc_toolchain_config.bzl", "cc_toolchain_confi
 
 BIN_PREFIX = "bin/arm-buildroot-linux-musleabihf-"
 
-REPO = "external/+toolchains+cc_toolchain_armv7-linux-musl-x86_64-linux"
+REPO = "{repo_path}"
 
 cc_toolchain_config(
     name = "armv7-linux-musl_toolchain_config",
@@ -303,6 +311,7 @@ cc_toolchain_config(
     abi_version = "unknown",
     compile_flags = [
         "-nostdinc++",
+        "-fPIC",
         "-isystem", REPO + "/arm-buildroot-linux-musleabihf/include/c++/12.3.0/",
         "-isystem", REPO + "/arm-buildroot-linux-musleabihf/include/c++/12.3.0/arm-buildroot-linux-musleabihf/",
         "-isystem", REPO + "/arm-buildroot-linux-musleabihf/sysroot/usr/include/",
@@ -364,7 +373,7 @@ toolchain(
     toolchain = ":armv7-linux-musl_toolchain",
     toolchain_type = "@rules_cc//cc:toolchain_type",
 )
-""".replace("{musl_constraint}", _MUSL_CONSTRAINT),
+""".replace("{musl_constraint}", _MUSL_CONSTRAINT).replace("{repo_path}", _EXTERNAL_PREFIX + "cc_toolchain_armv7-linux-musl-x86_64-linux"),
     )
 
     repo_names.append("cc_toolchain_armv7-linux-musl-x86_64-linux")

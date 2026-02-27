@@ -36,7 +36,7 @@ platform(
 )
 
 platform(
-  name = "armv7-linux-gnu",
+  name = "armv7-linux-gnueabihf",
   constraint_values = [
     "@platforms//cpu:armv7",
     "@platforms//os:linux",
@@ -45,7 +45,7 @@ platform(
 )
 
 platform(
-  name = "armv7-linux-musl",
+  name = "armv7-linux-musleabihf",
   constraint_values = [
     "@platforms//cpu:armv7",
     "@platforms//os:linux",

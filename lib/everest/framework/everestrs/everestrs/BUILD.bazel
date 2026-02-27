@@ -42,10 +42,6 @@ cc_library(
     name = "everestrs_bridge",
     srcs = ["src/lib.rs" + ".cc"],
     cxxopts = ["-std=c++17"],
-    linkopts = select({
-        "//third-party/bazel/toolchains:musl": [],
-        "//conditions:default": ["-lstdc++"],
-    }),
     visibility = ["//visibility:public"],
     deps = [
         ":everestrs_bridge/include",
