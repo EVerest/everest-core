@@ -75,6 +75,7 @@ use_repo(
     "com_github_LiamBindle_mqtt-c",
     "com_github_pboettch_json-schema-validator",
     "com_github_warmcatt_libwebsockets",
+    "openssl_source",
     "pybind11_json",
     "sigslot",
 )

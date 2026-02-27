@@ -1,5 +1,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("@rules_python//python:py_binary.bzl", "py_binary")
+load("//third-party/bazel/toolchains:defs.bzl", "CROSS_PYTHON_INCOMPATIBLE")
 
 py_binary(
     name = "collect_migration_files",
@@ -8,6 +9,7 @@ py_binary(
     ],
     imports = ["."],
     main = ".ci/build-kit/scripts/collect_migration_files.py",
+    target_compatible_with = CROSS_PYTHON_INCOMPATIBLE,
 )
 
 genrule(

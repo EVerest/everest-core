@@ -138,6 +138,8 @@ jobs:
         platform:
           - aarch64-linux-gnu
           - aarch64-linux-musl
+          - armv7-linux-gnu
+          - armv7-linux-musl
     uses: ./.github/workflows/job_bazel-cross-build.yaml
     with:
       runner: ${{ inputs.runner || 'ubuntu-24.04' }}

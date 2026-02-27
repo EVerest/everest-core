@@ -30,5 +30,5 @@ jobs:
       - name: Build all
         run: >
           bazelisk build //...
-          --platforms=${{ inputs.platform }}
+          --platforms=//third-party/bazel/toolchains:${{ inputs.platform }}
           --@bazel_tools//tools/test:incompatible_use_default_test_toolchain=false
