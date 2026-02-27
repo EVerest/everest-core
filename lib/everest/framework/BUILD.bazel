@@ -4,23 +4,23 @@ load("@rules_python//python:py_binary.bzl", "py_binary")
 py_binary(
     name = "collect_migration_files",
     srcs = [
-        ".ci/build-kit/scripts/collect_migration_files.py"
+        ".ci/build-kit/scripts/collect_migration_files.py",
     ],
-    main = ".ci/build-kit/scripts/collect_migration_files.py",
     imports = ["."],
+    main = ".ci/build-kit/scripts/collect_migration_files.py",
 )
 
 genrule(
     name = "compile_time_settings",
     srcs = ["//lib/everest/framework/schemas/migrations"],
     outs = ["include/everest/compile_time_settings.hpp"],
-    tools = [":collect_migration_files"],
     cmd = """
     echo "#define EVEREST_INSTALL_PREFIX \\"/usr\\"" > $@
     echo "#define EVEREST_INSTALL_LIBDIR \\"/lib\\"" >> $@
     echo "#define EVEREST_NAMESPACE (\\"everest\\")" >> $@
     $(location :collect_migration_files) --migration-files $(locations //lib/everest/framework/schemas/migrations) --output $@
   """,
+    tools = [":collect_migration_files"],
 )
 
 genrule(
@@ -38,22 +38,11 @@ genrule(
 cc_library(
     name = "framework",
     srcs = glob(["lib/**/*.cpp"]),
-    hdrs = glob(["include/**/*.hpp"]) + [":compile_time_settings", ":version_information"],
-    cxxopts = ["-std=c++17"],
-    strip_include_prefix = "include",
-    visibility = ["//visibility:public"],
-    deps = [
-        "@boost.program_options",
-        "@boost.uuid",
-        "@com_github_HowardHinnant_date//:date",
-        "@com_github_LiamBindle_mqtt-c//:libmqtt",
-        "@rapidyaml//:rapidyaml",
-        "//lib/everest/log:liblog",
-        "//lib/everest/sqlite:everest-sqlite",
-        "@com_github_fmtlib_fmt//:fmt",
-        "@com_github_nlohmann_json//:json",
-        "@com_github_pboettch_json-schema-validator//:json-schema-validator",
+    hdrs = glob(["include/**/*.hpp"]) + [
+        ":compile_time_settings",
+        ":version_information",
     ],
+    cxxopts = ["-std=c++17"],
     # See https://github.com/HowardHinnant/date/issues/324
     local_defines = [
         "BUILD_TZ_LIB=ON",
@@ -61,6 +50,20 @@ cc_library(
         "USE_OS_TZDB=1",
         "USE_AUTOLOAD=0",
         "HAS_REMOTE_API=0",
+    ],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib/everest/log:liblog",
+        "//lib/everest/sqlite:everest-sqlite",
+        "@boost.program_options",
+        "@boost.uuid",
+        "@com_github_HowardHinnant_date//:date",
+        "@com_github_LiamBindle_mqtt-c//:libmqtt",
+        "@com_github_fmtlib_fmt//:fmt",
+        "@com_github_nlohmann_json//:json",
+        "@com_github_pboettch_json-schema-validator//:json-schema-validator",
+        "@rapidyaml",
     ],
 )
 
@@ -89,37 +92,37 @@ cc_binary(
     ),
     cxxopts = ["-std=c++17"],
     deps = [
-        "@rapidyaml//:rapidyaml",
+        ":controller-ipc",
+        ":framework",
         "//lib/everest/log:liblog",
         "@com_github_fmtlib_fmt//:fmt",
         "@com_github_warmcatt_libwebsockets//:libwebsockets",
-        ":controller-ipc",
-        ":framework",
-	"@libcap//:libcap",
+        "@libcap",
+        "@rapidyaml",
     ],
 )
 
 cc_binary(
     name = "manager",
-    cxxopts = ["-std=c++17"],
     srcs = glob(
         [
             "src/*.cpp",
             "src/*.hpp",
         ],
     ),
+    cxxopts = ["-std=c++17"],
     visibility = ["//visibility:public"],
     deps = [
-        "@boost.program_options",
-        "//lib/everest/log:liblog",
-        "@com_github_fmtlib_fmt//:fmt",
-        "@com_github_pboettch_json-schema-validator//:json-schema-validator",
         ":controller-ipc",
         ":framework",
-	"@libcap//:libcap",
+        "//lib/everest/log:liblog",
+        "@boost.program_options",
+        "@com_github_fmtlib_fmt//:fmt",
+        "@com_github_pboettch_json-schema-validator//:json-schema-validator",
+        "@libcap",
     ],
 )
 
 exports_files([
-   "dependencies.yaml",
+    "dependencies.yaml",
 ])

@@ -1,0 +1,55 @@
+package(default_visibility = ["//visibility:public"])
+
+constraint_setting(name = "libc")
+
+constraint_value(
+    name = "gnu",
+    constraint_setting = ":libc",
+)
+
+constraint_value(
+    name = "musl",
+    constraint_setting = ":libc",
+)
+
+constraint_value(
+    name = "none_libc",
+    constraint_setting = ":libc",
+)
+
+platform(
+  name = "aarch64-linux-gnu",
+  constraint_values = [
+    "@platforms//cpu:aarch64",
+    "@platforms//os:linux",
+    ":gnu",
+  ],
+)
+
+platform(
+  name = "aarch64-linux-musl",
+  constraint_values = [
+    "@platforms//cpu:aarch64",
+    "@platforms//os:linux",
+    ":musl",
+  ],
+)
+
+platform(
+  name = "armv7-linux-gnu",
+  constraint_values = [
+    "@platforms//cpu:armv7",
+    "@platforms//os:linux",
+    ":gnu",
+  ],
+)
+
+platform(
+  name = "armv7-linux-musl",
+  constraint_values = [
+    "@platforms//cpu:armv7",
+    "@platforms//os:linux",
+    ":musl",
+  ],
+)
+
