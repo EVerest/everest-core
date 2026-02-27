@@ -128,3 +128,21 @@ jobs:
     uses: ./.github/workflows/job_bazel-build-test.yaml
     with:
       runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+
+
+  bazel-cross-build-aarch64-gnu:
+    name: Bazel Cross-Build (aarch64-linux-gnu)
+    uses: ./.github/workflows/job_bazel-cross-build.yaml
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      platform: //third-party/bazel/toolchains:aarch64-linux-gnu
+      platform_name: aarch64-linux-gnu
+
+
+  bazel-cross-build-aarch64-musl:
+    name: Bazel Cross-Build (aarch64-linux-musl)
+    uses: ./.github/workflows/job_bazel-cross-build.yaml
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+      platform: //third-party/bazel/toolchains:aarch64-linux-musl
+      platform_name: aarch64-linux-musl
