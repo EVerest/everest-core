@@ -9,16 +9,12 @@ on:
         default: 'ubuntu-24.04'
         type: string
       platform:
-        description: 'Target platform (e.g. //third-party/bazel/toolchains:aarch64-linux-gnu)'
-        required: true
-        type: string
-      platform_name:
         description: 'Human-readable platform name for display'
         required: true
         type: string
 jobs:
   bazel-cross-build:
-    name: Cross-compile (${{ inputs.platform_name }})
+    name: Cross-compile (${{ inputs.platform }})
     runs-on: ${{ inputs.runner }}
     steps:
       - name: Checkout
@@ -27,9 +23,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: "~/.cache/bazel"
-          key: ${{ runner.os }}-bazel-cross-${{ inputs.platform_name }}-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'third-party/bazel/*') }}
+          key: ${{ runner.os }}-bazel-cross-${{ inputs.platform }}-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'third-party/bazel/*') }}
           restore-keys: |
-            ${{ runner.os }}-bazel-cross-${{ inputs.platform_name }}-
+            ${{ runner.os }}-bazel-cross-${{ inputs.platform }}-
             ${{ runner.os }}-bazel-
       - name: Build all
         run: >
