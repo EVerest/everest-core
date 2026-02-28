@@ -354,6 +354,8 @@ TEST(FixedVectorTest, EraseEdgeCases) {
 
 struct ThrowsOnCopy {
     ThrowsOnCopy() = default;
+    ThrowsOnCopy(ThrowsOnCopy&&) noexcept = default;
+    ThrowsOnCopy& operator=(ThrowsOnCopy&&) noexcept = default;
     ThrowsOnCopy(const ThrowsOnCopy& /*other*/) {
         if (should_throw) {
             throw std::runtime_error("Throwing on copy");
@@ -371,7 +373,8 @@ TEST(FixedVectorTest, ExceptionSafety) {
 
     ThrowsOnCopy::should_throw = true;
     try {
-        vec.push_back(ThrowsOnCopy{});
+        const ThrowsOnCopy obj{};
+        vec.push_back(obj); // const lvalue forces copy constructor
     } catch (const std::runtime_error&) {
         // exception caught
     }
@@ -616,6 +619,8 @@ TEST(FixedVectorTest, InitializerListConstructor) {
 
 struct ThrowsOnNthCopy {
     ThrowsOnNthCopy() = default;
+    ThrowsOnNthCopy(ThrowsOnNthCopy&&) noexcept = default;
+    ThrowsOnNthCopy& operator=(ThrowsOnNthCopy&&) noexcept = default;
     ThrowsOnNthCopy(const ThrowsOnNthCopy& /*other*/) {
         if (copy_countdown > 0) {
             copy_countdown--;

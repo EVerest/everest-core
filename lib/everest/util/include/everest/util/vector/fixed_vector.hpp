@@ -605,7 +605,7 @@ private:
      * @param other Unused, present for signature matching.
      */
     template <typename U = T, std::enable_if_t<!(std::is_nothrow_move_assignable_v<U> &&
-                                                  std::is_nothrow_move_constructible_v<U>)>* = nullptr>
+                                                 std::is_nothrow_move_constructible_v<U>)>* = nullptr>
     void move_assign_from(fixed_vector&& /*other*/) {
         static_assert(std::is_nothrow_move_constructible_v<U>,
                       "fixed_vector requires T to be nothrow move-constructible for move assignment.");
