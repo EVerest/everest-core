@@ -2535,6 +2535,16 @@ void EvseManager::fail_cable_check(const std::string& reason) {
         }
         r_hlc[0]->call_cable_check_finished(false);
     }
+    // Do not raise a cable check fault if the car has already been unplugged.
+    // This prevents a race condition where the detached cable check thread raises an error
+    // after clear_errors_on_unplug() has already run, leaving the charger permanently
+    // inoperative (see GitHub issue #1392).
+    const auto current_state = charger->get_current_state();
+    if (current_state == Charger::EvseState::Idle || current_state == Charger::EvseState::Finished) {
+        EVLOG_info << "Cable check failed due to: " << reason
+                   << ", but session already ended (car unplugged). Not raising cable check fault error.";
+        return;
+    }
 
     // Raising a cable check fault should not happen if a cancel_transaction (DeAuthorized) is triggered
     // during cable check
