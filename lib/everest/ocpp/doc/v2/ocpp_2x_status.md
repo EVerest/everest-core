@@ -2709,13 +2709,13 @@ CSMS setpoint and Dynamic charging profiles from K01. There are no specific requ
 
 | ID  | Status | Remark |
 | --- | ------ | ------ |
-| Q11 | ✅      |        |
+| Q11 | ✅      |Use Case doesn't contain any functional requirement|
 
 ## Bidirectional Power Transfer - Resuming a V2X operation after an offline period
 
 | ID  | Status | Remark |
 | --- | ------ | ------ |
-| Q12 | ✅      |        |
+| Q12 | ✅      | Use Case doesn't contain any functional requirement|
 
 ## DER Control - Starting a V2X session with DER control in EVSE (New in OCPP 2.1)
 
