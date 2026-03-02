@@ -52,8 +52,8 @@ cmake(
     ],
     deps = [
         "@libcap//:libcap",
-        "@openssl//:ssl",
-        "@openssl//:crypto",
+        "@everest-core//third-party/bazel/openssl:ssl",
+        "@everest-core//third-party/bazel/openssl:crypto",
     ],
 )
 

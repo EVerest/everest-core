@@ -1,0 +1,23 @@
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+)
+
+configure_make(
+    name = "openssl",
+    configure_command = "Configure",
+    configure_options = [
+        "linux-armv4",
+        "no-shared",
+        "no-afalgeng",
+        "no-dynamic-engine",
+        "no-tests",
+    ],
+    configure_in_place = True,
+    lib_source = ":all_srcs",
+    out_static_libs = ["libssl.a", "libcrypto.a"],
+    targets = ["install_sw"],
+    visibility = ["//visibility:public"],
+)

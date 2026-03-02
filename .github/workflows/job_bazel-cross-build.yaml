@@ -1,0 +1,34 @@
+name: Bazel Cross-Compilation Build
+run-name: ${{ github.actor }} is cross-compiling with bazel
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'Which runner to use'
+        required: false
+        default: 'ubuntu-24.04'
+        type: string
+      platform:
+        description: 'Human-readable platform name for display'
+        required: true
+        type: string
+jobs:
+  bazel-cross-build:
+    name: Cross-compile (${{ inputs.platform }})
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.0
+      - name: Mount bazel cache
+        uses: actions/cache@v3
+        with:
+          path: "~/.cache/bazel"
+          key: ${{ runner.os }}-bazel-cross-${{ inputs.platform }}-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'third-party/bazel/*') }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-cross-${{ inputs.platform }}-
+            ${{ runner.os }}-bazel-
+      - name: Build all
+        run: >
+          bazelisk build //...
+          --platforms=//third-party/bazel/toolchains:${{ inputs.platform }}
+          --@bazel_tools//tools/test:incompatible_use_default_test_toolchain=false

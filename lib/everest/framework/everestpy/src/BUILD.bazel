@@ -1,11 +1,13 @@
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("@rules_python//python:py_library.bzl", "py_library")
+load("//third-party/bazel/toolchains:defs.bzl", "CROSS_PYTHON_INCOMPATIBLE")
 
 pybind_extension(
 	name = "everestpy",
 	srcs = glob(["everest/**/*.cpp", "everest/**/*.hpp"]),
 	deps = ["//lib/everest/framework:framework", "@pybind11_json//:pybind11_json"],
 	includes = ["everest"],
+	target_compatible_with = CROSS_PYTHON_INCOMPATIBLE,
 	visibility = [
         "//visibility:public",
     ],
@@ -15,6 +17,7 @@ py_library(
     name = "framework",
     data = [":everestpy.so"],
     srcs = glob(["everest/framework/**/*.py",]),
+    target_compatible_with = CROSS_PYTHON_INCOMPATIBLE,
     visibility = [
         "//visibility:public",
     ],
