@@ -85,6 +85,9 @@ Result AuthorizationSetup::feed([[maybe_unused]] Event ev) {
             m_ctx.stop_session(true); // Tell stack to close the tcp/tls connection
             return {};
         }
+
+        // Remember the request in the context in case we need to resend it
+        m_ctx.save_request(req);
         m_ctx.respond(req);
         return m_ctx.create_state<Authorization>();
     } else {
