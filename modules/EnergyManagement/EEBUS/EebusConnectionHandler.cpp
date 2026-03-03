@@ -10,7 +10,7 @@ namespace module {
 
 namespace {
 constexpr auto CHANNEL_READY_TIMEOUT = std::chrono::seconds(60);
-constexpr auto HEARTBEAT_TIMEOUT_SECONDS = 60;
+constexpr auto HEARTBEAT_TIMEOUT_SECONDS = 120;
 } // namespace
 
 EebusConnectionHandler::EebusConnectionHandler(std::shared_ptr<ConfigValidator> config) :
@@ -39,7 +39,11 @@ void EebusConnectionHandler::reconnect() {
         this->m_handler.unregister_event_handler(&this->reconnection_timer);
         EVLOG_info << "Reconnected successfully.";
         if (this->use_case_added) {
-            this->add_use_case(this->last_use_case, this->last_callbacks);
+            if (!this->add_use_case(this->last_use_case, this->last_callbacks)) {
+                EVLOG_error << "Failed to re-add use case after reconnect. Will retry.";
+                this->reconnection_timer.set_timeout(std::chrono::seconds(this->config->get_reconnect_delay_s()));
+                return;
+            }
             this->done_adding_use_case();
         }
     } else {
@@ -134,6 +138,7 @@ void EebusConnectionHandler::start_service() {
     if (!status.ok()) {
         EVLOG_error << "start_service failed: " << status.error_message();
         m_handler.add_action([this] { handle_event(EebusConnectionEvents::DISCONNECTED); });
+        return;
     }
 
     if (lpc_handler) {
@@ -175,9 +180,14 @@ bool EebusConnectionHandler::add_use_case(eebus::EEBusUseCase use_case, const ee
         this->lpc_handler->set_stub(cs_lpc::ControllableSystemLPCControl::NewStub(lpc_channel));
         this->lpc_handler->configure_use_case();
         this->event_reader =
-            std::make_unique<UseCaseEventReader>(this->control_service_stub, [this](const auto& event) {
-                m_handler.add_action([this, event] { this->lpc_handler->handle_event(event); });
-            });
+            std::make_unique<UseCaseEventReader>(
+                this->control_service_stub,
+                [this](const auto& event) {
+                    m_handler.add_action([this, event] { this->lpc_handler->handle_event(event); });
+                },
+                [this] {
+                    m_handler.add_action([this] { this->handle_event(EebusConnectionEvents::DISCONNECTED); });
+                });
 
         common_types::EntityAddress entity_address_for_event_reader = common_types::CreateEntityAddress({1});
         this->event_reader->start(entity_address_for_event_reader, use_case_info);
