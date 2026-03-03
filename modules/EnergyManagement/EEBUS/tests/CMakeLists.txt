@@ -17,6 +17,7 @@ target_sources(${TEST_TARGET_NAME}
         ../LpcUseCaseHandler.cpp
         ../helper.cpp
         ../EebusCallbacks.cpp
+        ../UseCaseEventReader.cpp
 )
 
 target_compile_definitions(${TEST_TARGET_NAME}
