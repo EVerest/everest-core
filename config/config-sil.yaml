@@ -161,6 +161,7 @@ active_modules:
   token_provider:
     config_implementation:
       main:
+        mqtt_topic: everest_api/dummy_token_provider/cmd/provide
         timeout: 10
         token: DEADBEEF
     connections:

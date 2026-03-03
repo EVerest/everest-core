@@ -133,6 +133,9 @@ active_modules:
     module: System
   token_provider:
     module: DummyTokenProviderManual
+    config_implementation:
+      main:
+        mqtt_topic: 'everest_api/token_provider_manual/cmd/provide'
   auth:
     module: Auth
     config_module:
