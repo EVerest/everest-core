@@ -175,19 +175,35 @@ bool ConfigValidator::validate_manage_eebus_grpc_api_binary() const {
 }
 
 bool ConfigValidator::validate_vendor_code() const {
-    return !this->config.vendor_code.empty();
+    if (this->config.vendor_code.empty()) {
+        EVLOG_error << "vendor_code is empty";
+        return false;
+    }
+    return true;
 }
 
 bool ConfigValidator::validate_device_brand() const {
-    return !this->config.device_brand.empty();
+    if (this->config.device_brand.empty()) {
+        EVLOG_error << "device_brand is empty";
+        return false;
+    }
+    return true;
 }
 
 bool ConfigValidator::validate_device_model() const {
-    return !this->config.device_model.empty();
+    if (this->config.device_model.empty()) {
+        EVLOG_error << "device_model is empty";
+        return false;
+    }
+    return true;
 }
 
 bool ConfigValidator::validate_serial_number() const {
-    return !this->config.serial_number.empty();
+    if (this->config.serial_number.empty()) {
+        EVLOG_error << "serial_number is empty";
+        return false;
+    }
+    return true;
 }
 
 bool ConfigValidator::validate_failsafe_control_limit() const {

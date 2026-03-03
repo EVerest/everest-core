@@ -277,3 +277,58 @@ TEST_F(LpcStateMachineTest, failsafe_exits_to_unlimited_controlled_when_heartbea
 }
 
 } // namespace module
+
+// ---------------------------------------------------------------------------
+// UseCaseEventReader tests
+// ---------------------------------------------------------------------------
+#include <UseCaseEventReader.hpp>
+#include <grpcpp/grpcpp.h>
+#include <chrono>
+#include <thread>
+
+TEST(UseCaseEventReaderTest, DestructorBlocksUntilOnDoneFires) {
+    auto reader = std::make_unique<UseCaseEventReader>(nullptr, nullptr, nullptr);
+
+    // Mark the reader as started (stub is null, so no gRPC call is made)
+    reader->start(common_types::EntityAddress{}, control_service::UseCase{});
+
+    // Capture raw pointer so the lambda remains valid after reader.reset() nulls the unique_ptr
+    UseCaseEventReader* raw = reader.get();
+
+    // Simulate gRPC calling OnDone asynchronously after a short delay
+    std::thread done_thread([raw]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        raw->OnDone(grpc::Status::CANCELLED);
+    });
+
+    auto start = std::chrono::steady_clock::now();
+    reader.reset(); // destructor must block until OnDone fires
+    auto elapsed = std::chrono::steady_clock::now() - start;
+
+    done_thread.join();
+
+    EXPECT_GE(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count(), 40);
+}
+
+TEST(UseCaseEventReaderTest, DestructorReturnsImmediatelyIfStartNeverCalled) {
+    auto reader = std::make_unique<UseCaseEventReader>(nullptr, nullptr, nullptr);
+
+    auto start = std::chrono::steady_clock::now();
+    reader.reset(); // must NOT block (start() was never called)
+    auto elapsed = std::chrono::steady_clock::now() - start;
+
+    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count(), 100);
+}
+
+TEST(UseCaseEventReaderTest, DestructorReturnsImmediatelyIfOnDoneAlreadyFired) {
+    auto reader = std::make_unique<UseCaseEventReader>(nullptr, nullptr, nullptr);
+
+    // OnDone fires before destructor
+    reader->OnDone(grpc::Status::CANCELLED);
+
+    auto start = std::chrono::steady_clock::now();
+    reader.reset();
+    auto elapsed = std::chrono::steady_clock::now() - start;
+
+    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count(), 50);
+}

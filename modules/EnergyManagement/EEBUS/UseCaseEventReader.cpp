@@ -12,11 +12,23 @@ UseCaseEventReader::UseCaseEventReader(std::shared_ptr<control_service::ControlS
                                        std::function<void()> disconnection_callback) :
     stub(std::move(stub)),
     event_callback(std::move(event_callback)),
-    disconnection_callback(std::move(disconnection_callback)) {
+    disconnection_callback(std::move(disconnection_callback)),
+    done_future_(done_promise_.get_future()) {
+}
+
+UseCaseEventReader::~UseCaseEventReader() {
+    if (started_) {
+        stop();
+        done_future_.wait();
+    }
 }
 
 void UseCaseEventReader::start(const common_types::EntityAddress& entity_address,
                                const control_service::UseCase& use_case) {
+    started_ = true;
+    if (!this->stub) {
+        return;
+    }
     this->request.mutable_entity_address()->CopyFrom(entity_address);
     this->request.mutable_use_case()->CopyFrom(use_case);
     this->stub->async()->SubscribeUseCaseEvents(&context, &request, this);
@@ -38,6 +50,7 @@ void UseCaseEventReader::OnReadDone(bool ok) {
 }
 
 void UseCaseEventReader::OnDone(const grpc::Status& s) {
+    done_promise_.set_value();
     if (s.error_code() == grpc::StatusCode::CANCELLED) {
         return; // Normal shutdown via stop()
     }
