@@ -11,7 +11,8 @@
 class UseCaseEventReader : public grpc::ClientReadReactor<control_service::SubscribeUseCaseEventsResponse> {
 public:
     UseCaseEventReader(std::shared_ptr<control_service::ControlService::Stub> stub,
-                       std::function<void(const control_service::UseCaseEvent&)> event_callback);
+                       std::function<void(const control_service::UseCaseEvent&)> event_callback,
+                       std::function<void()> disconnection_callback);
 
     void start(const common_types::EntityAddress& entity_address, const control_service::UseCase& use_case);
     void stop();
@@ -22,6 +23,7 @@ public:
 private:
     std::shared_ptr<control_service::ControlService::Stub> stub;
     std::function<void(const control_service::UseCaseEvent&)> event_callback;
+    std::function<void()> disconnection_callback;
 
     grpc::ClientContext context;
     control_service::SubscribeUseCaseEventsRequest request;

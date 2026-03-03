@@ -8,8 +8,11 @@
 #include "control_service/messages.pb.h"
 
 UseCaseEventReader::UseCaseEventReader(std::shared_ptr<control_service::ControlService::Stub> stub,
-                                       std::function<void(const control_service::UseCaseEvent&)> event_callback) :
-    stub(std::move(stub)), event_callback(std::move(event_callback)) {
+                                       std::function<void(const control_service::UseCaseEvent&)> event_callback,
+                                       std::function<void()> disconnection_callback) :
+    stub(std::move(stub)),
+    event_callback(std::move(event_callback)),
+    disconnection_callback(std::move(disconnection_callback)) {
 }
 
 void UseCaseEventReader::start(const common_types::EntityAddress& entity_address,
@@ -35,9 +38,15 @@ void UseCaseEventReader::OnReadDone(bool ok) {
 }
 
 void UseCaseEventReader::OnDone(const grpc::Status& s) {
+    if (s.error_code() == grpc::StatusCode::CANCELLED) {
+        return; // Normal shutdown via stop()
+    }
     if (!s.ok()) {
-        if (s.error_code() != grpc::StatusCode::CANCELLED) {
-            EVLOG_error << "UseCaseEventReader stream failed: " << s.error_message();
-        }
+        EVLOG_error << "UseCaseEventReader stream failed: " << s.error_message();
+    } else {
+        EVLOG_warning << "UseCaseEventReader stream closed by server unexpectedly.";
+    }
+    if (disconnection_callback) {
+        disconnection_callback();
     }
 }
