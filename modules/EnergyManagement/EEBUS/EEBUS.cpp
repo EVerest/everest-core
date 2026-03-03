@@ -14,6 +14,12 @@
 namespace module {
 
 EEBUS::~EEBUS() {
+    // Signal the event handler thread to stop before joining, so it exits its
+    // epoll loop rather than blocking indefinitely.
+    running_flag = false;
+    if (event_handler_thread.joinable()) {
+        event_handler_thread.join();
+    }
     if (this->connection_handler) {
         this->connection_handler->stop();
     }
@@ -23,7 +29,6 @@ EEBUS::~EEBUS() {
             this->eebus_grpc_api_thread.join();
         }
     }
-    running_flag = false;
 }
 
 void EEBUS::init() {
@@ -52,7 +57,10 @@ void EEBUS::init() {
     this->connection_handler = std::make_unique<EebusConnectionHandler>(config_validator);
     event_handler.register_event_handler(this->connection_handler.get());
 
-    this->connection_handler->add_use_case(eebus::EEBusUseCase::LPC, this->callbacks);
+    if (!this->connection_handler->add_use_case(eebus::EEBusUseCase::LPC, this->callbacks)) {
+        EVLOG_critical << "Failed to add LPC use case; EEBUS module will not function.";
+        return;
+    }
     this->connection_handler->done_adding_use_case();
 }
 
@@ -99,6 +107,11 @@ void EEBUS::start_eebus_grpc_api(const std::filesystem::path& binary_path, int p
 
 void EEBUS::ready() {
     invoke_ready(*p_main);
+
+    if (!this->connection_handler) {
+        EVLOG_critical << "EEBUS module failed to initialize; not starting event handler thread.";
+        return;
+    }
 
     // Start the event handler in its own thread
     event_handler_thread = std::thread([this]() { event_handler.run(running_flag); });
