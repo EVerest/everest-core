@@ -61,6 +61,12 @@ struct SQLiteStatementTest : public StatementInterface {
     virtual int bind_double(const std::string& param, const double val) {
         return 0;
     }
+    virtual int bind_datetime(const int idx, const std::chrono::time_point<date::utc_clock>& datetime) {
+        return 0;
+    }
+    virtual int bind_datetime(const std::string& param, const std::chrono::time_point<date::utc_clock>& datetime) {
+        return 0;
+    }
     virtual int bind_null(const int idx) {
         return 0;
     }
@@ -87,6 +93,9 @@ struct SQLiteStatementTest : public StatementInterface {
     }
     virtual double column_double(const int idx) {
         return 0.0;
+    }
+    virtual std::chrono::time_point<date::utc_clock> column_datetime(const int idx) {
+        return std::chrono::time_point<date::utc_clock>(std::chrono::milliseconds(0));
     }
     virtual SqliteVariant column_variant(const std::string& name) {
         return 0;

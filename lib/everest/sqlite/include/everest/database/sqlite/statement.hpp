@@ -3,11 +3,13 @@
 
 #pragma once
 
+#include <chrono>
+#include <cstdint>
+#include <date/tz.h>
 #include <optional>
+#include <sqlite3.h>
 #include <string>
 #include <variant>
-
-#include <sqlite3.h>
 
 namespace everest::db::sqlite {
 
@@ -39,6 +41,8 @@ public:
     virtual int bind_int64(const std::string& param, const int64_t val) = 0;
     virtual int bind_double(const int idx, const double val) = 0;
     virtual int bind_double(const std::string& param, const double val) = 0;
+    virtual int bind_datetime(const int idx, const std::chrono::time_point<date::utc_clock>& datetime) = 0;
+    virtual int bind_datetime(const std::string& param, const std::chrono::time_point<date::utc_clock>& datetime) = 0;
     virtual int bind_null(const int idx) = 0;
     virtual int bind_null(const std::string& param) = 0;
 
@@ -50,6 +54,7 @@ public:
     virtual int column_int(const int idx) = 0;
     virtual int64_t column_int64(const int idx) = 0;
     virtual double column_double(const int idx) = 0;
+    virtual std::chrono::time_point<date::utc_clock> column_datetime(const int idx) = 0;
 };
 
 /// \brief RAII wrapper class that handles finalization, step, binding and column access of sqlite3_stmt
@@ -75,6 +80,8 @@ public:
     int bind_double(const std::string& param, const double val) override;
     int bind_int64(const int idx, const int64_t val) override;
     int bind_int64(const std::string& param, const int64_t val) override;
+    int bind_datetime(const int idx, const std::chrono::time_point<date::utc_clock>& datetime) override;
+    int bind_datetime(const std::string& param, const std::chrono::time_point<date::utc_clock>& datetime) override;
     int bind_null(const int idx) override;
     int bind_null(const std::string& param) override;
 
@@ -86,6 +93,7 @@ public:
     int column_int(const int idx) override;
     int64_t column_int64(const int idx) override;
     double column_double(const int idx) override;
+    std::chrono::time_point<date::utc_clock> column_datetime(const int idx) override;
 };
 
 } // namespace everest::db::sqlite

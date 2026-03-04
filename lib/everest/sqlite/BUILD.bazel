@@ -6,6 +6,7 @@ cc_library(
     hdrs = glob(["include/**/*.hpp"]),
     deps = [
         "@sqlite3",
+        "@com_github_HowardHinnant_date//:date",
         "@com_github_nlohmann_json//:json",
         "//lib/everest/log:liblog",
     ],
