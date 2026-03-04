@@ -8,4 +8,10 @@ cmds:
         description: External limits object
         type: object
         $ref: /energy#/ExternalLimits
-
+vars:
+  capabilities:
+    description: >-
+      Describes the maximum/rated energy flow at this node, e.g. how many phases are configured,
+      the maximum current and the nominal voltage. This is published at least once during start up.
+    type: object
+    $ref: /energy#/CapabilityLimits
