@@ -12,4 +12,5 @@ else
     mkdir -p "$EVEREST_OCPP_CONFIGS_PATH"
 
     cp config/libocpp-config-* "$EVEREST_OCPP_CONFIGS_PATH"
+    cp config/everest-config-* "$EVEREST_OCPP_CONFIGS_PATH"
 fi

@@ -97,6 +97,8 @@ active_modules:
       evse_manager:
         - module_id: evse_manager
           implementation_id: evse
+        - module_id: evse_manager_2
+          implementation_id: evse
       auth:
         - module_id: auth
           implementation_id: main
@@ -114,9 +116,37 @@ active_modules:
           implementation_id: external_limits
         - module_id: evse_manager_1_ocpp_sink
           implementation_id: external_limits
+        - module_id: evse_manager_2_ocpp_sink
+          implementation_id: external_limits
       extensions_15118:
         - module_id: iso15118_charger
           implementation_id: extensions
+  evse_manager_2:
+    module: EvseManager
+    mapping:
+      module:
+        evse: 2
+    config_module:
+      connector_id: 2
+      evse_id: DE*PNX*E12345*2
+      session_logging: true
+      session_logging_xml: false
+      session_logging_path: /tmp/everest-logs
+      charge_mode: AC
+    connections:
+      bsp:
+        - module_id: yeti_driver_2
+          implementation_id: board_support
+      powermeter_grid_side:
+        - module_id: yeti_driver_2
+          implementation_id: powermeter
+  yeti_driver_2:
+    module: YetiSimulator
+    mapping:
+      module:
+        evse: 2
+    config_module:
+      connector_id: 1
   evse_manager_1_ocpp_sink:
     module: EnergyNode
     mapping:
@@ -128,6 +158,18 @@ active_modules:
     connections:
       energy_consumer:
         - module_id: evse_manager
+          implementation_id: energy_grid
+  evse_manager_2_ocpp_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 2
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_2
           implementation_id: energy_grid
   system:
     module: System
@@ -152,6 +194,8 @@ active_modules:
           implementation_id: auth_validator
       evse_manager:
         - module_id: evse_manager
+          implementation_id: evse
+        - module_id: evse_manager_2
           implementation_id: evse
   evse_security:
     module: EvseSecurity
@@ -180,6 +224,8 @@ active_modules:
       energy_consumer:
         - module_id: evse_manager_1_ocpp_sink
           implementation_id: energy_grid
+        - module_id: evse_manager_2_ocpp_sink
+          implementation_id: energy_grid
       powermeter:
         - module_id: yeti_driver
           implementation_id: powermeter
@@ -188,6 +234,8 @@ active_modules:
     connections:
       evse_manager:
         - module_id: evse_manager
+          implementation_id: evse
+        - module_id: evse_manager_2
           implementation_id: evse
       error_history:
         - module_id: error_history
