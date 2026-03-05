@@ -72,6 +72,9 @@ active_modules:
         implementation_id: evse
   token_provider_manual:
     module: DummyTokenProviderManual
+    config_implementation:
+      main:
+        mqtt_topic: 'everest_api/token_provider_manual/cmd/provide'
   energy_manager:
     module: EnergyManager
     connections:

@@ -19,7 +19,9 @@
 namespace module {
 namespace main {
 
-struct Conf {};
+struct Conf {
+    std::string mqtt_topic;
+};
 
 class auth_token_providerImpl : public auth_token_providerImplBase {
 public:
