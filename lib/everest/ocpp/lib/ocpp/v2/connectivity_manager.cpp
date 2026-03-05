@@ -8,6 +8,7 @@
 #include <everest/logging.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/network_config_sync.hpp>
 #include <ocpp/v2/utils.hpp>
 
 namespace {
@@ -336,17 +337,37 @@ ConnectivityManager::get_ws_connection_options(const std::int32_t configuration_
     const auto& network_connection_profile = network_connection_profile_opt.value();
 
     try {
-        auto uri = Uri::parse_and_validate(
-            network_connection_profile.ocppCsmsUrl.get(),
-            this->device_model.get_value<std::string>(ControllerComponentVariables::SecurityCtrlrIdentity),
-            network_connection_profile.securityProfile);
+        // B09.FR.16-18: Check per-slot Identity override first, fall back to SecurityCtrlr.Identity
+        std::string identity_to_use =
+            this->device_model.get_value<std::string>(ControllerComponentVariables::SecurityCtrlrIdentity);
+
+        const auto slot_identity_cv = NetworkConfigurationComponentVariables::get_component_variable(
+            configuration_slot, NetworkConfigurationComponentVariables::Identity);
+        if (const auto slot_identity = this->device_model.get_optional_value<std::string>(slot_identity_cv)) {
+            identity_to_use = slot_identity.value();
+            EVLOG_debug << "Using per-slot Identity for slot " << configuration_slot;
+        }
+
+        auto uri = Uri::parse_and_validate(network_connection_profile.ocppCsmsUrl.get(), identity_to_use,
+                                           network_connection_profile.securityProfile);
 
         const auto ocpp_versions = utils::get_ocpp_protocol_versions(
             this->device_model.get_value<std::string>(ControllerComponentVariables::SupportedOcppVersions));
 
+        // B09.FR.26-28: Check per-slot BasicAuthPassword override first
+        std::optional<std::string> basic_auth_password;
+        const auto slot_pwd_cv = NetworkConfigurationComponentVariables::get_component_variable(
+            configuration_slot, NetworkConfigurationComponentVariables::BasicAuthPassword);
+        if (const auto slot_pwd = this->device_model.get_optional_value<std::string>(slot_pwd_cv)) {
+            basic_auth_password = slot_pwd.value();
+            EVLOG_debug << "Using per-slot BasicAuthPassword for slot " << configuration_slot;
+        } else {
+            basic_auth_password =
+                this->device_model.get_optional_value<std::string>(ControllerComponentVariables::BasicAuthPassword);
+        }
+
         WebsocketConnectionOptions connection_options{
-            ocpp_versions, uri, network_connection_profile.securityProfile,
-            this->device_model.get_optional_value<std::string>(ControllerComponentVariables::BasicAuthPassword),
+            ocpp_versions, uri, network_connection_profile.securityProfile, basic_auth_password,
             // Always use a minimum of 1 second otherwise each message would timeout immediately
             std::chrono::seconds(std::max(network_connection_profile.messageTimeout, 1)),
             this->device_model.get_value<int>(ControllerComponentVariables::RetryBackOffRandomRange),
