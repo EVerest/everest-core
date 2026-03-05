@@ -185,9 +185,7 @@ std::string enhanced_convert(const ocpp::v2::Component& component, const ocpp::v
     using namespace ocpp::v2::ControllerComponentVariables;
     auto result = ocpp::v16::keys::convert_v2(component, variable, attribute);
     if (!result.has_value()) {
-        if (is_same(NetworkConnectionProfiles, component, variable)) {
-            result = std::string{ocpp::v16::keys::convert(ocpp::v16::keys::valid_keys::CentralSystemURI)};
-        } else if (component.name == "EVSE" && variable.name == "ISO15118EvseId") {
+        if (component.name == "EVSE" && variable.name == "ISO15118EvseId") {
             result = std::string{ocpp::v16::keys::convert(ocpp::v16::keys::valid_keys::ConnectorEvseIds)};
         }
     }
@@ -313,7 +311,7 @@ MemoryStorage::SetVariableStatusEnum MemoryStorage::set_v16(const std::string& n
         auto found = keys::convert(name);
         bool create = found.has_value();
 
-        if (name.find("MeterPublicKey[") == 0) {
+        if (name.rfind("MeterPublicKey") == 0) {
             create = true;
         }
 
@@ -418,20 +416,7 @@ void MemoryStorage::add_to_report(std::vector<ocpp::v2::ReportData>& report, con
         data.variableAttribute.push_back(std::move(va));
         report.push_back(std::move(data));
     } else {
-        if (name_str == "CentralSystemURI" &&
-            ocpp::v2::ControllerComponentVariables::NetworkConnectionProfiles.variable) {
-            ocpp::v2::ReportData data;
-            data.component = ocpp::v2::ControllerComponentVariables::NetworkConnectionProfiles.component;
-            data.variable = ocpp::v2::ControllerComponentVariables::NetworkConnectionProfiles.variable.value();
-            ocpp::v2::VariableAttribute va;
-            va.type = ocpp::v2::AttributeEnum::Actual;
-            va.mutability = get_mutability(name_str);
-            if (!value_str.empty()) {
-                va.value = central_system_uri_to_json(value_str);
-            }
-            data.variableAttribute.push_back(std::move(va));
-            report.push_back(std::move(data));
-        } else if (name_str == "SupportedMeasurands") {
+        if (name_str == "SupportedMeasurands") {
             // ignore
         } else {
             std::cerr << "add_to_report: missing '" << name_str << "'\n";
@@ -548,9 +533,7 @@ MemoryStorage::GetVariableStatusEnum MemoryStorage::get_variable(const Component
         if (retrieved) {
             const auto key_opt = v16::keys::convert(name);
             if (key_opt) {
-                if (key_opt.value() == v16::keys::valid_keys::CentralSystemURI) {
-                    retrieved = central_system_uri_to_json(*retrieved);
-                } else if (key_opt.value() == v16::keys::valid_keys::ConnectorEvseIds) {
+                if (key_opt.value() == v16::keys::valid_keys::ConnectorEvseIds) {
                     if (component_id.evse) {
                         const auto id = component_id.evse.value().id;
                         auto fetched = get_connector_id(id, *retrieved);
@@ -595,16 +578,7 @@ MemoryStorage::SetVariableStatusEnum MemoryStorage::set_value(const Component& c
         std::string store_value = value;
         result = MemoryStorage::SetVariableStatusEnum::Accepted;
         if (key_opt) {
-            if (key_opt.value() == v16::keys::valid_keys::CentralSystemURI) {
-                try {
-                    // convert from JSON
-                    auto profile = json::parse(value);
-                    store_value = profile[0]["ocppCsmsUrl"];
-                } catch (const std::exception& ex) {
-                    std::cerr << "set_variable failed for: " << component_id.name << ':' << variable_id.name << " ("
-                              << key_str << ") : " << ex.what() << '\n';
-                }
-            } else if (key_opt.value() == v16::keys::valid_keys::ConnectorEvseIds) {
+            if (key_opt.value() == v16::keys::valid_keys::ConnectorEvseIds) {
                 result = MemoryStorage::SetVariableStatusEnum::Rejected;
                 auto retrieved = get_v16(v16::keys::valid_keys::ConnectorEvseIds);
                 store_value.clear();

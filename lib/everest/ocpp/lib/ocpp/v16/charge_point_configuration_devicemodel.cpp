@@ -1,21 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
-#include "everest/logging.hpp"
-#include "ocpp/v16/ocpp_types.hpp"
-#include "ocpp/v2/ctrlr_component_variables.hpp"
-#include "ocpp/v2/ocpp_enums.hpp"
-#include <cstddef>
+#include <everest/logging.hpp>
+#include <ocpp/common/cistring.hpp>
 #include <ocpp/common/utils.hpp>
 #include <ocpp/v16/charge_point_configuration_devicemodel.hpp>
 #include <ocpp/v16/known_keys.hpp>
+#include <ocpp/v16/ocpp_types.hpp>
 #include <ocpp/v16/types.hpp>
 #include <ocpp/v16/utils.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
 #include <ocpp/v2/device_model_interface.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <exception>
 #include <functional>
 #include <optional>
@@ -24,18 +25,26 @@
 #include <type_traits>
 #include <utility>
 
+namespace ocpp {
+// CiString has issues - no support for string_view and creates many temporary
+// strings. e.g. lhs.get() returns a copy of the string ...
+template <size_t L> bool operator==(const CiString<L>& lhs, const std::string_view& rhs) {
+    return iequals(lhs.get(), std::string{rhs});
+}
+} // namespace ocpp
+
 namespace {
 using namespace ocpp;
 using SetResult = v16::ChargePointConfigurationDeviceModel::SetResult;
 using DeviceModelInterface = v2::DeviceModelInterface;
 using SupportedFeatureProfiles = v16::SupportedFeatureProfiles;
 
-constexpr const char* cost_and_price_component = "OCPP16LegacyCtrlr";
-constexpr const char* cost_and_price_feature = "CostAndPrice";
-constexpr const char* custom_component = "CustomizationCtrlr";
-constexpr const char* custom_feature = "Custom";
-constexpr const char* pnc_component = "ISO15118Ctrlr";
-constexpr const char* pnc_feature = "PnC";
+constexpr const std::string_view cost_and_price_component{"OCPP16LegacyCtrlr"};
+constexpr const std::string_view cost_and_price_feature{"CostAndPrice"};
+constexpr const std::string_view custom_component{"Custom16LegacyCtrlr"};
+constexpr const std::string_view custom_feature{"Custom"};
+constexpr const std::string_view pnc_component{"ISO15118Ctrlr"};
+constexpr const std::string_view pnc_feature{"PnC"};
 
 constexpr bool starts_with(const std::string_view& str, const std::string_view& looking_for) {
     return str.rfind(looking_for, 0) == 0;
@@ -418,7 +427,8 @@ bool key_exists(DeviceModelInterface& storage, const std::string_view& name) {
 
 /// \brief set custom value
 SetResult set_value(DeviceModelInterface& storage, const std::string_view& name, const std::string& value) {
-    const v2::Component component{custom_component};
+    // CiString is missing many construct options - so creating a temporary string
+    const v2::Component component{std::string{custom_component}};
     const v2::Variable variable{std::string{name}};
     return set_value(storage, component, variable, value);
 }
@@ -449,25 +459,16 @@ void add_to_list(v16::utils::OrderedUniqueStringList& list, const ocpp::v2::Repo
     // VariableCharacteristics of valuesList are added to the set of they exist
     if (entry.variableCharacteristics) {
         std::optional<std::string> csl = entry.variableCharacteristics.value().valuesList;
-        auto vec = v16::utils::from_csl(csl.value());
-        for (auto& i : vec) {
-            list.insert(std::move(i));
+        if (csl) {
+            auto vec = v16::utils::from_csl(csl.value());
+            for (auto& i : vec) {
+                list.insert(std::move(i));
+            }
         }
     } else {
         EVLOG_info << "ReportData with no variableCharacteristics: " << entry.component.name << '['
                    << entry.variable.name << ']';
     }
-}
-
-std::string central_system_uri_from_json(const std::string& value) {
-    std::string result;
-    try {
-        auto profiles = json::parse(value);
-        result = profiles[0]["ocppCsmsUrl"];
-    } catch (const std::exception& e) {
-        EVLOG_error << "NetworkConnectionProfiles not valid: " << e.what();
-    }
-    return result;
 }
 
 } // namespace
@@ -487,32 +488,11 @@ ChargePointConfigurationDeviceModel::setInternalAllowChargingProfileWithoutStart
 
 ChargePointConfigurationDeviceModel::SetResult
 ChargePointConfigurationDeviceModel::setInternalCentralSystemURI(const std::string& value) {
-    // stored as a JSON string, an array of profiles
-    auto result = SetResult::Rejected;
-
-    // retrieve network profiles - at least one entry must already exist
-    const auto profiles_opt = get_optional<std::string>(
-        *storage, ocpp::v2::ControllerComponentVariables::NetworkConnectionProfiles, v2::AttributeEnum::Actual);
-    if (profiles_opt) {
-        try {
-            auto profiles = json::parse(profiles_opt.value());
-            if (profiles.is_array() && profiles.size() > 0) {
-                // update 1st profile
-                profiles[0]["ocppCsmsUrl"] = value;
-                result = set_value(*storage, ocpp::v2::ControllerComponentVariables::NetworkConnectionProfiles,
-                                   profiles.dump(-1));
-                if (result == SetResult::Accepted) {
-                    EVLOG_warning << "CentralSystemURI changed to: " << value;
-                    result = SetResult::RebootRequired;
-                }
-            } else {
-                EVLOG_error << "NetworkConnectionProfiles invalid: not array with at least one entry";
-            }
-        } catch (const std::exception& e) {
-            EVLOG_error << "NetworkConnectionProfiles not valid: " << e.what();
-        }
+    auto result = set_value(*storage, keys::valid_keys::CentralSystemURI, value);
+    if (result == SetResult::Accepted) {
+        EVLOG_warning << "CentralSystemURI changed to: " << value;
+        result = SetResult::RebootRequired;
     }
-
     return result;
 }
 
@@ -1102,7 +1082,7 @@ std::optional<std::string> ChargePointConfigurationDeviceModel::calculateEvseIds
             component.evse = std::move(evse);
             auto value = get_optional<std::string>(*storage, component, variable, v2::AttributeEnum::Actual);
             if (value) {
-                found = true; // atleast one instance exists
+                found = true; // at least one instance exists
                 evse_ids.push_back(std::move(value.value()));
             } else {
                 // support EVSEs with no ISO15118EvseId
@@ -1276,11 +1256,7 @@ void ChargePointConfigurationDeviceModel::setChargepointModemInformation(const s
 // Internal
 
 std::string ChargePointConfigurationDeviceModel::getCentralSystemURI() {
-    // stored as a JSON string, an array of profiles - needs to be parsed
-    // to extract the CentralSystemURI
-    const auto profiles_str = get_value<std::string>(
-        *storage, ocpp::v2::ControllerComponentVariables::NetworkConnectionProfiles, v2::AttributeEnum::Actual);
-    return central_system_uri_from_json(profiles_str);
+    return get_value<std::string>(*storage, keys::valid_keys::CentralSystemURI);
 }
 
 std::string ChargePointConfigurationDeviceModel::getChargePointId() {
@@ -1539,13 +1515,10 @@ KeyValue ChargePointConfigurationDeviceModel::getAuthorizeConnectorZeroOnConnect
 }
 
 KeyValue ChargePointConfigurationDeviceModel::getCentralSystemURIKeyValue() {
-    const auto key = keys::valid_keys::CentralSystemURI;
-    KeyValue kv;
-    kv.key = std::move(std::string{v16::keys::convert(key)});
-    kv.value = getCentralSystemURI();
-    kv.readonly = isReadOnly(*storage, ocpp::v2::ControllerComponentVariables::NetworkConnectionProfiles,
-                             v2::AttributeEnum::Actual)
-                      .value_or(true);
+    auto kv = get_key_value(*storage, keys::valid_keys::CentralSystemURI);
+    kv.readonly =
+        isReadOnly(*storage, ocpp::v2::ControllerComponentVariables::CentralSystemURI16, v2::AttributeEnum::Actual)
+            .value_or(true);
     return kv;
 }
 
@@ -2851,8 +2824,6 @@ std::optional<KeyValue> ChargePointConfigurationDeviceModel::get(const CiString<
             get_value = false;
         }
 
-        // TODO(james-ctc): check for SupportedFeatureProfiles::Custom from device model
-
         if (keys::is_hidden(sv_key)) {
             // we should not return an AuthorizationKey because it's write only
             get_value = false;
@@ -2886,6 +2857,7 @@ std::optional<KeyValue> ChargePointConfigurationDeviceModel::get(const CiString<
             // known key
             result = get_key_value_optional(*storage, sv_key_opt.value());
         } else {
+            // TODO(james-ctc): check for SupportedFeatureProfiles::Custom from device model
             // custom key
             result = get_key_value_optional(*storage, key_str);
         }
@@ -2949,25 +2921,21 @@ std::vector<KeyValue> ChargePointConfigurationDeviceModel::get_all_key_value() {
                     EVLOG_warning << "OCPP 1.6 key not recognised: " << *v16_key_opt;
                 }
             } else {
-                KeyValue kv;
-
-                if (is_same(NetworkConnectionProfiles, component, variable)) {
-                    const auto key = keys::valid_keys::CentralSystemURI;
-                    kv.key = std::move(std::string{v16::keys::convert(key)});
-                    if (!value.empty()) {
-                        kv.value = central_system_uri_from_json(value);
-                    }
-                } else if (is_same(SampledDataTxStartedMeasurands, component, variable)) {
+                if (is_same(SampledDataTxStartedMeasurands, component, variable)) {
                     add_to_list(valid_measurands, entry);
                 } else {
-                    // assume custom variable
-                    kv.key = variable.name;
-                    if (!value.empty()) {
-                        kv.value = std::move(value);
+                    // check for OCPP 1.6 custom variables
+                    // don't include all 2.x keys
+                    if (component.name == custom_component) {
+                        KeyValue kv;
+                        kv.key = variable.name;
+                        if (!value.empty()) {
+                            kv.value = std::move(value);
+                        }
+                        kv.readonly = mutability == v2::MutabilityEnum::ReadOnly;
+                        all.push_back(std::move(kv));
                     }
                 }
-                kv.readonly = mutability == v2::MutabilityEnum::ReadOnly;
-                all.push_back(std::move(kv));
             }
         } catch (std::exception& ex) {
             EVLOG_error << "Device model '" << component.name << "' not supported: " << ex.what();

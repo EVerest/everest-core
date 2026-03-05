@@ -62,9 +62,6 @@ namespace ocpp::v16::keys {
 // Internal configuration keys
 // ============================================================================
 
-// CentralSystemURI maps to NetworkConnectionProfiles however the contents also
-// need conversion hence not included in the mapping list below
-
 #define MAPPING_INTERNAL(mapping) \
     mapping(ChargePointId, ChargePointId, Actual) \
     mapping(ChargeBoxSerialNumber, ChargeBoxSerialNumber, Actual) \
@@ -137,10 +134,8 @@ namespace ocpp::v16::keys {
 
 #define MAPPING_SECURITY(mapping) \
     mapping(AdditionalRootCertificateCheck, AdditionalRootCertificateCheck, Actual) \
-    mapping(AuthorizationKey, BasicAuthPassword, Actual) \
     mapping(CertificateSignedMaxChainSize, MaxCertificateChainSize, Actual) \
     mapping(CpoName, OrganizationName, Actual) \
-    mapping(SecurityProfile, SecurityProfile, Actual) \
     mapping(CertSigningWaitMinimum, CertSigningWaitMinimum, Actual) \
     mapping(CertSigningRepeatTimes, CertSigningRepeatTimes, Actual) \
     mapping(CertificateStoreMaxLength, CertificateEntries, Actual)
@@ -196,8 +191,17 @@ namespace ocpp::v16::keys {
     mapping(Language, Language, Actual) \
     mapping(WaitForSetUserPriceTimeout, WaitForSetUserPriceTimeout, Actual)
 
+// ============================================================================
+// Mavericks Section - OCPP 1.6 keys where OCPP 2.x mapping is problematic
+// ============================================================================
+
+#define MAPPING_MISC_ADDITIONAL(mapping) \
+    mapping(AuthorizationKey, AuthorizationKey16, Actual) \
+    mapping(CentralSystemURI, CentralSystemURI16, Actual) \
+    mapping(SecurityProfile, SecurityProfile16, Actual)
 
 #define MAPPING_ALL(mapping) \
+    MAPPING_MISC_ADDITIONAL(mapping) \
     MAPPING_MISC(mapping) \
     MAPPING_STANDARD(mapping) \
     MAPPING_INTERNAL(mapping) \
@@ -257,6 +261,7 @@ namespace ocpp::v16::keys {
     key(FirmwareManagement, SupportedFileTransferProtocols) \
     key(Internal, AllowChargingProfileWithoutStartSchedule) \
     key(Internal, AuthorizeConnectorZeroOnConnectorOne) \
+    key(Internal, CentralSystemURI) \
     key(Internal, ChargeBoxSerialNumber) \
     key(Internal, ChargePointId) \
     key(Internal, ChargePointModel) \
@@ -333,7 +338,6 @@ namespace ocpp::v16::keys {
 
 // these have special handling
 #define FOR_ALL_UNMAPPED_KEYS(key) \
-    key(Internal, CentralSystemURI) \
     key(Internal, ConnectorEvseIds) \
     key(Internal, SupportedMeasurands)
 

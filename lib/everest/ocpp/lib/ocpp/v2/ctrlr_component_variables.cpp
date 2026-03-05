@@ -28,6 +28,7 @@ const Component SmartChargingCtrlr = {"SmartChargingCtrlr"};
 const Component TariffCostCtrlr = {"TariffCostCtrlr"};
 const Component TxCtrlr = {"TxCtrlr"};
 const Component OCPP16LegacyCtrlr = {"OCPP16LegacyCtrlr"};
+const Component CustomLegacyController = {"CustomLegacyController"};
 } // namespace ControllerComponents
 
 namespace StandardizedVariables {
@@ -1371,6 +1372,24 @@ const ComponentVariable WaitForSetUserPriceTimeout = {
     ControllerComponents::OCPP16LegacyCtrlr,
     std::optional<Variable>({
         "WaitForSetUserPriceTimeout",
+    }),
+};
+const ComponentVariable AuthorizationKey16 = {
+    ControllerComponents::CustomLegacyController,
+    std::optional<Variable>({
+        "AuthorizationKey",
+    }),
+};
+const RequiredComponentVariable CentralSystemURI16 = {
+    ControllerComponents::CustomLegacyController,
+    std::optional<Variable>({
+        "CentralSystemURI",
+    }),
+};
+const RequiredComponentVariable SecurityProfile16 = {
+    ControllerComponents::CustomLegacyController,
+    std::optional<Variable>({
+        "SecurityProfile",
     }),
 };
 } // namespace ControllerComponentVariables

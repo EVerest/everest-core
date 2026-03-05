@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <string_view>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -137,7 +138,7 @@ std::string supported_feature_profiles_to_string(SupportedFeatureProfiles e);
 
 /// \brief Converts the given std::string \p s to SupportedFeatureProfiles
 /// \returns a SupportedFeatureProfiles from a string representation
-SupportedFeatureProfiles string_to_supported_feature_profiles(const std::string& s);
+SupportedFeatureProfiles string_to_supported_feature_profiles(const std::string_view& s);
 } // namespace conversions
 
 /// \brief Writes the string representation of the given \p supported_feature_profiles to the given output stream \p os

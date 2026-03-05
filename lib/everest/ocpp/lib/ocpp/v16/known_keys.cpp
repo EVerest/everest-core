@@ -158,12 +158,12 @@ void V2ConfigMap::configure(const std::string_view& v16, const ocpp::v2::Compone
                               << cv.variable->name << '\'';
             }
         }
-        map.insert({v16, {&cv, attribute}});
+        map.insert_or_assign(v16, v2details{&cv, attribute});
         std::string name = mapping_name(cv.component, cv.variable.value(), attribute);
         if (const auto it = reverse_map.find(name); it != reverse_map.end()) {
             EVLOG_error << "V2 " << name << ": '" << it->second << "' replaced with '" << v16 << '\'';
         }
-        reverse_map.insert({std::move(name), v16});
+        reverse_map.insert_or_assign(std::move(name), v16);
     }
 }
 

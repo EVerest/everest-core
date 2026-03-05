@@ -34,6 +34,7 @@ std::string to_csl(const std::vector<std::string>& vec);
 /// \note will not contain empty strings when a comma is repeated
 std::vector<std::string> from_csl(const std::string& csl);
 
+/// \brief List that maintains insertion order and prevents duplicates
 class OrderedUniqueStringList {
 private:
     using Store = std::map<std::string, std::size_t>;
@@ -43,24 +44,34 @@ private:
     void do_insert(std::string&& s);
 
 public:
+    /// \brief Add to list assuming not a duplicate
+    /// \param s - the string to add
     void insert(const std::string& s) {
         do_insert(std::string{s});
     }
+    /// \brief Add to list assuming not a duplicate
+    /// \param s - the string to add
     void insert(std::string&& s) {
         do_insert(std::move(s));
     }
 
+    /// \brief Clear the list
     void clear() {
         count = 0;
         list.clear();
     }
 
-    std::vector<std::string> get();
+    /// \brief obtain an ordered vector of the unique strings
+    std::vector<std::string> get() const;
 
+    /// \brief is the list empty
+    /// \returns true when empty
     bool empty() const {
         return list.empty();
     }
 
+    /// \brief how many strings are in the list
+    /// \returns the size of the list
     auto size() const {
         return list.size();
     }

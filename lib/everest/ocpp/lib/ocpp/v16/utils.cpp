@@ -99,7 +99,7 @@ void OrderedUniqueStringList::do_insert(std::string&& s) {
         list.insert({std::move(s), count++});
     }
 }
-std::vector<std::string> OrderedUniqueStringList::get() {
+std::vector<std::string> OrderedUniqueStringList::get() const {
     std::vector<std::string> result(list.size());
     for (const auto& i : list) {
         result[i.second] = i.first;
