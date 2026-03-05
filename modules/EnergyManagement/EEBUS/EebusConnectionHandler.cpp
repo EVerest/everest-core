@@ -179,15 +179,12 @@ bool EebusConnectionHandler::add_use_case(eebus::EEBusUseCase use_case, const ee
 
         this->lpc_handler->set_stub(cs_lpc::ControllableSystemLPCControl::NewStub(lpc_channel));
         this->lpc_handler->configure_use_case();
-        this->event_reader =
-            std::make_unique<UseCaseEventReader>(
-                this->control_service_stub,
-                [this](const auto& event) {
-                    m_handler.add_action([this, event] { this->lpc_handler->handle_event(event); });
-                },
-                [this] {
-                    m_handler.add_action([this] { this->handle_event(EebusConnectionEvents::DISCONNECTED); });
-                });
+        this->event_reader = std::make_unique<UseCaseEventReader>(
+            this->control_service_stub,
+            [this](const auto& event) {
+                m_handler.add_action([this, event] { this->lpc_handler->handle_event(event); });
+            },
+            [this] { m_handler.add_action([this] { this->handle_event(EebusConnectionEvents::DISCONNECTED); }); });
 
         common_types::EntityAddress entity_address_for_event_reader = common_types::CreateEntityAddress({1});
         this->event_reader->start(entity_address_for_event_reader, use_case_info);

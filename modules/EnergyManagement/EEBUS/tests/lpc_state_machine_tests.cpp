@@ -282,8 +282,8 @@ TEST_F(LpcStateMachineTest, failsafe_exits_to_unlimited_controlled_when_heartbea
 // UseCaseEventReader tests
 // ---------------------------------------------------------------------------
 #include <UseCaseEventReader.hpp>
-#include <grpcpp/grpcpp.h>
 #include <chrono>
+#include <grpcpp/grpcpp.h>
 #include <thread>
 
 TEST(UseCaseEventReaderTest, DestructorBlocksUntilOnDoneFires) {
