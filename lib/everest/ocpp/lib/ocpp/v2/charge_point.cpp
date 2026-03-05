@@ -1092,10 +1092,11 @@ void ChargePoint::websocket_connected_callback(const int configuration_slot,
     if (this->registration_status == RegistrationStatusEnum::Accepted) {
         this->connectivity_manager->confirm_successful_connection();
 
-        if (this->time_disconnected.time_since_epoch() != 0s) {
+        if (const auto time_disconnected = this->connectivity_manager->get_time_disconnected();
+            time_disconnected.has_value()) {
             // handle offline threshold
             //  Get the current time point using steady_clock
-            auto offline_duration = std::chrono::steady_clock::now() - this->time_disconnected;
+            const auto offline_duration = std::chrono::steady_clock::now() - time_disconnected.value();
 
             // B04.FR.01
             // If offline period exceeds offline threshold then send the status notification for all connectors
@@ -1113,7 +1114,6 @@ void ChargePoint::websocket_connected_callback(const int configuration_slot,
             this->security->init_certificate_expiration_check_timers(); // re-init as timers are stopped on disconnect
         }
     }
-    this->time_disconnected = std::chrono::time_point<std::chrono::steady_clock>();
 
     // We have a connection again so next time it fails we should send the notification again
     this->skip_invalid_csms_certificate_notifications = false;
@@ -1127,12 +1127,6 @@ void ChargePoint::websocket_connected_callback(const int configuration_slot,
 void ChargePoint::websocket_disconnected_callback(const int configuration_slot,
                                                   const NetworkConnectionProfile& network_connection_profile) {
     this->message_queue->pause();
-
-    // check if offline threshold has been defined
-    if (this->device_model->get_value<int>(ControllerComponentVariables::OfflineThreshold) != 0) {
-        // Get the current time point using steady_clock
-        this->time_disconnected = std::chrono::steady_clock::now();
-    }
 
     this->security->stop_certificate_expiration_check_timers();
     if (this->callbacks.connection_state_changed_callback.has_value()) {

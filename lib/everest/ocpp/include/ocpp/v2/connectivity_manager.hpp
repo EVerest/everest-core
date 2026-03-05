@@ -7,9 +7,11 @@
 #include <ocpp/v2/messages/SetNetworkProfile.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 
+#include <chrono>
 #include <functional>
 #include <future>
 #include <optional>
+
 namespace ocpp {
 namespace v2 {
 
@@ -83,6 +85,11 @@ public:
     /// \return True is the websocket is connected, else false
     ///
     virtual bool is_websocket_connected() = 0;
+
+    /// @brief Get the time the websocket has been disconnected.
+    /// @return The time the websocket has been disconnected
+    ///
+    virtual std::optional<std::chrono::time_point<std::chrono::steady_clock>> get_time_disconnected() const = 0;
 
     /// \brief Connect to the websocket
     /// \param configuration_slot Optional the network_profile_slot to connect to. std::nullopt will select the slot
@@ -168,6 +175,7 @@ public:
     std::optional<std::int32_t> get_priority_from_configuration_slot(const int configuration_slot) const override;
     const std::vector<int>& get_network_connection_slots() const override;
     bool is_websocket_connected() override;
+    std::optional<std::chrono::time_point<std::chrono::steady_clock>> get_time_disconnected() const override;
     void connect(std::optional<std::int32_t> network_profile_slot = std::nullopt) override;
     void disconnect() override;
     bool send_to_websocket(const std::string& message) override;
@@ -176,6 +184,8 @@ public:
     void confirm_successful_connection() override;
 
 private:
+    std::optional<std::chrono::time_point<std::chrono::steady_clock>> time_disconnected{};
+
     /// \brief Initializes the websocket and tries to connect
     ///
     void try_connect_websocket();

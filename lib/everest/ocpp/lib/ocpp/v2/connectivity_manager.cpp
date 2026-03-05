@@ -122,6 +122,10 @@ bool ConnectivityManager::is_websocket_connected() {
     return this->websocket != nullptr && this->websocket->is_connected();
 }
 
+std::optional<std::chrono::time_point<std::chrono::steady_clock>> ConnectivityManager::get_time_disconnected() const {
+    return this->time_disconnected;
+}
+
 void ConnectivityManager::connect(std::optional<std::int32_t> network_profile_slot) {
     if (this->network_connection_slots.empty()) {
         EVLOG_warning << "No network connection profiles configured, aborting websocket connection.";
@@ -406,11 +410,15 @@ void ConnectivityManager::on_websocket_connected(OcppProtocolVersion protocol) {
         this->websocket_connected_callback.value()(actual_configuration_slot, network_connection_profile.value(),
                                                    this->connected_ocpp_version);
     }
+    this->time_disconnected = std::nullopt;
 }
 
 void ConnectivityManager::on_websocket_disconnected() {
     std::optional<NetworkConnectionProfile> network_connection_profile =
         this->get_network_connection_profile(this->get_active_network_configuration_slot());
+    if (!this->time_disconnected.has_value()) {
+        this->time_disconnected = std::chrono::steady_clock::now();
+    }
 
     if (this->websocket_disconnected_callback.has_value() and network_connection_profile.has_value()) {
         this->websocket_disconnected_callback.value()(this->get_active_network_configuration_slot(),
