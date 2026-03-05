@@ -127,7 +127,7 @@ void ChargePoint::start(BootReasonEnum bootreason, bool start_connecting) {
     // call clear_invalid_charging_profiles when system boots
     this->clear_invalid_charging_profiles();
 
-    if (start_connecting) {
+    if (start_connecting && !this->connectivity_manager->is_websocket_connected()) {
         this->connectivity_manager->connect();
     }
 
@@ -171,90 +171,6 @@ void ChargePoint::stop() {
 
 void ChargePoint::disconnect_websocket() {
     this->connectivity_manager->disconnect();
-}
-
-void ChargePoint::on_websocket_connected(const int configuration_slot,
-                                         const NetworkConnectionProfile& network_connection_profile,
-                                         const OcppProtocolVersion ocpp_version) {
-    this->message_queue->resume(this->message_queue_resume_delay);
-    this->ocpp_version = ocpp_version;
-    if (this->registration_status == RegistrationStatusEnum::Accepted) {
-        this->connectivity_manager->confirm_successful_connection();
-
-        if (this->time_disconnected.time_since_epoch() != 0s) {
-            // handle offline threshold
-            //  Get the current time point using steady_clock
-            auto offline_duration = std::chrono::steady_clock::now() - this->time_disconnected;
-
-            // B04.FR.01
-            // If offline period exceeds offline threshold then send the status notification for all connectors
-            if (offline_duration > std::chrono::seconds(this->device_model->get_value<int>(
-                                       ControllerComponentVariables::OfflineThreshold))) {
-                EVLOG_debug << "offline for more than offline threshold ";
-                this->component_state_manager->send_status_notification_all_connectors();
-            } else {
-                // B04.FR.02
-                // If offline period doesn't exceed offline threshold then send the status notification for all
-                // connectors that changed state
-                EVLOG_debug << "offline for less than offline threshold ";
-                this->component_state_manager->send_status_notification_changed_connectors();
-            }
-            this->security->init_certificate_expiration_check_timers(); // re-init as timers are stopped on disconnect
-        }
-    }
-    // set time_disconnected to zero
-    this->time_disconnected = std::chrono::time_point<std::chrono::steady_clock>();
-
-    // We have a connection again so next time it fails we should send the notification again
-    this->skip_invalid_csms_certificate_notifications = false;
-
-    if (this->callbacks.connection_state_changed_callback.has_value()) {
-        this->callbacks.connection_state_changed_callback.value()(true, configuration_slot, network_connection_profile,
-                                                                  ocpp_version);
-    }
-}
-
-void ChargePoint::on_websocket_disconnected(const int configuration_slot,
-                                            const NetworkConnectionProfile& network_connection_profile) {
-    this->message_queue->pause();
-
-    // check if offline threshold has been defined
-    if (this->device_model->get_value<int>(ControllerComponentVariables::OfflineThreshold) != 0) {
-        // Get the current time point using steady_clock
-        this->time_disconnected = std::chrono::steady_clock::now();
-    }
-
-    this->security->stop_certificate_expiration_check_timers();
-    if (this->callbacks.connection_state_changed_callback.has_value()) {
-        this->callbacks.connection_state_changed_callback.value()(false, configuration_slot, network_connection_profile,
-                                                                  this->ocpp_version);
-    }
-}
-
-void ChargePoint::on_websocket_connection_failed(ConnectionFailedReason reason) {
-    switch (reason) {
-    case ConnectionFailedReason::InvalidCSMSCertificate:
-        if (!this->skip_invalid_csms_certificate_notifications) {
-            this->security->security_event_notification_req(CiString<50>(ocpp::security_events::INVALIDCSMSCERTIFICATE),
-                                                            std::nullopt, true, true);
-            this->skip_invalid_csms_certificate_notifications = true;
-        } else {
-            EVLOG_debug << "Skipping InvalidCsmsCertificate SecurityEvent since it has been sent already";
-        }
-        break;
-    case ConnectionFailedReason::FailedToAuthenticateAtCsms: {
-        const auto& security_event = ocpp::security_events::FAILEDTOAUTHENTICATEATCSMS;
-        this->security->security_event_notification_req(CiString<50>(security_event), std::nullopt, true,
-                                                        utils::is_critical(security_event));
-        break;
-    }
-    default: {
-        const auto& security_event = "WebsocketConnectionFailedWithUnknownReason";
-        EVLOG_error << "Websocket connection failed with unknown reason";
-        this->security->security_event_notification_req(CiString<50>(security_event), std::nullopt, true, false);
-        break;
-    }
-    }
 }
 
 void ChargePoint::on_network_disconnected(OCPPInterfaceEnum ocpp_interface) {
@@ -583,7 +499,8 @@ void ChargePoint::initialize(const std::map<std::int32_t, std::int32_t>& evse_co
 
     if (this->connectivity_manager == nullptr) {
         // connectivity manager was not provided in constructor. Create a new one and set the message callbacks
-        this->connectivity_manager = std::make_shared<ConnectivityManager>(*this->device_model, this->evse_security);
+        this->connectivity_manager =
+            std::make_shared<ConnectivityManager>(*this->device_model, this->evse_security, this->share_path);
         this->connectivity_manager->set_websocket_connected_callback(
             [this](int configuration_slot, const NetworkConnectionProfile& network_connection_profile,
                    const OcppProtocolVersion ocpp_version) {
@@ -1197,9 +1114,9 @@ std::optional<DataTransferResponse> ChargePoint::data_transfer_req(const DataTra
     return this->data_transfer->data_transfer_req(request);
 }
 
-void ChargePoint::websocket_connected_callback(const int configuration_slot,
-                                               const NetworkConnectionProfile& network_connection_profile,
-                                               const OcppProtocolVersion ocpp_version) {
+void ChargePoint::on_websocket_connected(const int configuration_slot,
+                                         const NetworkConnectionProfile& network_connection_profile,
+                                         const OcppProtocolVersion ocpp_version) {
     this->message_queue->update_message_timeout(network_connection_profile.messageTimeout);
     this->message_queue->resume(this->message_queue_resume_delay);
     this->ocpp_version = ocpp_version;
@@ -1243,8 +1160,8 @@ void ChargePoint::websocket_connected_callback(const int configuration_slot,
     }
 }
 
-void ChargePoint::websocket_disconnected_callback(const int configuration_slot,
-                                                  const NetworkConnectionProfile& network_connection_profile) {
+void ChargePoint::on_websocket_disconnected(const int configuration_slot,
+                                            const NetworkConnectionProfile& network_connection_profile) {
     this->message_queue->pause();
 
     this->security->stop_certificate_expiration_check_timers();
@@ -1257,7 +1174,7 @@ void ChargePoint::websocket_disconnected_callback(const int configuration_slot,
     }
 }
 
-void ChargePoint::websocket_connection_failed(ConnectionFailedReason reason) {
+void ChargePoint::on_websocket_connection_failed(ConnectionFailedReason reason) {
     switch (reason) {
     case ConnectionFailedReason::InvalidCSMSCertificate:
         if (!this->skip_invalid_csms_certificate_notifications) {
@@ -1268,13 +1185,21 @@ void ChargePoint::websocket_connection_failed(ConnectionFailedReason reason) {
             EVLOG_debug << "Skipping InvalidCsmsCertificate SecurityEvent since it has been sent already";
         }
         break;
-    case ConnectionFailedReason::FailedToAuthenticateAtCsms:
+    case ConnectionFailedReason::FailedToAuthenticateAtCsms: {
         const auto& security_event = ocpp::security_events::FAILEDTOAUTHENTICATEATCSMS;
         this->security->security_event_notification_req(CiString<50>(security_event), std::nullopt, true,
                                                         utils::is_critical(security_event));
         break;
     }
+    default: {
+        const auto& security_event = "WebsocketConnectionFailedWithUnknownReason";
+        EVLOG_error << "Websocket connection failed with unknown reason";
+        this->security->security_event_notification_req(CiString<50>(security_event), std::nullopt, true, false);
+        break;
+    }
+    }
 }
+
 void ChargePoint::update_dm_availability_state(const std::int32_t evse_id, const std::int32_t connector_id,
                                                const ConnectorStatusEnum status) {
     RequiredComponentVariable charging_station = ControllerComponentVariables::ChargingStationAvailabilityState;

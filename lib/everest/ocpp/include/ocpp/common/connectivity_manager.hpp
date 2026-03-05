@@ -82,7 +82,8 @@ public:
     /// \param configuration_slot   The configuration slot to get the priority from.
     /// \return The priority if the configuration slot exists.
     ///
-    virtual std::optional<std::int32_t> get_priority_from_configuration_slot(const int configuration_slot) const = 0;
+    virtual std::optional<std::int32_t>
+    get_priority_from_configuration_slot(const std::int32_t configuration_slot) const = 0;
 
     /// @brief Get the network connection slots sorted by priority.
     /// Each item in the vector contains the configured configuration slots, where the slot with index 0 has the highest
@@ -169,7 +170,8 @@ private:
     OcppProtocolVersion connected_ocpp_version;
 
 public:
-    ConnectivityManager(ocpp::v2::DeviceModelAbstract& device_model, std::shared_ptr<EvseSecurity> evse_security);
+    ConnectivityManager(ocpp::v2::DeviceModelAbstract& device_model, std::shared_ptr<EvseSecurity> evse_security,
+                        const fs::path& share_path = {});
 
     void set_message_callback(const std::function<void(const std::string& message)>& callback) override;
     void set_logging(std::shared_ptr<MessageLogging> logging) override;

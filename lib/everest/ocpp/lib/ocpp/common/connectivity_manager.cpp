@@ -28,11 +28,10 @@ using SetNetworkProfileRequest = ocpp::v2::SetNetworkProfileRequest;
 namespace ControllerComponentVariables = ocpp::v2::ControllerComponentVariables;
 
 ConnectivityManager::ConnectivityManager(ocpp::v2::DeviceModelAbstract& device_model,
-                                         std::shared_ptr<EvseSecurity> evse_security,
-                                        std::shared_ptr<MessageLogging> logging, const fs::path& share_path,
-                                         const std::function<void(const std::string& message)>& message_callback) :
+                                         std::shared_ptr<EvseSecurity> evse_security, const fs::path& share_path) :
     device_model{device_model},
     evse_security{evse_security},
+    share_path{share_path},
     message_callback([](const std::string& message) {
         EVLOG_warning << "No message callback set in ConnectivityManager. Dropping message: " << message;
     }),
@@ -431,7 +430,7 @@ void ConnectivityManager::on_websocket_connected(OcppProtocolVersion protocol) {
 void ConnectivityManager::on_websocket_disconnected() {
     std::optional<NetworkConnectionProfile> network_connection_profile =
         this->get_network_connection_profile(this->get_active_network_configuration_slot());
-    if (this->time_disconnected.load().time_since_epoch() == 0s) {
+    if (this->time_disconnected.load().time_since_epoch() == std::chrono::seconds(0)) {
         this->time_disconnected = std::chrono::steady_clock::now();
     }
 
