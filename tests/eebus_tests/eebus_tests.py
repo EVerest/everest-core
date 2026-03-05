@@ -628,6 +628,71 @@ class TestEEBUSModule:
         assert limited_limits == limits
 
     @pytest.mark.asyncio
+    async def test_use_case_support_update_reinitializes(
+        self,
+        eebus_test_env: dict,
+    ):
+        """
+        When UseCaseSupportUpdate fires (e.g. EG reconnects at SPINE level while the gRPC channel
+        to the sidecar stays up), the module must re-call configure_use_case() and start_heartbeat()
+        so the sidecar has current values and the heartbeat subscription is renewed.
+        """
+        everest_core = eebus_test_env["everest_core"]
+        control_service_servicer = eebus_test_env["control_service_servicer"]
+        cs_lpc_control_servicer = eebus_test_env["cs_lpc_control_servicer"]
+        cs_lpc_control_server = eebus_test_env["cs_lpc_control_server"]
+
+        probe = await perform_eebus_handshake(
+            control_service_servicer, cs_lpc_control_servicer, cs_lpc_control_server, everest_core
+        )
+
+        # Simulate the EG reconnecting at SPINE level — the sidecar fires UseCaseSupportUpdate.
+        uc_event = control_service_messages_pb2.SubscribeUseCaseEventsResponse(
+            remote_ski="this-is-a-ski-42",
+            remote_entity_address=common_types_pb2.EntityAddress(entity_address=[1]),
+            use_case_event=control_service_types_pb2.UseCaseEvent(
+                use_case=control_service_types_pb2.UseCase(
+                    actor=control_service_types_pb2.UseCase.ActorType.ControllableSystem,
+                    name=control_service_types_pb2.UseCase.NameType.limitationOfPowerConsumption,
+                ),
+                event="UseCaseSupportUpdate",
+            ),
+        )
+        control_service_servicer.command_queues["SubscribeUseCaseEvents"].response_queue.put_nowait(uc_event)
+
+        # The module must re-run configure_use_case() — service all four setter calls.
+        req = await async_get(cs_lpc_control_servicer.command_queues["SetConsumptionNominalMax"].request_queue, timeout=5)
+        assert req is not None
+        cs_lpc_control_servicer.command_queues["SetConsumptionNominalMax"].response_queue.put_nowait(
+            cs_lpc_messages_pb2.SetConsumptionNominalMaxResponse()
+        )
+
+        req = await async_get(cs_lpc_control_servicer.command_queues["SetConsumptionLimit"].request_queue, timeout=5)
+        assert req is not None
+        cs_lpc_control_servicer.command_queues["SetConsumptionLimit"].response_queue.put_nowait(
+            cs_lpc_messages_pb2.SetConsumptionLimitResponse()
+        )
+
+        req = await async_get(cs_lpc_control_servicer.command_queues["SetFailsafeConsumptionActivePowerLimit"].request_queue, timeout=5)
+        assert req is not None
+        cs_lpc_control_servicer.command_queues["SetFailsafeConsumptionActivePowerLimit"].response_queue.put_nowait(
+            cs_lpc_messages_pb2.SetFailsafeConsumptionActivePowerLimitResponse()
+        )
+
+        req = await async_get(cs_lpc_control_servicer.command_queues["SetFailsafeDurationMinimum"].request_queue, timeout=5)
+        assert req is not None
+        cs_lpc_control_servicer.command_queues["SetFailsafeDurationMinimum"].response_queue.put_nowait(
+            cs_lpc_messages_pb2.SetFailsafeDurationMinimumResponse()
+        )
+
+        # The module must also re-subscribe to the heartbeat.
+        req = await async_get(cs_lpc_control_servicer.command_queues["StartHeartbeat"].request_queue, timeout=5)
+        assert req is not None
+        cs_lpc_control_servicer.command_queues["StartHeartbeat"].response_queue.put_nowait(
+            cs_lpc_messages_pb2.StartHeartbeatResponse()
+        )
+
+    @pytest.mark.asyncio
     async def test_init_state_timeout(
         self,
         eebus_test_env: dict,
