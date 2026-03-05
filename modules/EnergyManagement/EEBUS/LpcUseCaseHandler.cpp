@@ -111,9 +111,15 @@ void LpcUseCaseHandler::handle_write_approval_required() {
 }
 
 void LpcUseCaseHandler::handle_use_case_support_update() {
-    // The LPC use case does not require action on support changes from the remote HEMS;
-    // use-case support negotiation is handled at the connection level by EebusConnectionHandler.
-    EVLOG_debug << "Received UseCaseSupportUpdate event (ignored at LPC handler level)";
+    // The EG's SPINE-level use case support has changed (e.g. EG reconnected while the gRPC
+    // channel to the sidecar stayed alive). Re-push our configuration so the sidecar has current
+    // values for the EG's Initial Scenario reads, then re-subscribe to heartbeats so the 120 s
+    // timeout tracks the newly-active EG. Both calls are idempotent and fail-safe if the EG has
+    // actually withdrawn support — the heartbeat will simply stop arriving and Failsafe triggers
+    // after 120 s as normal.
+    EVLOG_info << "UseCaseSupportUpdate received — re-configuring LPC and re-subscribing to heartbeat";
+    this->configure_use_case();
+    this->start_heartbeat();
 }
 
 void LpcUseCaseHandler::run_state_machine() {
