@@ -1,0 +1,374 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for NetworkConfiguration slot 1 (test)",
+  "type": "object",
+  "name": "NetworkConfiguration",
+  "instance": "1",
+  "properties": {
+    "OcppCsmsUrl": {
+      "variable_name": "OcppCsmsUrl",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string",
+        "maxLimit": 2000
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "OCPP CSMS URL",
+      "type": "string",
+      "default": "wss://ocpp.example.com"
+    },
+    "SecurityProfile": {
+      "variable_name": "SecurityProfile",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer",
+        "minLimit": 0,
+        "maxLimit": 3
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Security profile for this configuration slot",
+      "type": "integer",
+      "default": 1
+    },
+    "OcppInterface": {
+      "variable_name": "OcppInterface",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "OptionList",
+        "valuesList": "Wired0,Wired1,Wired2,Wired3,Wireless0,Wireless1,Wireless2,Wireless3"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "OCPP interface",
+      "type": "string",
+      "default": "Wired0"
+    },
+    "OcppTransport": {
+      "variable_name": "OcppTransport",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "OptionList",
+        "valuesList": "JSON,SOAP"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "OCPP transport protocol",
+      "type": "string",
+      "default": "JSON"
+    },
+    "MessageTimeout": {
+      "variable_name": "MessageTimeout",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer",
+        "minLimit": 1
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Message timeout in seconds",
+      "type": "integer",
+      "default": 30
+    },
+    "Identity": {
+      "variable_name": "Identity",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string",
+        "maxLimit": 48
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Per-slot identity override",
+      "type": "string"
+    },
+    "BasicAuthPassword": {
+      "variable_name": "BasicAuthPassword",
+      "characteristics": {
+        "supportsMonitoring": false,
+        "dataType": "string",
+        "maxLimit": 64
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "WriteOnly"
+        }
+      ],
+      "description": "Per-slot basic auth password",
+      "type": "string"
+    },
+    "ApnEnabled": {
+      "variable_name": "ApnEnabled",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "APN enabled",
+      "type": "boolean",
+      "default": false
+    },
+    "VpnEnabled": {
+      "variable_name": "VpnEnabled",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "VPN enabled",
+      "type": "boolean",
+      "default": false
+    },
+    "Apn": {
+      "variable_name": "Apn",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string",
+        "maxLimit": 2000
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "APN access point name",
+      "type": "string"
+    },
+    "ApnUserName": {
+      "variable_name": "ApnUserName",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string",
+        "maxLimit": 50
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "APN user name",
+      "type": "string"
+    },
+    "ApnPassword": {
+      "variable_name": "ApnPassword",
+      "characteristics": {
+        "supportsMonitoring": false,
+        "dataType": "string",
+        "maxLimit": 64
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "WriteOnly"
+        }
+      ],
+      "description": "APN password",
+      "type": "string"
+    },
+    "SimPin": {
+      "variable_name": "SimPin",
+      "characteristics": {
+        "supportsMonitoring": false,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "WriteOnly"
+        }
+      ],
+      "description": "SIM PIN",
+      "type": "integer"
+    },
+    "PreferredNetwork": {
+      "variable_name": "PreferredNetwork",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string",
+        "maxLimit": 6
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Preferred network MCC+MNC",
+      "type": "string"
+    },
+    "UseOnlyPreferredNetwork": {
+      "variable_name": "UseOnlyPreferredNetwork",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Use only preferred network",
+      "type": "boolean",
+      "default": false
+    },
+    "ApnAuthentication": {
+      "variable_name": "ApnAuthentication",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "OptionList",
+        "valuesList": "CHAP,NONE,PAP,AUTO"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "APN authentication method",
+      "type": "string",
+      "default": "AUTO"
+    },
+    "VpnServer": {
+      "variable_name": "VpnServer",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string",
+        "maxLimit": 2000
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "VPN server",
+      "type": "string"
+    },
+    "VpnUser": {
+      "variable_name": "VpnUser",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string",
+        "maxLimit": 50
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "VPN user",
+      "type": "string"
+    },
+    "VpnPassword": {
+      "variable_name": "VpnPassword",
+      "characteristics": {
+        "supportsMonitoring": false,
+        "dataType": "string",
+        "maxLimit": 64
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "WriteOnly"
+        }
+      ],
+      "description": "VPN password",
+      "type": "string"
+    },
+    "VpnKey": {
+      "variable_name": "VpnKey",
+      "characteristics": {
+        "supportsMonitoring": false,
+        "dataType": "string",
+        "maxLimit": 255
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "WriteOnly"
+        }
+      ],
+      "description": "VPN key",
+      "type": "string"
+    },
+    "VpnType": {
+      "variable_name": "VpnType",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "OptionList",
+        "valuesList": "IKEv2,IPSec,L2TP,PPTP"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "VPN type",
+      "type": "string"
+    },
+    "VpnGroup": {
+      "variable_name": "VpnGroup",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string",
+        "maxLimit": 50
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "VPN group",
+      "type": "string"
+    }
+  },
+  "required": [
+    "OcppCsmsUrl",
+    "SecurityProfile",
+    "OcppInterface",
+    "OcppTransport",
+    "MessageTimeout"
+  ]
+}

@@ -1630,5 +1630,42 @@ const std::vector<Variable> required_connector_variables{
 const std::vector<Variable> required_v2x_variables{V2xComponentVariables::Available, V2xComponentVariables::Enabled,
                                                    V2xComponentVariables::SupportedEnergyTransferModes,
                                                    V2xComponentVariables::SupportedOperationModes};
+
+namespace NetworkConfigurationComponentVariables {
+
+const Variable OcppCsmsUrl = {"OcppCsmsUrl"};
+const Variable SecurityProfile = {"SecurityProfile"};
+const Variable OcppInterface = {"OcppInterface"};
+const Variable OcppTransport = {"OcppTransport"};
+const Variable MessageTimeout = {"MessageTimeout"};
+const Variable Identity = {"Identity"};
+const Variable BasicAuthPassword = {"BasicAuthPassword"};
+const Variable ApnEnabled = {"ApnEnabled"};
+const Variable VpnEnabled = {"VpnEnabled"};
+const Variable Apn = {"Apn"};
+const Variable ApnUserName = {"ApnUserName"};
+const Variable ApnPassword = {"ApnPassword"};
+const Variable SimPin = {"SimPin"};
+const Variable PreferredNetwork = {"PreferredNetwork"};
+const Variable UseOnlyPreferredNetwork = {"UseOnlyPreferredNetwork"};
+const Variable ApnAuthentication = {"ApnAuthentication"};
+const Variable VpnServer = {"VpnServer"};
+const Variable VpnUser = {"VpnUser"};
+const Variable VpnPassword = {"VpnPassword"};
+const Variable VpnKey = {"VpnKey"};
+const Variable VpnType = {"VpnType"};
+const Variable VpnGroup = {"VpnGroup"};
+
+ComponentVariable get_component_variable(const std::int32_t slot, const Variable& variable) {
+    Component component;
+    component.name = "NetworkConfiguration";
+    component.instance = std::to_string(slot);
+    ComponentVariable component_variable;
+    component_variable.component = component;
+    component_variable.variable = variable;
+    return component_variable;
+}
+} // namespace NetworkConfigurationComponentVariables
+
 } // namespace v2
 } // namespace ocpp

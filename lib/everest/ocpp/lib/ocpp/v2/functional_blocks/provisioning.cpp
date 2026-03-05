@@ -3,6 +3,8 @@
 
 #include <ocpp/v2/functional_blocks/provisioning.hpp>
 
+#include <set>
+
 #include <ocpp/common/constants.hpp>
 #include <ocpp/common/evse_security.hpp>
 #include <ocpp/v2/component_state_manager.hpp>
@@ -10,6 +12,7 @@
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/evse_manager.hpp>
 #include <ocpp/v2/functional_blocks/functional_block_context.hpp>
+#include <ocpp/v2/network_config_sync.hpp>
 #include <ocpp/v2/notify_report_requests_splitter.hpp>
 
 #include <ocpp/v2/functional_blocks/availability.hpp>
@@ -453,6 +456,22 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
         return;
     }
 
+    // Sync the profile to NetworkConfiguration device model variables (B09.FR.09)
+    network_config::write_profile_to_device_model(this->context.device_model, msg.configurationSlot, msg.connectionData,
+                                                  VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
+
+    // Handle B09.FR.11/12: set ApnEnabled/VpnEnabled based on presence of apn/vpn fields
+    const auto apn_cv = NetworkConfigurationComponentVariables::get_component_variable(
+        msg.configurationSlot, NetworkConfigurationComponentVariables::ApnEnabled);
+    const auto vpn_cv = NetworkConfigurationComponentVariables::get_component_variable(
+        msg.configurationSlot, NetworkConfigurationComponentVariables::VpnEnabled);
+    this->context.device_model.set_value(apn_cv.component, apn_cv.variable.value(), AttributeEnum::Actual,
+                                         msg.connectionData.apn.has_value() ? "true" : "false",
+                                         VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
+    this->context.device_model.set_value(vpn_cv.component, vpn_cv.variable.value(), AttributeEnum::Actual,
+                                         msg.connectionData.vpn.has_value() ? "true" : "false",
+                                         VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
+
     std::string tech_info = "Received and stored a new network connection profile at configurationSlot: " +
                             std::to_string(msg.configurationSlot);
     EVLOG_info << tech_info;
@@ -603,6 +622,9 @@ void Provisioning::handle_variable_changed(const SetVariableData& set_variable_d
 }
 
 void Provisioning::handle_variables_changed(const std::map<SetVariableData, SetVariableResult>& set_variable_results) {
+    // Track which NetworkConfiguration slots were modified
+    std::set<int32_t> modified_slots;
+
     // iterate over set_variable_results
     for (const auto& [set_variable_data, set_variable_result] : set_variable_results) {
         if (set_variable_result.attributeStatus == SetVariableStatusEnum::Accepted) {
@@ -618,6 +640,17 @@ void Provisioning::handle_variables_changed(const std::map<SetVariableData, SetV
                            << " changed to " << set_variable_data.attributeValue.get();
             }
 
+            // Track NetworkConfiguration slot changes for Phase 6 sync
+            if (set_variable_data.component.name == "NetworkConfiguration" &&
+                set_variable_data.component.instance.has_value()) {
+                try {
+                    const int32_t slot = std::stoi(set_variable_data.component.instance.value().get());
+                    modified_slots.insert(slot);
+                } catch (const std::exception& e) {
+                    EVLOG_warning << "Error parsing NetworkConfiguration slot: " << e.what();
+                }
+            }
+
             // handles required behavior specified within OCPP2.0.1 (e.g. reconnect when BasicAuthPassword has changed)
             this->handle_variable_changed(set_variable_data);
             // notifies libocpp user application that a variable has changed
@@ -627,12 +660,54 @@ void Provisioning::handle_variables_changed(const std::map<SetVariableData, SetV
         }
     }
 
+    // Phase 6: Sync modified NetworkConfiguration slots back to JSON blob
+    if (!modified_slots.empty()) {
+        std::vector<int32_t> slots_vec(modified_slots.begin(), modified_slots.end());
+        network_config::sync_json_blob_from_device_model(this->context.device_model, slots_vec);
+    }
+
     // process all triggered monitors, after a possible disconnect
     this->diagnostics.process_triggered_monitors();
 }
 
-bool Provisioning::validate_set_variable(const SetVariableData& set_variable_data) {
+std::optional<std::string> Provisioning::validate_set_variable(const SetVariableData& set_variable_data) {
     const ComponentVariable cv = {set_variable_data.component, set_variable_data.variable, std::nullopt};
+
+    // B09.FR.21/22: Reject changes to the currently active NetworkConfiguration slot
+    if (cv.component.name == "NetworkConfiguration" && cv.component.instance.has_value() && cv.variable.has_value()) {
+        try {
+            const int slot = std::stoi(cv.component.instance.value().get());
+            const auto active_slot_opt =
+                this->context.device_model.get_optional_value<int>(ControllerComponentVariables::ActiveNetworkProfile);
+
+            if (active_slot_opt.has_value() && slot == active_slot_opt.value()) {
+                EVLOG_warning << "Cannot set NetworkConfiguration variable for slot " << slot
+                              << " which is the currently active slot";
+                return "PriorityNetworkConf";
+            }
+
+            // B09.FR.35: Reject security profile downgrades
+            if (cv.variable.value().name == "SecurityProfile") {
+                try {
+                    const int new_profile = std::stoi(set_variable_data.attributeValue.get());
+                    const int active_profile =
+                        this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
+                    if (new_profile < active_profile) {
+                        EVLOG_warning << "Cannot downgrade SecurityProfile from " << active_profile << " to "
+                                      << new_profile;
+                        return "NoSecurityDowngrade";
+                    }
+                } catch (const std::exception& e) {
+                    EVLOG_warning << "Error validating SecurityProfile: " << e.what();
+                    return "InvalidNetworkConf";
+                }
+            }
+        } catch (const std::exception& e) {
+            EVLOG_warning << "Error validating NetworkConfiguration: " << e.what();
+            return "InvalidNetworkConf";
+        }
+    }
+
     if (cv == ControllerComponentVariables::NetworkConfigurationPriority) {
         const auto network_configuration_priorities = ocpp::split_string(set_variable_data.attributeValue.get(), ',');
         const auto active_security_profile =
@@ -650,7 +725,7 @@ bool Provisioning::validate_set_variable(const SetVariableData& set_variable_dat
 
                 if (network_profile_it == network_connection_profiles.end()) {
                     EVLOG_warning << "Could not find network profile for configurationSlot: " << configuration_slot;
-                    return false;
+                    return "InvalidNetworkConf";
                 }
 
                 auto network_profile = SetNetworkProfileRequest(*network_profile_it).connectionData;
@@ -665,25 +740,25 @@ bool Provisioning::validate_set_variable(const SetVariableData& set_variable_dat
                             .status != ocpp::GetCertificateInfoStatus::Accepted) {
                     EVLOG_warning << "SecurityProfile of configurationSlot: " << configuration_slot
                                   << " is 3 but no CSMS Leaf Certificate is installed";
-                    return false;
+                    return "InvalidNetworkConf";
                 }
                 if (network_profile.securityProfile >= 2 and
                     !this->context.evse_security.is_ca_certificate_installed(ocpp::CaCertificateType::CSMS)) {
                     EVLOG_warning << "SecurityProfile of configurationSlot: " << configuration_slot
                                   << " is >= 2 but no CSMS Root Certifciate is installed";
-                    return false;
+                    return "InvalidNetworkConf";
                 }
             }
         } catch (const std::invalid_argument& e) {
             EVLOG_warning << "NetworkConfigurationPriority contains at least one value which is not an integer: "
                           << set_variable_data.attributeValue.get();
-            return false;
+            return "InvalidNetworkConf";
         } catch (const json::exception& e) {
             EVLOG_warning << "Could not parse NetworkConnectionProfiles or SetNetworkProfileRequest: " << e.what();
-            return false;
+            return "InvalidNetworkConf";
         }
     }
-    return true;
+    return std::nullopt;
     // TODO(piet): other special validating of variables requested to change can be added here...
 }
 
@@ -700,7 +775,8 @@ Provisioning::set_variables_internal(const std::vector<SetVariableData>& set_var
         set_variable_result.attributeType = set_variable_data.attributeType.value_or(AttributeEnum::Actual);
 
         // validates variable against business logic of the spec
-        if (this->validate_set_variable(set_variable_data)) {
+        const auto validation_result = this->validate_set_variable(set_variable_data);
+        if (!validation_result.has_value()) {
             // attempt to set the value includes device model validation
             set_variable_result.attributeStatus =
                 this->context.device_model.set_value(set_variable_data.component, set_variable_data.variable,
@@ -708,6 +784,9 @@ Provisioning::set_variables_internal(const std::vector<SetVariableData>& set_var
                                                      set_variable_data.attributeValue.get(), source, allow_read_only);
         } else {
             set_variable_result.attributeStatus = SetVariableStatusEnum::Rejected;
+            StatusInfo status_info;
+            status_info.reasonCode = validation_result.value();
+            set_variable_result.attributeStatusInfo = status_info;
         }
         response[set_variable_data] = set_variable_result;
     }
