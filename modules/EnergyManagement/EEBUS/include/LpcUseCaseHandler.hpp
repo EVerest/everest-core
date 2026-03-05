@@ -30,8 +30,9 @@ public:
     // supply a fake clock to control time without real delays.
     using ClockFn = std::function<std::chrono::time_point<std::chrono::steady_clock>()>;
 
-    LpcUseCaseHandler(double failsafe_control_limit, double max_nominal_power, eebus::EEBusCallbacks callbacks,
-                      ClockFn clock_fn = [] { return std::chrono::steady_clock::now(); });
+    LpcUseCaseHandler(
+        double failsafe_control_limit, double max_nominal_power, eebus::EEBusCallbacks callbacks,
+        ClockFn clock_fn = [] { return std::chrono::steady_clock::now(); });
     ~LpcUseCaseHandler() = default;
     LpcUseCaseHandler(const LpcUseCaseHandler&) = delete;
     LpcUseCaseHandler& operator=(const LpcUseCaseHandler&) = delete;
@@ -101,8 +102,8 @@ private:
     // Timestamps that are set/reset atomically on every Failsafe entry.
     struct FailsafeContext {
         using TP = std::chrono::time_point<std::chrono::steady_clock>;
-        TP entry{TP::min()};                  // When we entered Failsafe [LPC-922 clock]
-        TP first_heartbeat{TP::min()};        // First post-Failsafe heartbeat [LPC-921 clock]
+        TP entry{TP::min()};           // When we entered Failsafe [LPC-922 clock]
+        TP first_heartbeat{TP::min()}; // First post-Failsafe heartbeat [LPC-921 clock]
 
         void reset(TP entry_time) {
             entry = entry_time;
