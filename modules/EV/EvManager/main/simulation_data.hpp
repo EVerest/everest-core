@@ -6,6 +6,7 @@
 #include "command_registry.hpp"
 #include "simulation_command.hpp"
 #include <generated/types/board_support_common.hpp>
+#include <generated/types/slac.hpp>
 #include <optional>
 #include <queue>
 #include <string>
@@ -36,7 +37,7 @@ struct SimulationData {
 
     SimState state{SimState::UNPLUGGED};
     SimState last_state{SimState::UNDEFINED};
-    std::string slac_state{"UNMATCHED"};
+    types::slac::State slac_state{types::slac::State::UNMATCHED};
     std::optional<size_t> sleep_ticks_left{};
 
     bool v2g_finished{false};

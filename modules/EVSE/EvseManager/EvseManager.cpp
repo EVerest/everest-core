@@ -1236,10 +1236,10 @@ void EvseManager::ready() {
     }
 
     if (slac_enabled) {
-        r_slac[0]->subscribe_state([this](const std::string& s) {
-            session_log.evse(true, fmt::format("SLAC {}", s));
+        r_slac[0]->subscribe_state([this](const types::slac::State s) {
+            session_log.evse(true, fmt::format("SLAC {}", types::slac::state_to_string(s)));
             // Notify charger whether matching was started (or is done) or not
-            if (s == "UNMATCHED") {
+            if (s == types::slac::State::UNMATCHED) {
                 charger->set_matching_started(false);
                 slac_unmatched = true;
             } else {

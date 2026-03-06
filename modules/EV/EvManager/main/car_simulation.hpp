@@ -74,8 +74,8 @@ public:
         sim_data.pwm_duty_cycle = pwm_duty_cycle;
     }
 
-    void set_slac_state(std::string slac_state) {
-        sim_data.slac_state = std::move(slac_state);
+    void set_slac_state(types::slac::State slac_state) {
+        sim_data.slac_state = slac_state;
     }
 
     void set_iso_pwr_ready(bool iso_pwr_ready) {

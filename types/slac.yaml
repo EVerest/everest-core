@@ -1,0 +1,9 @@
+description: SLAC shared types
+types:
+  State:
+    description: SLAC state enum
+    type: string
+    enum:
+      - UNMATCHED
+      - MATCHING
+      - MATCHED

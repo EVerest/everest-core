@@ -50,7 +50,11 @@ void ev_slacImpl::run() {
         } else if (value == "UNMATCHED") {
             publish_dlink_ready(false);
         }
-        publish_state(value);
+        try {
+            publish_state(types::slac::string_to_state(value));
+        } catch (const std::exception& e) {
+            EVLOG_error << fmt::format("Tried to publish unknown SLAC state '{}'. Error: {}", value, e.what());
+        }
     };
 
     callbacks.log_debug = [](const std::string& text) { EVLOG_debug << "EvSlac: " << text; };

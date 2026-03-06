@@ -13,10 +13,7 @@ vars:
   state:
     description: Provides the state enum.
     type: string
-    enum:
-      - UNMATCHED
-      - MATCHING
-      - MATCHED
+    $ref: /slac#/State
   dlink_ready:
     description: >-
       Inform higher layers about a change in data link status. Emits true

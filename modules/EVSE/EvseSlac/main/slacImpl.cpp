@@ -65,7 +65,13 @@ void slacImpl::run() {
 
     callbacks.signal_dlink_ready = [this](bool value) { publish_dlink_ready(value); };
 
-    callbacks.signal_state = [this](const std::string& value) { publish_state(value); };
+    callbacks.signal_state = [this](const std::string& value) {
+        try {
+            publish_state(types::slac::string_to_state(value));
+        } catch (const std::exception& e) {
+            EVLOG_error << fmt::format("Tried to publish unknown SLAC state '{}'. Error: {}", value, e.what());
+        }
+    };
 
     callbacks.signal_error_routine_request = [this]() { publish_request_error_routine(nullptr); };
 

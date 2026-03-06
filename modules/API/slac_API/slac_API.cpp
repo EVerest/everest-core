@@ -6,6 +6,7 @@
 #include <everest_api_types/generic/string.hpp>
 #include <everest_api_types/slac/API.hpp>
 #include <everest_api_types/slac/codec.hpp>
+#include <everest_api_types/slac/wrapper.hpp>
 #include <everest_api_types/utilities/codec.hpp>
 
 namespace module {
@@ -60,7 +61,7 @@ void slac_API::generate_api_var_state() {
     subscribe_api_topic("state", [=](const std::string& data) {
         API_types_ext::State val;
         if (deserialize(data, val)) {
-            p_main->publish_state(serialize(val));
+            p_main->publish_state(to_internal_api(val));
             return true;
         }
         return false;
