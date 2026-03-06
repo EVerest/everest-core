@@ -102,6 +102,7 @@ All parameters are defined in `modules/HardwareDrivers/PowerMeters/CarloGavazzi_
 | `timezone_offset_minutes` | integer | `0` | Timezone offset from UTC (minutes) |
 | `live_measurement_interval_ms` | integer | `1000` | Interval for reading/publishing live measurements |
 | `device_state_read_interval_ms` | integer | `10000` | Interval for reading device-state bitfield (VendorError reporting) |
+| `public_key_format` | enum | `binary` | The key format to use for the public key.
 
 ### Parameter tuning notes
 

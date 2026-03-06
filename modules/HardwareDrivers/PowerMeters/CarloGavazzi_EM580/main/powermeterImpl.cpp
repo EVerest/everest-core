@@ -220,12 +220,16 @@ void powermeterImpl::read_signature_config() {
     }
     EVLOG_info << "Signature type detected: " << signature_type_string;
 
-    this->m_public_key_hex = read_public_key_in_hex(this->m_public_key_length_in_bits);
-    EVLOG_info << "Public key (raw, hex): " << this->m_public_key_hex;
+    if (config.public_key_format == "binary") {
+        this->m_public_key_hex = read_public_key_in_hex(this->m_public_key_length_in_bits);
+        EVLOG_info << "Public key (raw, hex): " << this->m_public_key_hex;
+    } else if (config.public_key_format == "der") {
+        this->m_public_key_hex = read_public_key_der_in_hex(der_word_count);
+        EVLOG_info << "Public key (DER, hex): " << this->m_public_key_hex;
+    } else {
+        throw std::runtime_error("invalid public key format: " + config.public_key_format);
+    }
     this->publish_public_key_ocmf(this->m_public_key_hex);
-
-    const std::string der_hex = read_public_key_der_in_hex(der_word_count);
-    EVLOG_info << "Public key (DER, hex): " << der_hex;
 }
 
 void powermeterImpl::read_firmware_versions() {

@@ -58,6 +58,13 @@ provides:
         minimum: 500
         maximum: 60000
         default: 10000
+      public_key_format:
+        description: The key format to use for the public key.
+        type: string
+        enum:
+          - binary
+          - der
+        default: binary
 requires:
   modbus:
     interface: serial_communication_hub
