@@ -5,11 +5,13 @@
 
 #include "gmock/gmock.h"
 
-#include <ocpp/v2/connectivity_manager.hpp>
+#include <ocpp/common/connectivity_manager.hpp>
 
 namespace ocpp::v2 {
-class ConnectivityManagerMock : public ConnectivityManagerInterface {
+class ConnectivityManagerMock : public ocpp::ConnectivityManagerInterface {
 public:
+    MOCK_METHOD(void, set_message_callback, (const std::function<void(const std::string& message)>& callback));
+    MOCK_METHOD(void, set_logging, (std::shared_ptr<MessageLogging> logging));
     MOCK_METHOD(void, set_websocket_authorization_key, (const std::string& authorization_key));
     MOCK_METHOD(void, set_websocket_connection_options, (const WebsocketConnectionOptions& connection_options));
     MOCK_METHOD(void, set_websocket_connection_options_without_reconnect, ());
