@@ -122,6 +122,8 @@ struct Conf {
     std::string bpt_grid_code_island_method;
     double voltage_plausibility_max_spread_threshold_V;
     int voltage_plausibility_fault_duration_ms;
+    int hlc_charge_loop_without_energy_timeout_s;
+    int dc_ramp_ampere_per_second;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -340,6 +342,8 @@ private:
     static constexpr std::chrono::seconds MIN_TIME_BETWEEN_FIRST_AND_LAST_FAILURE{2};
     static constexpr int REQUIRED_CONSECUTIVE_FAILURES{2};
 
+    std::atomic<double> latest_target_current_low_pass{0.};
+    std::atomic<std::chrono::steady_clock::time_point> latest_target_current_low_pass_last_update{};
     std::atomic<double> latest_target_voltage{0.};
     std::atomic<double> latest_target_current{0.};
     std::atomic<double> last_power_supply_voltage{0.};

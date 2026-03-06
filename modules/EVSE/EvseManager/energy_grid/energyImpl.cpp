@@ -151,9 +151,6 @@ types::energy::EvseState to_energy_evse_state(const Charger::EvseState charger_s
     case Charger::EvseState::PrepareCharging:
         return types::energy::EvseState::PrepareCharging;
         break;
-    case Charger::EvseState::WaitingForEnergy:
-        return types::energy::EvseState::WaitForEnergy;
-        break;
     case Charger::EvseState::Charging:
         return types::energy::EvseState::Charging;
         break;
@@ -178,9 +175,6 @@ types::energy::EvseState to_energy_evse_state(const Charger::EvseState charger_s
     case Charger::EvseState::SwitchPhases:
         return types::energy::EvseState::Charging;
         break;
-    case Charger::EvseState::Replug:
-        return types::energy::EvseState::PrepareCharging;
-        break;
     }
     return types::energy::EvseState::Disabled;
 }
@@ -192,7 +186,6 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
 
     // If we need energy, copy local limit schedules to energy_flow_request.
     if (charger_state == Charger::EvseState::Charging || charger_state == Charger::EvseState::PrepareCharging ||
-        charger_state == Charger::EvseState::WaitingForEnergy ||
         charger_state == Charger::EvseState::WaitingForAuthentication ||
         charger_state == Charger::EvseState::ChargingPausedEV || !mod->config.request_zero_power_in_idle) {
 
@@ -365,8 +358,7 @@ bool energyImpl::random_delay_needed(float last_limit, float limit) {
 
     // Are we starting up with a car attached? This will need a random delay as well
     if ((charger_state == Charger::EvseState::PrepareCharging or charger_state == Charger::EvseState::Charging or
-         charger_state == Charger::EvseState::WaitingForAuthentication or
-         charger_state == Charger::EvseState::WaitingForEnergy) and
+         charger_state == Charger::EvseState::WaitingForAuthentication) and
         std::chrono::steady_clock::now() - mod->timepoint_ready_for_charging.load() <
             detect_startup_with_ev_attached_duration) {
         last_enforced_limit = 0.;
@@ -436,8 +428,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             // Are we in a state where a random delay makes sense?
             if (not(charger_state == Charger::EvseState::PrepareCharging or
                     charger_state == Charger::EvseState::Charging or
-                    charger_state == Charger::EvseState::WaitingForAuthentication or
-                    charger_state == Charger::EvseState::WaitingForEnergy)) {
+                    charger_state == Charger::EvseState::WaitingForAuthentication)) {
                 mod->random_delay_running = false;
             }
 
@@ -501,9 +492,6 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                 mod->charger->set_max_current(0, valid_until);
             }
         }
-
-        if (limit > 1e-5 || limit < -1e-5)
-            mod->charger->resume_charging_power_available();
 
         mod->signalNrOfPhasesAvailable(mod->ac_nr_phases_active);
 
