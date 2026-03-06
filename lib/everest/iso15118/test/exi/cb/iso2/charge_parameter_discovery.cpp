@@ -30,7 +30,7 @@ SCENARIO("Ser/Deserialize d2 charge parameter discovery messages") {
 
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D});
 
-            REQUIRE(msg.requested_energy_transfer_mode == dt::EnergyTransferMode::DcExtended);
+            REQUIRE(msg.requested_energy_transfer_mode == dt::EnergyTransferMode::DC_extended);
 
             REQUIRE(std::holds_alternative<dt::AcEvChargeParameter>(msg.ev_charge_parameter));
             const auto& param = std::get<dt::AcEvChargeParameter>(msg.ev_charge_parameter);
@@ -57,7 +57,7 @@ SCENARIO("Ser/Deserialize d2 charge parameter discovery messages") {
 
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D});
 
-            REQUIRE(msg.requested_energy_transfer_mode == dt::EnergyTransferMode::DcExtended);
+            REQUIRE(msg.requested_energy_transfer_mode == dt::EnergyTransferMode::DC_extended);
 
             REQUIRE(msg.max_entries_sa_schedule_tuple.has_value());
             REQUIRE(msg.max_entries_sa_schedule_tuple == 5);
@@ -89,7 +89,7 @@ SCENARIO("Ser/Deserialize d2 charge parameter discovery messages") {
 
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D});
 
-            REQUIRE(msg.requested_energy_transfer_mode == dt::EnergyTransferMode::DcExtended);
+            REQUIRE(msg.requested_energy_transfer_mode == dt::EnergyTransferMode::DC_extended);
 
             REQUIRE(std::holds_alternative<dt::DcEvChargeParameter>(msg.ev_charge_parameter));
             const auto& param = std::get<dt::DcEvChargeParameter>(msg.ev_charge_parameter);
@@ -119,7 +119,7 @@ SCENARIO("Ser/Deserialize d2 charge parameter discovery messages") {
 
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x02, 0xDB, 0x22, 0x07, 0x3B, 0x08, 0x4D, 0x2D});
 
-            REQUIRE(msg.requested_energy_transfer_mode == dt::EnergyTransferMode::DcExtended);
+            REQUIRE(msg.requested_energy_transfer_mode == dt::EnergyTransferMode::DC_extended);
 
             REQUIRE(msg.max_entries_sa_schedule_tuple.has_value());
             REQUIRE(msg.max_entries_sa_schedule_tuple == 5);

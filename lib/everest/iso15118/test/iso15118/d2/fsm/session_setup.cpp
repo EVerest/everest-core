@@ -17,7 +17,8 @@ SCENARIO("ISO15118-2 session setup state transitions") {
 
     // Move to helper function?
     const auto evse_id = std::string("everest se");
-    const d2::EvseSetupConfig evse_setup{evse_id};
+    d2::EvseSetupConfig evse_setup{};
+    evse_setup.evse_id = evse_id;
 
     auto state_helper = FsmStateHelper(d2::SessionConfig(evse_setup));
     auto ctx = state_helper.get_context();

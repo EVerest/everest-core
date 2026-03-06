@@ -11,15 +11,6 @@
 namespace iso15118::d2::msg {
 
 namespace data_types {
-enum class EnergyTransferMode {
-    AcSinglePhaseCore,
-    AcThreePhaseCore,
-    DcCore,
-    DcExtended,
-    DcComboCore,
-    DcUnique
-};
-
 enum class CostKind {
     RelativePricePercentage,
     RenewableGenerationPercentage,
