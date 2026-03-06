@@ -539,20 +539,26 @@ TEST(FixedVectorTest, NothrowMoveConstraint) {
 // Types with throwing move operations — used only in compile-time rejection checks below.
 struct ThrowingMoveConstructor {
     ThrowingMoveConstructor() = default;
-    ThrowingMoveConstructor(ThrowingMoveConstructor&&) noexcept(false) {}
+    ThrowingMoveConstructor(ThrowingMoveConstructor&&) noexcept(false) {
+    }
     ThrowingMoveConstructor& operator=(ThrowingMoveConstructor&&) noexcept = default;
 };
 
 struct ThrowingMoveAssignment {
     ThrowingMoveAssignment() = default;
     ThrowingMoveAssignment(ThrowingMoveAssignment&&) noexcept = default;
-    ThrowingMoveAssignment& operator=(ThrowingMoveAssignment&&) noexcept(false) { return *this; }
+    ThrowingMoveAssignment& operator=(ThrowingMoveAssignment&&) noexcept(false) {
+        return *this;
+    }
 };
 
 struct ThrowingBothMoveOps {
     ThrowingBothMoveOps() = default;
-    ThrowingBothMoveOps(ThrowingBothMoveOps&&) noexcept(false) {}
-    ThrowingBothMoveOps& operator=(ThrowingBothMoveOps&&) noexcept(false) { return *this; }
+    ThrowingBothMoveOps(ThrowingBothMoveOps&&) noexcept(false) {
+    }
+    ThrowingBothMoveOps& operator=(ThrowingBothMoveOps&&) noexcept(false) {
+        return *this;
+    }
 };
 
 // Verify at compile time that fixed_vector rejects types whose move operations can throw.
