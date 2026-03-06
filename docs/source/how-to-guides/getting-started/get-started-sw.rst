@@ -7,7 +7,7 @@ Get started in Software
 Prepare Your Development Environment
 ====================================
 
-This guide will help you to set up a development environment for EVerest on 
+This guide will help you to set up a development environment for EVerest on
 your local machine.
 
 For a native build, EVerest requires a Linux based system.
@@ -18,7 +18,7 @@ Docker / Podman (Mac).
 System Requirements and Dependencies
 ====================================
 
-This section lists all dependencies and supported environments required to set up 
+This section lists all dependencies and supported environments required to set up
 your development environment and build EVerest.
 
 .. attention::
@@ -74,7 +74,7 @@ Use `zypper` to get your needed libraries installed:
    boost-devel libboost_filesystem-devel libboost_log-devel \
    libboost_program_options-devel libboost_system-devel libboost_thread-devel \
    java-17-openjdk java-17-openjdk-devel nodejs nodejs-devel npm python3-devel \
-   python3-pip gcc-c++ libopenssl-devel sqlite3-devel libpcap-devel \ 
+   python3-pip gcc-c++ libopenssl-devel sqlite3-devel libpcap-devel \
    libevent-devel libcap-devel
 
 **Fedora**:
@@ -96,50 +96,28 @@ Download And Install EVerest
 =============================
 
 EVerest's main application code is located in ``everest-core``. It makes use of various
-libraries and tools that are distributed across multiple EVerest repositories.
+libraries which are included in the same repository for the most part. External dependencies
+are dynamically loaded via `CPM <https://github.com/cpm-cmake/CPM.cmake>`_.
 
-The EVerest Dependency Manager - short ``edm`` - helps you with orchestrating and pulling in
-the dependencies in the build process of ``everest-core``.
-
-To start with that, let's get ``edm`` ready to work.
-
-You will first of all need to pull ``everest-dev-environment`` to your
-development environment.
-
-.. code-block:: bash
-
-  git clone https://github.com/everest/everest-core.git
-  cd everest-core/applications/dev-environment/dependency_manager
-  python3 -m pip install . --break-system-packages
-
-or in short
-
-.. code-block:: bash
-
-  python3 -m pip install git+https://github.com/everest/everest-core.git@main#subdirectory=applications/dev-environment/dependency_manager --break-system-packages
-
-.. note::
-
-  Alternatively, you can also install ``edm`` in a python virtual environment.
-  Make sure edm is available in your PATH after the installation.You can verify
-  this by running ``edm --version``.
-
-``edm`` uses `CPM <https://github.com/cpm-cmake/CPM.cmake>`_ for its CMake
-integration. This means you can and should set the `CPM_SOURCE_CACHE` environment
+This means you can and should set the ``CPM_SOURCE_CACHE`` environment
 variable. This makes sure that dependencies that you do not manage in the workspace
 are not re-downloaded multiple times. For detailed information and other useful
 environment variables please refer to the
 `CPM Documentation <https://github.com/cpm-cmake/CPM.cmake/blob/master/README.md#CPM_SOURCE_CACHE>`_.
 
-Make sure to set the PATH and the CPM_SOURCE_CACHE variable in your shell profile:
+Make sure to set the ``PATH`` and the ``CPM_SOURCE_CACHE`` variable in your shell profile:
 
 .. code-block:: bash
 
   export CPM_SOURCE_CACHE=$HOME/.cache/CPM
   export PATH=$PATH:/home/$(whoami)/.local/bin
 
-For more details about ``edm``, see the dedicated
-:doc:`edm documentation </explanation/dev-tools/edm>`.
+.. note::
+  In the past the EVerest Dependency Manager - short ``edm`` - helped you with orchestrating
+  and pulling in the dependencies in the build process of ``everest-core``. Since EVerest has
+  been restructered into a (quasi)-mono-repository, manual installation of ``edm`` is no longer
+  recommended for building recent releases of EVerest (2026 and later).
+  For more details about ``edm``, see the dedicated :doc:`edm documentation </explanation/dev-tools/edm>`.
 
 We can now continue to build ``everest-core``.
 
@@ -165,7 +143,7 @@ Prepare The Helpers
 EVerest provides some Docker containers that help with the simulation.
 One container is used to run an MQTT Broker (mosquitto), which is required to run EVerest.
 This documentation section shows the necessary steps to start the simulation and get a
-simple NODERED user interface running.
+simple Node-RED user interface running.
 
 .. hint::
    To get all this working, make sure you have docker and docker-compose installed during the previous install phase.
@@ -186,7 +164,7 @@ It is used for the communication between the EVerest modules:
 
 .. code-block:: bash
 
-  docker run -d --name mqtt-server --network infranet_network -p 1883:1883 -p 9001:9001 ghcr.io/everest/everest-dev-environment/mosquitto:docker-images-v0.1.0
+  docker run -d --name mqtt-server --network infranet_network -p 1883:1883 -p 9001:9001 ghcr.io/everest/containers/mosquitto:docker-images-v0.1.0
 
 
 That makes us ready for entering the simulation phase described in the next
@@ -203,16 +181,16 @@ Also the Electric Vehicle simulations run as part of EVerest.
 Change to the directory ``everest-core/build``, which has been created during
 EVerest install.
 
-Since the EVerest config we are going to use includes ISO15118 functionality on the EV 
+Since the EVerest config we are going to use includes ISO15118 functionality on the EV
 side, we need to source the preinstalled virtual environment and install the respective
 python requirements for ISO15118 using a make target:
 
 .. code-block:: bash
-  
+
   source venv/bin/activate
   make iso15118_pip_install_dist
 
-Now we can start EVerest with a software-in-the-loop configuration via script. 
+Now we can start EVerest with a software-in-the-loop configuration via script.
 
 .. code-block:: bash
 
@@ -243,8 +221,7 @@ e.g. `CAR PLUGIN`, `PAUSE`, `RESUME` and so on:
 .. image:: images/quick-start-sil-gui.png
   :width: 200px
 
-Having a very first basic feeling for that will be enough for now. We are
-preparing a module tutorial, in which we will dig deeper into things.
+Having a very first basic feeling for that will be enough for now.
 
 .. _htg_getting_started_sw_admin_panel:
 

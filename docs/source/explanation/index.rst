@@ -48,14 +48,14 @@ Below that, you will be presented with a categorized list of all articles.
         Tool helping to orchestrate dependencies between the different EVerest repositories.
 
     .. grid-item-card:: The ev-cli Development Tool
-        :link: dev-tools/edm
-        :link-type: doc
+       :link: dev-tools/ev-cli
+       :link-type: doc
 
         Command line tool to generate C++ code from interface and manifest definitions.
 
     .. grid-item-card:: The Plug&Charge Process in EVerest
-        :link: dev-tools/edm
-        :link-type: doc
+       :link: pnc-process
+       :link-type: doc
 
         Learn how Plug&Charge is implemented in EVerest.
 
