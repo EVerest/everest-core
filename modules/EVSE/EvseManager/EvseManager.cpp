@@ -2535,13 +2535,20 @@ void EvseManager::fail_cable_check(const std::string& reason) {
         }
         r_hlc[0]->call_cable_check_finished(false);
     }
-
-    // Raising a cable check fault should not happen if a cancel_transaction (DeAuthorized) is triggered
-    // during cable check
+    // Raising a cable check fault should not happen if:
+    // - a cancel_transaction (DeAuthorized) is triggered during cable check
+    // - the car has already been unplugged (Idle/Finished), which prevents a race condition
+    //   where the detached cable check thread raises an error after clear_errors_on_unplug()
+    //   has already run, leaving the charger permanently inoperative (see GitHub issue #1392)
+    const auto current_state = charger->get_current_state();
     const auto last_stop_transaction_reason = charger->get_last_stop_transaction_reason();
-    if (not last_stop_transaction_reason.has_value() or
-        (last_stop_transaction_reason.has_value() and
-         last_stop_transaction_reason.value() != types::evse_manager::StopTransactionReason::DeAuthorized)) {
+    if (current_state == Charger::EvseState::Idle || current_state == Charger::EvseState::Finished) {
+        EVLOG_info << "Cable check failed due to: " << reason
+                   << ", but session already ended (car unplugged). Not raising cable check fault error.";
+    } else if (not last_stop_transaction_reason.has_value() or
+               (last_stop_transaction_reason.has_value() and
+                last_stop_transaction_reason.value() !=
+                    types::evse_manager::StopTransactionReason::DeAuthorized)) {
         // Raising the cable check error also causes the HLC stack to get notified
         this->error_handling->raise_cable_check_fault(reason);
     }
