@@ -49,7 +49,7 @@ channels:
   send_reply_upload_logs:
     address: null
     messages:
-      reply_upload_logs:
+      send_reply_upload_logs:
         $ref: '#/components/messages/send_reply_upload_logs'
   receive_request_is_reset_allowed:
     address: 'e2m/is_reset_allowed'
@@ -127,15 +127,15 @@ operations:
   send_reply_update_firmware:
     title: 'Reply to update firmware request'
     action: send
-    description: 'Direction: EVerest to Module'
+    description: 'Direction: Module to EVerest'
     channel:
       $ref: '#/channels/send_reply_update_firmware'
   receive_allow_firmware_installation:
     title: 'Call to allow a firmware installation to proceed'
     action: receive
+    description: 'Direction: EVerest to Module'
     channel:
       $ref: '#/channels/receive_allow_firmware_installation'
-      description: 'Direction: EVerest to Module'
   receive_request_upload_logs:
     title: 'Receive request to upload logs'
     action: receive
@@ -150,7 +150,7 @@ operations:
   send_reply_upload_logs:
     title: 'Request to upload logs'
     action: send
-    description: 'Direction: EVerest to Module'
+    description: 'Direction: Module to EVerest'
     channel:
       $ref: '#/channels/send_reply_upload_logs'
   receive_request_is_reset_allowed:
@@ -169,7 +169,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_reply_is_reset_allowed'
-    description: 'Direction: EVerest to Module'
+    description: 'Direction: Module to EVerest'
   receive_reset:
     title: 'Call to reset the system immediately'
     action: receive
@@ -188,11 +188,11 @@ operations:
       channel:
         $ref: '#/channels/send_reply_set_system_time'
   send_reply_set_system_time:
-    title: 'Receive request to set the system time'
+    title: 'Send reply to set system time request'
     action: send
     channel:
       $ref: '#/channels/send_reply_set_system_time'
-    description: 'Direction: EVerest to Module'
+    description: 'Direction: Module to EVerest'
   receive_request_get_boot_reason:
     title: 'Receive request to get the boot reason'
     action: receive
@@ -205,11 +205,11 @@ operations:
       channel:
         $ref: '#/channels/send_reply_get_boot_reason'
   send_reply_get_boot_reason:
-    title: 'Receive request to get the boot reason'
+    title: 'Send reply to get boot reason request'
     action: send
     channel:
       $ref: '#/channels/send_reply_get_boot_reason'
-    description: 'Direction: EVerest to Module'
+    description: 'Direction: Module to EVerest'
 
   send_firmware_update_status:
     title: 'Send firmware update status'
@@ -326,7 +326,7 @@ components:
       payload:
         $ref: '#/components/schemas/ResetAllowed'
       examples:
-        - summary: "CommunicationCheck"
+        - summary: "Reset is allowed"
           payload:
             true
     receive_request_set_system_time:
@@ -349,13 +349,13 @@ components:
             $ref: '#/components/schemas/SystemTime'
     send_reply_set_system_time:
       name: send_reply_set_system_time
-      title: 'Reply to is reset allowed'
-      summary: 'Reply to is reset allowed request.'
+      title: 'Reply to set system time'
+      summary: 'Reply to set system time request.'
       contentType: application/json
       payload:
         $ref: '#/components/schemas/SystemTimeSet'
       examples:
-        - summary: "CommunicationCheck"
+        - summary: "system time set successfully"
           payload:
             true
     receive_request_get_boot_reason:
@@ -524,23 +524,22 @@ components:
             FirmwareUpdateRequest.
           type: integer
     FirmwareUpdateStatusEnum:
-      description: >-
-        State describing the current download/upload status of a firmware
-        update of the system
-          Downloaded: Intermediate state. New firmware has been downloaded by System
-          DownloadFailed: Failure end state. System failed to download firmware
-          Downloading: Intermediate state. Firmware is being downloaded
-          DownloadScheduled: Intermediate state. Downloading of new firmware has been scheduled
-          DownloadPaused: Intermediate state. Downloading has been paused
-          Idle: System is not performing firmware update related tasks
-          InstallationFailed: Failure end state. Installation of new firmware has failed
-          Installing: Intermediate state. Firmware is being installed
-          Installed: Successful end state. New firmware has successfully been installed in System
-          InstallRebooting: Intermediate state. System is about to reboot to activate new firmware
-          InstallScheduled: Intermediate state. Installation of the downloaded firmware is scheduled to take place on installDateTime
-          InstallVerificationFailed: Failure end state. Verification of the new firmware (e.g. using a checksum or some other means) has failed and installation will not proceed. (Final failure state)
-          InvalidSignature: Failure end state. The firmware signature is not valid
-          SignatureVerified: Intermediate state. Provide signature successfully verified
+      description: |
+        State describing the current download/upload status of a firmware update of the system:
+        - Downloaded: Intermediate state. New firmware has been downloaded by System
+        - DownloadFailed: Failure end state. System failed to download firmware
+        - Downloading: Intermediate state. Firmware is being downloaded
+        - DownloadScheduled: Intermediate state. Downloading of new firmware has been scheduled
+        - DownloadPaused: Intermediate state. Downloading has been paused
+        - Idle: System is not performing firmware update related tasks
+        - InstallationFailed: Failure end state. Installation of new firmware has failed
+        - Installing: Intermediate state. Firmware is being installed
+        - Installed: Successful end state. New firmware has successfully been installed in System
+        - InstallRebooting: Intermediate state. System is about to reboot to activate new firmware
+        - InstallScheduled: Intermediate state. Installation of the downloaded firmware is scheduled to take place on installDateTime
+        - InstallVerificationFailed: Failure end state. Verification of the new firmware (e.g. using a checksum or some other means) has failed and installation will not proceed. (Final failure state)
+        - InvalidSignature: Failure end state. The firmware signature is not valid
+        - SignatureVerified: Intermediate state. Provide signature successfully verified
       type: string
       enum:
         - Downloaded
@@ -558,15 +557,16 @@ components:
         - InvalidSignature
         - SignatureVerified
     LogStatusEnum:
-      description: >-
-        State describing the current status of log upload of the system
-          BadMessage: A badly formatted packet or other protocol incompatibility was detected
-          Idle: The system is not uploading a log file
-          NotSupportedOperation: The server does not support the operation
-          PermissionDenied: Insufficient permissions to perform the operation
-          Uploaded: File has been uploaded successfully
-          UploadFailure: Failed to upload the requested file
-          Uploading: File is being uploaded
+      description: |
+        State describing the current status of log upload of the system:
+        - AcceptedCanceled: Log upload request accepted, but cancelled an ongoing log upload.
+        - BadMessage: A badly formatted packet or other protocol incompatibility was detected
+        - Idle: The system is not uploading a log file
+        - NotSupportedOperation: The server does not support the operation
+        - PermissionDenied: Insufficient permissions to perform the operation
+        - Uploaded: File has been uploaded successfully
+        - UploadFailure: Failed to upload the requested file
+        - Uploading: File is being uploaded
       type: string
       enum:
         - AcceptedCanceled
@@ -605,7 +605,7 @@ components:
       additionalProperties: true
       properties:
         type:
-          description: 'type ot the reset (Soft or Hard)'
+          description: 'type of the reset (Soft or Hard)'
           type: string
           $ref: '#/components/schemas/ResetType'
         scheduled:
@@ -625,13 +625,13 @@ components:
       description: 'true if reset successful'
       type: boolean
     UpdateFirmwareResponse:
-      description: >-
+      description: |
         Enum for the response of an update_firmware command
-          Accepted: Accepted this firmware update request. This does not mean the firmware update is successful, the system will now start the firmware update process
-          Rejected: Firmware update request rejected
-          AcceptedCanceled: Accepted this firmware update request, but in doing this has cancelled an ongoing firmware update
-          InvalidCertificate: The certificate is invalid
-          RevokedCertificate: Failure end state. The Firmware Signing certificate has been revoked
+        - Accepted: Accepted this firmware update request. This does not mean the firmware update is successful, the system will now start the firmware update process
+        - Rejected: Firmware update request rejected
+        - AcceptedCanceled: Accepted this firmware update request, but in doing this has cancelled an ongoing firmware update
+        - InvalidCertificate: The certificate is invalid
+        - RevokedCertificate: Failure end state. The Firmware Signing certificate has been revoked
       type: string
       enum:
         - Accepted
@@ -648,7 +648,7 @@ components:
       properties:
         retries:
           description: >-
-            This specifies how many the system must try to upload the logs
+            This specifies how many times the system must try to upload the logs
             before giving up.
           type: integer
           minimum: 1
@@ -698,11 +698,11 @@ components:
           type: string
           $ref: '#/components/schemas/UploadLogsStatus'
     UploadLogsStatus:
-      description: >-
+      description: |
         Enum for the upload logs status response
-          Accepted: Request to upload logs has been accepted
-          Rejected: Request to upload logs has been rejected
-          AcceptedCanceled: Accepted this log upload, but in doing this has cancelled an ongoing log file upload
+        - Accepted: Request to upload logs has been accepted
+        - Rejected: Request to upload logs has been rejected
+        - AcceptedCanceled: Accepted this log upload, but in doing this has cancelled an ongoing log file upload
       type: string
       enum:
         - Accepted

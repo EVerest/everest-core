@@ -366,7 +366,7 @@ components:
       type: string
       description: |
         Type of Error
-        - CommunicationFault: The communication to the hardware or underlying driver is lost or has errors.
+        - CommunicationFault: 'The communication to the hardware or underlying driver is lost or has errors.''
         - VendorError: 'Vendor specific error code. Will stop charging session.'
         - VendorWarning: 'Vendor specific error code. Charging may continue.'
     CommunicationCheck:

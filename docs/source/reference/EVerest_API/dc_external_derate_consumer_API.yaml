@@ -24,7 +24,7 @@ info:
     url: https://opensource.org/licenses/Apache-2.0
   tags:
     - name: EVerest
-    - name: powermeter
+    - name: dc external derate
 servers:
   default:
     pathname: 'everest_api/1/dc_external_derate_consumer/{module_id}'
@@ -111,7 +111,7 @@ components:
 
     receive_plug_temperature_C:
       name: receive_plug_temperature_C
-      title: Receive the public key
+      title: Receive the plug temperature
       summary: Current temperature of the plug in degree celsius
       contentType: application/json
       payload:
