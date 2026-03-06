@@ -660,24 +660,24 @@ components:
           type: object
           $ref: '#/components/schemas/IdlePrice'
     Price:
-        description: >-
-          Price object containing the currency and the value of money.
-        type: object
-        additionalProperties: true
-        required:
-          - currency
-          - value
-        properties:
-          currency:
-            description: >-
-              Currency of the price.
-            type: object
-            $ref: '#/components/schemas/Currency'
-          value:
-            description: >-
-              Value in the minor units of the currency.
-            type: object
-            $ref: '#/components/schemas/MoneyAmount'
+      description: >-
+        Price object containing the currency and the value of money.
+      type: object
+      additionalProperties: true
+      required:
+        - currency
+        - value
+      properties:
+        currency:
+          description: >-
+            Currency of the price.
+          type: object
+          $ref: '#/components/schemas/Currency'
+        value:
+          description: >-
+            Value in the minor units of the currency.
+          type: object
+          $ref: '#/components/schemas/MoneyAmount'
     SessionCost:
       description: >-
         Session cost object containing the total cost of the session and a list

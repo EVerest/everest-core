@@ -69,6 +69,7 @@ components:
       name: send_set_external_limits
       title: 'Send external energy limits'
       summary: 'External energy limits'
+      contentType: application/json
       payload:
         $ref: '#/components/schemas/ExternalLimits'
       examples:

@@ -401,7 +401,6 @@ components:
         EvseNotFound in case no match for evse_id was found
         Rejected in case module could not process the request for other reasons
       type: string
-      additionalProperties: true
       enum:
         - Accepted
         - AuthorizationNotFound

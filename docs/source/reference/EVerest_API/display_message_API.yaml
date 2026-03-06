@@ -271,6 +271,7 @@ components:
     ClearDisplayMessageRequest:
       description: Request to remove a specific display message.
       type: object
+      additionalProperties: true
       properties:
         id:
           description: Id of display message that should be removed from the charging station
@@ -283,7 +284,6 @@ components:
       additionalProperties: true
       properties:
         status:
-          type: object
           $ref: '#/components/schemas/ClearMessageResponseEnum'
         status_info:
           type: string
@@ -438,7 +438,7 @@ components:
           $ref: '#/components/schemas/MessageStateEnum'
           type: string
     GetDisplayMessageResponse:
-      description: Reponse on the 'get display message' request. Will return the requested display messages.
+      description: Response on the 'get display message' request. Will return the requested display messages.
       type: object
       additionalProperties: true
       properties:
@@ -467,7 +467,6 @@ components:
         status:
           description: Whether the charging station is able to display the message
           $ref: '#/components/schemas/DisplayMessageStatusEnum'
-          type: object
         status_info:
           description: Detailed status information
           type: string

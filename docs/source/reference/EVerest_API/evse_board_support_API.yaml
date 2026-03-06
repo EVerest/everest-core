@@ -241,6 +241,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_ac_pp_ampacity'
+    description: 'Direction: Module to EVerest'
   send_request_stop_transaction:
     title: 'Send request to stop charging'
     action: send
@@ -265,7 +266,7 @@ operations:
       channel:
         $ref: '#/channels/send_reply_reset'
   send_reply_reset:
-    title: 'Request to reset RCD'
+    title: 'Send reply to reset RCD request'
     description: 'Reply to request'
     action: send
     channel:
@@ -550,7 +551,7 @@ components:
       name: receive_unlock
       title: 'Receive signal to unlock'
       summary: >-
-        Unlock connector lock. (e.g. normal unlaock or enforced by OCPP)
+        Unlock connector lock. (e.g. normal unlock or enforced by OCPP)
 
 
     send_raise_error:

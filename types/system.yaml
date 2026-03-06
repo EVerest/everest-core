@@ -123,6 +123,7 @@ types:
   LogStatusEnum:
     description: >-
       State describing the current status of log upload of the system
+        AcceptedCanceled: Log upload request accepted, but cancelled an ongoing log upload.
         BadMessage: A badly formatted packet or other protocol incompatibility was detected
         Idle: The system is not uploading a log file
         NotSupportedOperation: The server does not support the operation

@@ -618,6 +618,7 @@ components:
     V2XFreqWattPointType:
       description: A point of a frequency-watt curve.
       type: object
+      additionalProperties: true
       required:
         - frequency
         - power
@@ -631,6 +632,7 @@ components:
     V2XSignalWattPointCurve:
       description: A point of a signal-watt curve.
       type: object
+      additionalProperties: true
       required:
         - signal
         - power
@@ -645,6 +647,7 @@ components:
       description: >-
         Element providing information on a charging schedule period.
       type: object
+      additionalProperties: true
       required:
         - start_period
         - limit
@@ -766,6 +769,7 @@ components:
       description: >-
         Element providing information on an OCPP charging schedule.
       type: object
+      additionalProperties: true
       required:
         - evse
         - charging_rate_unit
@@ -804,7 +808,7 @@ components:
             type: object
             $ref: '#/components/schemas/ChargingSchedule'
     EventTriggerEnum:
-      description: >-
+      description: |
         Indicates the trigger reason of a generic event as part of the type EventData
         Alerting: Monitored variable has passed an Lower or Upper Threshold
         Delta: Delta Monitored Variable value has changed by more than specified amount
@@ -815,7 +819,7 @@ components:
         - Delta
         - Periodic
     EventNotificationType:
-      description: >-
+      description: |
         Indicates the event notification type as part of the type EventData
         HardWiredNotification: The software implemented by the manufacturer triggered a hardwired notification
         HardWiredMonitor: Triggered by a monitor, which is hardwired by the manufacturer

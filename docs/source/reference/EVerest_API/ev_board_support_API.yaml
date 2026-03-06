@@ -208,7 +208,7 @@ components:
       examples:
         - summary: "Enable the EV."
           payload:
-            "true"
+            true
     receive_set_cp_state:
       name: receive_set_cp_state
       title: 'Receive CP State'
@@ -230,7 +230,7 @@ components:
       examples:
         - summary: "Allow the relays to be closed."
           payload:
-            "true"
+            true
     receive_diode_fail:
       name: receive_diode_fail
       title: 'Receive diode failure state'
@@ -241,7 +241,7 @@ components:
       examples:
         - summary: "Diode failure signaled"
           payload:
-            "true"
+            true
     receive_set_ac_max_current:
       name: receive_set_ac_max_current
       title: 'Receive the max AC current'
@@ -256,14 +256,14 @@ components:
     receive_set_three_phases:
       name: receive_set_three_phases
       title: 'Receive three or one phase support'
-      summary: Wether the EV should indicate single or three phase support.
+      summary: Whether the EV should indicate single or three phase support.
       contentType: application/json
       payload:
         $ref: '#/components/schemas/ThreePhaseSupport'
       examples:
         - summary: "EV should request single phase only."
           payload:
-            "false"
+            false
     receive_set_rcd_error:
       name: receive_set_rcd_error
       title: 'Setting set RCD error.'
@@ -372,7 +372,7 @@ components:
       examples:
         - summary: ""
           payload:
-            "true"
+            true
 
 
   schemas:
