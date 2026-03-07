@@ -58,7 +58,7 @@ Now you can clone this repository and install **edm**:
 
 .. code-block:: bash
 
-  git clone https://github.com/everest/everest-core.git
+  git clone https://github.com/EVerest/everest-core.git
   cd everest-core/applications/dependency_manager
   python3 -m pip install . --break-system-packages
 
@@ -66,7 +66,7 @@ or in short
 
 .. code-block:: bash
 
-  python3 -m pip install git+https://github.com/everest/everest-core.git@main#subdirectory=applications/dependency_manager --break-system-packages
+  python3 -m pip install git+https://github.com/EVerest/everest-core.git@main#subdirectory=applications/dependency_manager --break-system-packages
 
 .. note::
 

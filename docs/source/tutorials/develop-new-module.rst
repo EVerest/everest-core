@@ -62,8 +62,8 @@ Alternative 1: Clone required repositories (recommended for recent versions)
 
 Just clone this, to get the required dependencies::
 
-    git clone https://github.com/EVerest/everest-cmake ${EVEREST_WORKSPACE}/everest-cmake
-    git clone https://github.com/EVerest/everest-core ${EVEREST_WORKSPACE}/everest-core
+    git clone https://github.com/EVerest/everest-cmake.git ${EVEREST_WORKSPACE}/everest-cmake
+    git clone https://github.com/EVerest/everest-core.git ${EVEREST_WORKSPACE}/everest-core
 
 Alternative 2: Setup Workspace via EVerest Dependency Manager (recommended for pre-2026 version)
 ------------------------------------------------------------------------------------------------
@@ -98,7 +98,7 @@ following, we assume the environment variable ``EVEREST_TUTORIAL_DIR`` to hold
 this directory, for example::
 
     export EVEREST_TUTORIAL_DIR=~/everest-tutorial-module
-    git clone https://github.com/EVerest/everest-template $EVEREST_TUTORIAL_DIR
+    git clone https://github.com/EVerest/everest-template.git $EVEREST_TUTORIAL_DIR
 
 This provides you in particular with the ``.clang-format`` and ``.eslintrc.json``
 files.
