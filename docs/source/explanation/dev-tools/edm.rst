@@ -7,6 +7,13 @@ edm
 edm stands for EVerest dependency manager. It helps you orchestrating the
 dependencies between the different EVerest repositories.
 
+.. note::
+
+  The EDM tool was developed at a time when the EVerest source code was
+  organized in many different repositories. Since 2026, EVerest has essentially
+  changed to a (quasi-)mono-repository layout. Manual installation of EDM is
+  usually not necessary to work with recent versions of EVerest.
+
 Dependency Manager for EVerest
 ##############################
 
@@ -51,13 +58,29 @@ Now you can clone this repository and install **edm**:
 
 .. code-block:: bash
 
-  git clone https://github.com/EVerest/everest-core
-  cd everest-core/applications/dev-environment/dependency_manager
+  git clone https://github.com/EVerest/everest-core.git
+  cd everest-core/applications/dependency_manager
   python3 -m pip install . --break-system-packages
+
+or in short
+
+.. code-block:: bash
+
+  python3 -m pip install git+https://github.com/EVerest/everest-core.git@main#subdirectory=applications/dependency_manager --break-system-packages
+
+.. note::
+
+  Alternatively, you can also install ``edm`` in a python virtual environment.
+  Make sure edm is available in your PATH after the installation. You can verify
+  this by running ``edm --version``.
+
+Next you could run
+
+.. code-block:: bash
 
   edm init --workspace ~/checkout/everest-workspace
 
-The last command creates a workspace in the ``~/checkout/everest-workspace``
+This creates a workspace in the ``~/checkout/everest-workspace``
 directory from the most recent release of EVerest. If you want the most recent
 main you can use:
 
