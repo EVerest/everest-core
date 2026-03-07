@@ -10,6 +10,9 @@ benefit of the community. All participation in this project is open and not
 bound to corporate affiliation. Participants are bound to the project's
 :doc:`Code of Conduct </project/governance/code-of-conduct>`.
 
+Technical Charter can be found at 
+https://github.com/lf-energy/foundation/blob/main/project_charters/everest_charter.pdf.
+
 Project roles
 =============
 
@@ -101,8 +104,7 @@ TSC Members
 TSC Members have formal voting rights on TSC decisions. They can be elected by existing
 voting members. A simple majority of existing voting members is required for approval.
 
-See the `TSC MEMBERS file <https://github.com/EVerest/EVerest/blob/main/tsc/MEMBERS.md>`_
-for the current list of TSC members and their roles.
+You can find the current TSC members as part of the :ref:`TSC documentation <governance_tsc>`.
 
 TSC responsibilities
 ~~~~~~~~~~~~~~~~~~~~
@@ -134,7 +136,7 @@ TSC meetings and participation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TSC meetings are open to the community. See the
-`TSC README <https://github.com/EVerest/EVerest/blob/main/tsc/README.md>`_
+:ref:`TSC Documentation <governance_tsc>`
 for meeting minutes and how to participate.
 
 Release Process

@@ -106,8 +106,8 @@ If you need a label that doesn't exist, discuss with maintainers before creating
 Coding Style
 ------------
 
-Each contribution must meet the `Javascript <https://github.com/EVerest/EVerest/blob/main/.eslintrc.json>`_ or
-`C++ <https://github.com/EVerest/EVerest/blob/main/.clang-format>`_ *coding style* (part of every repository).
+Each contribution must meet the `Javascript <https://github.com/EVerest/everest-core/blob/main/.eslintrc.json>`_ or
+`C++ <https://github.com/EVerest/everest-core/blob/main/.clang-format>`_ *coding style* (part of every repository).
 
 License
 -------

@@ -48,6 +48,7 @@ way to start is with our [Getting Started Guides](https://everest.github.io/nigh
 # Community
 
 Find more information about the community and ways to get involved [here](https://everest.github.io/nightly/project/community.html).
+
 # Contributing to EVerest
 
 Anyone can contribute to EVerest! Learn more about getting involved

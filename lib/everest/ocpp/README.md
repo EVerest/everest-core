@@ -21,7 +21,7 @@ Check out the [Getting Started guide](doc/common/getting_started.md). It should 
 
 ## Get Involved
 
-See the [COMMUNITY.md](https://github.com/EVerest/EVerest/blob/main/COMMUNITY.md) and [CONTRIBUTING.md](https://github.com/EVerest/EVerest/blob/main/CONTRIBUTING.md) of the EVerest project to get involved.
+See the [Contribution Guideline](https://everest.github.io/nightly/project/contributing.html) of the EVerest project to get involved.
 
 ## OCPP1.6
 
