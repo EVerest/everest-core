@@ -30,13 +30,19 @@ import logging
 import pytest
 
 
+
 def pytest_addoption(parser):
-    parser.addoption(
-        "--everest-prefix",
-        action="store",
-        default="~/checkout/everest-workspace/everest-core",
-        help="everest-core path; default = '~/checkout/everest-workspace/everest-core'",
-    )
+    # Guard against duplicate registration when tests/conftest.py is also loaded
+    # (e.g. when invoked via run-tests.sh with --config-file pointing to tests/pytest.ini).
+    try:
+        parser.addoption(
+            "--everest-prefix",
+            action="store",
+            default="../../build/dist",
+            help="everest prefix path; default = '../../build/dist'",
+        )
+    except ValueError:
+        pass
 
 
 def pytest_sessionfinish(session, exitstatus):

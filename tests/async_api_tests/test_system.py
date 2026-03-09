@@ -1,3 +1,4 @@
+import os
 import pytest
 import pytest_asyncio
 import json
@@ -66,7 +67,8 @@ class AsyncApiMqttHandler:
 
 @pytest_asyncio.fixture
 async def async_api_mqtt_handler(everest_core: EverestCore) -> AsyncApiMqttHandler:
-    handler = AsyncApiMqttHandler("localhost", 1883, everest_core.mqtt_external_prefix)
+    broker = os.environ.get("MQTT_SERVER_ADDRESS", "localhost")
+    handler = AsyncApiMqttHandler(broker, 1883, everest_core.mqtt_external_prefix)
     await handler.start()
     yield handler
     await handler.stop()

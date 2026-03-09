@@ -4,13 +4,24 @@
 from pathlib import Path
 import pytest
 
+from everest.testing.core_utils.network_isolation import NetworkIsolationPlugin
+
 
 def pytest_addoption(parser):
     parser.addoption("--everest-prefix", action="store", default="../build/dist",
                      help="everest prefix path; default = '../build/dist'")
+    parser.addoption(
+        "--network-isolation",
+        action="store_true",
+        default=False,
+        help="Enable network isolation for parallel ISO 15118 tests. "
+             "Requires veth pairs created by setup-network-isolation.sh.",
+    )
 
 
 def pytest_configure(config):
+    NetworkIsolationPlugin.register(config)
+
     everest_prefix = config.getoption('--everest-prefix')
     everest_config_path = Path(everest_prefix) / 'etc/everest'
     if not everest_config_path.exists():
