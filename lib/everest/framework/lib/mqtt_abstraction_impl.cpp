@@ -87,8 +87,9 @@ bool MQTTAbstractionImpl::connect() {
         const auto result = this->mqtt_client->connect(this->mqtt_server_socket_path, mqtt_keep_alive);
         return (result == everest::lib::io::mqtt::ErrorCode::Success);
     } else {
-        EVLOG_info << fmt::format("Connecting to MQTT broker: {}:{} using bind address {}", this->mqtt_server_address,
-                                  this->mqtt_server_port, this->mqtt_bind_address);
+        EVLOG_info << fmt::format(
+            "Connecting to MQTT broker: {}:{}{}", this->mqtt_server_address, this->mqtt_server_port,
+            this->mqtt_bind_address.empty() ? "" : fmt::format(" using bind address {}", this->mqtt_bind_address));
         try {
             const auto port_uint = std::stoul(this->mqtt_server_port);
             if (port_uint > std::numeric_limits<std::uint16_t>::max()) {
