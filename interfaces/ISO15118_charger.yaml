@@ -402,6 +402,13 @@ vars:
     description: Estimated or calculated time until bulk and full charge is complete
     type: object
     $ref: /iso15118#/DcEvRemainingTime
+  hlc_session_failed:
+    description: >-
+      Published by the HLC module whenever an HLC session failure is detected,
+      immediately when it occurs. Provides a protocol-agnostic reason for the
+      failure independently of the EvseManager state machine transitions.
+    type: string
+    $ref: /evse_manager#/HlcSessionFailedReasonEnum
   dlink_terminate:
     description: Terminate the data link and become UNMATCHED.
     type: "null"

@@ -320,6 +320,54 @@ PauseChargingEVSEReasonEnum_External to_external_api(PauseChargingEVSEReasonEnum
     throw std::out_of_range("Unexpected value for PauseChargingEVSEReasonEnum_Internal");
 }
 
+HlcSessionFailedReasonEnum_Internal to_internal_api(HlcSessionFailedReasonEnum_External const& val) {
+    using SrcT = HlcSessionFailedReasonEnum_External;
+    using TarT = HlcSessionFailedReasonEnum_Internal;
+
+    switch (val) {
+    case SrcT::ProtocolNegotiationFailed:
+        return TarT::ProtocolNegotiationFailed;
+    case SrcT::AuthorizationFailed:
+        return TarT::AuthorizationFailed;
+    case SrcT::ChargingParametersNotAccepted:
+        return TarT::ChargingParametersNotAccepted;
+    case SrcT::EnergyTransferSetupFailed:
+        return TarT::EnergyTransferSetupFailed;
+    case SrcT::ChargingInterrupted:
+        return TarT::ChargingInterrupted;
+    case SrcT::FailedTLSHandshake:
+        return TarT::FailedTLSHandshake;
+    case SrcT::UnexpectedSessionEnd:
+        return TarT::UnexpectedSessionEnd;
+    }
+
+    throw std::out_of_range("Unexpected value for HlcSessionFailedReasonEnum_External");
+}
+
+HlcSessionFailedReasonEnum_External to_external_api(HlcSessionFailedReasonEnum_Internal const& val) {
+    using SrcT = HlcSessionFailedReasonEnum_Internal;
+    using TarT = HlcSessionFailedReasonEnum_External;
+
+    switch (val) {
+    case SrcT::ProtocolNegotiationFailed:
+        return TarT::ProtocolNegotiationFailed;
+    case SrcT::AuthorizationFailed:
+        return TarT::AuthorizationFailed;
+    case SrcT::ChargingParametersNotAccepted:
+        return TarT::ChargingParametersNotAccepted;
+    case SrcT::EnergyTransferSetupFailed:
+        return TarT::EnergyTransferSetupFailed;
+    case SrcT::ChargingInterrupted:
+        return TarT::ChargingInterrupted;
+    case SrcT::FailedTLSHandshake:
+        return TarT::FailedTLSHandshake;
+    case SrcT::UnexpectedSessionEnd:
+        return TarT::UnexpectedSessionEnd;
+    }
+
+    throw std::out_of_range("Unexpected value for HlcSessionFailedReasonEnum_Internal");
+}
+
 SessionEvent_Internal to_internal_api(SessionEvent_External const& val) {
     SessionEvent_Internal result;
     result.uuid = val.uuid;
@@ -350,6 +398,20 @@ SessionEvent_External to_external_api(SessionEvent_Internal const& val) {
     result.charging_paused_evse = optToExternal(val.charging_paused_evse);
     result.charging_state_changed_event = optToExternal(val.charging_state_changed_event);
     result.source = optToExternal(val.source);
+    return result;
+}
+
+HlcSessionFailedEvent_Internal to_internal_api(HlcSessionFailedEvent_External const& val) {
+    HlcSessionFailedEvent_Internal result;
+    result.uuid = val.uuid;
+    result.reason = to_internal_api(val.reason);
+    return result;
+}
+
+HlcSessionFailedEvent_External to_external_api(HlcSessionFailedEvent_Internal const& val) {
+    HlcSessionFailedEvent_External result;
+    result.uuid = val.uuid;
+    result.reason = to_external_api(val.reason);
     return result;
 }
 

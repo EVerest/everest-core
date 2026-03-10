@@ -414,6 +414,69 @@ void from_json(json const& j, PauseChargingEVSEReasonEnum& k) {
                             " could not be converted to enum of type API_V1_0_PauseChargingEVSEReasonEnum");
 }
 
+void to_json(json& j, HlcSessionFailedReasonEnum const& k) noexcept {
+    switch (k) {
+    case HlcSessionFailedReasonEnum::ProtocolNegotiationFailed:
+        j = "ProtocolNegotiationFailed";
+        return;
+    case HlcSessionFailedReasonEnum::AuthorizationFailed:
+        j = "AuthorizationFailed";
+        return;
+    case HlcSessionFailedReasonEnum::ChargingParametersNotAccepted:
+        j = "ChargingParametersNotAccepted";
+        return;
+    case HlcSessionFailedReasonEnum::EnergyTransferSetupFailed:
+        j = "EnergyTransferSetupFailed";
+        return;
+    case HlcSessionFailedReasonEnum::ChargingInterrupted:
+        j = "ChargingInterrupted";
+        return;
+    case HlcSessionFailedReasonEnum::FailedTLSHandshake:
+        j = "FailedTLSHandshake";
+        return;
+    case HlcSessionFailedReasonEnum::UnexpectedSessionEnd:
+        j = "UnexpectedSessionEnd";
+        return;
+    }
+
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::evse_manager::HlcSessionFailedReasonEnum";
+}
+
+void from_json(json const& j, HlcSessionFailedReasonEnum& k) {
+    std::string s = j;
+    if (s == "ProtocolNegotiationFailed") {
+        k = HlcSessionFailedReasonEnum::ProtocolNegotiationFailed;
+        return;
+    }
+    if (s == "AuthorizationFailed") {
+        k = HlcSessionFailedReasonEnum::AuthorizationFailed;
+        return;
+    }
+    if (s == "ChargingParametersNotAccepted") {
+        k = HlcSessionFailedReasonEnum::ChargingParametersNotAccepted;
+        return;
+    }
+    if (s == "EnergyTransferSetupFailed") {
+        k = HlcSessionFailedReasonEnum::EnergyTransferSetupFailed;
+        return;
+    }
+    if (s == "ChargingInterrupted") {
+        k = HlcSessionFailedReasonEnum::ChargingInterrupted;
+        return;
+    }
+    if (s == "FailedTLSHandshake") {
+        k = HlcSessionFailedReasonEnum::FailedTLSHandshake;
+        return;
+    }
+    if (s == "UnexpectedSessionEnd") {
+        k = HlcSessionFailedReasonEnum::UnexpectedSessionEnd;
+        return;
+    }
+
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type API_V1_0_HlcSessionFailedReasonEnum");
+}
+
 void to_json(json& j, SessionEvent const& k) noexcept {
     j = json{
         {"uuid", k.uuid},
@@ -480,6 +543,18 @@ void from_json(json const& j, SessionEvent& k) {
     if (j.contains("source")) {
         k.source.emplace(j.at("source"));
     }
+}
+
+void to_json(json& j, HlcSessionFailedEvent const& k) noexcept {
+    j = json{
+        {"uuid", k.uuid},
+        {"reason", k.reason},
+    };
+}
+
+void from_json(json const& j, HlcSessionFailedEvent& k) {
+    k.uuid = j.at("uuid");
+    k.reason = j.at("reason");
 }
 
 void to_json(json& j, Limits const& k) noexcept {

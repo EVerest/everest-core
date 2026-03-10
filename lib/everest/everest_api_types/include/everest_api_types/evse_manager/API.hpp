@@ -74,6 +74,16 @@ enum class PauseChargingEVSEReasonEnum {
     UserPause,
 };
 
+enum class HlcSessionFailedReasonEnum {
+    ProtocolNegotiationFailed,
+    AuthorizationFailed,
+    ChargingParametersNotAccepted,
+    EnergyTransferSetupFailed,
+    ChargingInterrupted,
+    FailedTLSHandshake,
+    UnexpectedSessionEnd
+};
+
 struct SessionStarted {
     StartSessionReason reason;
     std::optional<auth::ProvidedIdToken> id_tag;
@@ -248,6 +258,11 @@ struct SessionEvent {
     std::optional<ChargingStateChangedEvent> charging_state_changed_event;
     std::optional<AuthorizationEvent> authorization_event;
     std::optional<EnableDisableSource> source;
+};
+
+struct HlcSessionFailedEvent {
+    std::string uuid;
+    HlcSessionFailedReasonEnum reason;
 };
 
 struct EnableDisableRequest {
