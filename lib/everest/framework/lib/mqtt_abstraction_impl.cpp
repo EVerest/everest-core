@@ -64,6 +64,7 @@ MQTTAbstractionImpl::MQTTAbstractionImpl(const MQTTSettings& mqtt_settings) :
         }
     });
     this->mqtt_client->set_callback_connect([this](auto& mqtt, auto, auto, auto const&) { this->on_mqtt_connect(); });
+    this->mqtt_client->set_callback_disconnect([this](auto& mqtt, auto, auto const&) { this->on_mqtt_disconnect(); });
 }
 
 MQTTAbstractionImpl::~MQTTAbstractionImpl() {
