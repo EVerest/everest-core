@@ -14,4 +14,3 @@ __pycache__/
 *.orig
 *.rej
 docs/source/conf.py
-!/third-party/bazel/*.patch
