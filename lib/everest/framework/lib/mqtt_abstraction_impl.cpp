@@ -333,7 +333,7 @@ std::shared_future<void> MQTTAbstractionImpl::spawn_main_loop_thread() {
 
     std::packaged_task<void(void)> task([this]() {
         try {
-            this->ev_handler.register_event_handler(&*this->mqtt_client);
+            this->ev_handler.register_event_handler(this->mqtt_client.get());
             this->ev_handler.register_event_handler(&this->disconnect_event,
                                                     [this](const auto&) { this->running = false; });
 
