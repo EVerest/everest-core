@@ -1,6 +1,5 @@
 #!/bin/sh
 
-apt-get install -y --no-install-recommends iproute2 # TODO: remove when we have it pre-installed in the base image
 
 rsync -a "$EXT_MOUNT/source/tests" ./
 retVal=$?
