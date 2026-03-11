@@ -68,10 +68,6 @@ MQTTAbstractionImpl::MQTTAbstractionImpl(const MQTTSettings& mqtt_settings) :
 }
 
 MQTTAbstractionImpl::~MQTTAbstractionImpl() {
-    // FIXME (aw): verify that disconnecting is thread-safe!
-    if (this->mqtt_is_connected) {
-        disconnect();
-    }
     // this->mqtt_mainloop_thread.join();
 }
 
@@ -110,7 +106,8 @@ bool MQTTAbstractionImpl::connect() {
 void MQTTAbstractionImpl::disconnect() {
     BOOST_LOG_FUNCTION();
 
-    this->mqtt_client->disconnect();
+    this->disconnect_event.notify();
+
     // FIXME(kai): always set connected to false for the moment
     this->mqtt_is_connected = false;
 }
@@ -207,13 +204,15 @@ void MQTTAbstractionImpl::subscribe(const std::string& topic, QOS qos) {
 
     this->subscribed_topics.insert(topic);
 
-    const auto result = this->mqtt_client->subscribe(
-        topic,
-        [this, topic](everest::lib::io::mqtt::mosquitto_cpp& client,
-                      everest::lib::io::mqtt::mosquitto_cpp::message const& message) {
-            this->message_queue.add(std::make_unique<Message>(topic, message.payload));
-        },
-        max_qos_level);
+    this->ev_handler.add_action([this, topic, max_qos_level]() {
+        const auto result = this->mqtt_client->subscribe(
+            topic,
+            [this, topic](everest::lib::io::mqtt::mosquitto_cpp& client,
+                          everest::lib::io::mqtt::mosquitto_cpp::message const& message) {
+                this->message_queue.add(std::make_unique<Message>(topic, message.payload));
+            },
+            max_qos_level);
+    });
 }
 
 void MQTTAbstractionImpl::unsubscribe(const std::string& topic) {
@@ -228,8 +227,8 @@ void MQTTAbstractionImpl::unsubscribe(const std::string& topic) {
     EVLOG_debug << fmt::format("Unsubscribing from topic: {}", topic);
 
     this->subscribed_topics.erase(topic);
-
-    this->mqtt_client->unsubscribe(topic, everest::lib::io::mqtt::PropertiesBase{});
+    this->ev_handler.add_action(
+        [this, topic]() { this->mqtt_client->unsubscribe(topic, everest::lib::io::mqtt::PropertiesBase{}); });
 }
 
 void MQTTAbstractionImpl::clear_retained_topics() {
@@ -334,11 +333,11 @@ std::shared_future<void> MQTTAbstractionImpl::spawn_main_loop_thread() {
 
     std::packaged_task<void(void)> task([this]() {
         try {
-            // Create event handler and register clients
-            everest::lib::io::event::fd_event_handler ev_handler;
-            ev_handler.register_event_handler(&*this->mqtt_client);
+            this->ev_handler.register_event_handler(&*this->mqtt_client);
+            this->ev_handler.register_event_handler(&this->disconnect_event,
+                                                    [this](const auto&) { this->running = false; });
 
-            ev_handler.run(this->running);
+            this->ev_handler.run(this->running);
         } catch (boost::exception& e) {
             EVLOG_critical << fmt::format("Caught MQTT mainloop boost::exception:\n{}",
                                           boost::diagnostic_information(e, true));
