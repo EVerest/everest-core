@@ -30,7 +30,7 @@ cd ~/checkout/everest-workspace/everest-core/tests
 ./run-tests.sh all          # all tests (core, framework, async, OCPP)
 ./run-tests.sh core         # core tests only
 ./run-tests.sh framework    # framework tests only
-./run-tests.sh async        # async API tests only
+./run-tests.sh asyncapi        # async API tests only
 ./run-tests.sh integration  # core + framework + async
 ./run-tests.sh ocpp         # all OCPP tests (1.6, 2.0.1, 2.1)
 ./run-tests.sh --serial all # run serially (no parallelism)

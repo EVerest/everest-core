@@ -11,7 +11,7 @@ set -euo pipefail
 #   integration     Core, framework, and async API tests
 #   core            Core tests only
 #   framework       Framework tests only
-#   async           Async API tests only
+#   asyncapi        Async API tests only
 #
 #   ocpp            All OCPP tests (1.6, 2.0.1, 2.1)
 #   ocpp16          OCPP 1.6 tests only
@@ -180,7 +180,7 @@ case "$SUITE" in
             framework_tests/*.py
         ;;
 
-    async)
+    asyncapi)
         cd "$SCRIPT_DIR"
         "$PYTHON" -m pytest "${PYTEST_ARGS[@]}" \
             --junitxml="$JUNITXML" --html="$HTML" \
@@ -223,7 +223,7 @@ case "$SUITE" in
 
     *)
         echo "Unknown suite: $SUITE" >&2
-        echo "Valid suites: all, integration, core, framework, async, ocpp, ocpp16, ocpp201, ocpp21" >&2
+        echo "Valid suites: all, integration, core, framework, asyncapi, ocpp, ocpp16, ocpp201, ocpp21" >&2
         exit 1
         ;;
 
