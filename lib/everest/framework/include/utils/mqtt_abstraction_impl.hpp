@@ -158,6 +158,8 @@ private:
     std::string mqtt_external_prefix;
 
     std::unique_ptr<everest::lib::io::mqtt::mqtt_client> mqtt_client;
+    everest::lib::io::event::event_fd disconnect_event;
+    everest::lib::io::event::fd_event_handler ev_handler;
 
     void on_mqtt_message(const Message& message);
     void on_mqtt_connect();
