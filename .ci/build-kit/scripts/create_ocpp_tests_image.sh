@@ -1,5 +1,7 @@
 #!/bin/sh
 
+apt-get install -y --no-install-recommends iproute2
+
 rsync -a "$EXT_MOUNT/source/tests" ./
 retVal=$?
 
