@@ -48,6 +48,7 @@ cc_library(
         "@com_github_HowardHinnant_date//:date",
         "@com_github_LiamBindle_mqtt-c//:libmqtt",
         "@rapidyaml//:rapidyaml",
+        "//lib/everest/io:io",
         "//lib/everest/log:liblog",
         "//lib/everest/sqlite:everest-sqlite",
         "//lib/everest/util:util",

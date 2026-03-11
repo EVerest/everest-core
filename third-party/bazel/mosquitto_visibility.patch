@@ -1,0 +1,12 @@
+diff
+--- BUILD.bazel
++++ BUILD.bazel
+@@ -327,7 +327,7 @@ cc_library(
+         ":srv_enabled": ["WITH_SRV"],
+         "//conditions:default": [],
+     }),
+-    visibility = ["//:__subpackages__"],
++    visibility = ["//visibility:public"],
+     deps = [
+         ":bundled_deps",
+         ":cjson_compat",
