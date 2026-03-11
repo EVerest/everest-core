@@ -234,6 +234,7 @@ void EebusConnectionHandler::done_adding_use_case() {
 }
 
 void EebusConnectionHandler::stop() {
+    this->stop_requested_ = true;
     if (this->event_reader) {
         this->event_reader->stop();
     }
@@ -241,16 +242,29 @@ void EebusConnectionHandler::stop() {
 
 bool EebusConnectionHandler::wait_for_channel_ready(const std::shared_ptr<grpc::Channel>& channel,
                                                     std::chrono::milliseconds timeout) {
+    constexpr auto POLL_INTERVAL = std::chrono::seconds(1);
     auto deadline = std::chrono::system_clock::now() + timeout;
     grpc_connectivity_state state = channel->GetState(true);
+
     while (state != GRPC_CHANNEL_READY) {
-        if (!channel->WaitForStateChange(state, deadline)) {
-            // timeout or channel is shutting down
+        if (this->stop_requested_) {
+            EVLOG_info << "Channel wait interrupted by shutdown.";
+            return false;
+        }
+
+        // Check if deadline has already passed
+        if (std::chrono::system_clock::now() >= deadline) {
             EVLOG_error << "Channel is not ready after timeout.";
             return false;
         }
+
+        if (!channel->WaitForStateChange(state, std::chrono::system_clock::now() + POLL_INTERVAL)) {
+            continue;
+        }
+        // State change detected, update state
         state = channel->GetState(true);
     }
+
     return true;
 }
 

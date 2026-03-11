@@ -64,8 +64,7 @@ private:
     bool configure_service();
     void reconnect();
     void reset();
-    static bool wait_for_channel_ready(const std::shared_ptr<grpc::Channel>& channel,
-                                       std::chrono::milliseconds timeout);
+    bool wait_for_channel_ready(const std::shared_ptr<grpc::Channel>& channel, std::chrono::milliseconds timeout);
 
     std::shared_ptr<ConfigValidator> config;
     std::unique_ptr<LpcUseCaseHandler> lpc_handler;
@@ -79,6 +78,8 @@ private:
 
     everest::lib::io::event::timer_fd state_machine_timer;
     everest::lib::io::event::timer_fd reconnection_timer;
+
+    std::atomic<bool> stop_requested_{false};
 
     // store last added use case for reconnection
     eebus::EEBusUseCase last_use_case;

@@ -18,6 +18,8 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
+#include <condition_variable>
+#include <mutex>
 #include <thread>
 
 #include <EebusCallbacks.hpp>
@@ -87,6 +89,8 @@ private:
     everest::lib::io::event::fd_event_handler event_handler;
     std::thread event_handler_thread;
     std::atomic_bool running_flag{true};
+    std::mutex shutdown_mutex;
+    std::condition_variable shutdown_cv;
     std::shared_ptr<ConfigValidator> config_validator;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
