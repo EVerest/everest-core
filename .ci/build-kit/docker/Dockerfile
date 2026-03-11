@@ -65,7 +65,7 @@ RUN tmpdir=$(mktemp -d) \
 RUN python3.13 -m pip install --break-system-packages \
     grpcio \
     grpcio-tools \
-    pydantic \
+    'pydantic<2.0' \
     cryptography \
     netifaces \
     psutil \
