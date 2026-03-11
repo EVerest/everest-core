@@ -14,6 +14,10 @@ config:
     default: 550
     minimum: 1
     maximum: 550
+  cfg_retain_variables:
+    description: "Wether mqtt messages of var updates are published with retain=true"
+    type: boolean
+    default: false
 
 provides:
   main:

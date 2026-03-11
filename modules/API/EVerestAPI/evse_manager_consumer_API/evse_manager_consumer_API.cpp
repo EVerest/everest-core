@@ -111,11 +111,17 @@ auto evse_manager_consumer_API::forward_api_var(std::string const& var) {
     using namespace API_dc;
     using namespace API_random_delay;
     auto topic = topics.everest_to_extern(var);
+
+    // clear if the topic is retained
+    if (config.cfg_retain_variables) {
+        mqtt.publish(topic, std::string(), true);
+    }
+
     return [this, topic](auto const& val) {
         try {
             auto&& external = to_external_api(val);
             auto&& payload = serialize(external);
-            mqtt.publish(topic, payload);
+            mqtt.publish(topic, payload, config.cfg_retain_variables);
         } catch (const std::exception& e) {
             EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what();
         } catch (...) {
@@ -366,12 +372,17 @@ void evse_manager_consumer_API::subscribe_api_topic(std::string const& var,
 }
 
 void evse_manager_consumer_API::generate_api_var_session_info() {
+    auto topic = topics.everest_to_extern("session_info");
+    // clear if the topic is retained
+    if (config.cfg_retain_variables) {
+        mqtt.publish("session_info", std::string(), true);
+    }
+
     this->session_info.handle()->set_publish_callback(
-        [this](const everest::lib::API::V1_0::types::evse_manager::SessionInfo& external) {
-            auto topic = topics.everest_to_extern("session_info");
+        [this, topic](const everest::lib::API::V1_0::types::evse_manager::SessionInfo& external) {
             try {
                 auto&& payload = serialize(external);
-                mqtt.publish(topic, payload);
+                mqtt.publish(topic, payload, config.cfg_retain_variables);
             } catch (const std::exception& e) {
                 EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what();
             } catch (...) {

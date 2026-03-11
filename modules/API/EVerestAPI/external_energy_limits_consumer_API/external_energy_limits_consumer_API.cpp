@@ -35,11 +35,17 @@ void external_energy_limits_consumer_API::ready() {
 auto external_energy_limits_consumer_API::forward_api_var(std::string const& var) {
     using namespace API_types_ext;
     auto topic = topics.everest_to_extern(var);
+
+    // clear if the topic is retained
+    if (config.cfg_retain_variables) {
+        mqtt.publish(topic, std::string(), true);
+    }
+
     return [this, topic](auto const& val) {
         try {
             auto&& external = to_external_api(val);
             auto&& payload = serialize(external);
-            mqtt.publish(topic, payload);
+            mqtt.publish(topic, payload, config.cfg_retain_variables);
         } catch (const std::exception& e) {
             EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what();
         } catch (...) {

@@ -558,7 +558,8 @@ int ModuleLoader::initialize() {
 
         // NOLINTNEXTLINE(modernize-avoid-bind): prefer bind here for readability
         module_adapter.ext_mqtt_publish =
-            std::bind(&Everest::Everest::external_mqtt_publish, &everest, std::placeholders::_1, std::placeholders::_2);
+            std::bind(&Everest::Everest::external_mqtt_publish, &everest, std::placeholders::_1, std::placeholders::_2,
+                      std::placeholders::_3);
 
         module_adapter.ext_mqtt_subscribe = [&everest](const std::string& topic, const StringHandler& handler) {
             return everest.provide_external_mqtt_handler(topic, handler);

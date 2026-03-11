@@ -26,34 +26,34 @@ void ModuleAdapter::gather_cmds(ImplementationBase& impl) {
 
 MqttProvider::MqttProvider(ModuleAdapter& ev) : ev(ev){};
 
-void MqttProvider::publish(const std::string& topic, const std::string& data) {
-    ev.ext_mqtt_publish(topic, data);
+void MqttProvider::publish(const std::string& topic, const std::string& data, bool retain) {
+    ev.ext_mqtt_publish(topic, data, retain);
 }
 
-void MqttProvider::publish(const std::string& topic, const char* data) {
-    ev.ext_mqtt_publish(topic, std::string(data));
+void MqttProvider::publish(const std::string& topic, const char* data, bool retain) {
+    ev.ext_mqtt_publish(topic, std::string(data), retain);
 }
 
-void MqttProvider::publish(const std::string& topic, bool data) {
+void MqttProvider::publish(const std::string& topic, bool data, bool retain) {
     if (data) {
-        ev.ext_mqtt_publish(topic, "true");
+        ev.ext_mqtt_publish(topic, "true", retain);
     } else {
-        ev.ext_mqtt_publish(topic, "false");
+        ev.ext_mqtt_publish(topic, "false", retain);
     }
 }
 
-void MqttProvider::publish(const std::string& topic, int data) {
-    ev.ext_mqtt_publish(topic, std::to_string(data));
+void MqttProvider::publish(const std::string& topic, int data, bool retain) {
+    ev.ext_mqtt_publish(topic, std::to_string(data), retain);
 }
 
-void MqttProvider::publish(const std::string& topic, double data, int precision) {
+void MqttProvider::publish(const std::string& topic, double data, int precision, bool retain) {
     std::stringstream stream;
     stream << std::fixed << std::setprecision(precision) << data;
-    ev.ext_mqtt_publish(topic, stream.str());
+    ev.ext_mqtt_publish(topic, stream.str(), retain);
 }
 
-void MqttProvider::publish(const std::string& topic, double data) {
-    this->publish(topic, data, mqtt_provider_default_precision);
+void MqttProvider::publish(const std::string& topic, double data, bool retain) {
+    this->publish(topic, data, mqtt_provider_default_precision, retain);
 }
 
 UnsubscribeToken MqttProvider::subscribe(const std::string& topic, StringHandler handler) const {

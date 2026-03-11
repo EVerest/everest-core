@@ -35,6 +35,7 @@ namespace module {
 struct Conf {
     int cfg_communication_check_to_s;
     int cfg_heartbeat_interval_ms;
+    bool cfg_retain_variables;
 };
 
 class error_history_consumer_API : public Everest::ModuleBase {

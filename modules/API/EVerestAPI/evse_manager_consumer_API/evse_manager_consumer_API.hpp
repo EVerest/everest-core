@@ -45,6 +45,7 @@ struct Conf {
     int cfg_communication_check_to_s;
     int cfg_heartbeat_interval_ms;
     int cfg_request_reply_to_s;
+    bool cfg_retain_variables;
 };
 
 class evse_manager_consumer_API : public Everest::ModuleBase {

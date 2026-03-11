@@ -8,6 +8,10 @@ config:
     description: "Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat."
     type: integer
     default: 1000
+  cfg_retain_variables:
+    description: "Wether mqtt messages of var updates are published with retain=true"
+    type: boolean
+    default: false
 
 provides:
   main:

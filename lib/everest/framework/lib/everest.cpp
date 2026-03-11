@@ -741,10 +741,10 @@ void Everest::publish_cleared_error(const std::string& impl_id, const error::Err
     this->mqtt_abstraction->publish(error_topic, payload, QOS::QOS2);
 }
 
-void Everest::external_mqtt_publish(const std::string& topic, const std::string& data) {
+void Everest::external_mqtt_publish(const std::string& topic, const std::string& data, bool retain) {
     BOOST_LOG_FUNCTION();
     check_external_mqtt();
-    this->mqtt_abstraction->publish(fmt::format("{}{}", this->mqtt_external_prefix, topic), data);
+    this->mqtt_abstraction->publish(fmt::format("{}{}", this->mqtt_external_prefix, topic), data, QOS::QOS2, retain);
 }
 
 UnsubscribeToken Everest::provide_external_mqtt_handler(const std::string& topic, const StringHandler& handler) {
