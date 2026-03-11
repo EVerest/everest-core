@@ -50,6 +50,15 @@ def _deps_impl(module_ctx):
         build_file = "@everest-core//third-party/bazel:BUILD.mqtt-c.bazel",
     )
 
+    maybe(
+        http_archive,
+        name = "mosquitto",
+        url = "https://mosquitto.org/files/source/mosquitto-2.0.22.tar.gz",
+        sha256 = "2f752589ef7db40260b633fbdb536e9a04b446a315138d64a7ff3c14e2de6b68",
+        strip_prefix = "mosquitto-2.0.22",
+        build_file = "@everest-core//third-party/bazel:BUILD.mosquitto.bazel",
+    )
+
 
     version = "0.2.15"
     maybe(

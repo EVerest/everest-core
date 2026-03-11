@@ -22,7 +22,6 @@ bazel_dep(name = "fast_float", version = "6.1.6")
 bazel_dep(name = "fmt", version = "12.1.0", repo_name = "com_github_fmtlib_fmt")
 bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.1", repo_name = "com_github_nlohmann_json")
 bazel_dep(name = "libcap", version = "2.27.bcr.1")
-bazel_dep(name = "mosquitto", version = "2.1.2")
 bazel_dep(name = "openssl", version = "3.3.1.bcr.6")
 bazel_dep(name = "platforms", version = "0.0.11")
 bazel_dep(name = "pugixml", version = "1.15")
@@ -36,12 +35,6 @@ bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "pybind11_bazel", version = "3.0.0")
 bazel_dep(name = "sqlite3", version = "3.51.2")
 
-single_version_override(
-    module_name = "mosquitto",
-    patches = ["third-party/bazel/mosquitto_visibility.patch"],
-    version = "2.1.2",
-)
-
 ###############################################################################
 # N O N   M O D U L E
 ###############################################################################
@@ -50,6 +43,7 @@ deps = use_extension("//third-party/bazel:extension.bzl", "deps")
 use_repo(
     deps,
     "sigslot",
+    "mosquitto",
     "com_github_HowardHinnant_date",
     "com_github_pboettch_json-schema-validator",
     "com_github_warmcatt_libwebsockets",
