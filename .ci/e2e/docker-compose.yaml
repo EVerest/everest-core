@@ -22,6 +22,8 @@ services:
       - type: bind
         source: ${GITHUB_WORKSPACE}
         target: /ext
+    cap_add:
+      - NET_ADMIN
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
     networks:
