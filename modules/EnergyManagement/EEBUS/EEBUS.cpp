@@ -14,20 +14,31 @@
 namespace module {
 
 EEBUS::~EEBUS() {
-    // Signal the event handler thread to stop before joining, so it exits its
-    // epoll loop rather than blocking indefinitely.
+    // 1. Signal all threads to stop
     running_flag = false;
-    if (event_handler_thread.joinable()) {
-        event_handler_thread.join();
-    }
+    this->eebus_grpc_api_thread_active.store(false);
+
+    // 2. Stop connection handler first — sets its internal stop flag to break out of
+    //    any in-progress wait_for_channel_ready() call, and cancels the gRPC stream.
     if (this->connection_handler) {
         this->connection_handler->stop();
     }
-    if (this->config.manage_eebus_grpc_api_binary) {
-        this->eebus_grpc_api_thread_active.store(false);
-        if (this->eebus_grpc_api_thread.joinable()) {
-            this->eebus_grpc_api_thread.join();
-        }
+
+    // 3. Wake the event handler's epoll so it checks running_flag and exits.
+    //    fd_event_handler::run() uses epoll_wait(-1) (infinite timeout); setting
+    //    running_flag alone does NOT wake it. add_action() writes to an internal
+    //    eventfd which wakes epoll_wait.
+    event_handler.add_action([] {});
+
+    // 4. Wake the grpc api thread if it's sleeping between restart attempts.
+    shutdown_cv.notify_all();
+
+    // 5. Join threads
+    if (event_handler_thread.joinable()) {
+        event_handler_thread.join();
+    }
+    if (this->eebus_grpc_api_thread.joinable()) {
+        this->eebus_grpc_api_thread.join();
     }
 }
 
@@ -99,7 +110,9 @@ void EEBUS::start_eebus_grpc_api(const std::filesystem::path& binary_path, int p
 
         if (this->eebus_grpc_api_thread_active) {
             EVLOG_info << "Restarting eebus_grpc_api binary in " << restart_delay_s << " seconds...";
-            std::this_thread::sleep_for(std::chrono::seconds(restart_delay_s));
+            std::unique_lock<std::mutex> lock(this->shutdown_mutex);
+            this->shutdown_cv.wait_for(lock, std::chrono::seconds(restart_delay_s),
+                                       [this] { return !this->eebus_grpc_api_thread_active.load(); });
         }
     }
     EVLOG_info << "eebus_grpc_api monitoring thread is stopping.";
