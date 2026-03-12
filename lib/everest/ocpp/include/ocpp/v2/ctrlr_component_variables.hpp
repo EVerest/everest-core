@@ -396,6 +396,11 @@ extern const Variable VpnPassword;
 extern const Variable VpnKey;
 extern const Variable VpnType;
 extern const Variable VpnGroup;
+extern const Variable OcppVersion;
+extern const Variable CsmsRootCertificateHashAlgorithm;
+extern const Variable CsmsRootCertificateIssuerKeyHash;
+extern const Variable CsmsRootCertificateIssuerNameHash;
+extern const Variable CsmsRootCertificateSerialNumber;
 ComponentVariable get_component_variable(const std::int32_t slot, const Variable& variable);
 } // namespace NetworkConfigurationComponentVariables
 

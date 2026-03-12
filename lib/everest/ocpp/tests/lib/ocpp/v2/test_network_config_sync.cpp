@@ -6,8 +6,8 @@
 
 #include <device_model_test_helper.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/device_model_interface.hpp>
 #include <ocpp/v2/messages/SetNetworkProfile.hpp>
-#include <ocpp/v2/network_config_sync.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 
 using json = nlohmann::json;
@@ -70,6 +70,9 @@ static void seed_blob(DeviceModel& dm, const json& profiles) {
 // Read the current NetworkConnectionProfiles JSON blob from the device model.
 static json read_blob(DeviceModel& dm) {
     const auto str = dm.get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles);
+    if (str.empty()) {
+        return json::array();
+    }
     return json::parse(str);
 }
 
@@ -94,19 +97,19 @@ protected:
 
 TEST_F(NetworkConfigSyncTest, WriteBasicProfileSucceeds) {
     auto profile = make_basic_profile();
-    EXPECT_TRUE(network_config::write_profile_to_device_model(*dm, 1, profile, "test"));
+    EXPECT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, profile, "test"));
 }
 
 TEST_F(NetworkConfigSyncTest, WriteProfileWithApnSucceeds) {
     auto profile = make_basic_profile();
     profile.apn = make_test_apn();
-    EXPECT_TRUE(network_config::write_profile_to_device_model(*dm, 1, profile, "test"));
+    EXPECT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, profile, "test"));
 }
 
 TEST_F(NetworkConfigSyncTest, WriteProfileWithVpnSucceeds) {
     auto profile = make_basic_profile();
     profile.vpn = make_test_vpn();
-    EXPECT_TRUE(network_config::write_profile_to_device_model(*dm, 1, profile, "test"));
+    EXPECT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, profile, "test"));
 }
 
 // ---------------------------------------------------------------------------
@@ -115,15 +118,15 @@ TEST_F(NetworkConfigSyncTest, WriteProfileWithVpnSucceeds) {
 
 TEST_F(NetworkConfigSyncTest, ReadFromEmptySlotReturnsNullopt) {
     // Slot 2 has no default OcppCsmsUrl, so reading without writing first returns nullopt
-    auto result = network_config::read_profile_from_device_model(*dm, 2);
+    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 2);
     EXPECT_FALSE(result.has_value());
 }
 
 TEST_F(NetworkConfigSyncTest, WriteAndReadBasicProfileRoundtrip) {
     auto original = make_basic_profile(2, "wss://test.server/ocpp");
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 1, original, "test"));
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, original, "test"));
 
-    auto result = network_config::read_profile_from_device_model(*dm, 1);
+    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result->ocppCsmsUrl.get(), "wss://test.server/ocpp");
     EXPECT_EQ(result->securityProfile, 2);
@@ -136,9 +139,9 @@ TEST_F(NetworkConfigSyncTest, WriteAndReadBasicProfileRoundtrip) {
 TEST_F(NetworkConfigSyncTest, WriteAndReadProfileWithApnRoundtrip) {
     auto original = make_basic_profile();
     original.apn = make_test_apn();
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 1, original, "test"));
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, original, "test"));
 
-    auto result = network_config::read_profile_from_device_model(*dm, 1);
+    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
     ASSERT_TRUE(result.has_value());
     ASSERT_TRUE(result->apn.has_value());
     EXPECT_EQ(result->apn->apn.get(), "internet");
@@ -151,9 +154,9 @@ TEST_F(NetworkConfigSyncTest, WriteAndReadProfileWithIdentityRoundtrip) {
     auto original = make_basic_profile();
     original.identity = "per_slot_identity";
     original.basicAuthPassword = "secret";
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 1, original, "test"));
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, original, "test"));
 
-    auto result = network_config::read_profile_from_device_model(*dm, 1);
+    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
     ASSERT_TRUE(result.has_value());
     ASSERT_TRUE(result->identity.has_value());
     EXPECT_EQ(result->identity->get(), "per_slot_identity");
@@ -161,25 +164,25 @@ TEST_F(NetworkConfigSyncTest, WriteAndReadProfileWithIdentityRoundtrip) {
 
 TEST_F(NetworkConfigSyncTest, OverwriteProfileUpdatesFields) {
     auto first = make_basic_profile(1, "wss://first.example.com/ocpp");
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 1, first, "test"));
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, first, "test"));
 
     auto second = make_basic_profile(2, "wss://second.example.com/ocpp");
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 1, second, "test"));
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, second, "test"));
 
-    auto result = network_config::read_profile_from_device_model(*dm, 1);
+    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result->ocppCsmsUrl.get(), "wss://second.example.com/ocpp");
     EXPECT_EQ(result->securityProfile, 2);
 }
 
 TEST_F(NetworkConfigSyncTest, TwoSlotsAreIndependent) {
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 1, make_basic_profile(1, "wss://slot1.example.com"),
-                                                              "test"));
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 2, make_basic_profile(2, "wss://slot2.example.com"),
-                                                              "test"));
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(
+        *dm, 1, make_basic_profile(1, "wss://slot1.example.com"), "test"));
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(
+        *dm, 2, make_basic_profile(2, "wss://slot2.example.com"), "test"));
 
-    auto r1 = network_config::read_profile_from_device_model(*dm, 1);
-    auto r2 = network_config::read_profile_from_device_model(*dm, 2);
+    auto r1 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    auto r2 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 2);
 
     ASSERT_TRUE(r1.has_value());
     ASSERT_TRUE(r2.has_value());
@@ -190,118 +193,104 @@ TEST_F(NetworkConfigSyncTest, TwoSlotsAreIndependent) {
 }
 
 // ---------------------------------------------------------------------------
-// sync_json_blob_from_device_model
+// migrate_from_blob_if_needed
 // ---------------------------------------------------------------------------
 
-TEST_F(NetworkConfigSyncTest, SyncSingleSlotBuildsBlob) {
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 1, make_basic_profile(1), "test"));
+// Note: slot 1 has a default OcppCsmsUrl in the test DM config ("wss://ocpp.example.com"),
+// so it is never considered "empty" unless explicitly cleared first.
+// Import-from-blob tests clear slot 1 before calling migrate to simulate a fresh deployment.
 
-    // Pre-seed the blob with a valid empty array so get_value succeeds
-    seed_blob(*dm, json::array());
+TEST_F(NetworkConfigSyncTest, MigrateFromBlobPopulatesSlot1) {
+    NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1); // remove defaults so DM looks fresh
 
-    network_config::sync_json_blob_from_device_model(*dm, {1});
-
-    const auto blob = read_blob(*dm);
-    ASSERT_EQ(blob.size(), 1u);
-    EXPECT_EQ(blob[0].at("configurationSlot").get<int>(), 1);
-    EXPECT_EQ(blob[0].at("connectionData").at("ocppCsmsUrl").get<std::string>(), "wss://csms.example.com/ocpp");
-}
-
-// Regression test for the data-loss bug: updating slot 2 must not erase slot 1.
-TEST_F(NetworkConfigSyncTest, SyncPartialUpdatePreservesOtherSlots) {
-    // Write both slots to the device model
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 1, make_basic_profile(1, "wss://slot1.example.com"),
-                                                              "test"));
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 2, make_basic_profile(2, "wss://slot2.example.com"),
-                                                              "test"));
-
-    // Seed the blob with both slots present
-    seed_blob(*dm, json::array());
-    network_config::sync_json_blob_from_device_model(*dm, {1, 2});
-    ASSERT_EQ(read_blob(*dm).size(), 2u);
-
-    // Now update only slot 2
-    auto updated = make_basic_profile(2, "wss://slot2-updated.example.com");
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 2, updated, "test"));
-    network_config::sync_json_blob_from_device_model(*dm, {2});
-
-    // Both slots must still be present
-    const auto blob = read_blob(*dm);
-    ASSERT_EQ(blob.size(), 2u);
-
-    // Find each slot in the blob (order may vary)
-    std::string slot1_url, slot2_url;
-    for (const auto& entry : blob) {
-        if (entry.at("configurationSlot").get<int>() == 1) {
-            slot1_url = entry.at("connectionData").at("ocppCsmsUrl").get<std::string>();
-        } else if (entry.at("configurationSlot").get<int>() == 2) {
-            slot2_url = entry.at("connectionData").at("ocppCsmsUrl").get<std::string>();
-        }
-    }
-    EXPECT_EQ(slot1_url, "wss://slot1.example.com") << "Slot 1 must be preserved after slot 2 update";
-    EXPECT_EQ(slot2_url, "wss://slot2-updated.example.com") << "Slot 2 must reflect the update";
-}
-
-TEST_F(NetworkConfigSyncTest, SyncWithEmptyBlobProducesValidArray) {
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 1, make_basic_profile(), "test"));
-
-    // No pre-existing blob — should be handled gracefully
-    // (get_value throws if unset, so the catch branch rebuilds from scratch)
-    network_config::sync_json_blob_from_device_model(*dm, {1});
-    // If NetworkConnectionProfiles was not pre-set, the function logs a warning and
-    // still writes the new profiles. Verify it doesn't crash.
-    SUCCEED();
-}
-
-TEST_F(NetworkConfigSyncTest, SyncPreservesThreeSlots) {
-    // Write three separate URL values — slot 3 doesn't exist in the test config
-    // so only slots 1 and 2 are tested here. Both must survive a partial update.
-    ASSERT_TRUE(
-        network_config::write_profile_to_device_model(*dm, 1, make_basic_profile(1, "wss://a.example.com"), "test"));
-    ASSERT_TRUE(
-        network_config::write_profile_to_device_model(*dm, 2, make_basic_profile(2, "wss://b.example.com"), "test"));
-
-    seed_blob(*dm, json::array());
-    network_config::sync_json_blob_from_device_model(*dm, {1, 2});
-
-    // Update only slot 1
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 1, make_basic_profile(1, "wss://a-new.example.com"),
-                                                              "test"));
-    network_config::sync_json_blob_from_device_model(*dm, {1});
-
-    const auto blob = read_blob(*dm);
-    ASSERT_EQ(blob.size(), 2u);
-    for (const auto& entry : blob) {
-        const int slot = entry.at("configurationSlot").get<int>();
-        const auto url = entry.at("connectionData").at("ocppCsmsUrl").get<std::string>();
-        if (slot == 1) {
-            EXPECT_EQ(url, "wss://a-new.example.com");
-        } else if (slot == 2) {
-            EXPECT_EQ(url, "wss://b.example.com");
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// seed_device_model_from_json_blob
-// ---------------------------------------------------------------------------
-
-TEST_F(NetworkConfigSyncTest, SeedFromBlobPopulatesSlot1) {
-    // Build a JSON blob with one profile at slot 1
     SetNetworkProfileRequest req;
     req.configurationSlot = 1;
     req.connectionData = make_basic_profile(1, "wss://seeded.example.com/ocpp");
     seed_blob(*dm, make_blob({req}));
 
-    network_config::seed_device_model_from_json_blob(*dm);
+    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
 
-    auto result = network_config::read_profile_from_device_model(*dm, 1);
+    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result->ocppCsmsUrl.get(), "wss://seeded.example.com/ocpp");
     EXPECT_EQ(result->securityProfile, 1);
 }
 
-TEST_F(NetworkConfigSyncTest, SeedFromBlobPopulatesBothSlots) {
+TEST_F(NetworkConfigSyncTest, MigrateFromBlobClearsBlob) {
+    NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
+
+    SetNetworkProfileRequest req;
+    req.configurationSlot = 1;
+    req.connectionData = make_basic_profile(1, "wss://migrated.example.com");
+    seed_blob(*dm, make_blob({req}));
+
+    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
+
+    // Blob must be cleared after migration — empty blob is the idempotency marker
+    const auto blob = read_blob(*dm);
+    EXPECT_EQ(blob.size(), 0u);
+}
+
+TEST_F(NetworkConfigSyncTest, MigrateOverwritesDmWithBlobValue) {
+    // Slot 1 has a default OcppCsmsUrl — blob import must overwrite it
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1).has_value())
+        << "Test precondition: slot 1 must have default data in the test DM config";
+
+    SetNetworkProfileRequest req;
+    req.configurationSlot = 1;
+    req.connectionData = make_basic_profile(1, "wss://blob-set.example.com");
+    seed_blob(*dm, make_blob({req}));
+    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
+
+    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    ASSERT_TRUE(result.has_value());
+    // Blob value wins — blob always overwrites DM on migration
+    EXPECT_EQ(result->ocppCsmsUrl.get(), "wss://blob-set.example.com")
+        << "Blob must overwrite DM data during migration";
+}
+
+TEST_F(NetworkConfigSyncTest, MigrateFromEmptyBlobIsNoop) {
+    NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
+
+    // Seed an empty blob — no import should happen
+    seed_blob(*dm, json::array());
+    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
+
+    // Slot 1 must still be empty
+    EXPECT_FALSE(NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1).has_value())
+        << "Empty blob must not populate any DM slot";
+}
+
+TEST_F(NetworkConfigSyncTest, MigrateFromBlobIsIdempotent) {
+    NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
+
+    SetNetworkProfileRequest req;
+    req.configurationSlot = 1;
+    req.connectionData = make_basic_profile(1, "wss://idempotent.example.com");
+    seed_blob(*dm, make_blob({req}));
+
+    // First call: blob is non-empty, imports from blob, clears blob
+    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
+
+    auto r1 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    ASSERT_TRUE(r1.has_value());
+    EXPECT_EQ(r1->ocppCsmsUrl.get(), "wss://idempotent.example.com");
+
+    // Verify blob is cleared
+    EXPECT_EQ(read_blob(*dm).size(), 0u) << "Blob must be cleared after migration";
+
+    // Second call: blob is empty (already migrated), must be a no-op
+    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
+
+    auto r2 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    ASSERT_TRUE(r2.has_value());
+    // DM value is unchanged — blob was empty so no re-import occurred
+    EXPECT_EQ(r2->ocppCsmsUrl.get(), "wss://idempotent.example.com");
+}
+
+TEST_F(NetworkConfigSyncTest, MigrateFromBlobPopulatesBothSlots) {
+    NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
+
     SetNetworkProfileRequest req1;
     req1.configurationSlot = 1;
     req1.connectionData = make_basic_profile(1, "wss://primary.example.com");
@@ -311,10 +300,10 @@ TEST_F(NetworkConfigSyncTest, SeedFromBlobPopulatesBothSlots) {
     req2.connectionData = make_basic_profile(2, "wss://backup.example.com");
 
     seed_blob(*dm, make_blob({req1, req2}));
-    network_config::seed_device_model_from_json_blob(*dm);
+    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
 
-    auto r1 = network_config::read_profile_from_device_model(*dm, 1);
-    auto r2 = network_config::read_profile_from_device_model(*dm, 2);
+    auto r1 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    auto r2 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 2);
 
     ASSERT_TRUE(r1.has_value());
     ASSERT_TRUE(r2.has_value());
@@ -323,58 +312,124 @@ TEST_F(NetworkConfigSyncTest, SeedFromBlobPopulatesBothSlots) {
     EXPECT_EQ(r2->securityProfile, 2);
 }
 
-TEST_F(NetworkConfigSyncTest, SeedFromBlobWithApnPopulatesApnFields) {
+TEST_F(NetworkConfigSyncTest, MigrateFromBlobWithApnPopulatesApnFields) {
+    NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
+
     SetNetworkProfileRequest req;
     req.configurationSlot = 1;
     req.connectionData = make_basic_profile();
     req.connectionData.apn = make_test_apn();
 
     seed_blob(*dm, make_blob({req}));
-    network_config::seed_device_model_from_json_blob(*dm);
+    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
 
-    auto result = network_config::read_profile_from_device_model(*dm, 1);
+    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
     ASSERT_TRUE(result.has_value());
     ASSERT_TRUE(result->apn.has_value());
     EXPECT_EQ(result->apn->apn.get(), "internet");
 }
 
-TEST_F(NetworkConfigSyncTest, SeedThenSyncRoundtrip) {
-    // Start: seed from a blob
-    SetNetworkProfileRequest req;
-    req.configurationSlot = 1;
-    req.connectionData = make_basic_profile(1, "wss://original.example.com");
-    seed_blob(*dm, make_blob({req}));
-    network_config::seed_device_model_from_json_blob(*dm);
+// ---------------------------------------------------------------------------
+// Optional variable clearing on overwrite (Step 3 / Piet comment 4)
+// ---------------------------------------------------------------------------
 
-    // Update the DM directly (as if via SetVariables)
-    auto updated_profile = make_basic_profile(1, "wss://updated.example.com");
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 1, updated_profile, "test"));
+// Writing a profile with Identity and then overwriting with a profile that has
+// no Identity must clear the Identity variable so it is not visible in the next read.
+TEST_F(NetworkConfigSyncTest, OverwriteWithoutIdentityClearsIdentity) {
+    auto with_identity = make_basic_profile();
+    with_identity.identity = "slot_identity";
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, with_identity, "test"));
 
-    // Sync back to blob
-    network_config::sync_json_blob_from_device_model(*dm, {1});
+    auto r1 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    ASSERT_TRUE(r1.has_value());
+    ASSERT_TRUE(r1->identity.has_value());
+    EXPECT_EQ(r1->identity->get(), "slot_identity");
 
-    // The blob must reflect the update
-    const auto blob = read_blob(*dm);
-    ASSERT_EQ(blob.size(), 1u);
-    EXPECT_EQ(blob[0].at("connectionData").at("ocppCsmsUrl").get<std::string>(), "wss://updated.example.com");
+    // Overwrite with a profile that has no identity
+    auto without_identity = make_basic_profile();
+    ASSERT_TRUE(
+        NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, without_identity, "test"));
+
+    auto r2 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    ASSERT_TRUE(r2.has_value());
+    // Identity must be absent — clearing writes "" which is treated as unset
+    EXPECT_FALSE(r2->identity.has_value()) << "Identity must be cleared after overwrite without identity";
 }
 
-TEST_F(NetworkConfigSyncTest, SeedDoesNotCorruptExistingDmValues) {
-    // First, write slot 1 directly via DM
-    ASSERT_TRUE(network_config::write_profile_to_device_model(*dm, 1, make_basic_profile(1, "wss://dm-set.example.com"),
-                                                              "test"));
+// Writing a profile with APN and then overwriting without APN must not leave
+// stale APN sub-fields in the device model.
+TEST_F(NetworkConfigSyncTest, OverwriteWithoutApnClearsApnSubFields) {
+    auto with_apn = make_basic_profile();
+    with_apn.apn = make_test_apn();
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, with_apn, "test"));
 
-    // Now seed from a blob with a different URL for slot 1 — seed should overwrite
-    SetNetworkProfileRequest req;
-    req.configurationSlot = 1;
-    req.connectionData = make_basic_profile(1, "wss://blob-set.example.com");
-    seed_blob(*dm, make_blob({req}));
-    network_config::seed_device_model_from_json_blob(*dm);
+    auto r1 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    ASSERT_TRUE(r1.has_value());
+    ASSERT_TRUE(r1->apn.has_value());
 
-    auto result = network_config::read_profile_from_device_model(*dm, 1);
-    ASSERT_TRUE(result.has_value());
-    // Seed takes precedence — last write wins
-    EXPECT_EQ(result->ocppCsmsUrl.get(), "wss://blob-set.example.com");
+    // Overwrite with a profile that has no APN
+    ASSERT_TRUE(
+        NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, make_basic_profile(), "test"));
+
+    auto r2 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    ASSERT_TRUE(r2.has_value());
+    EXPECT_FALSE(r2->apn.has_value()) << "APN must be cleared after overwrite without APN";
+}
+
+// Writing a profile with VPN and then overwriting without VPN must not leave
+// stale VPN sub-fields in the device model.
+TEST_F(NetworkConfigSyncTest, OverwriteWithoutVpnClearsVpnSubFields) {
+    auto with_vpn = make_basic_profile();
+    with_vpn.vpn = make_test_vpn();
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, with_vpn, "test"));
+
+    auto r1 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    ASSERT_TRUE(r1.has_value());
+    ASSERT_TRUE(r1->vpn.has_value());
+
+    // Overwrite with a profile that has no VPN
+    ASSERT_TRUE(
+        NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, make_basic_profile(), "test"));
+
+    auto r2 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    ASSERT_TRUE(r2.has_value());
+    EXPECT_FALSE(r2->vpn.has_value()) << "VPN must be cleared after overwrite without VPN";
+}
+
+// ---------------------------------------------------------------------------
+// clear_slot_in_device_model (Step 7)
+// ---------------------------------------------------------------------------
+
+TEST_F(NetworkConfigSyncTest, ClearSlotMakesReadReturnNullopt) {
+    // Write a full profile to slot 1
+    auto profile = make_basic_profile(1, "wss://to-be-cleared.example.com");
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, profile, "test"));
+
+    // Verify it can be read back
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1).has_value());
+
+    // Clear the slot
+    NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
+
+    // After clearing, required fields (OcppCsmsUrl) are empty -> read returns nullopt
+    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    EXPECT_FALSE(result.has_value()) << "read_profile_from_device_model must return nullopt after clear";
+}
+
+TEST_F(NetworkConfigSyncTest, ClearSlotDoesNotAffectOtherSlot) {
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(
+        *dm, 1, make_basic_profile(1, "wss://s1.example.com"), "test"));
+    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(
+        *dm, 2, make_basic_profile(2, "wss://s2.example.com"), "test"));
+
+    // Clear only slot 1
+    NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
+
+    // Slot 1 must be gone, slot 2 must remain intact
+    EXPECT_FALSE(NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1).has_value());
+    auto r2 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 2);
+    ASSERT_TRUE(r2.has_value());
+    EXPECT_EQ(r2->ocppCsmsUrl.get(), "wss://s2.example.com");
 }
 
 // ---------------------------------------------------------------------------
