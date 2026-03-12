@@ -22,16 +22,6 @@ namespace ocpp {
 
 using namespace common;
 
-namespace {
-std::int64_t to_unix_milliseconds(const DateTime& dt) {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(dt.to_time_point().time_since_epoch()).count();
-}
-
-DateTime from_unix_milliseconds(std::int64_t ms_since_epoch) {
-    return DateTime(date::utc_clock::time_point(std::chrono::milliseconds(ms_since_epoch)));
-}
-} // namespace
-
 namespace v2 {
 
 DatabaseHandler::DatabaseHandler(std::unique_ptr<ConnectionInterface> database,
@@ -118,9 +108,9 @@ void DatabaseHandler::authorization_cache_insert_entry(const std::string& id_tok
 
     insert_stmt->bind_text("@id_token_hash", id_token_hash);
     insert_stmt->bind_text("@id_token_info", json(id_token_info).dump(), SQLiteString::Transient);
-    insert_stmt->bind_int64("@last_used", to_unix_milliseconds(DateTime()));
+    insert_stmt->bind_datetime("@last_used", DateTime().to_time_point());
     if (id_token_info.cacheExpiryDateTime.has_value()) {
-        insert_stmt->bind_int64("@expiry_date", to_unix_milliseconds(id_token_info.cacheExpiryDateTime.value()));
+        insert_stmt->bind_datetime("@expiry_date", id_token_info.cacheExpiryDateTime.value().to_time_point());
     } else {
         insert_stmt->bind_null("@expiry_date");
     }
@@ -134,7 +124,7 @@ void DatabaseHandler::authorization_cache_update_last_used(const std::string& id
     const std::string sql = "UPDATE AUTH_CACHE SET LAST_USED = @last_used WHERE ID_TOKEN_HASH = @id_token_hash";
     auto insert_stmt = this->database->new_statement(sql);
 
-    insert_stmt->bind_int64("@last_used", to_unix_milliseconds(DateTime()));
+    insert_stmt->bind_datetime("@last_used", DateTime().to_time_point());
     insert_stmt->bind_text("@id_token_hash", id_token_hash);
 
     if (insert_stmt->step() != SQLITE_DONE) {
@@ -157,7 +147,7 @@ DatabaseHandler::authorization_cache_get_entry(const std::string& id_token_hash)
 
     if (status == SQLITE_ROW) {
         return AuthorizationCacheEntry{json::parse(select_stmt->column_text(0)),
-                                       from_unix_milliseconds(select_stmt->column_int64(1))};
+                                       DateTime(select_stmt->column_datetime(1))};
     }
 
     throw QueryExecutionException(this->database->get_error_message());
@@ -194,10 +184,10 @@ void DatabaseHandler::authorization_cache_delete_expired_entries(
     auto delete_stmt = this->database->new_statement(sql);
 
     const DateTime now;
-    delete_stmt->bind_int64("@before_date", to_unix_milliseconds(now));
+    delete_stmt->bind_datetime("@before_date", now.to_time_point());
     if (auth_cache_lifetime.has_value()) {
-        delete_stmt->bind_int64("@before_last_used",
-                                to_unix_milliseconds(DateTime(now.to_time_point() - auth_cache_lifetime.value())));
+        delete_stmt->bind_datetime("@before_last_used",
+                                   DateTime(now.to_time_point() - auth_cache_lifetime.value()).to_time_point());
     } else {
         delete_stmt->bind_null("@before_last_used");
     }
@@ -403,7 +393,7 @@ void DatabaseHandler::transaction_metervalues_insert(const std::string& transact
     auto stmt = this->database->new_statement(sql1);
 
     stmt->bind_text("@transaction_id", transaction_id);
-    stmt->bind_int64("@timestamp", to_unix_milliseconds(meter_value.timestamp));
+    stmt->bind_datetime("@timestamp", meter_value.timestamp.to_time_point());
     stmt->bind_int("@context", static_cast<int>(context));
     stmt->bind_null("@custom_data");
 
@@ -515,8 +505,7 @@ std::vector<MeterValue> DatabaseHandler::transaction_metervalues_get_all(const s
     int status = SQLITE_ERROR;
     while ((status = select_stmt->step()) == SQLITE_ROW) {
         MeterValue value;
-        value.timestamp = from_unix_milliseconds(select_stmt->column_int64(2));
-
+        value.timestamp = DateTime(select_stmt->column_datetime(2));
         if (select_stmt->column_type(4) == SQLITE_TEXT) {
             value.customData = CustomData{select_stmt->column_text(4)};
         }
@@ -669,7 +658,7 @@ void DatabaseHandler::transaction_insert(const EnhancedTransaction& transaction,
     insert_stmt->bind_text("@transaction_id", transaction.transactionId.get(), SQLiteString::Transient);
     insert_stmt->bind_int("@evse_id", evse_id);
     insert_stmt->bind_int("@connector_id", transaction.connector_id);
-    insert_stmt->bind_int64("@time_start", to_unix_milliseconds(transaction.start_time));
+    insert_stmt->bind_datetime("@time_start", transaction.start_time.to_time_point());
     insert_stmt->bind_int("@seq_no", transaction.seq_no);
     insert_stmt->bind_text(
         "@charging_state",
@@ -698,7 +687,7 @@ std::unique_ptr<EnhancedTransaction> DatabaseHandler::transaction_get(const std:
     // Fill transaction
     transaction->transactionId = get_stmt->column_text(0);
     transaction->connector_id = get_stmt->column_int(1);
-    transaction->start_time = from_unix_milliseconds(get_stmt->column_int64(2));
+    transaction->start_time = DateTime(get_stmt->column_datetime(2));
     transaction->seq_no = get_stmt->column_int(3);
     transaction->chargingState = conversions::string_to_charging_state_enum(get_stmt->column_text(4));
     transaction->id_token_sent = get_stmt->column_int(5) != 0;
