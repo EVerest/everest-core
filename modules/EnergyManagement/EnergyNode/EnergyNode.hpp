@@ -29,6 +29,7 @@ namespace module {
 struct Conf {
     double fuse_limit_A;
     int phase_count;
+    double nominal_voltage_V;
 };
 
 class EnergyNode : public Everest::ModuleBase {

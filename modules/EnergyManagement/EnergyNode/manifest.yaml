@@ -1,5 +1,5 @@
 description: >-
-  This module is part of the Energy Tree and represents a simple current fuse.
+  This module is part of the Energy Tree and represents a simple current fuse on AC side.
 config:
   fuse_limit_A:
     description: >-
@@ -8,10 +8,16 @@ config:
     type: number
     minimum: 0.0
   phase_count:
-    description: phase count limit. Omit if not limited in this fuse.
+    description: phase count of this fuse
     type: integer
-    minimum: 0
+    minimum: 1
     maximum: 3
+    default: 3
+  nominal_voltage_V:
+    description: Nominal AC voltage between a single phase and neutral in Volt
+    type: number
+    minimum: 0
+    default: 230
 provides:
   energy_grid:
     description: This is the chain interface to build the energy supply tree
