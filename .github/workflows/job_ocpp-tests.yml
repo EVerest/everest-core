@@ -87,7 +87,10 @@ jobs:
           -f source/.ci/e2e/docker-compose.yaml \
           run \
           e2e-test-server \
-          run-script run_ocpp_tests
+          tests/run-tests.sh ocpp \
+          --everest-prefix /ext/dist \
+          --junitxml /ext/ocpp-tests-result.xml \
+          --html /ext/ocpp-tests-report.html
       - name: Upload result and report as artifact
         continue-on-error: true
         if: ${{ steps.run_ocpp_tests.outcome == 'success' || steps.run_ocpp_tests.outcome == 'failure' }}

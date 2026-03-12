@@ -1,39 +1,64 @@
 # everest-core tests
 
-This folder contains the basic test functions for everest-core's integration testing. You can either extend the '*\*_tests.py*' files in the "everest-core/**tests/core_tests**" folder or write your own!
+This folder contains the basic test functions for everest-core's e2e testing. You can either extend the '*\*_tests.py*' files in the "everest-core/**tests/core_tests**" folder or write your own!
 
 ## Prerequisites
 
-For running the tests you need to install the everest-testing framework from everest-utils:
+In order to run any of the e2e tests, you need to have everest-core compiled
+and installed on your system. Please also make sure to install the python
+requirements.
 
 ```bash
-cd ~/checkout/everest-workspace/everest-utils/everest-testing
-python3 -m pip install .
-```
-
-You can also use the following cmake target to install everest-testing and its dependencies:
-```bash
-cd everest-core
-cmake --build build --target install_everest_testing
+cd everest-core/
+cmake -S . -B build -DBUILD_TESTING=ON
+cmake --build build --target install --parallel -j$(nproc)
+. build/venv/bin/activate
+cmake --build build --target everestpy_pip_install_dist # install everestpy
+cmake --build build --target everest-testing_pip_install_dist # install everest-testing
+cmake --build build --target iso15118_pip_install_dist # install iso15118 for ev side simulation
+python3 -m pip install "aiofile>=3.7.4"
+python3 -m pip install "netifaces>=0.11.0"
 ```
 
 ## Execute locally
 
-To start you should try executing the available basic tests:
-
--   **startup_tests.py** (checks if all test functionality can be started correctly, but does not yet do any value-based integration testing)
--   **basic_charging_tests.py** (tests a basic charging situation: enable charging -> wait 20 seconds -> check if a certain minimum amount of kWhs have been charged)
-
-Go to your "everest-core/**tests**" folder and execute *pytest*:
+All test suites are run via the unified `run-tests.sh` script:
 
 ```bash
 cd ~/checkout/everest-workspace/everest-core/tests
-pytest --everest-prefix ../build/dist core_tests/*.py framework_tests/*.py
+
+./run-tests.sh all          # all tests (core, framework, async, OCPP)
+./run-tests.sh core         # core tests only
+./run-tests.sh framework    # framework tests only
+./run-tests.sh asyncapi        # async API tests only
+./run-tests.sh integration  # core + framework + async
+./run-tests.sh ocpp         # all OCPP tests (1.6, 2.0.1, 2.1)
+./run-tests.sh --serial all # run serially (no parallelism)
+./run-tests.sh -j4 all      # limit to 4 parallel workers
+./run-tests.sh --help       # show all options
 ```
 
-After execution a "results.xml" file should be available in the "everest-core/**tests**" folder, which details the current test results.
+The script automatically sets up network isolation for parallel ISO 15118 tests
+(requires sudo or CAP_NET_ADMIN) and falls back to sequential execution otherwise.
 
-(*Note: Because the everest-core tests are used in CI testing and because an upstream issue in the way everestpy handles external modules, it is currently not possible to receive a test report on stdout at the end of a pytest run in everest-core tests, as otherwise CI testing would not always work. We are currently working on resolving the issue, please be patient. Thank you!*)
+After execution `result.xml` and `report.html` are written to the `tests/` directory.
+
+### Running individual tests directly
+
+For a single test file or test case, invoke `pytest` directly from the `tests/` directory:
+
+```bash
+cd ~/checkout/everest-workspace/everest-core/tests
+
+# Run a single test file
+python3 -m pytest core_tests/smoke_tests.py
+
+# Run a single test by name
+python3 -m pytest core_tests/smoke_tests.py::test_iso15118_ac_session
+```
+
+Network isolation is not set up automatically in this mode — ISO 15118 tests will
+run sequentially via their `xdist_group` marker.
 
 ## Add own test sets
 
