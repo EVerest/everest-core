@@ -13,7 +13,6 @@
 #include <ocpp/v2/evse_manager.hpp>
 #include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/message_dispatcher.hpp>
-#include <ocpp/v2/network_config_sync.hpp>
 #include <ocpp/v2/notify_report_requests_splitter.hpp>
 
 #include <ocpp/v2/functional_blocks/authorization.hpp>
@@ -440,8 +439,8 @@ void ChargePoint::on_ev_charging_needs(const NotifyEVChargingNeedsRequest& reque
 void ChargePoint::initialize(const std::map<std::int32_t, std::int32_t>& evse_connector_structure,
                              const std::string& message_log_path) {
     this->device_model->check_integrity(evse_connector_structure);
-    // Seed NetworkConfiguration device model variables from existing JSON blob (migration on first boot)
-    ocpp::v2::network_config::seed_device_model_from_json_blob(*this->device_model);
+    // One-time migration: if NetworkConnectionProfiles blob is non-empty, write into DM components and clear blob
+    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*this->device_model);
     this->database_handler->open_connection();
     this->component_state_manager = std::make_shared<ComponentStateManager>(
         evse_connector_structure, database_handler,
