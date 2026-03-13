@@ -106,6 +106,12 @@ def get_vector_variable_name(variable_name_suffix=""):
 class ValueGenerator:
     manual_generator = ManualGenerator()
     base_types = ["int32_t", "int64_t", "float", "std::string", "bool"]
+    unsupported_base_types = ["void",
+                              "char", "signed char", "unsigned char", "wchar_t", "char16_t", "char32_t", "char8_t",
+                              "short", "short int", "signed short", "signed short int", "unsigned short", "unsigned short int", "int", "signed", "signed int", "unsigned", "unsigned int", "long", "long int", "signed long", "signed long int", "unsigned long", "unsigned long int", "long long", "long long int", "signed long long", "signed long long int", "unsigned long long", "unsigned long long int",
+                              "double", "long double",
+                              "int8_t", "int16_t", "uint8_t", "uint16_t", "uint32_t", "uint64_t",
+                              "std::size_t", "std::byte", "std::int8_t", "std::int16_t", "std::int32_t", "std::int64_t", "std::uint8_t", "std::uint16_t", "std::uint32_t", "std::uint64_t"]
 
     def __init__(self, struct_name, struct_namespace, enum_map, across_file_struct_generator=None):
         if (across_file_struct_generator is None):
@@ -216,6 +222,8 @@ class ValueGenerator:
                                                 field_type, namespace, is_optional)
 
     def generate_corresponding_test(self, original_object, result_object, field_type, namespace, is_optional):
+        if field_type in self.unsupported_base_types:
+            raise TypeError(f"Unsupported type {field_type!r}, supported base types are: {self.base_types}")
         is_simple = field_type in self.base_types or field_type in self.enum_map.keys(
         ) or self.namespace_cleanup(field_type) in self.enum_map.keys()
         if is_simple:
@@ -230,9 +238,9 @@ class ValueGenerator:
                 result_object + ".has_value());\nif (" + result_object + \
                 ".has_value()) {"
             optional_wrapper_rear = "}\n"
-        wraped = self.generate_corresponding_test_unsafe(
+        wrapped = self.generate_corresponding_test_unsafe(
             original_object, result_object, field_type, namespace, is_optional)
-        return optional_wrapper_front + wraped + optional_wrapper_rear
+        return optional_wrapper_front + wrapped + optional_wrapper_rear
 
     def generate_corresponding_test_unsafe(self, original_object, result_object, field_type, namespace, is_optional):
         if "std::vector<" in field_type:
