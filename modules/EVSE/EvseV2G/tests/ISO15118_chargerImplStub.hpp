@@ -69,6 +69,11 @@ struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
     virtual void handle_no_energy_pause_charging(types::iso15118::NoEnergyPauseMode& mode) {
         std::cout << "ISO15118_chargerImplBase::handle_no_energy_pause_charging called" << std::endl;
     }
+    virtual bool
+    handle_update_supported_app_protocols(types::iso15118::SupportedAppProtocols& supported_app_protocols) {
+        std::cout << "ISO15118_chargerImplBase::handle_update_supported_app_protocols called" << std::endl;
+        return true;
+    }
     virtual void handle_update_ac_max_current(double& max_current) {
         std::cout << "ISO15118_chargerImplBase::handle_update_ac_max_current called" << std::endl;
     }
