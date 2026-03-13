@@ -86,19 +86,6 @@ public:
 
     /// \brief Sends an MQTT request and waits for a JSON response.
     ///
-    /// This function registers a temporary response handler for the specified topic,
-    /// waits for a response message, and returns the received JSON data.
-    /// If no response is received within the configured timeout, it throws an
-    /// EverestTimeoutError.
-    ///
-    /// \param topic The MQTT topic to retrieve data from.
-    /// \param qos The Quality of Service (QoS) level for the request.
-    /// \return The JSON message received from the MQTT topic.
-    /// \throws EverestTimeoutError If no response is received within the timeout.
-    nlohmann::json get(const std::string& topic, QOS qos);
-
-    /// \brief Sends an MQTT request and waits for a JSON response.
-    ///
     /// This function registers a temporary handler for the response topic specified
     /// in the request, publishes a request message, and waits for the
     /// corresponding JSON response. If no response is received within the timeout,
@@ -106,9 +93,10 @@ public:
     ///
     /// \param request The MQTT request containing the response topic, request topic,
     ///                payload, QoS, and timeout.
+    /// \param retries How often the get should be retried if it failed, defaults to 0.
     /// \return The JSON response received from the MQTT broker.
     /// \throws EverestTimeoutError If no response is received within the specified timeout.
-    nlohmann::json get(const MQTTRequest& request);
+    nlohmann::json get(const MQTTRequest& request, std::size_t retries = 0);
 
     ///
     /// \brief Spawn a thread running the mqtt main loop
@@ -164,6 +152,7 @@ private:
     void on_mqtt_message(const Message& message);
     void on_mqtt_connect();
     static void on_mqtt_disconnect();
+    nlohmann::json get_internal(const MQTTRequest& request);
 };
 } // namespace Everest
 

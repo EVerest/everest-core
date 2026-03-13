@@ -233,7 +233,7 @@ std::map<ModuleIdType, everest::config::ModuleConfigurationParameters> ConfigSer
     mqtt_request.request_data = json(get_request).dump();
 
     try {
-        Response response = mqtt_abstraction->get(mqtt_request);
+        Response response = mqtt_abstraction->get(mqtt_request, mqtt_get_config_retries);
         if (response.status != ResponseStatus::Ok) {
             EVLOG_error << "Could not get module configs via MQTT";
             return {};
@@ -269,7 +269,7 @@ std::map<std::string, ModuleTierMappings> ConfigServiceClient::get_mappings() {
     mqtt_request.request_data = json(get_request).dump();
 
     try {
-        Response response = mqtt_abstraction->get(mqtt_request);
+        Response response = mqtt_abstraction->get(mqtt_request, mqtt_get_config_retries);
         if (response.status != ResponseStatus::Ok) {
             EVLOG_error << "Could not get mappings configs via MQTT";
             return {};
@@ -308,7 +308,7 @@ ConfigServiceClient::set_config_value(const everest::config::ConfigurationParame
         mqtt_request.request_topic = fmt::format("{}config/request", mqtt_abstraction->get_everest_prefix());
         mqtt_request.request_data = json(request).dump();
 
-        const Response response = mqtt_abstraction->get(mqtt_request);
+        const Response response = mqtt_abstraction->get(mqtt_request, mqtt_get_config_retries);
         result.status = response.status;
         result.status_info = response.status_info;
         if (response.status == ResponseStatus::Ok) {
@@ -344,7 +344,7 @@ ConfigServiceClient::get_config_value(const everest::config::ConfigurationParame
             fmt::format("{}modules/{}/response", mqtt_abstraction->get_everest_prefix(), request.origin);
         mqtt_request.request_topic = fmt::format("{}config/request", mqtt_abstraction->get_everest_prefix());
         mqtt_request.request_data = json(request).dump();
-        const Response response = mqtt_abstraction->get(mqtt_request);
+        const Response response = mqtt_abstraction->get(mqtt_request, mqtt_get_config_retries);
         result.status = response.status;
         result.status_info = response.status_info;
         if (response.status == ResponseStatus::Ok) {

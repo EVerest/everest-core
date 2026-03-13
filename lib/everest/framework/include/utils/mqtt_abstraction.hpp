@@ -69,12 +69,12 @@ public:
     void clear_retained_topics();
 
     ///
-    /// \copydoc MQTTAbstractionImpl::get(const std::string&, QOS)
-    nlohmann::json get(const std::string& topic, QOS qos);
+    /// \copydoc MQTTAbstractionImpl::get(const std::string&, QOS, std::size_t)
+    nlohmann::json get(const std::string& topic, QOS qos, std::size_t retries = 0);
 
     ///
-    /// \copydoc MQTTAbstractionImpl::get(const MQTTRequest&)
-    nlohmann::json get(const MQTTRequest& request);
+    /// \copydoc MQTTAbstractionImpl::get(const MQTTRequest&, std::size_t)
+    nlohmann::json get(const MQTTRequest& request, std::size_t retries = 0);
 
     ///
     /// \brief Get MQTT topic prefix for the "everest" topic
