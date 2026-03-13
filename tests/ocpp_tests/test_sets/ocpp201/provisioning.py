@@ -1008,20 +1008,24 @@ async def test_b09_b10(
     central_system_v201: CentralSystem,
 ):
 
-    # TODO(This discovers a bug in the connectivity_manager of libocpp. this->network_connection_profiles are not updated when a new profile is set)
-
+    # Fetch NetworkConfiguration variables instead of NetworkConnectionProfiles
+    # Get initial NetworkConfiguration slot 1 variables
     r: call_result201.GetVariables = (
-        await charge_point_v201.get_config_variables_req(
-            "InternalCtrlr", "NetworkConnectionProfiles"
+        await charge_point_v201.get_variables_req(
+            get_variable_data=[
+                GetVariableDataType(
+                    component=ComponentType(name="NetworkConfiguration", instance="1"),
+                    variable=VariableType(name="OcppCsmsUrl"),
+                    attribute_type=AttributeEnumType.actual,
+                )
+            ]
         )
     )
     get_variables_result: GetVariableResultType = GetVariableResultType(
         **r.get_variable_result[0]
     )
     assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
-
-    profiles = json.loads(get_variables_result.attribute_value)
-    assert len(profiles) == 1
+    initial_url = get_variables_result.attribute_value
 
     # invalid security profile
     r: call_result201.SetNetworkProfile = (
@@ -1074,18 +1078,31 @@ async def test_b09_b10(
 
     assert r.status == "Accepted"
 
+    # Check that NetworkConfiguration slot 2 now exists and has the expected values
     r: call_result201.GetVariables = (
-        await charge_point_v201.get_config_variables_req(
-            "InternalCtrlr", "NetworkConnectionProfiles"
+        await charge_point_v201.get_variables_req(
+            get_variable_data=[
+                GetVariableDataType(
+                    component=ComponentType(name="NetworkConfiguration", instance="2"),
+                    variable=VariableType(name="OcppCsmsUrl"),
+                    attribute_type=AttributeEnumType.actual,
+                ),
+                GetVariableDataType(
+                    component=ComponentType(name="NetworkConfiguration", instance="2"),
+                    variable=VariableType(name="SecurityProfile"),
+                    attribute_type=AttributeEnumType.actual,
+                )
+            ]
         )
     )
-    get_variables_result: GetVariableResultType = GetVariableResultType(
-        **r.get_variable_result[0]
-    )
-    assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
-
-    profiles = json.loads(get_variables_result.attribute_value)
-    assert len(profiles) == 2
+    # Should get two successful results for slot 2 variables
+    assert len(r.get_variable_result) == 2
+    slot2_url_result = GetVariableResultType(**r.get_variable_result[0])
+    slot2_security_result = GetVariableResultType(**r.get_variable_result[1])
+    assert slot2_url_result.attribute_status == GetVariableStatusEnumType.accepted
+    assert slot2_security_result.attribute_status == GetVariableStatusEnumType.accepted
+    assert slot2_url_result.attribute_value == "wss://localhost:9000/cp001"
+    assert slot2_security_result.attribute_value == "2"
 
     # Set valid NetworkConfigurationPriority
     r: call_result201.SetVariables = (
