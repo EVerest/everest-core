@@ -8,7 +8,6 @@
 #include <ocpp/v16/charge_point_configuration_interface.hpp>
 #include <ocpp/v16/types.hpp>
 
-#include <map>
 #include <set>
 #include <vector>
 
@@ -93,6 +92,9 @@ protected:
     SetResult setInternalNextTimeOffsetTransitionDateTime(const std::string& value);
     SetResult setInternalTimeOffsetNextTransition(const std::string& value);
     SetResult setInternalWaitForSetUserPriceTimeout(const std::string& value);
+
+    std::optional<std::string> calculateEvseIds();
+    std::string calculateSupportedMeasurands();
 
 public:
     explicit ChargePointConfigurationDeviceModel(const std::string_view& ocpp_main_path,

@@ -88,6 +88,9 @@ extern const Component SecurityCtrlr;
 extern const Component SmartChargingCtrlr;
 extern const Component TariffCostCtrlr;
 extern const Component TxCtrlr;
+// following controllers contains OCPP1.6 configuration keys without a clear mapping to OCPP2.x.
+extern const Component OCPP16LegacyCtrlr;
+extern const Component CustomLegacyController;
 } // namespace ControllerComponents
 
 namespace StandardizedVariables {
@@ -310,6 +313,39 @@ extern const ComponentVariable TxBeforeAcceptedEnabled;
 extern const RequiredComponentVariable TxStartPoint;
 extern const RequiredComponentVariable TxStopPoint;
 extern const ComponentVariable ISO15118CtrlrAvailable;
+
+// OCPP1.6 mavericks: The following ComponentVariable definitions are required because some CPP1.6 configuration keys
+// do not map to any existing component variable combination in OCPP2.x. The following definitions only control the
+// OCPP1.6 implementation
+extern const ComponentVariable BlinkRepeat;
+extern const ComponentVariable ConnectorPhaseRotation;
+extern const ComponentVariable ConnectorPhaseRotationMaxLength;
+extern const RequiredComponentVariable GetConfigurationMaxKeys;
+extern const ComponentVariable LightIntensity;
+extern const ComponentVariable MinimumStatusDuration;
+extern const ComponentVariable StopTransactionOnEVSideDisconnect;
+extern const RequiredComponentVariable SupportedFeatureProfiles;
+extern const ComponentVariable SupportedFeatureProfilesMaxLength;
+extern const RequiredComponentVariable UnlockConnectorOnEVSideDisconnect;
+extern const ComponentVariable ReserveConnectorZeroSupported;
+extern const ComponentVariable HostName;
+extern const ComponentVariable AllowChargingProfileWithoutStartSchedule;
+extern const ComponentVariable WaitForStopTransactionsOnResetTimeout;
+extern const ComponentVariable StopTransactionIfUnlockNotSupported;
+extern const ComponentVariable MeterPublicKeys;
+extern const ComponentVariable DisableSecurityEventNotifications;
+extern const ComponentVariable ISO15118CertificateManagementEnabled;
+extern const ComponentVariable CustomDisplayCostAndPrice; // Required only if CaliforniaPricing enabled
+extern const ComponentVariable DefaultPrice;
+extern const ComponentVariable DefaultPriceText;
+extern const ComponentVariable CustomIdleFeeAfterStop;
+extern const ComponentVariable SupportedLanguages;
+extern const ComponentVariable CustomMultiLanguageMessages;
+extern const ComponentVariable Language;
+extern const ComponentVariable WaitForSetUserPriceTimeout;
+extern const ComponentVariable AuthorizationKey16;
+extern const RequiredComponentVariable CentralSystemURI16;
+extern const RequiredComponentVariable SecurityProfile16;
 } // namespace ControllerComponentVariables
 
 namespace EvseComponentVariables {

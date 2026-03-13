@@ -459,7 +459,7 @@ std::string supported_feature_profiles_to_string(SupportedFeatureProfiles e) {
 
 /// \brief Converts the given std::string \p s to SupportedFeatureProfiles
 /// \returns a SupportedFeatureProfiles from a string representation
-SupportedFeatureProfiles string_to_supported_feature_profiles(const std::string& s) {
+SupportedFeatureProfiles string_to_supported_feature_profiles(const std::string_view& s) {
     if (s == "Internal") {
         return SupportedFeatureProfiles::Internal;
     }

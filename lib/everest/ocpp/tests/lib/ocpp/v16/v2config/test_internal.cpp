@@ -7,8 +7,9 @@
 #include <string>
 
 #include "configuration_stub.hpp"
-#include "ocpp/v16/ocpp_enums.hpp"
-#include "ocpp/v16/types.hpp"
+#include "v2config/memory_storage.hpp"
+#include <ocpp/v16/ocpp_enums.hpp>
+#include <ocpp/v16/types.hpp>
 
 namespace {
 using namespace ocpp::v16::stubs;
@@ -235,13 +236,36 @@ TEST_P(Configuration, SupportedCiphers13) {
 TEST_P(Configuration, SupportedMeasurands) {
     ASSERT_NE(get(), nullptr);
     // initial values are from the JSON unit test config files
-    EXPECT_EQ(get()->getSupportedMeasurands(),
-              "Energy.Active.Import.Register,Energy.Active.Export.Register,Power.Active.Import,Voltage,Current.Import,"
-              "Frequency,Current.Offered,Power.Offered,SoC,Temperature");
+    // using sets for comparison since order of a cls cannot be guaranteed
+    const std::string expected_str{"Energy.Active.Import.Register,Energy.Active.Export.Register,Power.Active.Import,"
+                                   "Voltage,Current.Import,Frequency,Current.Offered,Power.Offered,SoC,Temperature"};
+    const std::set<std::string> expected{"Energy.Active.Import.Register",
+                                         "Energy.Active.Export.Register",
+                                         "Power.Active.Import",
+                                         "Voltage",
+                                         "Current.Import",
+                                         "Frequency",
+                                         "Current.Offered",
+                                         "Power.Offered",
+                                         "SoC",
+                                         "Temperature"};
+    const auto supported = get()->getSupportedMeasurands();
+    EXPECT_EQ(supported, expected_str);
+    auto list = ocpp::v16::utils::from_csl(supported);
+    std::set<std::string> res_set;
+    std::move(list.begin(), list.end(), std::inserter(res_set, res_set.end()));
+    // ordered set now used so string compare should work
+    EXPECT_EQ(expected, res_set);
+
     auto kv = get()->getSupportedMeasurandsKeyValue();
     EXPECT_EQ(kv.key, "SupportedMeasurands");
-    EXPECT_EQ(kv.value, "Energy.Active.Import.Register,Energy.Active.Export.Register,Power.Active.Import,Voltage,"
-                        "Current.Import,Frequency,Current.Offered,Power.Offered,SoC,Temperature");
+    ASSERT_TRUE(kv.value);
+    // ordered set now used so string compare should work
+    EXPECT_EQ(std::string{kv.value.value()}, expected_str);
+    list = ocpp::v16::utils::from_csl(kv.value.value());
+    res_set.clear();
+    std::move(list.begin(), list.end(), std::inserter(res_set, res_set.end()));
+    EXPECT_EQ(expected, res_set);
     EXPECT_TRUE(kv.readonly);
 }
 
@@ -965,6 +989,119 @@ TEST_F(Configuration, SetSeccLeafSubjectOrganizationV2) {
     EXPECT_FALSE(kv.value().readonly);
 }
 
+TEST(ConnectorEvseIds, Get) {
+    using namespace ocpp::v16::stubs;
+    auto res = MemoryStorage::get_connector_id(0, "");
+    EXPECT_FALSE(res.has_value());
+    res = MemoryStorage::get_connector_id(0, "1,2,3,4");
+    EXPECT_FALSE(res.has_value());
+    res = MemoryStorage::get_connector_id(-1, "");
+    EXPECT_FALSE(res.has_value());
+    res = MemoryStorage::get_connector_id(-1, "1,2,3,4");
+    EXPECT_FALSE(res.has_value());
+
+    res = MemoryStorage::get_connector_id(1, "");
+    EXPECT_FALSE(res.has_value());
+    res = MemoryStorage::get_connector_id(2, "");
+    EXPECT_FALSE(res.has_value());
+
+    res = MemoryStorage::get_connector_id(1, "one");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "one");
+    res = MemoryStorage::get_connector_id(1, "one,two");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "one");
+    res = MemoryStorage::get_connector_id(1, ",two");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "");
+    res = MemoryStorage::get_connector_id(1, ",");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "");
+
+    res = MemoryStorage::get_connector_id(2, "one");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "");
+    res = MemoryStorage::get_connector_id(2, "one,two");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "two");
+    res = MemoryStorage::get_connector_id(2, ",two");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "two");
+    res = MemoryStorage::get_connector_id(2, ",");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "");
+
+    res = MemoryStorage::get_connector_id(3, "one");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "");
+    res = MemoryStorage::get_connector_id(3, "one,two");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "");
+    res = MemoryStorage::get_connector_id(3, "one,two,three");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "three");
+    res = MemoryStorage::get_connector_id(3, ",two,three");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "three");
+    res = MemoryStorage::get_connector_id(3, "one,,three");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "three");
+    res = MemoryStorage::get_connector_id(3, ",,three");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "three");
+}
+
+TEST(ConnectorEvseIds, Set) {
+    using namespace ocpp::v16::stubs;
+    auto res = MemoryStorage::set_connector_id(0, "", "");
+    EXPECT_FALSE(res.has_value());
+    res = MemoryStorage::set_connector_id(0, "one", "");
+    EXPECT_FALSE(res.has_value());
+    res = MemoryStorage::set_connector_id(0, "one", "two");
+    EXPECT_FALSE(res.has_value());
+    res = MemoryStorage::set_connector_id(-1, "", "");
+    EXPECT_FALSE(res.has_value());
+    res = MemoryStorage::set_connector_id(-1, "one", "");
+    EXPECT_FALSE(res.has_value());
+    res = MemoryStorage::set_connector_id(-1, "one", "two");
+    EXPECT_FALSE(res.has_value());
+
+    res = MemoryStorage::set_connector_id(1, "", "");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "");
+    res = MemoryStorage::set_connector_id(1, "", "one");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "one");
+    res = MemoryStorage::set_connector_id(1, "two", "one");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "one");
+
+    res = MemoryStorage::set_connector_id(2, "", "");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), ",");
+    res = MemoryStorage::set_connector_id(2, "one", "");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "one,");
+    res = MemoryStorage::set_connector_id(2, "", "two");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), ",two");
+    res = MemoryStorage::set_connector_id(2, ",", "two");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), ",two");
+    res = MemoryStorage::set_connector_id(2, "one", "two");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "one,two");
+    res = MemoryStorage::set_connector_id(2, ",,", "two");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), ",two,");
+    res = MemoryStorage::set_connector_id(2, ",,three", "two");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), ",two,three");
+    res = MemoryStorage::set_connector_id(2, "one,,three", "two");
+    EXPECT_TRUE(res.has_value());
+    EXPECT_EQ(res.value_or("X"), "one,two,three");
+}
+
 TEST_F(Configuration, SetConnectorEvseIdsV2) {
     ASSERT_TRUE(device_model);
     // set an initial value
@@ -985,6 +1122,50 @@ TEST_F(Configuration, SetConnectorEvseIdsV2) {
     ASSERT_TRUE(kv.has_value());
     EXPECT_EQ(kv.value().key, "ConnectorEvseIds");
     EXPECT_EQ(kv.value().value, "01234567");
+    EXPECT_FALSE(kv.value().readonly);
+}
+
+TEST_F(Configuration, SetConnectorEvseIdsV2Multi) {
+    ASSERT_TRUE(device_model);
+
+    EXPECT_FALSE(v2_config->getConnectorEvseIds().has_value());
+
+    device_model->set("Core", "NumberOfConnectors", "3");
+    device_model->set("Internal", "ConnectorEvseIds", "");
+
+    EXPECT_TRUE(v2_config->getConnectorEvseIds().has_value());
+    EXPECT_EQ(v2_config->getConnectorEvseIds(), ",,");
+    auto kv = v2_config->getConnectorEvseIdsKeyValue();
+    ASSERT_TRUE(kv.has_value());
+    EXPECT_EQ(kv.value().key, "ConnectorEvseIds");
+    EXPECT_EQ(kv.value().value, ",,");
+    EXPECT_FALSE(kv.value().readonly);
+
+    v2_config->setConnectorEvseIds(",01234567,76543210");
+    EXPECT_TRUE(v2_config->getConnectorEvseIds().has_value());
+    EXPECT_EQ(v2_config->getConnectorEvseIds(), ",01234567,76543210");
+    kv = v2_config->getConnectorEvseIdsKeyValue();
+    ASSERT_TRUE(kv.has_value());
+    EXPECT_EQ(kv.value().key, "ConnectorEvseIds");
+    EXPECT_EQ(kv.value().value, ",01234567,76543210");
+    EXPECT_FALSE(kv.value().readonly);
+
+    v2_config->setConnectorEvseIds("01234567,,76543210");
+    EXPECT_TRUE(v2_config->getConnectorEvseIds().has_value());
+    EXPECT_EQ(v2_config->getConnectorEvseIds(), "01234567,,76543210");
+    kv = v2_config->getConnectorEvseIdsKeyValue();
+    ASSERT_TRUE(kv.has_value());
+    EXPECT_EQ(kv.value().key, "ConnectorEvseIds");
+    EXPECT_EQ(kv.value().value, "01234567,,76543210");
+    EXPECT_FALSE(kv.value().readonly);
+
+    v2_config->setConnectorEvseIds("01234567,76543210,");
+    EXPECT_TRUE(v2_config->getConnectorEvseIds().has_value());
+    EXPECT_EQ(v2_config->getConnectorEvseIds(), "01234567,76543210,");
+    kv = v2_config->getConnectorEvseIdsKeyValue();
+    ASSERT_TRUE(kv.has_value());
+    EXPECT_EQ(kv.value().key, "ConnectorEvseIds");
+    EXPECT_EQ(kv.value().value, "01234567,76543210,");
     EXPECT_FALSE(kv.value().readonly);
 }
 

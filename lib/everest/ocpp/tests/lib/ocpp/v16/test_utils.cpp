@@ -26,6 +26,42 @@ TEST(CSL, ToCSL) {
     EXPECT_FALSE(res.empty());
     EXPECT_EQ(res, "One,Two");
 
+    res = to_csl({"", "Two"});
+    EXPECT_FALSE(res.empty());
+    EXPECT_EQ(res, ",Two");
+
+    res = to_csl({"One", ""});
+    EXPECT_FALSE(res.empty());
+    EXPECT_EQ(res, "One,");
+
+    res = to_csl({"One", "Two", "Three"});
+    EXPECT_FALSE(res.empty());
+    EXPECT_EQ(res, "One,Two,Three");
+
+    res = to_csl({"", "", ""});
+    EXPECT_FALSE(res.empty());
+    EXPECT_EQ(res, ",,");
+
+    res = to_csl({"One", "", "Three"});
+    EXPECT_FALSE(res.empty());
+    EXPECT_EQ(res, "One,,Three");
+
+    res = to_csl({"", "Two", "Three"});
+    EXPECT_FALSE(res.empty());
+    EXPECT_EQ(res, ",Two,Three");
+
+    res = to_csl({"One", "Two", ""});
+    EXPECT_FALSE(res.empty());
+    EXPECT_EQ(res, "One,Two,");
+
+    res = to_csl({"", "", "Three"});
+    EXPECT_FALSE(res.empty());
+    EXPECT_EQ(res, ",,Three");
+
+    res = to_csl({"One", "", ""});
+    EXPECT_FALSE(res.empty());
+    EXPECT_EQ(res, "One,,");
+
     // TODO(james-ctc): should this be detected?
     res = to_csl({"One", "Two", "Three,Four"});
     EXPECT_FALSE(res.empty());
