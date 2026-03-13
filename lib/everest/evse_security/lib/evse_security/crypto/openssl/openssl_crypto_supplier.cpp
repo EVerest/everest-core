@@ -5,6 +5,7 @@
 #include <everest/logging.hpp>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cstring>
 #include <iterator>
@@ -502,7 +503,8 @@ X509Handle_ptr OpenSSLSupplier::x509_duplicate_unique(X509Handle* handle) {
 
 CertificateValidationResult OpenSSLSupplier::x509_verify_certificate_chain(
     X509Handle* target, const std::vector<X509Handle*>& parents, const std::vector<X509Handle*>& untrusted_subcas,
-    bool allow_future_certificates, const std::optional<fs::path> dir_path, const std::optional<fs::path> file_path) {
+    bool allow_future_certificates, const std::optional<fs::path> dir_path, const std::optional<fs::path> file_path,
+    bool ignore_unhandled_critical_extensions) {
 
     const X509_STORE_ptr store_ptr(X509_STORE_new());
     const X509_STORE_CTX_ptr store_ctx_ptr(X509_STORE_CTX_new());
@@ -559,6 +561,71 @@ CertificateValidationResult OpenSSLSupplier::x509_verify_certificate_chain(
         }
         // certificate is not expired, but may not be valid yet. Since we allow future certs, disable time checks.
         X509_STORE_CTX_set_flags(store_ctx_ptr.get(), X509_V_FLAG_NO_CHECK_TIME);
+    }
+
+    // Bypass X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION for known non-compliant certificates.
+    // Triggered only when every critical extension on the certificate has a well-known RFC 5280
+    // NID, so truly unknown/custom OID critical extensions still cause verification to fail.
+    if (ignore_unhandled_critical_extensions) {
+        auto verify_callback = [](int ok, X509_STORE_CTX* ctx) -> int {
+            if (!ok) {
+                const int error = X509_STORE_CTX_get_error(ctx);
+                X509* cert = X509_STORE_CTX_get_current_cert(ctx);
+
+                if (error == X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION && cert != nullptr) {
+                    // RFC 5280 extension NIDs that OpenSSL handles during certificate path
+                    // validation and are therefore safe to have marked critical.
+                    static const std::array<int, 12> handled_nids = {
+                        NID_basic_constraints,
+                        NID_key_usage,
+                        NID_ext_key_usage,
+                        NID_subject_alt_name,
+                        NID_name_constraints,
+                        NID_certificate_policies,
+                        NID_policy_constraints,
+                        NID_inhibit_any_policy,
+                        NID_authority_key_identifier,
+                        NID_subject_key_identifier,
+                        NID_crl_distribution_points,
+                        NID_info_access,
+                    };
+
+                    bool has_unknown_critical = false;
+
+                    const int num_exts = X509_get_ext_count(cert);
+                    for (int i = 0; i < num_exts; i++) {
+                        X509_EXTENSION* ext = X509_get_ext(cert, i);
+                        if (!X509_EXTENSION_get_critical(ext)) {
+                            continue;
+                        }
+                        const int nid = OBJ_obj2nid(X509_EXTENSION_get_object(ext));
+                        bool is_known = false;
+                        for (const int known_nid : handled_nids) {
+                            if (nid == known_nid) {
+                                is_known = true;
+                                break;
+                            }
+                        }
+                        if (!is_known) {
+                            has_unknown_critical = true;
+                        }
+                    }
+
+                    if (!has_unknown_critical) {
+                        char* subject = X509_NAME_oneline(X509_get_subject_name(cert), nullptr, 0);
+                        EVLOG_info << "Ignoring unhandled critical extension(s) with well-known NIDs "
+                                      "on certificate: "
+                                   << (subject != nullptr ? subject : "unknown");
+                        OPENSSL_free(subject);
+                        X509_STORE_CTX_set_error(ctx, X509_V_OK);
+                        return 1;
+                    }
+                }
+            }
+            return ok;
+        };
+
+        X509_STORE_CTX_set_verify_cb(store_ctx_ptr.get(), verify_callback);
     }
 
     // verifies the certificate chain based on ctx

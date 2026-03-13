@@ -81,10 +81,12 @@ file(COPY
 
 file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/create-pki.sh"
+    "${CMAKE_CURRENT_SOURCE_DIR}/create-pki-critical-ski.sh"
     DESTINATION "${LIBEVSE_SECURITY_TEST_DIR}/tests"
 )
 
 file(COPY
     "${CMAKE_CURRENT_SOURCE_DIR}/openssl-pki.conf"
+    "${CMAKE_CURRENT_SOURCE_DIR}/openssl-pki-critical-ski.conf"
     DESTINATION "${LIBEVSE_SECURITY_TEST_DIR}/tests"
 )

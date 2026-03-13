@@ -34,7 +34,8 @@ public:
     static CertificateValidationResult
     x509_verify_certificate_chain(X509Handle* target, const std::vector<X509Handle*>& parents,
                                   const std::vector<X509Handle*>& untrusted_subcas, bool allow_future_certificates,
-                                  const std::optional<fs::path> dir_path, const std::optional<fs::path> file_path);
+                                  const std::optional<fs::path> dir_path, const std::optional<fs::path> file_path,
+                                  bool ignore_unhandled_critical_extensions = false);
     static KeyValidationResult x509_check_private_key(X509Handle* handle, std::string private_key,
                                                       std::optional<std::string> password);
     static bool x509_verify_signature(X509Handle* handle, const std::vector<std::uint8_t>& signature,
