@@ -38,7 +38,9 @@ struct ModuleAdapterStub : public Everest::ModuleAdapter {
         };
         get_global_error_manager = [this]() { return this->get_global_error_manager_fn(); };
         get_global_error_state_monitor = [this]() { return this->get_global_error_state_monitor_fn(); };
-        ext_mqtt_publish = [this](const std::string& s1, const std::string& s2) { this->ext_mqtt_publish_fn(s1, s2); };
+        ext_mqtt_publish = [this](const std::string& s1, const std::string& s2, bool retain) {
+            this->ext_mqtt_publish_fn(s1, s2);
+        };
         ext_mqtt_subscribe = [this](const std::string& str, StringHandler sh) {
             return this->ext_mqtt_subscribe_fn(str, sh);
         };

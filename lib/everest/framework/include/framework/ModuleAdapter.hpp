@@ -84,7 +84,7 @@ struct ModuleAdapter {
     using GetGlobalErrorManagerFunc = std::function<std::shared_ptr<error::ErrorManagerReqGlobal>()>;
     using GetGlobalErrorStateMonitorFunc = std::function<std::shared_ptr<error::ErrorStateMonitor>()>;
     using GetErrorStateMonitorReqFunc = std::function<std::shared_ptr<error::ErrorStateMonitor>(const Requirement&)>;
-    using ExtMqttPublishFunc = std::function<void(const std::string&, const std::string&)>;
+    using ExtMqttPublishFunc = std::function<void(const std::string&, const std::string&, bool)>;
     using ExtMqttSubscribeFunc = std::function<UnsubscribeToken(const std::string&, StringHandler)>;
     using ExtMqttSubscribePairFunc = std::function<UnsubscribeToken(const std::string&, StringPairHandler)>;
     using TelemetryPublishFunc =
@@ -119,17 +119,17 @@ class MqttProvider {
 public:
     MqttProvider(ModuleAdapter& ev);
 
-    void publish(const std::string& topic, const std::string& data);
+    void publish(const std::string& topic, const std::string& data, bool retain = false);
 
-    void publish(const std::string& topic, const char* data);
+    void publish(const std::string& topic, const char* data, bool retain = false);
 
-    void publish(const std::string& topic, bool data);
+    void publish(const std::string& topic, bool data, bool retain = false);
 
-    void publish(const std::string& topic, int data);
+    void publish(const std::string& topic, int data, bool retain = false);
 
-    void publish(const std::string& topic, double data, int precision);
+    void publish(const std::string& topic, double data, int precision, bool retain = false);
 
-    void publish(const std::string& topic, double data);
+    void publish(const std::string& topic, double data, bool retain = false);
 
     UnsubscribeToken subscribe(const std::string& topic, StringHandler handler) const;
 

@@ -130,9 +130,9 @@ public:
     std::shared_ptr<config::ConfigServiceClient> get_config_service_client() const;
 
     ///
-    /// \brief publishes the given \p data on the given \p topic
+    /// \brief publishes the given \p data on the given \p topic with the \p retain to select message to be retained
     ///
-    void external_mqtt_publish(const std::string& topic, const std::string& data);
+    void external_mqtt_publish(const std::string& topic, const std::string& data, bool retain);
 
     ///
     /// \brief Allows a module to indicate that it provides a external mqtt \p handler at the given \p topic
