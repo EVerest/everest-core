@@ -14,6 +14,8 @@
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
+#include <atomic>
+#include <everest/io/event/event_fd.hpp>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -44,9 +46,9 @@ public:
     slacImpl() = delete;
     slacImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<EvseSlac>& mod, Conf& config) :
         slacImplBase(ev, "main"), mod(mod), config(config){};
-
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
+    ~slacImpl() override;
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
 
 protected:
@@ -71,6 +73,8 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     void run();
+    std::atomic<bool> online{true};
+    everest::lib::io::event::event_fd exit_event;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

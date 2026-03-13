@@ -3,14 +3,17 @@
 
 #include "slacImpl.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <future>
 
-#include <everest/slac/io.hpp>
+#include <everest/slac/slac_event.hpp>
 #include <fmt/core.h>
 #include <slac/channel.hpp>
 #include <thread>
 
+#include "everest/io/event/fd_event_handler.hpp"
+#include "everest/logging.hpp"
 #include "fsm_controller.hpp"
 
 static std::promise<void> module_ready;
@@ -26,6 +29,11 @@ static std::string mac_to_ascii(const std::string& mac_binary) {
     return fmt::format("{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}", mac_binary[0], mac_binary[1], mac_binary[2],
                        mac_binary[3], mac_binary[4], mac_binary[5]);
 }
+
+    slacImpl::~slacImpl(){
+        online.store(false);
+        exit_event.notify();
+    }
 
 void slacImpl::init() {
     // setup evse fsm thread
@@ -48,16 +56,7 @@ void slacImpl::run() {
     }
 
     // initialize slac i/o
-    SlacIO slac_io;
-    try {
-        slac_io.init(config.device);
-    } catch (const std::exception& e) {
-        EVLOG_error << fmt::format("Couldn't open device {} for SLAC communication. Reason: {}", config.device,
-                                   e.what());
-        raise_error(
-            error_factory->create_error("generic/CommunicationFault", "", "Could not open device " + config.device));
-        return;
-    }
+    everest::lib::slac::SlacEvent slac_io(config.device);
 
     // setup callbacks
     slac::fsm::evse::ContextCallbacks callbacks;
@@ -111,9 +110,14 @@ void slacImpl::run() {
 
     fsm_ctrl = std::make_unique<FSMController>(fsm_ctx);
 
-    slac_io.run([](slac::messages::HomeplugMessage& msg) { fsm_ctrl->signal_new_slac_message(msg); });
+    slac_io.set_callback([](slac::messages::HomeplugMessage const& msg) { fsm_ctrl->signal_new_slac_message(msg); });
 
-    fsm_ctrl->run();
+    everest::lib::io::event::fd_event_handler event_handler;
+    event_handler.register_event_handler(&slac_io);
+    event_handler.register_event_handler(fsm_ctrl.get());
+    event_handler.register_event_handler(&exit_event, [](auto&){});
+    fsm_ctrl->init();
+    event_handler.run(online);
 }
 
 void slacImpl::handle_reset(bool& enable) {

@@ -643,6 +643,36 @@ std::uint32_t ip_to_s_addr(std::string const& ip) {
     return s_addr;
 }
 
+MacAddress get_mac_address(int fd, std::string const& if_name) {
+    struct ifreq ifr;
+    std::memset(&ifr, 0, sizeof(ifr));
+    std::strncpy(ifr.ifr_name, if_name.c_str(), IFNAMSIZ - 1);
+
+    if (ioctl(fd, SIOCGIFHWADDR, &ifr) == -1) {
+        throw std::runtime_error("Cannot get MAC address for interface: " + if_name + " with given socket");
+    }
+
+    MacAddress addr;
+    std::memcpy(addr.data(), ifr.ifr_hwaddr.sa_data, 6);
+    return addr;
+}
+
+MacAddress get_mac_address(std::string const& if_name) {
+    // dummy socket for ioctl
+    auto temp_fd = event::unique_fd(::socket(AF_INET, SOCK_DGRAM, 0));
+    if (not temp_fd.is_fd()) {
+        throw std::runtime_error("Cannot get MAC address for interface: " + if_name + ". Failed to open dummy socket");
+    }
+
+    try {
+        auto addr = get_mac_address(temp_fd, if_name);
+        return addr;
+
+    } catch (...) {
+        throw std::runtime_error("Cannot get MAC address for interface: " + if_name);
+    }
+}
+
 } // namespace socket
 
 } // namespace everest::lib::io

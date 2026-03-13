@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -352,5 +353,9 @@ std::string get_interface_address(std::string const& name);
  * @throws std::runtime_error if the operation fails.
  */
 std::vector<if_info> get_all_interaces();
+
+using MacAddress = std::array<std::uint8_t, 6>;
+MacAddress get_mac_address(std::string const& if_name);
+MacAddress get_mac_address(int fd, std::string const& if_name);
 
 } // namespace everest::lib::io::socket
