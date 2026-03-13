@@ -24,6 +24,7 @@ public:
                 (const));
     MOCK_METHOD(const std::vector<int>&, get_network_connection_slots, (), (const));
     MOCK_METHOD(bool, is_websocket_connected, ());
+    MOCK_METHOD(std::optional<std::chrono::time_point<std::chrono::steady_clock>>, get_time_disconnected, (), (const));
     MOCK_METHOD(void, connect, (std::optional<std::int32_t> network_profile_slot));
     MOCK_METHOD(void, disconnect, ());
     MOCK_METHOD(bool, send_to_websocket, (const std::string& message));
