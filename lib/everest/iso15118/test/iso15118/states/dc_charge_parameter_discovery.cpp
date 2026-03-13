@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 #include <iso15118/detail/d20/state/dc_charge_parameter_discovery.hpp>
@@ -455,4 +456,122 @@ SCENARIO("DC charge parameter discovery state handling") {
     // GIVEN("Bad Case - Performance Timeout") {} // TODO(sl): not here
 
     // GIVEN("Bad Case - Sequence Timeout") {} // TODO(sl): not here
+}
+
+SCENARIO("DC charge parameter compatibility check") {
+    d20::DcTransferLimits powersupply_limits;
+    powersupply_limits.charge_limits.power.max = dt::from_float(300000.f);
+    powersupply_limits.charge_limits.power.min = dt::from_float(100000.f);
+    powersupply_limits.charge_limits.current.max = dt::from_float(500.f);
+    powersupply_limits.charge_limits.current.min = dt::from_float(5.f);
+    powersupply_limits.voltage.max = dt::from_float(1000.f);
+    powersupply_limits.voltage.min = dt::from_float(10.f);
+
+    d20::DcTransferLimits checked_limits;
+    std::variant<DC_ModeReq, BPT_DC_ModeReq> ev_limits;
+    auto& ev_mode = ev_limits.emplace<DC_ModeReq>();
+    ev_mode.max_charge_power = dt::from_float(0.f);
+    ev_mode.max_charge_current = dt::from_float(100.f);
+    ev_mode.max_voltage = dt::from_float(400.f);
+
+    GIVEN("Good Case: EV sends max power as 0 and EVSE min power is below fallback") {
+        const auto compatible = d20::state::handle_compatibility_check(powersupply_limits, ev_limits, checked_limits);
+
+        THEN("Compatibility check passes and max power is clamped to fallback (200 kW)") {
+            REQUIRE(compatible == true);
+            REQUIRE(dt::from_RationalNumber(checked_limits.charge_limits.power.max) == Catch::Approx(200000.f));
+        }
+    }
+
+    GIVEN("Bad Case: EV sends max power as 0 and EVSE min power is above fallback") {
+        powersupply_limits.charge_limits.power.min = dt::from_float(210000.f);
+
+        const auto compatible = d20::state::handle_compatibility_check(powersupply_limits, ev_limits, checked_limits);
+
+        THEN("Compatibility check fails because EVSE min power exceeds fallback") {
+            REQUIRE(compatible == false);
+        }
+    }
+
+    GIVEN(
+        "Good Case: EV sends max power as 0 and max current * max voltage is above fallback and above EVSE max power") {
+        ev_mode.max_charge_power = dt::from_float(0.f);
+        ev_mode.max_charge_current = dt::from_float(1000.f);
+        ev_mode.max_voltage = dt::from_float(400.f);
+
+        const auto compatible = d20::state::handle_compatibility_check(powersupply_limits, ev_limits, checked_limits);
+
+        THEN("Compatibility check passes and max power is clamped to fallback (300 kW)") {
+            REQUIRE(compatible == true);
+            REQUIRE(dt::from_RationalNumber(checked_limits.charge_limits.power.max) == Catch::Approx(300000.f));
+        }
+    }
+
+    GIVEN("Good Case: EV max voltage <= 500 V and EVSE max voltage is clamped to EV max + 50 V") {
+        powersupply_limits.voltage.max = dt::from_float(900.f);
+        ev_mode.max_voltage = dt::from_float(400.f);
+        ev_mode.max_charge_current = dt::from_float(300.f);
+        ev_mode.max_charge_power = dt::from_float(250000.f);
+
+        const auto compatible = d20::state::handle_compatibility_check(powersupply_limits, ev_limits, checked_limits);
+
+        THEN("Compatibility check passes and max voltage is clamped to 450 V") {
+            REQUIRE(compatible == true);
+            REQUIRE(dt::from_RationalNumber(checked_limits.voltage.max) == Catch::Approx(450.f));
+        }
+    }
+
+    GIVEN("Good Case: EV max voltage > 500 V and EVSE max voltage is clamped to 1.1 * EV max voltage") {
+        powersupply_limits.voltage.max = dt::from_float(1000.f);
+        ev_mode.max_voltage = dt::from_float(700.f);
+        ev_mode.max_charge_current = dt::from_float(300.f);
+        ev_mode.max_charge_power = dt::from_float(250000.f);
+
+        const auto compatible = d20::state::handle_compatibility_check(powersupply_limits, ev_limits, checked_limits);
+
+        THEN("Compatibility check passes and max voltage is clamped to 770 V") {
+            REQUIRE(compatible == true);
+            REQUIRE(dt::from_RationalNumber(checked_limits.voltage.max) == Catch::Approx(770.f));
+        }
+    }
+
+    GIVEN("Good Case: EVSE max current is above EV max current") {
+        powersupply_limits.charge_limits.current.max = dt::from_float(500.f);
+        ev_mode.max_charge_current = dt::from_float(125.f);
+        ev_mode.max_voltage = dt::from_float(700.f);
+        ev_mode.max_charge_power = dt::from_float(250000.f);
+
+        const auto compatible = d20::state::handle_compatibility_check(powersupply_limits, ev_limits, checked_limits);
+
+        THEN("Compatibility check passes and max current is clamped to EV max current") {
+            REQUIRE(compatible == true);
+            REQUIRE(dt::from_RationalNumber(checked_limits.charge_limits.current.max) == Catch::Approx(125.f));
+        }
+    }
+
+    GIVEN("Bad Case: EVSE min voltage is greater than or equal to EV max voltage") {
+        powersupply_limits.voltage.min = dt::from_float(400.f);
+        ev_mode.max_voltage = dt::from_float(400.f);
+        ev_mode.max_charge_current = dt::from_float(300.f);
+        ev_mode.max_charge_power = dt::from_float(250000.f);
+
+        const auto compatible = d20::state::handle_compatibility_check(powersupply_limits, ev_limits, checked_limits);
+
+        THEN("Compatibility check fails") {
+            REQUIRE(compatible == false);
+        }
+    }
+
+    GIVEN("Bad Case: EVSE min current is greater than or equal to EV max current") {
+        powersupply_limits.charge_limits.current.min = dt::from_float(100.f);
+        ev_mode.max_charge_current = dt::from_float(100.f);
+        ev_mode.max_voltage = dt::from_float(700.f);
+        ev_mode.max_charge_power = dt::from_float(250000.f);
+
+        const auto compatible = d20::state::handle_compatibility_check(powersupply_limits, ev_limits, checked_limits);
+
+        THEN("Compatibility check fails") {
+            REQUIRE(compatible == false);
+        }
+    }
 }

@@ -17,6 +17,35 @@ namespace iso15118 {
 
 static constexpr auto SESSION_IDLE_TIMEOUT_MS = 5000;
 
+static void clamp_dc_limits(const d20::DcTransferLimits& upper_bound, d20::DcTransferLimits& candidate) {
+    namespace dt = message_20::datatypes;
+
+    const auto clamp_rational_max = [](const dt::RationalNumber& bound, dt::RationalNumber& value) {
+        if (dt::from_RationalNumber(value) > dt::from_RationalNumber(bound)) {
+            value = bound;
+        }
+    };
+    const auto clamp_rational_min = [](const dt::RationalNumber& bound, dt::RationalNumber& value) {
+        if (dt::from_RationalNumber(value) < dt::from_RationalNumber(bound)) {
+            value = bound;
+        }
+    };
+
+    clamp_rational_max(upper_bound.voltage.max, candidate.voltage.max);
+    clamp_rational_max(upper_bound.charge_limits.current.max, candidate.charge_limits.current.max);
+    clamp_rational_max(upper_bound.charge_limits.power.max, candidate.charge_limits.power.max);
+    clamp_rational_min(upper_bound.voltage.min, candidate.voltage.min);
+    clamp_rational_min(upper_bound.charge_limits.current.min, candidate.charge_limits.current.min);
+    clamp_rational_min(upper_bound.charge_limits.power.min, candidate.charge_limits.power.min);
+
+    if (upper_bound.discharge_limits.has_value() and candidate.discharge_limits.has_value()) {
+        clamp_rational_max(upper_bound.discharge_limits->current.max, candidate.discharge_limits->current.max);
+        clamp_rational_max(upper_bound.discharge_limits->power.max, candidate.discharge_limits->power.max);
+        clamp_rational_min(upper_bound.discharge_limits->current.min, candidate.discharge_limits->current.min);
+        clamp_rational_min(upper_bound.discharge_limits->power.min, candidate.discharge_limits->power.min);
+    }
+}
+
 static void log_sdp_packet(const iso15118::io::SdpPacket& sdp) {
     static constexpr auto ESCAPED_BYTE_CHAR_COUNT = 4;
     auto payload_string_buffer = std::make_unique<char[]>(sdp.get_payload_length() * ESCAPED_BYTE_CHAR_COUNT + 1);
@@ -160,7 +189,12 @@ TimePoint const& Session::poll() {
     while ((active_control_event = control_event_queue.pop()) != std::nullopt) {
 
         if (const auto control_data = ctx.get_control_event<d20::DcTransferLimits>()) {
-            ctx.session_config.dc_limits = *control_data;
+            auto updated_limits = *control_data;
+            if (ctx.dc_limits_locked_after_charge_param) {
+                const auto& bounds = ctx.dc_limits_after_charge_param_bounds.value_or(ctx.session_config.dc_limits);
+                clamp_dc_limits(bounds, updated_limits);
+            }
+            ctx.session_config.dc_limits = updated_limits;
         } else if (const auto control_data = ctx.get_control_event<d20::EnergyServices>()) {
             ctx.session_config.supported_energy_transfer_services = *control_data;
         } else if (const auto control_data = ctx.get_control_event<d20::SupportedVASs>()) {
