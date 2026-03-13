@@ -673,7 +673,8 @@ std::optional<std::string> Provisioning::validate_set_variable(const SetVariable
         try {
             for (const auto& configuration_slot : network_configuration_priorities) {
                 const int slot = std::stoi(configuration_slot);
-                const auto profile_opt = this->context.connectivity_manager.get_network_connection_profile(slot);
+                const auto profile_opt = NetworkConfigurationComponentVariables::read_profile_from_device_model(
+                    this->context.device_model, slot);
 
                 if (!profile_opt.has_value()) {
                     EVLOG_warning << "Could not find network profile for configurationSlot: " << configuration_slot;
