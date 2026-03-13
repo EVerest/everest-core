@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5.27", features = ["derive"] }
 everestrs-build = { workspace = true }
+everestrs-macro = { path = "../everestrs-macro" }
 log = { version = "0.4.20", features = ["std"] }
 serde = { version = "1.0.175", features = ["derive"] }
 serde_json = "1"
@@ -15,6 +16,7 @@ thiserror = "1.0.48"
 # Note: the version must be kept in sync with the `cxxbridge-cmd` version installed in `everestrs/CMakeLists.txt`.
 # The `=` before the version number ensures that Cargo uses exactly this version when generating new lockfiles.
 cxx = { version = "=1.0.194", features = ["c++17"] }
+nix = { version = "0.31.2", features = ["fs"] }
 
 [features]
 build_bazel = []

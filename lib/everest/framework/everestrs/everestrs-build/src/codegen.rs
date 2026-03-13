@@ -193,7 +193,7 @@ impl TypeRef {
     }
 
     pub fn module_name(&self) -> String {
-        format!("crate::generated::types::{}", self.module_path.join("::"),)
+        format!("types::{}", self.module_path.join("::"),)
     }
 
     pub fn absolute_type_path(&self) -> String {
@@ -706,9 +706,13 @@ fn emit_config(config: BTreeMap<String, ConfigEntry>) -> Vec<ArgumentContext> {
 }
 
 pub fn emit(manifest_path: PathBuf, everest_core: Vec<PathBuf>) -> Result<String> {
-    let mut yaml_repo = YamlRepo::new(everest_core);
     let blob = fs::read_to_string(&manifest_path).context("While reading manifest file")?;
     let manifest: Manifest = serde_yaml::from_str(&blob).context("While parsing manifest")?;
+    emit_manifest(manifest, everest_core)
+}
+
+pub fn emit_manifest(manifest: Manifest, everest_core: Vec<PathBuf>) -> Result<String> {
+    let mut yaml_repo = YamlRepo::new(everest_core);
 
     let mut env = Environment::new();
     env.set_undefined_behavior(UndefinedBehavior::Strict);
@@ -788,7 +792,8 @@ pub fn emit(manifest_path: PathBuf, everest_core: Vec<PathBuf>) -> Result<String
                 required_interface
                     .vars
                     .iter()
-                    .find(|&required_var| &required_var.name == ignored_var).is_none()
+                    .find(|&required_var| &required_var.name == ignored_var)
+                    .is_none()
             }) {
                 panic!("The interface `{interface}` cannot ignore unkown variable `{unknown_var}`");
             }

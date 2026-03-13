@@ -63,7 +63,8 @@ impl OnReadySubscriber for OurModule {
     }
 }
 
-fn main() {
+#[everestrs::main]
+fn main(module: &Module) {
     let their_example = Arc::new(ExampleClient::new());
     let another_example = Arc::new(ExampleClient::new());
     let main_service = Arc::new(MainService {});
@@ -72,7 +73,7 @@ fn main() {
         another_example: another_example.clone(),
         min_current: Mutex::new(None),
     });
-    let _module = Module::new(
+    let _publishers = module.start(
         our_module.clone(),
         main_service.clone(),
         their_example.clone(),

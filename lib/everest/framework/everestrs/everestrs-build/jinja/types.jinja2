@@ -1,5 +1,6 @@
 {% for name, types in types.children | items %}
 pub mod {{ name }} {
+mod types { pub use super::super::*; }
 {% include "types" %}
 }
 {% endfor %}

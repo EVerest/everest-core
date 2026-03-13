@@ -4,8 +4,8 @@
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
 use generated::{
-    get_config, Context, ExampleServiceSubscriber, KvsClientSubscriber, KvsServiceSubscriber,
-    Module, ModulePublisher, OnReadySubscriber,
+    Context, ExampleServiceSubscriber, KvsClientSubscriber, KvsServiceSubscriber, Module,
+    ModulePublisher, OnReadySubscriber,
 };
 use std::sync::Arc;
 use std::{thread, time};
@@ -70,11 +70,12 @@ impl OnReadySubscriber for OneClass {
     }
 }
 
-fn main() {
-    let config = get_config();
+#[everestrs::main]
+fn main(module: &Module) {
+    let config = module.get_config();
     println!("Received the config {config:?}");
     let one_class = Arc::new(OneClass {});
-    let _module = Module::new(
+    let _publishers = module.start(
         one_class.clone(),
         one_class.clone(),
         one_class.clone(),

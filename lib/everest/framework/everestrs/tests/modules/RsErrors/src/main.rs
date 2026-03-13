@@ -85,13 +85,14 @@ impl ErrorsMultipleClientSubscriber for ErrorCommunacator {
 
 impl crate::generated::ErrorsMultipleServiceSubscriber for ErrorCommunacator {}
 
-fn main() {
+#[everestrs::main]
+fn main(module: &Module) {
     let one_class = Arc::new(ErrorCommunacator {
         errors_raised: Mutex::new(HashSet::new()),
         errors_cleared: Mutex::new(HashSet::new()),
         errors_cleared_cv: Condvar::new(),
     });
-    let _module = Module::new(one_class.clone(), one_class.clone(), one_class.clone());
+    let _publishers = module.start(one_class.clone(), one_class.clone(), one_class.clone());
 
     let mut tests_passed = false;
     // This mutex goes into the condvar, but it is dummy data as we know that the

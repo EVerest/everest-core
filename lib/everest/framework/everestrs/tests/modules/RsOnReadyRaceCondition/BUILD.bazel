@@ -47,7 +47,6 @@ everest_test(
         ":RsOnReadyRaceCondition",
     ],
     config_file = "config.yaml",
-    toolchains = ["@rules_python//python:current_py_toolchain"],
-    test_script = "test.sh",
-    tags = ["exclusive"]
+    test_binary = "//lib/everest/framework/everestrs/tests/modules:smoke_test_script",
+    tags = ["exclusive"],
 )

@@ -1,3 +1,5 @@
+pub mod manager;
+
 use everestrs_build::schema;
 
 use clap::Parser;
@@ -15,17 +17,11 @@ use thiserror::Error;
 /// Prevent calling the init of loggers more than once.
 static INIT_LOGGER_ONCE: Once = Once::new();
 
-/// Prevent from calling [Runtime] more than once and keep it alive.
-///
-/// The c++ [Module] has a static lifetime. We will pass the reference of
-/// the `Runtime` to the `Module` and thus the `Module` must not outlife the
-/// `Runtime`. To achive this we make the lifetime of the `Runtime` also static.
-static INIT_RUNTIME_ONCE: OnceLock<Pin<Arc<Runtime>>> = OnceLock::new();
-
 // Reexport everything so the clients can use it.
+pub use everestrs_macro::{harness, main, test};
+pub use log;
 pub use serde;
 pub use serde_json;
-pub use log;
 // TODO(ddo) Drop this again - its only there as a MVP for the enum support
 // of errors.
 pub use serde_yaml;
@@ -186,7 +182,7 @@ mod ffi {
             mqtt_broker_port: &u32,
             mqtt_everest_prefix: &str,
             mqtt_external_prefix: &str,
-        ) -> &'static Module;
+        ) -> UniquePtr<Module>;
 
         /// Returns the manifest.
         fn get_manifest(self: &Module) -> JsonBlob;
@@ -351,7 +347,7 @@ pub use ffi::{ErrorSeverity, ErrorType as FfiErrorType};
 pub struct ErrorType<T> {
     /// Serialised type from the FfiErrorType
     pub error_type: T,
-    
+
     /// Carried over directly from the FfiErrorType
     pub description: String,
 
@@ -376,7 +372,7 @@ impl<T> From<T> for ErrorType<T> {
 
 /// Arguments for an EVerest node.
 #[derive(Parser, Debug)]
-struct Args {
+pub struct Args {
     /// prefix of installation.
     #[arg(long)]
     pub prefix: PathBuf,
@@ -452,28 +448,96 @@ pub trait Subscriber: Sync + Send {
 /// The `Subscriber` and the `Runtime` have a cyclic dependency. Since the
 /// `Runtime` has a static lifetime we must uphold that the `Subscriber` also
 /// has a static lifetime.
+/// Controls what happens when a panic occurs on an MQTT callback thread.
+pub enum PanicStrategy {
+    /// Log the panic and abort the process. Appropriate for production modules
+    /// where a panic in a callback means the module is in a broken state.
+    Abort,
+    /// Capture the panic and re-raise it on the main/test thread when the
+    /// module is dropped. Appropriate for tests where panics (e.g. from
+    /// mockall assertions) should be forwarded to the test harness.
+    Capture,
+}
+
 pub struct Runtime {
-    cpp_module: &'static ffi::Module,
+    cpp_module: cxx::UniquePtr<ffi::Module>,
     sub_impl: OnceLock<Arc<dyn Subscriber>>,
+    /// The config for the client module.
+    config: HashMap<String, HashMap<String, Config>>,
+    panic_strategy: PanicStrategy,
+    /// Stores the first panic from an MQTT callback thread so it can be
+    /// re-raised on the main/test thread when the module is dropped.
+    /// Only used with [`PanicStrategy::Capture`].
+    captured_panic: std::sync::Mutex<Option<Box<dyn std::any::Any + Send>>>,
 }
 
 impl Runtime {
+    /// Handle a panic payload according to the configured strategy.
+    fn handle_panic(&self, payload: Box<dyn std::any::Any + Send>) {
+        match self.panic_strategy {
+            PanicStrategy::Abort => {
+                // Extract a message for the log, then abort.
+                let msg = if let Some(s) = payload.downcast_ref::<&str>() {
+                    s.to_string()
+                } else if let Some(s) = payload.downcast_ref::<String>() {
+                    s.clone()
+                } else {
+                    "unknown panic".to_string()
+                };
+                log::error!("Panic on MQTT callback thread: {msg}");
+                std::process::abort();
+            }
+            PanicStrategy::Capture => {
+                let mut slot = self.captured_panic.lock().unwrap();
+                if slot.is_none() {
+                    *slot = Some(payload);
+                }
+            }
+        }
+    }
+
+    /// If a panic was captured on an MQTT callback thread, re-raise it on the
+    /// current thread. This is intended to be called from `Drop`.
+    pub fn check_panic(&self) {
+        let payload = self.captured_panic.lock().unwrap().take();
+        if let Some(payload) = payload {
+            std::panic::resume_unwind(payload);
+        }
+    }
+
     fn on_ready(&self) {
-        self.sub_impl.get().unwrap().on_ready();
+        if let Err(payload) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            self.sub_impl.get().unwrap().on_ready();
+        })) {
+            self.handle_panic(payload);
+        }
     }
 
     fn handle_command(&self, impl_id: &str, name: &str, json: ffi::JsonBlob) -> ffi::JsonBlob {
         debug!("handle_command: {impl_id}, {name}, '{:?}'", json.as_bytes());
-        let parameters: Option<HashMap<String, serde_json::Value>> = json.deserialize();
-        let retval = self
-            .sub_impl
-            .get()
-            .unwrap()
-            .handle_command(impl_id, name, parameters.unwrap_or_default());
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let parameters: Option<HashMap<String, serde_json::Value>> = json.deserialize();
+            let retval = self.sub_impl.get().unwrap().handle_command(
+                impl_id,
+                name,
+                parameters.unwrap_or_default(),
+            );
 
-        match retval {
-            Ok(blob) => ffi::JsonBlob::from_vec(serde_json::to_vec(&blob).unwrap()),
-            Err(err) => ffi::JsonBlob::from_vec(serde_json::to_vec(&err).unwrap())
+            match retval {
+                Ok(blob) => ffi::JsonBlob::from_vec(serde_json::to_vec(&blob).unwrap()),
+                Err(err) => ffi::JsonBlob::from_vec(serde_json::to_vec(&err).unwrap()),
+            }
+        }));
+
+        match result {
+            Ok(blob) => blob,
+            Err(payload) => {
+                self.handle_panic(payload);
+                // Return an error response so the C++ side doesn't hang.
+                // Only reached with PanicStrategy::Capture (Abort never returns).
+                let err = Error::HandlerException("panic in command handler".into());
+                ffi::JsonBlob::from_vec(serde_json::to_vec(&err).unwrap())
+            }
         }
     }
 
@@ -482,24 +546,35 @@ impl Runtime {
             "handle_variable: {impl_id}, {name}, '{:?}'",
             json.as_bytes()
         );
-        if let Err(err) =
-            self.sub_impl
-                .get()
-                .unwrap()
-                .handle_variable(impl_id, index, name, json.deserialize())
-        {
-            log::error!("`handle_variable` failed: {err:?}");
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            if let Err(err) =
+                self.sub_impl
+                    .get()
+                    .unwrap()
+                    .handle_variable(impl_id, index, name, json.deserialize())
+            {
+                log::error!("`handle_variable` failed: {err:?}");
+            }
+        }));
+
+        if let Err(payload) = result {
+            self.handle_panic(payload);
         }
     }
 
     fn handle_on_error(&self, impl_id: &str, index: usize, error: ffi::ErrorType, raised: bool) {
         debug!("handle_on_error: {impl_id}, index {index}, raised {raised}");
 
-        // We want to split the error type into the group and the remainder.
-        self.sub_impl
-            .get()
-            .unwrap()
-            .handle_on_error(impl_id, index, error, raised);
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            self.sub_impl
+                .get()
+                .unwrap()
+                .handle_on_error(impl_id, index, error, raised);
+        }));
+
+        if let Err(payload) = result {
+            self.handle_panic(payload);
+        }
     }
 
     pub fn publish_variable<T: serde::Serialize>(
@@ -529,14 +604,18 @@ impl Runtime {
             Ok(ok) => Ok(ok),
             Err(_) => match serde_json::from_slice::<Error>(&return_value.data) {
                 Ok(err) => Err(err),
-                Err(err) => Err(Error::MessageParsingError(format!("{err:?}")))
-            }
+                Err(err) => Err(Error::MessageParsingError(format!("{err:?}"))),
+            },
         }
     }
 
     /// Called from the generated code.
     /// The type T should be an error.
-    pub fn raise_error<T: serde::Serialize + core::fmt::Debug>(&self, impl_id: &str, error: ErrorType<T>) {
+    pub fn raise_error<T: serde::Serialize + core::fmt::Debug>(
+        &self,
+        impl_id: &str,
+        error: ErrorType<T>,
+    ) {
         let error_string = serde_yaml::to_string(&error.error_type).unwrap_or_default();
         // Remove the new line -> this should be gone once we stop using yaml
         // since we don't really want yaml.
@@ -574,35 +653,74 @@ impl Runtime {
             .clear_error(impl_id, &error_string, clear_all);
     }
 
-    // TODO(hrapp): This function could use some error handling.
+    /// Create a runtime by parsing CLI arguments. Uses [`PanicStrategy::Abort`]
+    /// since this is the production entry point.
     pub fn new() -> Pin<Arc<Self>> {
-        INIT_RUNTIME_ONCE
-            .get_or_init(|| {
-                let args: Args = Args::parse();
-                logger::Logger::init_logger(
-                    &args.module,
-                    &args.prefix.to_string_lossy(),
-                    &args.log_config.to_string_lossy(),
-                );
+        let args: Args = Args::parse();
+        Self::create(args, PanicStrategy::Abort)
+    }
 
-                let cpp_module = ffi::create_module(
-                    &args.module,
-                    &args.prefix.to_string_lossy(),
-                    &args
-                        .mqtt_broker_socket_path
-                        .unwrap_or_default()
-                        .to_string_lossy(),
-                    &args.mqtt_broker_host,
-                    &args.mqtt_broker_port,
-                    &args.mqtt_everest_prefix,
-                    &args.mqtt_external_prefix,
-                );
-                Arc::pin(Self {
-                    cpp_module,
-                    sub_impl: OnceLock::new(),
+    /// Create a runtime with explicit args instead of parsing CLI arguments.
+    /// Uses [`PanicStrategy::Capture`] since this is used by test harnesses.
+    pub fn new_with_args(args: Args) -> Pin<Arc<Self>> {
+        Self::create(args, PanicStrategy::Capture)
+    }
+
+    fn create(args: Args, panic_strategy: PanicStrategy) -> Pin<Arc<Self>> {
+        logger::Logger::init_logger(
+            &args.module,
+            &args.prefix.to_string_lossy(),
+            &args.log_config.to_string_lossy(),
+        );
+
+        let cpp_module = ffi::create_module(
+            &args.module,
+            &args.prefix.to_string_lossy(),
+            &args
+                .mqtt_broker_socket_path
+                .unwrap_or_default()
+                .to_string_lossy(),
+            &args.mqtt_broker_host,
+            &args.mqtt_broker_port,
+            &args.mqtt_everest_prefix,
+            &args.mqtt_external_prefix,
+        );
+
+        let raw_config = cpp_module.get_module_configs(&args.module);
+
+        // Convert the nested Vec's into nested HashMaps.
+        let mut config: HashMap<String, HashMap<String, Config>> = HashMap::new();
+        for mm_config in raw_config {
+            let cc_config = mm_config
+                .data
+                .into_iter()
+                .map(|field| {
+                    let value = match field.config_type {
+                        ffi::ConfigType::Boolean => Config::Boolean(field.bool_value),
+                        ffi::ConfigType::String => Config::String(field.string_value),
+                        ffi::ConfigType::Number => Config::Number(field.number_value),
+                        ffi::ConfigType::Integer => Config::Integer(field.integer_value),
+                        _ => panic!("Unexpected value {:?}", field.config_type),
+                    };
+
+                    (field.name, value)
                 })
-            })
-            .clone()
+                .collect::<HashMap<_, _>>();
+
+            // If we have already an entry with the `module_name`, we try to extend
+            // it.
+            config
+                .entry(mm_config.module_name)
+                .or_default()
+                .extend(cc_config);
+        }
+        Arc::pin(Self {
+            cpp_module,
+            sub_impl: OnceLock::new(),
+            config,
+            panic_strategy,
+            captured_panic: std::sync::Mutex::new(None),
+        })
     }
 
     pub fn set_subscriber(self: Pin<&Self>, sub_impl: Arc<dyn Subscriber>) {
@@ -672,6 +790,21 @@ impl Runtime {
             .map(|connection| (connection.implementation_id, connection.slots))
             .collect()
     }
+
+    /// Interface for fetching the configurations through the C++ runtime.
+    pub fn get_module_configs(&self) -> &HashMap<String, HashMap<String, Config>> {
+        &self.config
+    }
+}
+
+impl Drop for Runtime {
+    fn drop(&mut self) {
+        // Re-raise any panic that was captured on an MQTT callback thread,
+        // but only if we're not already unwinding from another panic.
+        if !std::thread::panicking() {
+            self.check_panic();
+        }
+    }
 }
 
 /// A store for our config values. The type is closely related to
@@ -722,58 +855,4 @@ impl TryFrom<&Config> for i64 {
             _ => Err(Error::MessageParsingError(format!("{:?}", value))),
         }
     }
-}
-
-/// Interface for fetching the configurations through the C++ runtime.
-///
-/// This is separetated from the module since the user might need the config
-/// to create the [Runtime].
-pub fn get_module_configs() -> HashMap<String, HashMap<String, Config>> {
-    let args: Args = Args::parse();
-    logger::Logger::init_logger(
-        &args.module,
-        &args.prefix.to_string_lossy(),
-        &args.log_config.to_string_lossy(),
-    );
-    let cpp_module = ffi::create_module(
-        &args.module,
-        &args.prefix.to_string_lossy(),
-        &args
-            .mqtt_broker_socket_path
-            .unwrap_or_default()
-            .to_string_lossy(),
-        &args.mqtt_broker_host,
-        &args.mqtt_broker_port,
-        &args.mqtt_everest_prefix,
-        &args.mqtt_external_prefix,
-    );
-    let raw_config = cpp_module.get_module_configs(&args.module);
-
-    // Convert the nested Vec's into nested HashMaps.
-    let mut out: HashMap<String, HashMap<String, Config>> = HashMap::new();
-    for mm_config in raw_config {
-        let cc_config = mm_config
-            .data
-            .into_iter()
-            .map(|field| {
-                let value = match field.config_type {
-                    ffi::ConfigType::Boolean => Config::Boolean(field.bool_value),
-                    ffi::ConfigType::String => Config::String(field.string_value),
-                    ffi::ConfigType::Number => Config::Number(field.number_value),
-                    ffi::ConfigType::Integer => Config::Integer(field.integer_value),
-                    _ => panic!("Unexpected value {:?}", field.config_type),
-                };
-
-                (field.name, value)
-            })
-            .collect::<HashMap<_, _>>();
-
-        // If we have already an entry with the `module_name`, we try to extend
-        // it.
-        out.entry(mm_config.module_name)
-            .or_default()
-            .extend(cc_config);
-    }
-
-    out
 }

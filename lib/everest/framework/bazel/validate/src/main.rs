@@ -38,7 +38,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config_modules: std::collections::HashSet<_> = config
         .active_modules
         .into_values()
-        .map(|m| m.module)
+        .filter_map(|m| {
+            if &m.module == "ProbeModule" {
+                None
+            } else {
+                Some(m.module)
+            }
+        })
         .collect();
 
     let given_modules: std::collections::HashSet<_> = args.modules.into_iter().collect();
