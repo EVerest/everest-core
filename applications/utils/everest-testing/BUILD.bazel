@@ -1,5 +1,6 @@
 load("//applications/utils:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_library")
+load("//third-party/bazel/toolchains:defs.bzl", "CROSS_PYTHON_INCOMPATIBLE")
 
 exports_files(
     ["BUILD.bazel"],
@@ -10,6 +11,7 @@ py_library(
     srcs = glob(["src/**/*.py"]),
     imports = ["src"],
     visibility = ["//visibility:public"],
+    target_compatible_with = CROSS_PYTHON_INCOMPATIBLE,
     deps = [
         requirement("pytest"),
         requirement("pytest-asyncio"),

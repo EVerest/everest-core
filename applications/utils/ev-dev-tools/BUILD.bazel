@@ -1,5 +1,6 @@
 load("//applications/utils:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+load("//third-party/bazel/toolchains:defs.bzl", "CROSS_PYTHON_INCOMPATIBLE")
 
 exports_files(
     ["BUILD.bazel"],
@@ -9,6 +10,7 @@ py_library(
     name = "lib",
     srcs = glob(["src/ev_cli/*.py"]),
     imports = ["src"],
+    target_compatible_with = CROSS_PYTHON_INCOMPATIBLE,
     deps = [
         requirement("jinja2"),
         requirement("jsonschema"),
@@ -24,5 +26,6 @@ py_binary(
     legacy_create_init = False,
     main = "src/ev_cli/ev.py",
     visibility = ["//visibility:public"],
+    target_compatible_with = CROSS_PYTHON_INCOMPATIBLE,
     deps = [":lib"],
 )

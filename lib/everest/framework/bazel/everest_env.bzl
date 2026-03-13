@@ -1,4 +1,5 @@
 load("@rules_python//python:defs.bzl", "PyInfo")
+load("//third-party/bazel/toolchains:defs.bzl", "CROSS_PYTHON_INCOMPATIBLE")
 
 def _everest_env(ctx):
     """Everest Root rule
@@ -243,7 +244,7 @@ everest_impl_env = rule(
     toolchains = ["@bazel_tools//tools/python:toolchain_type"],
 )
 
-everest_test = rule(
+_everest_impl_test = rule(
     implementation = _everest_env,
     attrs = dict(ATTRS, _is_test=attr.bool(default=True)),
     doc = """
@@ -273,7 +274,16 @@ You can run it with `bazel test`.
     test = True,
 )
 
-def everest_env(name, **kwargs):
+def everest_test(name, target_compatible_with = [], **kwargs):
+    """Wrapper around the everest_test rule that marks the target as
+    incompatible with cross-compilation platforms (no Python toolchain)."""
+    _everest_impl_test(
+        name = name,
+        target_compatible_with = CROSS_PYTHON_INCOMPATIBLE + target_compatible_with,
+        **kwargs,
+    )
+
+def everest_env(name, target_compatible_with = [], **kwargs):
     """
     Creates an EVerest environment.
 
@@ -297,5 +307,9 @@ def everest_env(name, **kwargs):
     You can either run this target with `bazel run` or pass it for example to a (py)
     test which will run your tests against the environment.
     """
-    everest_impl_env(name=name, **kwargs)
-    everest_test(name=name + "__manager_test", tags=["exclusive"],**kwargs)
+    everest_impl_env(
+        name = name,
+        target_compatible_with = CROSS_PYTHON_INCOMPATIBLE + target_compatible_with,
+        **kwargs,
+    )
+    everest_test(name = name + "__manager_test", tags = ["exclusive"], target_compatible_with = target_compatible_with, **kwargs)

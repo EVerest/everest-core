@@ -32,8 +32,8 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":websocketpp_utils",
-        "@openssl//:crypto",
-        "@openssl//:ssl",
+        "//third-party/bazel/openssl:crypto",
+        "//third-party/bazel/openssl:ssl",
         "@com_github_nlohmann_json//:json",
         "@com_github_HowardHinnant_date//:date",
         "//lib/everest/framework:framework",
