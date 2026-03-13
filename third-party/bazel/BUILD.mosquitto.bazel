@@ -1,0 +1,137 @@
+# SPDX-License-Identifier: Apache-2.0
+# stripped down version of the 2.1.2 recipe in the bazel-central-registry
+# by UebelAndre, licensed Apache-2.0 https://github.com/bazelbuild/bazel-central-registry/blob/4c39e836b6db6c1f83f27e3c79a8a9f03fb1b292/modules/mosquitto/2.1.2/overlay/BUILD.bazel
+# adapted to mosquitto 2.0.22
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+###############################################################################
+# Common build settings
+###############################################################################
+
+COMMON_COPTS = select({
+    "//conditions:default": [
+        "-std=gnu99",
+        "-w",
+    ],
+})
+
+COMMON_DEFINES = [
+    "CMAKE",
+    'VERSION=\\"2.0.22\\"',
+    "OPENSSL_API_COMPAT=0x10100000L",
+] + select({
+    "//conditions:default": [
+        "WITH_UNIX_SOCKETS",
+    ],
+})
+
+PLUGIN_LINKOPTS = select({
+    "//conditions:default": [],
+})
+
+###############################################################################
+# config_header
+###############################################################################
+
+copy_file(
+    name = "config_header_gen",
+    src = "config.h",
+    out = "config_inc/config.h",
+)
+
+cc_library(
+    name = "config_header",
+    hdrs = ["config_inc/config.h"],
+    includes = ["config_inc"],
+    visibility = ["//:__subpackages__"],
+)
+
+###############################################################################
+# Bundled dependencies (uthash, utlist)
+###############################################################################
+
+cc_library(
+    name = "bundled_deps",
+    hdrs = [
+        "deps/uthash.h",
+        "deps/utlist.h",
+    ],
+    includes = ["deps"],
+    visibility = ["//:__subpackages__"],
+)
+
+###############################################################################
+# mosquitto_common -- shared utility library (libcommon/)
+###############################################################################
+
+cc_library(
+    name = "mosquitto_common",
+    srcs = [],
+    hdrs = glob([
+        "include/*.h",
+    ]),
+    copts = COMMON_COPTS,
+    includes = [
+        "include",
+        "libcommon",
+    ],
+    local_defines = COMMON_DEFINES + select({
+        "//conditions:default": [],
+    }),
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":bundled_deps",
+        ":config_header",
+        "@openssl//:ssl",
+    ] + select({
+        "//conditions:default": [],
+    }),
+)
+
+###############################################################################
+# libmosquitto -- MQTT client library (lib/)
+###############################################################################
+
+cc_library(
+    name = "mosquitto",
+    srcs = glob(
+        [
+            "lib/*.c",
+            "lib/*.h",
+        ],
+    ),
+    hdrs = glob([
+        "include/*.h",
+    ]),
+    copts = COMMON_COPTS,
+    includes = [
+        "common",
+        "include",
+        "lib",
+        "libcommon",
+    ],
+    linkopts = select({
+        "//conditions:default": [
+            "-lpthread",
+        ],
+    }),
+    local_defines = COMMON_DEFINES + [
+    ] + select({
+        "//conditions:default": ["WITH_THREADING"],
+    }) + select({
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":bundled_deps",
+        ":config_header",
+        ":mosquitto_common",
+        "@openssl//:ssl",
+    ] + select({
+        "//conditions:default": [],
+    }),
+)
