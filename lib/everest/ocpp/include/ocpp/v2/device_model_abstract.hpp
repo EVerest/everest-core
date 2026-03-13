@@ -9,7 +9,14 @@
 namespace ocpp {
 namespace v2 {
 
-class DeviceModelAbstract : public DeviceModelBase, public DeviceModelInterface {};
+class DeviceModelAbstract : public DeviceModelBase, public DeviceModelInterface {
+public:
+    // Disambiguate typed getters: prefer DeviceModelBase versions which use
+    // request_value_internal and provide EVLOG_critical logging on missing values.
+    using DeviceModelBase::get_optional_value;
+    using DeviceModelBase::get_value;
+    using DeviceModelBase::request_value;
+};
 
 } // namespace v2
 } // namespace ocpp

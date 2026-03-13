@@ -30,5 +30,8 @@ public:
     MOCK_METHOD(void, on_network_disconnected, (OCPPInterfaceEnum ocpp_interface));
     MOCK_METHOD(void, on_charging_station_certificate_changed, ());
     MOCK_METHOD(void, confirm_successful_connection, ());
+    MOCK_METHOD(void, reload_network_profiles, ());
+    MOCK_METHOD(bool, set_network_profile,
+                (int32_t slot, const NetworkConnectionProfile& profile, const std::string& source));
 };
 } // namespace ocpp::v2

@@ -336,17 +336,38 @@ ConnectivityManager::get_ws_connection_options(const std::int32_t configuration_
     const auto& network_connection_profile = network_connection_profile_opt.value();
 
     try {
-        auto uri = Uri::parse_and_validate(
-            network_connection_profile.ocppCsmsUrl.get(),
-            this->device_model.get_value<std::string>(ControllerComponentVariables::SecurityCtrlrIdentity),
-            network_connection_profile.securityProfile);
+        // B09.FR.16-18: Check per-slot Identity override first, fall back to SecurityCtrlr.Identity
+        std::string identity_to_use =
+            this->device_model.get_value<std::string>(ControllerComponentVariables::SecurityCtrlrIdentity);
+
+        const auto slot_identity_cv = NetworkConfigurationComponentVariables::get_component_variable(
+            configuration_slot, NetworkConfigurationComponentVariables::Identity);
+        if (const auto slot_identity = this->device_model.get_optional_value<std::string>(slot_identity_cv);
+            slot_identity.has_value() && !slot_identity->empty()) {
+            identity_to_use = *slot_identity;
+            EVLOG_debug << "Using per-slot Identity for slot " << configuration_slot;
+        }
+
+        auto uri = Uri::parse_and_validate(network_connection_profile.ocppCsmsUrl.get(), identity_to_use,
+                                           network_connection_profile.securityProfile);
 
         const auto ocpp_versions = utils::get_ocpp_protocol_versions(
             this->device_model.get_value<std::string>(ControllerComponentVariables::SupportedOcppVersions));
 
+        // B09.FR.26-28: Check per-slot BasicAuthPassword override first
+        std::optional<std::string> basic_auth_password;
+        const auto slot_pwd_cv = NetworkConfigurationComponentVariables::get_component_variable(
+            configuration_slot, NetworkConfigurationComponentVariables::BasicAuthPassword);
+        if (const auto slot_pwd = this->device_model.get_optional_value<std::string>(slot_pwd_cv)) {
+            basic_auth_password = slot_pwd.value();
+            EVLOG_debug << "Using per-slot BasicAuthPassword for slot " << configuration_slot;
+        } else {
+            basic_auth_password =
+                this->device_model.get_optional_value<std::string>(ControllerComponentVariables::BasicAuthPassword);
+        }
+
         WebsocketConnectionOptions connection_options{
-            ocpp_versions, uri, network_connection_profile.securityProfile,
-            this->device_model.get_optional_value<std::string>(ControllerComponentVariables::BasicAuthPassword),
+            ocpp_versions, uri, network_connection_profile.securityProfile, basic_auth_password,
             // Always use a minimum of 1 second otherwise each message would timeout immediately
             std::chrono::seconds(std::max(network_connection_profile.messageTimeout, 1)),
             this->device_model.get_value<int>(ControllerComponentVariables::RetryBackOffRandomRange),
@@ -437,9 +458,23 @@ void ConnectivityManager::on_websocket_stopped_connecting(ocpp::WebsocketCloseRe
 }
 
 void ConnectivityManager::cache_network_connection_profiles() {
-    // get all the network connection profiles from the device model and cache them
-    this->cached_network_connection_profiles =
-        json::parse(this->device_model.get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
+    this->cached_network_connection_profiles.clear();
+    this->network_connection_slots.clear();
+
+    // Build profiles and priority-ordered slot list from NetworkConfiguration DM components
+    for (const std::string& str : ocpp::split_string(
+             this->device_model.get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority),
+             ',')) {
+        const int slot = std::stoi(str);
+        this->network_connection_slots.push_back(slot);
+        if (const auto profile =
+                NetworkConfigurationComponentVariables::read_profile_from_device_model(this->device_model, slot)) {
+            SetNetworkProfileRequest req;
+            req.configurationSlot = slot;
+            req.connectionData = *profile;
+            this->cached_network_connection_profiles.push_back(req);
+        }
+    }
 
     if (!this->device_model.get_optional_value<bool>(ControllerComponentVariables::AllowSecurityLevelZeroConnections)
              .value_or(false) &&
@@ -451,13 +486,20 @@ void ConnectivityManager::cache_network_connection_profiles() {
         throw std::invalid_argument(
             "All profiles configured have security_profile 0 which is not officially allowed in OCPP 2.0.1");
     }
+}
 
-    for (const std::string& str : ocpp::split_string(
-             this->device_model.get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority),
-             ',')) {
-        const int num = std::stoi(str);
-        this->network_connection_slots.push_back(num);
+void ConnectivityManager::reload_network_profiles() {
+    cache_network_connection_profiles();
+}
+
+bool ConnectivityManager::set_network_profile(const int32_t slot, const NetworkConnectionProfile& profile,
+                                              const std::string& source) {
+    if (!NetworkConfigurationComponentVariables::write_profile_to_device_model(this->device_model, slot, profile,
+                                                                               source)) {
+        return false;
     }
+    cache_network_connection_profiles();
+    return true;
 }
 
 void ConnectivityManager::check_cache_for_invalid_security_profiles() {
@@ -490,56 +532,56 @@ void ConnectivityManager::check_cache_for_invalid_security_profiles() {
 }
 
 void ConnectivityManager::remove_network_connection_profiles_below_actual_security_profile() {
-    if (not ControllerComponentVariables::NetworkConnectionProfiles.variable.has_value()) {
-        EVLOG_warning << "NetworkConnectionProfiles variable is not set, cannot remove associated connection profiles";
-        return;
-    }
-    // Remove all the profiles that are a lower security level than security_level
     const auto security_level = this->device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
 
-    auto network_connection_profiles =
-        json::parse(this->device_model.get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
-
-    auto is_lower_security_level = [security_level](const SetNetworkProfileRequest& item) {
-        return item.connectionData.securityProfile < security_level;
-    };
-
-    network_connection_profiles.erase(
-        std::remove_if(network_connection_profiles.begin(), network_connection_profiles.end(), is_lower_security_level),
-        network_connection_profiles.end());
-
-    this->device_model.set_value(ControllerComponentVariables::NetworkConnectionProfiles.component,
-                                 ControllerComponentVariables::NetworkConnectionProfiles.variable.value(),
-                                 AttributeEnum::Actual, network_connection_profiles.dump(),
-                                 VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
-
-    // Update the NetworkConfigurationPriority so only remaining profiles are in there
-    const auto network_priority = ocpp::split_string(
-        this->device_model.get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority), ',');
-
-    auto in_network_profiles = [&network_connection_profiles](const std::string& item) {
-        auto is_same_slot = [&item](const SetNetworkProfileRequest& profile) {
-            return std::to_string(profile.configurationSlot) == item;
-        };
-        return std::any_of(network_connection_profiles.begin(), network_connection_profiles.end(), is_same_slot);
-    };
-
-    std::string new_network_priority;
-    for (const auto& item : network_priority) {
-        if (in_network_profiles(item)) {
-            if (!new_network_priority.empty()) {
-                new_network_priority += ',';
-            }
-            new_network_priority += item;
+    // Collect slots to prune from the in-memory cache
+    std::vector<int32_t> pruned_slots;
+    for (const auto& profile : this->cached_network_connection_profiles) {
+        if (profile.connectionData.securityProfile < security_level) {
+            pruned_slots.push_back(profile.configurationSlot);
         }
     }
-    if (not ControllerComponentVariables::NetworkConfigurationPriority.variable.has_value()) {
-        EVLOG_warning << "NetworkConfigurationPriority variable is not set, cannot set new network priority";
+
+    if (pruned_slots.empty()) {
         return;
     }
+
+    // Clear per-slot DM variables to prevent re-injection via SetVariables
+    for (const int32_t slot : pruned_slots) {
+        NetworkConfigurationComponentVariables::clear_slot_in_device_model(this->device_model, slot);
+    }
+
+    // Remove pruned slots from in-memory caches
+    auto is_pruned = [&pruned_slots](int32_t slot) {
+        return std::find(pruned_slots.begin(), pruned_slots.end(), slot) != pruned_slots.end();
+    };
+
+    this->cached_network_connection_profiles.erase(
+        std::remove_if(this->cached_network_connection_profiles.begin(), this->cached_network_connection_profiles.end(),
+                       [&is_pruned](const SetNetworkProfileRequest& p) { return is_pruned(p.configurationSlot); }),
+        this->cached_network_connection_profiles.end());
+
+    this->network_connection_slots.erase(
+        std::remove_if(this->network_connection_slots.begin(), this->network_connection_slots.end(), is_pruned),
+        this->network_connection_slots.end());
+
+    // Rebuild and persist NetworkConfigurationPriority from remaining slots
+    if (not ControllerComponentVariables::NetworkConfigurationPriority.variable.has_value()) {
+        EVLOG_warning << "NetworkConfigurationPriority variable is not set, cannot update network priority";
+        return;
+    }
+
+    std::string new_priority;
+    for (const int32_t slot : this->network_connection_slots) {
+        if (!new_priority.empty()) {
+            new_priority += ',';
+        }
+        new_priority += std::to_string(slot);
+    }
+
     this->device_model.set_value(ControllerComponentVariables::NetworkConfigurationPriority.component,
                                  ControllerComponentVariables::NetworkConfigurationPriority.variable.value(),
-                                 AttributeEnum::Actual, new_network_priority, VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
+                                 AttributeEnum::Actual, new_priority, VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
 }
 
 } // namespace v2

@@ -373,6 +373,37 @@ Variable get_protocol_supported_by_ev(const std::int32_t priority);
 ComponentVariable get_component_variable(const std::int32_t evse_id, const Variable& variable);
 } // namespace ConnectedEvComponentVariables
 
+namespace NetworkConfigurationComponentVariables {
+extern const Variable OcppCsmsUrl;
+extern const Variable SecurityProfile;
+extern const Variable OcppInterface;
+extern const Variable OcppTransport;
+extern const Variable MessageTimeout;
+extern const Variable Identity;
+extern const Variable BasicAuthPassword;
+extern const Variable ApnEnabled;
+extern const Variable VpnEnabled;
+extern const Variable Apn;
+extern const Variable ApnUserName;
+extern const Variable ApnPassword;
+extern const Variable SimPin;
+extern const Variable PreferredNetwork;
+extern const Variable UseOnlyPreferredNetwork;
+extern const Variable ApnAuthentication;
+extern const Variable VpnServer;
+extern const Variable VpnUser;
+extern const Variable VpnPassword;
+extern const Variable VpnKey;
+extern const Variable VpnType;
+extern const Variable VpnGroup;
+extern const Variable OcppVersion;
+extern const Variable CsmsRootCertificateHashAlgorithm;
+extern const Variable CsmsRootCertificateIssuerKeyHash;
+extern const Variable CsmsRootCertificateIssuerNameHash;
+extern const Variable CsmsRootCertificateSerialNumber;
+ComponentVariable get_component_variable(const std::int32_t slot, const Variable& variable);
+} // namespace NetworkConfigurationComponentVariables
+
 } // namespace v2
 } // namespace ocpp
 

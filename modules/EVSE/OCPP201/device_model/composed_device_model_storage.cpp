@@ -82,11 +82,19 @@ ocpp::v2::SetVariableStatusEnum ComposedDeviceModelStorage::set_variable_attribu
 std::optional<ocpp::v2::VariableMonitoringMeta>
 ComposedDeviceModelStorage::set_monitoring_data(const ocpp::v2::SetMonitoringData& data,
                                                 const ocpp::v2::VariableMonitorType type) {
+    if (this->device_model_storages.find(VARIABLE_SOURCE_OCPP) == this->device_model_storages.end()) {
+        EVLOG_error << "OCPP device model storage not registered, cannot set monitoring data";
+        return std::nullopt;
+    }
     return this->device_model_storages.at(VARIABLE_SOURCE_OCPP)->set_monitoring_data(data, type);
 }
 
 bool ComposedDeviceModelStorage::update_monitoring_reference(const int32_t monitor_id,
                                                              const std::string& reference_value) {
+    if (this->device_model_storages.find(VARIABLE_SOURCE_OCPP) == this->device_model_storages.end()) {
+        EVLOG_error << "OCPP device model storage not registered, cannot update monitoring reference";
+        return false;
+    }
     return this->device_model_storages.at(VARIABLE_SOURCE_OCPP)
         ->update_monitoring_reference(monitor_id, reference_value);
 }
@@ -104,10 +112,18 @@ ComposedDeviceModelStorage::get_monitoring_data(const std::vector<ocpp::v2::Moni
 
 ocpp::v2::ClearMonitoringStatusEnum ComposedDeviceModelStorage::clear_variable_monitor(int monitor_id,
                                                                                        bool allow_protected) {
+    if (this->device_model_storages.find(VARIABLE_SOURCE_OCPP) == this->device_model_storages.end()) {
+        EVLOG_error << "OCPP device model storage not registered, cannot clear variable monitor";
+        return ocpp::v2::ClearMonitoringStatusEnum::Rejected;
+    }
     return this->device_model_storages.at(VARIABLE_SOURCE_OCPP)->clear_variable_monitor(monitor_id, allow_protected);
 }
 
 int32_t ComposedDeviceModelStorage::clear_custom_variable_monitors() {
+    if (this->device_model_storages.find(VARIABLE_SOURCE_OCPP) == this->device_model_storages.end()) {
+        EVLOG_error << "OCPP device model storage not registered, cannot clear custom variable monitors";
+        return 0;
+    }
     return this->device_model_storages.at(VARIABLE_SOURCE_OCPP)->clear_custom_variable_monitors();
 }
 
