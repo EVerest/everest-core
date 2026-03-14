@@ -66,6 +66,13 @@ Each code contribution must include:
 - A `Developer Certificate of Origin signoff <https://github.com/lf-energy/tac/blob/main/process/contribution_guidelines.md#contribution-sign-off>`_.
 - Submitted to the project as a pull request.
 
+The contributor is responsible for the quality and correctness of their submission.
+All submitted code must be fully understood by the contributor, who should be able
+to justify the technical approach and explain any change during review.
+
+Pull requests should be well-scoped and limited to a single logical
+change. This keeps reviews focused and the commit history clean.
+
 Each commit message and pull request description should have enough information
 in it so that other contributors can understand what has been changed and
 eventually which impact the change will have. Issue and pull request templates
@@ -88,6 +95,15 @@ addressed.
 
 Project committers will review the contribution in a timely manner, and advise
 of any changes needed to merge the request.
+
+AI-generated Contributions
+---------------------------
+
+EVerest aligns with the Linux Foundation's position on the use of generative AI
+tools in open source development. See the `Linux Foundation guidance on
+generative AI <https://www.linuxfoundation.org/legal/generative-ai>`_ for
+details. Every contribution must be reviewed and verified by a human
+contributor prior to submission.
 
 Labels
 ------
@@ -116,4 +132,7 @@ License
 -------
 
 EVerest is licensed under the `Apache License 2.0 <https://github.com/EVerest/everest-core/blob/main/LICENSE>`_ license.
-Contributions should abide by that standard license.
+Contributions should abide by that standard license. Contributors are
+responsible for ensuring that any third-party content included in their
+submission does not introduce conflicting license obligations or copyright
+infringement.
