@@ -41,6 +41,8 @@ public:
         const std::string UV;
         // UD
         const std::string UD;
+        // OCMF Identification Type (set on device at startup via /settings/ocmfId/IT, -1 = not set)
+        const int IT;
         // command timeout in milliseconds
         const int command_timeout_ms;
     };
@@ -104,6 +106,7 @@ private:
     Conf config;
 
     void fetch_meter_id_from_device();
+    void set_identification_type(int identification_type);
     std::string get_current_transaction();
     void request_device_to_start_transaction(const types::powermeter::TransactionReq& value);
     void request_device_to_stop_transaction(const std::string& transaction_id);
