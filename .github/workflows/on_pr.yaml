@@ -116,6 +116,13 @@ jobs:
       runner: ${{ inputs.runner || 'ubuntu-24.04' }}
 
 
+  source-file-hash-check:
+    name: Source File Hash Check
+    uses: ./.github/workflows/job_source-file-hash-check.yml
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-24.04' }}
+
+
   manifest-tests:
     name: Manifests Test
     uses: ./.github/workflows/job_manifest-tests.yml
