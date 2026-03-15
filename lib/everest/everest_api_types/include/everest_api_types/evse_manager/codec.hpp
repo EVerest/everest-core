@@ -39,12 +39,15 @@ std::string serialize(EvseStateEnum const& val) noexcept;
 std::string serialize(SessionInfo const& val) noexcept;
 std::string serialize(PauseChargingEVSEReasonEnum val) noexcept;
 std::string serialize(ChargingPausedEVSEReasons const& val) noexcept;
+std::string serialize(HlcSessionFailedReasonEnum val) noexcept;
+std::string serialize(HlcSessionFailedEvent const& val) noexcept;
 
 std::ostream& operator<<(std::ostream& os, StopTransactionReason const& val);
 std::ostream& operator<<(std::ostream& os, StopTransactionRequest const& val);
 std::ostream& operator<<(std::ostream& os, StartSessionReason const& val);
 std::ostream& operator<<(std::ostream& os, SessionEventEnum const& val);
 std::ostream& operator<<(std::ostream& os, SessionEvent const& val);
+std::ostream& operator<<(std::ostream& os, HlcSessionFailedEvent const& val);
 std::ostream& operator<<(std::ostream& os, Limits const& val);
 std::ostream& operator<<(std::ostream& os, EVInfo const& val);
 std::ostream& operator<<(std::ostream& os, CarManufacturer const& val);
@@ -71,6 +74,7 @@ std::ostream& operator<<(std::ostream& os, EvseStateEnum const& val);
 std::ostream& operator<<(std::ostream& os, SessionInfo const& val);
 std::ostream& operator<<(std::ostream& os, PauseChargingEVSEReasonEnum const& val);
 std::ostream& operator<<(std::ostream& os, ChargingPausedEVSEReasons const& val);
+std::ostream& operator<<(std::ostream& os, HlcSessionFailedReasonEnum const& val);
 
 template <class T> T deserialize(std::string const& val);
 template <class T> std::optional<T> try_deserialize(std::string const& val) noexcept {

@@ -619,6 +619,7 @@ error_out:
         free(conn->buffer);
     }
 
+    conn->last_v2g_msg_at_disconnect = conn->ctx->current_v2g_msg;
     v2g_ctx_init_charging_state(conn->ctx, true);
 
     return rv ? -1 : 0;

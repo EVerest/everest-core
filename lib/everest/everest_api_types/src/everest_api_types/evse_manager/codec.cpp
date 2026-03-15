@@ -165,6 +165,16 @@ std::string serialize(ChargingPausedEVSEReasons const& val) noexcept {
     return result.dump(json_indent);
 }
 
+std::string serialize(HlcSessionFailedReasonEnum val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
+std::string serialize(HlcSessionFailedEvent const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
 std::ostream& operator<<(std::ostream& os, StopTransactionReason const& val) {
     os << serialize(val);
     return os;
@@ -315,6 +325,16 @@ std::ostream& operator<<(std::ostream& os, PauseChargingEVSEReasonEnum const& va
 }
 
 std::ostream& operator<<(std::ostream& os, ChargingPausedEVSEReasons const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, HlcSessionFailedReasonEnum const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, HlcSessionFailedEvent const& val) {
     os << serialize(val);
     return os;
 }
@@ -502,6 +522,18 @@ template <> PauseChargingEVSEReasonEnum deserialize(std::string const& s) {
 template <> ChargingPausedEVSEReasons deserialize(std::string const& s) {
     auto data = json::parse(s);
     ChargingPausedEVSEReasons result = data;
+    return result;
+}
+
+template <> HlcSessionFailedReasonEnum deserialize(std::string const& s) {
+    auto data = json::parse(s);
+    HlcSessionFailedReasonEnum result = data;
+    return result;
+}
+
+template <> HlcSessionFailedEvent deserialize(std::string const& s) {
+    auto data = json::parse(s);
+    HlcSessionFailedEvent result = data;
     return result;
 }
 

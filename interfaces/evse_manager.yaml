@@ -141,6 +141,12 @@ vars:
     description: Emits all events related to sessions
     type: object
     $ref: /evse_manager#/SessionEvent
+  hlc_session_failed:
+    description: >-
+      Published whenever an HLC session failure occurs and the connection is terminated.
+      Uses the uuid field to correlate with session_event. Not used with basic charging.
+    type: object
+    $ref: /evse_manager#/HlcSessionFailedEvent
   limits:
     description: Limits of this evse, published on change
     type: object
