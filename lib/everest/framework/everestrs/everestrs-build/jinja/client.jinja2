@@ -5,11 +5,27 @@ pub(crate) trait {{trait.name | title}}ClientSubscriber: Sync + Send {
 {% endfor %}
 
 {%- if trait.errors %}
-    fn on_error_raised(&self, context: &Context, error: ::everestrs::ErrorType<crate::generated::errors::{{ trait.name | snake }}::Error>);
+    fn on_error_raised(&self, context: &Context, error: ::everestrs::ErrorType<errors::{{ trait.name | snake }}::Error>);
 
-    fn on_error_cleared(&self, context: &Context, error: ::everestrs::ErrorType<crate::generated::errors::{{ trait.name | snake }}::Error>);
+    fn on_error_cleared(&self, context: &Context, error: ::everestrs::ErrorType<errors::{{ trait.name | snake }}::Error>);
 {%- endif %}
 
+}
+
+#[cfg(all(feature = "mockall", feature = "trait"))]
+mockall::mock! {
+    pub(crate) {{trait.name | title}}ClientSubscriber {}
+    impl {{trait.name | title}}ClientSubscriber for {{trait.name | title}}ClientSubscriber {
+{% for var in trait.vars %}
+        fn on_{{ var.name | snake }}<'a>(&self, context: &Context<'a>, value: {{ var.data_type.name }});
+{% endfor %}
+
+{%- if trait.errors %}
+        fn on_error_raised<'a>(&self, context: &Context<'a>, error: ::everestrs::ErrorType<errors::{{ trait.name | snake }}::Error>);
+
+        fn on_error_cleared<'a>(&self, context: &Context<'a>, error: ::everestrs::ErrorType<errors::{{ trait.name | snake }}::Error>);
+{%- endif %}
+    }
 }
 
 fn dispatch_variable_to_{{ trait.name | snake }}(
@@ -38,7 +54,7 @@ fn dispatch_error_to_{{ trait.name | snake }} (
     raised: bool
 ) {
 {%- if trait.errors %}
-    // The type is crate::generated::errors::{{ trait.name | snake }}::Error
+    // The type is errors::{{ trait.name | snake }}::Error
     let Ok(v) = __serde_yaml::from_str(&error.error_type) else {
         everestrs::log::error!("Failed to deserialize error `{}`", error.error_type);
         return;
@@ -62,6 +78,8 @@ fn dispatch_error_to_{{ trait.name | snake }} (
 pub(crate) mod __mockall_{{trait.name | snake }}_client {
 
 use super::__serde_json;
+use super::types;
+use super::errors;
 
 #[derive(Clone)]
 pub(crate) struct {{trait.name | title }}ClientPublisher {
@@ -102,7 +120,7 @@ impl {{trait.name | title }}ClientPublisher {
 
 }
 
-#[cfg(feature="mockall")]
+#[cfg(all(feature = "mockall", not(feature = "trait")))]
 mockall::mock!{
    pub(crate) {{trait.name | title }}ClientPublisher {
 {%- for cmd in trait.cmds %}
@@ -125,5 +143,5 @@ mockall::mock!{
 }
 
 }
-#[cfg_attr(feature="mockall", mockall_double::double)]
+#[cfg_attr(all(feature = "mockall", not(feature = "trait")), mockall_double::double)]
 pub(crate) use __mockall_{{trait.name | snake }}_client::{{trait.name | title }}ClientPublisher;

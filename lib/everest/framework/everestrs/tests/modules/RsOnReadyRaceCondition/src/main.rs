@@ -67,11 +67,12 @@ impl OnReadySubscriber for OneClass {
     }
 }
 
-fn main() {
+#[everestrs::main]
+fn main(module: &Module) {
     let one_class = Arc::new(OneClass {
         on_ready_called: AtomicBool::new(false),
     });
-    let _module = Module::new(one_class.clone(), one_class.clone(), one_class.clone());
+    let _publishers = module.start(one_class.clone(), one_class.clone(), one_class.clone());
     log::info!("Module initialized");
 
     loop {

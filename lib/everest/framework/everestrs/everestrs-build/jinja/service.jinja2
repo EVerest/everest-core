@@ -23,6 +23,25 @@ pub(crate) trait {{trait.name | title}}ServiceSubscriber: Sync + Send {
 {% endfor %}
 }
 
+#[cfg(all(feature = "mockall", feature = "trait"))]
+mockall::mock! {
+    pub(crate) {{trait.name | title}}ServiceSubscriber {}
+    impl {{trait.name | title}}ServiceSubscriber for {{trait.name | title}}ServiceSubscriber {
+{%- for cmd in trait.cmds %}
+        fn {{cmd.name}}<'a>(&self,
+            context: &Context<'a>,
+        {%- for arg in cmd.arguments %}
+            {{arg.name | identifier }}: {{arg.data_type.name}},
+        {%- endfor %}
+        ) -> ::everestrs::Result<{%- if cmd.result -%}
+            {{cmd.result.data_type.name}}
+        {%- else -%}
+            ()
+        {%- endif -%}>;
+{% endfor %}
+    }
+}
+
 fn dispatch_command_to_{{ trait.name | snake }}(
    context: &Context,
    service: &dyn {{trait.name | title}}ServiceSubscriber,
@@ -53,6 +72,9 @@ fn dispatch_command_to_{{ trait.name | snake }}(
 
 pub(crate) mod __mockall_{{trait.name | snake }}_service {
 
+use super::types;
+use super::errors;
+
 #[derive(Clone)]
 pub(crate) struct {{trait.name | title }}ServicePublisher {
    pub(super) implementation_id: &'static str,
@@ -68,11 +90,11 @@ impl {{trait.name | title }}ServicePublisher {
 {% endfor %}
 
 {%- if trait.errors %}
-    pub(crate) fn raise_error(&self, error: ::everestrs::ErrorType<crate::generated::errors::{{ trait.name | snake }}::Error>) {
+    pub(crate) fn raise_error(&self, error: ::everestrs::ErrorType<errors::{{ trait.name | snake }}::Error>) {
         self.runtime.raise_error(self.implementation_id, error);
     }
 
-    pub(crate) fn clear_error(&self, error: crate::generated::errors::{{ trait.name | snake }}::Error) {
+    pub(crate) fn clear_error(&self, error: errors::{{ trait.name | snake }}::Error) {
         self.runtime.clear_error(self.implementation_id, error, true);
     }
 
@@ -82,7 +104,7 @@ impl {{trait.name | title }}ServicePublisher {
 {%- endif %}
 }
 
-#[cfg(feature="mockall")]
+#[cfg(all(feature = "mockall", not(feature = "trait")))]
 mockall::mock!{
    pub(crate) {{trait.name | title }}ServicePublisher {
 {% for var in trait.vars %}
@@ -90,9 +112,9 @@ mockall::mock!{
 {% endfor %}
 
 {%- if trait.errors %}
-    pub(crate) fn raise_error(&self, error: ::everestrs::ErrorType<crate::generated::errors::{{ trait.name | snake }}::Error>);
+    pub(crate) fn raise_error(&self, error: ::everestrs::ErrorType<errors::{{ trait.name | snake }}::Error>);
 
-    pub(crate) fn clear_error(&self, error: crate::generated::errors::{{ trait.name | snake }}::Error);
+    pub(crate) fn clear_error(&self, error: errors::{{ trait.name | snake }}::Error);
 
     pub(crate) fn clear_all_errors(&self);
 {%- endif %}
@@ -104,5 +126,5 @@ mockall::mock!{
 }
 
 }
-#[cfg_attr(feature="mockall", mockall_double::double)]
+#[cfg_attr(all(feature = "mockall", not(feature = "trait")), mockall_double::double)]
 pub(crate) use __mockall_{{trait.name | snake }}_service::{{trait.name | title }}ServicePublisher;

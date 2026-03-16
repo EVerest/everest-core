@@ -71,28 +71,19 @@ inline ConfigField get_config_field(const std::string& _name, int _value) {
 
 } // namespace
 
-/// @brief The flag which prevents us from re-initializing the module.
-std::once_flag mod_flag;
-
-/// @brief The central handle to the EVerest infrastructure.
-std::unique_ptr<Module> mod;
-
-const Module& create_module(rust::Str module_id, rust::Str prefix, rust::Str mqtt_broker_socket_path,
-                            rust::Str mqtt_broker_host, const unsigned int& mqtt_broker_port,
-                            rust::Str mqtt_everest_prefix, rust::Str mqtt_external_prefix) {
-    std::call_once(mod_flag, [&]() {
-        auto socket_path = std::string(mqtt_broker_socket_path);
-        Everest::MQTTSettings mqtt_settings;
-        if (not socket_path.empty()) {
-            Everest::populate_mqtt_settings(mqtt_settings, socket_path, std::string(mqtt_everest_prefix),
-                                            std::string(mqtt_external_prefix));
-        } else {
-            Everest::populate_mqtt_settings(mqtt_settings, std::string(mqtt_broker_host), mqtt_broker_port,
-                                            std::string(mqtt_everest_prefix), std::string(mqtt_external_prefix));
-        }
-        mod = std::make_unique<Module>(std::string(module_id), std::string(prefix), mqtt_settings);
-    });
-    return *mod;
+std::unique_ptr<Module> create_module(rust::Str module_id, rust::Str prefix, rust::Str mqtt_broker_socket_path,
+                                      rust::Str mqtt_broker_host, const unsigned int& mqtt_broker_port,
+                                      rust::Str mqtt_everest_prefix, rust::Str mqtt_external_prefix) {
+    auto socket_path = std::string(mqtt_broker_socket_path);
+    Everest::MQTTSettings mqtt_settings;
+    if (not socket_path.empty()) {
+        Everest::populate_mqtt_settings(mqtt_settings, socket_path, std::string(mqtt_everest_prefix),
+                                        std::string(mqtt_external_prefix));
+    } else {
+        Everest::populate_mqtt_settings(mqtt_settings, std::string(mqtt_broker_host), mqtt_broker_port,
+                                        std::string(mqtt_everest_prefix), std::string(mqtt_external_prefix));
+    }
+    return std::make_unique<Module>(std::string(module_id), std::string(prefix), mqtt_settings);
 }
 
 Module::Module(const std::string& module_id, const std::string& prefix, const Everest::MQTTSettings& mqtt_settings) :

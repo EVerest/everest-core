@@ -7,7 +7,8 @@ use std::collections::{BTreeMap, HashSet};
 pub struct Manifest {
     #[serde(default)]
     pub description: String,
-    pub metadata: Metadata,
+    #[serde(default)]
+    pub metadata: Option<Metadata>,
     pub provides: BTreeMap<String, ProvidesEntry>,
     #[serde(default)]
     pub requires: BTreeMap<String, RequiresEntry>,
@@ -17,7 +18,7 @@ pub struct Manifest {
     // this is never used in Rust code.
     #[allow(dead_code)]
     #[serde(default)]
-    enable_external_mqtt: bool,
+    pub enable_external_mqtt: bool,
 
     #[serde(default)]
     pub config: BTreeMap<String, ConfigEntry>,
@@ -91,5 +92,7 @@ pub enum MutabilityEnum {
 }
 
 impl MutabilityEnum {
-    fn default() -> Self { MutabilityEnum::ReadOnly }
+    fn default() -> Self {
+        MutabilityEnum::ReadOnly
+    }
 }

@@ -1,0 +1,14 @@
+load("@rules_rust//rust:defs.bzl", "rust_proc_macro")
+
+rust_proc_macro(
+    name = "everestrs-macro",
+    srcs = ["src/lib.rs"],
+    edition = "2021",
+    deps = [
+        "//lib/everest/framework/everestrs/everestrs-build",
+        "@everest_framework_crate_index//:syn",
+        "@everest_framework_crate_index//:quote",
+        "@everest_framework_crate_index//:proc-macro2",
+    ],
+    visibility = ["//visibility:public"],
+)

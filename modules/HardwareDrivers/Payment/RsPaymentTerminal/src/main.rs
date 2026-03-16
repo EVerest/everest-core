@@ -42,7 +42,7 @@ use generated::types::{
     session_cost::{SessionCost, SessionStatus, TariffMessage},
 };
 use generated::{
-    get_config, AuthTokenProviderServiceSubscriber, AuthTokenValidatorServiceSubscriber,
+    AuthTokenProviderServiceSubscriber, AuthTokenValidatorServiceSubscriber,
     BankSessionTokenProviderClientSubscriber, Context, Module, ModulePublisher, OnReadySubscriber,
     PaymentTerminalServiceSubscriber, SessionCostClientSubscriber,
 };
@@ -590,8 +590,9 @@ impl PaymentTerminalServiceSubscriber for PaymentTerminalModule {
     }
 }
 
-fn main() -> Result<()> {
-    let config = get_config();
+#[everestrs::main]
+fn main(module: &Module) -> Result<()> {
+    let config = module.get_config();
     log::info!("Received the config {config:?}");
 
     let pt_config = Config {
@@ -616,7 +617,7 @@ fn main() -> Result<()> {
         pre_authorization_amount: config.pre_authorization_amount as usize,
     });
 
-    let _module = Module::new(
+    let _publishers = module.start(
         pt_module.clone(),
         pt_module.clone(),
         pt_module.clone(),

@@ -57,7 +57,6 @@ everest_env(
         ":RsCmdErrors",
     ],
     config_file = "config.yaml",
-    toolchains = ["@rules_python//python:current_py_toolchain"],
 )
 
 everest_test(
@@ -66,7 +65,6 @@ everest_test(
         ":RsCmdErrors",
     ],
     config_file = "config.yaml",
-    test_script = "test.sh",
+    test_binary = "//lib/everest/framework/everestrs/tests/modules:smoke_test_script",
     tags = ["exclusive"],
-    toolchains = ["@rules_python//python:current_py_toolchain"],
 )

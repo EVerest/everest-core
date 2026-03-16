@@ -1,10 +1,13 @@
-mod codegen;
+pub mod codegen;
+pub mod manifest_resolver;
 pub mod schema;
 
 use anyhow::{Context, Result};
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
+
+pub use manifest_resolver::build_test_manifest;
 
 #[derive(Debug, Default)]
 pub struct Builder {

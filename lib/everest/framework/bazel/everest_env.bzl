@@ -25,6 +25,8 @@ def _everest_env(ctx):
 
     symlinks = {}
     files = []
+    py_toolchain = ctx.toolchains["@bazel_tools//tools/python:toolchain_type"]
+    py_interpreter = py_toolchain.py3_runtime.interpreter.dirname
     py_imports = []
     py_transitive_sources = []
     modules = ctx.attr.modules + ctx.attr.test_modules
@@ -58,10 +60,17 @@ def _everest_env(ctx):
             if not file.path.startswith(prefix)
         ]
 
+    # Also pick up Python imports from the test binary (e.g. py_test deps).
+    if ctx.attr.test_binary and PyInfo in ctx.attr.test_binary:
+        py_imports.extend(ctx.attr.test_binary[PyInfo].imports.to_list())
+        py_transitive_sources.extend(ctx.attr.test_binary[PyInfo].transitive_sources.to_list())
+
+    config_file = ctx.attr.config_file[DefaultInfo].files.to_list()[0]
+    config_path = "etc/everest/{0}".format(config_file.basename)
     symlinks.update({"bin/manager": ctx.attr.manager[DefaultInfo].files.to_list()[0]})
     symlinks.update(
         {
-            "etc/everest/config-sil.yaml": ctx.attr.config_file[DefaultInfo].files.to_list()[0],
+            config_path: config_file,
         },
     )
     symlinks.update(
@@ -111,44 +120,36 @@ def _everest_env(ctx):
     script_content = """
 #!/bin/sh
 set -ex
-export PATH=$(realpath $(PYTHON3)):$PATH
+export PATH=$(realpath {}):$PATH
 declare -a PYTHON_ROOTS=({})
 for i in "${{PYTHON_ROOTS[@]}}"
 do
     export PYTHONPATH=$(realpath ../$i):$PYTHONPATH
 done
-    """.format(" ".join(py_imports))
+    """.format(py_interpreter, " ".join(py_imports))
+
     if ctx.attr._is_test:
         script_content += """
-bin/manager --prefix . --config etc/everest/config-sil.yaml --check
-        """
+bin/manager --prefix . --config {0} --check
+        """.format(config_path)
 
-        if ctx.attr.test_script and ctx.attr.test_script[DefaultInfo].files.to_list():
+        if ctx.attr.test_binary:
+            test_bin = ctx.attr.test_binary[DefaultInfo].files.to_list()[0]
             script_content += """
-bin/manager --prefix . --config etc/everest/config-sil.yaml &
-PID_MANAGER=$!
-{}
-
-if ps -p $PID_MANAGER > /dev/null
-then
-    kill $PID_MANAGER
-else
-    echo "manager died"
-    exit -1
-fi
-
-            """.format(ctx.attr.test_script[DefaultInfo].files.to_list()[0].path)
-            files.append(ctx.attr.test_script[DefaultInfo].files.to_list()[0])
+{0} "$@"
+            """.format(test_bin.short_path)
     else:
         script_content += """
-bin/manager --prefix . --config etc/everest/config-sil.yaml
-        """
+bin/manager --prefix . --config {0}
+        """.format(config_path)
     ctx.actions.write(script, script_content, is_executable = True)
 
     runfiles = ctx.runfiles(
         symlinks = symlinks,
         files = files + [script],
     )
+    if ctx.attr.test_binary:
+        runfiles = runfiles.merge(ctx.attr.test_binary[DefaultInfo].default_runfiles)
 
     return [
         DefaultInfo(
@@ -166,7 +167,7 @@ ATTRS = {
     "config_file": attr.label(
         doc = """
 The EVerest configuration file. It will be linked to
-`/etc/everest/config-sil.yaml`""",
+`/etc/everest/<basename>`""",
             allow_single_file = True,
         ),
     "manager": attr.label(
@@ -221,9 +222,10 @@ The rule will not enforce that these modules are defined in the given
         """,
         allow_files = False,
     ),
-    "test_script": attr.label(
-        allow_single_file = True,
-        doc = "A test script which will run after the manager starts.",
+    "test_binary": attr.label(
+        doc = "A test binary to run. The binary is responsible for starting/stopping the manager.",
+        executable = True,
+        cfg = "target",
     ),
     "_validation_tool": attr.label(
         default = Label("//lib/everest/framework/bazel/validate"),
@@ -246,6 +248,7 @@ everest_impl_env = rule(
 everest_test = rule(
     implementation = _everest_env,
     attrs = dict(ATTRS, _is_test=attr.bool(default=True)),
+    toolchains = ["@bazel_tools//tools/python:toolchain_type"],
     doc = """
 Creates an EVerest Test.
 
@@ -262,7 +265,6 @@ everest_test(
     name = "my_everest_env",
     modules = [":ModuleFoo", ":ModuleBar"],
     config_file = ":my_config.yaml",
-    toolchains = ["@rules_python//python:current_py_toolchain"],
     test_script=":my_test_script",
 )
 
@@ -289,7 +291,6 @@ def everest_env(name, **kwargs):
         name = "my_everest_env",
         modules = [":ModuleFoo", ":ModuleBar"],
         config_file = ":my_config.yaml",
-        toolchains = ["@rules_python//python:current_py_toolchain"],
     )
 
     ```

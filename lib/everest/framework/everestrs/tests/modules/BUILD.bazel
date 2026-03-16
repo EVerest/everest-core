@@ -1,0 +1,7 @@
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+
+sh_binary(
+    name = "smoke_test_script",
+    srcs = ["smoke_test.sh"],
+    visibility = ["//visibility:public"],
+)

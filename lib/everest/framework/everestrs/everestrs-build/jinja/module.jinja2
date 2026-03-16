@@ -31,6 +31,14 @@ pub(crate) trait OnReadySubscriber: Sync + Send {
     fn on_ready(&self, pub_impl: &ModulePublisher);
 }
 
+#[cfg(all(feature = "mockall", feature = "trait"))]
+mockall::mock! {
+    pub(crate) OnReadySubscriber {}
+    impl OnReadySubscriber for OnReadySubscriber {
+        fn on_ready(&self, pub_impl: &ModulePublisher);
+    }
+}
+
 {% for trait in provided_interfaces %}
 {% include "service" %}
 {% endfor %}
@@ -40,7 +48,7 @@ pub(crate) trait OnReadySubscriber: Sync + Send {
 {% endfor %}
 
 #[derive(Clone)]
-#[cfg_attr(all(test, feature="mockall"), derive(Default))]
+#[cfg_attr(all(test, feature="mockall", not(feature="trait")), derive(Default))]
 pub(crate) struct ModulePublisher {
 {% for provide in provides %}
    pub(crate) {{ provide.implementation_id | identifier }}: {{provide.interface | title}}ServicePublisher,
@@ -56,7 +64,7 @@ pub(crate) struct ModulePublisher {
 {% endfor %}
 }
 
-pub(crate) struct Module {
+struct ModuleInner {
     on_ready: ::std::sync::Arc<dyn OnReadySubscriber>,
 {% for provide in provides %}
    {{ provide.implementation_id | identifier }}: ::std::sync::Arc<dyn {{provide.interface | title}}ServiceSubscriber>,
@@ -72,6 +80,13 @@ pub(crate) struct Module {
 {% endfor %}
 
     publisher: ModulePublisher,
+    ready: ::std::sync::Condvar,
+    ready_flag: ::std::sync::Mutex<bool>,
+}
+
+pub(crate) struct Module {
+    runtime: ::std::pin::Pin<::std::sync::Arc<::everestrs::Runtime>>,
+    inner: ::std::sync::OnceLock<::std::sync::Arc<ModuleInner>>,
 }
 
 /// The context structure.
@@ -86,7 +101,24 @@ pub(crate) struct Context<'a> {
 
 impl Module {
     #[must_use]
-    pub(crate) fn new
+    pub(crate) fn new() -> Self {
+        let runtime = ::everestrs::Runtime::new();
+        Self {
+            runtime,
+            inner: ::std::sync::OnceLock::new(),
+        }
+    }
+
+    #[must_use]
+    pub(crate) fn new_with_args(args: ::everestrs::Args) -> Self {
+        let runtime = ::everestrs::Runtime::new_with_args(args);
+        Self {
+            runtime,
+            inner: ::std::sync::OnceLock::new(),
+        }
+    }
+
+    pub(crate) fn start
 {% if requires_with_generics %}
     <
     {% for require in requires %}
@@ -97,6 +129,7 @@ impl Module {
     >
 {% endif %}
     (
+        &self,
         on_ready: ::std::sync::Arc<dyn OnReadySubscriber>,
 {% for provide in provides %}
         {{ provide.implementation_id | identifier }}: ::std::sync::Arc<dyn {{provide.interface | title}}ServiceSubscriber>,
@@ -108,25 +141,26 @@ impl Module {
         {{ require.implementation_id | identifier }}_cb: {{ require.implementation_id | title }}Callback,
     {% endif %}
 {% endfor %}
-    ) -> ::std::sync::Arc<Self> {
-        let runtime = ::everestrs::Runtime::new();
+    ) -> &ModulePublisher {
+        let runtime = &self.runtime;
         let connections = runtime.get_module_connections();
-        let this = ::std::sync::Arc::new(Self {
-            on_ready,
+        let inner = self.inner.get_or_init(|| {
+            ::std::sync::Arc::new(ModuleInner {
+                on_ready,
 {% for provide in provides %}
-            {{ provide.implementation_id | identifier }},
+                {{ provide.implementation_id | identifier }},
 {% endfor %}
 {% for require in requires %}
     {% if require.min_connections == 1 and require.max_connections == 1 %}
-            {{ require.implementation_id | identifier }},
+                {{ require.implementation_id | identifier }},
     {% elif require.min_connections == require.max_connections %}
-            {{ require.implementation_id | identifier }}_slots: ::core::array::from_fn({{ require.implementation_id | identifier }}_cb),
+                {{ require.implementation_id | identifier }}_slots: ::core::array::from_fn({{ require.implementation_id | identifier }}_cb),
     {% else %}
-            {{ require.implementation_id | identifier }}_slots: (0..connections.get("{{require.implementation_id}}").cloned().unwrap_or(0)).map({{ require.implementation_id | identifier }}_cb).collect(),
+                {{ require.implementation_id | identifier }}_slots: (0..connections.get("{{require.implementation_id}}").cloned().unwrap_or(0)).map({{ require.implementation_id | identifier }}_cb).collect(),
     {% endif %}
 {% endfor %}
-            #[cfg(any(not(test), not(feature = "mockall")))]
-            publisher: ModulePublisher {
+                #[cfg(any(not(test), not(feature = "mockall"), feature = "trait"))]
+                publisher: ModulePublisher {
 {% for provide in provides %}
    {{ provide.implementation_id | identifier }}: {{provide.interface | title}}ServicePublisher {
       implementation_id: "{{ provide.implementation_id }}",
@@ -154,17 +188,27 @@ impl Module {
         }).collect(),
     {% endif %}
 {% endfor %}
-            },
-            #[cfg(all(test, feature = "mockall"))]
-            publisher: ModulePublisher::default(),
+                },
+                #[cfg(all(test, feature = "mockall", not(feature = "trait")))]
+                publisher: ModulePublisher::default(),
+                ready: ::std::sync::Condvar::new(),
+                ready_flag: ::std::sync::Mutex::new(false),
+            })
         });
 
-        runtime.as_ref().set_subscriber(this.clone());
-        this
+        runtime.as_ref().set_subscriber(inner.clone());
+
+        // Block until on_ready has fired.
+        let mut ready = inner.ready_flag.lock().unwrap();
+        while !*ready {
+            ready = inner.ready.wait(ready).unwrap();
+        }
+
+        &inner.publisher
     }
 }
 
-impl ::everestrs::Subscriber for Module {
+impl ::everestrs::Subscriber for ModuleInner {
     fn handle_command(
         &self,
         implementation_id: &str,
@@ -243,7 +287,10 @@ impl ::everestrs::Subscriber for Module {
     }
 
     fn on_ready(&self) {
-        self.on_ready.on_ready(&self.publisher)
+        self.on_ready.on_ready(&self.publisher);
+        let mut ready = self.ready_flag.lock().unwrap();
+        *ready = true;
+        self.ready.notify_all();
     }
 }
 

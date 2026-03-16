@@ -4,7 +4,7 @@ include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 use everestrs::ErrorType;
 use generated::errors::example::Error as ExampleError;
 use generated::{
-    get_config, Context, ExampleClientSubscriber, ExampleServiceSubscriber, Module,
+    Context, ExampleClientSubscriber, ExampleServiceSubscriber, Module,
     ModulePublisher, OnReadySubscriber,
 };
 use std::sync::Arc;
@@ -54,11 +54,12 @@ impl OnReadySubscriber for OneClass {
     }
 }
 
-fn main() {
-    let config = get_config();
+#[everestrs::main]
+fn main(module: &Module) {
+    let config = module.get_config();
     log::info!("Received the config {config:?}");
     let one_class = Arc::new(OneClass {});
-    let _module = Module::new(one_class.clone(), one_class.clone(), one_class.clone());
+    let _publishers = module.start(one_class.clone(), one_class.clone(), one_class.clone());
     log::info!("Module initialized");
 
     loop {
@@ -124,3 +125,4 @@ mod test {
         }
     }
 }
+

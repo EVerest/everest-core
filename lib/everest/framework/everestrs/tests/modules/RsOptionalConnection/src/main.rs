@@ -43,9 +43,10 @@ impl OnReadySubscriber for OptionalConnection {
     }
 }
 
-fn main() {
+#[everestrs::main]
+fn main(module: &Module) {
     let one_class = Arc::new(OptionalConnection {});
-    let _module = Module::new(one_class.clone(), one_class.clone(), |_index| {
+    let _publishers = module.start(one_class.clone(), one_class.clone(), |_index| {
         one_class.clone()
     });
     log::info!("Module initialized");

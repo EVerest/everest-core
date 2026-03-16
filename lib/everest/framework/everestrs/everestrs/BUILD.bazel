@@ -13,10 +13,14 @@ rust_library(
         "@everest_framework_crate_index//:serde_json",
         "@everest_framework_crate_index//:serde_yaml",
         "@everest_framework_crate_index//:thiserror",
+	"@everest_framework_crate_index//:nix",
         "@cxx.rs//:cxx",
         ":everestrs_sys",
         ":everestrs_bridge",
         "//lib/everest/framework/everestrs/everestrs-build:everestrs-build",
+    ],
+    proc_macro_deps = [
+        "//lib/everest/framework/everestrs/everestrs-macro",
     ],
     visibility = ["//visibility:public"],
 )

@@ -629,6 +629,15 @@ int boot(const po::variables_map& vm) {
         throw BootException(fmt::format("Invalid boot source: {}", static_cast<int>(boot_mode)));
     }
 
+    // CLI override for mqtt_everest_prefix (e.g. for parallel test execution).
+    if (vm.count("mqtt_everest_prefix") != 0) {
+        auto prefix = vm["mqtt_everest_prefix"].as<std::string>();
+        if (!prefix.empty() && prefix.back() != '/') {
+            prefix += "/";
+        }
+        ms.mqtt_settings.everest_prefix = prefix;
+    }
+
     Logging::init(ms.runtime_settings.logging_config_file.string());
 
     EVLOG_info << "  \033[0;1;35;95m_\033[0;1;31;91m__\033[0;1;33;93m__\033[0;1;32;92m__\033[0;1;36;96m_\033[0m      "
@@ -934,6 +943,8 @@ int main(int argc, char* argv[]) {
                        "Path to a named pipe, that shall be used for status updates from the manager");
     desc.add_options()("retain-topics", "Retain configuration MQTT topics setup by manager for inspection, by default "
                                         "these will be cleared after startup");
+    desc.add_options()("mqtt_everest_prefix", po::value<std::string>(),
+                       "Override the MQTT everest prefix (useful for running multiple instances in parallel)");
 
     po::variables_map vm;
 
