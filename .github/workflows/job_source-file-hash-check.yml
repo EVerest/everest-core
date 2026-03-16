@@ -1,0 +1,20 @@
+name: Source File Hash Check
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'Which runner to use'
+        required: false
+        default: 'ubuntu-24.04'
+        type: string
+
+jobs:
+  source_file_hash_check:
+    name: Source File Hash Check
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify interface and type source file hashes
+        run: |
+          .github/workflows/scripts/check_api_source_file_hashes.sh
