@@ -12,7 +12,7 @@ It supports both AC and DC powermeters.
 
 To do so, a register configuration file is needed that describes which (ModbusRTU-)registers
 are available on the device and what data they contain. The available data will then be used
-to calculate the correct structure of data for the ``powermeter`` interface of everest-core.
+to calculate the correct structure of data for the ``powermeter`` interface of EVerest.
 
 Currently available powermeter configurations can be found in the module's ``models`` 
 subdirectory.
@@ -93,3 +93,4 @@ get_signed_meter_value
 ----------------------
 
 `currently not implemented`
+

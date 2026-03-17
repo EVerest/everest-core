@@ -22,7 +22,7 @@ In EVerest the OCPP module leverages several other modules to perform tasks that
 - EvseManager manages the charging session and charging state machine by communicating with a "board support package", a driver for the charging hardware that abstracts away the control pilot, relay control, power meters, etc. The EvseManager also handles reservations.
 - System handles firmware updates, log uploads and resets
 
-The following sections explain the steps you can follow to implement their functionality on your own and integrate the libocpp directly into your charging station software without relying on EVerest. However, in most cases it's much easier to write an EVerest driver using the *everest-core/interfaces/board_support_AC.yaml* interface.
+The following sections explain the steps you can follow to implement their functionality on your own and integrate the libocpp directly into your charging station software without relying on EVerest. However, in most cases it's much easier to write an EVerest driver using the *EVerest/interfaces/board_support_AC.yaml* interface.
 
 #### ChargePoint() constructor
 
@@ -148,7 +148,7 @@ Some general notes: the "connector" parameter of some of the callbacks refers to
 
 - register_reserve_now_callback
 
-  libocpp can use this to reserve a connector, reservation handling is outsourced to a reservation manager in EVerest that implements the reservation interface (everest-core/interfaces/reservation.yaml)
+  libocpp can use this to reserve a connector, reservation handling is outsourced to a reservation manager in EVerest that implements the reservation interface (EVerest/interfaces/reservation.yaml)
 
 - register_upload_diagnostics_callback
 

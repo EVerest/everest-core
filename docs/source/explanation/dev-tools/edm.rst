@@ -58,15 +58,15 @@ Now you can clone this repository and install **edm**:
 
 .. code-block:: bash
 
-  git clone https://github.com/EVerest/everest-core.git
-  cd everest-core/applications/dependency_manager
+  git clone https://github.com/EVerest/EVerest.git
+  cd EVerest/applications/dependency_manager
   python3 -m pip install . --break-system-packages
 
 or in short
 
 .. code-block:: bash
 
-  python3 -m pip install git+https://github.com/EVerest/everest-core.git@main#subdirectory=applications/dependency_manager --break-system-packages
+  python3 -m pip install git+https://github.com/EVerest/EVerest.git@main#subdirectory=applications/dependency_manager --break-system-packages
 
 .. note::
 
@@ -95,7 +95,7 @@ dependencies for EVerest:
 
 	everest-workspace/
 	├── everest-cmake
-	├── everest-core
+	├── EVerest
 	├── everest-dev-environment
 	├── everest-framework
 	├── everest-sqlite
@@ -137,11 +137,11 @@ Building EVerest
 ****************
 
 Make sure you have installed :doc:`ev-cli <ev-cli>` first.
-You can now use the following commands to build the repository everest-core:
+You can now use the following commands to build the repository EVerest:
 
 .. code-block:: bash
 
-  cd ~/checkout/everest-workspace/everest-core
+  cd ~/checkout/everest-workspace/EVerest
   mkdir build
   cd build
   cmake ..

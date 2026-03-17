@@ -9,7 +9,7 @@ ev-cli
 - Generate C++ header files for defined interfaces
 - Create/update auto generated files for modules (C++ only).
 
-Generating the header files is done in the build process of ``everest-core``. For this
+Generating the header files is done in the build process of ``EVerest``. For this
 you don't need to install ``ev-dev-tools`` by yourself, it happens automatically during the build process.
 
 For creating and updating auto generated files for modules you need to install ``ev-dev-tools`` to use it during development.
@@ -27,7 +27,7 @@ you can install the python package manually.
 Use automatically installed `ev-dev-tools` from python venv
 ===========================================================
 
-Build ``everest-core`` as explained in the :ref:`Quick Start Guide <htg_getting_started_sw>`.
+Build ``EVerest`` as explained in the :ref:`Quick Start Guide <htg_getting_started_sw>`.
 This will create a python venv in your build directory.
 You can activate it with:
 
@@ -43,7 +43,7 @@ To install ``ev_cli`` manually from github repository:
 
 .. code-block:: bash
 
-    python3 -m pip install git+https://github.com/everest/everest-core.git@main#subdirectory=applications/utils/ev-dev-tools
+    python3 -m pip install git+https://github.com/everest/EVerest.git@main#subdirectory=applications/utils/ev-dev-tools
 
 *****************************
 ev-cli command line interface

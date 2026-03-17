@@ -737,10 +737,10 @@ def types_get_templates(args):
 
 def main():
     global validators, everest_dirs, work_dir
-    everest_core_dir = Path(__file__).parent.parent.parent.parent.parent.parent
-    everest_framework_dir = everest_core_dir / 'lib' / 'everest' / 'framework'
+    everest_dir = Path(__file__).parent.parent.parent.parent.parent.parent
+    everest_framework_dir = everest_dir / 'lib' / 'everest' / 'framework'
     schemas_dir = everest_framework_dir / 'schemas'
-    everest_dir_default = [str(everest_core_dir), str(Path.cwd().parent / 'everest-core')]
+    everest_dir_default = [str(everest_dir), str(Path.cwd().parent / 'EVerest')]
 
     parser = argparse.ArgumentParser(description='Everest command line tool')
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
@@ -753,8 +753,8 @@ def main():
                                help=f'everest directory containing the interface definitions (default: {everest_dir_default})',
                                default=everest_dir_default)
     common_parser.add_argument('--everest-projects', '-ep', nargs='*',
-                               help='everest project names. used in auto detection of their directories to get eg. interface defintions (default: everest-core)',
-                               default=['everest-core'])
+                               help='everest project names. used in auto detection of their directories to get eg. interface defintions (default: EVerest)',
+                               default=['EVerest'])
     common_parser.add_argument('--schemas-dir', '-sd', type=str,
                                help=f'everest framework directory containing the schema definitions (default: {schemas_dir})',
                                default=str(schemas_dir))

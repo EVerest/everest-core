@@ -95,7 +95,7 @@ Tested with Fedora 40, 41 and 42. Here is how to get your needed libraries with
 Download And Install EVerest
 =============================
 
-EVerest's main application code is located in ``everest-core``. It makes use of various
+EVerest's main application code is located in `EVerest <https://github.com/EVerest/EVerest>`_. It makes use of various
 libraries which are included in the same repository for the most part. External dependencies
 are dynamically loaded via `CPM <https://github.com/cpm-cmake/CPM.cmake>`_.
 
@@ -114,18 +114,18 @@ Make sure to set the ``PATH`` and the ``CPM_SOURCE_CACHE`` variable in your shel
 
 .. note::
   In the past the EVerest Dependency Manager - short ``edm`` - helped you with orchestrating
-  and pulling in the dependencies in the build process of ``everest-core``. Since EVerest has
+  and pulling in the dependencies in the build process of ``EVerest``. Since EVerest has
   been restructered into a (quasi)-mono-repository, manual installation of ``edm`` is no longer
   recommended for building recent releases of EVerest (2026 and later).
   For more details about ``edm``, see the dedicated :doc:`edm documentation </explanation/dev-tools/edm>`.
 
-We can now continue to build ``everest-core``.
+We can now continue to build ``EVerest``.
 
 .. code-block:: bash
 
-  git clone https://github.com/EVerest/everest-core
+  git clone https://github.com/EVerest/EVerest
   mkdir build && cd build
-  cmake ../everest-core/
+  cmake ../EVerest/
   make -j$(nproc) install
 
 .. _htg_getting_started_sw_simulate:
@@ -178,7 +178,7 @@ software-in-the-loop configuration. This means that all hardware related
 parts like Powermeter, RFID-Reader are loaded as simulated modules.
 Also the Electric Vehicle simulations run as part of EVerest.
 
-Change to the directory ``everest-core/build``, which has been created during
+Change to the directory ``EVerest/build``, which has been created during
 EVerest install.
 
 Since the EVerest config we are going to use includes ISO15118 functionality on the EV
@@ -297,7 +297,7 @@ the basic elements of the EVerest module concept.
 So, let's dig into the overview:
 
 EVerest is a modular framework. So, there are lots of modules for different
-entities in ``everest-core``:
+entities in ``EVerest/modules``:
 
 - EvseManager (a charging port as part of a charging station)
 - Hardware driver modules
@@ -373,7 +373,7 @@ With the ``min_connections`` and ``max_connections`` keys you can configure how
 many connections are required or allowed for your module.
 
 In EVerest, you find a manifest file for each module. See the module
-directories in *everest-core/modules*.
+directories in *EVerest/modules*.
 
 Interfaces
 ^^^^^^^^^^^^^^^
@@ -392,7 +392,7 @@ to create a new one. EVerest contains a rich set of interfaces defining common
 functionality of a charging station software stack.
 
 You can find all interface source files in the directory
-*everest-core/interfaces* as yaml files or their
+*EVerest/interfaces* as yaml files or their
 respective documentation in the :doc:`EVerest Reference Documentation </reference/types_index>`.
 
 This is an easy interface as an example:
@@ -455,7 +455,7 @@ In the interface, you saw a reference to an EVerest type definition.
 
 You can find the type definitions as yaml files in the following directory:
 
-*everest-core/types* or their respective
+*EVerest/types* or their respective
 documentation in the :doc:`EVerest Reference Documentation </reference/index>`.
 
 An easy definition of a type could look like this:
@@ -487,7 +487,7 @@ Generate the stub files
 ---------------------------
 
 You can use ``ev-cli`` to generate stub files for a module. Everything that you need
-is a module directory within ``everest-core/modules`` containing a ``manifest.yaml`` file
+is a module directory within ``EVerest/modules`` containing a ``manifest.yaml`` file
 described above.
 
 Assuming the module is defined inside the ``EVSE`` directory you can use :ref:`ev-cli <exp_dev_tools_evcli>` to create

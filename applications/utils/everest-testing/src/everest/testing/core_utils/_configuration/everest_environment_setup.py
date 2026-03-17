@@ -46,7 +46,7 @@ class EverestEnvironmentEvseSecurityConfiguration:
     use_temporary_certificates_folder: bool = True
     module_id: Optional[str] = None  # if None, auto-detected
     source_certificate_directory: Optional[
-        Path] = None  # if provided, this will be copied to temporary path; If none, the certificates of the everest-core directory / installation will be used
+        Path] = None  # if provided, this will be copied to temporary path; If none, the certificates of the EVerest directory / installation will be used
     module_configuration: Optional[
         # if provided, will be merged into configuration; paths will be adapted if use_temporary_certificates_folder is true
         EvseSecurityModuleConfiguration] = None
@@ -63,7 +63,7 @@ class EverestEnvironmentCoreConfiguration:
     everest_core_path: Path
     template_everest_config_path: Union[
         Path, None]  # Underlying EVerest configuration; will be copied temporarily by EverestCore and adjusted;
-    # if none, config is auto-detected by everest-core
+    # if none, config is auto-detected by EVerest
 
 
 @dataclass

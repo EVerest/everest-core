@@ -2,7 +2,7 @@
 
 ## Build and test
 
-This library is built and tested as part of the build process of everest-core.
+This library is built and tested as part of the build process of EVerest.
 
 ## Run examples
 

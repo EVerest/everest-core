@@ -106,7 +106,7 @@ def everest_environment(request,
 def everest_core(request,
                  everest_environment
                  )-> EverestCore:
-    """Fixture that can be used to start and stop everest-core"""
+    """Fixture that can be used to start and stop EVerest"""
 
     yield everest_environment.everest_core
 

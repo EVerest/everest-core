@@ -63,7 +63,7 @@ async def test_ocpp_201(charge_point_v201: ChargePoint201, test_controller: Ever
     """This test case tests some requirements around AuthorizationCache of OCPP2.0.1
 
     Args:
-        charge_point_v201 (ChargePoint201): this fixture starts up a OCPP2.0.1 CSMS and everest-core connection to this CSMS using OCPP. The reference can be used to send and receive messages over OCPP
+        charge_point_v201 (ChargePoint201): this fixture starts up a OCPP2.0.1 CSMS and EVerest connection to this CSMS using OCPP. The reference can be used to send and receive messages over OCPP
         test_controller (TestController): this fixture is used to control the simulation
         test_utility (TestUtility): this fixture carries meta data of the test case that can be used for validations
     """

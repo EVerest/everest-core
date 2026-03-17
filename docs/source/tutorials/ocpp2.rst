@@ -8,13 +8,13 @@ OCPP 2.0.1 and 2.1 in EVerest
 
   EVerest has an implementation of OCPP 1.6J and 2.0.1 and 2.1. This tutorial is about
   the 2.0.1 and 2.1 implementation. To get documentation about all implemented versions,
-  see `lib/ocpp in the everest-core repository <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp>`_.
+  see `lib/ocpp in the EVerest repository <https://github.com/EVerest/EVerest/tree/main/lib/everest/ocpp>`_.
 
 OCPP2.0.1 and OCPP2.1 in EVerest
 =================================
 
 EVerest provides an implementation of OCPP 2.0.1 and 2.1 based on
-`libocpp` which is hosted as part of the `everest-core repository <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp>`_. Since OCPP 2.0.1 and 2.1
+`libocpp` which is hosted as part of the `EVerest repository <https://github.com/EVerest/EVerest/tree/main/lib/everest/ocpp>`_. Since OCPP 2.0.1 and 2.1
 is mostly backwards compatible, the implementation of OCPP 2.1 is based on the
 2.0.1 implementation. Every functionality that is provided as part of OCPP 2.0.1
 is also available in OCPP 2.1.
@@ -62,7 +62,7 @@ can be used for testing. It works with both OCPP 2.0.1 and 2.1.
 It responds "friendly" to all OCPP messages initiated by the charging station.
 Follow the instruction of its README to start up the CSMS locally.
 
-EVerest's `everest-core` repository provides a configuration that you can use
+The EVerest repository provides a configuration that you can use
 to run EVerest with OCPP 2.x.
 By default, this configuration is connecting to `localhost:9000` which is also
 the default address and port of our simple CSMS.
@@ -71,7 +71,7 @@ Simply run
 
 .. code-block:: bash
 
-    ${EVEREST_WORKSPACE:?}/everest-core/build/run-scripts/run-sil-ocpp201-pnc.sh
+    ${EVEREST_WORKSPACE:?}/EVerest/build/run-scripts/run-sil-ocpp201-pnc.sh
 
 to start EVerest with OCPP 2.x support and Plug&Charge enabled. You can start playing around with the EVerest
 simulation to start charging sessions.
@@ -265,12 +265,12 @@ Device Model initialization
 
 The config files are parsed at startup and used to initialize an SQLite
 database. Please see
-`the documentation about the device model initialization <https://github.com/EVerest/everest-core/blob/main/lib/everest/ocpp/doc/v2/ocpp_201_device_model_initialization.md>`_
+`the documentation about the device model initialization <https://github.com/EVerest/EVerest/blob/main/lib/everest/ocpp/doc/v2/ocpp_201_device_model_initialization.md>`_
 for detailed information about this process.
 
 You should specify the path to the directory of your device model definitions
 using the configuration parameter ``DeviceModelConfigPath``
-of the OCPP201 module within everest-core.
+of the OCPP201 module within EVerest.
 It shall point to the directory where the component files are located in these
 two subdirectories:
 
@@ -292,11 +292,11 @@ in functional requirements of the specification. Please have
 a look at the OCPP 2.x specifications for more information about each of the
 standardized components and variables.
 For this reason, it is recommended to use the
-`device device model definitions of libocpp <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp/config/v2/component_config>`_
+`device device model definitions of libocpp <https://github.com/EVerest/EVerest/tree/main/lib/everest/ocpp/config/v2/component_config>`_
 as a starting point. This is an examplary device model configuration for two
 EVSEs.
 
-The `device model setup from libocpp <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp/config/v2/component_config>`_
+The `device model setup from libocpp <https://github.com/EVerest/EVerest/tree/main/lib/everest/ocpp/config/v2/component_config>`_
 serves as a good example. 
 
 The split between the two directories only has semantic reasons.
@@ -348,7 +348,7 @@ Configuring the OCPP201 module within EVerest
 To be able to follow the further explanations, you should be familiar with the configuration of EVerest modules.
 Take a look into :doc:`EVerest Module Concept </explanation/detail-module-concept>` for that.
 
-To configure the OCPP201 module of everest-core, find the available configuration parameters
+To configure the OCPP201 module of EVerest, find the available configuration parameters
 and carefully read the further explanations in the
 :ref:`OCPP201 module documentation <everest_modules_OCPP201>`
 in order to configure it according to your needs.
@@ -356,7 +356,7 @@ in order to configure it according to your needs.
 In order to enable OCPP2.x in EVerest, you need to load the module in the EVerest configuration file and set up the module connections. The interfaces
 provided and required by the OCPP module and its purposes are described in the :ref:`OCPP201 module documentation <everest_modules_OCPP201>`.
 
-The EVerest configuration file `config-sil-ocpp201.yaml <https://github.com/EVerest/everest-core/blob/main/config/config-sil-ocpp201.yaml>`_
+The EVerest configuration file `config-sil-ocpp201.yaml <https://github.com/EVerest/EVerest/blob/main/config/config-sil-ocpp201.yaml>`_
 which was used previously serves as a good example
 for how the connections of the module could be set up.
 

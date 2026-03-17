@@ -74,7 +74,7 @@ class StatusFifoListener:
 
 
 class EverestCore:
-    """This class can be used to configure, start and stop a full build of everest-core
+    """This class can be used to configure, start and stop a full build of EVerest
     """
 
     def __init__(self,
@@ -150,7 +150,7 @@ class EverestCore:
             yaml.dump(everest_config, f)
 
     def start(self, standalone_module: Optional[Union[str, List[str]]] = None, test_connections: Connections = None):
-        """Starts everest-core in a subprocess
+        """Starts EVerest in a subprocess
 
         Args:
             standalone_module (str, optional): If set, a submodule can be started separately. EVerest will then wait for the submodule to be started.

@@ -30,7 +30,7 @@ Implementation of this library does not grant compliance with CHAdeMO requiremen
 
 ## Integration with EVerest
 
-This library will be (but is not yet) integrated within the `IEEE2030.1.1` module within [everest-core](https://github.com/EVerest/everest-core) — the complete software stack for your charging station. It is recommended to use EVerest together with this IEEE 2030.1.1 implementation.
+This library will be (but is not yet) integrated within the `IEEE2030.1.1` module within [EVerest](https://github.com/EVerest/EVerest) — the complete software stack for your charging station. It is recommended to use EVerest together with this IEEE 2030.1.1 implementation.
 
 ## Dependencies
 

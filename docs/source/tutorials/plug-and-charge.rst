@@ -39,7 +39,7 @@ certificates:
 .. code-block:: bash
 
    cd {EVerest Workspace Directory}/Josev/iso15118/shared/pki
-   ./create_certs.sh -v iso-2 -i {EVerest Workspace Directory}/everest-core
+   ./create_certs.sh -v iso-2 -i {EVerest Workspace Directory}/EVerest
 
 This will enable ISO 15118 communication including Plug&Charge and install the
 required CA certificates inside ``config/certs/ca`` and the client certificates,
@@ -80,15 +80,14 @@ Let's get started step by step
 ------------------------------
 
 1. Prerequisites must be fullfilled: EVerest must be installed on your system.
-   By default, the installation of everest-core includes a complete and
-   automatic installation of a test PKI. The certificates and keys are located
-   under ``dist/etc/everest/certs``.
+   By default, this includes a complete and automatic installation of a test PKI.
+   The certificates and keys are located under ``dist/etc/everest/certs``.
 
 2. Let's prepare the central system that we are going to use. Follow the
    instructions described here to set it up:
    https://github.com/EVerest/ocpp-csms
 
-3. Run everest-core with either OCPP1.6, OCPP2.x using the prepared run-scripts.
+3. Run EVerest with either OCPP1.6, OCPP2.x using the prepared run-scripts.
    Make sure the the endpoint ``localhost:9000/<id>`` is specified in the respective 
    ocpp configuration file (OCPP2.x config defaults to this address, while for
    OCPP1.6 the default is different).

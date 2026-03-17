@@ -16,7 +16,7 @@ config:
   EverestDeviceModelDatabasePath:
     description: >-
       Path to the SQLite databse for the EVerest device model. This database stores components and variables
-      like EVSE and Connector that are closely related to everest-core and therefore not owned and managed by libocpp.
+      like EVSE and Connector that are closely related to EVerest and therefore not owned and managed by libocpp.
     type: string
     default: everest_device_model_storage.db
   DeviceModelDatabaseMigrationPath:

@@ -20,12 +20,12 @@ environment for EVerest using a development container (devcontainer).
 VSCode will automatically build the container. After this all development
 happens inside the container.
 
-The contents of the everest-core repo are mapped inside the container
+The contents of the EVerest repo are mapped inside the container
 in the directory ``/workspace``
 You can exit VSCode at any time, re-running it will cause VSCode to ask you
 again to reopen in container.
 
-Opening the everest-core repository in the VSCode devcontainer will
+Opening the EVerest repository in the VSCode devcontainer will
 automatically start all of the provided service containers.
 
 *************
@@ -42,16 +42,16 @@ To install the prerequisites, please check your operating system or distribution
 Required Steps
 **************
 
-1. **Clone the everest-core repository**
+1. **Clone the EVerest repository**
 
-   If you have not done this yet, clone the everest-core repository
+   If you have not done this yet, clone the EVerest repository
    from GitHub to your local machine:
 
    .. code-block:: bash
 
-       git clone https://github.com/EVerest/everest-core.git path/to/everest-core
+       git clone https://github.com/EVerest/EVerest.git path/to/EVerest
 
-   Where ``path/to/everest-core`` is the path where you want to
+   Where ``path/to/EVerest`` is the path where you want to
    clone the repository to.
 
 2. **Open in VSCode**
@@ -60,7 +60,7 @@ Required Steps
 
    .. code-block:: bash
 
-       code path/to/everest-core
+       code path/to/EVerest
    
    Choose **Reopen in container** when prompted by VSCode.
 

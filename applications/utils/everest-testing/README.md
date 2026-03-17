@@ -22,12 +22,12 @@ Controller that can be used to start/stop the Everest instance and send events t
 
 The core_utils basically provide two fixtures that you can require in your test cases:
 
-- **everest_core** The main fixture `everest_core` can be used to start and stop the everest-core application.
+- **everest_core** The main fixture `everest_core` can be used to start and stop the EVerest application.
 - **test_controller**: Fixture that references the test_controller that can be used for control events for the test cases. This includes control over simulations that trigger events like an EV plug in, EV plug out, swipe RFID and more. 
 
 #### Configuration Fixtures:
 
-- **core_config** Core configuration, which is the everest_core path and the configuration path (utilizes the `everest_core_config` marker.)
+- **core_config** Core configuration, which is the EVerest path and the configuration path (utilizes the `everest_core_config` marker.)
 - **probe_module_config** Used to provide the probe module configuration. In particular can be overriden if the probe module should require module connections.
 - **ocpp_config**  Used to provide the configuration, i.e. the JSON device model,  to set up the OCPP (1.6 or 2.0.1) module.
 - **evse_security_config** Used to provide the configuration to set up the EvseSecurity module.
@@ -76,7 +76,7 @@ An important function that you will frequently use when writing test cases is th
 
 ## Add a conftest.py
 
-The test_controller fixture and inherently also the charge_point_v16 and charge_point_v201 require information about the directory of the everest-core application and libocpp. Those can be specified within a conftest.py. Within the conftest.py you could also override the test_config fixture for your specific setup.
+The test_controller fixture and inherently also the charge_point_v16 and charge_point_v201 require information about the directory of the EVerest application and libocpp. Those can be specified within a conftest.py. Within the conftest.py you could also override the test_config fixture for your specific setup.
 
 ## Set markers and override fixture to configure instances
 
@@ -122,9 +122,9 @@ _Note_: The "*" import from `core_utils.fixtures` may ensure backwards compatibi
 
 ## Install
 
-In order to use the provided fixtures within your test cases, a successful build of everest-core is required. Refer to https://github.com/EVerest/everest-core for this.
+In order to use the provided fixtures within your test cases, a successful build of EVerest is required. Refer to https://github.com/EVerest/EVerest for this.
 
-An MQTT broker needs to run on your system in order to start the test cases including everest-core. Docker can be used for this. Refer to https://everest.github.io/nightly/tutorials/docker_setup.html in order to set this up.
+An MQTT broker needs to run on your system in order to start the test cases including EVerest. Docker can be used for this. Refer to https://everest.github.io/nightly/tutorials/docker_setup.html in order to set this up.
 
 Install this package using
 
@@ -134,13 +134,13 @@ python3 -m pip install .
 
 ## Examples
 
-Have a look at [example_tests.py](examples/tests.py). In this file you can find and run one OCPP1.6 and one OCPP2.0.1 test case. These test cases will help you to get familiar with the fixtures provided in this package. You need a successful of [everest-core](https://github.com/EVerest/everest-core) on your development machine in order to run the tests.
+Have a look at [example_tests.py](examples/tests.py). In this file you can find and run one OCPP1.6 and one OCPP2.0.1 test case. These test cases will help you to get familiar with the fixtures provided in this package. You need a successful build of [EVerest](https://github.com/EVerest/EVerest) on your development machine in order to run the tests.
 
 You can run these tests using
 
 ```bash
 cd examples
-python3 -m pytest tests.py --everest-prefix <path-to-everest-core>/build/dist/ --libocpp <path-to-libocpp> --log-cli-level=DEBUG
+python3 -m pytest tests.py --everest-prefix <path-to-EVerest>/build/dist/ --libocpp <path-to-libocpp> --log-cli-level=DEBUG
 ```
 
 

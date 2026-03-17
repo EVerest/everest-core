@@ -44,8 +44,8 @@ The BringUp modules should be included in the system image initially,
 but later in production they should not be installed.
 
 To get familiar with this method, you can use a pure SIL version on your
-development PC. This step is optional. From the build folder of
-everest-core, start the following run script:
+development PC. This step is optional. From the *build* folder, start
+the following run script:
 
 .. code-block:: bash
 

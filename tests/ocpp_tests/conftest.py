@@ -34,8 +34,8 @@ def pytest_addoption(parser):
     parser.addoption(
         "--everest-prefix",
         action="store",
-        default="~/checkout/everest-workspace/everest-core",
-        help="everest-core path; default = '~/checkout/everest-workspace/everest-core'",
+        default="~/checkout/everest-workspace/EVerest",
+        help="EVerest path; default = '~/checkout/everest-workspace/EVerest'",
     )
 
 

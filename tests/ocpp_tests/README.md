@@ -5,12 +5,12 @@ for OCPP1.6 and OCPP2.0.1.
 
 ## Requirements
 
-In order to run the integration tests, you need to have everest-core compiled
+In order to run the integration tests, you need to have EVerest compiled
 and installed on your system. Please also make sure to install the python
 requirements.
 
 ```bash
-cd everest-core/
+cd EVerest/
 cmake -S . -B build -DBUILD_TESTING=ON
 cmake --build build --target install --parallel -j$(nproc)
 . build/venv/bin/activate
@@ -44,7 +44,7 @@ Alternatively, you can run individual test sets or test cases using
 
 ```bash
 python3 -m pytest test_sets/ocpp201/remote_control.py \
-  --everest-prefix <path-to-everest-core-installation-directory> \
+  --everest-prefix <path-to-EVerest-installation-directory> \
   -k 'test_F01_F02_F03'
 ```
 
@@ -52,7 +52,7 @@ e.g.
 
 ```bash
 python3 -m pytest test_sets/ocpp201/remote_control.py \
-  --everest-prefix ~/checkout/everest-core/build/dist \
+  --everest-prefix ~/checkout/EVerest/build/dist \
   -k 'test_F01_F02_F03'
 ```
 
@@ -65,5 +65,5 @@ for the test cases installed using the
 convenience scripts inside [test_sets/everest-aux](test_sets/everest-aux/)
 
 ```bash
-./install_certs <path-to-everest-core-installation-directory>
-./install_configs <path-to-everest-core-installation-directory>
+./install_certs <path-to-EVerest-installation-directory>
+./install_configs <path-to-EVerest-installation-directory>

@@ -63,7 +63,7 @@ Alternative 1: Clone required repositories (recommended for recent versions)
 Just clone this, to get the required dependencies::
 
     git clone https://github.com/EVerest/everest-cmake.git ${EVEREST_WORKSPACE}/everest-cmake
-    git clone https://github.com/EVerest/everest-core.git ${EVEREST_WORKSPACE}/everest-core
+    git clone https://github.com/EVerest/EVerest.git ${EVEREST_WORKSPACE}/EVerest
 
 Alternative 2: Setup Workspace via EVerest Dependency Manager (recommended for pre-2026 version)
 ------------------------------------------------------------------------------------------------
@@ -76,15 +76,15 @@ benefit of allowing your to select a specific snapshot (see the corresponding
     cd $EVEREST_WORKSPACE
 
 As of 2026 the EVerest dependency manager layouts the workspace to be compatible with
-older non-mono-repository versions of everest-core. Assuming you want to build a recent
+older non-mono-repository versions of EVerest (or, as formerly called, `everest-core`). Assuming you want to build a recent
 version of everest, you can delete the dependencies which are part of the mono-repo today.
 
-**Remove everything except** ``everest-core/`` **and** ``everest-cmake/`` **.**
+**Remove everything except** ``EVerest/`` **and** ``everest-cmake/`` **.**
 
 The result should look like::
 
     $ ls
-    everest-core    everest-cmake
+    EVerest    everest-cmake
 
 
 Create Module Skeleton
@@ -140,7 +140,7 @@ We store the following interface configuration in form of a .yaml file in
 Second, we use the  ``ev-cli`` tool to auto-generate header files for this
 interface::
 
-     cd $EVEREST_TUTORIAL_DIR && ev-cli interface generate-headers --everest-dir . --schemas-dir $EVEREST_WORKSPACE/everest-core/lib/everest/framework/schemas interface_tutorial_module
+     cd $EVEREST_TUTORIAL_DIR && ev-cli interface generate-headers --everest-dir . --schemas-dir $EVEREST_WORKSPACE/EVerest/lib/everest/framework/schemas interface_tutorial_module
 
 
 After this, you should find the following file tree structure in your module::
@@ -209,7 +209,7 @@ In particular, this manifest declares the following:
 Again, we use the EVerest cli tool to auto-generate code from this
 configuration::
 
-    cd $EVEREST_TUTORIAL_DIR && ev-cli module create --everest-dir . --schemas-dir $EVEREST_WORKSPACE/everest-core/lib/everest/framework/schemas TutorialModule --licenses $EVEREST_WORKSPACE/everest-core/applications/utils/ev-dev-tools/src/ev_cli/licenses
+    cd $EVEREST_TUTORIAL_DIR && ev-cli module create --everest-dir . --schemas-dir $EVEREST_WORKSPACE/EVerest/lib/everest/framework/schemas TutorialModule --licenses $EVEREST_WORKSPACE/EVerest/applications/utils/ev-dev-tools/src/ev_cli/licenses
 
 
 After that, you should have the following file structure::
@@ -350,11 +350,11 @@ handled by EDM.
 
 In order for this to work, you need to add a dependency file for EDM, called
 ``dependencies.yaml``, in the project root directory. For example, listing
-only ``everest-core`` as a dependency looks like this::
+only ``EVerest`` as a dependency looks like this::
 
     ---
-    everest-core:
-      git: https://github.com/EVerest/everest-core.git
+    EVerest:
+      git: https://github.com/EVerest/EVerest.git
       git_tag: main
 
 With the above setup taken care of, you are now ready to build the project.

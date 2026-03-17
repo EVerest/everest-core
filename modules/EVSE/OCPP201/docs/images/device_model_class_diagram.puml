@@ -23,7 +23,7 @@ class DeviceModelStorageSqlite implements DeviceModelStorageInterface
 
 }
 
-package everest-core {
+package "OCPP201 Module" {
 
 class EverestDeviceModelStorage implements libocpp.DeviceModelStorageInterface
 class ComposedDeviceModelStorage implements libocpp.DeviceModelStorageInterface {

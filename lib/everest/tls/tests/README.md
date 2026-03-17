@@ -3,7 +3,7 @@
 Building tests:
 
 ```sh
-$ cd everest-core
+$ cd EVerest
 $ mkdir build
 $ cd build
 $ cmake -GNinja -DEVEREST_CORE_BUILD_TESTING=ON ..

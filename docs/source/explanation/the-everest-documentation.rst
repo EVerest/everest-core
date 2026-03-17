@@ -80,11 +80,11 @@ documentation serves as a reference for the syntax.
   the end result (html) looks as intended!
 
 The locations of the source files that make up the documentation you are reading,
-are within the `EVerest/everest-core repository <https://github.com/EVerest/everest-core>`_.
+are within the `EVerest/EVerest repository <https://github.com/EVerest/EVerest>`_.
 
 .. note::
   You will find a number of documentation files that are not part of the documentation you are reading
-  but still reside inside the `EVerest/everest-core repository <https://github.com/EVerest/everest-core>`_.
+  but still reside inside the `EVerest/EVerest repository <https://github.com/EVerest/EVerest>`_.
   See :ref:`below <documenting_everest_doc_near_source_code>`.
 
 Main EVerest Documentation
@@ -100,7 +100,7 @@ EVerest interfaces, modules, types and the EVerest API contain documentation
 as part of their definitions, right inside the corresponding yaml files.
 Those files may also contain configuration settings along with short explanations.
 
-In the `EVerest/everest-core repository <https://github.com/EVerest/everest-core>`_:
+In the `EVerest/EVerest repository <https://github.com/EVerest/EVerest>`_:
 
 * ``types/*.yaml``: Definitions of the internal EVerest types for inter-module communication.
   This adds to the *reference* section.
@@ -152,7 +152,7 @@ Those docs snippest are not being pushed to the EVerest main documentation.
 
 Examples:
 
-- md files in certain places the everest-core repository
+- md files in certain places the EVerest repository
 
   - ``docs/README.md``: How to build the documentation you are reading
   - ``applications/utils/everest-testing/README.md``: How to use pytest with EVerest

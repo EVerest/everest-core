@@ -8,14 +8,14 @@ OCPP 1.6 in EVerest
 
   EVerest has an implementation of OCPP 1.6J and 2.0.1 and 2.1. This tutorial is about
   the 1.6 implementation. To get documentation about all implemented versions,
-  see `lib/ocpp in the everest-core repository <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp>`_.
+  see `lib/ocpp in the EVerest repository <https://github.com/EVerest/EVerest/tree/main/lib/everest/ocpp>`_.
 
 EVerest provides a complete implementation of Open Charge Point Protocol
 (OCPP) 1.6J, supporting all feature profiles including Plug&Charge and the
 Security Extensions.
 
-The source code of `libocpp` is hosted as part of the everest-core repository:
-`<https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp>`_.
+The source code of `libocpp` is hosted as part of the EVerest repository:
+`<https://github.com/EVerest/EVerest/tree/main/lib/everest/ocpp>`_.
 
 This is a tutorial about how to set up and configure OCPP 1.6 in EVerest.
 
@@ -43,7 +43,7 @@ If you have done that successfully, you can move on with this tutorial.
 Run EVerest SIL with SteVe
 ==========================
 
-EVerest's `everest-core` repository provides a configuration that you can use to run EVerest with OCPP.
+The EVerest repository provides a configuration that you can use to run EVerest with OCPP.
 By default this configuration is connecting to the Open Source CSMS
 `SteVe <https://github.com/steve-community/steve>`_.
 Make sure that SteVe is running on your machine as the CSMS we connect to.
@@ -57,7 +57,7 @@ Simply run
 
 .. code-block:: bash
 
-    ${EVEREST_WORKSPACE:?}/everest-core/build/run-scripts/run-sil-ocpp.sh
+    ${EVEREST_WORKSPACE:?}/EVerest/build/run-scripts/run-sil-ocpp.sh
 
 to start EVerest with OCPP 1.6J. You can start playing around with central
 system-initiated messages and use the EVerest simulation to start charging
@@ -76,7 +76,7 @@ In addition to the EVerest configuration yaml file, OCPP 1.6 is configured
 using a JSON configuration file.
 This configuration file can contain all configuration keys from the OCPP 1.6
 specification.
-Examples for that can be found `here <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp/config/v16>`__.
+Examples for that can be found `here <https://github.com/EVerest/EVerest/tree/main/lib/everest/ocpp/config/v16>`__.
 
 This is the one we used to connect to SteVe:
 
@@ -181,7 +181,7 @@ tailored to your specific charging station.
 
   There is a lot to configure with OCPP. Make sure to thoroughly read through
   the OCPP 1.6 specification and the
-  `profile schemas <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp/config/v16/profile_schemas>`_
+  `profile schemas <https://github.com/EVerest/EVerest/tree/main/lib/everest/ocpp/config/v16/profile_schemas>`_
   and configure OCPP according to your needs.
 
 .. _tutorial_ocpp16_connect_different_csms:
@@ -194,9 +194,9 @@ details within the OCPP configuration file. The OCPP config is a separate
 JSON file in which all configuration keys of OCPP 1.6 plus some internal parameters
 can be configured.
 
-You can specify the path to this configuration file inside the ``everest-core``
+You can specify the path to this configuration file inside the ``EVerest``
 configuration file using the configuration parameter ``ChargePointConfigPath``
-of the OCPP module within everest-core. This defaults to *ocpp-config.json*.
+of the OCPP module within EVerest. This defaults to *ocpp-config.json*.
 If this path is relative, the default path for the OCPP configuration
 *dist/share/everest/modules/OCPP* will be prepended.
 
@@ -225,7 +225,7 @@ and it might also include to change the parameters ``AuthorizationKey`` and
   - Minimal length: 16 bytes
 
 Modify these parameters according to the connection requirements of the CSMS. Find all available configuration keys
-and their descriptions in `here <https://github.com/EVerest/everest-core/tree/main/lib/everest/ocpp/config/v16/profile_schemas>`_
+and their descriptions in `here <https://github.com/EVerest/EVerest/tree/main/lib/everest/ocpp/config/v16/profile_schemas>`_
 
 .. note::
 
@@ -242,7 +242,7 @@ Configuring OCPP 1.6 within EVerest
 To be able to follow the further explanations, you should be familiar with the configuration of EVerest modules.
 Take a look into :doc:`EVerest Module Concept </explanation/detail-module-concept>` for that.
 
-To configure the OCPP module of everest-core, find the available configuration parameters
+To configure the OCPP module of EVerest, find the available configuration parameters
 in the :ref:`module documentation <everest_modules_OCPP>`, and read through them
 carefully in order to configure it according to your needs.
 
@@ -253,7 +253,7 @@ described in the
 :ref:`module documentation <everest_modules_OCPP>`.
 
 The EVerest configuration file
-`config-sil-ocpp.yaml <https://github.com/EVerest/everest-core/blob/main/config/config-sil-ocpp.yaml>`_
+`config-sil-ocpp.yaml <https://github.com/EVerest/EVerest/blob/main/config/config-sil-ocpp.yaml>`_
 which was used previously serves as a good example for how the connections of
 the module could be set up.
 

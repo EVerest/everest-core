@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() {
-    echo "Usage: $0 <everest-core-installation-directory>"
+    echo "Usage: $0 <EVerest-installation-directory>"
     exit 1
 }
 

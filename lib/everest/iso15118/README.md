@@ -1,7 +1,7 @@
 ISO 15118 library suite
 =======================
 
-This is a C++ library implementation of ISO 15118-20, ISO15118-2 and DIN70121. The implementation of ISO15118-20 is currently under heavy development. DIN70121 and ISO15118-2 will follow and are currently covered by the [EvseV2G module](https://github.com/EVerest/everest-core/tree/main/modules/EvseV2G) of everest-core.
+This is a C++ library implementation of ISO 15118-20, ISO15118-2 and DIN70121. The implementation of ISO15118-20 is currently under heavy development. DIN70121 and ISO15118-2 will follow and are currently covered by the [EvseV2G module](https://github.com/EVerest/EVerest/tree/main/modules/EvseV2G) of EVerest.
 
 ISO 15118-20 Support
 --------------------
@@ -37,14 +37,14 @@ ISO 15118 Support
 ISO15118 support is distributed accross multiple repositories and modules in EVerest. Please see the following references of other ISO15118 related development:
 
 - Some functionality of part 2 of ISO 15118 is integrated in the
-  [EvseManager module in the everest-core repository](https://github.com/EVerest/everest-core/tree/main/modules/EvseManager).
+  [EvseManager module in the EVerest repository](https://github.com/EVerest/EVerest/tree/main/modules/EvseManager).
 - Current development for an EXI code generator (as used in the
   ISO 15118 protocol suite) is ongoing in the
   [cbexigen repository](https://github.com/EVerest/cbexigen).
 - The [repository libSlac](https://github.com/EVerest/libslac) contains
   definitions of SLAC messages that are used for ISO 15118 communication.
-- DIN70121 & ISO15118-2 funcationality can be found in
-  [EVerest module EvseV2G](https://github.com/EVerest/everest-core/tree/main/modules/EvseV2G)
+- DIN70121 & ISO15118-2 functionality can be found in
+  [EVerest module EvseV2G](https://github.com/EVerest/EVerest/tree/main/modules/EvseV2G)
 
 Dependencies
 ------------
@@ -141,4 +141,4 @@ Information on the corresponding research project can be found here (in
 German only):
 [InterBDL research project](https://www.thu.de/de/org/iea/smartgrids/Seiten/InterBDL.aspx).
 
-![Logo of funding by Federal Ministry of Economic Affairs and Climate Action](https://raw.githubusercontent.com/EVerest/everest-core/main/docs/images/bmwk-logo-incl-supporting.png)
+![Logo of funding by Federal Ministry of Economic Affairs and Climate Action](https://raw.githubusercontent.com/EVerest/EVerest/main/docs/images/bmwk-logo-incl-supporting.png)

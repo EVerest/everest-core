@@ -1,4 +1,4 @@
-description: This interface defines the everest-testing control functions on everest-core
+description: This interface defines the everest-testing control functions on EVerest
 cmds:
   start_charging:
     description: Enables the EvManager to begin charging
