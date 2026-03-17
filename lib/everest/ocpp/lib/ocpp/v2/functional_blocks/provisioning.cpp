@@ -589,7 +589,7 @@ void Provisioning::handle_variables_changed(const std::map<SetVariableData, SetV
                            << " changed to " << set_variable_data.attributeValue.get();
             }
 
-            // Track NetworkConfiguration slot changes for Phase 6 sync
+            // Track which NetworkConfiguration DM component slots were modified via SetVariables
             if (set_variable_data.component.name == "NetworkConfiguration" &&
                 set_variable_data.component.instance.has_value()) {
                 try {
@@ -609,7 +609,7 @@ void Provisioning::handle_variables_changed(const std::map<SetVariableData, SetV
         }
     }
 
-    // Phase 6: Refresh connectivity manager cache if any NetworkConfiguration slots were modified
+    // Refresh the connectivity manager's in-memory profile cache if any NetworkConfiguration slot changed
     if (!modified_slots.empty()) {
         this->context.connectivity_manager.reload_network_profiles();
     }

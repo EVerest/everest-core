@@ -10,6 +10,7 @@
 #include <type_traits>
 #include <vector>
 
+#include <everest/logging.hpp>
 #include <ocpp/common/utils.hpp>
 #include <ocpp/v2/enums.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
@@ -278,6 +279,8 @@ public:
         std::string value;
         const auto status = get_variable(component_id, variable_id, attribute_enum, value, true);
         if (status != GetVariableStatusEnum::Accepted) {
+            EVLOG_critical << "Required value " << variable_id.name << " of component " << component_id.name
+                           << " could not be retrieved";
             throw std::runtime_error("Required device model value not available: " + variable_id.name.get());
         }
         return to_specific_type<T>(value);
@@ -344,8 +347,9 @@ std::optional<NetworkConnectionProfile> read_profile_from_device_model(DeviceMod
 bool write_profile_to_device_model(DeviceModelInterface& dm, int32_t slot, const NetworkConnectionProfile& profile,
                                    const std::string& source);
 
-/// \brief One-time migration: if all slots in NetworkConfigurationPriority have an empty OcppCsmsUrl,
-/// import profiles from the NetworkConnectionProfiles blob. Idempotent once DM is populated.
+/// \brief One-time migration: if the NetworkConnectionProfiles blob is non-empty and no
+/// NetworkConfiguration DM slot has a configured OcppCsmsUrl, import profiles from the blob.
+/// Clears the blob after migration (or if DM is already populated) so this is idempotent.
 void migrate_from_blob_if_needed(DeviceModelInterface& dm);
 
 /// \brief Clear all NetworkConfiguration device model variables for the given slot.

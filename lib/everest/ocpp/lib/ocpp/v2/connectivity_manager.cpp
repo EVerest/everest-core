@@ -423,6 +423,30 @@ void ConnectivityManager::on_websocket_connected(OcppProtocolVersion protocol) {
     std::optional<NetworkConnectionProfile> network_connection_profile =
         this->get_network_connection_profile(actual_configuration_slot);
 
+    // Write negotiated OcppVersion to the per-slot NetworkConfiguration DM variable (B09)
+    if (protocol != OcppProtocolVersion::Unknown) {
+        std::string version_str;
+        switch (protocol) {
+        case OcppProtocolVersion::v201:
+            version_str = "OCPP201";
+            break;
+        case OcppProtocolVersion::v21:
+            version_str = "OCPP21";
+            break;
+        case OcppProtocolVersion::v16:
+        case OcppProtocolVersion::Unknown:
+            break;
+        }
+        if (!version_str.empty()) {
+            const auto nc_cv = NetworkConfigurationComponentVariables::get_component_variable(
+                actual_configuration_slot, NetworkConfigurationComponentVariables::OcppVersion);
+            if (nc_cv.variable.has_value()) {
+                this->device_model.set_read_only_value(nc_cv.component, nc_cv.variable.value(), AttributeEnum::Actual,
+                                                       version_str, VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
+            }
+        }
+    }
+
     if (this->websocket_connected_callback.has_value() and network_connection_profile.has_value()) {
         this->websocket_connected_callback.value()(actual_configuration_slot, network_connection_profile.value(),
                                                    this->connected_ocpp_version);
@@ -476,20 +500,24 @@ void ConnectivityManager::cache_network_connection_profiles() {
         }
     }
 
-    if (!this->device_model.get_optional_value<bool>(ControllerComponentVariables::AllowSecurityLevelZeroConnections)
+    if (!this->cached_network_connection_profiles.empty() &&
+        !this->device_model.get_optional_value<bool>(ControllerComponentVariables::AllowSecurityLevelZeroConnections)
              .value_or(false) &&
         std::none_of(this->cached_network_connection_profiles.begin(), this->cached_network_connection_profiles.end(),
                      [](const SetNetworkProfileRequest& profile) {
                          return profile.connectionData.securityProfile !=
                                 security::OCPP_1_6_ONLY_UNSECURED_TRANSPORT_WITHOUT_BASIC_AUTHENTICATION;
                      })) {
-        throw std::invalid_argument(
-            "All profiles configured have security_profile 0 which is not officially allowed in OCPP 2.0.1");
+        EVLOG_error << "All profiles configured have security_profile 0 which is not officially allowed in OCPP 2.0.1";
     }
 }
 
 void ConnectivityManager::reload_network_profiles() {
-    cache_network_connection_profiles();
+    try {
+        cache_network_connection_profiles();
+    } catch (const std::exception& e) {
+        EVLOG_error << "Failed to reload network profiles: " << e.what();
+    }
 }
 
 bool ConnectivityManager::set_network_profile(const int32_t slot, const NetworkConnectionProfile& profile,
@@ -498,7 +526,38 @@ bool ConnectivityManager::set_network_profile(const int32_t slot, const NetworkC
                                                                                source)) {
         return false;
     }
-    cache_network_connection_profiles();
+
+    // B09.FR.11: Add slot to NetworkConfigurationPriority if not already present
+    if (ControllerComponentVariables::NetworkConfigurationPriority.variable.has_value()) {
+        const auto priority_str = this->device_model.get_optional_value<std::string>(
+            ControllerComponentVariables::NetworkConfigurationPriority);
+        const auto slot_str = std::to_string(slot);
+        bool slot_found = false;
+        if (priority_str.has_value()) {
+            for (const auto& s : ocpp::split_string(priority_str.value(), ',')) {
+                if (s == slot_str) {
+                    slot_found = true;
+                    break;
+                }
+            }
+        }
+        if (!slot_found) {
+            std::string new_priority = priority_str.value_or("");
+            if (!new_priority.empty()) {
+                new_priority += ',';
+            }
+            new_priority += slot_str;
+            this->device_model.set_value(ControllerComponentVariables::NetworkConfigurationPriority.component,
+                                         ControllerComponentVariables::NetworkConfigurationPriority.variable.value(),
+                                         AttributeEnum::Actual, new_priority, source);
+        }
+    }
+
+    try {
+        cache_network_connection_profiles();
+    } catch (const std::exception& e) {
+        EVLOG_error << "Failed to refresh network profiles after set_network_profile: " << e.what();
+    }
     return true;
 }
 
@@ -521,6 +580,12 @@ void ConnectivityManager::check_cache_for_invalid_security_profiles() {
     this->network_connection_slots.erase(std::remove_if(this->network_connection_slots.begin(),
                                                         this->network_connection_slots.end(), is_lower_security_level),
                                          this->network_connection_slots.end());
+
+    if (this->network_connection_slots.empty()) {
+        EVLOG_warning << "All network connection slots were removed due to insufficient security profile";
+        this->pending_configuration_slot.reset();
+        return;
+    }
 
     // Use the active slot and if not valid any longer use the next available one
     auto opt_priority = this->get_priority_from_configuration_slot(before_slot);
