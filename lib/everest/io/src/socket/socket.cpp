@@ -11,7 +11,6 @@
 #include <iostream>
 #include <linux/if_packet.h>
 #include <linux/if_tun.h>
-#include <net/ethernet.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <netinet/in.h>
