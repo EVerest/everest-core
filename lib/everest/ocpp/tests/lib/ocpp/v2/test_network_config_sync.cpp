@@ -231,10 +231,10 @@ TEST_F(NetworkConfigSyncTest, MigrateFromBlobClearsBlob) {
     EXPECT_EQ(blob.size(), 0u);
 }
 
-TEST_F(NetworkConfigSyncTest, MigrateOverwritesDmWithBlobValue) {
-    // Slot 1 has a default OcppCsmsUrl — blob import must overwrite it
-    ASSERT_TRUE(NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1).has_value())
-        << "Test precondition: slot 1 must have default data in the test DM config";
+TEST_F(NetworkConfigSyncTest, MigrateSkippedWhenDmAlreadyPopulated) {
+    // Slot 1 has a default OcppCsmsUrl — migration must be skipped
+    auto before = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    ASSERT_TRUE(before.has_value()) << "Test precondition: slot 1 must have default data in the test DM config";
 
     SetNetworkProfileRequest req;
     req.configurationSlot = 1;
@@ -244,9 +244,13 @@ TEST_F(NetworkConfigSyncTest, MigrateOverwritesDmWithBlobValue) {
 
     auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
     ASSERT_TRUE(result.has_value());
-    // Blob value wins — blob always overwrites DM on migration
-    EXPECT_EQ(result->ocppCsmsUrl.get(), "wss://blob-set.example.com")
-        << "Blob must overwrite DM data during migration";
+    // DM value preserved — migration skipped because DM slot was already populated
+    EXPECT_EQ(result->ocppCsmsUrl.get(), before->ocppCsmsUrl.get())
+        << "DM value must be preserved when slot is already populated";
+
+    // Blob must be cleared even when migration is skipped
+    const auto blob = read_blob(*dm);
+    EXPECT_EQ(blob.size(), 0u) << "Blob must be cleared after skipped migration";
 }
 
 TEST_F(NetworkConfigSyncTest, MigrateFromEmptyBlobIsNoop) {

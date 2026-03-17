@@ -1904,6 +1904,27 @@ void migrate_from_blob_if_needed(DeviceModelInterface& dm) {
             EVLOG_debug << "NetworkConnectionProfiles blob is empty, no migration needed";
             return;
         }
+
+        // Check if DM slots are already populated — skip migration if any slot has a configured URL
+        const auto priority_str =
+            dm.get_optional_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority);
+        if (priority_str.has_value() && !priority_str.value().empty()) {
+            for (const auto& slot_str : ocpp::split_string(priority_str.value(), ',')) {
+                const int slot = std::stoi(slot_str);
+                const auto url_cv = get_component_variable(slot, OcppCsmsUrl);
+                const auto url_opt = dm.get_optional_value<std::string>(url_cv);
+                if (url_opt.has_value() && !url_opt.value().empty()) {
+                    EVLOG_debug << "NetworkConfiguration DM slot " << slot
+                                << " already has a URL, skipping blob migration";
+                    // Clear the blob so this check does not run again
+                    dm.set_value(ControllerComponentVariables::NetworkConnectionProfiles.component,
+                                 ControllerComponentVariables::NetworkConnectionProfiles.variable.value(),
+                                 AttributeEnum::Actual, "", "internal");
+                    return;
+                }
+            }
+        }
+
         const auto profiles = json::parse(blob_opt.value());
         if (profiles.empty()) {
             dm.set_value(ControllerComponentVariables::NetworkConnectionProfiles.component,
