@@ -606,11 +606,17 @@ CertificateValidationResult OpenSSLSupplier::x509_verify_certificate_chain(
                                 is_known = true;
                                 const char* nid_name = OBJ_nid2sn(nid);
                                 if (nid_name != nullptr) {
+                                    if (!nids_log.empty()) {
+                                        nids_log += ", ";
+                                    }
                                     nids_log += nid_name;
                                     nids_log += "(";
                                     nids_log += std::to_string(nid);
                                     nids_log += ")";
                                 } else {
+                                    if (!nids_log.empty()) {
+                                        nids_log += ", ";
+                                    }
                                     nids_log += "NID_" + std::to_string(nid);
                                 }
                                 break;
@@ -618,6 +624,7 @@ CertificateValidationResult OpenSSLSupplier::x509_verify_certificate_chain(
                         }
                         if (!is_known) {
                             has_unknown_critical = true;
+                            break;
                         }
                     }
 

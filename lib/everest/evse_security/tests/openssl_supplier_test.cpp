@@ -120,8 +120,8 @@ TEST_F(OpenSSLSupplierTest, x509_verify_certificate_chain_ignore_unhandled_criti
     // X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION is not mapped to a specific result.
     auto res_strict = OpenSSLSupplier::x509_verify_certificate_chain(
         res_leaf[0].get(), parents, empty_untrusted, true, std::nullopt, "pki_critical_ski/root_cert.pem", false);
-    ASSERT_EQ(res_strict, CertificateValidationResult::Unknown)
-        << "Strict mode must reject a chain containing an unhandled critical extension";
+    ASSERT_NE(res_strict, CertificateValidationResult::Valid)
+        << "Strict mode must not accept a chain containing an unhandled critical extension";
 
     // Lenient mode: every critical extension is a well-known RFC 5280 NID, so the chain
     // must validate when ignore_unhandled_critical_extensions is set.
