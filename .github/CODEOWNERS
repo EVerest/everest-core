@@ -40,7 +40,7 @@
 /modules/EVSE/EvseManager/ @corneliusclaussen @SebaLukas @hikinggrass @pietfried @mlitre
 /modules/EVSE/EvseSecurity/ @pietfried @hikinggrass @james-ctc @mlitre @SebaLukas
 /modules/EVSE/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas @pietfried @hikinggrass
-/modules/EVSE/EvseV2G/ @corneliusclaussen @SebaLukas @james-ctc @pietfried @hikinggrass @james-ctc @mlitre
+/modules/EVSE/EvseV2G/ @corneliusclaussen @SebaLukas @james-ctc @pietfried @hikinggrass @james-ctc @mlitre @barsnick
 /modules/EVSE/OCPP/ @hikinggrass @pietfried @mlitre
 /modules/HardwareDrivers/ @pietfried @hikinggrass @corneliusclaussen @florinmihut @cburandt @djchhp
 /modules/EVSE/OCPP201/ @hikinggrass @pietfried @mlitre
@@ -68,3 +68,6 @@
 
 /dependencies.yaml @hikinggrass @pietfried @corneliusclaussen @SebaLukas @james-ctc @mlitre
 /module-dependencies.cmake @hikinggrass @pietfried @corneliusclaussen @SebaLukas @james-ctc @mlitre
+
+# yocto
+/yocto/ @hikinggrass @corneliusclaussen @james-ctc @andistorm @barsnick
