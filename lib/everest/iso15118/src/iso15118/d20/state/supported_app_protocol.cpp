@@ -16,9 +16,12 @@ namespace iso15118::d20::state {
 
 constexpr auto ISO20_DC_NAMESPACE = "urn:iso:std:iso:15118:-20:DC";
 constexpr auto ISO20_AC_NAMESPACE = "urn:iso:std:iso:15118:-20:AC";
+constexpr auto ISO20_DER_IEC_NAMESPACE = "urn:iso:std:iso:15118:-20:AC-DER-IEC";
+// constexpr auto ISO20_DER_SAE_NAMESPACE = "urn:iso:std:iso:15118:-20:AC-DER-SAE";
 
 using ResponseCode = message_20::SupportedAppProtocolResponse::ResponseCode;
 
+namespace {
 message_20::SupportedAppProtocolResponse handle_request(const message_20::SupportedAppProtocolRequest& req,
                                                         const std::optional<std::string>& custom_protocol_namespace) {
     message_20::SupportedAppProtocolResponse res;
@@ -26,11 +29,10 @@ message_20::SupportedAppProtocolResponse handle_request(const message_20::Suppor
     std::map<uint8_t, uint8_t> ev_supported_protocols{}; // key: priority, value: schema_id
 
     for (const auto& protocol : req.app_protocol) {
-        if (protocol.protocol_namespace.compare(ISO20_DC_NAMESPACE) == 0) {
-            ev_supported_protocols[protocol.priority] = protocol.schema_id;
-        } else if (protocol.protocol_namespace.compare(ISO20_AC_NAMESPACE) == 0) {
-            ev_supported_protocols[protocol.priority] = protocol.schema_id;
-        } else if (protocol.protocol_namespace.compare(custom_protocol_namespace.value_or("")) == 0) {
+        if (protocol.protocol_namespace.compare(ISO20_DC_NAMESPACE) == 0 or
+            protocol.protocol_namespace.compare(ISO20_AC_NAMESPACE) == 0 or
+            protocol.protocol_namespace.compare(ISO20_DER_IEC_NAMESPACE) == 0 or
+            protocol.protocol_namespace.compare(custom_protocol_namespace.value_or("")) == 0) {
             ev_supported_protocols[protocol.priority] = protocol.schema_id;
         }
     }
@@ -42,6 +44,7 @@ message_20::SupportedAppProtocolResponse handle_request(const message_20::Suppor
     res.schema_id = ev_supported_protocols.begin()->second; // [V2G20-167] Highest Prio: 1, Lowest Prio: 20
     return response_with_code(res, ResponseCode::OK_SuccessfulNegotiation);
 }
+} // namespace
 
 void SupportedAppProtocol::enter() {
     m_ctx.log.enter_state("SupportedAppProtocol");
@@ -74,6 +77,8 @@ Result SupportedAppProtocol::feed(Event ev) {
                     m_ctx.feedback.selected_protocol("ISO15118-20:DC");
                 } else if (protocol.protocol_namespace.compare(ISO20_AC_NAMESPACE) == 0) {
                     m_ctx.feedback.selected_protocol("ISO15118-20:AC");
+                } else if (protocol.protocol_namespace.compare(ISO20_DER_IEC_NAMESPACE) == 0) {
+                    m_ctx.feedback.selected_protocol("ISO15118-20:AC-DER-IEC");
                 } else if (protocol.protocol_namespace.compare(m_ctx.session_config.custom_protocol.value_or("")) ==
                            0) {
                     m_ctx.feedback.selected_protocol(m_ctx.session_config.custom_protocol.value());
