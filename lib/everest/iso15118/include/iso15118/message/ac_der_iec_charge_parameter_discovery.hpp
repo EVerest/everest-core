@@ -149,7 +149,7 @@ struct DerControl {
     std::optional<RationalNumber> max_level_dc_injection;
 };
 
-struct DER_AC_CPDReqEnergyTransferMode {
+struct DER_AC_CPDReqEnergyTransferMode : AC_CPDReqEnergyTransferMode {
     Processing processing;
     RationalNumber max_discharge_power;
     std::optional<RationalNumber> max_discharge_power_L2;
@@ -161,7 +161,7 @@ struct DER_AC_CPDReqEnergyTransferMode {
     std::optional<ReactivePowerLimits> reactive_power_limits;
 };
 
-struct DER_AC_CPDResEnergyTransferMode {
+struct DER_AC_CPDResEnergyTransferMode : AC_CPDResEnergyTransferMode {
     RationalNumber nominal_charge_power;
     std::optional<RationalNumber> nominal_charge_power_L2;
     std::optional<RationalNumber> nominal_charge_power_L3;

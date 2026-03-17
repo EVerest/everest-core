@@ -7,6 +7,7 @@
 #include <iso15118/detail/cb_exi.hpp>
 #include <iso15118/message/variant.hpp>
 
+#include <cbv2g/iso_20/iso20_AC_DER_IEC_Datatypes.h>
 #include <cbv2g/iso_20/iso20_AC_Datatypes.h>
 #include <cbv2g/iso_20/iso20_CommonMessages_Datatypes.h>
 #include <cbv2g/iso_20/iso20_DC_Datatypes.h>
@@ -24,6 +25,7 @@ template <typename cb_HeaderType> void convert(const cb_HeaderType& in, Header& 
 template void convert(const struct iso20_MessageHeaderType& in, Header& out);
 template void convert(const struct iso20_dc_MessageHeaderType& in, Header& out);
 template void convert(const struct iso20_ac_MessageHeaderType& in, Header& out);
+template void convert(const struct iso20_ac_der_iec_MessageHeaderType& in, Header& out);
 
 template <typename cb_HeaderType> void convert_header(const Header& in, cb_HeaderType& out) {
     out.TimeStamp = in.timestamp;
@@ -48,6 +50,11 @@ template <> void convert(const Header& in, iso20_ac_MessageHeaderType& out) {
     convert_header(in, out);
 }
 
+template <> void convert(const Header& in, iso20_ac_der_iec_MessageHeaderType& out) {
+    init_iso20_ac_der_iec_MessageHeaderType(&out);
+    convert_header(in, out);
+}
+
 template <typename cb_RationalNumberType>
 void convert(const cb_RationalNumberType& in, datatypes::RationalNumber& out) {
     out.exponent = in.Exponent;
@@ -57,6 +64,7 @@ void convert(const cb_RationalNumberType& in, datatypes::RationalNumber& out) {
 template void convert(const struct iso20_ac_RationalNumberType& in, datatypes::RationalNumber& out);
 template void convert(const struct iso20_dc_RationalNumberType& in, datatypes::RationalNumber& out);
 template void convert(const struct iso20_RationalNumberType& in, datatypes::RationalNumber& out);
+template void convert(const struct iso20_ac_der_iec_RationalNumberType& in, datatypes::RationalNumber& out);
 
 template <typename cb_RationalNumberType>
 void convert(const datatypes::RationalNumber& in, cb_RationalNumberType& out) {
@@ -67,6 +75,7 @@ void convert(const datatypes::RationalNumber& in, cb_RationalNumberType& out) {
 template void convert(const datatypes::RationalNumber& in, struct iso20_ac_RationalNumberType& out);
 template void convert(const datatypes::RationalNumber& in, struct iso20_dc_RationalNumberType& out);
 template void convert(const datatypes::RationalNumber& in, struct iso20_RationalNumberType& out);
+template void convert(const datatypes::RationalNumber& in, struct iso20_ac_der_iec_RationalNumberType& out);
 
 template <> void convert(const datatypes::EvseStatus& in, struct iso20_dc_EVSEStatusType& out) {
     out.NotificationMaxDelay = in.notification_max_delay;
@@ -84,6 +93,16 @@ template <> void convert(const datatypes::EvseStatus& in, struct iso20_ac_EVSESt
 }
 
 template <> void convert(const struct iso20_ac_EVSEStatusType& in, datatypes::EvseStatus& out) {
+    cb_convert_enum(in.EVSENotification, out.notification);
+    out.notification_max_delay = in.NotificationMaxDelay;
+}
+
+template <> void convert(const datatypes::EvseStatus& in, struct iso20_ac_der_iec_EVSEStatusType& out) {
+    out.NotificationMaxDelay = in.notification_max_delay;
+    cb_convert_enum(in.notification, out.EVSENotification);
+}
+
+template <> void convert(const struct iso20_ac_der_iec_EVSEStatusType& in, datatypes::EvseStatus& out) {
     cb_convert_enum(in.EVSENotification, out.notification);
     out.notification_max_delay = in.NotificationMaxDelay;
 }

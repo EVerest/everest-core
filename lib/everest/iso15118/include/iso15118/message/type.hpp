@@ -42,6 +42,10 @@ enum class Type {
     AC_ChargeParameterDiscoveryRes,
     AC_ChargeLoopReq,
     AC_ChargeLoopRes,
+    DER_AC_ChargeParameterDiscoveryReq,
+    DER_AC_ChargeParameterDiscoveryRes,
+    DER_AC_ChargeLoopReq,
+    DER_AC_ChargeLoopRes,
 };
 
 template <typename T> struct TypeTrait {
@@ -99,6 +103,10 @@ CREATE_TYPE_TRAIT(AC_ChargeParameterDiscoveryRequest, AC_ChargeParameterDiscover
 CREATE_TYPE_TRAIT(AC_ChargeParameterDiscoveryResponse, AC_ChargeParameterDiscoveryRes);
 CREATE_TYPE_TRAIT(AC_ChargeLoopRequest, AC_ChargeLoopReq);
 CREATE_TYPE_TRAIT(AC_ChargeLoopResponse, AC_ChargeLoopRes);
+CREATE_TYPE_TRAIT(DER_AC_ChargeParameterDiscoveryRequest, DER_AC_ChargeParameterDiscoveryReq);
+CREATE_TYPE_TRAIT(DER_AC_ChargeParameterDiscoveryResponse, DER_AC_ChargeParameterDiscoveryRes);
+CREATE_TYPE_TRAIT(DER_AC_ChargeLoopRequest, DER_AC_ChargeLoopReq);
+CREATE_TYPE_TRAIT(DER_AC_ChargeLoopResponse, DER_AC_ChargeLoopRes);
 
 #ifdef CREATE_TYPE_TRAIT_PUSHED
 #define CREATE_TYPE_TRAIT CREATE_TYPE_TRAIT_PUSHED

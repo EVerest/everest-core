@@ -67,6 +67,7 @@ target_sources(iso15118
         message/dc_charge_loop.cpp
         message/dc_welding_detection.cpp
         message/session_stop.cpp
+        message/ac_der_charge_parameter_discovery.cpp
 
         tbd_controller.cpp    
 )
