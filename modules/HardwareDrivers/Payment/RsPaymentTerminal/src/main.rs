@@ -250,6 +250,7 @@ impl ProvidedIdToken {
             iso_15118_certificate_hash_data: None,
             prevalidated: None,
             request_id: None,
+            pre_authorized_amount: None,
         }
     }
 }
@@ -317,6 +318,7 @@ impl From<AuthorizationStatus> for ValidationResult {
             expiry_time: None,
             parent_id_token: None,
             reservation_id: None,
+            pre_authorized_amount: None,
         }
     }
 }
@@ -533,7 +535,9 @@ impl AuthTokenValidatorServiceSubscriber for PaymentTerminalModule {
 
         if let Err(err) = self.feig.begin_transaction(
             &provided_token.id_token.value,
-            self.pre_authorization_amount,
+            provided_token
+                .pre_authorized_amount
+                .map_or(self.pre_authorization_amount, |m| m.value.value as usize),
         ) {
             log::warn!("Failed to start a transaction: {err:?}");
             match err.downcast_ref::<ErrorMessages>() {

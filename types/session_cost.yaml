@@ -49,6 +49,7 @@ types:
       - Energy
       - Time
       - FlatFee
+      - PreAuthorizationAmount
       - Other
   ChargingPriceComponent:
     description: >-
