@@ -364,7 +364,7 @@
       "characteristics": {
         "supportsMonitoring": false,
         "dataType": "OptionList",
-        "valuesList": "OCPP201,OCPP21"
+        "valuesList": "OCPP20,OCPP201,OCPP21"
       },
       "attributes": [
         {
