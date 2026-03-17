@@ -1,0 +1,14 @@
+--- BUILD.bazel	2025-05-19 14:43:59.114597483 +0000
++++ BUILD.bazel	2025-05-19 14:32:37.499562045 +0000
+@@ -30,6 +30,11 @@
+             "src/asm/make_x86_64_sysv_elf_gas.S",
+             "src/asm/ontop_x86_64_sysv_elf_gas.S",
+         ],
++        "@platforms//cpu:armv7": [
++            "src/asm/jump_arm_aapcs_elf_gas.S",
++            "src/asm/make_arm_aapcs_elf_gas.S",
++            "src/asm/ontop_arm_aapcs_elf_gas.S",
++        ],
+     }),
+ )
+ 

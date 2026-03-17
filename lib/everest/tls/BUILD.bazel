@@ -26,7 +26,7 @@ cc_library(
         "//lib/everest/util",
         "//lib/everest/framework:framework",
         "//lib/everest/evse_security:libevse-security",
-        "@openssl//:crypto",
-        "@openssl//:ssl",
+        "//third-party/bazel/openssl:crypto",
+        "//third-party/bazel/openssl:ssl",
     ],
 )

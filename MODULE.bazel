@@ -9,7 +9,9 @@ module(
 
 bazel_dep(name = "bazel_features", version = "1.21.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
+
 BOOST_VERSION = "1.87.0"
+
 bazel_dep(name = "boost.asio", version = BOOST_VERSION)
 bazel_dep(name = "boost.process", version = BOOST_VERSION)
 bazel_dep(name = "boost.uuid", version = BOOST_VERSION)
@@ -22,7 +24,7 @@ bazel_dep(name = "fast_float", version = "6.1.6")
 bazel_dep(name = "fmt", version = "12.1.0", repo_name = "com_github_fmtlib_fmt")
 bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.1", repo_name = "com_github_nlohmann_json")
 bazel_dep(name = "libcap", version = "2.27.bcr.1")
-bazel_dep(name = "openssl", version = "3.3.1.bcr.6")
+bazel_dep(name = "openssl", version = "3.3.1.bcr.9")
 bazel_dep(name = "platforms", version = "0.0.11")
 bazel_dep(name = "pugixml", version = "1.15")
 bazel_dep(name = "rapidyaml", version = "0.10.0")
@@ -35,6 +37,33 @@ bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "pybind11_bazel", version = "3.0.0")
 bazel_dep(name = "sqlite3", version = "3.51.2")
 
+single_version_override(
+    module_name = "boost.context",
+    patches = ["//third-party/bazel/patches:boost.context.patch"],
+)
+
+###############################################################################
+# C R O S S - C O M P I L A T I O N   T O O L C H A I N S
+###############################################################################
+
+# Module extension for cross-compilation toolchain repositories
+cross_toolchains = use_extension("//third-party/bazel/toolchains:extensions.bzl", "toolchains")
+use_repo(
+    cross_toolchains,
+    "cc_toolchain_aarch64-linux-gnu-x86_64-linux",
+    "cc_toolchain_aarch64-linux-musl-x86_64-linux",
+    "cc_toolchain_armv7-linux-gnu-x86_64-linux",
+    "cc_toolchain_armv7-linux-musl-x86_64-linux",
+)
+
+register_toolchains("@cc_toolchain_aarch64-linux-gnu-x86_64-linux//:aarch64-linux-glibc_toolchain_toolchain")
+
+register_toolchains("@cc_toolchain_aarch64-linux-musl-x86_64-linux//:aarch64-linux-musl_toolchain_toolchain")
+
+register_toolchains("@cc_toolchain_armv7-linux-musl-x86_64-linux//:armv7-linux-musl_toolchain_toolchain")
+
+register_toolchains("@cc_toolchain_armv7-linux-gnu-x86_64-linux//:armv7-linux-gnu_toolchain_toolchain")
+
 ###############################################################################
 # N O N   M O D U L E
 ###############################################################################
@@ -42,13 +71,14 @@ bazel_dep(name = "sqlite3", version = "3.51.2")
 deps = use_extension("//third-party/bazel:extension.bzl", "deps")
 use_repo(
     deps,
-    "sigslot",
-    "mosquitto",
     "com_github_HowardHinnant_date",
+    "com_github_LiamBindle_mqtt-c",
     "com_github_pboettch_json-schema-validator",
     "com_github_warmcatt_libwebsockets",
-    "com_github_LiamBindle_mqtt-c",
+    "mosquitto",
+    "openssl_source",
     "pybind11_json",
+    "sigslot",
 )
 
 ###############################################################################
@@ -57,19 +87,17 @@ use_repo(
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(
-    python_version = "3.10",
     is_default = True,
+    python_version = "3.10",
 )
-
 use_repo(python, "python_3_10")
 
 pip_deps = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 pip_deps.parse(
-    python_version = "3.10",
     hub_name = "everest-testing_pip_deps",
+    python_version = "3.10",
     requirements_lock = "//applications/utils:requirements-bazel.txt",
 )
-
 use_repo(pip_deps, "everest-testing_pip_deps")
 
 ###############################################################################
@@ -80,15 +108,50 @@ RUST_EDITION = "2021"
 
 RUST_VERSION = "1.86.0"
 
+RUST_EXTRA_TARGET_TRIPLES = {
+    "armv7-unknown-linux-musleabihf": [
+        "@platforms//os:linux",
+        "@platforms//cpu:armv7",
+        "@everest-core//third-party/bazel/toolchains:musl",
+    ],
+    "armv7-unknown-linux-gnueabihf": [
+        "@platforms//os:linux",
+        "@platforms//cpu:armv7",
+        "@everest-core//third-party/bazel/toolchains:gnu",
+    ],
+    "aarch64-unknown-linux-musl": [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+        "@everest-core//third-party/bazel/toolchains:musl",
+    ],
+    "aarch64-unknown-linux-gnu": [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+        "@everest-core//third-party/bazel/toolchains:gnu",
+    ],
+}
+
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 rust.toolchain(
     edition = RUST_EDITION,
-    extra_target_triples = [
-        "aarch64-unknown-linux-gnu",
-        "x86_64-unknown-linux-gnu",
+    versions = [
+        RUST_VERSION,
+        "nightly/2026-02-09",
     ],
-    versions = [RUST_VERSION],
 )
+
+[
+    rust.repository_set(
+        name = "rust_{}_repository_set_x86_64-unknown-linux-gnu".format(target_triple.replace("-", "_")),
+        edition = RUST_EDITION,
+        exec_triple = "x86_64-unknown-linux-gnu",
+        target_compatible_with = target_compatible_with,
+        target_triple = target_triple,
+        versions = [RUST_VERSION],
+    )
+    for (target_triple, target_compatible_with) in RUST_EXTRA_TARGET_TRIPLES.items()
+]
+
 use_repo(rust, "rust_toolchains")
 
 register_toolchains("@rust_toolchains//:all")
@@ -104,17 +167,21 @@ everest_core_crate_index.from_cargo(
         "@everest-core//modules/Examples/RustExamples/RsExample:Cargo.toml",
         "@everest-core//modules/Examples/RustExamples/RsExampleUser:Cargo.toml",
     ],
+    supported_platform_triples = [
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu",
+        "armv7-unknown-linux-gnueabihf",
+    ],
 )
 everest_core_crate_index.annotation(
     crate = "everestrs",
-    repositories = ["everest_core_crate_index"],
     crate_features = ["build_bazel"],
+    repositories = ["everest_core_crate_index"],
     deps = [
-        "//lib/everest/framework/everestrs/everestrs-build",
         "//lib/everest/framework/everestrs/everestrs",
+        "//lib/everest/framework/everestrs/everestrs-build",
     ],
 )
-
 use_repo(
     everest_core_crate_index,
     "everest_core_crate_index",
@@ -133,12 +200,17 @@ everest_framework_crate_index.from_cargo(
         "//lib/everest/framework/everestrs/everestrs:Cargo.toml",
         "//lib/everest/framework/everestrs/everestrs-build:Cargo.toml",
     ],
+    supported_platform_triples = [
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu",
+        "armv7-unknown-linux-gnueabihf",
+    ],
 )
 
 everest_core_crate_index.annotation(
     crate = "log",
-    repositories = ["everest_core_crate_index"],
     override_target_lib = "@everest_framework_crate_index//:log",
+    repositories = ["everest_core_crate_index"],
 )
 
 use_repo(
@@ -154,7 +226,6 @@ everest_framework_validate_crate_index.from_cargo(
         "//lib/everest/framework/bazel/validate:Cargo.toml",
     ],
 )
-
 use_repo(
     everest_framework_validate_crate_index,
     "everest_framework_validate_crate_index",

@@ -31,7 +31,7 @@ cc_library(
         ":cert_rehash",
         "//lib/everest/framework:framework",
         "//lib/everest/timer:libtimer",
-        "@openssl//:crypto",
-        "@openssl//:ssl",
+        "//third-party/bazel/openssl:crypto",
+        "//third-party/bazel/openssl:ssl",
     ],
 )

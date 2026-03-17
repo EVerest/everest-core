@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2022 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 
 #include "energyImpl.hpp"
+#include "energy_schedule_utils.hpp"
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
@@ -11,24 +12,24 @@ namespace module {
 namespace energy_grid {
 
 void energyImpl::init() {
+    auto energy_state_handle = energy_state.handle();
 
-    // UUID must be unique also beyond this charging station -> will be handled on framework level and above later
-    energy_flow_request.uuid = mod->info.id;
-    energy_flow_request.node_type = types::energy::NodeType::Generic;
+    energy_state_handle->energy_flow_request.uuid = mod->info.id;
+    energy_state_handle->energy_flow_request.node_type = types::energy::NodeType::Generic;
 
     source_cfg = mod->info.id + "/module_config";
 
     // Initialize with sane defaults
-    energy_flow_request.schedule_import = get_local_schedule();
-    energy_flow_request.schedule_export = get_local_schedule();
+    energy_state_handle->energy_flow_request.schedule_import = get_local_schedule();
+    energy_state_handle->energy_flow_request.schedule_export = get_local_schedule();
 
     for (auto& entry : mod->r_energy_consumer) {
         entry->subscribe_energy_flow_request([this](types::energy::EnergyFlowRequest e) {
             // Received new energy_flow_request object from a child. Update in the cached object and republish.
-            std::scoped_lock lock(energy_mutex);
+            auto energy_state_handle = energy_state.handle();
 
             bool child_found = false;
-            for (auto& child : energy_flow_request.children) {
+            for (auto& child : energy_state_handle->energy_flow_request.children) {
                 if (child.uuid == e.uuid) {
                     child = e;
                     child_found = true;
@@ -36,19 +37,19 @@ void energyImpl::init() {
             }
 
             if (!child_found) {
-                energy_flow_request.children.push_back(e);
+                energy_state_handle->energy_flow_request.children.push_back(e);
             }
 
-            publish_complete_energy_object();
+            publish_complete_energy_object(*energy_state_handle);
         });
     }
 
     if (!mod->r_powermeter.empty()) {
         mod->r_powermeter[0]->subscribe_powermeter([this](types::powermeter::Powermeter p) {
             EVLOG_debug << "Incoming powermeter readings: " << p;
-            std::scoped_lock lock(energy_mutex);
-            energy_flow_request.energy_usage_root = p;
-            publish_complete_energy_object();
+            auto energy_state_handle = energy_state.handle();
+            energy_state_handle->energy_flow_request.energy_usage_root = p;
+            publish_complete_energy_object(*energy_state_handle);
         });
     }
 
@@ -56,15 +57,14 @@ void energyImpl::init() {
         mod->r_price_information[0]->subscribe_energy_pricing(
             [this](types::energy_price_information::EnergyPriceSchedule p) {
                 EVLOG_debug << "Incoming price schedule: " << p;
-                std::scoped_lock lock(energy_mutex);
-                energy_pricing = p;
-                publish_complete_energy_object();
+                auto energy_state_handle = energy_state.handle();
+                energy_state_handle->energy_pricing = p;
+                publish_complete_energy_object(*energy_state_handle);
             });
     }
 }
 
 types::energy::ScheduleReqEntry energyImpl::get_local_schedule_req_entry() {
-    // local schedule of this module
     types::energy::ScheduleReqEntry local_schedule;
     auto tp = date::utc_clock::now();
 
@@ -84,52 +84,39 @@ std::vector<types::energy::ScheduleReqEntry> energyImpl::get_local_schedule() {
 }
 
 void energyImpl::set_external_limits(types::energy::ExternalLimits& l) {
-    std::scoped_lock lock(energy_mutex);
+    auto energy_state_handle = energy_state.handle();
 
-    energy_flow_request.schedule_import = l.schedule_import;
-    if (not energy_flow_request.schedule_import.empty()) {
-        // add limits from our own fuse settings
-        for (auto& e : energy_flow_request.schedule_import) {
-            if (!e.limits_to_root.ac_max_current_A.has_value() ||
-                e.limits_to_root.ac_max_current_A.value().value > mod->config.fuse_limit_A)
-                e.limits_to_root.ac_max_current_A = {static_cast<float>(mod->config.fuse_limit_A), source_cfg};
-
-            if (!e.limits_to_root.ac_max_phase_count.has_value() ||
-                e.limits_to_root.ac_max_phase_count.value().value > mod->config.phase_count)
-                e.limits_to_root.ac_max_phase_count = {mod->config.phase_count, source_cfg};
-        }
+    // Process import schedule
+    energy_state_handle->energy_flow_request.schedule_import = l.schedule_import;
+    if (not energy_state_handle->energy_flow_request.schedule_import.empty()) {
+        module::energy_grid::process_schedule_with_limits(
+            energy_state_handle->energy_flow_request.schedule_import, source_cfg, mod->config.fuse_limit_A,
+            mod->config.phase_count, mod->config.nominal_voltage_V, mod->config.enhance_external_schedule);
     } else {
         // At least add our local config limit even if the external limit did not set an import schedule
-        energy_flow_request.schedule_import = get_local_schedule();
+        energy_state_handle->energy_flow_request.schedule_import = get_local_schedule();
     }
 
-    energy_flow_request.schedule_export = l.schedule_export;
-
-    if (not energy_flow_request.schedule_export.empty()) {
-        // add limits from our own fuse settings
-        for (auto& e : energy_flow_request.schedule_export) {
-            if (!e.limits_to_root.ac_max_current_A.has_value() ||
-                e.limits_to_root.ac_max_current_A.value().value > mod->config.fuse_limit_A)
-                e.limits_to_root.ac_max_current_A = {static_cast<float>(mod->config.fuse_limit_A), source_cfg};
-
-            if (!e.limits_to_root.ac_max_phase_count.has_value() ||
-                e.limits_to_root.ac_max_phase_count.value().value > mod->config.phase_count)
-                e.limits_to_root.ac_max_phase_count = {mod->config.phase_count, source_cfg};
-        }
+    // Process export schedule
+    energy_state_handle->energy_flow_request.schedule_export = l.schedule_export;
+    if (not energy_state_handle->energy_flow_request.schedule_export.empty()) {
+        module::energy_grid::process_schedule_with_limits(
+            energy_state_handle->energy_flow_request.schedule_export, source_cfg, mod->config.fuse_limit_A,
+            mod->config.phase_count, mod->config.nominal_voltage_V, mod->config.enhance_external_schedule);
     } else {
         // At least add our local config limit even if the external limit did not set an export schedule
-        energy_flow_request.schedule_export = get_local_schedule();
+        energy_state_handle->energy_flow_request.schedule_export = get_local_schedule();
     }
 
-    energy_flow_request.schedule_setpoints = l.schedule_setpoints;
+    energy_state_handle->energy_flow_request.schedule_setpoints = l.schedule_setpoints;
 }
 
-void energyImpl::publish_complete_energy_object() {
-    // join the different schedules to the complete array (with resampling)
-    types::energy::EnergyFlowRequest energy_complete = energy_flow_request;
+void energyImpl::publish_complete_energy_object(const EnergyState& state) {
+    // This method is always called from contexts that already hold the energy_state lock
+    types::energy::EnergyFlowRequest energy_complete = state.energy_flow_request;
 
-    if (not energy_flow_request.schedule_export.empty() and not energy_pricing.schedule_export.empty()) {
-        merge_price_into_schedule(energy_complete.schedule_export, energy_pricing.schedule_export);
+    if (not state.energy_flow_request.schedule_export.empty() and not state.energy_pricing.schedule_export.empty()) {
+        merge_price_into_schedule(energy_complete.schedule_export, state.energy_pricing.schedule_export);
     }
 
     publish_energy_flow_request(energy_complete);
@@ -181,16 +168,18 @@ void energyImpl::merge_price_into_schedule(std::vector<types::energy::ScheduleRe
 }
 
 void energyImpl::ready() {
+    auto energy_state_handle = energy_state.handle();
     // publish own limits at least once
-    publish_energy_flow_request(energy_flow_request);
+    publish_energy_flow_request(energy_state_handle->energy_flow_request);
     mod->signalExternalLimit.connect([this](types::energy::ExternalLimits& l) { set_external_limits(l); });
 }
 
 void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
+    auto energy_state_handle = energy_state.handle();
 
     // route to children if it is not for me
     // FIXME: this sends it to all children, we could do a lookup on which branch it actually is
-    if (value.uuid != energy_flow_request.uuid) {
+    if (value.uuid != energy_state_handle->energy_flow_request.uuid) {
         for (auto& entry : mod->r_energy_consumer) {
             entry->call_enforce_limits(value);
         }

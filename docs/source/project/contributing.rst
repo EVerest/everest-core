@@ -20,7 +20,7 @@ provides general project oversight.
 
 If you just need help or have a question, refer to the :doc:`Community Channels </project/community>`.
 
-To contribute code to the project, first read over the :doc:`Governance Policy </project/governance/governance>` 
+To contribute code to the project, first read over the :doc:`Governance Policy </project/governance/governance>`
 page to understand the roles involved.
 
 Discussing and Communication
@@ -96,10 +96,13 @@ GitHub labels help organize issues and pull requests. EVerest does not yet have
 a standardized label system. When contributing:
 
 - Browse existing labels in the repository and use them consistently
-- Common labels to look for: ``bug``, ``enhancement``, ``documentation``, 
+- Common labels to look for: ``bug``, ``enhancement``, ``documentation``,
   ``help-wanted``, ``good-first-issue``
 - Backport workflow: Use ``backport-candidate`` to mark PRs that should be
-  considered for backporting to stable releases
+  considered for backporting to stable releases. To trigger the automated
+  backport workflow, maintainers can add a label in the format ``backport <branch>`` (e.g. ``backport stable/2026.02``). This will automatically create
+  a cherry-pick PR targeting the specified branch once the original PR is merged. If the cherry-pick does not apply cleanly, the workflow will comment on the
+  original PR and the backport must be performed manually.
 
 If you need a label that doesn't exist, discuss with maintainers before creating it.
 

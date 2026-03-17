@@ -2587,6 +2587,19 @@ void EvseManager::process_dc_ev_target_voltage_current(const types::iso15118::Dc
         car_breaks_limit = true;
     }
 
+    // ISO15118-20 [V2G20-2183] allows EVs to only provide voltage or current,
+    // i.e. some EV implementations send target voltage as zero later.
+    // While this requirement is going to be dropped from the standard, we
+    // have to support older implementations by using a "cached" latest non-zero
+    // voltage the EV told us.
+    // EVs sending a current of zero has not yet been seen, so we don't care
+    // about this particular case here at the moment.
+    bool car_sent_zero_voltage{false};
+    if (almost_eq(clamped_voltage, 0.0) and ev_info.target_voltage.value_or(0.f) > 0.f) {
+        clamped_voltage = ev_info.target_voltage.value();
+        car_sent_zero_voltage = true;
+    }
+
     const auto actual_voltage =
         ev_info_snapshot.present_voltage.has_value() ? ev_info_snapshot.present_voltage.value() : clamped_voltage;
 
@@ -2611,6 +2624,9 @@ void EvseManager::process_dc_ev_target_voltage_current(const types::iso15118::Dc
         }
         if (car_breaks_limit) {
             EVLOG_warning << "EV ignores new EVSE max limits. Setting target current to new EVSE max limits";
+        }
+        if (car_sent_zero_voltage) {
+            EVLOG_warning << "EV did not provide a recent voltage. Re-using the previously communicated value again.";
         }
 
         {

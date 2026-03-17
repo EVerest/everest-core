@@ -60,6 +60,15 @@ def _deps_impl(module_ctx):
     )
 
 
+    maybe(
+        http_archive,
+        name = "openssl_source",
+        url = "https://github.com/openssl/openssl/releases/download/openssl-3.3.1/openssl-3.3.1.tar.gz",
+        sha256 = "777cd596284c883375a2a7a11bf5d2786fc5413255efab20c50d6ffe6d020b7e",
+        strip_prefix = "openssl-3.3.1",
+        build_file = "@everest-core//third-party/bazel:BUILD.openssl-foreign-cc.bazel",
+    )
+
     version = "0.2.15"
     maybe(
         http_archive,
