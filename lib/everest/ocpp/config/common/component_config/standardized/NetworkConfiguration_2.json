@@ -373,8 +373,7 @@
         }
       ],
       "description": "OCPP version used for this connection",
-      "type": "string",
-      "default": "OCPP201"
+      "type": "string"
     },
     "CsmsRootCertificateHashAlgorithm": {
       "variable_name": "CsmsRootCertificateHashAlgorithm",

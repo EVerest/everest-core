@@ -259,8 +259,9 @@ private:
     /// connected security profile
     void check_cache_for_invalid_security_profiles();
 
-    /// \brief Removes all connection profiles from the database that have a security profile lower than the currently
-    /// connected security profile
+    /// \brief Removes all NetworkConfiguration DM slots and in-memory cache entries for profiles that have a security
+    /// profile lower than the currently connected security profile, and persists the updated
+    /// NetworkConfigurationPriority
     void remove_network_connection_profiles_below_actual_security_profile();
 };
 
