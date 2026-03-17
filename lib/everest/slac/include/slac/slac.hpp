@@ -156,6 +156,10 @@ public:
         return &raw_msg;
     };
 
+    homeplug_message const* get_raw_message_ptr() const {
+        return &raw_msg;
+    }
+
     int get_raw_msg_len() const {
         return raw_msg_len;
     }

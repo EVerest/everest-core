@@ -69,6 +69,7 @@ public:
      * @brief Prototype of the callbacks that can be registered for event handling
      */
     using event_handler_type = std::function<void(event_list const& event)>;
+    using event_handler_empty_type = std::function<void()>;
 
     /**
      * @var task
@@ -127,6 +128,7 @@ public:
      * @return True on success, false otherwise
      */
     bool register_event_handler(event_fd* obj, event_handler_type const& handler);
+    bool register_event_handler(event_fd* obj, event_handler_empty_type const& handler);
     /**
      * @brief Register an \ref timer_fd for event handling
      * @details Reading from the event happens internally to acknowledge event handling.
@@ -136,6 +138,7 @@ public:
      * @return True on success, false otherwise
      */
     bool register_event_handler(timer_fd* obj, event_handler_type const& handler);
+    bool register_event_handler(timer_fd* obj, event_handler_empty_type const& handler);
 
     /**
      * @brief Register a client implementing \ref fd_event_sync_interface for event handling
