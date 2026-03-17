@@ -35,15 +35,15 @@ int socket_can_handler::tx(uint32_t can_id, uint8_t len8_dlc, can_payload const&
 
     frame.can_id = can_id;
     auto const max_dlc_value = 15;
-    #ifdef CAN_MAX_RAW_DLC
+#ifdef CAN_MAX_RAW_DLC
     frame.len8_dlc = std::min<uint8_t>(len8_dlc, max_dlc_value);
-    #endif
-    const auto len = std::min<uint8_t>(CAN_MAX_DLEN, payload.size());;
-    #ifdef CAN_MAX_DLEN
+#endif
+    const auto len = std::min<uint8_t>(CAN_MAX_DLEN, payload.size());
+#ifdef CAN_MAX_DLEN
     frame.can_dlc = len;
-    #else
+#else
     frame.len = len;
-    #endif
+#endif
     memcpy(frame.data, payload.data(), len);
 
     auto bytes_written = write(m_owned_can_fd, &frame, sizeof(can_frame));
@@ -67,11 +67,11 @@ int socket_can_handler::rx(uint32_t& can_id, uint8_t& len8_dlc, can_payload& pay
             payload.clear();
             payload.assign(frame.data, frame.data + frame.can_dlc);
             can_id = frame.can_id;
-            #ifdef CAN_MAX_RAW_DLC
+#ifdef CAN_MAX_RAW_DLC
             len8_dlc = frame.len8_dlc;
-            #else
-            // FIXME: do we need this information?
-            #endif
+#else
+// FIXME: do we need this information?
+#endif
             return 0;
         } else if (nbytes == -1) {
             return errno;
