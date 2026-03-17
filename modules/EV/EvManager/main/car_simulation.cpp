@@ -22,7 +22,7 @@ void CarSimulation::state_machine() {
             r_ev_board_support->call_allow_power_on(false);
             // Wait for physical plugin (ev BSP sees state A on CP and not Disconnected)
 
-            sim_data.slac_state = "UNMATCHED";
+            sim_data.slac_state = types::slac::State::UNMATCHED;
             if (!r_ev.empty()) {
                 r_ev[0]->call_stop_charging();
             }
@@ -245,16 +245,16 @@ bool CarSimulation::rcd_current(const CmdArguments& arguments) {
 bool CarSimulation::iso_wait_slac_matched(const CmdArguments& arguments) {
     sim_data.state = SimState::PLUGGED_IN;
 
-    if (sim_data.slac_state == "UNMATCHED") {
+    if (sim_data.slac_state == types::slac::State::UNMATCHED) {
         EVLOG_debug << "Slac UNMATCHED";
         if (!r_slac.empty()) {
             EVLOG_debug << "Slac trigger matching";
             r_slac[0]->call_reset();
             r_slac[0]->call_trigger_matching();
-            sim_data.slac_state = "TRIGGERED";
+            sim_data.slac_state = types::slac::State::MATCHING;
         }
     }
-    if (sim_data.slac_state == "MATCHED") {
+    if (sim_data.slac_state == types::slac::State::MATCHED) {
         EVLOG_debug << "Slac Matched";
         return true;
     }

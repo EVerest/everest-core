@@ -49,9 +49,10 @@ void TariffAndCost::handle_cost_and_tariff(const TransactionEventResponse& respo
         const DisplayMessageContent message = message_content_to_display_message_content(personal_message);
         cost_messages.push_back(message);
 
-        // If cost is enabled, the message will be sent to the running cost callback. But if it is not enabled, the
-        // tariff message will be sent using the session cost message callback.
-        if (!cost_enabled and this->tariff_message_callback.has_value() and this->tariff_message_callback != nullptr) {
+        // Always publish the tariff message so the tariff_message variable on the session_cost interface is updated.
+        // When cost is also enabled, the message will additionally be included in the running cost callback below
+        // (if totalCost is present in the same response).
+        if (this->tariff_message_callback.has_value() and this->tariff_message_callback != nullptr) {
             TariffMessage tariff_message;
             tariff_message.message = cost_messages;
             tariff_message.ocpp_transaction_id = original_message.transactionInfo.transactionId;

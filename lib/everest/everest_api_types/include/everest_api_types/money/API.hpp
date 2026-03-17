@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #pragma once
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>

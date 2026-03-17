@@ -5,7 +5,10 @@ info:
   title: 'EVerest API definition for session cost consumer'
   version: 1.0.0
   description: >-
-    API for EVerest API clients which allows to access modules that implement session_cost.
+    API for EVerest API clients that consume session cost and tariff
+    information from the `session_cost` interface. See the
+    Integrate Tariff and Cost how-to guide for OCPP-specific
+    configuration and message flow details.
 
   license:
     name: Apache-2.0
@@ -57,11 +60,19 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_tariff_message'
+    description: >-
+      Published at authorization time and whenever the CSMS sends updated
+      pricing during a session. Contains human-readable price text in one
+      or more languages.
   receive_session_cost:
     title: 'Receive session cost'
     action: receive
     channel:
       $ref: '#/channels/receive_session_cost'
+    description: >-
+      Published periodically during a session and once when it ends.
+      Contains session cost broken down into chunks, current and upcoming
+      pricing, and optional display messages.
 
 
   receive_heartbeat:
@@ -82,14 +93,14 @@ components:
     receive_tariff_message:
       name: receive_tariff_message
       title: 'Receive tariff message'
-      summary: Message to show tariff information
+      summary: 'Tariff and pricing information for a charging session'
       contentType: application/json
       payload:
         $ref: 'session_cost_API.yaml#/components/schemas/TariffMessage'
     receive_session_cost:
       name: receive_session_cost
       title: 'Receive session cost'
-      summary: Message to show session cost
+      summary: 'Running or final cost of a charging session'
       contentType: application/json
       payload:
         $ref: 'session_cost_API.yaml#/components/schemas/SessionCost'

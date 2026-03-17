@@ -296,7 +296,6 @@ types::powermeter::Powermeter get_meter_value(const types::evse_manager::Session
         }
         return session_event.transaction_finished.value().meter_value;
     } else if (event_type == types::evse_manager::SessionEventEnum::ChargingStarted or
-               event_type == types::evse_manager::SessionEventEnum::ChargingResumed or
                event_type == types::evse_manager::SessionEventEnum::ChargingPausedEV or
                event_type == types::evse_manager::SessionEventEnum::ChargingPausedEVSE) {
         if (!session_event.charging_state_changed_event.has_value()) {
@@ -837,6 +836,11 @@ void OCPP201::ready() {
                 ocpp_conversions::create_session_cost(running_cost, number_of_decimals, currency);
             this->p_session_cost->publish_session_cost(cost);
         };
+
+        callbacks.tariff_message_callback = [this](const ocpp::TariffMessage& message) {
+            const types::session_cost::TariffMessage m = ocpp_conversions::to_everest_tariff_message(message);
+            this->p_session_cost->publish_tariff_message(m);
+        };
     }
 
     if (!this->r_data_transfer.empty()) {
@@ -1292,10 +1296,6 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
         this->process_charging_started(evse_id, connector_id, session_event);
         break;
     }
-    case types::evse_manager::SessionEventEnum::ChargingResumed: {
-        this->process_charging_resumed(evse_id, connector_id, session_event);
-        break;
-    }
     case types::evse_manager::SessionEventEnum::ChargingPausedEV: {
         this->process_charging_paused_ev(evse_id, connector_id, session_event);
         break;
@@ -1332,11 +1332,8 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
     // TODO(kai): implement
     case types::evse_manager::SessionEventEnum::AuthRequired:
     case types::evse_manager::SessionEventEnum::PrepareCharging:
-    case types::evse_manager::SessionEventEnum::WaitingForEnergy:
     case types::evse_manager::SessionEventEnum::StoppingCharging:
     case types::evse_manager::SessionEventEnum::ChargingFinished:
-    case types::evse_manager::SessionEventEnum::ReplugStarted:
-    case types::evse_manager::SessionEventEnum::ReplugFinished:
     case types::evse_manager::SessionEventEnum::PluginTimeout:
     case types::evse_manager::SessionEventEnum::SwitchingPhases:
         break;
@@ -1618,15 +1615,6 @@ void OCPP201::process_charging_started(const int32_t evse_id, const int32_t conn
     }
     const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::ENERGY_TRANSFER_STARTED);
     this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
-    this->charge_point->on_charging_state_changed(evse_id, ocpp::v2::ChargingStateEnum::Charging);
-}
-
-void OCPP201::process_charging_resumed(const int32_t evse_id, const int32_t connector_id,
-                                       const types::evse_manager::SessionEvent& session_event) {
-    auto transaction_data = this->transaction_handler->get_transaction_data(evse_id);
-    if (transaction_data != nullptr) {
-        transaction_data->charging_state = ocpp::v2::ChargingStateEnum::Charging;
-    }
     this->charge_point->on_charging_state_changed(evse_id, ocpp::v2::ChargingStateEnum::Charging);
 }
 

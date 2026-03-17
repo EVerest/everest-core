@@ -33,6 +33,7 @@ struct Conf {
     int live_measurement_interval_ms;
     int device_state_read_interval_ms;
     int communication_error_pause_delay_s;
+    std::string public_key_format;
 };
 
 class powermeterImpl : public powermeterImplBase {

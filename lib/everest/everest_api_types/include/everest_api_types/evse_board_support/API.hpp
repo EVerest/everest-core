@@ -18,8 +18,6 @@ enum class Event {
     F,
     PowerOn,
     PowerOff,
-    EvseReplugStarted,
-    EvseReplugFinished,
     Disconnected,
 };
 

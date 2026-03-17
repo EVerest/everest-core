@@ -84,6 +84,12 @@ Have a look at this categorized list of all guides:
       :link-type: doc
 
       How to bring up all hard and software components of a charger in isolated test cases.
+   
+   .. grid-item-card:: Use the EVerest Development Container
+      :link: devcontainer-usage/index
+      :link-type: doc
+
+      How to use a development container for EVerest development and sil testing.
 
    .. grid-item-card:: Choosing EVerest Version and Upgrading
       :link: choosing-version-and-upgrading
@@ -96,6 +102,12 @@ Have a look at this categorized list of all guides:
       :link-type: doc
 
       How to get started with the Pionix Belay Box, an AC charging station dev kit based on EVerest.
+
+   .. grid-item-card:: Integrate Tariff and Cost
+      :link: integrate-tariff-and-cost
+      :link-type: doc
+
+      How to subscribe to tariff and session cost updates from the consumer APIs, including OCPP-specific configuration.
 
 .. toctree::
     :maxdepth: 1
@@ -115,3 +127,5 @@ Have a look at this categorized list of all guides:
     bringup/index
     choosing-version-and-upgrading
     pionix-belay-box
+    integrate-tariff-and-cost
+    devcontainer-usage/index

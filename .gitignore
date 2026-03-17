@@ -1,4 +1,5 @@
 *build*
+*dist
 .cache/
 workspace.yaml
 .vscode/

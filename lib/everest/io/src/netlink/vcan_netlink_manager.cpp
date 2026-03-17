@@ -14,6 +14,7 @@
 #include <linux/rtnetlink.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <unistd.h>
 // clang-format on
 

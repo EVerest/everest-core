@@ -35,12 +35,6 @@ void to_json(json& j, Event const& k) noexcept {
     case Event::PowerOff:
         j = "PowerOff";
         return;
-    case Event::EvseReplugStarted:
-        j = "EvseReplugStarted";
-        return;
-    case Event::EvseReplugFinished:
-        j = "EvseReplugFinished";
-        return;
     case Event::Disconnected:
         j = "Disconnected";
         return;
@@ -80,14 +74,6 @@ void from_json(json const& j, Event& k) {
     }
     if (s == "PowerOff") {
         k = Event::PowerOff;
-        return;
-    }
-    if (s == "EvseReplugStarted") {
-        k = Event::EvseReplugStarted;
-        return;
-    }
-    if (s == "EvseReplugFinished") {
-        k = Event::EvseReplugFinished;
         return;
     }
     if (s == "Disconnected") {

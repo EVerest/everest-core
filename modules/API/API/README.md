@@ -72,7 +72,6 @@ This variable is published every second and contains a json object with informat
     - Preparing
     - Reserved
     - AuthRequired
-    - WaitingForEnergy
     - Charging
     - ChargingPausedEV
     - ChargingPausedEVSE

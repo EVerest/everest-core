@@ -70,7 +70,7 @@ ninja -C build test
 
 ## Get Involved
 
-See the [COMMUNITY.md](https://github.com/EVerest/everest-core/blob/main/COMMUNITY.md) and [CONTRIBUTING.md](https://github.com/EVerest/everest-core/blob/main/CONTRIBUTING.md) of the EVerest project to get involved.
+See the [Contribution Guideline](https://everest.github.io/nightly/project/contributing.html) of the EVerest project to get involved.
 
 ## License
 

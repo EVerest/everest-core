@@ -141,4 +141,4 @@ Information on the corresponding research project can be found here (in
 German only):
 [InterBDL research project](https://www.thu.de/de/org/iea/smartgrids/Seiten/InterBDL.aspx).
 
-![Logo of funding by Federal Ministry of Economic Affairs and Climate Action](https://raw.githubusercontent.com/EVerest/EVerest/main/docs/img/bmwk-logo-incl-supporting.png)
+![Logo of funding by Federal Ministry of Economic Affairs and Climate Action](https://raw.githubusercontent.com/EVerest/everest-core/main/docs/images/bmwk-logo-incl-supporting.png)

@@ -17,7 +17,7 @@ ev_setup_python_executable(
 )
 get_filename_component(EVC_LIB_DIR ${EVC_EVEREST_LIB_DIR} DIRECTORY)
 get_filename_component(EVC_DIR ${EVC_LIB_DIR} DIRECTORY)
-set(EVC_EDM_DIR "${EVC_DIR}/applications/dev-environment")
+set(EVC_EDM_DIR "${EVC_DIR}/applications/dependency_manager")
 
 # use edm from everest-core
 add_subdirectory("${EVC_EDM_DIR}" edm_tool)

@@ -155,6 +155,14 @@ The mock has a few environment variables (enable or disable by setting them to `
   messages. This also allows to receive completely unsigned messages.
 - ``FUSION_CHARGER_MOCK_ETH``: The ethernet interface to use for receiving and sending goose messages. Defaults to
   ``veth0``.
+- ``FUSION_CHARGER_MOCK_PORT``: The Modbus TCP port to listen on. Defaults to ``8502``.
+- ``FUSION_CHARGER_MOCK_MQTT_HOST``: MQTT broker hostname or IP address. When set together with 
+  ``FUSION_CHARGER_MOCK_MQTT_PORT``, the mock will publish power request data via MQTT.
+- ``FUSION_CHARGER_MOCK_MQTT_PORT``: MQTT broker port. Required together with ``FUSION_CHARGER_MOCK_MQTT_HOST`` to 
+  enable MQTT publishing.
+- ``FUSION_CHARGER_MOCK_MQTT_BASE_TOPIC``: Base topic for MQTT publishing. Defaults to ``fusion_charger_mock/``. 
+  Power requests are published to ``<base_topic>/<connector_number>/power_request`` with JSON payload containing 
+  voltage and current values.
 
 It also has one optional command line argument, being the path to a folder with certificates and keys for mTLS.
 
@@ -173,3 +181,9 @@ corresponding files for the dispenser):
 .. code-block:: bash
 
     modules/HardwareDrivers/PowerSupplies/Huawei_V100R023C10/fusion_charger_lib/fusion-charger-dispenser-library/user-acceptance-tests/test_certificates/generate.sh
+
+Then run the mock with the path to the certificates folder:
+
+.. code-block:: bash
+
+    ./fusion_charger_mock /path/to/certificates

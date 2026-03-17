@@ -17,10 +17,10 @@ void BUSlac::init() {
 void BUSlac::ready() {
     auto screen = ScreenInteractive::Fullscreen();
 
-    r_slac->subscribe_state([this, &screen](const std::string& new_state) {
+    r_slac->subscribe_state([this, &screen](const types::slac::State new_state) {
         {
             std::scoped_lock lock(data_mutex);
-            state = new_state;
+            state = types::slac::state_to_string(new_state);
         }
         screen.PostEvent(Event::Custom);
     });

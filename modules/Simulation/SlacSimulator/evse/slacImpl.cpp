@@ -6,13 +6,13 @@
 namespace module {
 namespace evse {
 
-using util::State;
+using types::slac::State;
 
 void slacImpl::init() {
 }
 
 void slacImpl::ready() {
-    publish_state(state_to_string(state));
+    publish_state(state);
 }
 
 void slacImpl::handle_reset(bool& enable) {
@@ -42,7 +42,7 @@ void slacImpl::handle_dlink_pause() {
 void slacImpl::set_state_to_unmatched() {
     if (state != State::UNMATCHED) {
         state = State::UNMATCHED;
-        publish_state(state_to_string(state));
+        publish_state(state);
         publish_dlink_ready(false);
     }
 }
@@ -50,7 +50,7 @@ void slacImpl::set_state_to_unmatched() {
 void slacImpl::set_state_to_matching() {
     state = State::MATCHING;
     mod->cntmatching = 0;
-    publish_state(state_to_string(state));
+    publish_state(state);
 }
 
 State slacImpl::get_state() const {
@@ -59,7 +59,7 @@ State slacImpl::get_state() const {
 
 void slacImpl::set_state_matched() {
     state = State::MATCHED;
-    publish_state(state_to_string(state));
+    publish_state(state);
     publish_dlink_ready(true);
 };
 } // namespace evse

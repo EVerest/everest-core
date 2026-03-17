@@ -2,6 +2,7 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #pragma once
+#include <cstdint>
 #include <everest_api_types/text_message/API.hpp>
 #include <optional>
 #include <string>

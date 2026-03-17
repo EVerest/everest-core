@@ -6,7 +6,7 @@
 
 namespace module {
 
-using util::State;
+using State = types::slac::State;
 
 void SlacSimulator::init() {
     invoke_init(*p_evse);

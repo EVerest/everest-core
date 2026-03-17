@@ -5,6 +5,8 @@
 #include "http_client.hpp"
 #include "lem_dcbm_time_sync_helper.hpp"
 #include <chrono>
+#include <everest/logging.hpp>
+#include <fmt/core.h>
 #include <string>
 #include <thread>
 
@@ -27,6 +29,21 @@ void powermeterImpl::init() {
             mod->config.resilience_transaction_request_retries, mod->config.resilience_transaction_request_retry_delay,
             mod->config.cable_id, mod->config.tariff_id, mod->config.meter_timezone, mod->config.meter_dst,
             mod->config.SC, mod->config.UV, mod->config.UD, mod->config.command_timeout_ms});
+
+    // Validate and normalize temperature thresholds for the monitor.
+    // If the error level is configured below the warning level, clamp it and log a warning.
+    double warning_level_C = mod->config.temperature_warning_level_C;
+    double error_level_C = mod->config.temperature_error_level_C;
+    if (error_level_C < warning_level_C) {
+        EVLOG_warning << "LEM DCBM 400/600: temperature_error_level_C (" << error_level_C
+                      << " °C) is below temperature_warning_level_C (" << warning_level_C
+                      << " °C). Clamping error level to the warning level.";
+        error_level_C = warning_level_C;
+    }
+
+    this->temperature_monitor = std::make_unique<TemperatureMonitor>(
+        TemperatureMonitor::Config{warning_level_C, error_level_C, mod->config.temperature_hysteresis_K,
+                                   std::chrono::milliseconds(mod->config.temperature_min_time_as_valid_ms)});
 }
 
 void powermeterImpl::ready() {
@@ -41,13 +58,22 @@ void powermeterImpl::ready() {
                         std::chrono::milliseconds(mod->config.resilience_initial_connection_retry_delay));
                 } else {
                     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                    this->publish_powermeter(this->controller->get_powermeter());
+                    auto powermeter_data = this->controller->get_powermeter();
+                    this->publish_powermeter(powermeter_data);
                     // if the communication error is set, clear the error
                     if (this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
                                                                    "Communication timed out")) {
                         // need to update LEM status since we have recovered from a communication loss
                         this->controller->update_lem_status();
                         clear_error("powermeter/CommunicationFault", "Communication timed out");
+                    }
+
+                    // Evaluate temperature thresholds
+                    if (powermeter_data.temperatures.has_value() && powermeter_data.temperatures->size() >= 2) {
+                        const double temp_H = powermeter_data.temperatures->at(0).temperature;
+                        const double temp_L = powermeter_data.temperatures->at(1).temperature;
+                        auto events = this->temperature_monitor->update(temp_H, temp_L);
+                        handle_temperature_events(events, this->temperature_monitor->last_max_temperature());
                     }
                 }
             } catch (LemDCBM400600Controller::DCBMUnexpectedResponseException& dcbm_exception) {
@@ -75,6 +101,41 @@ powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& valu
 
 types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
     return this->controller->stop_transaction(transaction_id);
+}
+
+void powermeterImpl::handle_temperature_events(const TemperatureMonitor::Events& events, double max_temperature) {
+    if (events.warning_raised) {
+        EVLOG_warning << fmt::format(
+            "LEM DCBM 400/600: Temperature warning raised — max temperature {:.1f} °C exceeds warning level {:.1f} °C",
+            max_temperature, mod->config.temperature_warning_level_C);
+        auto error =
+            this->error_factory->create_error("powermeter/VendorWarning", "TemperatureWarning",
+                                              fmt::format("Max temperature {:.1f} °C exceeds warning level {:.1f} °C",
+                                                          max_temperature, mod->config.temperature_warning_level_C));
+        raise_error(error);
+    }
+    if (events.warning_cleared) {
+        EVLOG_info << fmt::format(
+            "LEM DCBM 400/600: Temperature warning cleared — max temperature {:.1f} °C dropped below {:.1f} °C",
+            max_temperature, mod->config.temperature_warning_level_C - mod->config.temperature_hysteresis_K);
+        clear_error("powermeter/VendorWarning", "TemperatureWarning");
+    }
+    if (events.error_raised) {
+        EVLOG_error << fmt::format(
+            "LEM DCBM 400/600: Temperature error raised — max temperature {:.1f} °C exceeds error level {:.1f} °C",
+            max_temperature, mod->config.temperature_error_level_C);
+        auto error =
+            this->error_factory->create_error("powermeter/VendorError", "TemperatureError",
+                                              fmt::format("Max temperature {:.1f} °C exceeds error level {:.1f} °C",
+                                                          max_temperature, mod->config.temperature_error_level_C));
+        raise_error(error);
+    }
+    if (events.error_cleared) {
+        EVLOG_info << fmt::format(
+            "LEM DCBM 400/600: Temperature error cleared — max temperature {:.1f} °C dropped below {:.1f} °C",
+            max_temperature, mod->config.temperature_error_level_C - mod->config.temperature_hysteresis_K);
+        clear_error("powermeter/VendorError", "TemperatureError");
+    }
 }
 
 } // namespace module::main

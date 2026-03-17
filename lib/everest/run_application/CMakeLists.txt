@@ -21,3 +21,20 @@ target_link_libraries(everest_run_application
         fmt::fmt
         everest::log
 )
+
+set_target_properties(everest_run_application PROPERTIES EXPORT_NAME run_application)
+
+if (DISABLE_EDM)
+    install(
+        TARGETS everest_run_application
+        EXPORT everest-core-targets
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+        INCLUDES DESTINATION include
+    )
+
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/everest
+        TYPE INCLUDE
+    )
+endif()

@@ -36,6 +36,15 @@ namespace everest::lib::util {
  * @tparam N The maximum number of elements the vector can hold (its capacity).
  */
 template <typename T, std::size_t N> class fixed_vector {
+    static_assert(!std::is_move_constructible_v<T> || std::is_nothrow_move_constructible_v<T>,
+                  "fixed_vector requires T's move constructor to be noexcept. "
+                  "Types with throwing move constructors are not supported because "
+                  "fixed_vector cannot propagate move-construction failures safely.");
+    static_assert(!std::is_move_assignable_v<T> || std::is_nothrow_move_assignable_v<T>,
+                  "fixed_vector requires T's move assignment to be noexcept. "
+                  "Types with throwing move assignment are not supported because "
+                  "fixed_vector cannot propagate move-assignment failures safely.");
+
 public:
     //- Member types
     using value_type = T;
@@ -72,14 +81,11 @@ public:
 
     /**
      * @brief Move constructor. Constructs the vector with the contents of other using move semantics.
-     * @details This constructor has two behaviors depending on `T`:
-     *          1. If `T` is `nothrow_move_constructible`, this operation is `noexcept` and highly efficient.
-     *          2. If `T`'s move constructor can throw, this provides a strong guarantee: if a failure occurs, the
-     *             source `other` is restored to its original state. However, the exception is **swallowed**, and
-     * `*this` will be empty. The caller must be prepared to handle an empty vector even if `other` was not.
+     * @details Since T is required to be nothrow move-constructible, this operation is always noexcept.
+     *          After the move, `other` is empty.
      * @param other another fixed_vector object to be used as source.
      */
-    fixed_vector(fixed_vector&& other) noexcept(std::is_nothrow_move_constructible_v<T>) {
+    fixed_vector(fixed_vector&& other) noexcept {
         move_construct_from(std::move(other));
     }
 
@@ -129,16 +135,12 @@ public:
 
     /**
      * @brief Move assignment operator. Replaces the contents with those of other using move semantics.
-     * @details If `T`'s move operations can throw, this provides a hybrid exception guarantee: if an exception is
-     * thrown, the source `other` is restored to its original state, while `*this` is left in a valid but
-     * unspecified state. **However, the exception is swallowed, and not re-thrown.** If move operations are `nothrow`,
-     * this is `noexcept`. The caller must be prepared for `*this` to be in a valid but unspecified state without an
-     * exception being propagated.
+     * @details Since T is required to have nothrow move operations, this is always noexcept.
+     *          After the move, `other` is empty.
      * @param other another fixed_vector object to be used as source.
      * @return *this
      */
-    fixed_vector& operator=(fixed_vector&& other) noexcept(
-        std::is_nothrow_move_assignable_v<T>&& std::is_nothrow_move_constructible_v<T>) {
+    fixed_vector& operator=(fixed_vector&& other) noexcept {
         if (this != &other) {
             move_assign_from(std::move(other));
         }
@@ -542,15 +544,14 @@ private:
 
     // Move-construct
     /**
-     * @brief Helper for move construction (fast path).
-     * @details This overload is enabled if `T` is nothrow move-constructible. It is `noexcept` and does not
-     *          provide a rollback, as failure is not expected.
+     * @brief Helper for move construction.
+     * @details This overload is enabled if `T` is nothrow move-constructible (enforced by class-level
+     *          static_assert). It is `noexcept`.
      */
     template <typename U = T, std::enable_if_t<std::is_nothrow_move_constructible_v<U>>* = nullptr>
     void move_construct_from(fixed_vector&& other) noexcept {
         for (auto& elem : other) {
             if (try_emplace_back(std::move(elem)) == nullptr) {
-                // This vector is full, or move ctor threw. In nothrow-case, it must be full.
                 break;
             }
         }
@@ -558,65 +559,31 @@ private:
     }
 
     /**
-     * @brief Helper for move construction (strong guarantee path).
-     * @details This overload is enabled if `T`'s move constructor can throw. It provides the strong guarantee
-     *          by moving elements back to the source if a failure occurs. This requires `T` to be move-assignable.
-     *          **Important: This function swallows any exception during element-wise construction and does not
-     *          propagate it.**
-     */
-    template <typename U = T, std::enable_if_t<(!std::is_nothrow_move_constructible_v<U> &&
-                                                std::is_move_constructible_v<U>)>* = nullptr>
-    void move_construct_from(fixed_vector&& other) {
-        static_assert(std::is_move_assignable_v<U>,
-                      "T must be move-assignable to provide strong exception guarantee for throwing move constructor");
-
-        if (this == &other) {
-            return;
-        }
-
-        size_type moved_count = 0;
-        try {
-            for (auto& elem : other) {
-                emplace_back(std::move(elem));
-                ++moved_count;
-            }
-            other.clear();
-        } catch (...) {
-            // A move construction failed. Restore the source `other`.
-            for (size_type i = 0; i < moved_count; ++i) {
-                other[i] = std::move((*this)[i]);
-            }
-            // Clear this vector, which now contains moved-from objects.
-            this->clear();
-        }
-    }
-
-    /**
      * @brief Helper for move construction: provides a compile-time error if `T` is not move-constructible.
      * @details This overload is enabled if `T` is not move-constructible, triggering a `static_assert`.
      * @param other Unused, present for signature matching.
      */
-    template <typename U = T, std::enable_if_t<!std::is_move_constructible_v<U>>* = nullptr>
+    template <typename U = T, std::enable_if_t<!std::is_nothrow_move_constructible_v<U>>* = nullptr>
     void move_construct_from(fixed_vector&& /*other*/) {
-        static_assert(std::is_move_constructible_v<U>,
-                      "fixed_vector requires T to be move-constructible for move construction.");
+        static_assert(std::is_nothrow_move_constructible_v<U>,
+                      "fixed_vector requires T to be nothrow move-constructible for move construction.");
     }
 
     // Move-assign
     /**
-     * @brief Helper for move assignment (fast path).
-     * @details This overload is enabled if `T`'s move operations are nothrow. It is `noexcept`.
+     * @brief Helper for move assignment.
+     * @details This overload is enabled if `T`'s move operations are nothrow (enforced by class-level
+     *          static_assert). It is `noexcept`.
      */
     template <typename U = T, std::enable_if_t<(std::is_nothrow_move_assignable_v<U> &&
                                                 std::is_nothrow_move_constructible_v<U>)>* = nullptr>
     void move_assign_from(fixed_vector&& other) noexcept {
         const size_type move_len = std::min(size_, other.size_);
-        std::move(other.begin(), other.begin() + move_len, begin()); // move assign
+        std::move(other.begin(), other.begin() + move_len, begin());
 
         if (size_ < other.size_) {
             for (size_type i = size_; i < other.size_; ++i) {
-                if (try_emplace_back(std::move(other[i])) == nullptr) { // move construct
-                    // This vector is full, or move ctor threw. In nothrow-case, it must be full.
+                if (try_emplace_back(std::move(other[i])) == nullptr) {
                     break;
                 }
             }
@@ -633,73 +600,17 @@ private:
     }
 
     /**
-     * @brief Helper for move assignment (hybrid exception guarantee path).
-     * @details This overload is enabled if `T`'s move operations can throw. If an exception occurs,
-     *          the source `other` is restored to its original state, while `this` is left in a valid but
-     *          unspecified state. **Important: Any exception thrown during element operations is swallowed,
-     *          and not re-thrown.**
-     */
-    template <typename U = T,
-              std::enable_if_t<!(std::is_nothrow_move_assignable_v<U> &&
-                                 std::is_nothrow_move_constructible_v<U>)&&std::is_move_assignable_v<U> &&
-                               std::is_move_constructible_v<U>>* = nullptr>
-    void move_assign_from(fixed_vector&& other) {
-        if (this == &other) {
-            return;
-        }
-
-        const size_type original_this_size = this->size_;
-        size_type assigned_count = 0;
-        size_type constructed_count = 0;
-
-        try {
-            // Move-assign over existing elements
-            const size_type assign_len = std::min(original_this_size, other.size_);
-            for (assigned_count = 0; assigned_count < assign_len; ++assigned_count) {
-                (*this)[assigned_count] = std::move(other[assigned_count]);
-            }
-
-            // Move-construct new elements if `this` is growing
-            if (original_this_size < other.size_) {
-                for (size_type i = original_this_size; i < other.size_; ++i) {
-                    emplace_back(std::move(other[i]));
-                    ++constructed_count;
-                }
-            } else if (original_this_size > other.size_) {
-                // Destroy extra elements if `this` is shrinking
-                size_ = other.size_;
-                if constexpr (!std::is_trivially_destructible_v<T>) {
-                    for (size_type i = size_; i < original_this_size; ++i) {
-                        std::destroy_at(data() + i);
-                    }
-                }
-            }
-            other.clear();
-        } catch (...) {
-            // Failure occurred. Restore `other`.
-            for (size_type i = 0; i < assigned_count; ++i) {
-                other[i] = std::move((*this)[i]);
-            }
-            for (size_type i = 0; i < constructed_count; ++i) {
-                other[original_this_size + i] = std::move((*this)[original_this_size + i]);
-            }
-            // Note: `this` is left in a valid but unspecified state.
-        }
-    }
-
-    /**
-     * @brief Helper for move assignment: provides a compile-time error if `T` is not move-constructible or not
-     * move-assignable.
-     * @details This overload is enabled if `T` does not meet the requirements, triggering `static_assert`s.
+     * @brief Helper for move assignment: provides a compile-time error if `T` does not meet the requirements.
+     * @details This overload is enabled if `T`'s move operations are not nothrow, triggering `static_assert`s.
      * @param other Unused, present for signature matching.
      */
-    template <typename U = T,
-              std::enable_if_t<!(std::is_move_constructible_v<U> && std::is_move_assignable_v<U>)>* = nullptr>
+    template <typename U = T, std::enable_if_t<!(std::is_nothrow_move_assignable_v<U> &&
+                                                 std::is_nothrow_move_constructible_v<U>)>* = nullptr>
     void move_assign_from(fixed_vector&& /*other*/) {
-        static_assert(std::is_move_constructible_v<U>,
-                      "fixed_vector requires T to be move-constructible for move assignment.");
-        static_assert(std::is_move_assignable_v<U>,
-                      "fixed_vector requires T to be move-assignable for move assignment.");
+        static_assert(std::is_nothrow_move_constructible_v<U>,
+                      "fixed_vector requires T to be nothrow move-constructible for move assignment.");
+        static_assert(std::is_nothrow_move_assignable_v<U>,
+                      "fixed_vector requires T to be nothrow move-assignable for move assignment.");
     }
 
     /**

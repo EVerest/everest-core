@@ -39,6 +39,10 @@ struct Conf {
     int SC;
     std::string UV;
     std::string UD;
+    double temperature_warning_level_C;
+    double temperature_error_level_C;
+    double temperature_hysteresis_K;
+    int temperature_min_time_as_valid_ms;
     int command_timeout_ms;
 };
 

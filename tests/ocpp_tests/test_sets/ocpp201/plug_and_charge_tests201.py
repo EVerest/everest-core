@@ -620,13 +620,12 @@ class TestPlugAndCharge:
 
         await asyncio.sleep(10)  # wait for ISO process to start
 
-        test_controller.swipe("DEADBEEF")
-
         test_utility.messages.clear()
+        test_controller.swipe("DEADBEEF")
 
         # expect authorize.req
         authorize_req: call201.Authorize = call201.Authorize(
-            **await wait_for_and_validate(test_utility, charge_point, "Authorize", {})
+            **await wait_for_and_validate(test_utility, charge_point, "Authorize", {"idToken": {"type": "ISO14443"}})
         )
 
         assert validate_authorize_req(authorize_req, False, False)

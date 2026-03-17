@@ -3,6 +3,7 @@
 
 #include <conversions.hpp>
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
+#include <generated/types/session_cost.hpp>
 #include <ocpp/v2/messages/Authorize.hpp>
 
 #include "auth_token_validatorImpl.hpp"
@@ -43,6 +44,15 @@ auth_token_validatorImpl::handle_validate_token(types::authorization::ProvidedId
         // request response
         const auto response = this->mod->charge_point->validate_token(id_token, certificate_opt, ocsp_request_data_opt);
         validation_result = conversions::to_everest_validation_result(response);
+
+        // Publish tariff message on the session_cost interface
+        if (!validation_result.tariff_messages.empty()) {
+            types::session_cost::TariffMessage tariff_message;
+            tariff_message.messages = validation_result.tariff_messages;
+            tariff_message.identifier_id = provided_token.id_token.value;
+            tariff_message.identifier_type = types::display_message::IdentifierType::IdToken;
+            this->mod->p_session_cost->publish_tariff_message(tariff_message);
+        }
     } catch (const ocpp::StringConversionException& e) {
         EVLOG_warning << "Error converting id token to validate: " << e.what();
         validation_result.authorization_status = types::authorization::AuthorizationStatus::Unknown;

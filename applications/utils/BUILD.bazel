@@ -1,6 +1,7 @@
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+load("//third-party/bazel/toolchains:defs.bzl", "CROSS_PYTHON_INCOMPATIBLE")
 
 write_file(
     name = "gen_update",
@@ -23,4 +24,5 @@ diff_test(
     failure_message = "Please run `bazel run //:vendor_requirements` to update the vendored requirements.bzl file.",
     file1 = "@everest-testing_pip_deps//:requirements.bzl",
     file2 = ":requirements.bzl",
+    target_compatible_with = CROSS_PYTHON_INCOMPATIBLE,
 )

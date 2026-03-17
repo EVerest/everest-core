@@ -16,6 +16,7 @@
 // insert your custom include headers here
 #include "http_client_interface.hpp"
 #include "lem_dcbm_400600_controller.hpp"
+#include "temperature_monitor.hpp"
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -61,6 +62,10 @@ private:
     // Initially it's a default-constructed thread (which is valid, but doesn't represent an actual running thread)
     // In ready(), the live_measure_publisher thread is started and placed in this field.
     std::thread live_measure_publisher_thread;
+
+    // Temperature monitoring with warning/error thresholds and hysteresis
+    std::unique_ptr<TemperatureMonitor> temperature_monitor;
+    void handle_temperature_events(const TemperatureMonitor::Events& events, double max_temperature);
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

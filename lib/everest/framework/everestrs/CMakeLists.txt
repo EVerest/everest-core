@@ -1,4 +1,4 @@
-set(CXXBRIDGE_VERSION 1.0.189) # Must be kept in sync with `everestrs/Cargo.toml`
+set(CXXBRIDGE_VERSION 1.0.194) # Must be kept in sync with `everestrs/Cargo.toml`
 set(CXXBRIDGE_INSTALL_PATH ${CMAKE_CURRENT_BINARY_DIR}/cargo/bin/cxxbridge)
 
 # Checks if the cxxbridge binary at CXXBRIDGE_PATH exists and matches the required version.

@@ -7,6 +7,7 @@
 # .github
 /.github/ @pietfried @corneliusclaussen
 /.github/workflows/ @pietfried @corneliusclaussen @andistorm
+/.github/workflows/on_label.yaml @andistorm @nzbr
 
 # applications
 /applications/pionix_chargebridge @djchhp @corneliusclaussen

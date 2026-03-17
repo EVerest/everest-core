@@ -21,14 +21,79 @@ void Auth::init() {
 
     for (const auto& token_provider : this->r_token_provider) {
         token_provider->subscribe_provided_token([this](ProvidedIdToken provided_token) {
+            {
+                auto state = this->event_state.handle();
+                if (!state->started) {
+                    EVLOG_warning << "Auth not fully initialized. Discarding provided token";
+                    return;
+                }
+            }
             std::thread t([this, provided_token]() { this->auth_handler->on_token(provided_token); });
             t.detach();
         });
     }
     for (const auto& token_validator : this->r_token_validator) {
         token_validator->subscribe_validate_result_update([this](ValidationResultUpdate validation_result_update) {
+            {
+                auto state = this->event_state.handle();
+                if (!state->started) {
+                    EVLOG_warning << "Auth not fully initialized. Discarding validation result update";
+                    return;
+                }
+            }
             this->auth_handler->handle_token_validation_result_update(validation_result_update);
         });
+    }
+
+    // Subscribe to session events and errors in init() so we don't miss any events
+    // Events received before ready() are queued.
+    int32_t evse_index = 0;
+    for (const auto& evse_manager : this->r_evse_manager) {
+        const int32_t evse_idx = evse_index;
+
+        evse_manager->subscribe_session_event([this, evse_idx](SessionEvent session_event) {
+            {
+                auto state = this->event_state.handle();
+                if (!state->started) {
+                    EVLOG_debug << "Auth not fully initialized, but received a session event on evse_index: "
+                                << evse_idx << " that will be queued up: " << session_event.event;
+                    state->event_queue.emplace(evse_idx, session_event);
+                    return;
+                }
+            }
+            this->auth_handler->handle_session_event(this->auth_handler->get_evse_id_by_index(evse_idx), session_event);
+        });
+
+        evse_manager->subscribe_error(
+            "evse_manager/Inoperative",
+            [this, evse_idx](const Everest::error::Error& error) {
+                {
+                    auto state = this->event_state.handle();
+                    if (!state->started) {
+                        EVLOG_debug << "Auth not fully initialized, queuing permanent fault raised for evse_index: "
+                                    << evse_idx;
+                        state->event_queue.emplace(evse_idx, PermanentFaultRaised{1});
+                        return;
+                    }
+                }
+                this->auth_handler->handle_permanent_fault_raised(this->auth_handler->get_evse_id_by_index(evse_idx),
+                                                                  1);
+            },
+            [this, evse_idx](const Everest::error::Error& error) {
+                {
+                    auto state = this->event_state.handle();
+                    if (!state->started) {
+                        EVLOG_debug << "Auth not fully initialized, queuing permanent fault cleared for evse_index: "
+                                    << evse_idx;
+                        state->event_queue.emplace(evse_idx, PermanentFaultCleared{1});
+                        return;
+                    }
+                }
+                this->auth_handler->handle_permanent_fault_cleared(this->auth_handler->get_evse_id_by_index(evse_idx),
+                                                                   1);
+            });
+
+        evse_index++;
     }
 }
 
@@ -47,27 +112,13 @@ void Auth::ready() {
 
         this->auth_handler->init_evse(evse_id, evse_index, connectors);
 
-        evse_manager->subscribe_session_event([this, evse_id](SessionEvent session_event) {
-            this->auth_handler->handle_session_event(evse_id, session_event);
-        });
-
-        evse_manager->subscribe_error(
-            "evse_manager/Inoperative",
-            // If no connector id is given, it defaults to connector id 1.
-            [this, evse_id](const Everest::error::Error& error) {
-                this->auth_handler->handle_permanent_fault_raised(evse_id, 1);
-            },
-            // If no connector id is given, it defaults to connector id 1.
-            [this, evse_id](const Everest::error::Error& error) {
-                this->auth_handler->handle_permanent_fault_cleared(evse_id, 1);
-            });
-
         evse_index++;
     }
 
     this->auth_handler->register_publish_token_validation_status_callback(
-        [this](const ProvidedIdToken& token, TokenValidationStatus status) {
-            this->p_main->publish_token_validation_status({token, status});
+        [this](const ProvidedIdToken& token, TokenValidationStatus status,
+               const std::vector<MessageContent>& tariff_messages) {
+            this->p_main->publish_token_validation_status({token, status, tariff_messages});
         });
 
     this->auth_handler->register_notify_evse_callback(
@@ -140,6 +191,31 @@ void Auth::ready() {
                 this->p_reservation->publish_reservation_update(status);
             }
         });
+
+    // Process any events that were queued during init before we were ready
+    {
+        auto state = this->event_state.handle();
+        while (!state->event_queue.empty()) {
+            auto queued_event = state->event_queue.front();
+            state->event_queue.pop();
+            const int32_t evse_id = this->auth_handler->get_evse_id_by_index(queued_event.evse_index);
+            if (std::holds_alternative<SessionEvent>(queued_event.data)) {
+                const auto& session_event = std::get<SessionEvent>(queued_event.data);
+                EVLOG_debug << "Processing queued session event for evse_id: " << evse_id
+                            << ", event: " << session_event.event;
+                this->auth_handler->handle_session_event(evse_id, session_event);
+            } else if (std::holds_alternative<PermanentFaultRaised>(queued_event.data)) {
+                const auto& fault = std::get<PermanentFaultRaised>(queued_event.data);
+                EVLOG_debug << "Processing queued permanent fault raised for evse_id: " << evse_id;
+                this->auth_handler->handle_permanent_fault_raised(evse_id, fault.connector_id);
+            } else if (std::holds_alternative<PermanentFaultCleared>(queued_event.data)) {
+                const auto& fault = std::get<PermanentFaultCleared>(queued_event.data);
+                EVLOG_debug << "Processing queued permanent fault cleared for evse_id: " << evse_id;
+                this->auth_handler->handle_permanent_fault_cleared(evse_id, fault.connector_id);
+            }
+        }
+        state->started = true;
+    }
 
     this->auth_handler->initialize();
 }

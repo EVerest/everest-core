@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <everest_api_types/powermeter/API.hpp>
 #include <optional>
 #include <string>

@@ -142,7 +142,10 @@ protected:
             });
 
         this->auth_handler->register_publish_token_validation_status_callback(
-            mock_publish_token_validation_status_callback.AsStdFunction());
+            [this](const ProvidedIdToken& token, TokenValidationStatus status,
+                   const std::vector<MessageContent>& /*tariff_messages*/) {
+                mock_publish_token_validation_status_callback.Call(token, status);
+            });
 
         this->auth_handler->init_evse(1, 0, {Connector(1, types::evse_manager::ConnectorTypeEnum::cCCS2)});
         this->auth_handler->init_evse(2, 1,
@@ -1172,7 +1175,7 @@ TEST_F(AuthTest, test_complete_event_flow) {
     session_event_3.event = SessionEventEnum::ChargingPausedEV;
 
     SessionEvent session_event_4;
-    session_event_4.event = SessionEventEnum::ChargingResumed;
+    session_event_4.event = SessionEventEnum::ChargingStarted;
 
     SessionEvent session_event_5;
     session_event_5.event = SessionEventEnum::TransactionFinished;

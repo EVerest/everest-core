@@ -58,13 +58,14 @@ struct ContextCallbacks {
 };
 
 struct Context {
-    explicit Context(const ContextCallbacks& callbacks_) : callbacks(callbacks_){};
+    static constexpr std::array<uint8_t, ETH_ALEN> BROADCAST_MAC = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    static constexpr std::array<uint8_t, ETH_ALEN> EV_PLC_MAC = {0x00, 0xB0, 0x52, 0x00, 0x00, 0x01};
 
-    // MAC address of our PLC modem (EV side)
-    uint8_t plc_mac[ETH_ALEN] = {0x00, 0xB0, 0x52, 0x00, 0x00, 0x01};
+    Context(const ContextCallbacks& callbacks_, const std::array<uint8_t, ETH_ALEN>& mac) :
+        callbacks(callbacks_), ev_host_mac(mac) {
+    }
 
-    // MAC address to use for SET KEY req
-    uint8_t plc_mac_chip_commands[ETH_ALEN] = {0x00, 0xB0, 0x52, 0x00, 0x00, 0x01};
+    const std::array<uint8_t, ETH_ALEN> ev_host_mac{};
 
     // event specific payloads
     // FIXME (aw): due to the synchroneous nature of the fsm, this could be even a ptr/ref

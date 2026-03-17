@@ -73,6 +73,7 @@ macro(_trailbook_ev_generate_rst_from_manifest_generate_command)
             add_custom_command(
                 OUTPUT
                     "${INDEX_FILE}"
+                COMMAND ${CMAKE_COMMAND} -E make_directory "${CURRENT_DEST_DIRECTORY}"
                 COMMAND ${Python3_EXECUTABLE} "${CUSTOM_TEMPLATE_SUBSTITUTION_SCRIPT}"
                 DEPENDS
                     "${INDEX_TEMPLATE_FILE}"

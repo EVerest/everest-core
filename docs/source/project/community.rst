@@ -7,6 +7,8 @@ Meet the EVerest Community
 There are quite some options to get involved in the EVerest community.
 The following sections will guide your way.
 
+.. _exp_community_zulip:
+
 Deep tech discussions: Zulip
 ============================
 
@@ -47,12 +49,6 @@ dedicated EVerest projects and topics.
 
 The working groups could change over time depending on the current needs of
 the community.
-Currently, we have the following working groups:
-
-* Car Communication (car/charger communication with topics ISO 15118, EXI, SLAC, CHAdeMO etc)
-* Cloud Communication (communication between charger and backends in cloud with topics OCPP 1.6, 2.0.1, 2.1 etc)
-* Energy Management
-* MCS (Megawatt Charging System)
 
 The links to the Zoom meetings of the working groups can also be found in the
 `official EVerest event calendar <https://zoom-lfx.platform.linuxfoundation.org/meetings/everest?view=week>`_.
@@ -62,17 +58,46 @@ groups, you can ask in Zulip or in the General Call for finding like-minded
 people and suggest creating a new working group.
 
 You might want to join the working group chat channels in Zulip.
-See the “Zulip chat” section above to see how to get there!
+See the :ref:`exp_community_zulip` to see how to get there!
+
+Car Communication
+-----------------
+
+This working groups focuses on the communication between the EV and the charger, with topics like 
+ISO 15118, EXI, SLAC and CHAdeMO.
+
+Chair & Tech Lead: Sebastian Lukas (`@SebaLukas <https://github.com/SebaLukas>`_)
+
+Cloud Communication
+-------------------
+
+This working group focuses on the communication between the charger and the cloud, with topics like
+OCPP, OCPI and EEBUS.
+
+Chair & Tech Lead: Piet Gömpel (`@Pietfried <https://github.com/pietfried>`_)
+
+Energy Management
+-----------------
+
+This working group focuses on the energy management within EVerest, including topics like
+load management, smart charging and V2G.
+
+Chair & Tech Lead: Piet Gömpel (`@Pietfried <https://github.com/pietfried>`_)
+
+MCS (Megawatt Charging System)
+------------------------------
+
+This working group focuses on the development and implementation of the Megawatt Charging System (MCS) standard,
+which is designed for high-power charging of electric vehicles.
+
+Chair & Tech Lead: Sebastian Lukas (`@SebaLukas <https://github.com/SebaLukas>`_)
 
 Technical Steering Committee (TSC)
 ==================================
 
-The Technical Steering Committee (TSC) is the governing body of the EVerest Project It is responsible for the overall
+The Technical Steering Committee (TSC) is the governing body of the EVerest Project. It is responsible for the overall
 project health and direction, coordination of activities, and working with other projects and committees as needed for
 the continued growth of the project.
-
-You can find more resources about the TSC here:
-https://github.com/EVerest/EVerest/tree/main/tsc
 
 .. _exp_community_mailinglist:
 

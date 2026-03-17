@@ -44,9 +44,9 @@ This is what to do:
 
 2. Create a GitHub issue
 
-   a. In the repository https://github.com/EVerest/EVerest, click on ``Issues``
+   a. In the repository https://github.com/EVerest/everest-core, click on ``Issues``
       and then ``New issue``.
-   b. Choose ``Documentation change request`` and fill out the title and
+   b. Choose ``Feature Request`` and fill out the title and
       the description fields. Answer the templated questions, which have already
       been added to the description text area.
    c. Also add a reference to any related documentation pages and describe how

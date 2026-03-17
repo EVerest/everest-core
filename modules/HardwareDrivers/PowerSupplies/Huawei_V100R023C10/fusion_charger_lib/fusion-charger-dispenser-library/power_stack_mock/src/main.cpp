@@ -308,6 +308,11 @@ int main(int argc, char* argv[]) {
         printf("Using default Ethernet interface: %s\n", config.eth.c_str());
     }
 
+    // Set the Modbus TCP port to use
+    if (std::getenv("FUSION_CHARGER_MOCK_PORT")) {
+        config.port = std::atoi(std::getenv("FUSION_CHARGER_MOCK_PORT"));
+    }
+
     printf("Waiting for connections on port %d\n", config.port);
 
     std::shared_ptr<MqttPowerRequestPublisher> mqtt_publisher;

@@ -24,16 +24,12 @@ EVSEStateEnum evse_manager_session_event_to_evse_state(types::evse_manager::Sess
         [[fallthrough]];
     case Event::TransactionStarted:
         return EVSEStateEnum::Preparing;
-    case Event::ChargingResumed:
-        [[fallthrough]];
     case Event::ChargingStarted:
         return EVSEStateEnum::Charging;
     case Event::ChargingPausedEV:
         return EVSEStateEnum::ChargingPausedEV;
     case Event::ChargingPausedEVSE:
         return EVSEStateEnum::ChargingPausedEVSE;
-    case Event::WaitingForEnergy:
-        return EVSEStateEnum::WaitingForEnergy;
     case Event::ChargingFinished:
         return EVSEStateEnum::Finished;
     case Event::StoppingCharging:
@@ -57,10 +53,6 @@ EVSEStateEnum evse_manager_session_event_to_evse_state(types::evse_manager::Sess
         return EVSEStateEnum::Unplugged;
     case Event::SwitchingPhases:
         return EVSEStateEnum::SwitchingPhases;
-    case Event::ReplugStarted:
-        [[fallthrough]];
-    case Event::ReplugFinished:
-        [[fallthrough]];
     case Event::Authorized:
         [[fallthrough]];
     case Event::Deauthorized:

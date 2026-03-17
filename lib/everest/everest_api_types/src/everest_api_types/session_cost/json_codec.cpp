@@ -6,6 +6,7 @@
 #include "session_cost/codec.hpp"
 
 #include "auth/json_codec.hpp"
+#include "display_message/json_codec.hpp"
 #include "money/json_codec.hpp"
 #include "text_message/json_codec.hpp"
 

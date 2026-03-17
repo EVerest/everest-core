@@ -16,6 +16,7 @@
 #include <generated/types/authorization.hpp>
 #include <generated/types/evse_manager.hpp>
 #include <generated/types/reservation.hpp>
+#include <generated/types/text_message.hpp>
 
 #include <Connector.hpp>
 #include <ReservationHandler.hpp>
@@ -23,6 +24,7 @@
 using namespace types::evse_manager;
 using namespace types::authorization;
 using namespace types::reservation;
+using namespace types::text_message;
 
 namespace types {
 namespace authorization {
@@ -76,6 +78,14 @@ public:
      * @param connectors    The connectors.
      */
     void init_evse(const int evse_id, const int evse_index, const std::vector<Connector>& connectors);
+
+    /**
+     * @brief Returns the evse_id for the given \p evse_index .
+     *
+     * @param evse_index
+     * @return int32_t evse_id
+     */
+    int32_t get_evse_id_by_index(const int evse_index);
 
     /**
      * @brief Call when everything is initialized. This will call 'init' of the reservation handler.
@@ -243,7 +253,8 @@ public:
      * @param callback
      */
     void register_publish_token_validation_status_callback(
-        const std::function<void(const ProvidedIdToken&, TokenValidationStatus)>& callback);
+        const std::function<void(const ProvidedIdToken&, TokenValidationStatus, const std::vector<MessageContent>&)>&
+            callback);
 
     WithdrawAuthorizationResult handle_withdraw_authorization(const WithdrawAuthorizationRequest& request);
 
@@ -289,8 +300,12 @@ private:
     std::function<void(const std::optional<int>& evse_index, const int32_t reservation_id,
                        const types::reservation::ReservationEndReason reason, const bool send_reservation_update)>
         reservation_cancelled_callback;
-    std::function<void(const ProvidedIdToken& token, TokenValidationStatus status)>
+    std::function<void(const ProvidedIdToken& token, TokenValidationStatus status,
+                       const std::vector<MessageContent>& tariff_messages)>
         publish_token_validation_status_callback;
+
+    void publish_token_validation_status(const ProvidedIdToken& token, TokenValidationStatus status,
+                                         const std::vector<MessageContent>& tariff_messages = {});
 
     std::vector<int> get_referenced_evses(const ProvidedIdToken& provided_token);
     int used_for_transaction(const std::vector<int>& evse_ids, const std::string& id_token);

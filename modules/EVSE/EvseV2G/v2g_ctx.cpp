@@ -350,6 +350,10 @@ free_out:
 }
 
 void v2g_ctx_free(struct v2g_context* ctx) {
+    if (ctx == nullptr) {
+        return;
+    }
+
     if (ctx->event_base) {
         event_base_loopbreak(ctx->event_base);
         event_base_free(ctx->event_base);

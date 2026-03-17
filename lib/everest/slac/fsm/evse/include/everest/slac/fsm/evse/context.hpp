@@ -165,6 +165,9 @@ struct EvseSlacConfig {
     // timeout for CM_SET_KEY.REQ
     int set_key_timeout_ms = 500;
 
+    // timeout for CM_SLAC_PARM.REQ
+    int slac_init_timeout_ms = slac::defs::TT_EVSE_SLAC_INIT_MS;
+
     // Settings CM_DEVICE_RESET.REQ
     struct chip_reset_struct {
         bool enabled = false;

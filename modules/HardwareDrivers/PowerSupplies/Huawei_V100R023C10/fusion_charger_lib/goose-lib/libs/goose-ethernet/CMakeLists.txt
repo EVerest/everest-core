@@ -13,6 +13,12 @@ if (MACOSX)
   target_link_libraries(goose-ethernet PRIVATE pcap)
 endif()
 
+include(CheckIncludeFile)
+check_include_file(net/ethernet.h HAVE_NET_ETHERNET_H)
+if(HAVE_NET_ETHERNET_H AND USING_MUSL)
+    target_compile_definitions(goose-ethernet PRIVATE _NETINET_IF_ETHER_H)
+endif()
+
 if(FUSION_CHARGER_LIB_BUILD_TESTS)
   add_subdirectory(tests)
 endif()

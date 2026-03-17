@@ -39,6 +39,7 @@ info:
     url: https://opensource.org/licenses/Apache-2.0
   tags:
     - name: EVerest
+    - name: over voltage monitor
 servers:
   default:
     pathname: 'everest_api/1/over_voltage_monitor/{module_id}'
@@ -55,17 +56,17 @@ channels:
   receive_set_limits:
     address: 'e2m/set_limits'
     messages:
-      start:
+      receive_set_limits:
         $ref: '#/components/messages/receive_set_limits'
   receive_start:
     address: 'e2m/start'
     messages:
-      start:
+      receive_start:
         $ref: '#/components/messages/receive_start'
   receive_stop:
     address: 'e2m/stop'
     messages:
-      stop:
+      receive_stop:
         $ref: '#/components/messages/receive_stop'
   receive_reset_over_voltage_error:
     address: 'e2m/reset_over_voltage_error'
@@ -301,12 +302,11 @@ components:
 
     Error:
       description: >-
-        Errors for the power_supply_DC interface.
-        Except for VendorWarning, all error codes will stop the charging session.
-        During all errors, follow the commands for setMode and setVoltageCurrent from EvseManager.
-        If they cannot be sent to the hardware, cache the last values received.
-        Once the PSU is back on-line (e.g. after a CommunicationFault), set the last mode and voltage/current
-        values and only after that clear the error.
+          Errors for Over Voltage Monitor
+
+          Note that the actual shutdown needs to be performed by lower layers outside of EVerest.
+          In the event of a shutdown, this error needs to be raised to indicate the nature of the shutdown
+          to EVerest after the fact.
       type: object
       additionalProperties: true
       required:

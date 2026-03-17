@@ -40,10 +40,6 @@ static std::variant<RawCPState, CPEvent> from_bsp_event(types::board_support_com
         return CPEvent::PowerOn;
     case types::board_support_common::Event::PowerOff:
         return CPEvent::PowerOff;
-    case types::board_support_common::Event::EvseReplugStarted:
-        return CPEvent::EvseReplugStarted;
-    case types::board_support_common::Event::EvseReplugFinished:
-        return CPEvent::EvseReplugFinished;
     default:
         return RawCPState::Disabled;
     }
@@ -71,10 +67,6 @@ const std::string cpevent_to_string(CPEvent e) {
         return "BCDtoEF";
     case CPEvent::BCDtoE:
         return "BCDtoE";
-    case CPEvent::EvseReplugStarted:
-        return "EvseReplugStarted";
-    case CPEvent::EvseReplugFinished:
-        return "EvseReplugFinished";
     }
     throw std::out_of_range("No known string conversion for provided enum of type CPEvent");
 }
@@ -457,11 +449,6 @@ void IECStateMachine::set_pp_ampacity(types::board_support_common::ProximityPilo
 // (e.g. in DC or AC tethered charging)
 double IECStateMachine::read_pp_ampacity() {
     return pp_ampacity;
-}
-
-// Forward special replug request. Only for testing setups.
-void IECStateMachine::evse_replug(int ms) {
-    r_bsp->call_evse_replug(ms);
 }
 
 // Forward special request to switch the number of phases during charging. BSP will need to implement a special

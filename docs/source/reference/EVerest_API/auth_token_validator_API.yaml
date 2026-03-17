@@ -70,7 +70,7 @@ operations:
       channel:
         $ref: '#/channels/send_reply_validate_token'
   send_reply_validate_token:
-    title: 'Receive request to validate token'
+    title: 'Send reply to validate token request'
     action: send
     description: 'Direction: Module to EVerest'
     channel:

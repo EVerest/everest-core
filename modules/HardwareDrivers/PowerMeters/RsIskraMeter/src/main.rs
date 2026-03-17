@@ -46,7 +46,7 @@ use backon::ConstantBuilder;
 use chrono::{Local, Offset, Utc};
 use everestrs::serde as everest_serde;
 use everestrs::serde_json as everest_serde_json;
-use generated::errors::powermeter::{Error, PowermeterError};
+use generated::errors::powermeter::{Error, GenericError};
 use generated::types::powermeter::{
     Powermeter, TransactionReq, TransactionRequestStatus, TransactionStartResponse,
     TransactionStopResponse,
@@ -1019,12 +1019,12 @@ impl generated::OnReadySubscriber for IskraMeter {
                         Err(e) => log::error!("Failed to post meter values {:?}", e),
                     }
                     power_meter_clone
-                        .clear_error(Error::Powermeter(PowermeterError::CommunicationFault));
+                        .clear_error(Error::Generic(GenericError::CommunicationFault));
                 }
                 Err(e) => {
                     log::error!("Failed to read meter value {:?}", e);
                     power_meter_clone
-                        .raise_error(Error::Powermeter(PowermeterError::CommunicationFault).into());
+                        .raise_error(Error::Generic(GenericError::CommunicationFault).into());
                 }
             };
             // Check the time status. In case of failure we just carry on.

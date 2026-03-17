@@ -23,10 +23,36 @@
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 #include <AuthHandler.hpp>
+#include <everest/util/async/monitor.hpp>
 #include <memory>
+#include <queue>
+#include <variant>
 
 using namespace types::evse_manager;
 using namespace types::authorization;
+
+struct PermanentFaultRaised {
+    int32_t connector_id;
+};
+
+struct PermanentFaultCleared {
+    int32_t connector_id;
+};
+
+using AuthEvent = std::variant<SessionEvent, PermanentFaultRaised, PermanentFaultCleared>;
+
+struct EvseEvent {
+    int32_t evse_index;
+    AuthEvent data;
+
+    EvseEvent(int32_t evse_index_, AuthEvent data_) : evse_index(evse_index_), data(std::move(data_)) {
+    }
+};
+
+struct EventQueueState {
+    bool started{false};
+    std::queue<EvseEvent> event_queue;
+};
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -99,6 +125,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    everest::lib::util::monitor<EventQueueState> event_state;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

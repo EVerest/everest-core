@@ -42,7 +42,7 @@ static const struct IgnoreErrors {
     ErrorList ac_rcd{"ac_rcd/VendorWarning"};
     ErrorList imd{"isolation_monitor/VendorWarning"};
     ErrorList powersupply{"power_supply_DC/VendorWarning"};
-    ErrorList powermeter{};
+    ErrorList powermeter{"powermeter/VendorWarning"};
     ErrorList over_voltage_monitor{"over_voltage_monitor/VendorWarning"};
 } ignore_errors;
 

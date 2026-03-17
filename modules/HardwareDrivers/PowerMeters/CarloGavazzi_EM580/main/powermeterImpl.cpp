@@ -7,6 +7,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <mutex>
+#include <stdexcept>
 #include <thread>
 #include <utility>
 
@@ -220,12 +221,16 @@ void powermeterImpl::read_signature_config() {
     }
     EVLOG_info << "Signature type detected: " << signature_type_string;
 
-    this->m_public_key_hex = read_public_key_in_hex(this->m_public_key_length_in_bits);
-    EVLOG_info << "Public key (raw, hex): " << this->m_public_key_hex;
+    if (config.public_key_format == "binary") {
+        this->m_public_key_hex = read_public_key_in_hex(this->m_public_key_length_in_bits);
+        EVLOG_info << "Public key (raw, hex): " << this->m_public_key_hex;
+    } else if (config.public_key_format == "der") {
+        this->m_public_key_hex = read_public_key_der_in_hex(der_word_count);
+        EVLOG_info << "Public key (DER, hex): " << this->m_public_key_hex;
+    } else {
+        throw std::invalid_argument("invalid public key format: " + config.public_key_format);
+    }
     this->publish_public_key_ocmf(this->m_public_key_hex);
-
-    const std::string der_hex = read_public_key_der_in_hex(der_word_count);
-    EVLOG_info << "Public key (DER, hex): " << der_hex;
 }
 
 void powermeterImpl::read_firmware_versions() {
@@ -338,6 +343,9 @@ void powermeterImpl::ready() {
                     read_device_state();
                     last_device_state_read = now;
                 }
+            } catch (const std::invalid_argument& e) {
+                EVLOG_error << "Configuration error (will not retry): " << e.what();
+                break;
             } catch (const std::exception& e) {
                 EVLOG_error << "Failed to communicate with the device, try again in "
                             << config.communication_error_pause_delay_s << " seconds: " << e.what();

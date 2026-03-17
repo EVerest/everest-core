@@ -1,0 +1,27 @@
+# Currently the openssl version from does not support armv7. For this target we
+# compile openssl with rules_foreign_cc and switch here based on the
+# architecture.
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+config_setting(
+    name = "armv7",
+    constraint_values = ["@platforms//cpu:armv7"],
+)
+
+cc_library(
+    name = "ssl",
+    visibility = ["//visibility:public"],
+    deps = select({
+        ":armv7": ["@openssl_source//:openssl"],
+        "//conditions:default": ["@openssl//:ssl"],
+    }),
+)
+
+cc_library(
+    name = "crypto",
+    visibility = ["//visibility:public"],
+    deps = select({
+        ":armv7": ["@openssl_source//:openssl"],
+        "//conditions:default": ["@openssl//:crypto"],
+    }),
+)

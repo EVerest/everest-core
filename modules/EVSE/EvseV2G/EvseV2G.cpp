@@ -10,6 +10,7 @@
 
 #include <csignal>
 #include <everest/tls/openssl_util.hpp>
+#include <stdexcept>
 namespace {
 void log_handler(openssl::log_level_t level, const std::string& str) {
     switch (level) {
@@ -44,8 +45,9 @@ void EvseV2G::init() {
     /* create v2g context */
     v2g_ctx = v2g_ctx_create(p_charger.get(), p_extensions.get(), r_security.get(), r_vas);
 
-    if (v2g_ctx == nullptr)
-        return;
+    if (v2g_ctx == nullptr) {
+        throw std::runtime_error("Failed to create v2g context");
+    }
 
     (void)openssl::set_log_handler(log_handler);
     tls::Server::configure_signal_handler(SIGUSR1);
@@ -116,7 +118,7 @@ void EvseV2G::ready() {
     return;
 
 err_out:
-    v2g_ctx_free(v2g_ctx);
+    throw std::runtime_error("Could not initialise EvseV2G module");
 }
 
 EvseV2G::~EvseV2G() {

@@ -13,8 +13,8 @@
 #include <map>
 #include <vector>
 
+#include <poll.h>
 #include <sys/epoll.h>
-#include <sys/poll.h>
 
 namespace everest::lib::io::event {
 

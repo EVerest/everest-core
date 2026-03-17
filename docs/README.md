@@ -47,6 +47,8 @@ be set to `OFF` when configuring CMake:
 cmake -D EVEREST_BUILD_DOCS=ON -D TRAILBOOK_everest_DOWNLOAD_ALL_VERSIONS=ON -D TRAILBOOK_everest_IS_RELEASE=OFF <path_to_source>
 ```
 
+**Note:** Building the documentation required `EDM` to be installed on the host system.
+
 ## Build
 
 There are three targets available to work with the EVerest documentation:

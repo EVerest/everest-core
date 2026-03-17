@@ -75,6 +75,35 @@ config:
     description: UD (OCMF/transaction fields)
     type: string
     default: ""
+  temperature_warning_level_C:
+    description: >-
+      Temperature warning threshold in degrees Celsius. If the maximum of temperatureH
+      and temperatureL exceeds this value for at least temperature_min_time_as_valid_ms,
+      a VendorWarning is raised. Charging continues. Default of 5000 effectively disables this.
+    type: number
+    default: 5000
+  temperature_error_level_C:
+    description: >-
+      Temperature error threshold in degrees Celsius. If the maximum of temperatureH
+      and temperatureL exceeds this value for at least temperature_min_time_as_valid_ms,
+      a VendorError is raised. Charging is stopped. Default of 5000 effectively disables this.
+    type: number
+    default: 5000
+  temperature_hysteresis_K:
+    description: >-
+      Hysteresis in Kelvin for clearing temperature warnings and errors.
+      A warning is cleared when max temperature drops below warning_level - hysteresis.
+      An error is cleared when max temperature drops below error_level - hysteresis.
+    type: number
+    default: 3
+    minimum: 0
+  temperature_min_time_as_valid_ms:
+    description: >-
+      Minimum time in milliseconds that the temperature must continuously exceed
+      the warning or error level before the corresponding event is raised.
+    type: integer
+    default: 5000
+    minimum: 0
   command_timeout_ms:
     description: The timeout in milliseconds for a HTTP command to the LEM power meter.
     type: integer

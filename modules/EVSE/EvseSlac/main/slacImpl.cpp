@@ -65,7 +65,13 @@ void slacImpl::run() {
 
     callbacks.signal_dlink_ready = [this](bool value) { publish_dlink_ready(value); };
 
-    callbacks.signal_state = [this](const std::string& value) { publish_state(value); };
+    callbacks.signal_state = [this](const std::string& value) {
+        try {
+            publish_state(types::slac::string_to_state(value));
+        } catch (const std::exception& e) {
+            EVLOG_error << fmt::format("Tried to publish unknown SLAC state '{}'. Error: {}", value, e.what());
+        }
+    };
 
     callbacks.signal_error_routine_request = [this]() { publish_request_error_routine(nullptr); };
 
@@ -84,6 +90,7 @@ void slacImpl::run() {
 
     auto fsm_ctx = slac::fsm::evse::Context(callbacks);
     fsm_ctx.slac_config.set_key_timeout_ms = config.set_key_timeout_ms;
+    fsm_ctx.slac_config.slac_init_timeout_ms = config.slac_init_timeout_ms;
     fsm_ctx.slac_config.ac_mode_five_percent = config.ac_mode_five_percent;
     fsm_ctx.slac_config.sounding_atten_adjustment = config.sounding_attenuation_adjustment;
 

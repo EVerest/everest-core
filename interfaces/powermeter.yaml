@@ -34,4 +34,4 @@ vars:
     description: The public key for OCMF
     type: string
 errors:
-  - reference: /errors/powermeter
+  - reference: /errors/generic

@@ -50,7 +50,11 @@ void ev_slacImpl::run() {
         } else if (value == "UNMATCHED") {
             publish_dlink_ready(false);
         }
-        publish_state(value);
+        try {
+            publish_state(types::slac::string_to_state(value));
+        } catch (const std::exception& e) {
+            EVLOG_error << fmt::format("Tried to publish unknown SLAC state '{}'. Error: {}", value, e.what());
+        }
     };
 
     callbacks.log_debug = [](const std::string& text) { EVLOG_debug << "EvSlac: " << text; };
@@ -58,11 +62,11 @@ void ev_slacImpl::run() {
     callbacks.log_warn = [](const std::string& text) { EVLOG_warning << "EvSlac: " << text; };
     callbacks.log_error = [](const std::string& text) { EVLOG_error << "EvSlac: " << text; };
 
-    auto fsm_ctx = slac::fsm::ev::Context(callbacks);
+    const uint8_t* if_mac = slac_io.get_mac_addr();
+    std::array<uint8_t, ETH_ALEN> ev_host_mac;
+    std::copy(if_mac, if_mac + ETH_ALEN, ev_host_mac.begin());
 
-    // Copy correct MAC address
-    memcpy(fsm_ctx.plc_mac, slac_io.get_mac_addr(), sizeof(fsm_ctx.plc_mac));
-
+    auto fsm_ctx = slac::fsm::ev::Context(callbacks, ev_host_mac);
     // fsm_ctx.slac_config.set_key_timeout_ms = config.set_key_timeout_ms;
     // fsm_ctx.slac_config.ac_mode_five_percent = config.ac_mode_five_percent;
     // fsm_ctx.slac_config.sounding_atten_adjustment = config.sounding_attenuation_adjustment;

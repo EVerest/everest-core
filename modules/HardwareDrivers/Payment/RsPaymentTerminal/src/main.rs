@@ -46,7 +46,6 @@ use generated::{
     BankSessionTokenProviderClientSubscriber, Context, Module, ModulePublisher, OnReadySubscriber,
     PaymentTerminalServiceSubscriber, SessionCostClientSubscriber,
 };
-use std::cmp::min;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::sync::{mpsc::channel, mpsc::Sender, Arc, Mutex};
@@ -57,6 +56,94 @@ use zvt_feig_terminal::config::{Config, FeigConfig};
 use zvt_feig_terminal::feig::{CardInfo, Error};
 
 const INVALID_BANK_TOKEN: &str = "PAYMENT_TERMINAL_INVALID";
+
+mod backoff {
+    use std::cmp::min;
+    use std::time::{Duration, Instant};
+
+    pub struct Backoff {
+        next_retry: Instant,
+        backoff_secs: u64,
+        max_backoff_secs: u64,
+    }
+
+    impl Backoff {
+        pub fn from_secs(max_backoff_secs: u64) -> Self {
+            Self {
+                next_retry: Instant::now(),
+                backoff_secs: 1,
+                max_backoff_secs,
+            }
+        }
+
+        pub fn is_ready(&self) -> bool {
+            Instant::now() >= self.next_retry
+        }
+
+        pub fn record_failure(&mut self) {
+            self.backoff_secs = min(self.backoff_secs * 2, self.max_backoff_secs);
+            log::info!(
+                "Recorded failure: next retry will be in {}",
+                self.backoff_secs
+            );
+            self.next_retry = Instant::now() + Duration::from_secs(self.backoff_secs);
+        }
+
+        pub fn record_success(&mut self) {
+            self.backoff_secs = 1;
+            log::debug!("Next retry will be in {}", self.backoff_secs);
+            self.next_retry = Instant::now() + Duration::from_secs(self.backoff_secs);
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn ready_immediately_after_creation() {
+            let b = Backoff::from_secs(60);
+            assert!(b.is_ready());
+        }
+
+        #[test]
+        fn not_ready_after_failure() {
+            let mut b = Backoff::from_secs(60);
+            b.record_failure();
+            assert!(!b.is_ready());
+            assert_eq!(b.backoff_secs, 2);
+        }
+
+        #[test]
+        fn exponential_increase() {
+            let mut b = Backoff::from_secs(60);
+            b.record_failure();
+            assert_eq!(b.backoff_secs, 2);
+            b.record_failure();
+            assert_eq!(b.backoff_secs, 4);
+            b.record_failure();
+            assert_eq!(b.backoff_secs, 8);
+        }
+
+        #[test]
+        fn caps_at_max() {
+            let mut b = Backoff::from_secs(8);
+            for _ in 0..10 {
+                b.record_failure();
+            }
+            assert_eq!(b.backoff_secs, 8);
+        }
+
+        #[test]
+        fn success_resets() {
+            let mut b = Backoff::from_secs(60);
+            b.record_failure();
+            b.record_failure();
+            b.record_success();
+            assert_eq!(b.backoff_secs, 1);
+        }
+    }
+}
 
 mod sync_feig {
     use anyhow::Result;
@@ -271,17 +358,20 @@ impl PaymentTerminalModule {
 
         // Wait for the card.
         let mut read_card_loop = || -> CardInfo {
-            let mut timeout = std::time::Instant::now();
-            let mut backoff_seconds = 1;
-
+            // Long backoff to the payment provider backend to not overload it.
+            let mut configure_backoff = backoff::Backoff::from_secs(3600);
+            let mut bank_token_backoff = backoff::Backoff::from_secs(60);
             loop {
-                if let Err(inner) = self.feig.configure() {
-                    log::warn!("Failed to configure: {inner:?}");
-                    let inner: PTError = inner.into();
-                    publishers.payment_terminal.raise_error(inner.into());
-                    continue;
-                } else {
-                    publishers.payment_terminal.clear_all_errors();
+                if configure_backoff.is_ready() {
+                    if let Err(inner) = self.feig.configure() {
+                        log::warn!("Failed to configure: {inner:?}");
+                        let inner: PTError = inner.into();
+                        publishers.payment_terminal.raise_error(inner.into());
+                        configure_backoff.record_failure();
+                    } else {
+                        configure_backoff.record_success();
+                        publishers.payment_terminal.clear_all_errors();
+                    }
                 }
 
                 let bank_cards_enabled = {
@@ -296,18 +386,11 @@ impl PaymentTerminalModule {
                 // Attempting to get an invoice token
                 if token.is_none() && bank_cards_enabled {
                     if let Some(publisher) = publishers.bank_session_token_slots.get(0) {
-                        if timeout.elapsed() > Duration::from_secs(0) {
+                        if bank_token_backoff.is_ready() {
                             token = publisher.get_bank_session_token().map_or(None, |v| v.token);
 
-                            // Poor man's backoff to avoid a busy loop
-                            const MAX_BACKOFF_SECONDS: u64 = 60;
                             if token.is_none() {
-                                backoff_seconds = min(backoff_seconds * 2, MAX_BACKOFF_SECONDS);
-                                timeout = std::time::Instant::now()
-                                    + Duration::from_secs(backoff_seconds);
-                                log::info!(
-                                    "Failed to receive invoice token, retrying in {backoff_seconds} seconds"
-                                );
+                                bank_token_backoff.record_failure();
                             } else {
                                 log::info!("Received the invoice token {token:?}");
                             }

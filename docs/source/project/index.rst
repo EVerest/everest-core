@@ -40,6 +40,12 @@ Project & Community
       :link-type: doc
 
       Learn about EVerest's security policies and how to report vulnerabilities.
+   
+   .. grid-item-card:: Technical Steering Committee (TSC)
+      :link: governance/tsc/index
+      :link-type: doc
+
+      Learn about the TSC, its members, responsibilities and how to participate in meetings.
 
 .. toctree::
     :hidden:
@@ -50,5 +56,6 @@ Project & Community
     governance/governance
     governance/code-of-conduct
     governance/security
+    governance/tsc/index
     releases/releases-and-versioning
     releases/breaking-changes

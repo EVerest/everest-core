@@ -94,9 +94,7 @@ int InitSlacState::send_parm_req() {
     msg.security_type = 0x0;
     memcpy(msg.run_id, run_id, sizeof(msg.run_id));
 
-    const uint8_t broadcast_mac[ETH_ALEN] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
-    ctx.send_slac_message(broadcast_mac, msg);
+    ctx.send_slac_message(ctx.BROADCAST_MAC.data(), msg);
 
     num_of_tries++;
 
@@ -199,7 +197,7 @@ int MatchRequestState::send_match_req() {
     msg.security_type = 0x0;
     msg.mvf_length = htole16(0x3e); // FIXME (aw) fixed constant
     memset(msg.pev_id, 0, sizeof(msg.pev_id));
-    memcpy(msg.pev_mac, ctx.plc_mac, sizeof(msg.pev_mac));
+    memcpy(msg.pev_mac, ctx.ev_host_mac.data(), sizeof(msg.pev_mac));
     memset(msg.evse_id, 0, sizeof(msg.evse_id));
     memcpy(msg.evse_mac, session_parameters.evse_mac, sizeof(msg.evse_mac));
     memcpy(msg.run_id, session_parameters.run_id, sizeof(msg.run_id));
@@ -250,7 +248,7 @@ void JoinNetworkState::enter() {
     msg.new_eks = slac::defs::CM_SET_KEY_REQ_PEKS_NMK_KNOWN_TO_STA;
     memcpy(msg.new_key, nmk, sizeof(msg.new_key));
 
-    ctx.send_slac_message(ctx.plc_mac_chip_commands, msg);
+    ctx.send_slac_message(ctx.EV_PLC_MAC.data(), msg);
 
     timeout = std::chrono::steady_clock::now() + std::chrono::milliseconds(SET_KEY_TIMEOUT_MS);
 }

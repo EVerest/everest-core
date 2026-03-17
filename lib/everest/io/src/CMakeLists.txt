@@ -41,6 +41,12 @@ target_link_libraries(everest_io
         everest::util
 )
 
+include(CheckIncludeFile)
+check_include_file(net/ethernet.h HAVE_NET_ETHERNET_H)
+if(HAVE_NET_ETHERNET_H AND USING_MUSL)
+    target_compile_definitions(everest_io PRIVATE _NETINET_IF_ETHER_H)
+endif()
+
 target_compile_features(everest_io PUBLIC cxx_std_17)
 
 target_compile_options(everest_io

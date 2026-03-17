@@ -586,6 +586,7 @@ TEST_F(RpcHandlerTest, EvseSetACChargingCurrentReq) {
     data_store.evses[0]->evseinfo.set_data(evse_info);
 
     RPCDataTypes::EVSEStatusObj evse_status{};
+    evse_status.charging_allowed = true;
     data_store.evses[0]->evsestatus.set_data(evse_status);
     data_store.evses[0]->evsestatus.set_ac_charge_param_evse_max_current(12.3);
 

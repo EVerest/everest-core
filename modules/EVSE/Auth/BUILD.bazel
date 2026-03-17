@@ -14,6 +14,7 @@ cc_library(
         "//types:types_lib",
         "//interfaces:interfaces_lib",
         "//lib/everest/helpers",
+        "//lib/everest/util",
     ],
     # See https://github.com/HowardHinnant/date/issues/324
     local_defines = [

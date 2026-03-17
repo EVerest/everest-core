@@ -5,8 +5,9 @@ info:
   title: 'EVerest API definition for auth consumer'
   version: 1.0.0
   description: >-
-    API to allow EVerest API clients to use the Auth module.
-
+    API for EVerest API clients that consume authorization events from an
+    Auth module. Provides token validation status updates and the ability
+    to withdraw previously granted authorizations.
   license:
     name: Apache-2.0
     url: https://opensource.org/licenses/Apache-2.0
@@ -85,7 +86,10 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_token_validation_status'
-    description: 'Direction: EVerest to Module'
+    description: >-
+      Published whenever the validation status of a token changes.
+      The message contains the token, its validation status, and an
+      optional array of tariff messages received at authorization time.
 
 
   receive_heartbeat:
@@ -147,7 +151,7 @@ components:
     receive_token_validation_status:
       name: receive_token_validation_status
       title: 'Receive token validation status message'
-      summary: 'Token validation status'
+      summary: 'Token validation status, optionally with tariff messages'
       contentType: application/json
       payload:
         $ref: '#/components/schemas/TokenValidationStatusMessage'
@@ -331,13 +335,22 @@ components:
     TokenValidationStatus:
       description: |
         Ongoing token validation status
-        - TimedOut Occurs when the token has been authorized but no connector is selected within connection_timeout seconds
+        - Processing: Validation is in progress
+        - Accepted: Token has been accepted
+        - Rejected: Token has been rejected
+        - TimedOut: Token was authorized but no connector was selected within connection_timeout seconds
+        - UsedToStart: Token was used to start a charging session
+        - UsedToStop: Token was used to stop a charging session
+        - Withdrawn: Authorization was withdrawn
       type: string
       enum:
         - Processing
         - Accepted
         - Rejected
         - TimedOut
+        - UsedToStart
+        - UsedToStop
+        - Withdrawn
     TokenValidationStatusMessage:
       description: The token validation status
       type: object
@@ -354,6 +367,9 @@ components:
           type: string
           $ref: '#/components/schemas/TokenValidationStatus'
         messages:
+          description: >-
+            Optional tariff or pricing messages received with the
+            authorization response.
           type: array
           items:
             type: object
@@ -385,7 +401,6 @@ components:
         EvseNotFound in case no match for evse_id was found
         Rejected in case module could not process the request for other reasons
       type: string
-      additionalProperties: true
       enum:
         - Accepted
         - AuthorizationNotFound

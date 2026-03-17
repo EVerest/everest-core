@@ -6,7 +6,7 @@ everest-sqlite is used within several modules and libraries of the EVerest proje
 
 ## Get Involved
 
-See the [COMMUNITY.md](https://github.com/EVerest/EVerest/blob/main/COMMUNITY.md) and [CONTRIBUTING.md](https://github.com/EVerest/EVerest/blob/main/CONTRIBUTING.md) of the EVerest project to get involved.
+See the [Contribution Guideline](https://everest.github.io/nightly/project/contributing.html) of the EVerest project to get involved.
 
 ## Features
 

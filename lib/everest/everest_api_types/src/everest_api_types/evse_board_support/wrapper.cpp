@@ -27,10 +27,6 @@ Event_Internal to_internal_api(Event_External const& val) {
         return TarT::PowerOn;
     case SrcT::PowerOff:
         return TarT::PowerOff;
-    case SrcT::EvseReplugStarted:
-        return TarT::EvseReplugStarted;
-    case SrcT::EvseReplugFinished:
-        return TarT::EvseReplugFinished;
     case SrcT::Disconnected:
         return TarT::Disconnected;
     }
@@ -59,10 +55,6 @@ Event_External to_external_api(Event_Internal const& val) {
         return TarT::PowerOn;
     case SrcT::PowerOff:
         return TarT::PowerOff;
-    case SrcT::EvseReplugStarted:
-        return TarT::EvseReplugStarted;
-    case SrcT::EvseReplugFinished:
-        return TarT::EvseReplugFinished;
     case SrcT::Disconnected:
         return TarT::Disconnected;
     }
