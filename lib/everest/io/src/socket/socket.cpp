@@ -27,6 +27,10 @@
 #include <everest/io/event/unique_fd.hpp>
 #include <everest/io/socket/socket.hpp>
 
+#ifndef PACKET_IGNORE_OUTGOING
+#define PACKET_IGNORE_OUTGOING 11
+#endif
+
 namespace {
 // a simple raii wrapper, which will call the given c-like deleter
 // function on its supplied pointer at the end of its lifetime
@@ -220,7 +224,7 @@ event::unique_fd open_raw_promiscuous_socket(std::string const& if_name) {
 
     int ignore_out = 1;
     if (setsockopt(socket_fd, SOL_PACKET, PACKET_IGNORE_OUTGOING, &ignore_out, sizeof(ignore_out)) == -1) {
-        auto msg = build_errno_string("Could not set PACKET_IGNORE_OUTGOIG for " + if_name);
+        auto msg = build_errno_string("Could not set PACKET_IGNORE_OUTGOING for " + if_name);
         close(socket_fd);
         throw std::runtime_error(msg);
     }
