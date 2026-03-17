@@ -6,7 +6,7 @@ This is Rust support using cxx.rs to wrap the framework C++ library.
 
   - Install Rust as outlined on <https://rustup.rs/>, which should just be this
     one line: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-  - Built your workspace as outlined in `everest-core` README, make sure to tell
+  - Built your workspace as outlined in `EVerest` README, make sure to tell
     cMake to enable `EVEREST_ENABLE_RS_SUPPORT`.
   - You can now try building the code, but it will not do anything: `cd everestrs
     && cargo build --all`
@@ -42,7 +42,7 @@ Then all publishers are mocked with `mockall`.
 
 ## Building from external repositories without CMake
 
-Note that the `everest-core` and `everest-framework` repositories are
+Note that the `EVerest` (and `everest-framework` prior to migration to a monorepo layout) repositories are
 automatically configured for this use case, this section is only relevant for
 Rust modules residing in their own repositories.
 
