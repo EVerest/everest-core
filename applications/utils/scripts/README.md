@@ -1,6 +1,6 @@
 # Utility Scripts
 
-This directory contains useful scripts for working with everest-core and meta-everest
+This directory contains useful scripts for working with EVerest and meta-everest
 
 _cargolock2bb.py_ converts a Cargo.lock file, that can also be loaded via an URL, into a .bb file
 

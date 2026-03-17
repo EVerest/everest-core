@@ -15,10 +15,10 @@ code-coverage:
   name: "CodeCoverage.cmake"
   license: "BSD-3-Clause"
 
-everest-core:
+EVerest:
   description: "This is the main part of EVerest containing the actual charge controller logic included in a large set of modules"
   license: "Apache-2.0"
-# dependencies of everest-core
+# dependencies of EVerest
 nanopb:
   description: "Protocol Buffers with small code size"
   license: "Zlib"

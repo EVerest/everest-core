@@ -52,7 +52,7 @@ endif()
 {% endfor %}
 
 execute_process(
-    COMMAND "${EVEREST_DEPENDENCY_MANAGER}" release --everest-core-dir ${PROJECT_SOURCE_DIR} --build-dir ${CMAKE_BINARY_DIR} --out ${CMAKE_BINARY_DIR}/release.json
+    COMMAND "${EVEREST_DEPENDENCY_MANAGER}" release --everest-dir ${PROJECT_SOURCE_DIR} --build-dir ${CMAKE_BINARY_DIR} --out ${CMAKE_BINARY_DIR}/release.json
 )
 
 install(
