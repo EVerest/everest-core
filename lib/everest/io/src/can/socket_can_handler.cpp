@@ -70,7 +70,7 @@ int socket_can_handler::rx(uint32_t& can_id, uint8_t& len8_dlc, can_payload& pay
 #ifdef CAN_MAX_RAW_DLC
             len8_dlc = frame.len8_dlc;
 #else
-// FIXME: do we need this information?
+            len8_dlc = 0;
 #endif
             return 0;
         } else if (nbytes == -1) {
