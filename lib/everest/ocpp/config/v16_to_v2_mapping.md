@@ -4,7 +4,7 @@
 This documents how OCPP 1.6 configuration keys map to the OCPP 2.x Device Model.
 
 It is intended as a **human-readable reference** for integrators and maintainers.
-The implementation in code (for example `known_keys` conversion logic and patching behavior) remains authoritative.
+The implementation in code (for example `known_keys` conversion logic and patching behaviour) remains authoritative.
 
 ## Core Profile
 
@@ -13,160 +13,172 @@ The implementation in code (for example `known_keys` conversion logic and patchi
 | 1 | `AllowOfflineTxForUnknownId` | VariableAttribute | `AuthCtrlr` | `OfflineTxForUnknownIdEnabled` | `Actual` |
 | 2 | `AuthorizationCacheEnabled` | VariableAttribute | `AuthCacheCtrlr` | `Enabled` | `Actual` |
 | 3 | `AuthorizeRemoteTxRequests` | VariableAttribute | `AuthCtrlr` | `AuthorizeRemoteStart` | `Actual` |
-| 4 | `BlinkRepeat` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `BlinkRepeat` | `Actual` |
 | 5 | `ClockAlignedDataInterval` | VariableAttribute | `AlignedDataCtrlr` | `Interval` | `Actual` |
 | 6 | `ConnectionTimeOut` | VariableAttribute | `TxCtrlr` | `EVConnectionTimeout` | `Actual` |
-| 7 | `ConnectorPhaseRotation` | VariableAttribute | `*` | `PhaseRotation` | `Actual` |
-| 8 | `ConnectorPhaseRotationMaxLength` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `ConnectorPhaseRotationMaxLength` | `Actual` |
-| 9 | `GetConfigurationMaxKeys` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `GetConfigurationMaxKeys` | `Actual` |
-| 10 | `HeartbeatInterval` | VariableAttribute | `OCPPCommCtrlr` | `HeartbeatInterval` | `Actual` |
-| 11 | `LightIntensity` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `LightIntensity` | `Actual` |
-| 12 | `LocalAuthorizeOffline` | VariableAttribute | `AuthCtrlr` | `LocalAuthorizeOffline` | `Actual` |
-| 13 | `LocalPreAuthorize` | VariableAttribute | `AuthCtrlr` | `LocalPreAuthorize` | `Actual` |
-| 14 | `MaxEnergyOnInvalidId` | VariableAttribute | `TxCtrlr` | `MaxEnergyOnInvalidId` | `Actual` |
-| 15 | `MeterValuesAlignedData` | VariableAttribute | `AlignedDataCtrlr` | `Measurands` | `Actual` |
-| 16 | `MeterValuesAlignedDataMaxLength` | VariableCharacteristics | `AlignedDataCtrlr` | `Measurands` | `maxLimit` |
-| 17 | `MeterValuesSampledData` | VariableAttribute | `SampledDataCtrlr` | `TxUpdatedMeasurands` | `Actual` |
-| 18 | `MeterValuesSampledDataMaxLength` | VariableCharacteristics | `SampledDataCtrlr` | `TxUpdatedMeasurands` | `maxLimit` |
-| 19 | `MeterValueSampleInterval` | VariableAttribute | `SampledDataCtrlr` | `TxUpdatedInterval` | `Actual` |
-| 20 | `MinimumStatusDuration` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `MinimumStatusDuration` | `Actual` |
-| 21 | `NumberOfConnectors` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `NumberOfConnectors` | `Actual` |
-| 22 | `ResetRetries` | VariableAttribute | `OCPPCommCtrlr` | `ResetRetries` | `Actual` |
-| 23 | `StopTransactionOnEVSideDisconnect` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `StopTransactionOnEVSideDisconnect` | `Actual` |
-| 24 | `StopTransactionOnInvalidId` | VariableAttribute | `TxCtrlr` | `StopTxOnInvalidId` | `Actual` |
-| 25 | `StopTxnAlignedData` | VariableAttribute | `AlignedDataCtrlr` | `TxEndedMeasurands` | `Actual` |
-| 26 | `StopTxnAlignedDataMaxLength` | VariableCharacteristics | `AlignedDataCtrlr` | `TxEndedMeasurands` | `maxLimit` |
-| 27 | `StopTxnSampledData` | VariableAttribute | `SampledDataCtrlr` | `TxEndedMeasurands` | `Actual` |
-| 28 | `StopTxnSampledDataMaxLength` | VariableCharacteristics | `SampledDataCtrlr` | `TxEndedMeasurands` | `maxLimit` |
-| 29 | `SupportedFeatureProfiles` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `SupportedFeatureProfiles` | `Actual` |
-| 30 | `SupportedFeatureProfilesMaxLength` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `SupportedFeatureProfilesMaxLength` | `Actual` |
-| 31 | `TransactionMessageAttempts` | VariableAttribute | `OCPPCommCtrlr` | `MessageAttempts` | `Actual` |
-| 32 | `TransactionMessageRetryInterval` | VariableAttribute | `OCPPCommCtrlr` | `MessageAttemptInterval` | `Actual` |
-| 33 | `UnlockConnectorOnEVSideDisconnect` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `UnlockConnectorOnEVSideDisconnect` | `Actual` |
-| 34 | `WebSocketPingInterval` | VariableAttribute | `OCPPCommCtrlr` | `WebSocketPingInterval` | `Actual` |
-| 35 | `SupportedFileTransferProtocols` | VariableAttribute | `OCPPCommCtrlr` | `FileTransferProtocols` | `Actual` |
-
-## Local Auth List Management Profile
-
-| ID | OCPP1.6 key | Mapping type | Component | Variable | Target field |
-| ---: | --- | --- | --- | --- | --- |
-| 36 | `LocalAuthListEnabled` | VariableAttribute | `LocalAuthListCtrlr` | `Enabled` | `Actual` |
-| 37 | `LocalAuthListMaxLength` | VariableCharacteristics | `LocalAuthListCtrlr` | `Entries` | `maxLimit` |
-| 38 | `SendLocalListMaxLength` | VariableAttribute | `LocalAuthListCtrlr` | `ItemsPerMessage` | `Actual` |
-
-## Reservation Profile
-
-| ID | OCPP1.6 key | Mapping type | Component | Variable | Target field |
-| ---: | --- | --- | --- | --- | --- |
-| 39 | `ReserveConnectorZeroSupported` | TBD | `` | `` | `` |
-
-## Smart Charging Profile
-
-| ID | OCPP1.6 key | Mapping type | Component | Variable | Target field |
-| ---: | --- | --- | --- | --- | --- |
-| 40 | `ChargeProfileMaxStackLevel` | VariableAttribute | `SmartChargingCtrlr` | `ProfileStackLevel` | `Actual` |
-| 41 | `ChargingScheduleAllowedChargingRateUnit` | VariableAttribute | `SmartChargingCtrlr` | `RateUnit` | `Actual` |
-| 42 | `ChargingScheduleMaxPeriods` | VariableAttribute | `SmartChargingCtrlr` | `PeriodsPerSchedule` | `Actual` |
-| 43 | `ConnectorSwitch3to1PhaseSupported` | VariableAttribute | `SmartChargingCtrlr` | `Phases3to1` | `Actual` |
-| 44 | `MaxChargingProfilesInstalled` | VariableCharacteristics | `SmartChargingCtrlr` | `ChargingProfileEntries` | `maxLimit` |
+| 7 | `HeartbeatInterval` | VariableAttribute | `OCPPCommCtrlr` | `HeartbeatInterval` | `Actual` |
+| 8 | `LocalAuthorizeOffline` | VariableAttribute | `AuthCtrlr` | `LocalAuthorizeOffline` | `Actual` |
+| 9 | `LocalPreAuthorize` | VariableAttribute | `AuthCtrlr` | `LocalPreAuthorize` | `Actual` |
+| 10 | `MaxEnergyOnInvalidId` | VariableAttribute | `TxCtrlr` | `MaxEnergyOnInvalidId` | `Actual` |
+| 11 | `MeterValuesAlignedData` | VariableAttribute | `AlignedDataCtrlr` | `Measurands` | `Actual` |
+| 12 | `MeterValuesAlignedDataMaxLength` | VariableCharacteristics | `AlignedDataCtrlr` | `Measurands` | `maxLimit` |
+| 13 | `MeterValuesSampledData` | VariableAttribute | `SampledDataCtrlr` | `TxUpdatedMeasurands` | `Actual` |
+| 14 | `MeterValuesSampledDataMaxLength` | VariableCharacteristics | `SampledDataCtrlr` | `TxUpdatedMeasurands` | `maxLimit` |
+| 15 | `MeterValueSampleInterval` | VariableAttribute | `SampledDataCtrlr` | `TxUpdatedInterval` | `Actual` |
+| 16 | `ResetRetries` | VariableAttribute | `OCPPCommCtrlr` | `ResetRetries` | `Actual` |
+| 17 | `StopTransactionOnInvalidId` | VariableAttribute | `TxCtrlr` | `StopTxOnInvalidId` | `Actual` |
+| 18 | `StopTxnAlignedData` | VariableAttribute | `AlignedDataCtrlr` | `TxEndedMeasurands` | `Actual` |
+| 19 | `StopTxnAlignedDataMaxLength` | VariableCharacteristics | `AlignedDataCtrlr` | `TxEndedMeasurands` | `maxLimit` |
+| 20 | `StopTxnSampledData` | VariableAttribute | `SampledDataCtrlr` | `TxEndedMeasurands` | `Actual` |
+| 21 | `StopTxnSampledDataMaxLength` | VariableCharacteristics | `SampledDataCtrlr` | `TxEndedMeasurands` | `maxLimit` |
+| 22 | `TransactionMessageAttempts` | VariableAttribute | `OCPPCommCtrlr` | `MessageAttempts` | `Actual` |
+| 23 | `TransactionMessageRetryInterval` | VariableAttribute | `OCPPCommCtrlr` | `MessageAttemptInterval` | `Actual` |
+| 24 | `WebSocketPingInterval` | VariableAttribute | `OCPPCommCtrlr` | `WebSocketPingInterval` | `Actual` |
+| 25 | `LocalAuthListEnabled` | VariableAttribute | `LocalAuthListCtrlr` | `Enabled` | `Actual` |
+| 26 | `ChargeProfileMaxStackLevel` | VariableAttribute | `SmartChargingCtrlr` | `ProfileStackLevel` | `Actual` |
+| 27 | `ChargingScheduleAllowedChargingRateUnit` | VariableAttribute | `SmartChargingCtrlr` | `RateUnit` | `Actual` |
+| 28 | `ChargingScheduleMaxPeriods` | VariableAttribute | `SmartChargingCtrlr` | `PeriodsPerSchedule` | `Actual` |
+| 29 | `ConnectorSwitch3to1PhaseSupported` | VariableAttribute | `SmartChargingCtrlr` | `Phases3to1` | `Actual` |
+| 30 | `SupportedFileTransferProtocols` | VariableAttribute | `OCPPCommCtrlr` | `FileTransferProtocols` | `Actual` |
 
 ## Internal Keys
 
 | ID | OCPP1.6 key | Mapping type | Component | Variable | Target field |
 | ---: | --- | --- | --- | --- | --- |
-| 45 | `ChargePointId` | VariableAttribute | `InternalCtrlr` | `ChargePointId` | `Actual` |
-| 46 | `CentralSystemURI` | VariableAttribute | `InternalCtrlr` | `NetworkConnectionProfiles.ocppCsmsUrl` | `Actual` |
-| 47 | `ChargeBoxSerialNumber` | VariableAttribute | `InternalCtrlr` | `ChargeBoxSerialNumber` | `Actual` |
-| 48 | `ChargePointModel` | VariableAttribute | `InternalCtrlr` | `ChargePointModel` | `Actual` |
-| 49 | `ChargePointSerialNumber` | VariableAttribute | `InternalCtrlr` | `ChargePointSerialNumber` | `Actual` |
-| 50 | `ChargePointVendor` | VariableAttribute | `InternalCtrlr` | `ChargePointVendor` | `Actual` |
-| 51 | `FirmwareVersion` | VariableAttribute | `InternalCtrlr` | `FirmwareVersion` | `Actual` |
-| 52 | `ICCID` | VariableAttribute | `InternalCtrlr` | `ICCID` | `Actual` |
-| 53 | `HostName` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `HostName` | `Actual` |
-| 54 | `IFace` | VariableAttribute | `InternalCtrlr` | `IFace` | `Actual` |
-| 55 | `IMSI` | VariableAttribute | `InternalCtrlr` | `IMSI` | `Actual` |
-| 56 | `MeterSerialNumber` | VariableAttribute | `InternalCtrlr` | `MeterSerialNumber` | `Actual` |
-| 57 | `MeterType` | VariableAttribute | `InternalCtrlr` | `MeterType` | `Actual` |
-| 58 | `SupportedCiphers12` | VariableAttribute | `InternalCtrlr` | `SupportedCiphers12` | `Actual` |
-| 59 | `SupportedCiphers13` | VariableAttribute | `InternalCtrlr` | `SupportedCiphers13` | `Actual` |
-| 60 | `UseTPM` | VariableAttribute | `InternalCtrlr` | `UseTPM` | `Actual` |
-| 61 | `UseTPMSeccLeafCertificate` | VariableAttribute | `InternalCtrlr` | `UseTPMSeccLeafCertificate` | `Actual` |
-| 62 | `RetryBackoffRandomRange` | VariableAttribute | `OCPPCommCtrlr` | `RetryBackOffRandomRange` | `Actual` |
-| 63 | `RetryBackoffRepeatTimes` | VariableAttribute | `OCPPCommCtrlr` | `RetryBackOffRepeatTimes` | `Actual` |
-| 64 | `RetryBackoffWaitMinimum` | VariableAttribute | `OCPPCommCtrlr` | `RetryBackOffWaitMinimum` | `Actual` |
-| 65 | `AuthorizeConnectorZeroOnConnectorOne` | VariableAttribute | `InternalCtrlr` | `AuthorizeConnectorZeroOnConnectorOne` | `Actual` |
-| 66 | `LogMessages` | VariableAttribute | `InternalCtrlr` | `LogMessages` | `Actual` |
-| 67 | `LogMessagesRaw` | VariableAttribute | `InternalCtrlr` | `LogMessagesRaw` | `Actual` |
-| 68 | `LogMessagesFormat` | VariableAttribute | `InternalCtrlr` | `LogMessagesFormat` | `Actual` |
-| 69 | `LogRotation` | VariableAttribute | `InternalCtrlr` | `LogRotation` | `Actual` |
-| 70 | `LogRotationDateSuffix` | VariableAttribute | `InternalCtrlr` | `LogRotationDateSuffix` | `Actual` |
-| 71 | `LogRotationMaximumFileSize` | VariableAttribute | `InternalCtrlr` | `LogRotationMaximumFileSize` | `Actual` |
-| 72 | `LogRotationMaximumFileCount` | VariableAttribute | `InternalCtrlr` | `LogRotationMaximumFileCount` | `Actual` |
-| 73 | `SupportedChargingProfilePurposeTypes` | VariableAttribute | `InternalCtrlr` | `SupportedChargingProfilePurposeTypes` | `Actual` |
-| 74 | `IgnoredProfilePurposesOffline` | VariableAttribute | `SmartChargingCtrlr` | `IgnoredProfilePurposesOffline` | `Actual` |
-| 75 | `MaxCompositeScheduleDuration` | VariableAttribute | `InternalCtrlr` | `MaxCompositeScheduleDuration` | `Actual` |
-| 76 | `CompositeScheduleDefaultLimitAmps` | VariableAttribute | `SmartChargingCtrlr` | `CompositeScheduleDefaultLimitAmps` | `Actual` |
-| 77 | `CompositeScheduleDefaultLimitWatts` | VariableAttribute | `SmartChargingCtrlr` | `CompositeScheduleDefaultLimitWatts` | `Actual` |
-| 78 | `CompositeScheduleDefaultNumberPhases` | VariableAttribute | `SmartChargingCtrlr` | `CompositeScheduleDefaultNumberPhases` | `Actual` |
-| 79 | `SupplyVoltage` | VariableAttribute | `SmartChargingCtrlr` | `SupplyVoltage` | `Actual` |
-| 80 | `WebsocketPingPayload` | VariableAttribute | `InternalCtrlr` | `WebsocketPingPayload` | `Actual` |
-| 81 | `WebsocketPongTimeout` | VariableAttribute | `InternalCtrlr` | `WebsocketPongTimeout` | `Actual` |
-| 82 | `UseSslDefaultVerifyPaths` | VariableAttribute | `InternalCtrlr` | `UseSslDefaultVerifyPaths` | `Actual` |
-| 83 | `VerifyCsmsCommonName` | VariableAttribute | `InternalCtrlr` | `VerifyCsmsCommonName` | `Actual` |
-| 84 | `VerifyCsmsAllowWildcards` | VariableAttribute | `InternalCtrlr` | `VerifyCsmsAllowWildcards` | `Actual` |
-| 85 | `OcspRequestInterval` | VariableAttribute | `InternalCtrlr` | `OcspRequestInterval` | `Actual` |
-| 86 | `SeccLeafSubjectCommonName` | VariableAttribute | `ISO15118Ctrlr` | `SeccId` | `Actual` |
-| 87 | `SeccLeafSubjectCountry` | VariableAttribute | `ISO15118Ctrlr` | `CountryName` | `Actual` |
-| 88 | `SeccLeafSubjectOrganization` | VariableAttribute | `ISO15118Ctrlr` | `OrganizationName` | `Actual` |
-| 89 | `ConnectorEvseIds` | VariableAttribute | `*EVSE` | `EvseId` | `Actual` |
-| 90 | `AllowChargingProfileWithoutStartSchedule` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `AllowChargingProfileWithoutStartSchedule` | `Actual` |
-| 91 | `WaitForStopTransactionsOnResetTimeout` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `WaitForStopTransactionsOnResetTimeout` | `Actual` |
-| 92 | `QueueAllMessages` | VariableAttribute | `OCPPCommCtrlr` | `QueueAllMessages` | `Actual` |
-| 93 | `MessageTypesDiscardForQueueing` | VariableAttribute | `OCPPCommCtrlr` | `MessageTypesDiscardForQueueing` | `Actual` |
-| 94 | `MessageQueueSizeThreshold` | VariableAttribute | `InternalCtrlr` | `MessageQueueSizeThreshold` | `Actual` |
-| 95 | `SupportedMeasurands` | VariableCharacteristics | `*` | `Measurands` | `valuesList` |
-| 96 | `MaxMessageSize` | VariableAttribute | `InternalCtrlr` | `MaxMessageSize` | `Actual` |
-| 97 | `TLSKeylogFile` | VariableAttribute | `InternalCtrlr` | `TLSKeylogFile` | `Actual` |
-| 98 | `EnableTLSKeylog` | VariableAttribute | `InternalCtrlr` | `EnableTLSKeylog` | `Actual` |
-| 99 | `StopTransactionIfUnlockNotSupported` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `StopTransactionIfUnlockNotSupported` | `Actual` |
-| 100 | `MeterPublicKeys` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `MeterPublicKeys` | `Actual` |
+| 31 | `ChargePointId` | VariableAttribute | `InternalCtrlr` | `ChargePointId` | `Actual` |
+| 32 | `ChargeBoxSerialNumber` | VariableAttribute | `InternalCtrlr` | `ChargeBoxSerialNumber` | `Actual` |
+| 33 | `ChargePointModel` | VariableAttribute | `InternalCtrlr` | `ChargePointModel` | `Actual` |
+| 34 | `ChargePointSerialNumber` | VariableAttribute | `InternalCtrlr` | `ChargePointSerialNumber` | `Actual` |
+| 35 | `ChargePointVendor` | VariableAttribute | `InternalCtrlr` | `ChargePointVendor` | `Actual` |
+| 36 | `FirmwareVersion` | VariableAttribute | `InternalCtrlr` | `FirmwareVersion` | `Actual` |
+| 37 | `ICCID` | VariableAttribute | `InternalCtrlr` | `ICCID` | `Actual` |
+| 38 | `IFace` | VariableAttribute | `InternalCtrlr` | `IFace` | `Actual` |
+| 39 | `IMSI` | VariableAttribute | `InternalCtrlr` | `IMSI` | `Actual` |
+| 40 | `MeterSerialNumber` | VariableAttribute | `InternalCtrlr` | `MeterSerialNumber` | `Actual` |
+| 41 | `MeterType` | VariableAttribute | `InternalCtrlr` | `MeterType` | `Actual` |
+| 42 | `SupportedCiphers12` | VariableAttribute | `InternalCtrlr` | `SupportedCiphers12` | `Actual` |
+| 43 | `SupportedCiphers13` | VariableAttribute | `InternalCtrlr` | `SupportedCiphers13` | `Actual` |
+| 44 | `UseTPM` | VariableAttribute | `InternalCtrlr` | `UseTPM` | `Actual` |
+| 45 | `UseTPMSeccLeafCertificate` | VariableAttribute | `InternalCtrlr` | `UseTPMSeccLeafCertificate` | `Actual` |
+| 46 | `RetryBackoffRandomRange` | VariableAttribute | `OCPPCommCtrlr` | `RetryBackOffRandomRange` | `Actual` |
+| 47 | `RetryBackoffRepeatTimes` | VariableAttribute | `OCPPCommCtrlr` | `RetryBackOffRepeatTimes` | `Actual` |
+| 48 | `AuthorizeConnectorZeroOnConnectorOne` | VariableAttribute | `InternalCtrlr` | `AuthorizeConnectorZeroOnConnectorOne` | `Actual` |
+| 49 | `LogMessages` | VariableAttribute | `InternalCtrlr` | `LogMessages` | `Actual` |
+| 50 | `LogMessagesRaw` | VariableAttribute | `InternalCtrlr` | `LogMessagesRaw` | `Actual` |
+| 51 | `LogMessagesFormat` | VariableAttribute | `InternalCtrlr` | `LogMessagesFormat` | `Actual` |
+| 52 | `LogRotation` | VariableAttribute | `InternalCtrlr` | `LogRotation` | `Actual` |
+| 53 | `LogRotationDateSuffix` | VariableAttribute | `InternalCtrlr` | `LogRotationDateSuffix` | `Actual` |
+| 54 | `LogRotationMaximumFileSize` | VariableAttribute | `InternalCtrlr` | `LogRotationMaximumFileSize` | `Actual` |
+| 55 | `LogRotationMaximumFileCount` | VariableAttribute | `InternalCtrlr` | `LogRotationMaximumFileCount` | `Actual` |
+| 56 | `SupportedChargingProfilePurposeTypes` | VariableAttribute | `InternalCtrlr` | `SupportedChargingProfilePurposeTypes` | `Actual` |
+| 57 | `IgnoredProfilePurposesOffline` | VariableAttribute | `SmartChargingCtrlr` | `IgnoredProfilePurposesOffline` | `Actual` |
+| 58 | `MaxCompositeScheduleDuration` | VariableAttribute | `InternalCtrlr` | `MaxCompositeScheduleDuration` | `Actual` |
+| 59 | `CompositeScheduleDefaultLimitAmps` | VariableAttribute | `SmartChargingCtrlr` | `CompositeScheduleDefaultLimitAmps` | `Actual` |
+| 60 | `CompositeScheduleDefaultLimitWatts` | VariableAttribute | `SmartChargingCtrlr` | `CompositeScheduleDefaultLimitWatts` | `Actual` |
+| 61 | `CompositeScheduleDefaultNumberPhases` | VariableAttribute | `SmartChargingCtrlr` | `CompositeScheduleDefaultNumberPhases` | `Actual` |
+| 62 | `SupplyVoltage` | VariableAttribute | `SmartChargingCtrlr` | `SupplyVoltage` | `Actual` |
+| 63 | `WebsocketPingPayload` | VariableAttribute | `InternalCtrlr` | `WebsocketPingPayload` | `Actual` |
+| 64 | `WebsocketPongTimeout` | VariableAttribute | `InternalCtrlr` | `WebsocketPongTimeout` | `Actual` |
+| 65 | `UseSslDefaultVerifyPaths` | VariableAttribute | `InternalCtrlr` | `UseSslDefaultVerifyPaths` | `Actual` |
+| 66 | `VerifyCsmsCommonName` | VariableAttribute | `InternalCtrlr` | `VerifyCsmsCommonName` | `Actual` |
+| 67 | `VerifyCsmsAllowWildcards` | VariableAttribute | `InternalCtrlr` | `VerifyCsmsAllowWildcards` | `Actual` |
+| 68 | `OcspRequestInterval` | VariableAttribute | `InternalCtrlr` | `OcspRequestInterval` | `Actual` |
+| 69 | `SeccLeafSubjectCommonName` | VariableAttribute | `ISO15118Ctrlr` | `SeccId` | `Actual` |
+| 70 | `SeccLeafSubjectCountry` | VariableAttribute | `ISO15118Ctrlr` | `CountryName` | `Actual` |
+| 71 | `SeccLeafSubjectOrganization` | VariableAttribute | `ISO15118Ctrlr` | `OrganizationName` | `Actual` |
+| 72 | `QueueAllMessages` | VariableAttribute | `OCPPCommCtrlr` | `QueueAllMessages` | `Actual` |
+| 73 | `MessageTypesDiscardForQueueing` | VariableAttribute | `OCPPCommCtrlr` | `MessageTypesDiscardForQueueing` | `Actual` |
+| 74 | `MessageQueueSizeThreshold` | VariableAttribute | `InternalCtrlr` | `MessageQueueSizeThreshold` | `Actual` |
+| 75 | `MaxMessageSize` | VariableAttribute | `InternalCtrlr` | `MaxMessageSize` | `Actual` |
+| 76 | `TLSKeylogFile` | VariableAttribute | `InternalCtrlr` | `TLSKeylogFile` | `Actual` |
+| 77 | `EnableTLSKeylog` | VariableAttribute | `InternalCtrlr` | `EnableTLSKeylog` | `Actual` |
+| 78 | `NumberOfConnectors` | OCPP1.6-specific | `InternalCtrlr` | `NumberOfConnectors` | `Actual` |
+| 79 | `RetryBackoffWaitMinimum` | VariableAttribute | `OCPPCommCtrlr` | `RetryBackOffWaitMinimum` | `Actual` |
+
+## Local Auth List Management Profile
+
+| ID | OCPP1.6 key | Mapping type | Component | Variable | Target field |
+| ---: | --- | --- | --- | --- | --- |
+| 80 | `LocalAuthListMaxLength` | VariableCharacteristics | `LocalAuthListCtrlr` | `Entries` | `maxLimit` |
+| 81 | `SendLocalListMaxLength` | VariableAttribute | `LocalAuthListCtrlr` | `ItemsPerMessage` | `maxLimit` |
+
+## Smart Charging Profile
+
+| ID | OCPP1.6 key | Mapping type | Component | Variable | Target field |
+| ---: | --- | --- | --- | --- | --- |
+| 82 | `MaxChargingProfilesInstalled` | VariableCharacteristics | `SmartChargingCtrlr` | `Entries` | `maxLimit` |
 
 ## Security Profile
 
 | ID | OCPP1.6 key | Mapping type | Component | Variable | Target field |
 | ---: | --- | --- | --- | --- | --- |
-| 101 | `AdditionalRootCertificateCheck` | VariableAttribute | `SecurityCtrlr` | `AdditionalRootCertificateCheck` | `Actual` |
-| 102 | `AuthorizationKey` | VariableAttribute | `SecurityCtrlr` | `BasicAuthPassword` | `Actual` |
-| 103 | `CertificateSignedMaxChainSize` | VariableAttribute | `SecurityCtrlr` | `MaxCertificateChainSize` | `Actual` |
-| 104 | `CertificateStoreMaxLength` | VariableCharacteristics | `SecurityCtrlr` | `CertificateEntries` | `maxLimit` |
-| 105 | `CpoName` | VariableAttribute | `SecurityCtrlr` | `OrganizationName` | `Actual` |
-| 106 | `SecurityProfile` | VariableAttribute | `SecurityCtrlr` | `SecurityProfile` | `Actual` |
-| 107 | `DisableSecurityEventNotifications` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `DisableSecurityEventNotifications` | `Actual` |
+| 83 | `AdditionalRootCertificateCheck` | VariableAttribute | `SecurityCtrlr` | `AdditionalRootCertificateCheck` | `Actual` |
+| 84 | `CertificateSignedMaxChainSize` | VariableAttribute | `SecurityCtrlr` | `MaxCertificateChainSize` | `Actual` |
+| 85 | `CpoName` | VariableAttribute | `SecurityCtrlr` | `OrganizationName` | `Actual` |
+| 86 | `CertSigningWaitMinimum` | VariableAttribute | `SecurityCtrlr` | `CertSigningWaitMinimum` | `Actual` |
+| 87 | `CertSigningRepeatTimes` | VariableAttribute | `SecurityCtrlr` | `CertSigningRepeatTimes` | `Actual` |
+| 88 | `CertificateStoreMaxLength` | VariableAttribute | `SecurityCtrlr` | `CertificateEntries` | `Actual` |
 
 ## PnC Profile
 
 | ID | OCPP1.6 key | Mapping type | Component | Variable | Target field |
 | ---: | --- | --- | --- | --- | --- |
-| 108 | `ISO15118CertificateManagementEnabled` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `ISO15118CertificateManagementEnabled` | `Actual` |
-| 109 | `ISO15118PnCEnabled` | VariableAttribute | `ISO15118Ctrlr` | `PnCEnabled` | `Actual` |
-| 110 | `CentralContractValidationAllowed` | VariableAttribute | `ISO15118Ctrlr` | `CentralContractValidationAllowed` | `Actual` |
-| 111 | `CertSigningWaitMinimum` | VariableAttribute | `SecurityCtrlr` | `CertSigningWaitMinimum` | `Actual` |
-| 112 | `CertSigningRepeatTimes` | VariableAttribute | `SecurityCtrlr` | `CertSigningRepeatTimes` | `Actual` |
-| 113 | `ContractValidationOffline` | VariableAttribute | `ISO15118Ctrlr` | `ContractValidationOffline` | `Actual` |
+| 89 | `ISO15118PnCEnabled` | VariableAttribute | `ISO15118Ctrlr` | `PnCEnabled` | `Actual` |
+| 90 | `CentralContractValidationAllowed` | VariableAttribute | `ISO15118Ctrlr` | `CentralContractValidationAllowed` | `Actual` |
+| 91 | `ContractValidationOffline` | VariableAttribute | `ISO15118Ctrlr` | `ContractValidationOffline` | `Actual` |
 
 ## CostAndPrice Profile
 
 | ID | OCPP1.6 key | Mapping type | Component | Variable | Target field |
 | ---: | --- | --- | --- | --- | --- |
+| 92 | `NumberOfDecimalsForCostValues` | VariableAttribute | `TariffCostCtrlr` | `NumberOfDecimalsForCostValues` | `Actual` |
+| 93 | `TimeOffset` | VariableAttribute | `ClockCtrlr` | `TimeOffset` | `Actual` |
+| 94 | `NextTimeOffsetTransitionDateTime` | VariableAttribute | `ClockCtrlr` | `NextTimeOffsetTransitionDateTime` | `Actual` |
+| 95 | `TimeOffsetNextTransition` | VariableAttribute | `ClockCtrlr` | `NextTransition` | `Actual` |
+
+## Mavericks Section
+
+| ID | OCPP1.6 key | Mapping type | Component | Variable | Target field |
+| ---: | --- | --- | --- | --- | --- |
+| 96 | `BlinkRepeat` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `BlinkRepeat` | `Actual` |
+| 97 | `ConnectorPhaseRotation` | VariableAttribute | `OCPP16LegacyCtrlr` | `PhaseRotation` | `Actual` |
+| 98 | `ConnectorPhaseRotationMaxLength` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `ConnectorPhaseRotationMaxLength` | `Actual` |
+| 99 | `GetConfigurationMaxKeys` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `GetConfigurationMaxKeys` | `Actual` |
+| 100 | `LightIntensity` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `LightIntensity` | `Actual` |
+| 101 | `MinimumStatusDuration` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `MinimumStatusDuration` | `Actual` |
+| 102 | `StopTransactionOnEVSideDisconnect` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `StopTransactionOnEVSideDisconnect` | `Actual` |
+| 103 | `SupportedFeatureProfiles` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `SupportedFeatureProfiles` | `Actual` |
+| 104 | `SupportedFeatureProfilesMaxLength` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `SupportedFeatureProfilesMaxLength` | `Actual` |
+| 105 | `UnlockConnectorOnEVSideDisconnect` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `UnlockConnectorOnEVSideDisconnect` | `Actual` |
+| 106 | `ReserveConnectorZeroSupported` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `ReserveConnectorZeroSupported` | `Actual` |
+| 107 | `HostName` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `HostName` | `Actual` |
+| 108 | `AllowChargingProfileWithoutStartSchedule` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `AllowChargingProfileWithoutStartSchedule` | `Actual` |
+| 109 | `WaitForStopTransactionsOnResetTimeout` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `WaitForStopTransactionsOnResetTimeout` | `Actual` |
+| 110 | `StopTransactionIfUnlockNotSupported` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `StopTransactionIfUnlockNotSupported` | `Actual` |
+| 111 | `MeterPublicKeys` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `MeterPublicKeys` | `Actual` |
+| 112 | `DisableSecurityEventNotifications` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `DisableSecurityEventNotifications` | `Actual` |
+| 113 | `ISO15118CertificateManagementEnabled` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `ISO15118CertificateManagementEnabled` | `Actual` |
 | 114 | `CustomDisplayCostAndPrice` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `CustomDisplayCostAndPrice` | `Actual` |
-| 115 | `NumberOfDecimalsForCostValues` | VariableAttribute | `TariffCostCtrlr` | `NumberOfDecimalsForCostValues` | `Actual` |
-| 116 | `DefaultPrice` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `DefaultPrice` | `Actual` |
-| 117 | `DefaultPriceText` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `DefaultPriceText` | `Actual` |
-| 118 | `TimeOffset` | VariableAttribute | `ClockCtrlr` | `TimeOffset` | `Actual` |
-| 119 | `NextTimeOffsetTransitionDateTime` | VariableAttribute | `ClockCtrlr` | `NextTimeOffsetTransitionDateTime` | `Actual` |
-| 120 | `TimeOffsetNextTransition` | VariableAttribute | `ClockCtrlr` | `TimeOffset:NextTransition` | `Actual` |
-| 121 | `CustomIdleFeeAfterStop` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `CustomIdleFeeAfterStop` | `Actual` |
-| 122 | `SupportedLanguages` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `SupportedLanguages` | `Actual` |
-| 123 | `CustomMultiLanguageMessages` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `CustomMultiLanguageMessages` | `Actual` |
-| 124 | `Language` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `Language` | `Actual` |
-| 125 | `WaitForSetUserPriceTimeout` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `WaitForSetUserPriceTimeout` | `Actual` |
+| 115 | `DefaultPrice` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `DefaultPrice` | `Actual` |
+| 116 | `DefaultPriceText` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `DefaultPriceText` | `Actual` |
+| 117 | `CustomIdleFeeAfterStop` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `CustomIdleFeeAfterStop` | `Actual` |
+| 118 | `SupportedLanguages` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `SupportedLanguages` | `Actual` |
+| 119 | `CustomMultiLanguageMessages` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `CustomMultiLanguageMessages` | `Actual` |
+| 120 | `Language` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `Language` | `Actual` |
+| 121 | `WaitForSetUserPriceTimeout` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `WaitForSetUserPriceTimeout` | `Actual` |
+
+## Mavericks Section
+
+Direct mapping is not supported. An additional key is used instead.
+
+| ID | OCPP1.6 key | Mapping type | Component | Variable | Target field |
+| ---: | --- | --- | --- | --- | --- |
+| 122 | `AuthorizationKey` | VariableAttribute | `CustomLegacyController` | `AuthorizationKey` | `Actual` |
+| 123 | `CentralSystemURI` | VariableAttribute | `CustomLegacyController` | `CentralSystemURI` | `Actual` |
+| 124 | `SecurityProfile` | VariableAttribute | `CustomLegacyController` | `SecurityProfile` | `Actual` |
+
+Special handling is required
+
+| ID | OCPP1.6 key | Mapping type | Component | Variable | Target field |
+| ---: | --- | --- | --- | --- | --- |
+| 125 | `ConnectorEvseIds` | VariableAttribute | `*EVSE` | `EvseId` | `Actual` |
+| 126 | `SupportedMeasurands` | VariableCharacteristics | `*` | `Measurands` | `valuesList` |
