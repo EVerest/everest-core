@@ -11,6 +11,43 @@
 #include <ConfigValidator.hpp>
 #include <EebusConnectionHandler.hpp>
 
+namespace {
+
+/// Parse the log level from an eebus-grpc output line and log it at the appropriate EVerest level.
+/// Expected format: "<datetime> <LEVEL> <message>" e.g. "2026-03-18 22:20:42 INFO Certificate path: ..."
+void log_grpc_output(const std::string& line) {
+    // The level token follows the second space (after "YYYY-MM-DD HH:MM:SS").
+    // Find the position after "YYYY-MM-DD " (11 chars) then after "HH:MM:SS " (9 chars) = 20 chars minimum.
+    static constexpr std::size_t datetime_prefix_len = 20; // "YYYY-MM-DD HH:MM:SS "
+    if (line.size() > datetime_prefix_len) {
+        auto level_end = line.find(' ', datetime_prefix_len);
+        if (level_end != std::string::npos) {
+            auto level = line.substr(datetime_prefix_len, level_end - datetime_prefix_len);
+            auto message = line.substr(level_end + 1);
+            if (level == "DEBUG" || level == "TRACE") {
+                EVLOG_debug << message;
+                return;
+            }
+            if (level == "INFO") {
+                EVLOG_info << message;
+                return;
+            }
+            if (level == "WARNING" || level == "WARN") {
+                EVLOG_warning << message;
+                return;
+            }
+            if (level == "ERROR" || level == "FATAL") {
+                EVLOG_error << message;
+                return;
+            }
+        }
+    }
+    // Fallback: log the full line as info if we can't parse the level
+    EVLOG_info << "eebus-grpc: " << line;
+}
+
+} // namespace
+
 namespace module {
 
 EEBUS::~EEBUS() {
@@ -94,7 +131,7 @@ void EEBUS::start_eebus_grpc_api(const std::filesystem::path& binary_path, int p
             everest::run_application::CmdOutput output = everest::run_application::run_application(
                 binary_path.string(), args, [this](const std::string& output_line) {
                     if (!output_line.empty()) {
-                        EVLOG_debug << "eebus-grpc: " << output_line;
+                        log_grpc_output(output_line);
                     }
                     if (not this->eebus_grpc_api_thread_active) {
                         return everest::run_application::CmdControl::Terminate;
