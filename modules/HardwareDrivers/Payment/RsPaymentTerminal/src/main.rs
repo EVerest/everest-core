@@ -318,7 +318,6 @@ impl From<AuthorizationStatus> for ValidationResult {
             expiry_time: None,
             parent_id_token: None,
             reservation_id: None,
-            pre_authorized_amount: None,
         }
     }
 }

@@ -209,11 +209,6 @@ types:
           type: string
           $ref: /iso15118#/EnergyTransferMode
         minItems: 1
-      pre_authorized_amount:
-        description: >-
-          The validator can indicate the authorzed amount for charging.
-        type: object
-        $ref: /money#/Price
   SelectionAlgorithm:
     description: >-
       The selection algorithm defines the logic to select one connector

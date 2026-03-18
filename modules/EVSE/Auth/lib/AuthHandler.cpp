@@ -286,9 +286,6 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                     // (see C16 of OCPP2.0.1 spec)
                     provided_token.parent_id_token = validation_result.parent_id_token.value();
                     provided_token.connectors = connectors;
-                    if (validation_result.pre_authorized_amount.has_value()) {
-                        provided_token.pre_authorized_amount = validation_result.pre_authorized_amount.value();
-                    }
                     return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
                 }
 
