@@ -26,7 +26,7 @@
 #include <everest/io/event/unique_fd.hpp>
 #include <everest/io/socket/socket.hpp>
 
-#ifndef PACKET_IGNORE_OUTGOING
+#ifdef EVEREST_NO_PACKET_IGNORE_OUTGOING
 #define PACKET_IGNORE_OUTGOING 11
 #endif
 

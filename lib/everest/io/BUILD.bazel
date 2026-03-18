@@ -8,6 +8,11 @@ cc_library(
     hdrs = glob([
         "include/everest/io/**/*.hpp",
     ]),
+    local_defines = select({
+        "@platforms//cpu:armv7": ["EVEREST_NO_PACKET_IGNORE_OUTGOING=ON"],
+        "@platforms//cpu:aarch64": ["EVEREST_NO_PACKET_IGNORE_OUTGOING=ON"],
+        "//conditions:default": [],
+    }),
     copts = ["-std=c++17"],
     includes = ["include"],
     visibility = ["//visibility:public"],
