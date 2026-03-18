@@ -9,7 +9,7 @@
 
 // #include <iso15118/d20/timeout.hpp>
 #include <iso15118/message/d2/variant.hpp>
-// #include <iso15118/session/feedback.hpp>
+#include <iso15118/session/feedback.hpp>
 // #include <iso15118/session/logger.hpp>
 
 #include "config.hpp"
@@ -73,7 +73,7 @@ using BasePointerType = std::unique_ptr<StateBase>;
 
 class Context {
 public:
-    Context(SessionConfig, MessageExchange&);
+    Context(session::feedback::Callbacks, SessionConfig, MessageExchange&);
 
     template <typename StateType, typename... Args> BasePointerType create_state(Args&&... args) {
         return std::make_unique<StateType>(*this, std::forward<Args>(args)...);
@@ -96,6 +96,8 @@ public:
 
     SessionConfig session_config;
 
+    const session::Feedback feedback;
+
 private:
     //     const auto& get_control_event() {
     //         return current_control_event;
@@ -113,7 +115,6 @@ private:
     //         return &std::get<T>(*current_control_event);
     //     }
 
-    //     const session::Feedback feedback;
     //     session::SessionLogger& log;
 
     //     const std::optional<ControlEvent>& current_control_event;

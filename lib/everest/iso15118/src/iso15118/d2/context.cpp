@@ -51,8 +51,11 @@ msg::Type MessageExchange::peek_request_type() const {
     return request->get_type();
 }
 
-Context::Context(SessionConfig session_config_, MessageExchange& message_exchange_) :
-    session_config(std::move(session_config_)), message_exchange(message_exchange_) {
+Context::Context(session::feedback::Callbacks feedback_callbacks, SessionConfig session_config_,
+                 MessageExchange& message_exchange_) :
+    session_config(std::move(session_config_)),
+    feedback(std::move(feedback_callbacks)),
+    message_exchange(message_exchange_) {
 }
 
 std::unique_ptr<msg::Variant> Context::pull_request() {

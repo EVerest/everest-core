@@ -3,6 +3,7 @@
 #include <iso15118/session/feedback.hpp>
 
 #include <iso15118/detail/helper.hpp>
+#include <optional>
 
 namespace iso15118::session {
 
@@ -62,6 +63,13 @@ void Feedback::ev_information(const d20::EVInformation& ev_information) const {
 void Feedback::ev_termination(const std::string& ev_termination_code,
                               const std::string& ev_termination_explanation) const {
     call_if_available(callbacks.ev_termination, ev_termination_code, ev_termination_explanation);
+}
+
+std::optional<d2::msg::data_types::Service> Feedback::get_service_from_id(uint16_t service_id) const {
+    if (not callbacks.get_service_from_id) {
+        return std::nullopt;
+    }
+    return std::invoke(callbacks.get_service_from_id, service_id);
 }
 
 std::optional<dt::ServiceParameterList> Feedback::get_vas_parameters(uint16_t vas_id) const {
