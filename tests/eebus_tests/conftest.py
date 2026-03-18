@@ -23,12 +23,39 @@ def get_free_port() -> int:
         return s.getsockname()[1]
 
 
+def extract_ski_from_cert(cert_path: Path) -> str:
+    """Extract Subject Key Identifier from a PEM certificate file."""
+    from cryptography import x509
+    cert = x509.load_pem_x509_certificate(cert_path.read_bytes())
+    ski_ext = cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier)
+    return ski_ext.value.digest.hex()
+
+
 def read_everest_ski(everest_prefix: Path) -> str:
     """Read EVerest's EEBUS SKI from the installed cert directory."""
     ski_file = everest_prefix / "etc" / "everest" / "certs" / "eebus" / "evse_ski"
-    if not ski_file.exists():
-        raise FileNotFoundError(f"EVerest SKI file not found at {ski_file}")
-    return ski_file.read_text().strip()
+    if ski_file.exists():
+        return ski_file.read_text().strip()
+    # SKI file may not exist if certs are runtime-generated; extract from cert.
+    cert_file = everest_prefix / "etc" / "everest" / "certs" / "eebus" / "evse_cert"
+    if cert_file.exists():
+        return extract_ski_from_cert(cert_file)
+    raise FileNotFoundError(
+        f"Neither SKI file ({ski_file}) nor certificate ({cert_file}) found"
+    )
+
+
+def wait_for_everest_ski(everest_prefix: Path, timeout: float = 10) -> str:
+    """Wait for EVerest's EEBUS cert to appear and return the SKI.
+
+    The sidecar generates certs synchronously before starting the gRPC
+    server, so this polls until the cert file exists.
+    """
+    cert_file = everest_prefix / "etc" / "everest" / "certs" / "eebus" / "evse_cert"
+    deadline = time.monotonic() + timeout
+    while not cert_file.exists() and time.monotonic() < deadline:
+        time.sleep(0.5)
+    return read_everest_ski(everest_prefix)
 
 
 class ReferenceControlBox:
@@ -91,22 +118,16 @@ def controlbox_binary():
     pytest.skip("controlbox binary not found")
 
 
-@pytest.fixture(scope="session")
-def everest_ski(request):
-    """Read EVerest's EEBUS SKI so the control box can trust it."""
-    prefix = Path(request.config.getoption("--everest-prefix")).resolve()
-    return read_everest_ski(prefix)
-
-
 @pytest.fixture
-def reference_control_box(controlbox_binary, everest_ski):
-    """Start the eebus-go controlbox on a free port, stop on teardown.
+def reference_control_box(request, controlbox_binary):
+    """Create and yield a ReferenceControlBox, stopping it on teardown.
 
-    The controlbox is given EVerest's SKI as the remote-ski argument so that
-    the SHIP trust handshake can complete.
+    The control box is NOT auto-started because the SKI may only become
+    available after EVerest starts and the sidecar generates certs.
+    Call box.start() in the test body after extracting the SKI.
     """
     port = get_free_port()
-    box = ReferenceControlBox(controlbox_binary, port, remote_ski=everest_ski)
-    box.start()
+    # remote_ski will be set by the test before calling start()
+    box = ReferenceControlBox(controlbox_binary, port, remote_ski="")
     yield box
     box.stop()

@@ -135,10 +135,19 @@ bool ConfigValidator::validate_certificate_path() const {
     if (!this->manage_eebus_grpc_api_binary) {
         return true;
     }
-    if (!std::filesystem::exists(this->certificate_path)) {
-        EVLOG_error << "Certificate file does not exist: " << this->certificate_path;
+    if (std::filesystem::exists(this->certificate_path)) {
+        return true;
+    }
+    // Sidecar will generate the cert; ensure parent directory exists.
+    auto parent = this->certificate_path.parent_path();
+    std::error_code ec;
+    std::filesystem::create_directories(parent, ec);
+    if (ec) {
+        EVLOG_error << "Failed to create certificate directory " << parent << ": " << ec.message();
         return false;
     }
+    EVLOG_info << "Certificate not found at " << this->certificate_path
+               << "; eebus_grpc_api will generate it on first run.";
     return true;
 }
 
@@ -146,10 +155,19 @@ bool ConfigValidator::validate_private_key_path() const {
     if (!this->manage_eebus_grpc_api_binary) {
         return true;
     }
-    if (!std::filesystem::exists(this->private_key_path)) {
-        EVLOG_error << "Key file does not exist: " << this->private_key_path;
+    if (std::filesystem::exists(this->private_key_path)) {
+        return true;
+    }
+    // Sidecar will generate the key; ensure parent directory exists.
+    auto parent = this->private_key_path.parent_path();
+    std::error_code ec;
+    std::filesystem::create_directories(parent, ec);
+    if (ec) {
+        EVLOG_error << "Failed to create private key directory " << parent << ": " << ec.message();
         return false;
     }
+    EVLOG_info << "Private key not found at " << this->private_key_path
+               << "; eebus_grpc_api will generate it on first run.";
     return true;
 }
 

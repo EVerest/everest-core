@@ -11,6 +11,7 @@ consumption limit from the control box via the EEBUS/SHIP protocol.
 
 import asyncio
 import time
+from pathlib import Path
 
 import pytest
 
@@ -20,7 +21,7 @@ from everest.testing.core_utils.everest_core import EverestCore
 from fixtures.eebus_module_test import EebusTestProbeModule
 from helpers.async_helpers import async_get
 
-from conftest import ReferenceControlBox
+from conftest import ReferenceControlBox, wait_for_everest_ski
 
 # The EEBUS module config uses failsafe_control_limit_W = 4200 (default).
 # Any limit with a different value must have come from the control box.
@@ -35,6 +36,7 @@ class TestEEBUSReference:
     @pytest.mark.asyncio
     async def test_receives_limit_from_control_box(
         self,
+        request,
         everest_core: EverestCore,
         test_controller,
         reference_control_box: ReferenceControlBox,
@@ -50,6 +52,13 @@ class TestEEBUSReference:
         discovery + SHIP handshake + limit delivery.
         """
         test_controller.start()
+
+        # Wait for the sidecar to generate certs (if not pre-existing), then
+        # extract the SKI and start the control box with it.
+        prefix = Path(request.config.getoption("--everest-prefix")).resolve()
+        everest_ski = wait_for_everest_ski(prefix)
+        reference_control_box.remote_ski = everest_ski
+        reference_control_box.start()
         assert reference_control_box.is_running()
 
         probe = EebusTestProbeModule(everest_core.get_runtime_session())
