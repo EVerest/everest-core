@@ -86,6 +86,23 @@
       "description": "Instance Cost: Whether costs are enabled.",
       "type": "boolean"
     },
+    "OfflineTariffFallbackMessage": {
+      "variable_name": "OfflineTariffFallbackMessage",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string",
+        "maxLimit": 255
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": ""
+        }
+      ],
+      "description": "Message (and/or tariff information) to be shown to an EV Driver when the Charging Station is offline and there is no driver specific tariff information available.",
+      "type": "string"
+    },
     "TariffFallbackMessage": {
       "variable_name": "TariffFallbackMessage",
       "characteristics": {
@@ -152,6 +169,38 @@
       "description": "Charging kWh price in the default currency when charging station is offline.",
       "type": "number"
     },
+    "TariffFallbackMessageDe": {
+      "variable_name": "TariffFallbackMessage",
+      "instance": "de",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Message (and/or tariff information) to be shown to an EV Driver when there is no driver specific tariff information available.",
+      "type": "string"
+    },
+    "TariffFallbackMessageNl": {
+      "variable_name": "TariffFallbackMessage",
+      "instance": "nl",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Message (and/or tariff information) to be shown to an EV Driver when there is no driver specific tariff information available.",
+      "type": "string"
+    },
     "TariffFallbackMessageEn": {
       "variable_name": "TariffFallbackMessage",
       "instance": "en-US",
@@ -165,7 +214,7 @@
           "mutability": "ReadWrite"
         }
       ],
-      "description": "Message (and / or tariff information) to be shown to an EV Driver when there is no driver specific tariff information available. Note: Add a TariffFallbackMessage with correct instance for every supported language!!",
+      "description": "Message (and / or tariff information) to be shown to an EV Driver when there is no driver specific tariff information available.",
       "type": "string"
     },
     "OfflineTariffFallbackMessageEn": {

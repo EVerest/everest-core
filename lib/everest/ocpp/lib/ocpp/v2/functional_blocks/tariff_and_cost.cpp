@@ -257,6 +257,148 @@ void TariffAndCost::handle_costupdated_req(const Call<CostUpdatedRequest> call) 
         this->io_context);
 }
 
+std::vector<DisplayMessageContent>
+TariffAndCost::get_fallback_messages(const ComponentVariable& component_variable) const {
+    std::vector<DisplayMessageContent> messages;
+
+    // Default (no-instance) entry
+    const auto default_msg = this->context.device_model.get_optional_value<std::string>(component_variable);
+    if (default_msg.has_value() and !default_msg.value().empty()) {
+        messages.push_back({default_msg.value(), std::nullopt, std::nullopt});
+    }
+
+    // Per-language instances — one entry per supported language in DisplayMessageCtrlr.Language
+    const auto metadata = this->context.device_model.get_variable_meta_data(
+        ControllerComponentVariables::DisplayMessageLanguage.component,
+        ControllerComponentVariables::DisplayMessageLanguage.variable.value());
+    if (metadata.has_value() and metadata.value().characteristics.valuesList.has_value()) {
+        for (const auto& language :
+             ocpp::split_string(metadata.value().characteristics.valuesList.value(), ',', true)) {
+            Variable var;
+            var.name = component_variable.variable.value().name;
+            var.instance = language;
+            const auto msg =
+                this->context.device_model.get_optional_value<std::string>(component_variable.component, var);
+            if (msg.has_value() and !msg.value().empty()) {
+                messages.push_back({msg.value(), language, std::nullopt});
+            }
+        }
+    }
+
+    return messages;
+}
+
+std::optional<TariffMessage> TariffAndCost::get_fallback_tariff_message(bool offline) const {
+    if (!is_tariff_enabled()) {
+        return std::nullopt;
+    }
+
+    // I04.FR.01: prefer the offline-specific variable when disconnected; fall back to the
+    // online TariffFallbackMessage when no offline messages are configured.
+    auto messages = offline ? get_fallback_messages(ControllerComponentVariables::OfflineTariffFallbackMessage)
+                            : get_fallback_messages(ControllerComponentVariables::TariffFallbackMessage);
+
+    if (offline and messages.empty()) {
+        EVLOG_debug << "No OfflineTariffFallbackMessage configured, falling back to TariffFallbackMessage";
+        messages = get_fallback_messages(ControllerComponentVariables::TariffFallbackMessage);
+    }
+
+    if (messages.empty()) {
+        return std::nullopt;
+    }
+
+    TariffMessage tariff_message;
+    tariff_message.message = messages;
+    return tariff_message;
+}
+
+void TariffAndCost::send_total_cost_fallback_message(const std::string& transaction_id) {
+    if (!is_cost_enabled() or !this->tariff_message_callback.has_value() or this->tariff_message_callback == nullptr) {
+        return;
+    }
+
+    // I05.FR.02: show TotalCostFallbackMessage when the CS is offline at transaction end.
+    // This is a human-readable display message only — actual cost data is not available.
+    const auto messages = get_fallback_messages(ControllerComponentVariables::TotalCostFallbackMessage);
+    if (messages.empty()) {
+        return;
+    }
+
+    TariffMessage tariff_message;
+    tariff_message.message = messages;
+    tariff_message.ocpp_transaction_id = transaction_id;
+    tariff_message.identifier_id = transaction_id;
+    tariff_message.identifier_type = IdentifierType::TransactionId;
+    this->tariff_message_callback.value()(tariff_message);
+}
+
+void TariffAndCost::ensure_personal_message(IdTokenInfo& id_token_info, bool offline) {
+    if (!is_tariff_enabled()) {
+        return;
+    }
+
+    if (id_token_info.personalMessage.has_value()) {
+        // Personal message already set by CSMS — assume it contains the tariff information.
+        return;
+    }
+
+    const auto fallback = get_fallback_tariff_message(offline);
+    if (!fallback.has_value() or fallback->message.empty()) {
+        return;
+    }
+
+    // Per California Pricing 4.3.4: personalMessage holds the text in the default language
+    // (DisplayMessageCtrlr.Language). All other languages go into customData.personalMessageExtra[] (max 4 additional
+    // entries).
+    const auto default_language =
+        this->context.device_model.get_optional_value<std::string>(ControllerComponentVariables::DisplayMessageLanguage)
+            .value_or(std::string{});
+
+    const auto& messages = fallback->message;
+
+    // Find the entry matching the default language; fall back to index 0 if none matches.
+    std::size_t primary_idx = 0;
+    for (std::size_t i = 0; i < messages.size(); ++i) {
+        if (!default_language.empty() and messages[i].language.has_value() and
+            messages[i].language.value() == default_language) {
+            primary_idx = i;
+            break;
+        }
+    }
+
+    // Set personalMessage to the default-language entry.
+    const auto& primary = messages[primary_idx];
+    MessageContent personal_msg;
+    personal_msg.format = primary.message_format.value_or(MessageFormatEnum::UTF8);
+    personal_msg.content = CiString<1024>(primary.message);
+    if (primary.language.has_value()) {
+        personal_msg.language = CiString<8>(primary.language.value());
+    }
+    id_token_info.personalMessage = personal_msg;
+
+    // Put remaining language entries into customData.personalMessageExtra.
+    constexpr std::size_t max_extra = 4;
+    json extra = json::array();
+    for (std::size_t i = 0; i < messages.size() and extra.size() < max_extra; ++i) {
+        if (i == primary_idx) {
+            continue;
+        }
+        json entry;
+        entry["content"] = messages[i].message;
+        if (messages[i].language.has_value()) {
+            entry["language"] = messages[i].language.value();
+        }
+        extra.push_back(entry);
+    }
+
+    if (!extra.empty()) {
+        CustomData custom_data = id_token_info.customData.value_or(json{});
+        custom_data["vendorId"] = "org.openchargealliance.multilanguage";
+        custom_data["personalMessageExtra"] = extra;
+        id_token_info.customData = custom_data;
+    }
+}
+
 bool TariffAndCost::is_multilanguage_enabled() const {
     return this->context.device_model
         .get_optional_value<bool>(ControllerComponentVariables::CustomImplementationMultiLanguageEnabled)

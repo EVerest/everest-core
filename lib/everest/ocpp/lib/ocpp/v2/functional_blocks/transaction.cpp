@@ -129,10 +129,15 @@ void TransactionBlock::on_transaction_finished(const std::int32_t evse_id, const
     const std::optional<IdToken> transaction_id_token =
         trigger_reason == ocpp::v2::TriggerReasonEnum::StopAuthorized ? id_token : std::nullopt;
 
+    const bool is_offline = !this->context.connectivity_manager.is_websocket_connected();
     this->transaction_event_req(TransactionEventEnum::Ended, timestamp, enhanced_transaction->get_transaction(),
                                 trigger_reason, enhanced_transaction->get_seq_no(), std::nullopt, std::nullopt,
-                                transaction_id_token, meter_values, std::nullopt,
-                                !this->context.connectivity_manager.is_websocket_connected(), std::nullopt);
+                                transaction_id_token, meter_values, std::nullopt, is_offline, std::nullopt);
+
+    // I05.FR.02: When offline, the CSMS response with totalCost will not arrive, so show the fallback message.
+    if (is_offline) {
+        this->tariff_and_cost.send_total_cost_fallback_message(transaction.transactionId.get());
+    }
 
     // K02.FR.05 The transaction is over, so delete the TxProfiles associated with the transaction.
     smart_charging.delete_transaction_tx_profiles(enhanced_transaction->get_transaction().transactionId);

@@ -16,7 +16,8 @@ from everest.testing.core_utils.controller.test_controller_interface import Test
 from ocpp.v201 import call as call201
 from ocpp.v201 import call_result as call_result201
 from ocpp.v201.enums import (IdTokenEnumType as IdTokenTypeEnum, ConnectorStatusEnumType,
-                             ClearCacheStatusEnumType)
+                             ClearCacheStatusEnumType, SetVariableStatusEnumType,
+                             AttributeEnumType)
 from ocpp.v201.datatypes import *
 from everest.testing.ocpp_utils.fixtures import *
 from everest_test_utils_probe_modules import (probe_module,
@@ -586,3 +587,201 @@ class TestOcpp201CostAndPrice:
                                            ],
                                                'timestamp': timestamp[:-9] + 'Z'}]}
                                            )
+
+    @pytest.mark.asyncio
+    @pytest.mark.probe_module
+    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceSessionCostConfigurationAdjustment())
+    async def test_tariff_fallback_message_on_authorize(self, central_system: CentralSystem,
+                                                         test_controller: TestController,
+                                                         test_utility: TestUtility,
+                                                         test_config: OcppTestConfiguration,
+                                                         probe_module):
+        """
+        I04.FR.01 integration: When TariffFallbackMessage is configured and the CSMS returns no
+        personalMessage in AuthorizeResponse, test if personal message is still set to the configured fallback.
+        The injected personalMessage is then converted and published via session_cost.tariff_message
+        so the display can show the price to the EV Driver.
+        """
+        tariff_message_mock = Mock()
+        probe_module.subscribe_variable("session_cost", "tariff_message", tariff_message_mock)
+
+        probe_module.start()
+        await probe_module.wait_to_be_ready()
+
+        chargepoint_with_pm = await central_system.wait_for_chargepoint()
+
+        # Clear auth cache so the CSMS is consulted for every authorization.
+        r: call_result201.ClearCache = await chargepoint_with_pm.clear_cache_req()
+        assert r.status == ClearCacheStatusEnumType.accepted
+
+        # Configure TariffFallbackMessage on the CS via OCPP SetVariables.
+        r = await chargepoint_with_pm.set_config_variables_req(
+            "TariffCostCtrlr", "TariffFallbackMessage", "Tariff: 0.30 EUR/kWh"
+        )
+        assert SetVariableResultType(**r.set_variable_result[0]).attribute_status == SetVariableStatusEnumType.accepted
+
+        evse_id1 = 1
+        connector_id = 1
+        id_token = IdTokenType(id_token="DEADBEEF", type=IdTokenTypeEnum.iso14443)
+
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StatusNotification",
+                                           call201.StatusNotification(datetime.now().isoformat(),
+                                                                      ConnectorStatusEnumType.available,
+                                                                      evse_id=evse_id1,
+                                                                      connector_id=connector_id),
+                                           validate_status_notification_201)
+
+        # Swipe to trigger authorization. The CSMS mock returns Accepted without a personalMessage
+        # (default behavior), so ensure_personal_message must inject the configured fallback.
+        test_controller.swipe(id_token.id_token)
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "Authorize",
+                                           call201.Authorize(id_token))
+
+        # The fallback tariff message must arrive on session_cost.tariff_message.
+        await self.await_mock_called(tariff_message_mock)
+
+        call_data = tariff_message_mock.call_args[0][0]
+        assert call_data["identifier_id"] == "DEADBEEF"
+        assert call_data["identifier_type"] == "IdToken"
+        assert len(call_data["messages"]) == 1
+        assert call_data["messages"][0]["content"] == "Tariff: 0.30 EUR/kWh"
+
+    @pytest.mark.asyncio
+    @pytest.mark.probe_module
+    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceSessionCostConfigurationAdjustment())
+    async def test_tariff_fallback_message_multilanguage_on_authorize(self, central_system: CentralSystem,
+                                                                       test_controller: TestController,
+                                                                       test_utility: TestUtility,
+                                                                       test_config: OcppTestConfiguration,
+                                                                       probe_module):
+        """
+        California Pricing 4.3.4 integration: When TariffFallbackMessage is configured for multiple languages, the
+        base (no-instance) message becomes personalMessage and language-specific instances go into
+        customData.personalMessageExtra. Both are forwarded as entries in session_cost.tariff_message
+        so multi-language displays can show the correct price text.
+        """
+        tariff_message_mock = Mock()
+        probe_module.subscribe_variable("session_cost", "tariff_message", tariff_message_mock)
+
+        probe_module.start()
+        await probe_module.wait_to_be_ready()
+
+        chargepoint_with_pm = await central_system.wait_for_chargepoint()
+
+        # Clear auth cache so the CSMS is consulted for every authorization.
+        r: call_result201.ClearCache = await chargepoint_with_pm.clear_cache_req()
+        assert r.status == ClearCacheStatusEnumType.accepted
+
+        # Set the base TariffFallbackMessage (no language instance).
+        r = await chargepoint_with_pm.set_config_variables_req(
+            "TariffCostCtrlr", "TariffFallbackMessage", "Tariff: 0.30 EUR/kWh"
+        )
+        assert SetVariableResultType(**r.set_variable_result[0]).attribute_status == SetVariableStatusEnumType.accepted
+
+        # Set the German-language instance ("de" is in DisplayMessageCtrlr.Language.valuesList).
+        r = await chargepoint_with_pm.set_variables_req(set_variable_data=[
+            SetVariableDataType(
+                attribute_value="Tarif: 0,30 EUR/kWh",
+                attribute_type=AttributeEnumType.actual,
+                component=ComponentType(name="TariffCostCtrlr"),
+                variable=VariableType(name="TariffFallbackMessage", instance="de")
+            )
+        ])
+        assert SetVariableResultType(**r.set_variable_result[0]).attribute_status == SetVariableStatusEnumType.accepted
+
+        evse_id1 = 1
+        connector_id = 1
+        id_token = IdTokenType(id_token="DEADBEEF", type=IdTokenTypeEnum.iso14443)
+
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StatusNotification",
+                                           call201.StatusNotification(datetime.now().isoformat(),
+                                                                      ConnectorStatusEnumType.available,
+                                                                      evse_id=evse_id1,
+                                                                      connector_id=connector_id),
+                                           validate_status_notification_201)
+
+        test_controller.swipe(id_token.id_token)
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "Authorize",
+                                           call201.Authorize(id_token))
+
+        await self.await_mock_called(tariff_message_mock)
+
+        call_data = tariff_message_mock.call_args[0][0]
+        assert call_data["identifier_id"] == "DEADBEEF"
+        assert call_data["identifier_type"] == "IdToken"
+        # Base message + German entry from personalMessageExtra.
+        assert len(call_data["messages"]) == 2
+        assert call_data["messages"][0]["content"] == "Tariff: 0.30 EUR/kWh"
+        assert call_data["messages"][1]["content"] == "Tarif: 0,30 EUR/kWh"
+        assert call_data["messages"][1]["language"] == "de"
+
+    @pytest.mark.asyncio
+    @pytest.mark.probe_module
+    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceSessionCostConfigurationAdjustment())
+    async def test_total_cost_fallback_message_on_offline_transaction_end(self, central_system: CentralSystem,
+                                                                           test_controller: TestController,
+                                                                           test_utility: TestUtility,
+                                                                           test_config: OcppTestConfiguration,
+                                                                           probe_module):
+        """
+        I05.FR.02 integration: When the CS is offline when a transaction ends and TotalCostFallbackMessage
+        is configured, a default total cost shall still be published via session_cost.tariff_message,
+        even if the CSMS response containing totalCost will never arrive.
+        """
+        tariff_message_mock = Mock()
+        probe_module.subscribe_variable("session_cost", "tariff_message", tariff_message_mock)
+
+        probe_module.start()
+        await probe_module.wait_to_be_ready()
+
+        chargepoint_with_pm = await central_system.wait_for_chargepoint()
+
+        # Configure TotalCostFallbackMessage. TariffFallbackMessage is intentionally left empty so
+        # the auth step does not produce a tariff_message event.
+        r = await chargepoint_with_pm.set_config_variables_req(
+            "TariffCostCtrlr", "TotalCostFallbackMessage", "Total cost unavailable (offline)"
+        )
+        assert SetVariableResultType(**r.set_variable_result[0]).attribute_status == SetVariableStatusEnumType.accepted
+
+        evse_id1 = 1
+        connector_id = 1
+        id_token = IdTokenType(id_token="DEADBEEF", type=IdTokenTypeEnum.iso14443)
+
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StatusNotification",
+                                           call201.StatusNotification(datetime.now().isoformat(),
+                                                                      ConnectorStatusEnumType.available,
+                                                                      evse_id=evse_id1,
+                                                                      connector_id=connector_id),
+                                           validate_status_notification_201)
+
+        # Start a transaction while online.
+        test_controller.swipe(id_token.id_token)
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "Authorize",
+                                           call201.Authorize(id_token))
+
+        test_controller.plug_in()
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "TransactionEvent",
+                                           {"eventType": "Started"})
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "TransactionEvent",
+                                           {"eventType": "Updated"})
+
+        # Go offline before ending the transaction so that the CS cannot retrieve totalCost.
+        test_controller.disconnect_websocket()
+        await asyncio.sleep(2)
+
+        # End the transaction while offline.
+        test_controller.plug_out()
+
+        # The TotalCostFallbackMessage must be published via session_cost.tariff_message.
+        await self.await_mock_called(tariff_message_mock)
+
+        call_data = tariff_message_mock.call_args[0][0]
+        assert call_data["identifier_type"] == "TransactionId"
+        assert len(call_data["messages"]) == 1
+        assert call_data["messages"][0]["content"] == "Total cost unavailable (offline)"
+
+        # Reconnect so queued TransactionEvent(Ended) can be sent and test teardown completes cleanly.
+        test_controller.connect_websocket()
+        chargepoint_with_pm = await central_system.wait_for_chargepoint(wait_for_bootnotification=False)
+        assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "TransactionEvent",
+                                           {"eventType": "Ended"})

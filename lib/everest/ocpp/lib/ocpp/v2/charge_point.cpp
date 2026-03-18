@@ -378,7 +378,15 @@ std::optional<std::string> ChargePoint::get_evse_transaction_id(std::int32_t evs
 
 AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std::optional<CiString<10000>>& certificate,
                                               const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) {
-    return this->authorization->validate_token(id_token, certificate, ocsp_request_data);
+    auto response = this->authorization->validate_token(id_token, certificate, ocsp_request_data);
+
+    // I04: if the CSMS provided no specific tariff, inject the TariffFallbackMessage so
+    // the display can show the price to the EV Driver.
+    if (this->tariff_and_cost != nullptr) {
+        this->tariff_and_cost->ensure_personal_message(response.idTokenInfo, this->is_offline());
+    }
+
+    return response;
 }
 
 void ChargePoint::on_event(const std::vector<EventData>& events) {

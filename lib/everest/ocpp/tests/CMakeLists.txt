@@ -18,6 +18,7 @@ if(LIBOCPP_ENABLE_V2)
     list(APPEND SEPARATE_UNIT_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/ocpp/v2/functional_blocks/test_authorization.cpp)
     list(APPEND SEPARATE_UNIT_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/ocpp/v2/functional_blocks/test_availability.cpp)
     list(APPEND SEPARATE_UNIT_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/ocpp/v2/functional_blocks/test_security.cpp)
+    list(APPEND SEPARATE_UNIT_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/ocpp/v2/functional_blocks/test_tariff_and_cost.cpp)
 endif()
 
 

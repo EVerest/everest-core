@@ -1157,6 +1157,12 @@ const RequiredComponentVariable TariffFallbackMessage = {
         "TariffFallbackMessage",
     }),
 };
+const ComponentVariable OfflineTariffFallbackMessage = {
+    ControllerComponents::TariffCostCtrlr,
+    std::optional<Variable>({
+        "OfflineTariffFallbackMessage",
+    }),
+};
 const RequiredComponentVariable TotalCostFallbackMessage = {
     ControllerComponents::TariffCostCtrlr,
     std::optional<Variable>({

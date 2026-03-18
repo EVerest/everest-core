@@ -86,3 +86,28 @@ target_include_directories(libocpp_test_availability PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
         ${LIBOCPP_TESTS_V2_ROOT_DIR}
 )
+
+set(TEST_TARIFF_AND_COST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/../device_model_test_helper.cpp
+            ${TEST_FUNCTIONAL_BLOCK_CONTEXT_SOURCES}
+            ${LIBOCPP_LIB_PATH}/ocpp/v2/functional_blocks/tariff_and_cost.cpp
+            ${LIBOCPP_LIB_PATH}/ocpp/v2/functional_blocks/display_message.cpp
+            ${LIBOCPP_LIB_PATH}/ocpp/v2/ctrlr_component_variables.cpp
+            ${LIBOCPP_LIB_PATH}/ocpp/v2/messages/ClearDisplayMessage.cpp
+            ${LIBOCPP_LIB_PATH}/ocpp/v2/messages/GetDisplayMessages.cpp
+            ${LIBOCPP_LIB_PATH}/ocpp/v2/messages/NotifyDisplayMessages.cpp
+            ${LIBOCPP_LIB_PATH}/ocpp/v2/messages/SetDisplayMessage.cpp
+            ${LIBOCPP_LIB_PATH}/ocpp/v2/messages/CostUpdated.cpp
+            ${LIBOCPP_LIB_PATH}/ocpp/v2/messages/TransactionEvent.cpp
+            ${LIBOCPP_TEST_INCLUDE_COMMON_SOURCES}
+            ${LIBOCPP_TEST_INCLUDE_V2_SOURCES}
+)
+
+target_sources(libocpp_test_tariff_and_cost PRIVATE
+        ${TEST_TARIFF_AND_COST_SOURCES})
+
+target_include_directories(libocpp_test_tariff_and_cost PUBLIC
+        ${LIBOCPP_INCLUDE_PATH}
+        ${LIBOCPP_3RDPARTY_PATH}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../mocks
+        ${LIBOCPP_TESTS_V2_ROOT_DIR}
+)

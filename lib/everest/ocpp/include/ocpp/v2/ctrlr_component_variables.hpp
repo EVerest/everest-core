@@ -303,6 +303,7 @@ extern const RequiredComponentVariable TariffCostCtrlrCurrency;
 extern const ComponentVariable TariffCostCtrlrEnabledTariff;
 extern const ComponentVariable TariffCostCtrlrEnabledCost;
 extern const RequiredComponentVariable TariffFallbackMessage;
+extern const ComponentVariable OfflineTariffFallbackMessage;
 extern const RequiredComponentVariable TotalCostFallbackMessage;
 extern const ComponentVariable NumberOfDecimalsForCostValues;
 extern const RequiredComponentVariable EVConnectionTimeOut;
