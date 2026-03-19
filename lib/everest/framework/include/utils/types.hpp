@@ -167,7 +167,6 @@ NLOHMANN_JSON_NAMESPACE_END
 
 namespace Everest {
 inline constexpr int mqtt_get_config_timeout_ms = 5000;
-inline constexpr std::size_t mqtt_get_config_retries = 1;
 
 /// \brief Errors than can happen related to commands
 enum class CmdErrorType {
