@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
+#include <cstddef>
 #include <everest/logging.hpp>
 
 #include <utils/mqtt_abstraction.hpp>
@@ -9,14 +10,7 @@ namespace Everest {
 
 namespace {
 std::unique_ptr<MQTTAbstractionImpl> create_mqtt_client(const MQTTSettings& mqtt_settings) {
-    if (mqtt_settings.uses_socket()) {
-        return std::make_unique<MQTTAbstractionImpl>(mqtt_settings.broker_socket_path, mqtt_settings.everest_prefix,
-                                                     mqtt_settings.external_prefix);
-    } else {
-        return std::make_unique<MQTTAbstractionImpl>(mqtt_settings.broker_host,
-                                                     std::to_string(mqtt_settings.broker_port),
-                                                     mqtt_settings.everest_prefix, mqtt_settings.external_prefix);
-    }
+    return std::make_unique<MQTTAbstractionImpl>(mqtt_settings);
 }
 } // namespace
 
@@ -78,14 +72,15 @@ void MQTTAbstraction::clear_retained_topics() {
     mqtt_abstraction->clear_retained_topics();
 }
 
-json MQTTAbstraction::get(const std::string& topic, QOS qos) {
+json MQTTAbstraction::get(const std::string& topic, QOS qos, std::size_t retries) {
     BOOST_LOG_FUNCTION();
-    return mqtt_abstraction->get(topic, qos);
+    const MQTTRequest request = {topic, qos};
+    return mqtt_abstraction->get(request, retries);
 }
 
-json MQTTAbstraction::get(const MQTTRequest& request) {
+json MQTTAbstraction::get(const MQTTRequest& request, std::size_t retries) {
     BOOST_LOG_FUNCTION();
-    return mqtt_abstraction->get(request);
+    return mqtt_abstraction->get(request, retries);
 }
 
 const std::string& MQTTAbstraction::get_everest_prefix() const {

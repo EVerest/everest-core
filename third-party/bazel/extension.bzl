@@ -43,11 +43,11 @@ def _deps_impl(module_ctx):
 
     maybe(
         http_archive,
-        name = "com_github_LiamBindle_mqtt-c",
-        url = "https://github.com/LiamBindle/MQTT-C/archive/f69ce1e7fd54f3b1834c9c9137ce0ec5d703cb4d.tar.gz",
-        sha256 = "0b3ab84e5bca3c0c29be6b84af6f9840d92a0ae4fc00ca74fdcacc30b2b0a1e9",
-        strip_prefix = "MQTT-C-f69ce1e7fd54f3b1834c9c9137ce0ec5d703cb4d",
-        build_file = "@everest-core//third-party/bazel:BUILD.mqtt-c.bazel",
+        name = "mosquitto",
+        url = "https://mosquitto.org/files/source/mosquitto-2.0.22.tar.gz",
+        sha256 = "2f752589ef7db40260b633fbdb536e9a04b446a315138d64a7ff3c14e2de6b68",
+        strip_prefix = "mosquitto-2.0.22",
+        build_file = "@everest-core//third-party/bazel:BUILD.mosquitto.bazel",
     )
 
 

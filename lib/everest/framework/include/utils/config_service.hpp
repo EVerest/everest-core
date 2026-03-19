@@ -2,12 +2,15 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#include <cstddef>
+
 #include <utils/config.hpp>
 #include <utils/mqtt_abstraction.hpp>
 namespace Everest {
 namespace config {
 
 constexpr auto MODULE_IMPLEMENTATION_ID = "!module";
+inline constexpr std::size_t mqtt_get_config_retries = 1;
 
 /// \brief The type of request or response
 enum class Type {

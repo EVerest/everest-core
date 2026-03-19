@@ -3,6 +3,8 @@
 #include <cstring>
 #include <everest/io/tun_tap/tap_handler.hpp>
 #include <fcntl.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <linux/if.h>

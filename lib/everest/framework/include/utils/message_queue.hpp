@@ -22,6 +22,9 @@ namespace Everest {
 struct Message {
     std::string topic;   ///< The MQTT topic where this message originated from
     std::string payload; ///< The message payload
+
+    Message(const std::string& topic_, const std::string& payload_) : topic(topic_), payload(payload_) {
+    }
 };
 
 struct ParsedMessage {

@@ -78,7 +78,7 @@ std::once_flag mod_flag;
 std::unique_ptr<Module> mod;
 
 const Module& create_module(rust::Str module_id, rust::Str prefix, rust::Str mqtt_broker_socket_path,
-                            rust::Str mqtt_broker_host, const unsigned int& mqtt_broker_port,
+                            rust::Str mqtt_broker_host, const std::uint16_t& mqtt_broker_port,
                             rust::Str mqtt_everest_prefix, rust::Str mqtt_external_prefix) {
     std::call_once(mod_flag, [&]() {
         auto socket_path = std::string(mqtt_broker_socket_path);

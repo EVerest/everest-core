@@ -8,13 +8,15 @@
 #include <everest/io/socket/socket.hpp>
 #include <linux/can.h>
 #include <linux/can/raw.h>
-#include <net/if.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
+
+#include <net/if.h>
 
 namespace everest::lib::io::can {
 
@@ -33,9 +35,16 @@ int socket_can_handler::tx(uint32_t can_id, uint8_t len8_dlc, can_payload const&
 
     frame.can_id = can_id;
     auto const max_dlc_value = 15;
+#ifdef CAN_MAX_RAW_DLC
     frame.len8_dlc = std::min<uint8_t>(len8_dlc, max_dlc_value);
-    frame.len = std::min<uint8_t>(CAN_MAX_DLEN, payload.size());
-    memcpy(frame.data, payload.data(), frame.len);
+#endif
+    const auto len = std::min<uint8_t>(CAN_MAX_DLEN, payload.size());
+#ifdef CAN_MAX_DLEN
+    frame.can_dlc = len;
+#else
+    frame.len = len;
+#endif
+    memcpy(frame.data, payload.data(), len);
 
     auto bytes_written = write(m_owned_can_fd, &frame, sizeof(can_frame));
     if (bytes_written != sizeof(can_frame)) {
@@ -58,7 +67,11 @@ int socket_can_handler::rx(uint32_t& can_id, uint8_t& len8_dlc, can_payload& pay
             payload.clear();
             payload.assign(frame.data, frame.data + frame.can_dlc);
             can_id = frame.can_id;
+#ifdef CAN_MAX_RAW_DLC
             len8_dlc = frame.len8_dlc;
+#else
+            len8_dlc = 0;
+#endif
             return 0;
         } else if (nbytes == -1) {
             return errno;

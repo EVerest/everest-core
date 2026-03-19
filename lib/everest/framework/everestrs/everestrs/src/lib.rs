@@ -183,7 +183,7 @@ mod ffi {
             prefix: &str,
             mqtt_broker_socket_path: &str,
             mqtt_broker_host: &str,
-            mqtt_broker_port: &u32,
+            mqtt_broker_port: &u16,
             mqtt_everest_prefix: &str,
             mqtt_external_prefix: &str,
         ) -> &'static Module;
@@ -399,7 +399,7 @@ struct Args {
 
     /// MQTT broker port
     #[arg(long = "mqtt_broker_port")]
-    pub mqtt_broker_port: u32,
+    pub mqtt_broker_port: u16,
 
     /// MQTT EVerest prefix
     #[arg(long = "mqtt_everest_prefix")]
