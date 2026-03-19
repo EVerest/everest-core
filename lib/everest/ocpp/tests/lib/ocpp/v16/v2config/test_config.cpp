@@ -106,7 +106,7 @@ TEST(V2Mapping, V2ToV16) {
     comp.name = "SmartChargingCtrlr";
     var.name = "Entries";
     var.instance = "ChargingProfiles";
-    res = convert_v2(comp, var, ocpp::v2::AttributeEnum::Actual);
+    res = convert_v2(comp, var, ocpp::v2::AttributeEnum::MaxSet);
     EXPECT_EQ(res, "MaxChargingProfilesInstalled");
 }
 
