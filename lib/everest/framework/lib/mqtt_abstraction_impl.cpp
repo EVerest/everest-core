@@ -30,9 +30,9 @@
 #include <utils/mqtt_abstraction_impl.hpp>
 
 namespace Everest {
-const auto mqtt_keep_alive = 600;
-const auto mqtt_get_timeout_ms = 5000;       ///< Timeout for MQTT get in milliseconds
-const auto mqtt_reconnect_timeout_ms = 2000; ///< MQTT reconnect timeout
+constexpr auto mqtt_keep_alive = 600;
+constexpr auto mqtt_get_timeout_ms = 5000;       ///< Timeout for MQTT get in milliseconds
+constexpr auto mqtt_reconnect_timeout_ms = 2000; ///< MQTT reconnect timeout
 
 MessageWithQOS::MessageWithQOS(const std::string& topic, const std::string& payload, QOS qos, bool retain) :
     Message{topic, payload}, qos(qos), retain(retain) {
