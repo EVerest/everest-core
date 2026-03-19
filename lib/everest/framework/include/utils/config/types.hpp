@@ -152,7 +152,7 @@ struct Settings {
     std::optional<int> controller_rpc_timeout_ms;
     std::optional<std::string> mqtt_broker_socket_path;
     std::optional<std::string> mqtt_broker_host;
-    std::optional<int> mqtt_broker_port;
+    std::optional<std::uint16_t> mqtt_broker_port;
     std::optional<std::string> mqtt_everest_prefix;
     std::optional<std::string> mqtt_external_prefix;
     std::optional<std::string> telemetry_prefix;

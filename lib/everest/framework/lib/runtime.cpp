@@ -215,7 +215,7 @@ void ManagerSettings::init_settings(const everest::config::Settings& settings) {
 
     std::string mqtt_broker_socket_path;
     std::string mqtt_broker_host;
-    int mqtt_broker_port = 0;
+    std::uint16_t mqtt_broker_port = 0;
     std::string mqtt_everest_prefix;
     std::string mqtt_external_prefix;
 
@@ -265,7 +265,7 @@ void ManagerSettings::init_settings(const everest::config::Settings& settings) {
 
     if (mqtt_server_port != nullptr) {
         try {
-            mqtt_broker_port = std::stoi(mqtt_server_port);
+            mqtt_broker_port = std::stoul(mqtt_server_port);
         } catch (...) {
             EVLOG_warning << "Environment variable MQTT_SERVER_PORT set, but not set to an integer. Ignoring.";
         }
@@ -703,9 +703,13 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
         }
     }
 
-    int mqtt_broker_port = defaults::MQTT_BROKER_PORT;
+    std::uint16_t mqtt_broker_port = defaults::MQTT_BROKER_PORT;
     if (vm.count("mqtt_broker_port") != 0) {
-        mqtt_broker_port = vm["mqtt_broker_port"].as<int>();
+        const auto mqtt_broker_port_int = vm["mqtt_broker_port"].as<int>();
+            if (mqtt_broker_port_int > std::numeric_limits<std::uint16_t>::max()) {
+                throw BootException(fmt::format("MQTT broker port {} is out of range.", mqtt_broker_port_int));
+            }
+        mqtt_broker_port = static_cast<std::uint16_t>(mqtt_broker_port_int);
     }
 
     // overwrite mqtt broker port with environment variable
@@ -714,7 +718,7 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
 
     if (mqtt_server_port != nullptr) {
         try {
-            mqtt_broker_port = std::stoi(mqtt_server_port);
+            mqtt_broker_port = std::stoul(mqtt_server_port);
         } catch (...) {
             EVLOG_warning << "Environment variable MQTT_SERVER_PORT set, but not set to an integer. Ignoring.";
         }

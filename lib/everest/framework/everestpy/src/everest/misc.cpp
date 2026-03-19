@@ -43,7 +43,7 @@ Everest::MQTTSettings get_mqtt_settings_from_env() {
         }
         auto mqtt_broker_port_ = Everest::defaults::MQTT_BROKER_PORT;
         try {
-            mqtt_broker_port_ = std::stoi(mqtt_broker_port);
+            mqtt_broker_port_ = std::stoul(mqtt_broker_port);
         } catch (...) {
             EVLOG_warning << "Could not parse MQTT broker port, using default: " << mqtt_broker_port_;
         }

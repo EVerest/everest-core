@@ -3,6 +3,7 @@
 #ifndef FRAMEWORK_EVEREST_RUNTIME_HPP
 #define FRAMEWORK_EVEREST_RUNTIME_HPP
 
+#include <cstdint>
 #include <filesystem>
 #include <string>
 
@@ -90,7 +91,7 @@ inline constexpr auto CONTROLLER_PORT = 8849;
 inline constexpr auto CONTROLLER_RPC_TIMEOUT_MS = 2000;
 inline constexpr auto MQTT_BROKER_SOCKET_PATH = "/tmp/mqtt_broker.sock";
 inline constexpr auto MQTT_BROKER_HOST = "localhost";
-inline constexpr auto MQTT_BROKER_PORT = 1883;
+inline constexpr std::uint16_t MQTT_BROKER_PORT = 1883;
 inline constexpr auto MQTT_EVEREST_PREFIX = "everest";
 inline constexpr auto MQTT_EXTERNAL_PREFIX = "";
 inline constexpr auto TELEMETRY_PREFIX = "everest-telemetry";
