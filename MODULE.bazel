@@ -72,7 +72,6 @@ deps = use_extension("//third-party/bazel:extension.bzl", "deps")
 use_repo(
     deps,
     "com_github_HowardHinnant_date",
-    "com_github_LiamBindle_mqtt-c",
     "com_github_pboettch_json-schema-validator",
     "com_github_warmcatt_libwebsockets",
     "mosquitto",
