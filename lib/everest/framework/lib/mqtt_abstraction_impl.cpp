@@ -168,9 +168,9 @@ void MQTTAbstractionImpl::publish(const std::string& topic, const std::string& d
     }
 
     const auto error =
-        this->mqtt_client->publish(topic, data, mqtt_qos, retain, everest::lib::io::mqtt::PropertiesBase{});
+        this->mqtt_client->publish(topic, data, mqtt_qos, retain, {});
     if (error != everest::lib::io::mqtt::ErrorCode::Success) {
-        EVLOG_error << fmt::format("MQTT Error");
+        EVLOG_error << "MQTT error during publishing";
     }
 
     EVLOG_verbose << fmt::format("publishing to topic: {} with payload: {} and qos: {} and retain: {}", topic, data,
@@ -226,7 +226,7 @@ void MQTTAbstractionImpl::unsubscribe(const std::string& topic) {
 
     this->subscribed_topics.erase(topic);
     this->ev_handler.add_action(
-        [this, topic]() { this->mqtt_client->unsubscribe(topic, everest::lib::io::mqtt::PropertiesBase{}); });
+        [this, topic]() { this->mqtt_client->unsubscribe(topic, {}); });
 }
 
 void MQTTAbstractionImpl::clear_retained_topics() {
