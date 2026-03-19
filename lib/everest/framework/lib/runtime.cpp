@@ -706,9 +706,9 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
     std::uint16_t mqtt_broker_port = defaults::MQTT_BROKER_PORT;
     if (vm.count("mqtt_broker_port") != 0) {
         const auto mqtt_broker_port_int = vm["mqtt_broker_port"].as<int>();
-            if (mqtt_broker_port_int > std::numeric_limits<std::uint16_t>::max()) {
-                throw BootException(fmt::format("MQTT broker port {} is out of range.", mqtt_broker_port_int));
-            }
+        if (mqtt_broker_port_int > std::numeric_limits<std::uint16_t>::max()) {
+            throw BootException(fmt::format("MQTT broker port {} is out of range.", mqtt_broker_port_int));
+        }
         mqtt_broker_port = static_cast<std::uint16_t>(mqtt_broker_port_int);
     }
 
