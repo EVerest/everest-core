@@ -38,10 +38,18 @@ config:
     description: Password for encrypted private keys.
     type: string
     default: ""
+  ignore_unhandled_critical_extensions:
+    description: >-
+      If true, bypasses X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION during certificate validation
+      when every critical extension on the certificate has a well-known RFC 5280 NID (e.g. SKI,
+      AKI, CRL Distribution Points). Enable only for interoperability with known non-compliant
+      certificates.
+    type: boolean
+    default: false
 provides:
   main:
     description: Implementation of the evse_security interface
-    interface: evse_security 
+    interface: evse_security
 enable_telemetry: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

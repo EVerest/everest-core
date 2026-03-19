@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef EVSE_SECURITY_FS_HPP
-#define EVSE_SECURITY_FS_HPP
+#ifndef EVSE_SECURITY_HPP
+#define EVSE_SECURITY_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -29,6 +29,7 @@ struct Conf {
     std::string secc_leaf_cert_directory;
     std::string secc_leaf_key_directory;
     std::string private_key_password;
+    bool ignore_unhandled_critical_extensions;
 };
 
 class EvseSecurity : public Everest::ModuleBase {
@@ -65,4 +66,4 @@ private:
 
 } // namespace module
 
-#endif // EVSE_SECURITY_FS_HPP
+#endif // EVSE_SECURITY_HPP

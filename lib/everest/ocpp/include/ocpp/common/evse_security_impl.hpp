@@ -25,6 +25,8 @@ struct SecurityConfiguration {
     fs::path secc_leaf_key_link;
     fs::path cpo_cert_chain_link;
     std::optional<std::string> private_key_password;
+    // TODO: add ignore_unhandled_critical_extensions (bool, default false) and forward it to
+    // EvseSecurity
 };
 
 class EvseSecurityImpl : public EvseSecurity {

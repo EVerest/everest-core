@@ -57,11 +57,14 @@ public:
     /// @param parents      Parents chain, until the root
     /// @param dir_path     Optional directory path that can be used for certificate store lookup
     /// @param file_path    Optional certificate file path that can be used for certificate store lookup
+    /// @param ignore_unhandled_critical_extensions If true, bypasses X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION when
+    /// every critical extension on the certificate has a well-known RFC 5280 NID
     /// @return
     static CertificateValidationResult
     x509_verify_certificate_chain(X509Handle* target, const std::vector<X509Handle*>& parents,
                                   const std::vector<X509Handle*>& untrusted_subcas, bool allow_future_certificates,
-                                  const std::optional<fs::path> dir_path, const std::optional<fs::path> file_path);
+                                  const std::optional<fs::path> dir_path, const std::optional<fs::path> file_path,
+                                  bool ignore_unhandled_critical_extensions = false);
 
     /// @brief Checks if the private key is consistent with the provided handle
     static KeyValidationResult x509_check_private_key(X509Handle* handle, std::string private_key,

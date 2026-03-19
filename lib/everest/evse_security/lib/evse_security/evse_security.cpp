@@ -287,14 +287,16 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
                            const std::optional<std::uintmax_t>& max_fs_usage_bytes,
                            const std::optional<std::uintmax_t>& max_fs_certificate_store_entries,
                            const std::optional<std::chrono::seconds>& csr_expiry,
-                           const std::optional<std::chrono::seconds>& garbage_collect_time) :
+                           const std::optional<std::chrono::seconds>& garbage_collect_time,
+                           bool ignore_unhandled_critical_extensions) :
     private_key_password(private_key_password),
     directories(file_paths.directories),
     links(file_paths.links),
     max_fs_usage_bytes(max_fs_usage_bytes.value_or(DEFAULT_MAX_FILESYSTEM_SIZE)),
     max_fs_certificate_store_entries(max_fs_certificate_store_entries.value_or(DEFAULT_MAX_CERTIFICATE_ENTRIES)),
     csr_expiry(csr_expiry.value_or(DEFAULT_CSR_EXPIRY)),
-    garbage_collect_time(garbage_collect_time.value_or(DEFAULT_GARBAGE_COLLECT_TIME)) {
+    garbage_collect_time(garbage_collect_time.value_or(DEFAULT_GARBAGE_COLLECT_TIME)),
+    ignore_unhandled_critical_extensions(ignore_unhandled_critical_extensions) {
     static_assert(sizeof(std::uint8_t) == 1, "uint8_t not equal to 1 byte!");
 
     const std::vector<fs::path> dirs = {
@@ -2076,7 +2078,8 @@ EvseSecurity::verify_certificate_internal(const std::string& certificate_chain,
         }
 
         return CryptoSupplier::x509_verify_certificate_chain(leaf_certificate.get(), trusted_parent_certificates,
-                                                             untrusted_subcas, true, std::nullopt, std::nullopt);
+                                                             untrusted_subcas, true, std::nullopt, std::nullopt,
+                                                             this->ignore_unhandled_critical_extensions);
 
     } catch (const CertificateLoadException& e) {
         EVLOG_warning << "Could not validate certificate chain because of invalid format";
