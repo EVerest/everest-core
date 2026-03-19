@@ -164,12 +164,20 @@ struct ConnectionData {
         return this->is_stopped_run;
     }
 
+    bool is_resetting() const {
+        return resetting.load(std::memory_order_acquire);
+    }
+
 public:
     /// \brief This should be used for a cleanup before calling the
     ///        init functions because releasing the unique ptrs has
     ///        as an effect the invocation of 'callback_minimal' during
     ///        '::lws_context_destroy(ptr);' and that causes a deadlock
     void reset_connection_data() {
+        // Signal that we are tearing down - callbacks fired during lws_context_destroy
+        // must be suppressed to avoid accessing invalidated state (wsi = nullptr)
+        resetting.store(true, std::memory_order_release);
+
         // Destroy them outside the lock scope
         std::unique_ptr<SSL_CTX> clear_sec;
         std::unique_ptr<lws_context> clear_lws;
@@ -197,6 +205,7 @@ public:
 
         // Reset the close status
         is_stopped_run = false;
+        resetting.store(false, std::memory_order_release);
 
         // Causes a deadlock in callback_minimal if not reset
         this->lws_ctx = std::unique_ptr<lws_context>(lws_ctx);
@@ -240,6 +249,7 @@ private:
     bool is_running;
     bool is_stopped_run;
     EConnectionState state;
+    std::atomic_bool resetting{false};
 
     std::mutex mutex;
 
@@ -421,6 +431,11 @@ int callback_minimal(struct lws* wsi, enum lws_callback_reasons reason, void* us
     if (wsi != nullptr) {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): needed for appropriate type
         if (auto* data = reinterpret_cast<ConnectionData*>(lws_wsi_user(wsi))) {
+            // During lws_context_destroy, callbacks fire but connection state is inconsistent
+            // (wsi set to nullptr, context being freed). Suppress all callbacks during this phase.
+            if (data->is_resetting()) {
+                return 0;
+            }
             auto* owner = data->get_owner();
             if (owner not_eq nullptr) {
                 return owner->process_callback(wsi, static_cast<int>(reason), user, in, len);
@@ -797,8 +812,9 @@ void WebsocketLibwebsockets::thread_websocket_client_loop(std::shared_ptr<Connec
                     }
                 } while (n >= 0 && processing);
             }
-            // After this point no minimal_callback can be called, we have finished
-            // using the connection information and we will recreate it if required
+            // After exiting the lws_service loop, reset_connection_data() will destroy
+            // the lws_context. Callbacks fired during destruction are suppressed by the
+            // 'resetting' flag in ConnectionData.
             local_data->reset_connection_data();
             // free memory allocated by strdup() earlier on
             free(const_cast<char*>(i.address));
@@ -1711,6 +1727,11 @@ void WebsocketLibwebsockets::on_conn_writable() {
 void WebsocketLibwebsockets::push_deferred_callback(const std::function<void()>& callback) {
     if (!callback) {
         EVLOG_error << "Attempting to push stale callback in deferred queue!";
+        return;
+    }
+
+    if (this->stop_deferred_handler.load()) {
+        EVLOG_debug << "Deferred handler is stopping, dropping callback";
         return;
     }
 
