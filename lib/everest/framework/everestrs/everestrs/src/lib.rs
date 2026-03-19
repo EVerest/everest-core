@@ -186,7 +186,6 @@ mod ffi {
             mqtt_broker_port: &u32,
             mqtt_everest_prefix: &str,
             mqtt_external_prefix: &str,
-            mqtt_bind_address: &str,
         ) -> &'static Module;
 
         /// Returns the manifest.
@@ -398,10 +397,6 @@ struct Args {
     #[arg(long = "mqtt_broker_host")]
     pub mqtt_broker_host: String,
 
-    /// MQTT bind address
-    #[arg(long = "mqtt_bind_address")]
-    pub mqtt_bind_address: String,
-
     /// MQTT broker port
     #[arg(long = "mqtt_broker_port")]
     pub mqtt_broker_port: u32,
@@ -601,7 +596,6 @@ impl Runtime {
                     &args.mqtt_broker_port,
                     &args.mqtt_everest_prefix,
                     &args.mqtt_external_prefix,
-                    &args.mqtt_bind_address,
                 );
                 Arc::pin(Self {
                     cpp_module,
@@ -752,7 +746,6 @@ pub fn get_module_configs() -> HashMap<String, HashMap<String, Config>> {
         &args.mqtt_broker_port,
         &args.mqtt_everest_prefix,
         &args.mqtt_external_prefix,
-        &args.mqtt_bind_address,
     );
     let raw_config = cpp_module.get_module_configs(&args.module);
 

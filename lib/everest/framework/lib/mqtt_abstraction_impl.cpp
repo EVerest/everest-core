@@ -52,7 +52,6 @@ MQTTAbstractionImpl::MQTTAbstractionImpl(const MQTTSettings& mqtt_settings) :
     } else {
         this->mqtt_server_address = mqtt_settings.broker_host;
         this->mqtt_server_port = std::to_string(mqtt_settings.broker_port);
-        this->mqtt_bind_address = mqtt_settings.bind_address;
     }
 
     this->mqtt_is_connected = false;
@@ -83,16 +82,15 @@ bool MQTTAbstractionImpl::connect() {
         const auto result = this->mqtt_client->connect(this->mqtt_server_socket_path, mqtt_keep_alive);
         return (result == everest::lib::io::mqtt::ErrorCode::Success);
     } else {
-        EVLOG_info << fmt::format(
-            "Connecting to MQTT broker: {}:{}{}", this->mqtt_server_address, this->mqtt_server_port,
-            this->mqtt_bind_address.empty() ? "" : fmt::format(" using bind address {}", this->mqtt_bind_address));
+        EVLOG_info << fmt::format("Connecting to MQTT broker: {}:{}", this->mqtt_server_address,
+                                  this->mqtt_server_port);
         try {
             const auto port_uint = std::stoul(this->mqtt_server_port);
             if (port_uint > std::numeric_limits<std::uint16_t>::max()) {
                 EVLOG_critical << fmt::format("Could not connect to MQTT broker, port {} is out of range.", port_uint);
                 return false;
             }
-            const auto result = this->mqtt_client->connect(this->mqtt_bind_address, this->mqtt_server_address,
+            const auto result = this->mqtt_client->connect("", this->mqtt_server_address,
                                                            static_cast<std::uint16_t>(port_uint), mqtt_keep_alive);
             return (result == everest::lib::io::mqtt::ErrorCode::Success);
         } catch (std::exception& e) {
