@@ -70,11 +70,13 @@ public:
 
     template <class Rep, class Period>
     void timeout(const std::function<void()>& callback, const std::chrono::duration<Rep, Period>& interval) {
+        timer_stub_set_timeout_interval_ms(std::chrono::duration_cast<std::chrono::milliseconds>(interval).count());
         timer_stub_set_callback(callback);
         timer_stub_timeout_called(1);
     }
 
     template <class Rep, class Period> void timeout(const std::chrono::duration<Rep, Period>& interval) {
+        timer_stub_set_timeout_interval_ms(std::chrono::duration_cast<std::chrono::milliseconds>(interval).count());
         timer_stub_timeout_called(1);
     }
 

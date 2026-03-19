@@ -873,3 +873,114 @@ TEST_F(SecurityTest, handle_sign_certificate_response_no_response) {
     // Timeout is over, callback is called.
     timer_stub_get_callback()();
 }
+
+TEST_F(SecurityTest, handle_sign_certificate_response_backoff_values) {
+    // Verify the exponential backoff sequence: with CertSigningWaitMinimum=30 and CertSigningRepeatTimes=2,
+    // first wait should be 30s, second wait 60s, then stop.
+    timer_stub_reset_timeout_called_count();
+    timer_stub_reset_callback();
+    timer_stub_reset_timeout_interval();
+    set_update_certificate_symlinks_enabled(this->device_model, true);
+    set_security_profile(this->device_model, 1);
+    this->device_model->set_value(ControllerComponentVariables::ChargeBoxSerialNumber.component,
+                                  ControllerComponentVariables::ChargeBoxSerialNumber.variable.value(),
+                                  AttributeEnum::Actual, "testserialnumber", "test", true);
+    this->device_model->set_value(ControllerComponentVariables::OrganizationName.component,
+                                  ControllerComponentVariables::OrganizationName.variable.value(),
+                                  AttributeEnum::Actual, "testOrganization", "test", true);
+    this->device_model->set_value(ControllerComponentVariables::ISO15118CtrlrCountryName.component,
+                                  ControllerComponentVariables::ISO15118CtrlrCountryName.variable.value(),
+                                  AttributeEnum::Actual, "testCountry", "test", true);
+    this->device_model->set_value(ControllerComponentVariables::UseTPM.component,
+                                  ControllerComponentVariables::UseTPM.variable.value(), AttributeEnum::Actual, "false",
+                                  "test", true);
+    this->device_model->set_value(ControllerComponentVariables::CertSigningWaitMinimum.component,
+                                  ControllerComponentVariables::CertSigningWaitMinimum.variable.value(),
+                                  AttributeEnum::Actual, "30", "test", true);
+    this->device_model->set_value(ControllerComponentVariables::CertSigningRepeatTimes.component,
+                                  ControllerComponentVariables::CertSigningRepeatTimes.variable.value(),
+                                  AttributeEnum::Actual, "2", "test", true);
+
+    ocpp::GetCertificateSignRequestResult sign_request_result;
+    sign_request_result.status = GetCertificateSignRequestStatus::Accepted;
+    sign_request_result.csr = "csr";
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillRepeatedly(Invoke([](const json& call, bool triggered) {
+        // Accept all SignCertificate.req dispatches
+    }));
+    EXPECT_CALL(this->evse_security,
+                generate_certificate_signing_request(ocpp::CertificateSigningUseEnum::ChargingStationCertificate,
+                                                     "testCountry", "testOrganization", "testserialnumber", false))
+        .WillRepeatedly(Return(sign_request_result));
+
+    // Initial sign_certificate_req + Accepted response
+    security.sign_certificate_req(ocpp::CertificateSigningUseEnum::ChargingStationCertificate, false);
+    security.handle_message(create_example_sign_certificate_response(GenericStatusEnum::Accepted));
+
+    // First timeout should be 30s (CertSigningWaitMinimum * 2^0)
+    EXPECT_EQ(timer_stub_get_timeout_interval_ms(), 30000);
+
+    // Fire timeout callback → triggers retry → feed new Accepted response → new timer
+    timer_stub_reset_timeout_interval();
+    timer_stub_get_callback()(); // increments csr_attempt to 2
+    security.handle_message(create_example_sign_certificate_response(GenericStatusEnum::Accepted));
+
+    // Second timeout should be 60s (CertSigningWaitMinimum * 2^1)
+    EXPECT_EQ(timer_stub_get_timeout_interval_ms(), 60000);
+
+    // Fire timeout callback again → csr_attempt becomes 3 > RepeatTimes(2) → should stop
+    timer_stub_reset_timeout_called_count();
+    timer_stub_reset_timeout_interval();
+    timer_stub_get_callback()(); // increments csr_attempt to 3
+    security.handle_message(create_example_sign_certificate_response(GenericStatusEnum::Accepted));
+
+    // Timer should not have been restarted (csr_attempt > CertSigningRepeatTimes)
+    EXPECT_EQ(timer_stub_get_timeout_called_count(), 0);
+    EXPECT_EQ(timer_stub_get_timeout_interval_ms(), 0);
+}
+
+TEST_F(SecurityTest, handle_sign_certificate_response_backoff_floor) {
+    // Verify the 10s safety floor: with CertSigningWaitMinimum=0, the floor of 10s should apply.
+    timer_stub_reset_timeout_called_count();
+    timer_stub_reset_callback();
+    timer_stub_reset_timeout_interval();
+    set_update_certificate_symlinks_enabled(this->device_model, true);
+    set_security_profile(this->device_model, 1);
+    this->device_model->set_value(ControllerComponentVariables::ChargeBoxSerialNumber.component,
+                                  ControllerComponentVariables::ChargeBoxSerialNumber.variable.value(),
+                                  AttributeEnum::Actual, "testserialnumber", "test", true);
+    this->device_model->set_value(ControllerComponentVariables::OrganizationName.component,
+                                  ControllerComponentVariables::OrganizationName.variable.value(),
+                                  AttributeEnum::Actual, "testOrganization", "test", true);
+    this->device_model->set_value(ControllerComponentVariables::ISO15118CtrlrCountryName.component,
+                                  ControllerComponentVariables::ISO15118CtrlrCountryName.variable.value(),
+                                  AttributeEnum::Actual, "testCountry", "test", true);
+    this->device_model->set_value(ControllerComponentVariables::UseTPM.component,
+                                  ControllerComponentVariables::UseTPM.variable.value(), AttributeEnum::Actual, "false",
+                                  "test", true);
+    this->device_model->set_value(ControllerComponentVariables::CertSigningWaitMinimum.component,
+                                  ControllerComponentVariables::CertSigningWaitMinimum.variable.value(),
+                                  AttributeEnum::Actual, "0", "test", true);
+    this->device_model->set_value(ControllerComponentVariables::CertSigningRepeatTimes.component,
+                                  ControllerComponentVariables::CertSigningRepeatTimes.variable.value(),
+                                  AttributeEnum::Actual, "1", "test", true);
+
+    ocpp::GetCertificateSignRequestResult sign_request_result;
+    sign_request_result.status = GetCertificateSignRequestStatus::Accepted;
+    sign_request_result.csr = "csr";
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillRepeatedly(Invoke([](const json& call, bool triggered) {
+        // Accept all SignCertificate.req dispatches
+    }));
+    EXPECT_CALL(this->evse_security,
+                generate_certificate_signing_request(ocpp::CertificateSigningUseEnum::ChargingStationCertificate,
+                                                     "testCountry", "testOrganization", "testserialnumber", false))
+        .WillRepeatedly(Return(sign_request_result));
+
+    // Initial sign_certificate_req + Accepted response
+    security.sign_certificate_req(ocpp::CertificateSigningUseEnum::ChargingStationCertificate, false);
+    security.handle_message(create_example_sign_certificate_response(GenericStatusEnum::Accepted));
+
+    // First timeout should be 10s (max(10, 0) * 2^0 = 10s floor)
+    EXPECT_EQ(timer_stub_get_timeout_interval_ms(), 10000);
+}

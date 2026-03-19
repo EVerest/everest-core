@@ -11,6 +11,7 @@ static std::uint32_t timeout_called_count;
 static std::uint32_t interval_called_count;
 static std::uint32_t at_called_count;
 static std::function<void()> callback;
+static std::int64_t timeout_interval_ms;
 
 void timer_stub_stop_called(std::uint32_t called_count) {
     stop_called_count += called_count;
@@ -70,4 +71,16 @@ std::uint32_t timer_stub_get_at_called_count() {
 
 std::function<void()> timer_stub_get_callback() {
     return callback;
+}
+
+void timer_stub_set_timeout_interval_ms(std::int64_t interval_ms) {
+    timeout_interval_ms = interval_ms;
+}
+
+std::int64_t timer_stub_get_timeout_interval_ms() {
+    return timeout_interval_ms;
+}
+
+void timer_stub_reset_timeout_interval() {
+    timeout_interval_ms = 0;
 }
