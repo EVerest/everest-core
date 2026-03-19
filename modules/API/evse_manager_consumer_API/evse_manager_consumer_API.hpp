@@ -117,6 +117,7 @@ private:
     void generate_api_cmd_random_delay_set_duration_s();
 
     void generate_api_var_session_event();
+    void generate_api_var_hlc_session_failed();
     void generate_api_var_session_info();
     void generate_api_var_ev_info();
     void generate_api_var_powermeter();

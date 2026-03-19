@@ -377,6 +377,17 @@ void ISO15118_chargerImpl::init() {
         }
     });
 
+    mod->r_iso2->subscribe_hlc_session_failed([this](const auto reason) {
+        if (not mod->selected_iso20()) {
+            publish_hlc_session_failed(reason);
+        }
+    });
+    mod->r_iso20->subscribe_hlc_session_failed([this](const auto reason) {
+        if (mod->selected_iso20()) {
+            publish_hlc_session_failed(reason);
+        }
+    });
+
     mod->r_iso2->subscribe_dlink_terminate([this]() {
         if (not mod->selected_iso20()) {
             publish_dlink_terminate(nullptr);

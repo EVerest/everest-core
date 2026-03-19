@@ -298,6 +298,7 @@ private:
         types::authorization::ProvidedIdToken id_token;
         types::authorization::ValidationResult validation_result;
         std::atomic_bool flag_authorized{false};
+        std::atomic_bool flag_externally_cancelled{false};
         std::atomic_bool flag_paused_by_evse{false};
         std::atomic_bool flag_ev_plugged_in{false};
         // set to true if auth is from PnC, otherwise to false (EIM)

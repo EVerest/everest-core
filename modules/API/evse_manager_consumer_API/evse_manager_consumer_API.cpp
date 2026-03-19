@@ -75,6 +75,7 @@ void evse_manager_consumer_API::ready() {
     generate_api_cmd_random_delay_set_duration_s();
 
     generate_api_var_session_event();
+    generate_api_var_hlc_session_failed();
     generate_api_var_session_info(); // special, not just forwarded
     generate_api_var_ev_info();
     generate_api_var_powermeter();
@@ -247,6 +248,10 @@ void evse_manager_consumer_API::generate_api_cmd_random_delay_set_duration_s() {
 
 void evse_manager_consumer_API::generate_api_var_session_event() {
     r_evse_manager->subscribe_session_event(forward_api_var("session_event"));
+}
+
+void evse_manager_consumer_API::generate_api_var_hlc_session_failed() {
+    r_evse_manager->subscribe_hlc_session_failed(forward_api_var("hlc_session_failed"));
 }
 
 void evse_manager_consumer_API::generate_api_var_ev_info() {

@@ -28,7 +28,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          dco-check --default-branch main -v
+          dco-check --default-branch main -v --exclude-pattern ".*@users\.noreply\.github\.com"
       - name:  Check DCO merge_group
         if: github.event_name == 'merge_group'
         run: |

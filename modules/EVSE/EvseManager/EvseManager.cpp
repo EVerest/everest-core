@@ -384,6 +384,13 @@ void EvseManager::ready() {
         r_hlc[0]->call_session_setup(payment_options, _contract_certificate_installation_enabled,
                                      _central_contract_validation_allowed);
 
+        r_hlc[0]->subscribe_hlc_session_failed([this](types::evse_manager::HlcSessionFailedReasonEnum reason) {
+            types::evse_manager::HlcSessionFailedEvent ev;
+            ev.uuid = charger->get_session_id();
+            ev.reason = reason;
+            p_evse->publish_hlc_session_failed(ev);
+        });
+
         r_hlc[0]->subscribe_dlink_error([this] {
             session_log.evse(true, "D-LINK_ERROR.req");
             // Inform charger

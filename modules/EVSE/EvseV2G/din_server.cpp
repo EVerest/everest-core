@@ -590,11 +590,11 @@ static enum v2g_event handle_din_charge_parameter(struct v2g_connection* conn) {
 
     if ((unsigned int)1 == res->DC_EVSEChargeParameter.EVSEMaximumPowerLimit_isUsed) {
         res->SAScheduleList.SAScheduleTuple.array[0].PMaxSchedule.PMaxScheduleEntry.array[0].PMax =
-            (SHRT_MAX < (conn->ctx->evse_v2g_data.evse_maximum_power_limit.Value *
-                         pow(10, conn->ctx->evse_v2g_data.evse_maximum_power_limit.Multiplier)))
+            (SHRT_MAX < (conn->ctx->evse_v2g_data.power_capabilities.max_power.Value *
+                         pow(10, conn->ctx->evse_v2g_data.power_capabilities.max_power.Multiplier)))
                 ? SHRT_MAX
-                : (conn->ctx->evse_v2g_data.evse_maximum_power_limit.Value *
-                   pow(10, conn->ctx->evse_v2g_data.evse_maximum_power_limit.Multiplier));
+                : (conn->ctx->evse_v2g_data.power_capabilities.max_power.Value *
+                   pow(10, conn->ctx->evse_v2g_data.power_capabilities.max_power.Multiplier));
     } else {
         res->SAScheduleList.SAScheduleTuple.array[0].PMaxSchedule.PMaxScheduleEntry.array[0].PMax = SHRT_MAX;
     }

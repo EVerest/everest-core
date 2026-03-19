@@ -1292,7 +1292,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
             } else {
                 conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                     .PMaxSchedule.PMaxScheduleEntry.array[0]
-                    .PMax = conn->ctx->evse_v2g_data.evse_maximum_power_limit;
+                    .PMax = conn->ctx->evse_v2g_data.power_capabilities.max_power;
             }
             if (departure_time_duration == 0) {
                 departure_time_duration = SA_SCHEDULE_DURATION; // one day, per spec

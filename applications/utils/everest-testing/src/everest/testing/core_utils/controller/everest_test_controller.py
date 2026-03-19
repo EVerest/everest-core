@@ -50,15 +50,15 @@ class EverestTestController(TestController):
             f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
             "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,1;sleep 200;unplug")
 
-    def plug_in_ac_iso(self, connector_id=1):
+    def plug_in_ac_iso(self, connector_id=1, payment_type=""):
         self._mqtt_client.publish(
             f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
-            "sleep 1;iso_wait_slac_matched;iso_start_v2g_session AC 86400 0;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;sleep 60;iso_stop_charging;iso_wait_v2g_session_stopped;unplug")
+            f"sleep 1;iso_wait_slac_matched;iso_start_v2g_session AC {payment_type} 86400 0;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;sleep 60;iso_stop_charging;iso_wait_v2g_session_stopped;unplug")
 
-    def plug_in_dc_iso(self, connector_id=1):
+    def plug_in_dc_iso(self, connector_id=1, payment_type=""):
         self._mqtt_client.publish(
             f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
-            "sleep 1;iso_wait_slac_matched;iso_start_v2g_session DC 86400 0;iso_wait_pwr_ready;iso_wait_for_stop 60;iso_wait_v2g_session_stopped;unplug"
+            f"sleep 1;iso_wait_slac_matched;iso_start_v2g_session DC {payment_type} 86400 0;iso_wait_pwr_ready;iso_wait_for_stop 60;iso_wait_v2g_session_stopped;unplug"
         )
 
     def plug_out(self, connector_id=1):

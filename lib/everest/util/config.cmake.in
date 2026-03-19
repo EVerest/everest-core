@@ -1,0 +1,10 @@
+@PACKAGE_INIT@
+
+if(NOT TARGET everest::util)
+    add_library(everest::util INTERFACE IMPORTED)
+    set_target_properties(everest::util PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_INCLUDEDIR@"
+    )
+endif()
+
+check_required_components(everest-util)

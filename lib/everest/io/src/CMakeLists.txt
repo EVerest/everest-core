@@ -38,7 +38,8 @@ target_include_directories(everest_io
 
 target_link_libraries(everest_io
     PUBLIC
-        everest::util
+        $<BUILD_INTERFACE:everest_util>
+        $<INSTALL_INTERFACE:everest::util>
 )
 
 include(CheckIncludeFile)

@@ -41,11 +41,23 @@ using PauseChargingEVSEReasonEnum_External = PauseChargingEVSEReasonEnum;
 PauseChargingEVSEReasonEnum_Internal to_internal_api(PauseChargingEVSEReasonEnum_External const& val);
 PauseChargingEVSEReasonEnum_External to_external_api(PauseChargingEVSEReasonEnum_Internal const& val);
 
+using HlcSessionFailedReasonEnum_Internal = ::types::evse_manager::HlcSessionFailedReasonEnum;
+using HlcSessionFailedReasonEnum_External = HlcSessionFailedReasonEnum;
+
+HlcSessionFailedReasonEnum_Internal to_internal_api(HlcSessionFailedReasonEnum_External const& val);
+HlcSessionFailedReasonEnum_External to_external_api(HlcSessionFailedReasonEnum_Internal const& val);
+
 using SessionEvent_Internal = ::types::evse_manager::SessionEvent;
 using SessionEvent_External = SessionEvent;
 
 SessionEvent_Internal to_internal_api(SessionEvent_External const& val);
 SessionEvent_External to_external_api(SessionEvent_Internal const& val);
+
+using HlcSessionFailedEvent_Internal = ::types::evse_manager::HlcSessionFailedEvent;
+using HlcSessionFailedEvent_External = HlcSessionFailedEvent;
+
+HlcSessionFailedEvent_Internal to_internal_api(HlcSessionFailedEvent_External const& val);
+HlcSessionFailedEvent_External to_external_api(HlcSessionFailedEvent_Internal const& val);
 
 using Limits_Internal = ::types::evse_manager::Limits;
 using Limits_External = Limits;

@@ -8,6 +8,8 @@
 #include "tools.hpp"
 #include "v2g_server.hpp"
 
+#include <generated/types/evse_manager.hpp>
+
 #include <arpa/inet.h>
 #include <cstring>
 #include <ctype.h>
@@ -360,6 +362,42 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, size_t
     return (ssize_t)bytes_written;
 }
 
+static std::optional<types::evse_manager::HlcSessionFailedReasonEnum>
+map_v2g_msg_to_hlc_failed_reason(V2gMsgTypeId msg, bool tls_handshake_failed) {
+    using Reason = types::evse_manager::HlcSessionFailedReasonEnum;
+    if (tls_handshake_failed) {
+        return Reason::FailedTLSHandshake;
+    }
+    switch (msg) {
+    case V2G_SUPPORTED_APP_PROTOCOL_MSG:
+    case V2G_SESSION_SETUP_MSG:
+        return Reason::ProtocolNegotiationFailed;
+    case V2G_SERVICE_DISCOVERY_MSG:
+    case V2G_SERVICE_DETAIL_MSG:
+    case V2G_CHARGE_PARAMETER_DISCOVERY_MSG:
+        return Reason::ChargingParametersNotAccepted;
+    case V2G_PAYMENT_SERVICE_SELECTION_MSG:
+    case V2G_PAYMENT_DETAILS_MSG:
+    case V2G_AUTHORIZATION_MSG:
+    case V2G_CERTIFICATE_UPDATE_MSG:
+    case V2G_CERTIFICATE_INSTALLATION_MSG:
+        return Reason::AuthorizationFailed;
+    case V2G_CABLE_CHECK_MSG:
+    case V2G_PRE_CHARGE_MSG:
+    case V2G_POWER_DELIVERY_MSG:
+        return Reason::EnergyTransferSetupFailed;
+    case V2G_CURRENT_DEMAND_MSG:
+    case V2G_CHARGING_STATUS_MSG:
+    case V2G_METERING_RECEIPT_MSG:
+        return Reason::ChargingInterrupted;
+    case V2G_SESSION_STOP_MSG:
+    case V2G_WELDING_DETECTION_MSG:
+        return std::nullopt;
+    default:
+        return Reason::UnexpectedSessionEnd;
+    }
+}
+
 /*!
  * \brief connection_teardown This function must be called on connection teardown.
  * \param conn is the V2G connection context
@@ -375,8 +413,18 @@ void connection_teardown(struct v2g_connection* conn) {
         }
     }
 
+    const V2gMsgTypeId last_msg = conn->last_v2g_msg_at_disconnect;
+    const bool evse_initiated_stop = conn->ctx->stop_hlc || conn->ctx->intl_emergency_shutdown;
+
     /* init charging session */
     v2g_ctx_init_charging_session(conn->ctx, true);
+
+    if (!evse_initiated_stop && (conn->d_link_action == dLinkAction::D_LINK_ACTION_TERMINATE ||
+                                 conn->d_link_action == dLinkAction::D_LINK_ACTION_ERROR)) {
+        if (const auto reason = map_v2g_msg_to_hlc_failed_reason(last_msg, conn->tls_handshake_failed)) {
+            conn->ctx->p_charger->publish_hlc_session_failed(*reason);
+        }
+    }
 
     /* print dlink status */
     switch (conn->d_link_action) {

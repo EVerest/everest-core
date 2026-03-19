@@ -1286,6 +1286,7 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
             }
         }
 
+        shared_context.flag_externally_cancelled = true;
         shared_context.flag_authorized = false;
         shared_context.authorized_pnc = false;
         shared_context.last_stop_transaction_reason = request.reason;
@@ -1312,6 +1313,7 @@ void Charger::start_session(bool authfirst) {
 void Charger::stop_session() {
     shared_context.session_active = false;
     shared_context.flag_authorized = false;
+    shared_context.flag_externally_cancelled = false;
     shared_context.flag_paused_by_evse = false;
     signal_simple_event(types::evse_manager::SessionEventEnum::SessionFinished);
     shared_context.session_uuid.clear();
@@ -1543,6 +1545,14 @@ void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& tok
                         const types::authorization::ValidationResult& result) {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_authorize);
     if (a) {
+        if (shared_context.flag_externally_cancelled) {
+            EVLOG_warning
+                << "Received an authorization after the session was externally cancelled. Ignoring this authorization.";
+            // Ignore (delayed) authorization responses after an external cancellation
+            // Without this guard, a delayed auth could restore flag_authorized and prevent the state machine
+            // from routing to EvseState::Finished
+            return;
+        }
         shared_context.id_token = token;
         shared_context.validation_result = result;
         // First user interaction was auth? Then start session already here and not at plug in

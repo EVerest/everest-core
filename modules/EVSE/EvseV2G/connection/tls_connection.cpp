@@ -38,11 +38,13 @@ void process_connection_thread(std::shared_ptr<tls::ServerConnection> con, struc
     dlog(DLOG_LEVEL_INFO, "Incoming TLS connection");
 
     bool loop{true};
+    bool tls_accepted{false};
     while (loop) {
         loop = false;
         const auto result = con->accept();
         switch (result) {
         case tls::Connection::result_t::success:
+            tls_accepted = true;
             if (ctx->state == 0) {
                 const auto rv = ::v2g_handle_connection(connection.get());
                 dlog(DLOG_LEVEL_INFO, "v2g_dispatch_connection exited with %d", rv);
@@ -63,6 +65,7 @@ void process_connection_thread(std::shared_ptr<tls::ServerConnection> con, struc
         }
     }
 
+    connection->tls_handshake_failed = !tls_accepted;
     connection->ctx->connection_initiated = false;
 
     ::connection_teardown(connection.get());

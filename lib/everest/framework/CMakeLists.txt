@@ -181,6 +181,7 @@ if (FRAMEWORK_INSTALL)
         EXPORT framework-targets
         NAMESPACE everest
         ADDITIONAL_CONTENT
+            "find_dependency(everest-util)"
             "find_dependency(nlohmann_json)"
             "find_dependency(nlohmann_json_schema_validator)"
             "find_dependency(fmt)"

@@ -27,6 +27,8 @@ const Component SecurityCtrlr = {"SecurityCtrlr"};
 const Component SmartChargingCtrlr = {"SmartChargingCtrlr"};
 const Component TariffCostCtrlr = {"TariffCostCtrlr"};
 const Component TxCtrlr = {"TxCtrlr"};
+const Component OCPP16LegacyCtrlr = {"OCPP16LegacyCtrlr"};
+const Component CustomLegacyController = {"CustomLegacyController"};
 } // namespace ControllerComponents
 
 namespace StandardizedVariables {
@@ -1215,6 +1217,181 @@ const ComponentVariable ISO15118CtrlrAvailable = {
     }),
 };
 
+// OCPP1.6 Mavericks - Configuration keys without direct OCPP 2.x equivalents
+const ComponentVariable BlinkRepeat = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "BlinkRepeat",
+    }),
+};
+const ComponentVariable ConnectorPhaseRotation = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "ConnectorPhaseRotation",
+    }),
+};
+const ComponentVariable ConnectorPhaseRotationMaxLength = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "ConnectorPhaseRotationMaxLength",
+    }),
+};
+const RequiredComponentVariable GetConfigurationMaxKeys = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "GetConfigurationMaxKeys",
+    }),
+};
+const ComponentVariable LightIntensity = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "LightIntensity",
+    }),
+};
+const ComponentVariable MinimumStatusDuration = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "MinimumStatusDuration",
+    }),
+};
+const ComponentVariable StopTransactionOnEVSideDisconnect = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "StopTransactionOnEVSideDisconnect",
+    }),
+};
+const RequiredComponentVariable SupportedFeatureProfiles = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "SupportedFeatureProfiles",
+    }),
+};
+const ComponentVariable SupportedFeatureProfilesMaxLength = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "SupportedFeatureProfilesMaxLength",
+    }),
+};
+const RequiredComponentVariable UnlockConnectorOnEVSideDisconnect = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "UnlockConnectorOnEVSideDisconnect",
+    }),
+};
+const ComponentVariable ReserveConnectorZeroSupported = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "ReserveConnectorZeroSupported",
+    }),
+};
+const ComponentVariable HostName = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "HostName",
+    }),
+};
+const ComponentVariable AllowChargingProfileWithoutStartSchedule = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "AllowChargingProfileWithoutStartSchedule",
+    }),
+};
+const ComponentVariable WaitForStopTransactionsOnResetTimeout = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "WaitForStopTransactionsOnResetTimeout",
+    }),
+};
+const ComponentVariable StopTransactionIfUnlockNotSupported = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "StopTransactionIfUnlockNotSupported",
+    }),
+};
+const ComponentVariable MeterPublicKeys = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "MeterPublicKeys",
+    }),
+};
+const ComponentVariable DisableSecurityEventNotifications = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "DisableSecurityEventNotifications",
+    }),
+};
+const ComponentVariable ISO15118CertificateManagementEnabled = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "ISO15118CertificateManagementEnabled",
+    }),
+};
+const ComponentVariable CustomDisplayCostAndPrice = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "CustomDisplayCostAndPrice",
+    }),
+};
+const ComponentVariable DefaultPrice = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "DefaultPrice",
+    }),
+};
+const ComponentVariable DefaultPriceText = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "DefaultPriceText",
+    }),
+};
+const ComponentVariable CustomIdleFeeAfterStop = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "CustomIdleFeeAfterStop",
+    }),
+};
+const ComponentVariable SupportedLanguages = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "SupportedLanguages",
+    }),
+};
+const ComponentVariable CustomMultiLanguageMessages = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "CustomMultiLanguageMessages",
+    }),
+};
+const ComponentVariable Language = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "Language",
+    }),
+};
+const ComponentVariable WaitForSetUserPriceTimeout = {
+    ControllerComponents::OCPP16LegacyCtrlr,
+    std::optional<Variable>({
+        "WaitForSetUserPriceTimeout",
+    }),
+};
+const ComponentVariable AuthorizationKey16 = {
+    ControllerComponents::CustomLegacyController,
+    std::optional<Variable>({
+        "AuthorizationKey",
+    }),
+};
+const RequiredComponentVariable CentralSystemURI16 = {
+    ControllerComponents::CustomLegacyController,
+    std::optional<Variable>({
+        "CentralSystemURI",
+    }),
+};
+const RequiredComponentVariable SecurityProfile16 = {
+    ControllerComponents::CustomLegacyController,
+    std::optional<Variable>({
+        "SecurityProfile",
+    }),
+};
 } // namespace ControllerComponentVariables
 
 namespace EvseComponentVariables {

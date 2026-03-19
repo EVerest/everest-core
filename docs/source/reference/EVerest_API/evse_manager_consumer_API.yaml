@@ -93,6 +93,11 @@ channels:
     messages:
       receive_session_event:
         $ref: '#/components/messages/receive_session_event'
+  receive_hlc_session_failed:
+    address: 'e2m/hlc_session_failed'
+    messages:
+      receive_hlc_session_failed:
+        $ref: '#/components/messages/receive_hlc_session_failed'
   receive_ev_info:
     address: 'e2m/ev_info'
     messages:
@@ -330,6 +335,11 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_session_event'
+  receive_hlc_session_failed:
+    title: 'Receive HLC session failed event'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_hlc_session_failed'
   receive_ev_info:
     title: 'Receive details of EV'
     action: receive
@@ -656,6 +666,13 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/SessionEvent'
+    receive_hlc_session_failed:
+      name: receive_hlc_session_failed
+      title: 'Receive HLC session failed event'
+      summary: 'Emits if a HLC session failed'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HlcSessionFailedEvent'
     receive_ev_info:
       name: receive_ev_info
       title: 'Receive details about EV'
@@ -957,6 +974,56 @@ components:
             Timestamp of transaction end. Updated at each transaction end.
           type: string
           format: date-time
+    HlcSessionFailedReasonEnum:
+      description: |
+        Reason for a higher-level-communication (HLC) session failure event.
+        Published via HlcSessionFailed whenever HLC session encounters a failure.
+        - ProtocolNegotiationFailed: No common communication protocol or version could be
+          negotiated. Applies to protocols with a version handshake phase.
+        - AuthorizationFailed: The authorization phase did not succeed and the EV terminated
+          the session. This covers both explicit rejection (e.g. failed PnC contract or
+          certificate verification) and authorization timeout (the EVSE did not respond
+          within the timeout of the EV).
+        - ChargingParametersNotAccepted: The EV terminated during parameter negotiation,
+          indicating it could not accept the offered energy transfer parameters (power
+          levels, voltage range, schedule, etc.).
+        - EnergyTransferSetupFailed: The setup phase immediately before energy transfer
+          began (e.g. power delivery request, pre-charge coordination) failed or was
+          rejected by the EV before any energy was transferred.
+        - ChargingInterrupted: The EV stopped energy transfer unexpectedly during active
+          charging without completing a normal stop sequence.
+        - FailedTLSHandshake: The TLS handshake between EV and EVSE failed before any
+          V2G message exchange could take place, preventing the session from starting.
+        - UnexpectedSessionEnd: The communication session ended unexpectedly at a phase
+          not covered by the above reasons, or without completing a normal termination
+          sequence. Catch-all for unclassified EV-side terminations.
+      type: string
+      enum:
+        - ProtocolNegotiationFailed
+        - AuthorizationFailed
+        - ChargingParametersNotAccepted
+        - EnergyTransferSetupFailed
+        - ChargingInterrupted
+        - FailedTLSHandshake
+        - UnexpectedSessionEnd
+    HlcSessionFailedEvent:
+      description: >-
+        Published on the hlc_session_failed variable whenever an HLC session failure occurs.
+        Can fire multiple times per EVerest session (e.g. on retries). Use uuid to
+        correlate with session_event.
+      type: object
+      additionalProperties: false
+      required:
+        - uuid
+        - reason
+      properties:
+        uuid:
+          description: Session UUID for correlation with session_event
+          type: string
+        reason:
+          description: Protocol-agnostic reason for the HLC session failure
+          type: string
+          $ref: '#/components/schemas/HlcSessionFailedReasonEnum'
     ChargingStateChangedEvent:
       description: Context for ChargingStateChanged event
       type: object
