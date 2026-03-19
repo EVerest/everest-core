@@ -2387,7 +2387,7 @@ bool EvseSecurity::is_filesystem_full() {
 
     uintmax_t total_size_bytes = 0;
     for (const auto& path : unique_paths) {
-        total_size_bytes = fs::file_size(path);
+        total_size_bytes += fs::file_size(path);
     }
 
     EVLOG_debug << "Total bytes used: " << total_size_bytes;
