@@ -808,7 +808,10 @@ void ISO15118_chargerImpl::handle_ac_contactor_closed(bool& status) {
 }
 
 void ISO15118_chargerImpl::handle_dlink_ready(bool& value) {
-    // your code for cmd dlink_ready goes here
+    std::scoped_lock lock(GEL);
+    if (controller) {
+        controller->set_dlink_ready(value);
+    }
 }
 
 void ISO15118_chargerImpl::handle_cable_check_finished(bool& status) {

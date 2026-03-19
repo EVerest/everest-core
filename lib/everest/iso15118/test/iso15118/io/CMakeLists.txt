@@ -10,6 +10,10 @@ target_link_libraries(test_logging
 
 catch_discover_tests(test_logging)
 
+add_executable(test_sdp_server sdp_server_test.cpp)
+target_link_libraries(test_sdp_server PRIVATE iso15118 Catch2::Catch2WithMain)
+catch_discover_tests(test_sdp_server)
+
 add_executable(connection_openssl_test)
 add_custom_command(
     TARGET connection_openssl_test POST_BUILD

@@ -57,6 +57,15 @@ void TbdController::loop() {
 
         next_event = offset_time_point_by_ms(get_current_time_point(), POLL_MANAGER_TIMEOUT_MS);
 
+        if (communication_setup_timeout && communication_setup_timeout->is_reached()) {
+            logf_warning("V2G communication setup timeout (18s) expired before session was established");
+            communication_setup_timeout.reset();
+            if (sdp_server) {
+                sdp_server->set_dlink_ready(false);
+            }
+            callbacks.signal(session::feedback::Signal::DLINK_ERROR);
+        }
+
         if (session) {
             try {
                 const auto next_session_event = session->poll();
@@ -137,8 +146,26 @@ void TbdController::update_ac_limits(const d20::AcTransferLimits& limits) {
     }
 }
 
+void TbdController::set_dlink_ready(bool ready) {
+    if (sdp_server) {
+        sdp_server->set_dlink_ready(ready);
+    }
+
+    if (ready) {
+        communication_setup_timeout.emplace(V2G_COMMUNICATION_SETUP_TIMEOUT_MS);
+        logf_info("V2G communication setup timeout started (%u ms)", V2G_COMMUNICATION_SETUP_TIMEOUT_MS);
+    } else {
+        communication_setup_timeout.reset();
+    }
+}
+
 void TbdController::handle_sdp_server_input() {
     auto request = sdp_server->get_peer_request();
+
+    if (not sdp_server->is_dlink_ready()) {
+        logf_info("Ignoring SDP request because dlink is not ready");
+        return;
+    }
 
     if (session) {
         logf_warning("Ignoring sdp request message because a session is already created and running");
@@ -181,6 +208,7 @@ void TbdController::handle_sdp_server_input() {
     const auto ipv6_endpoint = connection->get_public_endpoint();
 
     session = std::make_unique<Session>(std::move(connection), d20::SessionConfig(evse_setup), callbacks, pause_ctx);
+    communication_setup_timeout.reset();
 
     sdp_server->send_response(request, ipv6_endpoint);
 }

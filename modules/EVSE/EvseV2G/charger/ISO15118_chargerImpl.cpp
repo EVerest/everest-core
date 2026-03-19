@@ -3,6 +3,7 @@
 // Copyright (C) 2022-2023 Contributors to EVerest
 #include "ISO15118_chargerImpl.hpp"
 #include "log.hpp"
+#include "sdp.hpp"
 #include "tools.hpp"
 #include "v2g_ctx.hpp"
 #include <algorithm>
@@ -290,7 +291,8 @@ void ISO15118_chargerImpl::handle_ac_contactor_closed(bool& status) {
 }
 
 void ISO15118_chargerImpl::handle_dlink_ready(bool& value) {
-    // FIXME: dlink_ready(true) is ignored for now
+    sdp_set_dlink_ready(v2g_ctx, value);
+
     // If dlink becomes not ready (false), stop TCP connection in the read thread
     if (!value) {
         v2g_ctx->is_connection_terminated = true;

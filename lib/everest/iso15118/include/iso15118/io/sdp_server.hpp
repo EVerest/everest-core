@@ -2,6 +2,7 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <string>
 
@@ -37,9 +38,13 @@ public:
         return fd;
     }
 
+    void set_dlink_ready(bool ready);
+    bool is_dlink_ready() const;
+
 private:
     int fd{-1};
     uint8_t udp_buffer[2048];
+    std::atomic<bool> dlink_ready_{false};
 };
 
 class TlsKeyLoggingServer {

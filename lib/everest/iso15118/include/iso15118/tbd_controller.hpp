@@ -14,6 +14,7 @@
 #include <iso15118/d20/limits.hpp>
 #include <iso15118/io/poll_manager.hpp>
 #include <iso15118/io/sdp_server.hpp>
+#include <iso15118/io/time.hpp>
 #include <iso15118/message/common_types.hpp>
 #include <iso15118/session/feedback.hpp>
 #include <iso15118/session/iso.hpp>
@@ -44,6 +45,8 @@ public:
 
     void update_supported_vas_services(const std::vector<uint16_t>& vas_services);
 
+    void set_dlink_ready(bool ready);
+
 private:
     io::PollManager poll_manager;
     std::unique_ptr<io::SdpServer> sdp_server;
@@ -61,6 +64,9 @@ private:
     std::string interface_name;
 
     std::optional<d20::PauseContext> pause_ctx{std::nullopt};
+
+    static constexpr uint32_t V2G_COMMUNICATION_SETUP_TIMEOUT_MS{18000};
+    std::optional<Timeout> communication_setup_timeout;
 };
 
 } // namespace iso15118

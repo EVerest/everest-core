@@ -22,5 +22,6 @@ int sdp_create_response(uint8_t* buffer, struct sockaddr_in6* addr, enum sdp_sec
                         enum sdp_transport_protocol proto);
 int sdp_init(struct v2g_context* v2g_ctx);
 int sdp_listen(struct v2g_context* v2g_ctx);
+void sdp_set_dlink_ready(struct v2g_context* v2g_ctx, bool ready);
 
 #endif /* SDP_H */

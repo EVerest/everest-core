@@ -88,6 +88,14 @@ SdpServer::SdpServer(const std::string& interface_name) {
     }
 }
 
+void SdpServer::set_dlink_ready(bool ready) {
+    dlink_ready_.store(ready);
+}
+
+bool SdpServer::is_dlink_ready() const {
+    return dlink_ready_.load();
+}
+
 SdpServer::~SdpServer() {
     // FIXME (aw): rather use some RAII class for this!
     logf_info("Shutting down SDP server!");

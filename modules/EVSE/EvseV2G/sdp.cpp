@@ -3,6 +3,7 @@
 // Copyright (C) 2022-2023 Contributors to EVerest
 #include "sdp.hpp"
 #include "log.hpp"
+#include "tools.hpp"
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -273,6 +274,29 @@ int sdp_listen(struct v2g_context* v2g_ctx) {
         };
         socklen_t addrlen = sizeof(sdp_query.remote_addr);
 
+        /* Track V2G communication setup timeout [V2G2-723] */
+        long long int dlink_ready_time = v2g_ctx->sdp_dlink_ready_time.load();
+
+        /* Cancel timeout if a V2G TCP/TLS connection was established */
+        if (v2g_ctx->connection_initiated && dlink_ready_time != 0) {
+            dlog(DLOG_LEVEL_INFO, "V2G TCP/TLS connection established, SDP communication setup timeout cancelled");
+            v2g_ctx->sdp_dlink_ready_time = 0;
+        }
+
+        /* Check if V2G communication setup timeout has expired */
+        if (dlink_ready_time != 0 && !v2g_ctx->connection_initiated) {
+            long long int elapsed = getmonotonictime() - dlink_ready_time;
+            if (elapsed >= V2G_COMMUNICATION_SETUP_TIMEOUT) {
+                dlog(DLOG_LEVEL_WARNING,
+                     "V2G communication setup timeout (%dms) expired - signaling dlink_error to EvseManager [V2G2-723]",
+                     V2G_COMMUNICATION_SETUP_TIMEOUT);
+                v2g_ctx->p_charger->publish_dlink_error(nullptr);
+                v2g_ctx->sdp_dlink_ready = false;
+                v2g_ctx->sdp_dlink_ready_time = 0;
+                continue;
+            }
+        }
+
         /* Check if data was received on socket */
         signed status = poll(&pollfd, 1, POLL_TIMEOUT);
 
@@ -314,6 +338,11 @@ int sdp_listen(struct v2g_context* v2g_ctx) {
             dlog(DLOG_LEVEL_INFO, "Received packet from [%s]:%" PRIu16 " with security 0x%02x and protocol 0x%02x",
                  addr, ntohs(sdp_query.remote_addr.sin6_port), sdp_query.security_requested, sdp_query.proto_requested);
 
+            if (!v2g_ctx->sdp_dlink_ready) {
+                dlog(DLOG_LEVEL_INFO, "SDP request discarded: dlink not ready");
+                continue;
+            }
+
             sdp_send_response(v2g_ctx->sdp_socket, &sdp_query);
         }
     }
@@ -323,4 +352,10 @@ int sdp_listen(struct v2g_context* v2g_ctx) {
     }
 
     return 0;
+}
+
+void sdp_set_dlink_ready(struct v2g_context* v2g_ctx, bool ready) {
+    v2g_ctx->sdp_dlink_ready = ready;
+    v2g_ctx->sdp_dlink_ready_time = ready ? getmonotonictime() : 0;
+    dlog(DLOG_LEVEL_INFO, "SDP dlink_ready set to %s", ready ? "true" : "false");
 }

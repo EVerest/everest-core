@@ -156,6 +156,7 @@ target_sources(${SDP_NAME} PRIVATE
     sdp_test.cpp
     log.cpp
     ../sdp.cpp
+    ../tools.cpp
 )
 
 target_link_libraries(${SDP_NAME}
