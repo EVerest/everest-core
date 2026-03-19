@@ -22,9 +22,8 @@ services:
       - type: bind
         source: ${GITHUB_WORKSPACE}
         target: /ext
-      - type: bind
-        source: ${GITHUB_WORKSPACE}/source/.ci/e2e/scripts
-        target: /ext/scripts
+    cap_add:
+      - NET_ADMIN
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
     networks:

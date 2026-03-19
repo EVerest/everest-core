@@ -3,57 +3,31 @@
 This directory contains some test tooling and integration tests
 for OCPP1.6 and OCPP2.0.1.
 
-## Requirements
-
-In order to run the integration tests, you need to have everest-core compiled
-and installed on your system. Please also make sure to install the python
-requirements.
-
-```bash
-cd everest-core/
-cmake -S . -B build -DBUILD_TESTING=ON
-cmake --build build --target install --parallel -j$(nproc)
-. build/venv/bin/activate
-cmake --build build --target everestpy_pip_install_dist
-cmake --build build --target everest-testing_pip_install_dist
-cmake --build build --target iso15118_pip_install_dist
-python3 -m pip install "aiofile>=3.7.4"
-python3 -m pip install "netifaces>=0.11.0"
-cd tests/ocpp_tests
-python3 -m pip install -r requirements.txt
-```
-
 ## Run the tests
 
-You can run the integration tests using the convenience scripts
-provided in this directory e.g.
+All tests are run via the unified `tests/run-tests.sh` script from the
+repository root. The script handles parallel execution, network-isolation
+setup/teardown and certificate/config installation automatically.
 
 ```bash
-./run-testing.sh
+# From the repository root:
+tests/run-tests.sh ocpp          # all OCPP tests (1.6, 2.0.1, 2.1)
+tests/run-tests.sh ocpp16        # OCPP 1.6 only
+tests/run-tests.sh ocpp201       # OCPP 2.0.1 only
+tests/run-tests.sh ocpp21        # OCPP 2.1 only
+tests/run-tests.sh --serial ocpp # run serially
+tests/run-tests.sh -j4 ocpp     # limit to 4 parallel workers
+tests/run-tests.sh --help        # show all options
 ```
 
-This command runs all test cases in parallel.
-The time for running the test cases depends on your system.
-It usually takes a couple of minutes.
-You can check out the test results by opening the generated `results.html`.
+Tests run in parallel by default. The time depends on your system;
+it usually takes a couple of minutes.
+Check the generated `report.html` for detailed results.
 
-You can choose to run the tests sequentially and/or only run subsets
-for OCPP1.6 or OCPP2.0.1 using any of the other run scripts.
-
-Alternatively, you can run individual test sets or test cases using
+You can also run individual test sets or test cases using
 
 ```bash
-python3 -m pytest test_sets/ocpp201/remote_control.py \
-  --everest-prefix <path-to-everest-core-installation-directory> \
-  -k 'test_F01_F02_F03'
-```
-
-e.g.
-
-```bash
-python3 -m pytest test_sets/ocpp201/remote_control.py \
-  --everest-prefix ~/checkout/everest-core/build/dist \
-  -k 'test_F01_F02_F03'
+python3 -m pytest test_sets/ocpp201/remote_control.py::test_F01_F02_F03
 ```
 
 This runs test case `test_F01_F02_F03`
