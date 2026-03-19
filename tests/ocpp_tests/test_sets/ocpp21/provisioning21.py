@@ -1506,3 +1506,213 @@ async def test_network_configuration_vpn_configuration(
     assert (
         vpn_enabled_result[0].get("attribute_status") == "Accepted"
     ), f"VpnEnabled not set successfully: {vpn_enabled_result[0]}"
+
+
+@pytest.mark.asyncio
+@pytest.mark.ocpp_version("ocpp2.1")
+@pytest.mark.everest_core_config(
+    get_everest_config_path_str("everest-config-ocpp201.yaml")
+)
+@pytest.mark.ocpp_config_adaptions(
+    GenericOCPP2XConfigAdjustment(
+        [
+            (
+                OCPP2XConfigVariableIdentifier(
+                    "InternalCtrlr", "SupportedOcppVersions", "Actual"
+                ),
+                "ocpp2.1",
+            )
+        ]
+    )
+)
+async def test_network_configuration_dm_end_to_end(
+    central_system_v21: CentralSystem,
+    test_controller: TestController,
+):
+    """
+    US-006: End-to-end integration test for NetworkConfiguration device model.
+
+    Verifies the full lifecycle:
+    1. Migration from legacy NetworkConnectionProfiles blob to DM variables on boot
+    2. GetVariables reads correct values from NetworkConfiguration[1]
+    3. SetVariables updates a non-active slot and the change persists (read-back)
+    4. SetVariables on the active slot is rejected with PriorityNetworkConf
+    """
+    log.info(
+        "##################### US-006: NetworkConfiguration DM End-to-End #################"
+    )
+
+    test_controller.start()
+    charge_point_v21 = await central_system_v21.wait_for_chargepoint(
+        wait_for_bootnotification=True
+    )
+
+    # ── Step 1 & 2: Verify migration happened by reading slot 1 DM variables ──
+    # The charge point booted with a legacy NetworkConnectionProfiles blob.
+    # Migration should have populated NetworkConfiguration[1] with those values.
+    variable_names = ["OcppCsmsUrl", "SecurityProfile", "OcppInterface", "OcppTransport"]
+
+    get_vars = [
+        GetVariableDataType(
+            component=ComponentType(
+                name="NetworkConfiguration", instance="1"
+            ),
+            variable=VariableType(name=var_name),
+            attribute_type=AttributeEnumType.actual,
+        )
+        for var_name in variable_names
+    ]
+
+    response = await charge_point_v21.get_variables_req(
+        get_variable_data=get_vars
+    )
+
+    assert response and response.get_variable_result, "No get variable result for slot 1"
+    results = response.get_variable_result
+    assert len(results) == len(variable_names), (
+        f"Expected {len(variable_names)} results, got {len(results)}"
+    )
+
+    # Build a map of variable name → value for easier assertions
+    slot1_values = {}
+    for r in results:
+        var_name = r.get("variable", {}).get("name")
+        status = r.get("attribute_status")
+        assert status == "Accepted", (
+            f"GetVariables failed for {var_name}: status={status}"
+        )
+        slot1_values[var_name] = r.get("attribute_value")
+
+    # Verify migration produced correct values from the legacy blob
+    # The legacy blob has: securityProfile=1, ocppInterface=Wired0, ocppTransport=JSON
+    # OcppCsmsUrl is injected by the test framework to point to the test CSMS
+    assert slot1_values["OcppCsmsUrl"], "OcppCsmsUrl should not be empty after migration"
+    assert "ws" in slot1_values["OcppCsmsUrl"].lower(), (
+        f"OcppCsmsUrl should be a websocket URL, got: {slot1_values['OcppCsmsUrl']}"
+    )
+    assert slot1_values["SecurityProfile"] == "1", (
+        f"SecurityProfile should be 1, got: {slot1_values['SecurityProfile']}"
+    )
+    assert slot1_values["OcppInterface"] == "Wired0", (
+        f"OcppInterface should be Wired0, got: {slot1_values['OcppInterface']}"
+    )
+    assert slot1_values["OcppTransport"] == "JSON", (
+        f"OcppTransport should be JSON, got: {slot1_values['OcppTransport']}"
+    )
+
+    log.info("Step 1-2 PASSED: Migration verified — slot 1 DM variables match legacy blob")
+
+    # ── Step 3: SetVariables on non-active slot 2, then read back to verify persistence ──
+    new_url = "wss://updated-backup.example.com/ocpp"
+    new_security_profile = "2"
+    new_interface = "Wired0"
+    new_transport = "JSON"
+
+    set_vars = [
+        SetVariableDataType(
+            component=ComponentType(
+                name="NetworkConfiguration", instance="2"
+            ),
+            variable=VariableType(name="OcppCsmsUrl"),
+            attribute_type=AttributeEnumType.actual,
+            attribute_value=new_url,
+        ),
+        SetVariableDataType(
+            component=ComponentType(
+                name="NetworkConfiguration", instance="2"
+            ),
+            variable=VariableType(name="SecurityProfile"),
+            attribute_type=AttributeEnumType.actual,
+            attribute_value=new_security_profile,
+        ),
+        SetVariableDataType(
+            component=ComponentType(
+                name="NetworkConfiguration", instance="2"
+            ),
+            variable=VariableType(name="OcppInterface"),
+            attribute_type=AttributeEnumType.actual,
+            attribute_value=new_interface,
+        ),
+        SetVariableDataType(
+            component=ComponentType(
+                name="NetworkConfiguration", instance="2"
+            ),
+            variable=VariableType(name="OcppTransport"),
+            attribute_type=AttributeEnumType.actual,
+            attribute_value=new_transport,
+        ),
+    ]
+
+    response = await charge_point_v21.set_variables_req(
+        set_variable_data=set_vars
+    )
+
+    assert validate_set_variables_success(response, len(set_vars)), (
+        f"SetVariables on slot 2 should succeed: {response}"
+    )
+
+    # Read back slot 2 to verify persistence
+    get_vars_slot2 = [
+        GetVariableDataType(
+            component=ComponentType(
+                name="NetworkConfiguration", instance="2"
+            ),
+            variable=VariableType(name=var_name),
+            attribute_type=AttributeEnumType.actual,
+        )
+        for var_name in variable_names
+    ]
+
+    response = await charge_point_v21.get_variables_req(
+        get_variable_data=get_vars_slot2
+    )
+
+    assert response and response.get_variable_result, "No get variable result for slot 2"
+    results = response.get_variable_result
+
+    slot2_values = {}
+    for r in results:
+        var_name = r.get("variable", {}).get("name")
+        status = r.get("attribute_status")
+        assert status == "Accepted", (
+            f"GetVariables failed for slot 2 {var_name}: status={status}"
+        )
+        slot2_values[var_name] = r.get("attribute_value")
+
+    assert slot2_values["OcppCsmsUrl"] == new_url, (
+        f"Slot 2 OcppCsmsUrl should be {new_url}, got: {slot2_values['OcppCsmsUrl']}"
+    )
+    assert slot2_values["SecurityProfile"] == new_security_profile, (
+        f"Slot 2 SecurityProfile should be {new_security_profile}, got: {slot2_values['SecurityProfile']}"
+    )
+    assert slot2_values["OcppInterface"] == new_interface, (
+        f"Slot 2 OcppInterface should be {new_interface}, got: {slot2_values['OcppInterface']}"
+    )
+    assert slot2_values["OcppTransport"] == new_transport, (
+        f"Slot 2 OcppTransport should be {new_transport}, got: {slot2_values['OcppTransport']}"
+    )
+
+    log.info("Step 3 PASSED: SetVariables on slot 2 persisted and verified via GetVariables")
+
+    # ── Step 4: SetVariables on the active slot (1) should be rejected ──
+    set_var_active = SetVariableDataType(
+        component=ComponentType(
+            name="NetworkConfiguration", instance="1"
+        ),
+        variable=VariableType(name="OcppCsmsUrl"),
+        attribute_type=AttributeEnumType.actual,
+        attribute_value="wss://should-be-rejected.example.com/ocpp",
+    )
+
+    response = await charge_point_v21.set_variables_req(
+        set_variable_data=[set_var_active]
+    )
+
+    assert validate_set_variables_rejected(
+        response, "PriorityNetworkConf"
+    ), (
+        f"SetVariables on active slot 1 should be rejected with "
+        f"PriorityNetworkConf, but got: {response}"
+    )
+
+    log.info("Step 4 PASSED: SetVariables on active slot 1 rejected with PriorityNetworkConf")
