@@ -130,7 +130,7 @@ cc_library(
         ":bundled_deps",
         ":config_header",
         ":mosquitto_common",
-        "@openssl//:ssl",
+        "@everest-core//third-party/bazel/openssl:ssl",
     ] + select({
         "//conditions:default": [],
     }),
