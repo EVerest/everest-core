@@ -34,6 +34,27 @@ constexpr auto mqtt_keep_alive = 600;
 constexpr auto mqtt_get_timeout_ms = 5000;       ///< Timeout for MQTT get in milliseconds
 constexpr auto mqtt_reconnect_timeout_ms = 2000; ///< MQTT reconnect timeout
 
+namespace {
+everest::lib::io::mqtt::mqtt_client::QoS to_io_qos(Everest::QOS qos,
+                                                   everest::lib::io::mqtt::mqtt_client::QoS default_qos) {
+    switch (qos) {
+    case QOS::QOS0:
+        return everest::lib::io::mqtt::mqtt_client::QoS::at_most_once;
+        break;
+    case QOS::QOS1:
+        return everest::lib::io::mqtt::mqtt_client::QoS::at_least_once;
+        break;
+    case QOS::QOS2:
+        return everest::lib::io::mqtt::mqtt_client::QoS::exactly_once;
+        break;
+
+    default:
+        break;
+    }
+    return default_qos;
+}
+} // namespace
+
 MessageWithQOS::MessageWithQOS(const std::string& topic, const std::string& payload, QOS qos, bool retain) :
     Message{topic, payload}, qos(qos), retain(retain) {
 }
@@ -135,21 +156,7 @@ void MQTTAbstractionImpl::publish(const std::string& topic, const std::string& d
         return;
     }
 
-    auto mqtt_qos = everest::lib::io::mqtt::mqtt_client::QoS::at_most_once;
-    switch (qos) {
-    case QOS::QOS0:
-        mqtt_qos = everest::lib::io::mqtt::mqtt_client::QoS::at_most_once;
-        break;
-    case QOS::QOS1:
-        mqtt_qos = everest::lib::io::mqtt::mqtt_client::QoS::at_least_once;
-        break;
-    case QOS::QOS2:
-        mqtt_qos = everest::lib::io::mqtt::mqtt_client::QoS::exactly_once;
-        break;
-
-    default:
-        break;
-    }
+    auto mqtt_qos = to_io_qos(qos, everest::lib::io::mqtt::mqtt_client::QoS::at_most_once);
 
     if (retain) {
         if (not(data.empty() and qos == QOS::QOS0)) {
@@ -167,8 +174,7 @@ void MQTTAbstractionImpl::publish(const std::string& topic, const std::string& d
         return;
     }
 
-    const auto error =
-        this->mqtt_client->publish(topic, data, mqtt_qos, retain, {});
+    const auto error = this->mqtt_client->publish(topic, data, mqtt_qos, retain, {});
     if (error != everest::lib::io::mqtt::ErrorCode::Success) {
         EVLOG_error << "MQTT error during publishing";
     }
@@ -187,18 +193,7 @@ void MQTTAbstractionImpl::subscribe(const std::string& topic, QOS qos) {
     BOOST_LOG_FUNCTION();
     const std::lock_guard<std::mutex> lock(topics_mutex);
 
-    auto max_qos_level = everest::lib::io::mqtt::mqtt_client::QoS::at_most_once;
-    switch (qos) {
-    case QOS::QOS0:
-        max_qos_level = everest::lib::io::mqtt::mqtt_client::QoS::at_most_once;
-        break;
-    case QOS::QOS1:
-        max_qos_level = everest::lib::io::mqtt::mqtt_client::QoS::at_least_once;
-        break;
-    case QOS::QOS2:
-        max_qos_level = everest::lib::io::mqtt::mqtt_client::QoS::exactly_once;
-        break;
-    }
+    auto max_qos_level = to_io_qos(qos, everest::lib::io::mqtt::mqtt_client::QoS::at_most_once);
 
     this->subscribed_topics.insert(topic);
 
@@ -225,8 +220,7 @@ void MQTTAbstractionImpl::unsubscribe(const std::string& topic) {
     EVLOG_debug << fmt::format("Unsubscribing from topic: {}", topic);
 
     this->subscribed_topics.erase(topic);
-    this->ev_handler.add_action(
-        [this, topic]() { this->mqtt_client->unsubscribe(topic, {}); });
+    this->ev_handler.add_action([this, topic]() { this->mqtt_client->unsubscribe(topic, {}); });
 }
 
 void MQTTAbstractionImpl::clear_retained_topics() {

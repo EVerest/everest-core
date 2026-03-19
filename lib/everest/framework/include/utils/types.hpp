@@ -64,13 +64,6 @@ struct TypedHandler {
 
 using Token = std::shared_ptr<TypedHandler>;
 
-/// \brief MQTT Quality of service
-enum class QOS {
-    QOS0, ///< At most once delivery
-    QOS1, ///< At least once delivery
-    QOS2  ///< Exactly once delivery
-};
-
 struct ModuleInfo {
     struct Paths {
         std::filesystem::path etc;
@@ -187,6 +180,13 @@ struct CmdResultError {
 struct CmdResult {
     std::optional<json> result;
     std::optional<CmdResultError> error;
+};
+
+/// \brief MQTT Quality of service
+enum class QOS {
+    QOS0, ///< At most once delivery
+    QOS1, ///< At least once delivery
+    QOS2  ///< Exactly once delivery
 };
 
 struct MQTTRequest {
