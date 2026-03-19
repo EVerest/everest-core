@@ -22,12 +22,13 @@ Goal Of This Tutorial
 In this tutorial, we will keep everything as simple as possible. You will
 learn the following:
 
-1. Create an EVerest module that implements an interface.
-2. Define an interface containing a simple command with parameter and return
-   value.
+1. Define an interface containing a simple command with parameter and return value.
+2. Create a module that implements the interface.
 3. Define a configuration parameter for the new module.
 4. Configure required dependencies of the EVerest framework and modules.
 5. Build and run.
+6. Connect the module to the system by requiring another module.
+7. Implement the new requirement in Python.
 
 Install Prerequisites
 =====================
@@ -586,21 +587,223 @@ output similar to::
 Of course, you might setup your favorite IDE in a similar way for a nicer
 debugging experience.
 
-Exemplary Module Customizations
-===============================
+Extending the Module
+====================
 
-Having prepared a buildable and runnable module, we can now extend the logic
-of our implementation:
+Having prepared a buildable and runnable module, we can now extend our implementation
+to interact with the rest of the system.
 
-- Add a variable to your interface, and publish it;
-- Add a second module which requires the ``interface_tutorial_module`` interface and sends commands or subscribes to variables.
-- ...
+One way to connect a module to other modules is by requiring interfaces. First, create
+a new interface in ``interfaces/countdown_interface.yaml``:
 
-.. hint::
-    This section is yet to come. Want to help us with that? Feel free and create
-    a suggestion for this.
+..  code-block:: yaml
+
+    description: Countdown interface
+    cmds:
+      start:
+        description: Start the countdown
+        arguments:
+          start_value:
+            description: Start value of the countdown
+            type: string
+        result:
+          description: Whether the countdown has started
+          type: boolean
+    vars:
+      value:
+        description: Current countdown value
+        type: integer
+
+Next, require that interface in the tutorial module by adding a requirements block
+to ``modules/TutorialModule/manifest.yaml``:
+
+..  code-block:: yaml
+
+    # ...
+    requires:
+      countdown:
+         interface: countdown_interface
+
+Adding a new requirement necessitates regenerating some of our source code. The `ev-cli` tool
+can help with that::
+
+    cd $EVEREST_TUTORIAL_DIR && ev-cli module update --force --schemas-dir $EVEREST_WORKSPACE/everest-framework/schemas TutorialModule
+
+The `force` flag makes sure that the tool doesn't skip existing files, but still overwrites what's
+necessary to reflect changes in the manifest.
+
+Now we can implement our interaction with the timer in ``interface_tutorial_moduleImpl.cpp``:
+
+..  code-block:: cpp
+
+    #include "interface_tutorial_moduleImpl.hpp"
+
+    #include <everest/logging.hpp>
+
+    namespace module {
+    namespace interface_impl_tutorial_module {
+
+    void interface_tutorial_moduleImpl::init() {
+        mod->r_countdown->subscribe_value([](const auto& value) {
+            if (value > 0) {
+                EVLOG_info << "Countdown: " << value;
+            } else {
+                EVLOG_info << "Countdown complete";
+            }
+        });
+        EVLOG_info << "Tutorial module implementation initialized";
+    }
+
+    void interface_tutorial_moduleImpl::ready() {
+        EVLOG_info << "Tutorial module implementation ready";
+    }
+
+    std::string interface_tutorial_moduleImpl::handle_command_tutorial(std::string& payload) {
+        if (mod->r_countdown->call_start(payload)) {
+            EVLOG_info << "Started countdown";
+        } else {
+            EVLOG_warning << "Countdown failed";
+        }
+        return "everest";
+    }
+
+    } // namespace interface_impl_tutorial_module
+    } // namespace module
+
+Note that the framework has used the countdown interface definition and the module requirements to
+define ``r_countdown`` and its methods, ``call_start`` and ``subscribe_value``.
+
+Implementing a Module in Python
+-------------------------------
+
+Now let's define an implementation of the countdown interface in Python. EVerest doesn't
+provide the same code-generation for Python as it does for C++, so module authors have to
+write the module implementation themselves.
+
+First, create a folder for our module called ``PyCountdown`` and create the necessary files::
+
+    cd $EVEREST_TUTORIAL_DIR && mkdir modules/PyCountdown && touch modules/PyCountdown/{CMakeLists.txt,manifest.yaml,module.py}
+
+..  note::
+
+    Modules implemented in Python must have their names prefixed with "Py" so the EVerest build
+    system knows how to handle them.
+
+
+In ``modules/PyCountdown/manifest.yaml``, add the following:
+
+..  code-block:: yaml
+
+    description: A countdown module
+    provides:
+      countdown:
+        interface: countdown_interface
+        description: Countdown implementation
+    metadata:
+      license: https://opensource.org/licenses/Apache-2.0
+      authors:
+        - <Your Name>, <Your Organization>
+
+Finally, implement the module in ``modules/PyCountdown/module.py``:
+
+..  code-block:: Python
+
+    import time
+    from threading import Event
+
+    from everest.framework import Module, RuntimeSession, log
+
+
+    class PyCountdown:
+        def __init__(self):
+            # Set up the module.
+            self.module = Module(RuntimeSession())
+            self.setup = self.module.say_hello()
+            self.ready = Event()
+            self.count = 0
+
+            # Map interface commands to handler functions.
+            self.setup_command_handlers()
+
+            # Let EVerest know that initialization is complete.
+            self.module.init_done()
+
+        def run(self):
+            try:
+                while True:
+                    self.ready.wait()
+                    while self.count >= 0:
+                        self.module.publish_variable("countdown", "value", self.count)
+                        self.count -= 1
+                        time.sleep(1)
+            except KeyboardInterrupt:
+                pass
+
+        def handle_start(self, args):
+            try:
+                count = int(args["start_value"])
+                if count <= 0:
+                    return False
+                self.count = count
+                self.ready.set()
+                return True
+            except:
+                return False
+
+        def setup_command_handlers(self):
+            for cmd in self.module.implementations["countdown"].commands:
+                self.module.implement_command("countdown", cmd, getattr(self, f"handle_{cmd}"))
+
+
+    module = PyCountdown()
+    module.run()
+
+.. note::
+
+    Notice that along with the boilerplate, module authors must also implement
+    some kind of run loop so that the process won't exit immediately.
+
+Don't forget to add the new module to the build system in ``modules/CMakeLists.txt``::
+
+    ev_add_module(TutorialModule)
+    ev_add_module(PyCountdown)
+
+Connecting the Modules At Runtime
+---------------------------------
+
+Our tutorial module requires an implementation of the countdown interface, so let's add
+the new module to the config in ``config-everest-tutorial-module.yaml``:
+
+..  code-block:: yaml
+
+    active_modules:
+      tutorial_module_instance:
+        module: TutorialModule
+        connections:
+          countdown:
+            - module_id: countdown
+              implementation_id: countdown
+      countdown:
+        module: PyCountdown
+
+After building the project and running the script, try sending the `command_tutorial` command
+as before. If the payload is a number string, PyCountdown will count down from that number until
+it reaches zero. If the payload is not a valid number, the tutorial module will log that the
+countdown was unsuccessful.
+
+Next Steps
+==========
+
+With the basics covered, you're ready to start exploring more advanced usages of EVerest, like:
+
+* Requiring more than one implementation of an interface
+* Writing modules in Rust
+* Implementing board support interfaces
+* EVerest APIs
+* Much more!
+
+Please reach out on the mailing list or Zulip if you have questions, and happy charging!
 
 --------------------------------
 
-**Authors**: Valentin Dimov, Manuel Ziegler, Andreas Heinrich, Lukas Mertens, Martin Litre, Piet Gömpel, Christoph Burandt
-
+**Authors**: Valentin Dimov, Manuel Ziegler, Andreas Heinrich, Lukas Mertens, Martin Litre, Piet Gömpel, Christoph Burandt, Andy Bond
