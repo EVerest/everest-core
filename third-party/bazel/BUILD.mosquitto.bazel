@@ -86,7 +86,7 @@ cc_library(
     deps = [
         ":bundled_deps",
         ":config_header",
-        "@openssl//:ssl",
+        "@everest-core//third-party/bazel/openssl:ssl",
     ] + select({
         "//conditions:default": [],
     }),
