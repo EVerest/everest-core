@@ -9,6 +9,11 @@
 
 namespace iso15118::d20::state {
 
+bool handle_compatibility_check(const d20::DcTransferLimits& evse_dc_limits,
+                                const std::variant<message_20::datatypes::DC_CPDReqEnergyTransferMode,
+                                                   message_20::datatypes::BPT_DC_CPDReqEnergyTransferMode>& ev_limits,
+                                d20::DcTransferLimits& out_limits);
+
 message_20::DC_ChargeParameterDiscoveryResponse
 handle_request(const message_20::DC_ChargeParameterDiscoveryRequest& req, const d20::Session& session,
                const d20::DcTransferLimits& dc_limits);
