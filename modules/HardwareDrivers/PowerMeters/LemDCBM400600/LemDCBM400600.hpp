@@ -36,6 +36,7 @@ struct Conf {
     int resilience_transaction_request_retry_delay;
     int cable_id;
     int tariff_id;
+    int IT;
     int SC;
     std::string UV;
     std::string UD;

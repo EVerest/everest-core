@@ -92,7 +92,8 @@ protected:
                                                 "publicKey": "A80F10D968E1122F8820F288B23C4E1C0DA912F35B48481274ADFEFE66D7E87E130C7CF2B8047C45CF105041C8C3A57DD242782F755C9443F42DABA9404A67BF"
                                                 })";
 
-    const LemDCBM400600Controller::Conf controller_config{0, 0, 1, 0, 0, 0};
+    // IT = -1 so that init() does not call set_identification_type()
+    const LemDCBM400600Controller::Conf controller_config{0, 0, 1, 0, 0, 0, {}, {}, 0, {}, {}, -1};
 
     void SetUp() override {
         this->http_client = std::make_unique<HTTPClientMock>();
@@ -450,7 +451,7 @@ TEST_F(LemDCBM400600ControllerTest, test_init_meter_id_retry_success) {
             200,
             this->livemeasure_response,
         }));
-    const LemDCBM400600Controller::Conf controller_config{number_of_retries, 1, 1, 0};
+    const LemDCBM400600Controller::Conf controller_config{number_of_retries, 1, 1, 0, 0, 0, {}, {}, 0, {}, {}, -1};
     LemDCBM400600Controller controller(std::move(this->http_client), std::move(this->time_sync_helper),
                                        controller_config);
 
@@ -471,13 +472,137 @@ TEST_F(LemDCBM400600ControllerTest, test_init_meter_id_retry_fail_eventually) {
         .WillRepeatedly(testing::Throw(HttpClientError{"mock error"}));
     EXPECT_CALL(*this->time_sync_helper, restart_unsafe_period()).Times(0);
 
-    const LemDCBM400600Controller::Conf controller_config{number_of_retries, 1, 1, 0};
+    const LemDCBM400600Controller::Conf controller_config{number_of_retries, 1, 1, 0, 0, 0, {}, {}, 0, {}, {}, -1};
     LemDCBM400600Controller controller(std::move(this->http_client), std::move(this->time_sync_helper),
                                        controller_config);
 
     // Act & Verify
     struct ntp_server_spec ntp_spec;
     EXPECT_THROW(controller.init(), HttpClientError);
+}
+
+//****************************************************************
+// Test set_identification_type behavior (IT field)
+
+// Helper to set up a mock that successfully completes init() (fetch_meter_id + restart + set_command_timeout)
+#define SETUP_SUCCESSFUL_INIT(seq)                                                                                                                                                \
+    EXPECT_CALL(*this->http_client, get("/v1/status"))                                                                                                                            \
+        .Times(1)                                                                                                                                                                 \
+        .InSequence(seq)                                                                                                                                                          \
+        .WillOnce(testing::Return(HttpResponse{                                                                                                                                   \
+            200,                                                                                                                                                                  \
+            R"({ "meterId": "mock_meter_id", "publicKeyOcmf": "KEY", "status": {"bits": {"transactionIsOnGoing": false}}, "version":{"applicationFirmwareVersion":"0.1.2.3"} })", \
+        }));                                                                                                                                                                      \
+    EXPECT_CALL(*this->http_client, get("/v1/legal"))                                                                                                                             \
+        .Times(1)                                                                                                                                                                 \
+        .InSequence(seq)                                                                                                                                                          \
+        .WillOnce(testing::Return(HttpResponse{200, R"({"transactionId": "thetransactionid"})"}));                                                                                \
+    EXPECT_CALL(*this->time_sync_helper, restart_unsafe_period()).Times(1).InSequence(seq)
+
+/// \brief Test init() with IT = -1 does not call set_identification_type
+TEST_F(LemDCBM400600ControllerTest, test_init_skips_set_it_when_minus_one) {
+    // Setup
+    testing::Sequence seq;
+    SETUP_SUCCESSFUL_INIT(seq);
+
+    // No PUT /v1/settings expected
+    EXPECT_CALL(*this->http_client, put("/v1/settings", testing::_)).Times(0);
+
+    LemDCBM400600Controller controller(std::move(this->http_client), std::move(this->time_sync_helper),
+                                       this->controller_config); // IT = -1
+
+    // Act
+    controller.init();
+}
+
+/// \brief Test init() with IT >= 0 calls set_identification_type successfully
+TEST_F(LemDCBM400600ControllerTest, test_init_sets_it_when_valid) {
+    // Setup
+    testing::Sequence seq;
+    SETUP_SUCCESSFUL_INIT(seq);
+
+    EXPECT_CALL(*this->http_client, put("/v1/settings", R"({"ocmfId":{"IT":5}})"))
+        .Times(1)
+        .InSequence(seq)
+        .WillOnce(testing::Return(HttpResponse{200, R"({"result": 1})"}));
+
+    const LemDCBM400600Controller::Conf config_with_it{0, 0, 1, 0, 0, 0, {}, {}, 0, {}, {}, 5};
+    LemDCBM400600Controller controller(std::move(this->http_client), std::move(this->time_sync_helper), config_with_it);
+
+    // Act - should not throw
+    controller.init();
+}
+
+/// \brief Test set_identification_type throws on non-200 response code
+TEST_F(LemDCBM400600ControllerTest, test_init_set_it_fails_on_bad_status_code) {
+    // Setup
+    testing::Sequence seq;
+    SETUP_SUCCESSFUL_INIT(seq);
+
+    EXPECT_CALL(*this->http_client, put("/v1/settings", R"({"ocmfId":{"IT":3}})"))
+        .Times(1)
+        .InSequence(seq)
+        .WillOnce(testing::Return(HttpResponse{500, "Internal Server Error"}));
+
+    const LemDCBM400600Controller::Conf config_with_it{0, 0, 1, 0, 0, 0, {}, {}, 0, {}, {}, 3};
+    LemDCBM400600Controller controller(std::move(this->http_client), std::move(this->time_sync_helper), config_with_it);
+
+    // Act & Verify
+    EXPECT_THROW(controller.init(), LemDCBM400600Controller::DCBMUnexpectedResponseException);
+}
+
+/// \brief Test set_identification_type throws when device rejects the setting (result != 1)
+TEST_F(LemDCBM400600ControllerTest, test_init_set_it_fails_on_rejected) {
+    // Setup
+    testing::Sequence seq;
+    SETUP_SUCCESSFUL_INIT(seq);
+
+    EXPECT_CALL(*this->http_client, put("/v1/settings", R"({"ocmfId":{"IT":3}})"))
+        .Times(1)
+        .InSequence(seq)
+        .WillOnce(testing::Return(HttpResponse{200, R"({"result": 0})"}));
+
+    const LemDCBM400600Controller::Conf config_with_it{0, 0, 1, 0, 0, 0, {}, {}, 0, {}, {}, 3};
+    LemDCBM400600Controller controller(std::move(this->http_client), std::move(this->time_sync_helper), config_with_it);
+
+    // Act & Verify
+    EXPECT_THROW(controller.init(), LemDCBM400600Controller::DCBMUnexpectedResponseException);
+}
+
+/// \brief Test set_identification_type throws on malformed JSON response body
+TEST_F(LemDCBM400600ControllerTest, test_init_set_it_fails_on_malformed_json) {
+    // Setup
+    testing::Sequence seq;
+    SETUP_SUCCESSFUL_INIT(seq);
+
+    EXPECT_CALL(*this->http_client, put("/v1/settings", R"({"ocmfId":{"IT":3}})"))
+        .Times(1)
+        .InSequence(seq)
+        .WillOnce(testing::Return(HttpResponse{200, "not json"}));
+
+    const LemDCBM400600Controller::Conf config_with_it{0, 0, 1, 0, 0, 0, {}, {}, 0, {}, {}, 3};
+    LemDCBM400600Controller controller(std::move(this->http_client), std::move(this->time_sync_helper), config_with_it);
+
+    // Act & Verify
+    EXPECT_THROW(controller.init(), LemDCBM400600Controller::DCBMUnexpectedResponseException);
+}
+
+/// \brief Test set_identification_type throws when JSON body is missing "result" key
+TEST_F(LemDCBM400600ControllerTest, test_init_set_it_fails_on_missing_result_key) {
+    // Setup
+    testing::Sequence seq;
+    SETUP_SUCCESSFUL_INIT(seq);
+
+    EXPECT_CALL(*this->http_client, put("/v1/settings", R"({"ocmfId":{"IT":3}})"))
+        .Times(1)
+        .InSequence(seq)
+        .WillOnce(testing::Return(HttpResponse{200, R"({"status": "ok"})"}));
+
+    const LemDCBM400600Controller::Conf config_with_it{0, 0, 1, 0, 0, 0, {}, {}, 0, {}, {}, 3};
+    LemDCBM400600Controller controller(std::move(this->http_client), std::move(this->time_sync_helper), config_with_it);
+
+    // Act & Verify
+    EXPECT_THROW(controller.init(), LemDCBM400600Controller::DCBMUnexpectedResponseException);
 }
 
 } // namespace module::main

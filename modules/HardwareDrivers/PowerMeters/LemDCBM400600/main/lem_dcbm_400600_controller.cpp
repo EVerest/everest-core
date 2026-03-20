@@ -12,6 +12,11 @@ void LemDCBM400600Controller::init() {
                     this->config.init_retry_wait_in_milliseconds);
     this->time_sync_helper->restart_unsafe_period();
     this->http_client->set_command_timeout(this->config.command_timeout_ms);
+
+    if (this->config.IT >= 0) {
+        call_with_retry([this]() { this->set_identification_type(this->config.IT); },
+                        this->config.init_number_of_http_retries, this->config.init_retry_wait_in_milliseconds);
+    }
 }
 
 std::vector<std::string> split(const std::string& str, char delimiter) {
@@ -339,6 +344,25 @@ LemDCBM400600Controller::transaction_start_request_to_dcbm_payload(const types::
             {"tariffId", this->config.tariff_id}, {"cableId", this->config.cable_id},        {"userData", ""}}
             .dump();
     }
+}
+
+void LemDCBM400600Controller::set_identification_type(int identification_type) {
+    const std::string payload = nlohmann::ordered_json{{"ocmfId", {{"IT", identification_type}}}}.dump();
+    auto response = this->http_client->put("/v1/settings", payload);
+    if (response.status_code != 200) {
+        throw UnexpectedDCBMResponseCode("/v1/settings", 200, response);
+    }
+    try {
+        bool success = nlohmann::json::parse(response.body).at("result") == 1;
+        if (!success) {
+            throw UnexpectedDCBMResponseBody("/v1/settings",
+                                             "OCMF Identification Type setting was rejected by the device.");
+        }
+    } catch (nlohmann::json::exception& json_error) {
+        throw UnexpectedDCBMResponseBody(
+            "/v1/settings", fmt::format("Json error '{}' for body '{}'", json_error.what(), response.body));
+    }
+    EVLOG_info << "LEM DCBM 400/600: OCMF Identification Type (IT) set to: " << identification_type;
 }
 
 std::pair<std::string, std::string> LemDCBM400600Controller::get_transaction_stop_time_bounds() {

@@ -63,6 +63,26 @@ config:
     description: Used for a unique transaction tariff designation
     type: integer
     default: 0
+  IT:
+    description: >-
+      OCMF Identification Type (set on device at startup via /settings/ocmfId/IT).
+      Values per LEM DCBM Communication Protocol 4.2.10.3:
+      0=NONE, 1=DENIED, 2=UNDEFINED, 3=ISO14443, 4=ISO15693,
+      5=EMAID, 6=EVCCID, 7=EVCOID, 8=ISO7812, 9=CARD_TXN_NR,
+      10=CENTRAL, 11=CENTRAL_1, 12=CENTRAL_2, 13=LOCAL, 14=LOCAL_1,
+      15=LOCAL_2, 16=PHONE_NUMBER, 17=KEY_CODE.
+      A value of -1 means the field is not set on the device.
+      By setting this value you can controll the content of the ID field of OCMF record.  
+      If this value is not set, ID is set to the transaction id.
+      Please check the device documentation for more details.
+
+      WARNING: The device documentation states: "For correct usage the IT fields shall 
+        be set once to the corresponding protocol used (or kept to NONE as per default value), 
+        and not be changed during the lifetime of the DCBM due to current software limitation."
+    type: integer
+    minimum: -1
+    maximum: 17
+    default: -1
   SC:
     description: SC (OCMF/transaction fields)
     type: integer
