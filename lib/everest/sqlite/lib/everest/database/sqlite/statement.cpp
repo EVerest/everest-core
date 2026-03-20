@@ -88,6 +88,20 @@ int Statement::bind_double(const std::string& param, const double val) {
     return bind_double(index, val);
 }
 
+int Statement::bind_datetime(const int idx, const std::chrono::time_point<date::utc_clock>& datetime) {
+    const int64_t unix_time =
+        std::chrono::duration_cast<std::chrono::milliseconds>(datetime.time_since_epoch()).count();
+    return bind_int64(idx, unix_time);
+}
+
+int Statement::bind_datetime(const std::string& param, const std::chrono::time_point<date::utc_clock>& datetime) {
+    const int index = sqlite3_bind_parameter_index(this->stmt, param.c_str());
+    if (index <= 0) {
+        throw std::out_of_range("Parameter not found in SQL query");
+    }
+    return bind_datetime(index, datetime);
+}
+
 int Statement::bind_null(const int idx) {
     return sqlite3_bind_null(this->stmt, idx);
 }
@@ -162,6 +176,11 @@ int64_t Statement::column_int64(const int idx) {
 
 double Statement::column_double(const int idx) {
     return sqlite3_column_double(this->stmt, idx);
+}
+
+std::chrono::time_point<date::utc_clock> Statement::column_datetime(const int idx) {
+    const int64_t unix_time = column_int64(idx);
+    return std::chrono::time_point<date::utc_clock>(std::chrono::milliseconds(unix_time));
 }
 
 } // namespace everest::db::sqlite
