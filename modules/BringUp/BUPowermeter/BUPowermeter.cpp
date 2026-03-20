@@ -163,10 +163,23 @@ void BUPowermeter::ready() {
         ButtonOption::Animated(Color::Blue, Color::White, Color::RedLight, Color::White));
 
     Component stop_transaction0_button = Button(
-        "Stop transaction0",
+        "Stop transaction empty",
         [&] {
             last_command = "Stop transaction";
             std::string transaction_id = "";
+            auto now_b = std::chrono::steady_clock::now();
+            tr_stop = r_powermeter->call_stop_transaction(transaction_id);
+            auto now_e = std::chrono::steady_clock::now();
+            last_command_duration =
+                fmt::format("{} ms", std::chrono::duration_cast<std::chrono::milliseconds>(now_e - now_b).count());
+        },
+        ButtonOption::Animated(Color::Blue, Color::White, Color::RedLight, Color::White));
+
+    Component stop_transaction1_button = Button(
+        "Stop transaction dummy",
+        [&] {
+            last_command = "Stop transaction";
+            std::string transaction_id = "DUMMY";
             auto now_b = std::chrono::steady_clock::now();
             tr_stop = r_powermeter->call_stop_transaction(transaction_id);
             auto now_e = std::chrono::steady_clock::now();
@@ -179,6 +192,7 @@ void BUPowermeter::ready() {
         start_transaction_button,
         stop_transaction_button,
         stop_transaction0_button,
+        stop_transaction1_button,
     });
 
     auto cmds_renderer = Renderer(cmds_component, [&] {

@@ -15,6 +15,7 @@ namespace {
 
 constexpr std::size_t kFetchCallAlignmentBytes = 8;
 constexpr std::size_t kWriteCallAlignmentBytes = 32;
+constexpr std::size_t kBytesPerRegister = 2;
 
 struct alignas(kFetchCallAlignmentBytes) FetchCall {
     std::int32_t address;
@@ -76,6 +77,10 @@ transport::DataVector bytes(std::string_view str) {
     return transport::DataVector{str.begin(), str.end()};
 }
 
+transport::DataVector zero_bytes_for_words(std::uint16_t words) {
+    return transport::DataVector(words * kBytesPerRegister, 0U);
+}
+
 module::main::Conf make_test_conf() {
     constexpr int kDefaultIntervalMs = 1000;
     module::main::Conf conf{};
@@ -101,9 +106,14 @@ TEST(EM580PowermeterImpl, StartTransactionHappyPathCountsWrites) {
     auto transport = std::make_unique<FakeModbusTransport>();
     transport->push_fetch_response(em580::registers::MODBUS_OCMF_STATE_ADDRESS, 1,
                                    u16_be(em580::registers::MODBUS_OCMF_STATE_NOT_READY));
+    transport->push_fetch_response(em580::registers::MODBUS_SIGNED_MAP_ADDRESS,
+                                   em580::registers::MODBUS_SIGNED_MAP_WORD_COUNT_256,
+                                   zero_bytes_for_words(em580::registers::MODBUS_SIGNED_MAP_WORD_COUNT_256));
 
     auto* transport_ptr = transport.get();
     module::main::powermeterImpl::TestAccess::set_modbus_transport(impl, std::move(transport));
+    module::main::powermeterImpl::TestAccess::set_signed_map_word_count(
+        impl, em580::registers::MODBUS_SIGNED_MAP_WORD_COUNT_256);
 
     types::powermeter::TransactionReq req{};
     req.evse_id = "DE*TEST*EVSE01";

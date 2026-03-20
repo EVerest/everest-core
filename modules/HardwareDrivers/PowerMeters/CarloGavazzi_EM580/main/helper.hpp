@@ -35,10 +35,16 @@ constexpr std::uint16_t MODBUS_PUBLIC_KEY_DER_WORD_COUNT_256 = 46; // 2600h..262
 constexpr std::uint16_t MODBUS_PUBLIC_KEY_DER_WORD_COUNT_384 = 62; // 2600h..263Dh (124 bytes, DER length 0x7A + 2)
 
 constexpr std::int32_t MODBUS_SIGNED_MAP_ADDRESS = 302049;
-constexpr std::int32_t MODBUS_SIGNED_MAP_SIGNATURE_ADDRESS = 302126;
+constexpr std::uint16_t MODBUS_SIGNED_MAP_WORD_COUNT_256 = 93;  // 61 words signed Data + 32 words signature
+constexpr std::uint16_t MODBUS_SIGNED_MAP_WORD_COUNT_384 = 109; // 61 words signed Data + 48 words signature
 
 constexpr std::int32_t MODBUS_REAL_TIME_VALUES_ADDRESS = 300001;
-constexpr std::uint16_t MODBUS_REAL_TIME_VALUES_COUNT = 80; // Registers 300001-300080 (0x50 = 80 words)
+// We only need instantaneous values up to 300052 (frequency) for the live polling loop.
+// Energy totals are read from 301281+ (INT64, Wh) and signed values from 302049+.
+constexpr std::uint16_t MODBUS_REAL_TIME_VALUES_COUNT = 52; // Registers 300001-300052 (52 words)
+
+constexpr std::int32_t MODBUS_REAL_TIME_ENERGY_ADDRESS = 301281;
+constexpr std::uint16_t MODBUS_REAL_TIME_ENERGY_COUNT = 32; // Registers 301281-301312 (32 words)
 
 constexpr std::int32_t MODBUS_TEMPERATURE_ADDRESS = 300776; // Internal Temperature
 
@@ -104,7 +110,7 @@ constexpr std::int32_t MODBUS_OCMF_STATE_FILE_ADDRESS = 328945;      // 7110h: O
 constexpr std::uint16_t MODBUS_OCMF_STATE_FILE_WORD_COUNT = 2031;    // 2031 words = 4062 bytes
 constexpr std::int32_t MODBUS_OCMF_CHARGING_STATUS_ADDRESS = 328742; // 7045h: Charging status (UINT16)
 constexpr std::int32_t MODBUS_OCMF_LAST_TRANSACTION_ID_ADDRESS = 328762; // 7059h: Last transaction id (CHAR[])
-constexpr std::uint16_t MODBUS_OCMF_LAST_TRANSACTION_ID_WORD_COUNT = 14; // 14 bytes = 7 words
+constexpr std::uint16_t MODBUS_OCMF_LAST_TRANSACTION_ID_WORD_COUNT = 7;  // 14 bytes = 7 words
 constexpr std::int32_t MODBUS_OCMF_TIME_SYNC_STATUS_ADDRESS = 328769;    // 7060h: Time synchronization status (UINT16)
 
 } // namespace registers
@@ -154,6 +160,23 @@ inline std::int32_t to_int32(const transport::DataVector& data, ByteOffset offse
     const auto off = static_cast<transport::DataVector::size_type>(offset);
     check_bounds_or_throw(data, off, 4, "to_int32");
     return static_cast<std::int32_t>(data[off + 2] << 24 | data[off + 3] << 16 | data[off] << 8 | data[off + 1]);
+}
+
+inline std::int64_t to_int64(const transport::DataVector& data, ByteOffset offset) {
+    const auto off = static_cast<transport::DataVector::size_type>(offset);
+    check_bounds_or_throw(data, off, 8, "to_int64");
+    // EM580 Modbus spec:
+    // - Byte order inside a word is MSB -> LSB.
+    // - Word order for INT64/UINT64 is LSW -> MSW.
+    const std::uint64_t w0 = (static_cast<std::uint64_t>(data[off]) << 8) | static_cast<std::uint64_t>(data[off + 1]);
+    const std::uint64_t w1 =
+        (static_cast<std::uint64_t>(data[off + 2]) << 8) | static_cast<std::uint64_t>(data[off + 3]);
+    const std::uint64_t w2 =
+        (static_cast<std::uint64_t>(data[off + 4]) << 8) | static_cast<std::uint64_t>(data[off + 5]);
+    const std::uint64_t w3 =
+        (static_cast<std::uint64_t>(data[off + 6]) << 8) | static_cast<std::uint64_t>(data[off + 7]);
+    const std::uint64_t u = (w0) | (w1 << 16) | (w2 << 32) | (w3 << 48);
+    return static_cast<std::int64_t>(u);
 }
 
 inline std::uint16_t to_uint16(const transport::DataVector& data, ByteOffset offset) {
@@ -343,6 +366,38 @@ inline std::optional<std::string> extract_transaction_id_from_ocmf_record(const 
         }
     }
     return last_uuid;
+}
+
+/// Extract transaction id (UUID) from a tariff text string.
+///
+/// Driver convention: tariff text is written as "<user text><=><transaction_id>".
+/// Returns the last UUID found after the "<=>" marker.
+inline std::optional<std::string> extract_transaction_id_from_tariff_text(const std::string& tariff_text,
+                                                                          std::string_view marker) {
+    const std::size_t marker_pos = tariff_text.rfind(marker);
+    if (marker_pos == std::string::npos) {
+        return std::nullopt;
+    }
+
+    std::string tail = tariff_text.substr(marker_pos + marker.size());
+    while (!tail.empty() && std::isspace(static_cast<unsigned char>(tail.front()))) {
+        tail.erase(tail.begin());
+    }
+    while (!tail.empty() && std::isspace(static_cast<unsigned char>(tail.back()))) {
+        tail.pop_back();
+    }
+
+    // The transaction id is appended at the end, so search from the back.
+    if (tail.size() < 36) {
+        return std::nullopt;
+    }
+    for (std::size_t i = tail.size() - 36 + 1; i-- > 0;) {
+        const std::string candidate = tail.substr(i, 36);
+        if (is_uuid36(candidate)) {
+            return candidate;
+        }
+    }
+    return std::nullopt;
 }
 
 inline std::uint16_t flag_to_value(types::powermeter::OCMFIdentificationFlags flag) {
