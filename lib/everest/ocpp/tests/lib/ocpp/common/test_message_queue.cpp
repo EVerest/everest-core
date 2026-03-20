@@ -21,7 +21,8 @@ enum class TestMessageType {
     NON_TRANSACTIONAL,
     NON_TRANSACTIONAL_RESPONSE,
     InternalError,
-    BootNotification
+    BootNotification,
+    BootNotificationResponse
 };
 
 static std::string to_string(TestMessageType m) {
@@ -42,6 +43,8 @@ static std::string to_string(TestMessageType m) {
         return "internal_error";
     case TestMessageType::BootNotification:
         return "boot_notification";
+    case TestMessageType::BootNotificationResponse:
+        return "boot_notificationResponse";
     }
     throw std::out_of_range("unknown TestMessageType");
 };
@@ -70,6 +73,9 @@ static TestMessageType to_test_message_type(const std::string& s) {
     }
     if (s == "boot_notification") {
         return TestMessageType::BootNotification;
+    }
+    if (s == "boot_notificationResponse") {
+        return TestMessageType::BootNotificationResponse;
     }
     throw std::out_of_range("unknown string for TestMessageType");
 };
@@ -714,6 +720,118 @@ TEST_F(MessageQueueTest, test_non_transactional_retried_with_queue_all_messages)
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     EXPECT_EQ(3, get_call_count());
+}
+
+// \brief Test that BootNotification is not dropped when the normal message queue overflows.
+// Pushes a BootNotification plus enough messages to exceed the threshold, then verifies
+// BootNotification survives the drop and is still sent.
+TEST_F(MessageQueueTest, test_boot_notification_not_dropped_on_queue_overflow) {
+
+    config.queues_total_size_threshold = 10;
+    config.queue_all_messages = true;
+    restart_message_queue();
+
+    EXPECT_CALL(*db, insert_message_queue_message(testing::_, testing::_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*db, remove_message_queue_message(testing::_, testing::_))
+        .Times(testing::AnyNumber())
+        .WillRepeatedly(testing::Return());
+
+    // go offline
+    message_queue->pause();
+
+    // Push BootNotification first (goes to front of normal queue)
+    auto boot_id = push_message_call(TestMessageType::BootNotification);
+
+    // Push enough non-transactional messages to fill normal queue
+    const int non_transactional_count = 8;
+    for (int i = 0; i < non_transactional_count; i++) {
+        push_message_call(TestMessageType::NON_TRANSACTIONAL);
+    }
+
+    // Push transactional messages to exceed threshold and trigger drops
+    const int transactional_count = 5;
+    for (int i = 0; i < transactional_count; i++) {
+        push_message_call(TestMessageType::TRANSACTIONAL);
+    }
+
+    // Set up expectations: BootNotification must be sent
+    std::atomic<bool> boot_sent{false};
+    EXPECT_CALL(send_callback_mock, Call(testing::_))
+        .WillRepeatedly(testing::Invoke([&, this](const json::array_t& msg) -> bool {
+            std::string data = msg.at(3).at("data").get<std::string>();
+            if (data == boot_id) {
+                boot_sent = true;
+            }
+            this->mark_call_sent();
+            reception_timer.timeout(
+                [this, msg]() {
+                    this->message_queue->receive(json{3, msg[1], ""}.dump());
+                },
+                std::chrono::milliseconds(0));
+            return true;
+        }));
+
+    // go online again
+    message_queue->resume(std::chrono::seconds(0));
+
+    // Wait for messages to be processed (BootNotification + surviving non-transactional + transactional)
+    // Some non-transactional messages will have been dropped, but BootNotification must survive
+    wait_for_calls(5, std::chrono::seconds(5));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    EXPECT_TRUE(boot_sent) << "BootNotification was dropped from the queue!";
+}
+
+// \brief Test that when BootNotification is the only message in the normal queue,
+// check_queue_sizes() doesn't loop infinitely trying to drop it.
+TEST_F(MessageQueueTest, test_boot_notification_survives_when_only_message_in_normal_queue) {
+
+    config.queues_total_size_threshold = 10;
+    config.queue_all_messages = true;
+    restart_message_queue();
+
+    EXPECT_CALL(*db, insert_message_queue_message(testing::_, testing::_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*db, remove_message_queue_message(testing::_, testing::_))
+        .Times(testing::AnyNumber())
+        .WillRepeatedly(testing::Return());
+
+    // go offline
+    message_queue->pause();
+
+    // Push BootNotification as the only normal message
+    auto boot_id = push_message_call(TestMessageType::BootNotification);
+
+    // Fill transaction queue past threshold
+    const int transactional_count = 15;
+    for (int i = 0; i < transactional_count; i++) {
+        push_message_call(TestMessageType::TRANSACTIONAL);
+    }
+
+    // Set up expectations: BootNotification must be sent
+    std::atomic<bool> boot_sent{false};
+    EXPECT_CALL(send_callback_mock, Call(testing::_))
+        .WillRepeatedly(testing::Invoke([&, this](const json::array_t& msg) -> bool {
+            std::string data = msg.at(3).at("data").get<std::string>();
+            if (data == boot_id) {
+                boot_sent = true;
+            }
+            this->mark_call_sent();
+            reception_timer.timeout(
+                [this, msg]() {
+                    this->message_queue->receive(json{3, msg[1], ""}.dump());
+                },
+                std::chrono::milliseconds(0));
+            return true;
+        }));
+
+    // go online - this must not hang (the break guard prevents infinite loop)
+    message_queue->resume(std::chrono::seconds(0));
+
+    // Wait for messages to be processed
+    wait_for_calls(5, std::chrono::seconds(5));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    EXPECT_TRUE(boot_sent) << "BootNotification was dropped from the queue!";
 }
 
 } // namespace ocpp

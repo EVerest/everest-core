@@ -408,7 +408,11 @@ private:
         while (this->transaction_message_queue.size() + this->normal_message_queue.size() >
                    this->config.queues_total_size_threshold &&
                !this->normal_message_queue.empty()) {
+            auto size_before = this->normal_message_queue.size();
             this->drop_messages_from_normal_message_queue();
+            if (this->normal_message_queue.size() == size_before) {
+                break; // Nothing was droppable (only protected messages like BootNotification remain)
+            }
         }
 
         while (this->transaction_message_queue.size() + this->normal_message_queue.size() >
@@ -417,25 +421,35 @@ private:
         }
     }
 
+    /// \brief Drops messages from the normal message queue to reduce queue size.
+    /// BootNotification messages are never dropped, as they are required for
+    /// the charger to register with the CSMS — dropping them would deadlock
+    /// the queue when transaction messages have stall_until_accepted=true.
     void drop_messages_from_normal_message_queue() {
         // try to drop approx 10% of the allowed size (at least 1)
         const int number_of_dropped_messages = std::min((int)this->normal_message_queue.size(),
                                                         std::max(this->config.queues_total_size_threshold / 10, 1));
 
-        EVLOG_warning << "Dropping " << number_of_dropped_messages << " messages from normal message queue.";
+        EVLOG_warning << "Dropping up to " << number_of_dropped_messages << " messages from normal message queue.";
 
-        for (int i = 0; i < number_of_dropped_messages; i++) {
+        int dropped = 0;
+        auto it = this->normal_message_queue.begin();
+        while (dropped < number_of_dropped_messages && it != this->normal_message_queue.end()) {
+            if (is_boot_notification_message((*it)->messageType)) {
+                ++it; // Never drop BootNotification
+                continue;
+            }
             if (this->config.queue_all_messages) {
                 try {
-                    database_handler->remove_message_queue_message(
-                        this->normal_message_queue.front()->initial_unique_id, QueueType::Normal);
+                    database_handler->remove_message_queue_message((*it)->initial_unique_id, QueueType::Normal);
                 } catch (const everest::db::QueryExecutionException& e) {
-                    EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
+                    EVLOG_warning << "Could not delete message from normal message queue: " << e.what();
                 } catch (const std::exception& e) {
-                    EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
+                    EVLOG_warning << "Could not delete message from normal message queue: " << e.what();
                 }
             }
-            this->normal_message_queue.pop_front();
+            it = this->normal_message_queue.erase(it);
+            dropped++;
         }
     }
 
