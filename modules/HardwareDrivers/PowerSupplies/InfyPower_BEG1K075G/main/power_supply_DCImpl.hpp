@@ -14,6 +14,7 @@
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
+#include <optional>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -59,6 +60,10 @@ private:
     types::power_supply_DC::Capabilities caps;
 
     types::power_supply_DC::Mode last_publish_mode{types::power_supply_DC::Mode::Off};
+    std::optional<double> last_logged_export_voltage;
+    std::optional<double> last_logged_export_current;
+    std::optional<double> last_logged_import_voltage;
+    std::optional<double> last_logged_import_current;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
