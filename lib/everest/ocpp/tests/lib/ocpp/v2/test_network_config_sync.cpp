@@ -252,9 +252,13 @@ TEST_F(NetworkConfigSyncTest, MigrateFromBlobClearsBlob) {
 }
 
 TEST_F(NetworkConfigSyncTest, MigrateSkippedWhenDmAlreadyPopulated) {
-    // Slot 1 has a default OcppCsmsUrl — migration must be skipped
+    // Explicitly populate slot 1 so migration must be skipped
+    auto existing_profile = make_basic_profile(1, "wss://already-set.example.com");
+    ASSERT_TRUE(
+        NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, existing_profile, "test"));
+
     auto before = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
-    ASSERT_TRUE(before.has_value()) << "Test precondition: slot 1 must have default data in the test DM config";
+    ASSERT_TRUE(before.has_value()) << "Test precondition: slot 1 must have data after explicit write";
 
     SetNetworkProfileRequest req;
     req.configurationSlot = 1;
@@ -751,6 +755,9 @@ protected:
 
     ConnectivityManagerCacheTest() : dm_helper() {
         dm = dm_helper.get_device_model();
+        // Seed slot 1 so the cache has something to work with (default OcppCsmsUrl is empty)
+        auto seed_profile = make_basic_profile(1, "wss://ocpp.example.com");
+        NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, seed_profile, "test");
         evse_security = std::make_shared<ocpp::EvseSecurityMock>();
         logging = std::make_shared<ocpp::MessageLogging>(false, "", "", false, false, false, false, false, false, false,
                                                          nullptr);
