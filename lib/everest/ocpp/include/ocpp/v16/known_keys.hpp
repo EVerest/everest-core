@@ -118,15 +118,15 @@ namespace ocpp::v16::keys {
 // ============================================================================
 
 #define MAPPING_LOCAL_AUTH_LIST(mapping) \
-    mapping(LocalAuthListMaxLength, LocalAuthListCtrlrEntries, Actual) \
-    mapping(SendLocalListMaxLength, ItemsPerMessageSendLocalList, Actual)
+    mapping(LocalAuthListMaxLength, LocalAuthListCtrlrEntries, MaxSet) \
+    mapping(SendLocalListMaxLength, ItemsPerMessageSendLocalList, MaxSet)
 
 // ============================================================================
 // Smart Charging Section
 // ============================================================================
 
 #define MAPPING_SMART_CHARGING(mapping) \
-    mapping(MaxChargingProfilesInstalled, EntriesChargingProfiles, Actual)
+    mapping(MaxChargingProfilesInstalled, EntriesChargingProfiles, MaxSet)
 
 // ============================================================================
 // Security Section
