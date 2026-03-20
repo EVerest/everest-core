@@ -28,6 +28,7 @@
 #include "smart_charging_test_utils.hpp"
 #include <smart_charging_matchers.hpp>
 
+#include <chrono>
 #include <sstream>
 #include <vector>
 
@@ -1246,6 +1247,197 @@ TEST_F(CompositeScheduleTestFixtureV2, ZeroDuration) {
     EXPECT_EQ(result.chargingRateUnit, ChargingRateUnitEnum::A);
 
     EXPECT_THAT(result.chargingSchedulePeriod, testing::ElementsAre(PeriodEquals(0, expected_limit)));
+}
+
+TEST_F(CompositeScheduleTestFixtureV2, OfflineDuration_Online) {
+    this->load_charging_profiles_for_evse(BASE_JSON_PATH_V2 + "/offline_duration/valid_after_offline_duration/",
+                                          DEFAULT_EVSE_ID);
+
+    evse_manager->open_transaction(DEFAULT_EVSE_ID, TX_ID);
+
+    EXPECT_CALL(*database_handler, get_charging_profiles_for_evse(testing::_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*database_handler, new_statement(testing::_)).Times(testing::AnyNumber());
+    EXPECT_CALL(evse_manager->get_mock(1), get_current_phase_type).Times(testing::AnyNumber());
+
+    const auto start_time = ocpp::DateTime{"2024-01-17T18:00:00"};
+    const auto end_time = ocpp::DateTime{"2024-01-18T06:00:00"};
+
+    // Profile with CentralSetpoint has higher StackLevel and therefore is preferred
+    ChargingSchedulePeriod expected_period{};
+    expected_period.limit = 2000.0;
+    expected_period.numberPhases = 3;
+    expected_period.setpoint = -2000.0;
+    expected_period.startPeriod = 0;
+
+    CompositeSchedule expected_schedule{};
+    expected_schedule.chargingSchedulePeriod = {expected_period};
+    expected_schedule.evseId = DEFAULT_EVSE_ID;
+    expected_schedule.duration = 43200;
+    expected_schedule.scheduleStart = start_time;
+    expected_schedule.chargingRateUnit = ChargingRateUnitEnum::W;
+
+    const auto actual_schedule = handler->calculate_composite_schedule(start_time, end_time, DEFAULT_EVSE_ID,
+                                                                       ChargingRateUnitEnum::W, false, false);
+
+    ASSERT_EQ(actual_schedule, expected_schedule);
+}
+
+TEST_F(CompositeScheduleTestFixtureV2, OfflineDuration_OfflineNotLongEnough) {
+    this->load_charging_profiles_for_evse(BASE_JSON_PATH_V2 + "/offline_duration/valid_after_offline_duration/",
+                                          DEFAULT_EVSE_ID);
+
+    evse_manager->open_transaction(DEFAULT_EVSE_ID, TX_ID);
+
+    EXPECT_CALL(*database_handler, get_charging_profiles_for_evse(testing::_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*database_handler, new_statement(testing::_)).Times(testing::AnyNumber());
+    EXPECT_CALL(evse_manager->get_mock(1), get_current_phase_type).Times(testing::AnyNumber());
+
+    EXPECT_CALL(connectivity_manager, get_time_disconnected())
+        .WillRepeatedly(testing::Return(std::chrono::steady_clock::now() - std::chrono::seconds(300)));
+
+    const auto start_time = ocpp::DateTime{"2024-01-17T18:00:00"};
+    const auto end_time = ocpp::DateTime{"2024-01-18T06:00:00"};
+
+    // Profile with CentralSetpoint is preferred, because it is still valid in the offline case
+    ChargingSchedulePeriod expected_period{};
+    expected_period.limit = 2000.0;
+    expected_period.numberPhases = 3;
+    expected_period.setpoint = -2000.0;
+    expected_period.startPeriod = 0;
+
+    CompositeSchedule expected_schedule{};
+    expected_schedule.chargingSchedulePeriod = {expected_period};
+    expected_schedule.evseId = DEFAULT_EVSE_ID;
+    expected_schedule.duration = 43200;
+    expected_schedule.scheduleStart = start_time;
+    expected_schedule.chargingRateUnit = ChargingRateUnitEnum::W;
+
+    const auto actual_schedule = handler->calculate_composite_schedule(start_time, end_time, DEFAULT_EVSE_ID,
+                                                                       ChargingRateUnitEnum::W, false, false);
+
+    ASSERT_EQ(actual_schedule, expected_schedule);
+}
+
+TEST_F(CompositeScheduleTestFixtureV2, OfflineDuration_OfflineTooLong) {
+    this->load_charging_profiles_for_evse(BASE_JSON_PATH_V2 + "/offline_duration/valid_after_offline_duration/",
+                                          DEFAULT_EVSE_ID);
+
+    evse_manager->open_transaction(DEFAULT_EVSE_ID, TX_ID);
+
+    EXPECT_CALL(*database_handler, get_charging_profiles_for_evse(testing::_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*database_handler, new_statement(testing::_)).Times(testing::AnyNumber());
+    EXPECT_CALL(evse_manager->get_mock(1), get_current_phase_type).Times(testing::AnyNumber());
+
+    EXPECT_CALL(connectivity_manager, get_time_disconnected())
+        .WillRepeatedly(testing::Return(std::chrono::steady_clock::now() - std::chrono::seconds(900)));
+
+    const auto start_time = ocpp::DateTime{"2024-01-17T18:00:00"};
+    const auto end_time = ocpp::DateTime{"2024-01-18T06:00:00"};
+
+    // Profile with ChargingOnly is preferred, because the other one is invalid now that we have been offline for too
+    // long
+    ChargingSchedulePeriod expected_period{};
+    expected_period.limit = 2000.0;
+    expected_period.numberPhases = 3;
+    expected_period.startPeriod = 0;
+
+    CompositeSchedule expected_schedule{};
+    expected_schedule.chargingSchedulePeriod = {expected_period};
+    expected_schedule.evseId = DEFAULT_EVSE_ID;
+    expected_schedule.duration = 43200;
+    expected_schedule.scheduleStart = start_time;
+    expected_schedule.chargingRateUnit = ChargingRateUnitEnum::W;
+
+    const auto actual_schedule = handler->calculate_composite_schedule(start_time, end_time, DEFAULT_EVSE_ID,
+                                                                       ChargingRateUnitEnum::W, false, false);
+
+    ASSERT_EQ(actual_schedule, expected_schedule);
+}
+
+TEST_F(CompositeScheduleTestFixtureV2, OfflineDuration_OfflineTooLong_ValidAfterOfflineDuration) {
+    this->load_charging_profiles_for_evse(BASE_JSON_PATH_V2 + "/offline_duration/valid_after_offline_duration/",
+                                          DEFAULT_EVSE_ID);
+
+    evse_manager->open_transaction(DEFAULT_EVSE_ID, TX_ID);
+
+    EXPECT_CALL(*database_handler, get_charging_profiles_for_evse(testing::_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*database_handler, new_statement(testing::_)).Times(testing::AnyNumber());
+    EXPECT_CALL(evse_manager->get_mock(1), get_current_phase_type).Times(testing::AnyNumber());
+
+    EXPECT_CALL(connectivity_manager, get_time_disconnected())
+        .WillRepeatedly(testing::Return(std::chrono::steady_clock::now() - std::chrono::seconds(900)));
+
+    const auto start_time = ocpp::DateTime{"2024-01-17T18:00:00"};
+    const auto end_time = ocpp::DateTime{"2024-01-18T06:00:00"};
+
+    // Profile with ChargingOnly is preferred after being offline for too long
+    ChargingSchedulePeriod expected_period{};
+    expected_period.limit = 2000.0;
+    expected_period.numberPhases = 3;
+    expected_period.startPeriod = 0;
+
+    CompositeSchedule expected_schedule{};
+    expected_schedule.chargingSchedulePeriod = {expected_period};
+    expected_schedule.evseId = DEFAULT_EVSE_ID;
+    expected_schedule.duration = 43200;
+    expected_schedule.scheduleStart = start_time;
+    expected_schedule.chargingRateUnit = ChargingRateUnitEnum::W;
+
+    auto actual_schedule = handler->calculate_composite_schedule(start_time, end_time, DEFAULT_EVSE_ID,
+                                                                 ChargingRateUnitEnum::W, false, false);
+
+    testing::Mock::VerifyAndClearExpectations(&connectivity_manager);
+
+    ASSERT_EQ(actual_schedule, expected_schedule);
+
+    EXPECT_CALL(connectivity_manager, get_time_disconnected())
+        .WillRepeatedly(testing::Return(std::chrono::time_point<std::chrono::steady_clock>()));
+
+    // Profile with CentralSetpoint is preferred after being online again
+    expected_period.setpoint = -2000.0;
+    expected_schedule.chargingSchedulePeriod = {expected_period};
+
+    actual_schedule = handler->calculate_composite_schedule(start_time, end_time, DEFAULT_EVSE_ID,
+                                                            ChargingRateUnitEnum::W, false, false);
+
+    ASSERT_EQ(actual_schedule, expected_schedule);
+}
+
+TEST_F(CompositeScheduleTestFixtureV2, OfflineDuration_OfflineTooLong_InvalidAfterOfflineDuration) {
+    this->load_charging_profiles_for_evse(BASE_JSON_PATH_V2 + "/offline_duration/invalid_after_offline_duration/",
+                                          DEFAULT_EVSE_ID);
+
+    evse_manager->open_transaction(DEFAULT_EVSE_ID, TX_ID);
+
+    EXPECT_CALL(*database_handler, get_charging_profiles_for_evse(testing::_)).Times(testing::AnyNumber());
+    EXPECT_CALL(*database_handler, new_statement(testing::_)).Times(testing::AnyNumber());
+    EXPECT_CALL(evse_manager->get_mock(1), get_current_phase_type).Times(testing::AnyNumber());
+
+    EXPECT_CALL(connectivity_manager, get_time_disconnected())
+        .WillRepeatedly(testing::Return(std::chrono::steady_clock::now() - std::chrono::seconds(900)));
+
+    // Profile with invalidAfterOfflineDuration gets cleared when being offline for too long
+    EXPECT_CALL(*database_handler, clear_charging_profiles_matching_criteria(std::optional<int>{3}, testing::_));
+
+    const auto start_time = ocpp::DateTime{"2024-01-17T18:00:00"};
+    const auto end_time = ocpp::DateTime{"2024-01-18T06:00:00"};
+
+    ChargingSchedulePeriod expected_period{};
+    expected_period.limit = 2000.0;
+    expected_period.numberPhases = 3;
+    expected_period.startPeriod = 0;
+
+    CompositeSchedule expected_schedule{};
+    expected_schedule.chargingSchedulePeriod = {expected_period};
+    expected_schedule.evseId = DEFAULT_EVSE_ID;
+    expected_schedule.duration = 43200;
+    expected_schedule.scheduleStart = start_time;
+    expected_schedule.chargingRateUnit = ChargingRateUnitEnum::W;
+
+    auto actual_schedule = handler->calculate_composite_schedule(start_time, end_time, DEFAULT_EVSE_ID,
+                                                                 ChargingRateUnitEnum::W, false, false);
+
+    ASSERT_EQ(actual_schedule, expected_schedule);
 }
 
 } // namespace ocpp::v2

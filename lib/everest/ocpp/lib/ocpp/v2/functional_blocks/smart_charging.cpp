@@ -25,6 +25,7 @@
 const std::int32_t STATION_WIDE_ID = 0;
 
 using namespace std::chrono;
+using namespace std::chrono_literals;
 
 namespace ocpp::v2 {
 namespace {
@@ -337,6 +338,28 @@ ProfileValidationResultEnum SmartCharging::verify_rate_limit(const ChargingProfi
     }
 
     return result;
+}
+
+std::pair<bool, bool> SmartCharging::validate_profile_with_offline_time(const ChargingProfile& profile) {
+    const auto time_disconnected = this->context.connectivity_manager.get_time_disconnected();
+    // Being online means the profile is valid
+    if (time_disconnected.time_since_epoch() == 0s) {
+        return {true, false};
+    }
+
+    // Absent maxOfflineDuration means the profile is valid independent of the offline time
+    if (!profile.maxOfflineDuration.has_value()) {
+        return {true, false};
+    }
+
+    // Not being offline for long enough means profile is valid
+    if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - time_disconnected)
+            .count() <= profile.maxOfflineDuration.value()) {
+        return {true, false};
+    }
+
+    // Profile must be cleared when we are offline for too long and invalidAfterOfflineDuration is set
+    return {false, profile.invalidAfterOfflineDuration.value_or(false)};
 }
 
 bool SmartCharging::has_dc_input_phase_control(const std::int32_t evse_id) const {
@@ -1397,6 +1420,17 @@ SmartCharging::get_valid_profiles_for_evse(std::int32_t evse_id,
 
     auto evse_profiles = this->context.database_handler.get_charging_profiles_for_evse(evse_id);
     for (auto profile : evse_profiles) {
+        // Q11
+        if (const auto [valid, clear] = this->validate_profile_with_offline_time(profile); !valid) {
+            if (clear) {
+                // Q12
+                EVLOG_debug << "Clearing profile with ID: " << profile.id
+                            << ", because it is invalid after offline duration";
+                this->context.database_handler.clear_charging_profiles_matching_criteria(profile.id, std::nullopt);
+            }
+            continue;
+        }
+
         if (this->conform_and_validate_profile(profile, evse_id) == ProfileValidationResultEnum::Valid and
             std::find(std::begin(purposes_to_ignore), std::end(purposes_to_ignore), profile.chargingProfilePurpose) ==
                 std::end(purposes_to_ignore)) {

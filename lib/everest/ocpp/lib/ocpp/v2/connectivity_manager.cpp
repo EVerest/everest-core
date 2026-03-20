@@ -21,6 +21,8 @@ constexpr std::int32_t default_network_config_timeout_seconds = 60;
 namespace ocpp {
 namespace v2 {
 
+using namespace std::chrono_literals;
+
 ConnectivityManager::ConnectivityManager(DeviceModelAbstract& device_model, std::shared_ptr<EvseSecurity> evse_security,
                                          std::shared_ptr<MessageLogging> logging, const fs::path& share_path,
                                          const std::function<void(const std::string& message)>& message_callback) :
@@ -120,6 +122,10 @@ const std::vector<int>& ConnectivityManager::get_network_connection_slots() cons
 
 bool ConnectivityManager::is_websocket_connected() {
     return this->websocket != nullptr && this->websocket->is_connected();
+}
+
+std::chrono::time_point<std::chrono::steady_clock> ConnectivityManager::get_time_disconnected() const {
+    return this->time_disconnected;
 }
 
 void ConnectivityManager::connect(std::optional<std::int32_t> network_profile_slot) {
@@ -406,11 +412,15 @@ void ConnectivityManager::on_websocket_connected(OcppProtocolVersion protocol) {
         this->websocket_connected_callback.value()(actual_configuration_slot, network_connection_profile.value(),
                                                    this->connected_ocpp_version);
     }
+    this->time_disconnected = std::chrono::time_point<std::chrono::steady_clock>();
 }
 
 void ConnectivityManager::on_websocket_disconnected() {
     std::optional<NetworkConnectionProfile> network_connection_profile =
         this->get_network_connection_profile(this->get_active_network_configuration_slot());
+    if (this->time_disconnected.load().time_since_epoch() == 0s) {
+        this->time_disconnected = std::chrono::steady_clock::now();
+    }
 
     if (this->websocket_disconnected_callback.has_value() and network_connection_profile.has_value()) {
         this->websocket_disconnected_callback.value()(this->get_active_network_configuration_slot(),
