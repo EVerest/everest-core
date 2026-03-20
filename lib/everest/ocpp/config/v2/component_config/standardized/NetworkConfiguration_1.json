@@ -20,7 +20,7 @@
       ],
       "description": "OCPP CSMS URL",
       "type": "string",
-      "default": "wss://ocpp.example.com"
+      "default": ""
     },
     "SecurityProfile": {
       "variable_name": "SecurityProfile",
