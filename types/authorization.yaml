@@ -131,6 +131,11 @@ types:
           $ref: /iso15118#/CertificateHashDataInfo
         minItems: 1
         maxItems: 4
+      pre_authorized_amount:
+        description: >-
+          The pre authorized amount for this token.
+        type: object
+        $ref: /money#/Price
   TokenValidationStatusMessage:
     description: The token validation status
     type: object
