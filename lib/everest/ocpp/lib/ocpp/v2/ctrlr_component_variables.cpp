@@ -3,6 +3,14 @@
 
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 
+#include <everest/logging.hpp>
+#include <nlohmann/json.hpp>
+#include <ocpp/v2/device_model_interface.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
+#include <ocpp/v2/utils.hpp>
+
+using json = nlohmann::json;
+
 namespace ocpp {
 namespace v2 {
 
@@ -1630,5 +1638,333 @@ const std::vector<Variable> required_connector_variables{
 const std::vector<Variable> required_v2x_variables{V2xComponentVariables::Available, V2xComponentVariables::Enabled,
                                                    V2xComponentVariables::SupportedEnergyTransferModes,
                                                    V2xComponentVariables::SupportedOperationModes};
+
+namespace NetworkConfigurationComponentVariables {
+
+const Variable OcppCsmsUrl = {"OcppCsmsUrl"};
+const Variable SecurityProfile = {"SecurityProfile"};
+const Variable OcppInterface = {"OcppInterface"};
+const Variable OcppTransport = {"OcppTransport"};
+const Variable MessageTimeout = {"MessageTimeout"};
+const Variable Identity = {"Identity"};
+const Variable BasicAuthPassword = {"BasicAuthPassword"};
+const Variable ApnEnabled = {"ApnEnabled"};
+const Variable VpnEnabled = {"VpnEnabled"};
+const Variable Apn = {"Apn"};
+const Variable ApnUserName = {"ApnUserName"};
+const Variable ApnPassword = {"ApnPassword"};
+const Variable SimPin = {"SimPin"};
+const Variable PreferredNetwork = {"PreferredNetwork"};
+const Variable UseOnlyPreferredNetwork = {"UseOnlyPreferredNetwork"};
+const Variable ApnAuthentication = {"ApnAuthentication"};
+const Variable VpnServer = {"VpnServer"};
+const Variable VpnUser = {"VpnUser"};
+const Variable VpnPassword = {"VpnPassword"};
+const Variable VpnKey = {"VpnKey"};
+const Variable VpnType = {"VpnType"};
+const Variable VpnGroup = {"VpnGroup"};
+const Variable OcppVersion = {"OcppVersion"};
+const Variable CsmsRootCertificateHashAlgorithm = {"CsmsRootCertificateHashAlgorithm"};
+const Variable CsmsRootCertificateIssuerKeyHash = {"CsmsRootCertificateIssuerKeyHash"};
+const Variable CsmsRootCertificateIssuerNameHash = {"CsmsRootCertificateIssuerNameHash"};
+const Variable CsmsRootCertificateSerialNumber = {"CsmsRootCertificateSerialNumber"};
+
+ComponentVariable get_component_variable(const std::int32_t slot, const Variable& variable) {
+    Component component;
+    component.name = "NetworkConfiguration";
+    component.instance = std::to_string(slot);
+    ComponentVariable component_variable;
+    component_variable.component = component;
+    component_variable.variable = variable;
+    return component_variable;
+}
+
+std::optional<NetworkConnectionProfile> read_profile_from_device_model(DeviceModelInterface& dm, int32_t slot) {
+    try {
+        NetworkConnectionProfile profile;
+
+        const auto url_cv = get_component_variable(slot, OcppCsmsUrl);
+        const auto url_opt = dm.get_optional_value<std::string>(url_cv);
+        if (!url_opt.has_value() || url_opt.value().empty()) {
+            return std::nullopt;
+        }
+        profile.ocppCsmsUrl = url_opt.value();
+
+        const auto sec_cv = get_component_variable(slot, SecurityProfile);
+        const auto sec_opt = dm.get_optional_value<int>(sec_cv);
+        if (!sec_opt.has_value()) {
+            return std::nullopt;
+        }
+        profile.securityProfile = sec_opt.value();
+
+        const auto iface_cv = get_component_variable(slot, OcppInterface);
+        const auto iface_opt = dm.get_optional_value<std::string>(iface_cv);
+        if (!iface_opt.has_value()) {
+            return std::nullopt;
+        }
+        profile.ocppInterface = conversions::string_to_ocppinterface_enum(iface_opt.value());
+
+        const auto trans_cv = get_component_variable(slot, OcppTransport);
+        const auto trans_opt = dm.get_optional_value<std::string>(trans_cv);
+        if (!trans_opt.has_value()) {
+            return std::nullopt;
+        }
+        profile.ocppTransport = conversions::string_to_ocpptransport_enum(trans_opt.value());
+
+        const auto timeout_cv = get_component_variable(slot, MessageTimeout);
+        const auto timeout_opt = dm.get_optional_value<int>(timeout_cv);
+        if (!timeout_opt.has_value()) {
+            return std::nullopt;
+        }
+        profile.messageTimeout = timeout_opt.value();
+
+        const auto identity_cv = get_component_variable(slot, Identity);
+        if (const auto identity_opt = dm.get_optional_value<std::string>(identity_cv);
+            identity_opt.has_value() && !identity_opt.value().empty()) {
+            profile.identity = identity_opt.value();
+        }
+
+        const auto pwd_cv = get_component_variable(slot, BasicAuthPassword);
+        if (const auto pwd_opt = dm.get_optional_value<std::string>(pwd_cv);
+            pwd_opt.has_value() && !pwd_opt.value().empty()) {
+            profile.basicAuthPassword = pwd_opt.value();
+        }
+
+        const auto apn_enabled_cv = get_component_variable(slot, ApnEnabled);
+        const auto apn_enabled = dm.get_optional_value<bool>(apn_enabled_cv).value_or(false);
+        if (apn_enabled) {
+            APN apn;
+            const auto apn_cv = get_component_variable(slot, Apn);
+            if (const auto apn_opt = dm.get_optional_value<std::string>(apn_cv)) {
+                apn.apn = apn_opt.value();
+            } else {
+                EVLOG_warning << "APN enabled but APN value not set for slot " << slot;
+                return std::nullopt;
+            }
+            const auto auth_cv = get_component_variable(slot, ApnAuthentication);
+            if (const auto auth_opt = dm.get_optional_value<std::string>(auth_cv)) {
+                apn.apnAuthentication = conversions::string_to_apnauthentication_enum(auth_opt.value());
+            } else {
+                apn.apnAuthentication = APNAuthenticationEnum::AUTO;
+            }
+            if (const auto user_opt = dm.get_optional_value<std::string>(get_component_variable(slot, ApnUserName))) {
+                apn.apnUserName = user_opt.value();
+            }
+            if (const auto pwd_opt = dm.get_optional_value<std::string>(get_component_variable(slot, ApnPassword))) {
+                apn.apnPassword = pwd_opt.value();
+            }
+            if (const auto pin_opt = dm.get_optional_value<int>(get_component_variable(slot, SimPin))) {
+                apn.simPin = pin_opt.value();
+            }
+            if (const auto net_opt =
+                    dm.get_optional_value<std::string>(get_component_variable(slot, PreferredNetwork))) {
+                apn.preferredNetwork = net_opt.value();
+            }
+            if (const auto only_opt =
+                    dm.get_optional_value<bool>(get_component_variable(slot, UseOnlyPreferredNetwork))) {
+                apn.useOnlyPreferredNetwork = only_opt.value();
+            }
+            profile.apn = apn;
+        }
+
+        const auto vpn_enabled_cv = get_component_variable(slot, VpnEnabled);
+        const auto vpn_enabled = dm.get_optional_value<bool>(vpn_enabled_cv).value_or(false);
+        if (vpn_enabled) {
+            VPN vpn;
+            if (const auto server_opt = dm.get_optional_value<std::string>(get_component_variable(slot, VpnServer))) {
+                vpn.server = server_opt.value();
+            } else {
+                EVLOG_warning << "VPN enabled but VPN server value not set for slot " << slot;
+                return std::nullopt;
+            }
+            if (const auto user_opt = dm.get_optional_value<std::string>(get_component_variable(slot, VpnUser))) {
+                vpn.user = user_opt.value();
+            } else {
+                EVLOG_warning << "VPN enabled but VPN user value not set for slot " << slot;
+                return std::nullopt;
+            }
+            if (const auto pwd_opt = dm.get_optional_value<std::string>(get_component_variable(slot, VpnPassword))) {
+                vpn.password = pwd_opt.value();
+            } else {
+                EVLOG_warning << "VPN enabled but VPN password value not set for slot " << slot;
+                return std::nullopt;
+            }
+            if (const auto key_opt = dm.get_optional_value<std::string>(get_component_variable(slot, VpnKey))) {
+                vpn.key = key_opt.value();
+            } else {
+                EVLOG_warning << "VPN enabled but VPN key value not set for slot " << slot;
+                return std::nullopt;
+            }
+            if (const auto type_opt = dm.get_optional_value<std::string>(get_component_variable(slot, VpnType))) {
+                vpn.type = conversions::string_to_vpnenum(type_opt.value());
+            } else {
+                EVLOG_warning << "VPN enabled but VPN type value not set for slot " << slot;
+                return std::nullopt;
+            }
+            if (const auto group_opt = dm.get_optional_value<std::string>(get_component_variable(slot, VpnGroup))) {
+                vpn.group = group_opt.value();
+            }
+            profile.vpn = vpn;
+        }
+
+        return profile;
+    } catch (const std::exception& e) {
+        EVLOG_error << "Error reading profile from device model for slot " << slot << ": " << e.what();
+        return std::nullopt;
+    }
+}
+
+bool write_profile_to_device_model(DeviceModelInterface& dm, int32_t slot, const NetworkConnectionProfile& profile,
+                                   const std::string& source) {
+    try {
+        auto set = [&](const Variable& var, const std::string& val) {
+            const auto cv = get_component_variable(slot, var);
+            return dm.set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, val, source);
+        };
+
+        if (set(OcppCsmsUrl, profile.ocppCsmsUrl.get()) != SetVariableStatusEnum::Accepted) {
+            EVLOG_error << "Failed to set OcppCsmsUrl for slot " << slot;
+            return false;
+        }
+        if (set(SecurityProfile, std::to_string(profile.securityProfile)) != SetVariableStatusEnum::Accepted) {
+            EVLOG_error << "Failed to set SecurityProfile for slot " << slot;
+            return false;
+        }
+        if (set(OcppInterface, conversions::ocppinterface_enum_to_string(profile.ocppInterface)) !=
+            SetVariableStatusEnum::Accepted) {
+            EVLOG_error << "Failed to set OcppInterface for slot " << slot;
+            return false;
+        }
+        if (set(OcppTransport, conversions::ocpptransport_enum_to_string(profile.ocppTransport)) !=
+            SetVariableStatusEnum::Accepted) {
+            EVLOG_error << "Failed to set OcppTransport for slot " << slot;
+            return false;
+        }
+        if (set(MessageTimeout, std::to_string(profile.messageTimeout)) != SetVariableStatusEnum::Accepted) {
+            EVLOG_error << "Failed to set MessageTimeout for slot " << slot;
+            return false;
+        }
+
+        if (set(Identity, profile.identity.has_value() ? profile.identity.value().get() : "") !=
+            SetVariableStatusEnum::Accepted) {
+            EVLOG_warning << "Failed to set Identity for slot " << slot;
+        }
+        if (set(BasicAuthPassword, profile.basicAuthPassword.has_value() ? profile.basicAuthPassword.value().get()
+                                                                         : "") != SetVariableStatusEnum::Accepted) {
+            EVLOG_warning << "Failed to set BasicAuthPassword for slot " << slot;
+        }
+
+        if (profile.apn.has_value()) {
+            const auto& apn = profile.apn.value();
+            set(ApnEnabled, "true");
+            set(Apn, apn.apn.get());
+            set(ApnAuthentication, conversions::apnauthentication_enum_to_string(apn.apnAuthentication));
+            set(ApnUserName, apn.apnUserName.has_value() ? apn.apnUserName.value().get() : "");
+            set(ApnPassword, apn.apnPassword.has_value() ? apn.apnPassword.value().get() : "");
+            set(SimPin, apn.simPin.has_value() ? std::to_string(apn.simPin.value()) : "");
+            set(PreferredNetwork, apn.preferredNetwork.has_value() ? apn.preferredNetwork.value().get() : "");
+            set(UseOnlyPreferredNetwork, apn.useOnlyPreferredNetwork.has_value()
+                                             ? (apn.useOnlyPreferredNetwork.value() ? "true" : "false")
+                                             : "");
+        } else {
+            set(ApnEnabled, "false");
+        }
+
+        if (profile.vpn.has_value()) {
+            const auto& vpn = profile.vpn.value();
+            set(VpnEnabled, "true");
+            set(VpnServer, vpn.server.get());
+            set(VpnUser, vpn.user.get());
+            set(VpnPassword, vpn.password.get());
+            set(VpnKey, vpn.key.get());
+            set(VpnType, conversions::vpnenum_to_string(vpn.type));
+            set(VpnGroup, vpn.group.has_value() ? vpn.group.value().get() : "");
+        } else {
+            set(VpnEnabled, "false");
+        }
+
+        return true;
+    } catch (const std::exception& e) {
+        EVLOG_error << "Error writing profile to device model for slot " << slot << ": " << e.what();
+        return false;
+    }
+}
+
+void migrate_from_blob_if_needed(DeviceModelInterface& dm) {
+    try {
+        const auto blob_opt =
+            dm.get_optional_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles);
+        if (!blob_opt.has_value() || blob_opt.value().empty()) {
+            EVLOG_debug << "NetworkConnectionProfiles blob is empty, no migration needed";
+            return;
+        }
+
+        // Check if DM slots are already populated — skip migration if any slot has a configured URL
+        const auto priority_str =
+            dm.get_optional_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority);
+        if (priority_str.has_value() && !priority_str.value().empty()) {
+            for (const auto& slot_str : ocpp::split_string(priority_str.value(), ',')) {
+                const int slot = std::stoi(slot_str);
+                const auto url_cv = get_component_variable(slot, OcppCsmsUrl);
+                const auto url_opt = dm.get_optional_value<std::string>(url_cv);
+                if (url_opt.has_value() && !url_opt.value().empty()) {
+                    EVLOG_debug << "NetworkConfiguration DM slot " << slot
+                                << " already has a URL, skipping blob migration";
+                    // Clear the blob so this check does not run again
+                    dm.set_value(ControllerComponentVariables::NetworkConnectionProfiles.component,
+                                 ControllerComponentVariables::NetworkConnectionProfiles.variable.value(),
+                                 AttributeEnum::Actual, "", "internal");
+                    return;
+                }
+            }
+        }
+
+        const auto profiles = json::parse(blob_opt.value());
+        if (profiles.empty()) {
+            dm.set_value(ControllerComponentVariables::NetworkConnectionProfiles.component,
+                         ControllerComponentVariables::NetworkConnectionProfiles.variable.value(),
+                         AttributeEnum::Actual, "", "internal");
+            return;
+        }
+
+        int imported = 0;
+        for (const auto& profile_json : profiles) {
+            const int slot = profile_json.at("configurationSlot").get<int>();
+            const NetworkConnectionProfile profile = profile_json.at("connectionData");
+            if (write_profile_to_device_model(dm, slot, profile, "internal")) {
+                ++imported;
+            } else {
+                EVLOG_warning << "Failed to import NetworkConfiguration[" << slot << "] from blob";
+            }
+        }
+
+        // Clear the blob so this migration does not run again on the next boot
+        dm.set_value(ControllerComponentVariables::NetworkConnectionProfiles.component,
+                     ControllerComponentVariables::NetworkConnectionProfiles.variable.value(), AttributeEnum::Actual,
+                     "", "internal");
+
+        EVLOG_info << "Imported " << imported
+                   << " profile(s) from NetworkConnectionProfiles blob into NetworkConfiguration DM components";
+    } catch (const std::exception& e) {
+        EVLOG_error << "Error importing from NetworkConnectionProfiles blob: " << e.what();
+    }
+}
+
+void clear_slot_in_device_model(DeviceModelInterface& dm, int32_t slot) {
+    static const std::vector<const Variable*> all_vars = {
+        &OcppCsmsUrl,       &SecurityProfile,   &OcppInterface, &OcppTransport,    &MessageTimeout,
+        &Identity,          &BasicAuthPassword, &ApnEnabled,    &VpnEnabled,       &Apn,
+        &ApnUserName,       &ApnPassword,       &SimPin,        &PreferredNetwork, &UseOnlyPreferredNetwork,
+        &ApnAuthentication, &VpnServer,         &VpnUser,       &VpnPassword,      &VpnKey,
+        &VpnType,           &VpnGroup,
+    };
+    for (const auto* var : all_vars) {
+        const auto cv = get_component_variable(slot, *var);
+        dm.set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "", "internal");
+    }
+    EVLOG_debug << "Cleared NetworkConfiguration[" << slot << "] from device model";
+}
+} // namespace NetworkConfigurationComponentVariables
+
 } // namespace v2
 } // namespace ocpp

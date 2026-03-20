@@ -3,6 +3,8 @@
 
 #include <ocpp/v2/functional_blocks/provisioning.hpp>
 
+#include <set>
+
 #include <ocpp/common/constants.hpp>
 #include <ocpp/common/evse_security.hpp>
 #include <ocpp/v2/component_state_manager.hpp>
@@ -406,43 +408,9 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
         return;
     }
 
-    auto network_connection_profiles = json::parse(
-        this->context.device_model.get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
-
-    int index_to_override = -1;
-    int index = 0;
-    for (const SetNetworkProfileRequest network_profile : network_connection_profiles) {
-        if (network_profile.configurationSlot == msg.configurationSlot) {
-            index_to_override = index;
-        }
-        index++;
-    }
-
-    if (index_to_override != -1) {
-        // configurationSlot present, so we override
-        network_connection_profiles[index_to_override] = msg;
-    } else {
-        // configurationSlot not present, so we can append
-        network_connection_profiles.push_back(msg);
-    }
-
-    if (not ControllerComponentVariables::NetworkConnectionProfiles.variable.has_value()) {
-        const auto warning =
-            "Could not set a network profile because NetworkConnectionProfiles.variable is not defined";
-        EVLOG_warning << warning;
-        status_info.additionalInfo = warning;
-        response.statusInfo = status_info;
-        response.status = SetNetworkProfileStatusEnum::Rejected;
-        const ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
-        this->context.message_dispatcher.dispatch_call_result(call_result);
-        return;
-    }
-
-    if (this->context.device_model.set_value(ControllerComponentVariables::NetworkConnectionProfiles.component,
-                                             ControllerComponentVariables::NetworkConnectionProfiles.variable.value(),
-                                             AttributeEnum::Actual, network_connection_profiles.dump(),
-                                             VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL) !=
-        SetVariableStatusEnum::Accepted) {
+    // Write the profile to NetworkConfiguration device model variables and refresh the cache (B09.FR.09 / B09.FR.11/12)
+    if (!this->context.connectivity_manager.set_network_profile(msg.configurationSlot, msg.connectionData,
+                                                                VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL)) {
         const auto warning = "CSMS attempted to set a network profile that could not be written to the device model";
         EVLOG_warning << warning;
         status_info.additionalInfo = warning;
@@ -603,6 +571,9 @@ void Provisioning::handle_variable_changed(const SetVariableData& set_variable_d
 }
 
 void Provisioning::handle_variables_changed(const std::map<SetVariableData, SetVariableResult>& set_variable_results) {
+    // Track which NetworkConfiguration slots were modified
+    std::set<int32_t> modified_slots;
+
     // iterate over set_variable_results
     for (const auto& [set_variable_data, set_variable_result] : set_variable_results) {
         if (set_variable_result.attributeStatus == SetVariableStatusEnum::Accepted) {
@@ -618,6 +589,17 @@ void Provisioning::handle_variables_changed(const std::map<SetVariableData, SetV
                            << " changed to " << set_variable_data.attributeValue.get();
             }
 
+            // Track which NetworkConfiguration DM component slots were modified via SetVariables
+            if (set_variable_data.component.name == "NetworkConfiguration" &&
+                set_variable_data.component.instance.has_value()) {
+                try {
+                    const int32_t slot = std::stoi(set_variable_data.component.instance.value().get());
+                    modified_slots.insert(slot);
+                } catch (const std::exception& e) {
+                    EVLOG_warning << "Error parsing NetworkConfiguration slot: " << e.what();
+                }
+            }
+
             // handles required behavior specified within OCPP2.0.1 (e.g. reconnect when BasicAuthPassword has changed)
             this->handle_variable_changed(set_variable_data);
             // notifies libocpp user application that a variable has changed
@@ -627,33 +609,70 @@ void Provisioning::handle_variables_changed(const std::map<SetVariableData, SetV
         }
     }
 
+    // Refresh the connectivity manager's in-memory profile cache if any NetworkConfiguration slot changed
+    if (!modified_slots.empty()) {
+        this->context.connectivity_manager.reload_network_profiles();
+    }
+
     // process all triggered monitors, after a possible disconnect
     this->diagnostics.process_triggered_monitors();
 }
 
-bool Provisioning::validate_set_variable(const SetVariableData& set_variable_data) {
+std::optional<std::string> Provisioning::validate_set_variable(const SetVariableData& set_variable_data) {
     const ComponentVariable cv = {set_variable_data.component, set_variable_data.variable, std::nullopt};
+
+    // B09.FR.21/22: Reject changes to the currently active NetworkConfiguration slot
+    if (cv.component.name == "NetworkConfiguration" && cv.component.instance.has_value() && cv.variable.has_value()) {
+        try {
+            const int slot = std::stoi(cv.component.instance.value().get());
+            const auto active_slot_opt =
+                this->context.device_model.get_optional_value<int>(ControllerComponentVariables::ActiveNetworkProfile);
+
+            if (active_slot_opt.has_value() && slot == active_slot_opt.value()) {
+                EVLOG_warning << "Cannot set NetworkConfiguration variable for slot " << slot
+                              << " which is the currently active slot";
+                return "PriorityNetworkConf";
+            }
+
+            // B09.FR.35: Reject security profile downgrades
+            if (cv.variable.value().name == "SecurityProfile") {
+                try {
+                    const int new_profile = std::stoi(set_variable_data.attributeValue.get());
+                    const int active_profile =
+                        this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
+                    if (new_profile < active_profile) {
+                        EVLOG_warning << "Cannot downgrade SecurityProfile from " << active_profile << " to "
+                                      << new_profile;
+                        return "NoSecurityDowngrade";
+                    }
+                } catch (const std::exception& e) {
+                    EVLOG_warning << "Error validating SecurityProfile: " << e.what();
+                    return "InvalidNetworkConf";
+                }
+            }
+        } catch (const std::exception& e) {
+            EVLOG_warning << "Error validating NetworkConfiguration: " << e.what();
+            return "InvalidNetworkConf";
+        }
+    }
+
     if (cv == ControllerComponentVariables::NetworkConfigurationPriority) {
         const auto network_configuration_priorities = ocpp::split_string(set_variable_data.attributeValue.get(), ',');
         const auto active_security_profile =
             this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
 
         try {
-            const auto network_connection_profiles = json::parse(this->context.device_model.get_value<std::string>(
-                ControllerComponentVariables::NetworkConnectionProfiles));
             for (const auto& configuration_slot : network_configuration_priorities) {
-                auto network_profile_it =
-                    std::find_if(network_connection_profiles.begin(), network_connection_profiles.end(),
-                                 [configuration_slot](const SetNetworkProfileRequest& network_profile) {
-                                     return network_profile.configurationSlot == std::stoi(configuration_slot);
-                                 });
+                const int slot = std::stoi(configuration_slot);
+                const auto profile_opt = NetworkConfigurationComponentVariables::read_profile_from_device_model(
+                    this->context.device_model, slot);
 
-                if (network_profile_it == network_connection_profiles.end()) {
+                if (!profile_opt.has_value()) {
                     EVLOG_warning << "Could not find network profile for configurationSlot: " << configuration_slot;
-                    return false;
+                    return "InvalidNetworkConf";
                 }
 
-                auto network_profile = SetNetworkProfileRequest(*network_profile_it).connectionData;
+                const auto& network_profile = *profile_opt;
 
                 if (network_profile.securityProfile <= active_security_profile) {
                     continue;
@@ -665,25 +684,22 @@ bool Provisioning::validate_set_variable(const SetVariableData& set_variable_dat
                             .status != ocpp::GetCertificateInfoStatus::Accepted) {
                     EVLOG_warning << "SecurityProfile of configurationSlot: " << configuration_slot
                                   << " is 3 but no CSMS Leaf Certificate is installed";
-                    return false;
+                    return "InvalidNetworkConf";
                 }
                 if (network_profile.securityProfile >= 2 and
                     !this->context.evse_security.is_ca_certificate_installed(ocpp::CaCertificateType::CSMS)) {
                     EVLOG_warning << "SecurityProfile of configurationSlot: " << configuration_slot
                                   << " is >= 2 but no CSMS Root Certifciate is installed";
-                    return false;
+                    return "InvalidNetworkConf";
                 }
             }
         } catch (const std::invalid_argument& e) {
             EVLOG_warning << "NetworkConfigurationPriority contains at least one value which is not an integer: "
                           << set_variable_data.attributeValue.get();
-            return false;
-        } catch (const json::exception& e) {
-            EVLOG_warning << "Could not parse NetworkConnectionProfiles or SetNetworkProfileRequest: " << e.what();
-            return false;
+            return "InvalidNetworkConf";
         }
     }
-    return true;
+    return std::nullopt;
     // TODO(piet): other special validating of variables requested to change can be added here...
 }
 
@@ -700,7 +716,8 @@ Provisioning::set_variables_internal(const std::vector<SetVariableData>& set_var
         set_variable_result.attributeType = set_variable_data.attributeType.value_or(AttributeEnum::Actual);
 
         // validates variable against business logic of the spec
-        if (this->validate_set_variable(set_variable_data)) {
+        const auto validation_result = this->validate_set_variable(set_variable_data);
+        if (!validation_result.has_value()) {
             // attempt to set the value includes device model validation
             set_variable_result.attributeStatus =
                 this->context.device_model.set_value(set_variable_data.component, set_variable_data.variable,
@@ -708,6 +725,9 @@ Provisioning::set_variables_internal(const std::vector<SetVariableData>& set_var
                                                      set_variable_data.attributeValue.get(), source, allow_read_only);
         } else {
             set_variable_result.attributeStatus = SetVariableStatusEnum::Rejected;
+            StatusInfo status_info;
+            status_info.reasonCode = validation_result.value();
+            set_variable_result.attributeStatusInfo = status_info;
         }
         response[set_variable_data] = set_variable_result;
     }

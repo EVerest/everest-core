@@ -115,6 +115,17 @@ public:
 
     /// \brief Confirms the connection is successful so the security profile requirements can be handled
     virtual void confirm_successful_connection() = 0;
+
+    /// \brief Reload network connection profiles from NetworkConfiguration DM components into the in-memory cache
+    virtual void reload_network_profiles() = 0;
+
+    /// \brief Write a network connection profile to the device model and refresh the in-memory cache.
+    /// \param slot The configuration slot to write to
+    /// \param profile The profile to write
+    /// \param source The source of the change (e.g. 'csms', 'internal')
+    /// \return true if the profile was written successfully
+    virtual bool set_network_profile(int32_t slot, const NetworkConnectionProfile& profile,
+                                     const std::string& source) = 0;
 };
 
 class ConnectivityManager : public ConnectivityManagerInterface {
@@ -155,6 +166,9 @@ public:
     ConnectivityManager(DeviceModelAbstract& device_model, std::shared_ptr<EvseSecurity> evse_security,
                         std::shared_ptr<MessageLogging> logging, const fs::path& share_path,
                         const std::function<void(const std::string& message)>& message_callback);
+
+    void reload_network_profiles() override;
+    bool set_network_profile(int32_t slot, const NetworkConnectionProfile& profile, const std::string& source) override;
 
     void set_websocket_authorization_key(const std::string& authorization_key) override;
     void set_websocket_connection_options(const WebsocketConnectionOptions& connection_options) override;
@@ -234,8 +248,9 @@ private:
     /// connected security profile
     void check_cache_for_invalid_security_profiles();
 
-    /// \brief Removes all connection profiles from the database that have a security profile lower than the currently
-    /// connected security profile
+    /// \brief Removes all NetworkConfiguration DM slots and in-memory cache entries for profiles that have a security
+    /// profile lower than the currently connected security profile, and persists the updated
+    /// NetworkConfigurationPriority
     void remove_network_connection_profiles_below_actual_security_profile();
 };
 

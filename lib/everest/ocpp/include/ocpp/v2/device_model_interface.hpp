@@ -5,14 +5,83 @@
 #define DEVICE_MODEL_INTERFACE_HPP
 
 #include <optional>
+#include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 
+#include <everest/logging.hpp>
+#include <ocpp/common/utils.hpp>
 #include <ocpp/v2/enums.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
 namespace v2 {
+
+/// \brief Convert a raw string value from the device model to a typed value
+/// \tparam T Target type (std::string, int, double, size_t, DateTime, bool, or uint64_t)
+/// \param value Raw string value
+/// \return Typed value
+/// \throws std::invalid_argument if the value cannot be converted
+template <typename T> T to_specific_type(const std::string& value) {
+    static_assert(std::is_same_v<T, std::string> || std::is_same_v<T, int> || std::is_same_v<T, double> ||
+                      std::is_same_v<T, size_t> || std::is_same_v<T, DateTime> || std::is_same_v<T, bool> ||
+                      std::is_same_v<T, std::uint64_t>,
+                  "Requested unknown datatype");
+
+    if constexpr (std::is_same_v<T, std::string>) {
+        return value;
+    } else if constexpr (std::is_same_v<T, int>) {
+        return std::stoi(value);
+    } else if constexpr (std::is_same_v<T, double>) {
+        return std::stod(value);
+    } else if constexpr (std::is_same_v<T, std::size_t>) {
+        const std::size_t res = std::stoul(value);
+        return res;
+    } else if constexpr (std::is_same_v<T, DateTime>) {
+        return DateTime(value);
+    } else if constexpr (std::is_same_v<T, bool>) {
+        if (!is_boolean(value)) {
+            throw std::invalid_argument("Invalid boolean value: " + value);
+        }
+        return ocpp::conversions::string_to_bool(value);
+    } else if constexpr (std::is_same_v<T, std::uint64_t>) {
+        return std::stoull(value);
+    }
+}
+
+/// \brief Convert a raw string value to a typed value, selecting the type at compile time via DataEnum
+template <DataEnum T> auto to_specific_type_auto(const std::string& value) {
+    static_assert(T == DataEnum::string || T == DataEnum::integer || T == DataEnum::decimal ||
+                      T == DataEnum::dateTime || T == DataEnum::boolean,
+                  "Requested unknown datatype");
+
+    if constexpr (T == DataEnum::string) {
+        return to_specific_type<std::string>(value);
+    } else if constexpr (T == DataEnum::integer) {
+        return to_specific_type<int>(value);
+    } else if constexpr (T == DataEnum::decimal) {
+        return to_specific_type<double>(value);
+    } else if constexpr (T == DataEnum::dateTime) {
+        return to_specific_type<DateTime>(value);
+    } else if constexpr (T == DataEnum::boolean) {
+        return to_specific_type<bool>(value);
+    }
+}
+
+/// \brief Returns whether the given DataEnum type is numeric
+template <DataEnum T> bool is_type_numeric() {
+    static_assert(T == DataEnum::string || T == DataEnum::integer || T == DataEnum::decimal ||
+                      T == DataEnum::dateTime || T == DataEnum::boolean || T == DataEnum::OptionList ||
+                      T == DataEnum::SequenceList || T == DataEnum::MemberList,
+                  "Requested unknown datatype");
+
+    if constexpr (T == DataEnum::integer || T == DataEnum::decimal) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 /// \brief Helper struct that holds values that don't have spec coverage
 struct VariableMonitoringMeta {
@@ -193,7 +262,101 @@ public:
     /// \brief Check data integrity of the device model
     /// \param evse_connector_structure The EVSE connector structure
     virtual void check_integrity(const std::map<std::int32_t, std::int32_t>& evse_connector_structure) = 0;
+
+    // ============================================================================
+    // Typed value getters (implemented in terms of get_variable)
+    // ============================================================================
+
+    /// \brief Retrieves a variable attribute value as a typed value
+    /// \tparam T Target type (std::string, int, double, size_t, DateTime, bool, or uint64_t)
+    /// \param component_id The component
+    /// \param variable_id The variable
+    /// \param attribute_enum The attribute
+    /// \return Typed value; throws std::runtime_error if the variable is not found
+    template <typename T>
+    T get_value(const Component& component_id, const Variable& variable_id,
+                const AttributeEnum& attribute_enum = AttributeEnum::Actual) const {
+        std::string value;
+        const auto status = get_variable(component_id, variable_id, attribute_enum, value, true);
+        if (status != GetVariableStatusEnum::Accepted) {
+            EVLOG_critical << "Required value " << variable_id.name << " of component " << component_id.name
+                           << " could not be retrieved";
+            throw std::runtime_error("Required device model value not available: " + variable_id.name.get());
+        }
+        return to_specific_type<T>(value);
+    }
+
+    /// \brief Retrieves a variable attribute value as a typed value
+    /// \tparam T Target type (std::string, int, double, size_t, DateTime, bool, or uint64_t)
+    /// \param component_variable The component and variable
+    /// \param attribute_enum The attribute
+    /// \return Typed value; throws std::runtime_error if the variable is not found
+    template <typename T>
+    T get_value(const ComponentVariable& component_variable,
+                const AttributeEnum& attribute_enum = AttributeEnum::Actual) const {
+        if (!component_variable.variable.has_value()) {
+            throw std::runtime_error("ComponentVariable has no variable set");
+        }
+        return get_value<T>(component_variable.component, component_variable.variable.value(), attribute_enum);
+    }
+
+    /// \brief Retrieves an optional variable attribute value as a typed value
+    /// \tparam T Target type (std::string, int, double, size_t, DateTime, bool, or uint64_t)
+    /// \param component_id The component
+    /// \param variable_id The variable
+    /// \param attribute_enum The attribute
+    /// \return Typed value or std::nullopt if the variable is not found or cannot be converted
+    template <typename T>
+    std::optional<T> get_optional_value(const Component& component_id, const Variable& variable_id,
+                                        const AttributeEnum& attribute_enum = AttributeEnum::Actual) const {
+        std::string value;
+        const auto status = get_variable(component_id, variable_id, attribute_enum, value, true);
+        if (status != GetVariableStatusEnum::Accepted) {
+            return std::nullopt;
+        }
+        try {
+            return to_specific_type<T>(value);
+        } catch (const std::exception&) {
+            return std::nullopt;
+        }
+    }
+
+    /// \brief Retrieves an optional variable attribute value as a typed value
+    /// \tparam T Target type (std::string, int, double, size_t, DateTime, bool, or uint64_t)
+    /// \param component_variable The component and variable
+    /// \param attribute_enum The attribute
+    /// \return Typed value or std::nullopt if the variable is not found or cannot be converted
+    template <typename T>
+    std::optional<T> get_optional_value(const ComponentVariable& component_variable,
+                                        const AttributeEnum& attribute_enum = AttributeEnum::Actual) const {
+        if (!component_variable.variable.has_value()) {
+            return std::nullopt;
+        }
+        return get_optional_value<T>(component_variable.component, component_variable.variable.value(), attribute_enum);
+    }
 };
+
+namespace NetworkConfigurationComponentVariables {
+
+/// \brief Read a NetworkConnectionProfile from device model variables for the given slot.
+/// Returns std::nullopt if OcppCsmsUrl is absent/empty (slot not configured).
+std::optional<NetworkConnectionProfile> read_profile_from_device_model(DeviceModelInterface& dm, int32_t slot);
+
+/// \brief Write a NetworkConnectionProfile to device model variables for the given slot.
+/// Returns true on success.
+bool write_profile_to_device_model(DeviceModelInterface& dm, int32_t slot, const NetworkConnectionProfile& profile,
+                                   const std::string& source);
+
+/// \brief One-time migration: if the NetworkConnectionProfiles blob is non-empty and no
+/// NetworkConfiguration DM slot has a configured OcppCsmsUrl, import profiles from the blob.
+/// Clears the blob after migration (or if DM is already populated) so this is idempotent.
+void migrate_from_blob_if_needed(DeviceModelInterface& dm);
+
+/// \brief Clear all NetworkConfiguration device model variables for the given slot.
+/// After this call, read_profile_from_device_model returns std::nullopt for the slot.
+void clear_slot_in_device_model(DeviceModelInterface& dm, int32_t slot);
+
+} // namespace NetworkConfigurationComponentVariables
 
 } // namespace v2
 } // namespace ocpp
