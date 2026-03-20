@@ -16,6 +16,11 @@ namespace ocpp {
 Websocket::Websocket(const WebsocketConnectionOptions& connection_options, std::shared_ptr<EvseSecurity> evse_security,
                      std::shared_ptr<MessageLogging> logging) :
     logging(logging) {
+
+    if (logging == nullptr) {
+        throw std::runtime_error("Websocket requires a valid MessageLogging instance");
+    }
+
     this->websocket = std::make_unique<WebsocketLibwebsockets>(connection_options, evse_security);
 }
 
