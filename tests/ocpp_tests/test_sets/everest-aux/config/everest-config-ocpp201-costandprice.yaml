@@ -110,6 +110,9 @@ active_modules:
       private_key_password: "123456"
   token_provider_manual:
     module: DummyTokenProviderManual
+    config_implementation:
+      main:
+        mqtt_topic: 'everest_api/dummy_token_provider/cmd/provide'
   energy_manager:
     module: EnergyManager
     connections:

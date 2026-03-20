@@ -73,6 +73,7 @@ active_modules:
     connections: {}
     config_implementation:
       main:
+        mqtt_topic: 'everest_api/dummy_token_provider/cmd/provide'
         token: '123'
         type: dummy
   energy_manager:

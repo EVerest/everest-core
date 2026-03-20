@@ -166,6 +166,9 @@ active_modules:
       private_key_password: "123456"
   token_provider_1:
     module: DummyTokenProviderManual
+    config_implementation:
+      main:
+        mqtt_topic: 'everest_api/dummy_token_provider/cmd/provide'
   token_validator:
     module: DummyTokenValidator
     config_implementation:
