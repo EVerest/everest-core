@@ -448,7 +448,7 @@ at the end of the installation).
 
 Once they are sourced, this terminal will cross compile.
 
-In everest-core, create a folder called "build-cross". Change into it.
+In ``EVerest/``, create a folder called "build-cross". Change into it.
 
 There, run cmake as follows:
 

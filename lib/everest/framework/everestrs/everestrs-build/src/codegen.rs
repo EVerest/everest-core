@@ -85,7 +85,7 @@ fn is_reserved_keyword(s: &str) -> bool {
 
 fn lazy_load<'a, T: DeserializeOwned>(
     storage: &'a mut HashMap<String, T>,
-    everest_core: &Vec<PathBuf>,
+    everest_root: &Vec<PathBuf>,
     prefix: &str,
     postfix: &str,
 ) -> Result<&'a mut T> {
@@ -93,7 +93,7 @@ fn lazy_load<'a, T: DeserializeOwned>(
         return Ok(storage.get_mut(postfix).unwrap());
     }
 
-    let mut matches = everest_core
+    let mut matches = everest_root
         .iter()
         .filter_map(|core| {
             let p = core.join(format!("{prefix}/{postfix}.yaml"));
@@ -128,37 +128,37 @@ fn lazy_load<'a, T: DeserializeOwned>(
 #[derive(Default, Debug)]
 struct YamlRepo {
     // This might be also a HashMap of "namespaces" and paths.
-    everest_core: Vec<PathBuf>,
+    everest_root: Vec<PathBuf>,
     interfaces: HashMap<String, Interface>,
     data_types: HashMap<String, DataTypes>,
     error_types: HashMap<String, ErrorList>,
 }
 
 impl YamlRepo {
-    pub fn new(everest_core: Vec<PathBuf>) -> Self {
+    pub fn new(everest_root: Vec<PathBuf>) -> Self {
         Self {
-            everest_core,
+            everest_root,
             ..Default::default()
         }
     }
 
     pub fn get_interface<'a>(&'a mut self, name: &str) -> Result<&'a mut Interface> {
-        lazy_load(&mut self.interfaces, &self.everest_core, "interfaces", name)
+        lazy_load(&mut self.interfaces, &self.everest_root, "interfaces", name)
     }
 
     pub fn get_data_types<'a>(&'a mut self, name: &str) -> Result<&'a mut DataTypes> {
-        lazy_load(&mut self.data_types, &self.everest_core, "types", name)
+        lazy_load(&mut self.data_types, &self.everest_root, "types", name)
     }
 
     pub fn get_errors<'a>(&'a mut self, prefix: &str, name: &str) -> Result<&'a mut ErrorList> {
-        lazy_load(&mut self.error_types, &self.everest_core, prefix, name)
+        lazy_load(&mut self.error_types, &self.everest_root, prefix, name)
     }
 }
 
 // We just pull out of ObjectOptions what we really need for codegen.
 #[derive(Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
 struct TypeRef {
-    /// The same as the file name under everest-core/types.
+    /// The same as the file name under EVerest/types.
     module_path: Vec<String>,
     type_name: String,
 }
@@ -705,8 +705,8 @@ fn emit_config(config: BTreeMap<String, ConfigEntry>) -> Vec<ArgumentContext> {
         .collect::<Vec<_>>()
 }
 
-pub fn emit(manifest_path: PathBuf, everest_core: Vec<PathBuf>) -> Result<String> {
-    let mut yaml_repo = YamlRepo::new(everest_core);
+pub fn emit(manifest_path: PathBuf, everest_root: Vec<PathBuf>) -> Result<String> {
+    let mut yaml_repo = YamlRepo::new(everest_root);
     let blob = fs::read_to_string(&manifest_path).context("While reading manifest file")?;
     let manifest: Manifest = serde_yaml::from_str(&blob).context("While parsing manifest")?;
 

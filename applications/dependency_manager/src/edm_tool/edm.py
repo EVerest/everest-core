@@ -1006,8 +1006,8 @@ def init_handler(args):
     config_path = working_dir / "workspace-config.yaml"
 
     if args.list:
-        tags = GitInfo.get_remote_tags("https://github.com/EVerest/everest-core.git")
-        log.info(f"Available everest-core releases: {', '.join(tags)}")
+        tags = GitInfo.get_remote_tags("https://github.com/EVerest/EVerest.git")
+        log.info(f"Available EVerest releases: {', '.join(tags)}")
         sys.exit(0)
 
     if args.release:
@@ -1029,7 +1029,7 @@ def init_handler(args):
     if github_key_available:
         github_prefix = github_git_prefix
 
-    everest_core = {"name": "everest-core", "repo": github_prefix + "everest-core.git", "release": args.release}
+    everest_core = {"name": "EVerest", "repo": github_prefix + "EVerest.git", "release": args.release}
     everest_cmake = {"name": "everest-cmake", "repo": github_prefix + "everest-cmake.git", "release": None}
     everest_dev_environment = {"name": "everest-dev-environment",
                                "repo": github_prefix + "everest-dev-environment.git", "release": None}
@@ -1331,13 +1331,13 @@ def populate_component(metadata_yaml, key, version):
 
 def release_handler(args):
     """Handler for the edm release subcommand"""
-    everest_core_path = Path(args.everest_core_dir)
+    everest_core_path = Path(args.everest_dir)
     build_path = Path(args.build_dir)
     release_path = Path(args.out)
 
     metadata_yaml = {}
     metadata_file = os.environ.get('EVEREST_METADATA_FILE', None)
-    metadata_url = "https://raw.githubusercontent.com/EVerest/everest-core/main/everest-metadata.yaml"
+    metadata_url = "https://raw.githubusercontent.com/EVerest/EVerest/main/everest-metadata.yaml"
 
     if not metadata_file:
         metadata_path = build_path / "everest-metadata.yaml"
@@ -1368,7 +1368,7 @@ def release_handler(args):
         everest_core_repo_info_git_tag = everest_core_repo_info["branch"] + "@" + everest_core_repo_info["short_rev"]
     if everest_core_repo_info["tag"]:
         everest_core_repo_info_git_tag = everest_core_repo_info["tag"]
-    snapshot_yaml = {"everest-core": {"git_tag": everest_core_repo_info_git_tag}}
+    snapshot_yaml = {"EVerest": {"git_tag": everest_core_repo_info_git_tag}}
     for cpm_module_file_name in sorted(os.listdir(cpm_modules_path)):
         cpm_module_file = cpm_modules_path / cpm_module_file_name
         if not cpm_module_file.is_file():
@@ -1420,7 +1420,7 @@ def release_handler(args):
     include_all = os.environ.get('EVEREST_METADATA_INCLUDE_ALL', "no")
 
     release_json = {"channel": channel, "datetime": now,
-                    "version": snapshot_yaml["everest-core"]["git_tag"], "components": []}
+                    "version": snapshot_yaml["EVerest"]["git_tag"], "components": []}
 
     snapshot_yaml = dict(sorted(snapshot_yaml.items(), key=lambda entry: (entry[0].swapcase())))
 
@@ -1619,7 +1619,7 @@ def get_parser(version) -> argparse.ArgumentParser:
     init_parser.add_argument(
         "--list",
         action="store_true",
-        help="List available everest-core versions.")
+        help="List available EVerest versions.")
 
     list_parser = subparsers.add_parser('list', add_help=True)
     list_parser.set_defaults(action_handler=list_handler)
@@ -1671,13 +1671,13 @@ def get_parser(version) -> argparse.ArgumentParser:
     release_parser = subparsers.add_parser('release', add_help=True)
     release_parser.set_defaults(action_handler=release_handler)
     release_parser.add_argument(
-        "--everest-core-dir",
-        help="Path to everest-core",
+        "--everest-dir",
+        help="Path to EVerest",
         nargs="?",
-        default="everest-core")
+        default="EVerest")
     release_parser.add_argument(
         "--build-dir",
-        help="Path to everest-core build dir",
+        help="Path to EVerest build dir",
         nargs="?",
         default="build")
     release_parser.add_argument(

@@ -46,7 +46,7 @@ common:
 
 - `--schemas-dir`:
   schemas directory of the EVerest framework, containing the schema
-  definitions (default: ``everest-core/lib/everest/framework/schemas``)
+  definitions (default: ``EVerest/lib/everest/framework/schemas``)
 
 - `--clang-format-file`:
   if c++output should be formatted, set this to the path of the

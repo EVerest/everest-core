@@ -29,8 +29,8 @@ files, EVerest config files, recipes for your own software etc. Look at
 
 https://docs.yoctoproject.org/dev/dev-manual/layers.html
 
-You can find *meta-everest* in a subdirectory of everest-core:
-*everest-core/yocto/<yocto-release>/meta-everest*
+You can find *meta-everest* in a subdirectory of EVerest:
+*EVerest/yocto/<yocto-release>/meta-everest*
 
 Currently this includes support for the yocto *scarthgap* and *kirkstone* releases.
 

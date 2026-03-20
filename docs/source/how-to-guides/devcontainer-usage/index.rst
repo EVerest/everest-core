@@ -123,7 +123,7 @@ There are two ways to access the devcontainer:
        ./applications/devrd/devrd prompt
 
    This will open an interactive shell inside the devcontainer.
-   The contents of the everest-core repository are mapped
+   The contents of the EVerest repository are mapped
    to the ``/workspace`` directory inside the container.
 
    You can now run all development commands inside this shell.
@@ -189,7 +189,7 @@ There are two commands one should know when working with Node-RED flows:
 Modify Workspace Directory Mapping
 **********************************
 
-While the default mapping of the everest-core repository
+While the default mapping of the EVerest repository
 is to the ``/workspace`` directory inside the devcontainer,
 this can be modified by using the ``./applications/devrd/devrd env`` command:
 
@@ -197,7 +197,7 @@ this can be modified by using the ``./applications/devrd/devrd env`` command:
 
     ./applications/devrd/devrd env -w /path/to/workspace
 
-This will mount the everest-core repository to the specified
+This will mount the EVerest repository to the specified
 ``/path/to/workspace`` directory inside the devcontainer.
 
 Where ``/path/to/workspace`` is the desired path inside the container.
@@ -212,7 +212,7 @@ Simple SIL
 **Prerequisites:**
 
 - Containers are up and running
-- everest-core has been build (``cmake --build ...``) + installed (``cmake --install ...``)
+- EVerest has been build (``cmake --build ...``) + installed (``cmake --install ...``)
 
 **Inside the devcontainer:**
 

@@ -8,16 +8,16 @@ use std::process::Command;
 
 #[derive(Debug, Default)]
 pub struct Builder {
-    everest_core: Vec<PathBuf>,
+    everest_root: Vec<PathBuf>,
     // TODO(hrapp): This is almost always the same anyways.
     manifest_path: PathBuf,
     out_dir: Option<PathBuf>,
 }
 
 impl Builder {
-    pub fn new(manifest_path: impl Into<PathBuf>, everest_core: Vec<impl Into<PathBuf>>) -> Self {
+    pub fn new(manifest_path: impl Into<PathBuf>, everest_root: Vec<impl Into<PathBuf>>) -> Self {
         Self {
-            everest_core: everest_core
+            everest_root: everest_root
                 .into_iter()
                 .map(|element| element.into())
                 .collect::<Vec<_>>(),
@@ -37,7 +37,7 @@ impl Builder {
             .unwrap_or_else(|| PathBuf::from(std::env::var("OUT_DIR").unwrap()))
             .join("generated.rs");
 
-        let out = codegen::emit(self.manifest_path, self.everest_core)?;
+        let out = codegen::emit(self.manifest_path, self.everest_root)?;
 
         let mut f = std::fs::File::create(&path).context("Could not generate the output file.")?;
         f.write_all(out.as_bytes())?;

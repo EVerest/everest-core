@@ -28,7 +28,7 @@ def dcbm_port(request) -> int:
 
 @pytest.fixture(scope="function")
 def everest_test_instance(request, dcbm_host, dcbm_port, dcbm) -> LemDCBMStandaloneEverestInstance:
-    """Fixture that can be used to start and stop everest-core"""
+    """Fixture that can be used to start and stop EVerest"""
     everest_prefix = Path(request.config.getoption("--everest-prefix"))
     try:
         dcbm.reset_device()
@@ -42,7 +42,7 @@ def everest_test_instance(request, dcbm_host, dcbm_port, dcbm) -> LemDCBMStandal
 
 @pytest.fixture(scope="function")
 def everest_test_instance_ntp_configured(request, dcbm_host, dcbm_port, dcbm) -> LemDCBMStandaloneEverestInstance:
-    """Fixture that can be used to start and stop everest-core"""
+    """Fixture that can be used to start and stop EVerest"""
     everest_prefix = Path(request.config.getoption("--everest-prefix"))
     try:
         dcbm.reset_device()
@@ -61,7 +61,7 @@ def everest_test_instance_ntp_configured(request, dcbm_host, dcbm_port, dcbm) ->
 
 @pytest.fixture(scope="function")
 def everest_test_instance_tls(request, dcbm_host, dcbm_port, dcbm) -> LemDCBMStandaloneEverestInstance:
-    """Fixture that can be used to start and stop everest-core"""
+    """Fixture that can be used to start and stop EVerest"""
     everest_prefix = Path(request.config.getoption("--everest-prefix"))
     try:
         dcbm.reset_device()

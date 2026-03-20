@@ -7,10 +7,10 @@
 EVerest modules and even individual interface implementations can have mappings
 assigned to them. These mappings are inspired by the OCPP 3-tier model and are
 available for error handling since `everest-framework v0.16.0 <https://github.com/EVerest/everest-framework/releases/tag/v0.16.0>`_,
-which is included in everest-core since `release 2024.7.0. <https://github.com/EVerest/everest-core/releases/tag/2024.7.0>`_.
+which is included in EVerest since `release 2024.7.0. <https://github.com/EVerest/EVerest/releases/tag/2024.7.0>`_.
 
 These mappings are exposed for usage in module code since `everest-framework v0.18.0 <https://github.com/EVerest/everest-framework/releases/tag/v0.18.0>`_,
-which is included in everest-core since `release 2024.10.0. <https://github.com/EVerest/everest-core/releases/tag/2024.10.0>`_.
+which is included in EVerest since `release 2024.10.0. <https://github.com/EVerest/EVerest/releases/tag/2024.10.0>`_.
 
 Following an example how a mappping for the EvseManager could look like:
 

@@ -12,4 +12,4 @@ echo "Running $PARALLEL_TESTS tests in parallel"
   --max-worker-restart=0 \
   --timeout=300 \
   test_sets/*/*.py \
-  --everest-prefix "$EVEREST_CORE_DIR/build/dist"
+  --everest-prefix "$EVEREST_DIR/build/dist"

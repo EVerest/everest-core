@@ -26,7 +26,7 @@ the right choice.
 The devrd cli will help to manage the service containers independent
 of the devcontainer lifecycle. So one can start and stop the service containers
 at any time.
-The contents of the everest-core repo are mapped inside the container
+The contents of the EVerest repo are mapped inside the container
 in the directory ``/workspace``.
 
 *************
@@ -42,16 +42,16 @@ To install the prerequisites, please check your operating system or distribution
 Required Steps
 **************
 
-1. **Clone the everest-core repository**
+1. **Clone the EVerest repository**
 
-   If you have not done this yet, clone the everest-core repository
+   If you have not done this yet, clone the EVerest repository
    from GitHub to your local machine:
 
    .. code-block:: bash
 
-       git clone https://github.com/EVerest/everest-core.git path/to/everest-core
+       git clone https://github.com/EVerest/EVerest.git path/to/EVerest
     
-   Where ``path/to/everest-core`` is the path where you want to
+   Where ``path/to/EVerest`` is the path where you want to
    clone the repository to.
 
 2. **Build and start the devcontainer and service containers**
@@ -60,7 +60,7 @@ Required Steps
 
    .. code-block:: bash
 
-       cd path/to/everest-core
+       cd path/to/EVerest
 
    Then build and start the devcontainer and the service containers
    with the devrd cli:
@@ -82,7 +82,7 @@ Required Steps
        ./applications/devrd/devrd prompt
 
    This will open an interactive shell inside the devcontainer.
-   The contents of the everest-core repository are mapped
+   The contents of the EVerest repository are mapped
    to the ``/workspace`` directory inside the container.
 
    You can now run all development commands inside this shell.

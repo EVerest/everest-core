@@ -82,13 +82,13 @@ Now that the SDK is installed on your development machine and you know
 how to source the cross-toolchain, we can start fetch the EVerest
 sources and cross-compile them using the SDK-supplied toolchain.
 
-Clone the ``everest-core`` repository and checkout the branch/tag/commit you
+Clone the ``EVerest`` repository and checkout the branch/tag/commit you
 want to cross-compile.
 
 .. code-block:: bash
 
-   git clone git@github.com:EVerest/everest-core.git
-   cd everest-core
+   git clone git@github.com:EVerest/EVerest.git
+   cd EVerest
    git checkout TAG
 
 .. warning::
@@ -107,7 +107,7 @@ cross-compilation and run cmake with your desired additional flags.
    rsync -av dist/ root@192.168.3.11:/var/everest
 
 This will cross-compile and “install” EVerest into
-``everest-core/build-cross/dist/`` and ``rsync`` the cross-compiled
+``EVerest/build-cross/dist/`` and ``rsync`` the cross-compiled
 EVerest to your target (the next command assumes that your target is
 accessible at 192.168.3.11):
 

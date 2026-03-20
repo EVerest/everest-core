@@ -38,7 +38,7 @@ HOST_WORKSPACE_FOLDER="${HOST_WORKSPACE_FOLDER:-$(pwd)}"
 # Docker Compose project name (defaults to workspace folder name with _devcontainer suffix, can be overridden)
 # This matches VSC's naming convention: {workspace-folder-name}_devcontainer-{service-name}-1
 # If needed (and not running in VSCode), can be changed by setting the DOCKER_COMPOSE_PROJECT_NAME environment variable.
-DOCKER_COMPOSE_PROJECT_NAME="${DOCKER_COMPOSE_PROJECT_NAME:-$(basename "$HOST_WORKSPACE_FOLDER")_devcontainer}"
+DOCKER_COMPOSE_PROJECT_NAME="${DOCKER_COMPOSE_PROJECT_NAME:-$(basename "$HOST_WORKSPACE_FOLDER" | tr \"A-Z\" \"a-z\")_devcontainer}"
 
 
 # Function to detect if running inside container
@@ -469,7 +469,7 @@ list_nodered_flows() {
     done
     echo ""
     echo "Usage: ./devrd flow <flow-file-path>"
-    echo "Example: ./devrd flow everest-core/config/nodered/config-sil-dc-flow.json"
+    echo "Example: ./devrd flow EVerest/config/nodered/config-sil-dc-flow.json"
     echo ""
 }
 

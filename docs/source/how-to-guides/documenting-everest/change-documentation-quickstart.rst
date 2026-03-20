@@ -5,7 +5,7 @@ Documenting Quickstart
 ######################
 
 This is a short how-to for writing documentation in EVerest. Please refer to the
-`Documentation README <https://github.com/EVerest/everest-core/blob/main/docs/README.md>`_
+`Documentation README <https://github.com/EVerest/EVerest/blob/main/docs/README.md>`_
 for build instructions for the documentation.
 
 To get more detailed information, see
@@ -25,18 +25,18 @@ To get more detailed information, see
    b. If you want to document some partial aspects of your code (like a
       specific algorithm you use), you can add a section in the ``README.md``
       close to the source code. That could for example be in the ``lib/everest/...``
-      directory of the everest-core repository or in the corresponding GitHub repository
-      if the code is not part of everest-core.
+      directory of the EVerest repository or in the corresponding GitHub repository
+      if the code is not part of EVerest.
    c. For documentation that is required to understand an important part or
       concept of EVerest, place the new documentation in a proper location in
       the ``docs`` directory of the
-      `EVerest main repository <https://github.com/EVerest/everest-core>`_.
+      `EVerest main repository <https://github.com/EVerest/EVerest>`_.
    d. When in doubt, use the EVerest main repository.
 
 3. Create an issue (in case of bigger documentation changes).
 
    Consider to create a documentation issue inside of the
-   everest-core GitHub repository you just have chosen.
+   EVerest GitHub repository you just have chosen.
    Describe the most important aspects of the topic to be documented.
 
 4. Create a Git branch like ``docs/name-of-topic`` in the EVerest main

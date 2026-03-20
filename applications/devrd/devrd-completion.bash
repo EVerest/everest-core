@@ -26,11 +26,11 @@ _devrd_completion() {
             docker compose -p "$project_name" -f .devcontainer/docker-compose.yml -f .devcontainer/general-devcontainer/docker-compose.devcontainer.yml exec -T devcontainer find /workspace -name "*-flow.json" -type f 2>/dev/null | sed 's|/workspace/||' | sort
         else
             # Fallback to common flow file paths
-            echo "everest-core/config/nodered/config-sil-dc-flow.json"
-            echo "everest-core/config/nodered/config-sil-dc-bpt-flow.json"
-            echo "everest-core/config/nodered/config-sil-energy-management-flow.json"
-            echo "everest-core/config/nodered/config-sil-two-evse-flow.json"
-            echo "everest-core/config/nodered/config-sil-flow.json"
+            echo "EVerest/config/nodered/config-sil-dc-flow.json"
+            echo "EVerest/config/nodered/config-sil-dc-bpt-flow.json"
+            echo "EVerest/config/nodered/config-sil-energy-management-flow.json"
+            echo "EVerest/config/nodered/config-sil-two-evse-flow.json"
+            echo "EVerest/config/nodered/config-sil-flow.json"
         fi
     }
 

@@ -34,19 +34,19 @@ It could be extended to support different chips (**PN51[8,9]0**).
 
 ### Building
 
-1. Setup environment for everest-core as usual
+1. Setup environment for EVerest as usual
 2. Get **NxpNfcRdLib_Linux_v07.10.00_PUB.zip** from [nxp.com](https://www.nxp.com/design/design-center/development-boards-and-designs/nfc-reader-library-software-support-for-nfc-frontend-solutions:NFC-READER-LIBRARY)
 3. Store zip file at arbitrary location
 4. Provide this location to your EVerest build at configuration time: ``-DEXTERNAL_NXPNFCRDLIB_ZIP_PATH_NxpNfcFrontendTokenProvider=/<path>/<to>/<your>/NxpNfcRdLib_Linux_v07.10.00_PUB.zip``
-5. everest-core will automatically choose to include these sources into the build of the ``NxpNfcFrontendTokenProvider``
+5. EVerest will automatically choose to include these sources into the build of the ``NxpNfcFrontendTokenProvider``
 
 ### Example
 
 ```
-git clone git@github.com:EVerest/everest-core.git
+git clone git@github.com:EVerest/EVerest.git
 # download NxpNfcRdLib_Linux_v07.10.00_PUB.zip
 mkdir build
-cmake -S everest-core -B build -DEXTERNAL_NXPNFCRDLIB_ZIP_PATH_NxpNfcFrontendTokenProvider=/<path>/<to>/<your>/NxpNfcRdLib_Linux_v07.10.00_PUB.zip
+cmake -S EVerest -B build -DEXTERNAL_NXPNFCRDLIB_ZIP_PATH_NxpNfcFrontendTokenProvider=/<path>/<to>/<your>/NxpNfcRdLib_Linux_v07.10.00_PUB.zip
 cmake --build build --parallel -j
 cmake --install build/
 ```

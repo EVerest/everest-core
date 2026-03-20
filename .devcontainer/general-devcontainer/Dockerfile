@@ -79,5 +79,5 @@ RUN echo "" >> ${HOME}/.bashrc && \
 
 # Set up welcome message
 RUN echo "echo \"🏔️ 🚘 Welcome to the EVerest development environment!\"" >> ${HOME}/.bashrc && \
-    echo "echo \"Since you are working with the everest-core monorepo, you have all you need to get started here. 🎉🎉🎉\"" >> ${HOME}/.bashrc && \
+    echo "echo \"Since you are working with the EVerest monorepo, you have all you need to get started here. 🎉🎉🎉\"" >> ${HOME}/.bashrc && \
     echo "echo \"You can find the devrd tool in applications/devrd/devrd\"" >> ${HOME}/.bashrc

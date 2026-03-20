@@ -12,7 +12,7 @@ Here is how to set it up and run an EVerest simulation:
 1. Clone the ``rz-community-bsp`` repo:
    https://github.com/renesas-rz/rz-community-bsp.git
 
-2. Apply the patch necessary to build ``everest-core``.
+2. Apply the patch necessary to build ``EVerest``.
    You can find the patch here: :ref:`Patch file <how_to_renesas_mpu_patch>`
 
 3. Start the ``kas-container`` menu to configure the environment:

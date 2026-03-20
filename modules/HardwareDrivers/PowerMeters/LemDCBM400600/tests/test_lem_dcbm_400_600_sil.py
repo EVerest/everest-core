@@ -9,7 +9,7 @@ from lem_dcbm_test_utils.everest import LemDCBMStandaloneEverestInstance, LecmDD
 
 @pytest.fixture(scope="function")
 def everest_test_instance(request, lem_dcbm_mock) -> LemDCBMStandaloneEverestInstance:
-    """Fixture that can be used to start and stop everest-core"""
+    """Fixture that can be used to start and stop EVerest"""
     everest_prefix = Path(request.config.getoption("--everest-prefix"))
     with LemDCBMStandaloneEverestInstance(everest_prefix=everest_prefix,
                                           config=LecmDDCBMModuleConfig(ip_address="localhost",

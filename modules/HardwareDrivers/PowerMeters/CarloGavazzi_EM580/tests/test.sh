@@ -3,20 +3,20 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-EVEREST_CORE_DIR="$(cd -- "${SCRIPT_DIR}/../../../../.." && pwd)"
-DIST_DIR="${EVEREST_CORE_DIR}/build/dist"
+EVEREST_DIR="$(cd -- "${SCRIPT_DIR}/../../../../.." && pwd)"
+DIST_DIR="${EVEREST_DIR}/build/dist"
 DIST_ETC_DIR="${DIST_DIR}/etc/everest"
 MANAGER_BIN="${DIST_DIR}/bin/manager"
 BUPOWERMETER_BIN="${DIST_DIR}/libexec/everest/modules/BUPowermeter/BUPowermeter"
 
 if [[ ! -x "${MANAGER_BIN}" ]]; then
   echo "ERROR: manager binary not found/executable at: ${MANAGER_BIN}" >&2
-  echo "Did you build everest-core and generate the dist/ folder?" >&2
+  echo "Did you build EVerest and generate the dist/ folder?" >&2
   exit 1
 fi
 if [[ ! -x "${BUPOWERMETER_BIN}" ]]; then
   echo "ERROR: BUPowermeter binary not found/executable at: ${BUPOWERMETER_BIN}" >&2
-  echo "Did you build everest-core and generate the dist/ folder?" >&2
+  echo "Did you build EVerest and generate the dist/ folder?" >&2
   exit 1
 fi
 if [[ ! -d "${DIST_ETC_DIR}" ]]; then

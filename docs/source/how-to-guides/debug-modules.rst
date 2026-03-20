@@ -14,7 +14,7 @@ debugging enabled. One easy way to achieve this is to call
 
   cmake -B build -DCMAKE_BUILD_TYPE=Debug
 
-from the root folder of everest-core, assuming you have already created the
+from the root folder of EVerest, assuming you have already created the
 ``build`` directory.
 
 Execution
@@ -53,7 +53,7 @@ Visual Studio Code, the debug configuration (``launch.json``) looks like this:
             "program": "${workspaceFolder}/build/dist/libexec/everest/modules/Auth/Auth",
             "args": ["--config", "config-sil", "--module", "auth"],
             "stopAtEntry": false,
-            "cwd": "/workspace/everest-core",
+            "cwd": "/workspace/EVerest",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
@@ -91,3 +91,4 @@ the Auth module should be taken.
   Just in case you want to go this direction, you need to
   "set detach-on-fork off" and "follow-fork-mode" depending on what you want to
   achieve.
+

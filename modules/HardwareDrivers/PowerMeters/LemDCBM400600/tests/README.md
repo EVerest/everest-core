@@ -45,7 +45,7 @@ To then run the http client integration tests, run in the build directory
 ```
 ## Integration / E2E Tests for LemDCBM400600 (Python wrapped)
 
-The integration / E2E tests built on the integration test tools from  `everest-core/tests` allow to test
+The integration / E2E tests built on the integration test tools from  `EVerest/tests` allow to test
 the module from inside EVerest both against the mock (integration test) and the actual device (e2e test).
 
 ### Requirements for E2E tests

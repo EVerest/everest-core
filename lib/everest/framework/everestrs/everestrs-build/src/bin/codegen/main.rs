@@ -6,7 +6,7 @@ use std::path::PathBuf;
 #[derive(FromArgs)]
 /// Codegen for EVerest-rs
 struct Args {
-    /// path to everest-core.
+    /// path to EVerest
     #[argh(option)]
     pub everest_core: Vec<PathBuf>,
 

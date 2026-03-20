@@ -448,11 +448,11 @@ Clarification of the device model classes of this diagram:
 
 * EverestDeviceModelStorage
 
-  * Implements DeviceModelStorageInterface as part of everest-core (OCPP201 module)
+  * Implements DeviceModelStorageInterface as part of EVerest (OCPP201 module)
   * Uses EVerest config service to retrieve configuration variables of EVerest modules
 
 * ComposedDeviceModelStorage
 
-  * (Final) implementation of DeviceModelStorageInterface as part of everest-core (OCPP201 module)
+  * (Final) implementation of DeviceModelStorageInterface as part of EVerest (OCPP201 module)
   * A reference of this class will be passed to libocpp's ChargePoint constructor
   * Differentiates between externally and internally managed variables

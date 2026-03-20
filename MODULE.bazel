@@ -155,9 +155,9 @@ use_repo(rust, "rust_toolchains")
 
 register_toolchains("@rust_toolchains//:all")
 
-everest_core_crate_index = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
-everest_core_crate_index.from_cargo(
-    name = "everest_core_crate_index",
+everest_crate_index = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+everest_crate_index.from_cargo(
+    name = "everest_crate_index",
     cargo_lockfile = "@everest-core//modules:Cargo.lock",
     manifests = [
         "@everest-core//modules:Cargo.toml",
@@ -172,18 +172,18 @@ everest_core_crate_index.from_cargo(
         "armv7-unknown-linux-gnueabihf",
     ],
 )
-everest_core_crate_index.annotation(
+everest_crate_index.annotation(
     crate = "everestrs",
     crate_features = ["build_bazel"],
-    repositories = ["everest_core_crate_index"],
+    repositories = ["everest_crate_index"],
     deps = [
         "//lib/everest/framework/everestrs/everestrs",
         "//lib/everest/framework/everestrs/everestrs-build",
     ],
 )
 use_repo(
-    everest_core_crate_index,
-    "everest_core_crate_index",
+    everest_crate_index,
+    "everest_crate_index",
 )
 
 ###############################################################################
@@ -206,10 +206,10 @@ everest_framework_crate_index.from_cargo(
     ],
 )
 
-everest_core_crate_index.annotation(
+everest_crate_index.annotation(
     crate = "log",
     override_target_lib = "@everest_framework_crate_index//:log",
-    repositories = ["everest_core_crate_index"],
+    repositories = ["everest_crate_index"],
 )
 
 use_repo(

@@ -38,7 +38,7 @@ The last command registers the [**EDM** CMake module](#setting-up-cmake-integrat
 The workspace will have the following structure containing all current dependencies for EVerest:
 ```bash
 everest-workspace/
-├── everest-core
+├── EVerest
 ├── everest-deploy-devkit
 ├── everest-dev-environment
 ├── everest-framework

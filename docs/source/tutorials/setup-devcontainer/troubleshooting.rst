@@ -90,7 +90,7 @@ Docker containers are named based on the workspace directory to avoid conflicts.
 Switching between instances
 ---------------------------
 
-When switching between different everest-core instances (e.g., different branches or forks),
+When switching between different EVerest instances (e.g., different branches or forks),
 use the following commands:
 
 .. code-block:: bash
