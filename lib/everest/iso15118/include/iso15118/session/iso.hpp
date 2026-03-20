@@ -72,7 +72,11 @@ private:
 
     d20::Timeouts timeouts;
 
+    std::optional<TimePoint> last_response_tx_time; // timestamp of the last response message sent
+    std::optional<TimePoint> response_send_after;
+
     void handle_connection_event(io::ConnectionEvent event);
+    void send_response(io::v2gtp::PayloadType payload_type, message_20::Type response_type);
 };
 
 } // namespace iso15118
