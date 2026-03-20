@@ -244,45 +244,25 @@ void MQTTAbstractionImpl::clear_retained_topics() {
     retained_topics.clear();
 }
 
-json MQTTAbstractionImpl::get(const std::string& topic, QOS qos) {
+json MQTTAbstractionImpl::get(const MQTTRequest& request, std::size_t retries) {
     BOOST_LOG_FUNCTION();
-    std::lock_guard<std::mutex> lock(topic_request_mutex);
-
-    std::promise<json> res_promise;
-    std::future<json> res_future = res_promise.get_future();
-
-    const auto res_handler = [this, &res_promise](const std::string& /*topic*/, json data) {
-        res_promise.set_value(std::move(data));
-    };
-
-    const std::shared_ptr<TypedHandler> res_token =
-        std::make_shared<TypedHandler>(HandlerType::GetConfigResponse, std::make_shared<Handler>(res_handler));
-    this->register_handler(
-        topic, res_token,
-        QOS::QOS2); // without the lock guard, response handlers could be overriden if called from different threads
-
-    // wait for result future
-    const std::chrono::time_point<std::chrono::steady_clock> res_wait =
-        std::chrono::steady_clock::now() + std::chrono::milliseconds(mqtt_get_timeout_ms);
-    std::future_status res_future_status = std::future_status::deferred;
-    do {
-        res_future_status = res_future.wait_until(res_wait);
-    } while (res_future_status == std::future_status::deferred);
-
-    json result;
-    if (res_future_status == std::future_status::timeout) {
-        this->unregister_handler(topic, res_token);
-        EVLOG_AND_THROW(EverestTimeoutError(fmt::format("Timeout while waiting for result of get()")));
+    std::size_t attempt = 0;
+    while (attempt <= retries) {
+        try {
+            return this->get_internal(request);
+        } catch (const EverestTimeoutError& error) {
+            if (attempt < retries) {
+                attempt += 1;
+            } else {
+                std::rethrow_exception(std::current_exception());
+            }
+        }
     }
-    if (res_future_status == std::future_status::ready) {
-        result = res_future.get();
-    }
-    this->unregister_handler(topic, res_token);
-
-    return result;
+    EVLOG_AND_THROW(
+        EverestInternalError(fmt::format("Unknown error while waiting for result of get({})", request.response_topic)));
 }
 
-json MQTTAbstractionImpl::get(const MQTTRequest& request) {
+nlohmann::json MQTTAbstractionImpl::get_internal(const MQTTRequest& request) {
     BOOST_LOG_FUNCTION();
     std::lock_guard<std::mutex> lock(topic_request_mutex);
 
