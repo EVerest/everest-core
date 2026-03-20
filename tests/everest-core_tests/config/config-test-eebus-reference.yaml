@@ -1,0 +1,18 @@
+active_modules:
+  eebus:
+    module: EEBUS
+    connections:
+      eebus_energy_sink:
+        - module_id: probe
+          implementation_id: eebus_energy_sink
+    config_module:
+      manage_eebus_grpc_api_binary: true  # Let EEBUS module manage its own gRPC
+      vendor_code: "EVerest"
+      device_brand: "EVerest"
+      device_model: "SIL"
+      serial_number: "123456789"
+      eebus_service_port: 4715
+      grpc_port: 50052  # Use different port to avoid conflict with mock servers
+      eebus_ems_ski: "5f4db7163af56b9f24ccf9eac9c1758bcde762de"
+  probe:
+    module: ProbeModule
