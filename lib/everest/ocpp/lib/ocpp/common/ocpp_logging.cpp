@@ -161,6 +161,12 @@ void open_html_tags(std::ofstream& os) {
           "  padding: 8px;"
           "  vertical-align: top;"
           "}"
+          ".log td:nth-child(1) { white-space: nowrap; }"
+          ".log td:nth-child(5) pre {"
+          " white-space: pre-wrap;"
+          " word-wrap: break-word;"
+          " word-break: break-word;"
+          "}"
           ".log tr.CentralSystem{background-color: #E4E6F2;}"
           ".log tr.ChargePoint{background-color: #F2F0E4;}"
           ".log tr.SYS{background-color: white;}"
@@ -392,7 +398,7 @@ void write_log_to_file(std::ofstream& log_os, LogType typ, const std::string& ts
 
 void write_html_log_to_file(std::ofstream& html_log_os, LogType typ, const std::string& ts, const std::string& origin,
                             const std::string& target, const std::string& message_type, const std::string& json_str) {
-    html_log_os << "<tr class=\"" << origin << "\"> <td>" << ts << "</td> <td>" << origin + "&gt;" + target
+    html_log_os << "<tr class=\"" << origin << "\"> <td>" << ts << "</td> <td>" << origin + "-&gt;<br>" + target
                 << "</td> <td><b>" << (typ == LogType::ChargePoint || typ == LogType::System ? message_type : "")
                 << "</b></td><td><b>" << (typ == LogType::CentralSystem ? message_type : "")
                 << "</b></td> <td><pre lang=\"json\">" << html_encode(json_str) << "</pre></td> </tr>\n";
