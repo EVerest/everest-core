@@ -15,14 +15,14 @@ class Helper(metaclass=ABCMeta):
         if namespace is None:
             namespace = [""]
         self.namespace = namespace
-        self.representation = representation
+        self.representation = self.sanitize(representation)
         self.test_helpers_code = ""
         self.test_helpers_headers_code = ""
         self.tests_code = ["%s"]
         across_file_generator.add_helper(self)
 
     def get_representation(self):
-        return self.sanitize(self.representation)
+        return self.representation
 
     @abstractmethod
     def get_value_generation(self, a, seed=""):
@@ -60,7 +60,7 @@ class Helper(metaclass=ABCMeta):
         return re.search(
             r"%s%s([A-z_][0-9A-z_]*)%s\{" % (self.get_regex_structure_type(),
                                    Helper.regex_whitespaces, Helper.regex_whitespaces),
-            self.get_representation()).group(1)
+            self.representation).group(1)
 
     @staticmethod
     def sanitize(file):

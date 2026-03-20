@@ -106,9 +106,12 @@ class StructHelper(Helper):
 
     def generate_test_fields(self, fields, is_optional):
         code = ""
-        for i in fields:
-            code += self.value_generator.generate_corresponding_field_test(
-                i[1], i[0], self.get_namespace(), is_optional)
+        for field in fields:
+            try:
+                code += self.value_generator.generate_corresponding_field_test(
+                    field[1], field[0], self.get_namespace(), is_optional)
+            except TypeError as e:
+                raise TypeError(169*"/" + f"\n'{self.get_type_with_namespace()}::{field[1]}': {e}\n" + 180*"\\") from e
         return code
 
     def generate_test(self):
