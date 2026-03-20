@@ -28,6 +28,11 @@ void power_supply_DCImpl::init() {
 
     mod->acdc.signalVoltageCurrent.connect([this](float voltage, float current) {
         types::power_supply_DC::VoltageCurrent vc;
+        if (last_publish_mode == types::power_supply_DC::Mode::Import) {
+            // According to ISO 15118-20 V2G20-1034 / V2G20-1035,
+            // negative current indicates EV -> EVSE power transfer (discharging).
+            current = -current;
+        }
         vc.current_A = current;
         vc.voltage_V = voltage;
         publish_voltage_current(vc);
