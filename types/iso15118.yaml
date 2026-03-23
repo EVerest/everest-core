@@ -376,6 +376,30 @@ types:
           (approx. 80% SOC) is complete"
         type: string
         format: date-time
+  SupportedAppProtocol:
+    description: Protocols supported by the SECC
+    type: string
+    enum:
+      - DIN70121
+      - ISO15118D2
+      - ISO15118D20
+  SupportedAppProtocols:
+    description: >-
+      This message element is used by the SECC for transmitting the list
+      of supported protocols
+    type: object
+    additionalProperties: false
+    required:
+      - app_protocols
+    properties:
+      app_protocols:
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/SupportedAppProtocol
+          additionalProperties: false
+        minItems: 0
+        maxItems: 20
   AppProtocol:
     description: >-
       This message element is used by the EVCC for transmitting the list

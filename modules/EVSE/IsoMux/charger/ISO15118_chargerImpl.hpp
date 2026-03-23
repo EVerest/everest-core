@@ -9,6 +9,9 @@
 //
 
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
+#include <mutex>
+#include <optional>
+#include <unordered_map>
 
 #include "../IsoMux.hpp"
 
@@ -51,6 +54,8 @@ protected:
     virtual void handle_stop_charging(bool& stop) override;
     virtual void handle_pause_charging(bool& pause) override;
     virtual void handle_no_energy_pause_charging(types::iso15118::NoEnergyPauseMode& mode) override;
+    virtual bool
+    handle_update_supported_app_protocols(types::iso15118::SupportedAppProtocols& supported_app_protocols) override;
     virtual void handle_update_energy_transfer_modes(
         std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) override;
     virtual void handle_update_ac_max_current(double& max_current) override;
@@ -75,6 +80,17 @@ protected:
 private:
     const Everest::PtrContainer<IsoMux>& mod;
     const Conf& config;
+    types::iso15118::SupportedAppProtocols supported_app_protocols; // aggregated set of protocols from iso2/iso20
+    std::mutex supported_app_protocols_mutex;                       // guards shared protocol state
+    enum class ProtocolSource {
+        Iso2,
+        Iso20
+    };
+    std::unordered_map<types::iso15118::SupportedAppProtocol, ProtocolSource>
+        protocol_sources; // tracks which instance advertised each protocol
+
+    std::optional<types::iso15118::SupportedAppProtocols>
+    merge_supported_app_protocols(const types::iso15118::SupportedAppProtocols& value, ProtocolSource source);
 
     virtual void init() override;
     virtual void ready() override;

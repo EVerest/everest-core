@@ -2,9 +2,28 @@
 // Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
 
 #include "power_supply_DCImpl.hpp"
+#include <cmath>
 
 namespace module {
 namespace main {
+
+namespace {
+constexpr double voltage_log_threshold_v = 0.5;
+constexpr double current_log_threshold_a = 0.2;
+
+bool should_log_setpoint(std::optional<double>& last_voltage, std::optional<double>& last_current, double voltage,
+                         double current) {
+    if (!last_voltage.has_value() || !last_current.has_value() ||
+        std::abs(voltage - *last_voltage) >= voltage_log_threshold_v ||
+        std::abs(current - *last_current) >= current_log_threshold_a) {
+        last_voltage = voltage;
+        last_current = current;
+        return true;
+    }
+
+    return false;
+}
+} // namespace
 
 void power_supply_DCImpl::init() {
     caps.bidirectional = true;
@@ -28,6 +47,11 @@ void power_supply_DCImpl::init() {
 
     mod->acdc.signalVoltageCurrent.connect([this](float voltage, float current) {
         types::power_supply_DC::VoltageCurrent vc;
+        if (last_publish_mode == types::power_supply_DC::Mode::Import) {
+            // According to ISO 15118-20 V2G20-1034 / V2G20-1035,
+            // negative current indicates EV -> EVSE power transfer (discharging).
+            current = -current;
+        }
         vc.current_A = current;
         vc.voltage_V = voltage;
         publish_voltage_current(vc);
@@ -70,6 +94,13 @@ void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& mode,
                                          types::power_supply_DC::ChargingPhase& phase) {
     std::scoped_lock lock(settings_mutex);
 
+    if (mode != last_publish_mode) {
+        last_logged_export_voltage.reset();
+        last_logged_export_current.reset();
+        last_logged_import_voltage.reset();
+        last_logged_import_current.reset();
+    }
+
     if (mode == types::power_supply_DC::Mode::Off) {
         mod->acdc.switch_on_off(false);
         mod->acdc.set_inverter_mode(false);
@@ -102,7 +133,10 @@ void power_supply_DCImpl::handle_setExportVoltageCurrent(double& voltage, double
     exportVoltage = voltage;
     exportCurrentLimit = current;
 
-    EVLOG_info << "Updating voltage/current via CAN: " << exportVoltage << "V / " << exportCurrentLimit << "A";
+    if (should_log_setpoint(this->last_logged_export_voltage, this->last_logged_export_current, exportVoltage,
+                            exportCurrentLimit)) {
+        EVLOG_info << "Updating voltage/current via CAN: " << exportVoltage << "V / " << exportCurrentLimit << "A";
+    }
     mod->acdc.set_voltage_current(exportVoltage, exportCurrentLimit);
 };
 
@@ -124,7 +158,11 @@ void power_supply_DCImpl::handle_setImportVoltageCurrent(double& voltage, double
         minImportVoltage = voltage;
         importCurrentLimit = current;
 
-        EVLOG_info << "Updating voltage/current via CAN: " << minImportVoltage << "V / " << importCurrentLimit << "A";
+        if (should_log_setpoint(this->last_logged_import_voltage, this->last_logged_import_current, minImportVoltage,
+                                importCurrentLimit)) {
+            EVLOG_info << "Updating voltage/current via CAN: " << minImportVoltage << "V / " << importCurrentLimit
+                       << "A";
+        }
         mod->acdc.set_voltage_current(minImportVoltage, importCurrentLimit);
     }
 }

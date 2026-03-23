@@ -435,11 +435,15 @@ void* connection_handle(void* data) {
 
     uint16_t port = conn->ctx->proxy_port_iso2;
     conn->ctx->selected_iso20 = false;
+    const bool iso20_proxy_enabled = conn->ctx->iso20_proxy_enabled;
     // Open TCP connection to the proxied module
-    if (iso20) {
+    if (iso20 && iso20_proxy_enabled) {
         // Notify the proxy layer about the protocol decision
         conn->ctx->selected_iso20 = true;
         port = conn->ctx->proxy_port_iso20;
+    } else if (iso20 && !iso20_proxy_enabled) {
+        dlog(DLOG_LEVEL_INFO, "ISO-20 requested by EV, but ISO-20 is disabled in supported app protocols. "
+                              "Routing to ISO-2/DIN proxy.");
     }
 
     int proxy_fd = proxy_connect(port);

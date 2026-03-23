@@ -50,6 +50,8 @@ protected:
     virtual void handle_stop_charging(bool& stop) override;
     virtual void handle_pause_charging(bool& pause) override;
     virtual void handle_no_energy_pause_charging(types::iso15118::NoEnergyPauseMode& mode) override;
+    virtual bool
+    handle_update_supported_app_protocols(types::iso15118::SupportedAppProtocols& supported_app_protocols) override;
     virtual void handle_update_energy_transfer_modes(
         std::vector<types::iso15118::EnergyTransferMode>& supported_energy_transfer_modes) override;
     virtual void handle_update_ac_max_current(double& max_current) override;
