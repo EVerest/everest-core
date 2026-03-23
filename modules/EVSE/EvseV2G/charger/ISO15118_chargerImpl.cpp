@@ -34,7 +34,7 @@ void ISO15118_chargerImpl::init() {
     }
     if (mod->config.supported_ISO15118_2 == true) {
         v2g_ctx->supported_protocols |= (1 << V2G_PROTO_ISO15118_2013);
-        supp_app_protocols_secc.app_protocols.push_back(types::iso15118::SupportedAppProtocol::ISO15118d2);
+        supp_app_protocols_secc.app_protocols.push_back(types::iso15118::SupportedAppProtocol::ISO15118D2);
     }
 
     /* Configure tls_security */
@@ -373,18 +373,18 @@ bool ISO15118_chargerImpl::handle_update_supported_app_protocols(
     if (supported_app_protocols.app_protocols.empty()) {
         dlog(DLOG_LEVEL_WARNING, "No supported app protocols configured");
         return true;
-    } else {
-        std::string configured_protocols;
-
-        for (const auto& protocol : supported_app_protocols.app_protocols) {
-            if (!configured_protocols.empty()) {
-                configured_protocols += ", ";
-            }
-            configured_protocols += types::iso15118::supported_app_protocol_to_string(protocol);
-        }
-
-        dlog(DLOG_LEVEL_INFO, "Configured charging protocols: [%s]", configured_protocols.c_str());
     }
+
+    std::string configured_protocols;
+
+    for (const auto& protocol : supported_app_protocols.app_protocols) {
+        if (!configured_protocols.empty()) {
+            configured_protocols += ", ";
+        }
+        configured_protocols += types::iso15118::supported_app_protocol_to_string(protocol);
+    }
+
+    dlog(DLOG_LEVEL_INFO, "Configured charging protocols: [%s]", configured_protocols.c_str());
 
     for (const auto& protocol : supported_app_protocols.app_protocols) {
         // Check if the supported app protocol is in the SECC list
@@ -404,10 +404,10 @@ bool ISO15118_chargerImpl::handle_update_supported_app_protocols(
         case types::iso15118::SupportedAppProtocol::DIN70121:
             v2g_ctx->supported_protocols |= (1 << V2G_PROTO_DIN70121);
             break;
-        case types::iso15118::SupportedAppProtocol::ISO15118d2:
+        case types::iso15118::SupportedAppProtocol::ISO15118D2:
             v2g_ctx->supported_protocols |= (1 << V2G_PROTO_ISO15118_2013);
             break;
-        case types::iso15118::SupportedAppProtocol::ISO15118d20:
+        case types::iso15118::SupportedAppProtocol::ISO15118D20:
         default:
             dlog(DLOG_LEVEL_WARNING, "Unsupported app protocol: %s",
                  types::iso15118::supported_app_protocol_to_string(protocol).c_str());

@@ -169,9 +169,8 @@ void ISO15118_chargerImpl::init() {
 }
 
 void ISO15118_chargerImpl::ready() {
-    types::iso15118::SupportedAppProtocols supp_app_protocols_secc;
-    supp_app_protocols_secc.app_protocols.push_back(types::iso15118::SupportedAppProtocol::ISO15118d20);
-    publish_supported_app_protocols_secc(supp_app_protocols_secc);
+    publish_supported_app_protocols_secc(
+        types::iso15118::SupportedAppProtocols{.app_protocols = {types::iso15118::SupportedAppProtocol::ISO15118D20}});
 
     while (true) {
         if (setup_steps_done.all()) {
@@ -851,24 +850,24 @@ bool ISO15118_chargerImpl::handle_update_supported_app_protocols(
     if (supported_app_protocols.app_protocols.empty()) {
         EVLOG_warning << "No supported app protocols configured";
         return false;
-    } else {
-        std::string configured_protocols;
-
-        for (const auto& protocol : supported_app_protocols.app_protocols) {
-            if (!configured_protocols.empty()) {
-                configured_protocols += ", ";
-            }
-            configured_protocols += types::iso15118::supported_app_protocol_to_string(protocol);
-        }
-
-        EVLOG_info << "Configured charging protocols: [" << configured_protocols << "]";
     }
+
+    std::string configured_protocols;
+
+    for (const auto& protocol : supported_app_protocols.app_protocols) {
+        if (!configured_protocols.empty()) {
+            configured_protocols += ", ";
+        }
+        configured_protocols += types::iso15118::supported_app_protocol_to_string(protocol);
+    }
+
+    EVLOG_info << "Configured charging protocols: [" << configured_protocols << "]";
 
     bool has_iso15118_d20{false};
     bool all_supported{true};
 
     for (const auto& protocol : supported_app_protocols.app_protocols) {
-        if (protocol == types::iso15118::SupportedAppProtocol::ISO15118d20) {
+        if (protocol == types::iso15118::SupportedAppProtocol::ISO15118D20) {
             has_iso15118_d20 = true;
             continue;
         } else {

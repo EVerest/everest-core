@@ -381,8 +381,8 @@ types:
     type: string
     enum:
       - DIN70121
-      - ISO15118d2
-      - ISO15118d20
+      - ISO15118D2
+      - ISO15118D20
   SupportedAppProtocols:
     description: >-
       This message element is used by the SECC for transmitting the list

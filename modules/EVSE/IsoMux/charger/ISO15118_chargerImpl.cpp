@@ -537,11 +537,7 @@ ISO15118_chargerImpl::merge_supported_app_protocols(const types::iso15118::Suppo
         protocol_sources[protocol] = source;
     }
 
-    if (!changed) {
-        return std::nullopt;
-    }
-
-    return supported_app_protocols;
+    return changed ? std::optional<types::iso15118::SupportedAppProtocols>{supported_app_protocols} : std::nullopt;
 }
 
 void ISO15118_chargerImpl::handle_setup(types::iso15118::EVSEID& evse_id,
@@ -646,7 +642,12 @@ bool ISO15118_chargerImpl::handle_update_supported_app_protocols(
         v2g_ctx->iso20_proxy_enabled = false;
         EVLOG_info << "No protocols configured, disabling ISO-20 proxy routing";
         // Forward empty updates to both implementations
+        // TODO(FH): Currently only forwarded to the ISO-2 module, because ISO-20 module is not able to
+        // disable supported protocols. Currently, this implementation gap has been resolved by deactivating
+        // the ISO-20 proxy if the ISO-20 protocol has not been enabled. In that case, the ISO-2
+        // proxy takes over the responsibility for responding to the SupportedAppReq.
         const bool ok_iso2 = mod->r_iso2->call_update_supported_app_protocols(supported_app_protocols);
+        mod->r_iso20->call_update_supported_app_protocols(supported_app_protocols);
         return ok_iso2;
     }
 
