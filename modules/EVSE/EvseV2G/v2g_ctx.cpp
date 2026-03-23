@@ -87,20 +87,7 @@ static void* v2g_ctx_eventloop(void* data) {
 }
 
 static int v2g_ctx_start_events(struct v2g_context* ctx) {
-    pthread_attr_t attr;
-    int rv;
-
-    /* create the thread in detached state so we don't need to join it later */
-    if (pthread_attr_init(&attr) != 0) {
-        dlog(DLOG_LEVEL_ERROR, "pthread_attr_init failed: %s", strerror(errno));
-        return -1;
-    }
-    if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) != 0) {
-        dlog(DLOG_LEVEL_ERROR, "pthread_attr_setdetachstate failed: %s", strerror(errno));
-        return -1;
-    }
-
-    rv = pthread_create(&ctx->event_thread, NULL, v2g_ctx_eventloop, ctx);
+    int rv = pthread_create(&ctx->event_thread, NULL, v2g_ctx_eventloop, ctx);
     return rv ? -1 : 0;
 }
 
@@ -329,6 +316,7 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
         goto free_out;
     }
 
+    ctx->event_thread = 0;
     if (v2g_ctx_start_events(ctx) != 0)
         goto free_out;
 
@@ -339,8 +327,14 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
     return ctx;
 
 free_out:
+    ctx->shutdown = true;
     if (ctx->event_base) {
         event_base_loopbreak(ctx->event_base);
+    }
+    if (ctx->event_thread) {
+        pthread_join(ctx->event_thread, NULL);
+    }
+    if (ctx->event_base) {
         event_base_free(ctx->event_base);
     }
     free(ctx->local_tls_addr);
@@ -354,8 +348,17 @@ void v2g_ctx_free(struct v2g_context* ctx) {
         return;
     }
 
+    ctx->shutdown = true;
+
     if (ctx->event_base) {
         event_base_loopbreak(ctx->event_base);
+    }
+
+    if (ctx->event_thread) {
+        pthread_join(ctx->event_thread, NULL);
+    }
+
+    if (ctx->event_base) {
         event_base_free(ctx->event_base);
     }
 

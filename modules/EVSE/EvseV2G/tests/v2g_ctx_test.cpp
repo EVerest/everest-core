@@ -145,18 +145,8 @@ TEST_F(V2gCtxTest, v2g_ctx_init_charging_sessionFalse) {
 #endif
 
 TEST(valgrind, memcheck) {
-    GTEST_SKIP() << "pthreads result in valgrind reporting errors";
-    /*
-     * v2g_ctx_free() doesn't stop or wait for threads to finish (no join)
-     * hence there is access to free'd memory reported.
-     *
-     * ==2136== LEAK SUMMARY:
-     * ==2136==    definitely lost: 0 bytes in 0 blocks
-     * ==2136==    indirectly lost: 0 bytes in 0 blocks
-     * ==2136==      possibly lost: 304 bytes in 1 blocks
-     * ==2136==    still reachable: 80 bytes in 2 blocks
-     * ==2136==         suppressed: 0 bytes in 0 blocks
-     */
+    // v2g_ctx_free() now sets shutdown and joins the event thread,
+    // so there is no use-after-free during cleanup.
 
     // run via valgrind to ensure that malloc/free are working
     module::stub::QuietModuleAdapterStub adapter;
