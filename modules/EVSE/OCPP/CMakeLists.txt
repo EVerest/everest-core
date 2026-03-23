@@ -37,6 +37,7 @@ target_sources(${MODULE_NAME}
         "data_transfer/ocpp_data_transferImpl.cpp"
         "ocpp_generic/ocppImpl.cpp"
         "session_cost/session_costImpl.cpp"
+        "ocpp_debug/ocpp_debugImpl.cpp"
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

@@ -416,10 +416,12 @@ public:
     /// "console_detailed" are also available) configuration keys in the "Internal" section of the config file. Please
     /// note that this is intended for debugging purposes only as it logs all communication, including authentication
     /// messages. \param evse_security Pointer to evse_security that manages security related operations
+    /// \param message_callback A callback that will get all OCPP messages send or received to/from the CSMS
     explicit ChargePointImpl(ChargePointConfigurationInterface& cfg, const fs::path& share_path,
                              const fs::path& database_path, const fs::path& sql_init_path,
                              const fs::path& message_log_path, const std::shared_ptr<EvseSecurity>& evse_security,
-                             const std::optional<SecurityConfiguration>& security_configuration);
+                             const std::optional<SecurityConfiguration>& security_configuration,
+                             const std::function<void(const std::string& message, MessageDirection direction)>& message_callback);
 
     virtual ~ChargePointImpl() override = default;
 

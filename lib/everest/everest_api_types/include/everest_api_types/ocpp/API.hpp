@@ -256,4 +256,15 @@ struct ChargingSchedules {
     std::vector<ChargingSchedule> schedules;
 };
 
+enum class MessageDirection {
+    CSMSToChargingStation,
+    ChargingStationToCSMS,
+};
+
+struct Message {
+    std::string message;
+    MessageDirection direction;
+    std::optional<std::string> version;
+};
+
 } // namespace everest::lib::API::V1_0::types::ocpp

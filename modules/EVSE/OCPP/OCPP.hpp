@@ -16,6 +16,7 @@
 #include <generated/interfaces/ocpp/Implementation.hpp>
 #include <generated/interfaces/ocpp_1_6_charge_point/Implementation.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
+#include <generated/interfaces/ocpp_debug/Implementation.hpp>
 #include <generated/interfaces/session_cost/Implementation.hpp>
 
 // headers for required interface implementations
@@ -82,6 +83,7 @@ struct Conf {
     std::string RequestCompositeScheduleUnit;
     int DelayOcppStart;
     int ResetStopDelay;
+    bool Debug;
 };
 
 class OCPP : public Everest::ModuleBase {
@@ -92,7 +94,7 @@ public:
          std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
          std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
          std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppImplBase> p_ocpp_generic,
-         std::unique_ptr<session_costImplBase> p_session_cost,
+         std::unique_ptr<session_costImplBase> p_session_cost, std::unique_ptr<ocpp_debugImplBase> p_ocpp_debug,
          std::vector<std::unique_ptr<charger_informationIntf>> r_charger_information,
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
          std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink,
@@ -109,6 +111,7 @@ public:
         p_data_transfer(std::move(p_data_transfer)),
         p_ocpp_generic(std::move(p_ocpp_generic)),
         p_session_cost(std::move(p_session_cost)),
+        p_ocpp_debug(std::move(p_ocpp_debug)),
         r_charger_information(std::move(r_charger_information)),
         r_evse_manager(std::move(r_evse_manager)),
         r_evse_energy_sink(std::move(r_evse_energy_sink)),
@@ -128,6 +131,7 @@ public:
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
     const std::unique_ptr<ocppImplBase> p_ocpp_generic;
     const std::unique_ptr<session_costImplBase> p_session_cost;
+    const std::unique_ptr<ocpp_debugImplBase> p_ocpp_debug;
     const std::vector<std::unique_ptr<charger_informationIntf>> r_charger_information;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;

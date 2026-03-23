@@ -662,4 +662,35 @@ void from_json(const json& j, V2XFreqWattPointType& k) {
     set_obj(power);
 }
 
+void to_json(json& j, MessageDirection const& k) noexcept {
+    switch (k) {
+        set_json_enum(MessageDirection, CSMSToChargingStation);
+        set_json_enum(MessageDirection, ChargingStationToCSMS);
+    }
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::ocpp::MessageDirection";
+}
+
+void from_json(const json& j, MessageDirection& k) {
+    std::string s = j;
+    set_string_enum(MessageDirection, CSMSToChargingStation);
+    set_string_enum(MessageDirection, ChargingStationToCSMS);
+    throw std::out_of_range(
+        "Provided string " + s +
+        " could not be converted to enum of type everest::lib::API::V1_0::types::ocpp::MessageDirection");
+}
+
+void to_json(json& j, Message const& k) noexcept {
+    j = json{
+        {"message", k.message},
+        {"direction", k.direction},
+    };
+    set_json_optional(version);
+}
+
+void from_json(const json& j, Message& k) {
+    set_obj(message);
+    set_obj(direction);
+    set_obj_optional(version);
+}
+
 } // namespace everest::lib::API::V1_0::types::ocpp

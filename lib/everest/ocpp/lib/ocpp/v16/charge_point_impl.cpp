@@ -40,7 +40,8 @@ const auto DEFAULT_WAIT_FOR_SET_USER_PRICE_TIMEOUT_MS = 0;
 ChargePointImpl::ChargePointImpl(ChargePointConfigurationInterface& cfg, const fs::path& share_path,
                                  const fs::path& database_path, const fs::path& sql_init_path,
                                  const fs::path& message_log_path, const std::shared_ptr<EvseSecurity>& evse_security,
-                                 const std::optional<SecurityConfiguration>& security_configuration) :
+                                 const std::optional<SecurityConfiguration>& security_configuration,
+                                 const std::function<void(const std::string& message, MessageDirection direction)>& message_callback) :
     ocpp::ChargingStationBase(evse_security, security_configuration),
     configuration(cfg),
     message_log_path(message_log_path.string()), // .string() for compatibility with boost::filesystem
@@ -72,7 +73,7 @@ ChargePointImpl::ChargePointImpl(ChargePointConfigurationInterface& cfg, const f
     if (this->configuration.getLogRotation()) {
         this->logging = std::make_shared<ocpp::MessageLogging>(
             this->configuration.getLogMessages(), this->message_log_path, "libocpp_16", log_to_console,
-            detailed_log_to_console, log_to_file, log_to_html, log_raw, log_security, session_logging, nullptr,
+            detailed_log_to_console, log_to_file, log_to_html, log_raw, log_security, session_logging, message_callback,
             ocpp::LogRotationConfig(this->configuration.getLogRotationDateSuffix(),
                                     this->configuration.getLogRotationMaximumFileSize(),
                                     this->configuration.getLogRotationMaximumFileCount()),
@@ -86,7 +87,7 @@ ChargePointImpl::ChargePointImpl(ChargePointConfigurationInterface& cfg, const f
     } else {
         this->logging = std::make_shared<ocpp::MessageLogging>(
             this->configuration.getLogMessages(), this->message_log_path, DateTime().to_rfc3339(), log_to_console,
-            detailed_log_to_console, log_to_file, log_to_html, log_raw, log_security, session_logging, nullptr);
+            detailed_log_to_console, log_to_file, log_to_html, log_raw, log_security, session_logging, message_callback);
     }
 
     this->boot_notification_timer =
