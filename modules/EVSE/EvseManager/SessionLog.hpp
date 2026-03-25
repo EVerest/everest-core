@@ -17,11 +17,12 @@ namespace module {
 
 class SessionLog {
 public:
+    using mqtt_publish_ftor = std::function<void(nlohmann::json const&)>;
     SessionLog();
     ~SessionLog();
 
     void setPath(const std::string& path);
-    void setMqtt(const std::function<void(nlohmann::json data)>& mqtt_provider);
+    void setMqtt(mqtt_publish_ftor const& mqtt_provider);
     void enable();
     std::optional<std::filesystem::path> startSession(const std::string& suffix_string);
     void stopSession();
@@ -51,7 +52,7 @@ private:
 
     std::ofstream logfile_csv;
     std::ofstream logfile_html;
-    std::function<void(nlohmann::json data)> mqtt;
+    mqtt_publish_ftor mqtt;
 };
 
 extern SessionLog session_log;

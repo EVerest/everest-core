@@ -18,8 +18,6 @@ cc_library(
         "include/**/*.hpp",
     ]),
     defines = ["LIBEVSE_CRYPTO_SUPPLIER_OPENSSL"],
-    strip_include_prefix = "include",
-    visibility = ["//visibility:public"],
     local_defines = [
         "BUILD_TZ_LIB=ON",
         "USE_SYSTEM_TZ_DB=ON",
@@ -27,11 +25,14 @@ cc_library(
         "USE_AUTOLOAD=0",
         "HAS_REMOTE_API=0",
     ],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
     deps = [
         ":cert_rehash",
-        "//lib/everest/framework:framework",
+        "//lib/everest/log:liblog",
         "//lib/everest/timer:libtimer",
         "//third-party/bazel/openssl:crypto",
         "//third-party/bazel/openssl:ssl",
+        "@com_github_HowardHinnant_date//:date",
     ],
 )

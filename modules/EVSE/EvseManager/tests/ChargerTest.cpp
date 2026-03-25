@@ -700,7 +700,7 @@ IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& 
                                  bool lock_connector_in_state_b_) :
     r_bsp(r_bsp_) {
 }
-void IECStateMachine::process_bsp_event(const types::board_support_common::BspEvent bsp_event) {
+void IECStateMachine::process_bsp_event(const types::board_support_common::BspEvent& bsp_event) {
 }
 void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reason reason) {
 }
@@ -823,7 +823,7 @@ SessionLog::~SessionLog() {
 
 void SessionLog::setPath(const std::string& path) {
 }
-void SessionLog::setMqtt(const std::function<void(nlohmann::json data)>& mqtt_provider) {
+void SessionLog::setMqtt(const std::function<void(const nlohmann::json& data)>& mqtt_provider) {
 }
 void SessionLog::enable() {
 }

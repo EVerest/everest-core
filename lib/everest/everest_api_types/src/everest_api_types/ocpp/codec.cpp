@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "ocpp/codec.hpp"
 #include "nlohmann/json.hpp"
@@ -12,19 +12,12 @@
 namespace everest::lib::API::V1_0::types::ocpp {
 
 #define create_serialize_impl(A)                                                                                       \
-    std::string serialize(A const& val) noexcept {                                                                     \
-        json result = val;                                                                                             \
-        return result.dump(json_indent);                                                                               \
-    }                                                                                                                  \
+    std::string serialize(A const& val) noexcept { return nlohmann::json(val).dump(json_indent); }                     \
     std::ostream& operator<<(std::ostream& os, A const& val) {                                                         \
         os << serialize(val);                                                                                          \
         return os;                                                                                                     \
     }                                                                                                                  \
-    template <> A deserialize(std::string const& val) {                                                                \
-        auto data = json::parse(val);                                                                                  \
-        A obj = data;                                                                                                  \
-        return obj;                                                                                                    \
-    }
+    template <> A deserialize(std::string const& val) { return json::parse(val); }
 
 create_serialize_impl(AttributeEnum);
 create_serialize_impl(GetVariableStatusEnumType);

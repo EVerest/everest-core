@@ -2,9 +2,11 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #include <algorithm>
 #include <cstddef>
+#include <iterator>
 #include <list>
 #include <regex>
 #include <set>
+#include <string_view>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -30,6 +32,13 @@ struct ParsedConfigMap {
     std::vector<ConfigurationParameter> parsed_config_parameters;
     std::set<std::string> unknown_config_entries;
 };
+
+constexpr std::string_view path_modules = "modules/";
+constexpr std::string_view path_impl = "/impl/";
+constexpr std::string_view path_separator = ":";
+constexpr std::string_view path_arrow = "->";
+constexpr std::string_view ext_yaml = ".yaml";
+constexpr std::string_view error_ref_prefix = "/errors/";
 
 void loader(const json_uri& uri, json& schema) {
     BOOST_LOG_FUNCTION();
@@ -111,8 +120,9 @@ SchemaValidation load_schemas(const fs::path& schemas_dir) {
     return schema_validation;
 }
 
-json get_serialized_module_config(const std::string& module_id, const ModuleConfigurations& module_configurations) {
-    const auto& module_config = module_configurations.at(module_id);
+json get_serialized_module_config(std::string_view module_id, const ModuleConfigurations& module_configurations) {
+    auto it = module_configurations.find(module_id);
+    const auto& module_config = it->second;
     json serialized_mod_config = json::object();
     serialized_mod_config["module_config"] = module_config; // implicit conversion to json
     serialized_mod_config["mappings"] = json::object();
@@ -122,9 +132,9 @@ json get_serialized_module_config(const std::string& module_id, const ModuleConf
             serialized_mod_config["mappings"][fulfillment.module_id] = mapping;
         }
     }
-    const auto module_mapping = module_configurations.at(module_id).mapping;
+    const auto module_mapping = module_config.mapping;
     serialized_mod_config["mappings"][module_id] = module_mapping;
-    const auto telemetry_config = module_configurations.at(module_id).telemetry_config;
+    const auto& telemetry_config = module_config.telemetry_config;
     if (telemetry_config.has_value()) {
         serialized_mod_config["telemetry_config"] = telemetry_config.value();
     }
@@ -174,7 +184,7 @@ ParsedConfigMap parse_config_map(const json& config_map_schema,
     }
 
     std::set<std::string> unknown_config_entries;
-    const std::set<std::string> config_map_schema_keys = Config::keys(config_map_schema);
+    const everest::config::Keys& config_map_schema_keys = Config::keys(config_map_schema);
 
     std::set_difference(config_map_keys.begin(), config_map_keys.end(), config_map_schema_keys.begin(),
                         config_map_schema_keys.end(),
@@ -256,7 +266,7 @@ ParsedConfigMap parse_config_map(const json& config_map_schema,
     return {patched_config_parameters, unknown_config_entries};
 }
 
-auto get_provides_for_probe_module(const std::string& probe_module_id, const ModuleConfigurations& module_configs,
+auto get_provides_for_probe_module(std::string_view probe_module_id, const ModuleConfigurations& module_configs,
                                    const json& manifests) {
     auto provides = json::object();
 
@@ -302,7 +312,7 @@ auto get_provides_for_probe_module(const std::string& probe_module_id, const Mod
     return provides;
 }
 
-auto get_requirements_for_probe_module(const std::string& probe_module_id, const ModuleConfigurations& module_configs,
+auto get_requirements_for_probe_module(std::string_view probe_module_id, const ModuleConfigurations& module_configs,
                                        const json& manifests) {
     ModuleConfig probe_module_config;
     for (const auto& [module_id, module_config] : module_configs) {
@@ -358,7 +368,7 @@ auto get_requirements_for_probe_module(const std::string& probe_module_id, const
     return requirements;
 }
 
-void setup_probe_module_manifest(const std::string& probe_module_id, const ModuleConfigurations& module_configs,
+void setup_probe_module_manifest(std::string_view probe_module_id, const ModuleConfigurations& module_configs,
                                  json& manifests) {
     // setup basic information
     auto& manifest = manifests["ProbeModule"];
@@ -381,17 +391,18 @@ void setup_probe_module_manifest(const std::string& probe_module_id, const Modul
     }
 }
 
-ImplementationInfo extract_implementation_info(const std::unordered_map<std::string, std::string>& module_names,
-                                               const json& manifests, const std::string& module_id,
-                                               const std::string& impl_id) {
+ImplementationInfo extract_implementation_info(const std::map<std::string, std::string, std::less<>>& module_names,
+                                               const json& manifests, std::string_view module_id,
+                                               std::string_view impl_id) {
     BOOST_LOG_FUNCTION();
 
-    if (module_names.find(module_id) == module_names.end()) {
+    auto it = module_names.find(module_id);
+    if (it == module_names.end()) {
         EVTHROW(EverestApiError(fmt::format("Module id '{}' not found in config!", module_id)));
     }
     ImplementationInfo info;
     info.module_id = module_id;
-    info.module_name = module_names.at(module_id);
+    info.module_name = it->second;
     info.impl_id = impl_id;
 
     if (!impl_id.empty()) {
@@ -410,48 +421,67 @@ ImplementationInfo extract_implementation_info(const std::unordered_map<std::str
     return info;
 }
 
-std::string create_printable_identifier(const ImplementationInfo& info, const std::string& /*module_id*/,
-                                        const std::string& impl_id) {
+std::string create_printable_identifier(const ImplementationInfo& info, std::string_view /*module_id*/,
+                                        std::string_view impl_id) {
     BOOST_LOG_FUNCTION();
-
     // no implementation id yet so only return this kind of string:
-    auto module_string = fmt::format("{}:{}", info.module_id, info.module_name);
+    std::string module_string;
+    module_string.reserve(info.module_id.size() + path_separator.size() + info.module_name.size());
+    fmt::format_to(std::back_inserter(module_string), "{}{}{}", info.module_id, path_separator, info.module_name);
     if (impl_id.empty()) {
         return module_string;
     }
-    return fmt::format("{}->{}:{}", module_string, info.impl_id, info.impl_intf);
+
+    std::string result;
+    result.reserve(module_string.size() + path_arrow.size() + info.impl_id.size() + path_separator.size() +
+                   info.impl_intf.size());
+    fmt::format_to(std::back_inserter(result), "{}{}{}{}{}", module_string, path_arrow, info.impl_id, path_separator,
+                   info.impl_intf);
+    return result;
 }
 } // namespace
 
 // ConfigBase
 
-std::string ConfigBase::printable_identifier(const std::string& module_id) const {
+std::string ConfigBase::printable_identifier(std::string_view module_id) const {
     BOOST_LOG_FUNCTION();
 
-    return printable_identifier(module_id, "");
+    return printable_identifier(module_id, {});
 }
 
-std::string ConfigBase::printable_identifier(const std::string& module_id, const std::string& impl_id) const {
+std::string ConfigBase::printable_identifier(std::string_view module_id, std::string_view impl_id) const {
     BOOST_LOG_FUNCTION();
 
     const auto info = extract_implementation_info(this->module_names, this->manifests, module_id, impl_id);
     return create_printable_identifier(info, module_id, impl_id);
 }
 
-std::string ConfigBase::get_module_name(const std::string& module_id) const {
-    return this->module_names.at(module_id);
+std::string ConfigBase::get_module_name(std::string_view module_id) const {
+    auto it = this->module_names.find(module_id);
+    if (it == this->module_names.end()) {
+        EVLOG_AND_THROW(EverestConfigError(fmt::format("Module id '{}' not found in config", module_id)));
+    }
+    return it->second;
 }
 
-std::string ConfigBase::mqtt_prefix(const std::string& module_id, const std::string& impl_id) {
+std::string ConfigBase::mqtt_prefix(std::string_view module_id, std::string_view impl_id) {
     BOOST_LOG_FUNCTION();
+    const auto& prefix = this->mqtt_settings.everest_prefix;
+    std::string result;
+    result.reserve(prefix.size() + path_modules.size() + module_id.size() + path_impl.size() + impl_id.size());
 
-    return fmt::format("{}modules/{}/impl/{}", this->mqtt_settings.everest_prefix, module_id, impl_id);
+    fmt::format_to(std::back_inserter(result), "{}{}{}{}{}", prefix, path_modules, module_id, path_impl, impl_id);
+    return result;
 }
 
-std::string ConfigBase::mqtt_module_prefix(const std::string& module_id) const {
+std::string ConfigBase::mqtt_module_prefix(std::string_view module_id) const {
     BOOST_LOG_FUNCTION();
 
-    return fmt::format("{}modules/{}", this->mqtt_settings.everest_prefix, module_id);
+    const auto& prefix = this->mqtt_settings.everest_prefix;
+    std::string result;
+    result.reserve(prefix.size() + path_modules.size() + module_id.size());
+    fmt::format_to(std::back_inserter(result), "{}{}{}", prefix, path_modules, module_id);
+    return result;
 }
 
 const ModuleConfigurations& ConfigBase::get_module_configurations() const {
@@ -459,7 +489,7 @@ const ModuleConfigurations& ConfigBase::get_module_configurations() const {
     return this->module_configs;
 }
 
-bool ConfigBase::contains(const std::string& module_id) const {
+bool ConfigBase::contains(std::string_view module_id) const {
     BOOST_LOG_FUNCTION();
     return this->module_configs.find(module_id) != this->module_configs.end();
 }
@@ -484,12 +514,12 @@ const json& ConfigBase::get_settings() const {
     return this->settings;
 }
 
-const json ConfigBase::get_schemas() const {
+const Schemas& ConfigBase::get_schemas() const {
     BOOST_LOG_FUNCTION();
     return this->schemas;
 }
 
-json ConfigBase::get_error_types() {
+const error::ErrorTypes& ConfigBase::get_error_types() const {
     BOOST_LOG_FUNCTION();
     return this->error_map.get_error_types();
 }
@@ -499,12 +529,12 @@ const json& ConfigBase::get_types() const {
     return this->types;
 }
 
-std::unordered_map<std::string, std::string> ConfigBase::get_module_names() const {
+const std::map<std::string, std::string, std::less<>>& ConfigBase::get_module_names() const {
     return this->module_names;
 }
 
-std::vector<Fulfillment> ConfigBase::resolve_requirement(const std::string& module_id,
-                                                         const std::string& requirement_id) const {
+std::vector<Fulfillment> ConfigBase::resolve_requirement(std::string_view module_id,
+                                                         std::string_view requirement_id) const {
     BOOST_LOG_FUNCTION();
 
     // FIXME (aw): this function should throw, if the requirement id
@@ -518,16 +548,18 @@ std::vector<Fulfillment> ConfigBase::resolve_requirement(const std::string& modu
     }
 
     // check for connections for this requirement
-    const auto& module_config = this->module_configs.at(module_id);
-    if (module_config.connections.find(requirement_id) == module_config.connections.end()) {
+    auto module_config_it = this->module_configs.find(module_id);
+    const auto& module_config = module_config_it->second;
+    auto connections_it = module_config.connections.find(requirement_id);
+    if (connections_it == module_config.connections.end()) {
         return {}; // return an empty array if our config does not contain any connections for this
                    // requirement id
     }
 
-    return module_config.connections.at(requirement_id);
+    return connections_it->second;
 }
 
-std::map<Requirement, Fulfillment> ConfigBase::resolve_requirements(const std::string& module_id) const {
+std::map<Requirement, Fulfillment> ConfigBase::resolve_requirements(std::string_view module_id) const {
     std::map<Requirement, Fulfillment> requirements;
 
     const auto& module_name = get_module_name(module_id);
@@ -547,7 +579,7 @@ std::map<Requirement, Fulfillment> ConfigBase::resolve_requirements(const std::s
     return requirements;
 }
 
-std::list<Requirement> ConfigBase::get_requirements(const std::string& module_id) const {
+std::list<Requirement> ConfigBase::get_requirements(std::string_view module_id) const {
     BOOST_LOG_FUNCTION();
 
     std::list<Requirement> res;
@@ -559,7 +591,7 @@ std::list<Requirement> ConfigBase::get_requirements(const std::string& module_id
     return res;
 }
 
-std::map<std::string, std::vector<Fulfillment>> ConfigBase::get_fulfillments(const std::string& module_id) const {
+std::map<std::string, std::vector<Fulfillment>> ConfigBase::get_fulfillments(std::string_view module_id) const {
     BOOST_LOG_FUNCTION();
 
     std::map<std::string, std::vector<Fulfillment>> res;
@@ -619,7 +651,7 @@ void ManagerConfig::load_and_validate_manifest(ModuleConfig& module_config) {
         }
     }
 
-    const std::set<std::string> provided_impls = Config::keys(this->manifests[module_name]["provides"]);
+    const everest::config::Keys& provided_impls = Config::keys(this->manifests[module_name]["provides"]);
 
     this->interfaces[module_name] = json({});
 
@@ -739,7 +771,7 @@ std::tuple<json, int64_t> ManagerConfig::load_and_validate_with_schema(const fs:
     return {json_to_validate, validation_ms};
 }
 
-json ManagerConfig::resolve_interface(const std::string& intf_name) {
+json ManagerConfig::resolve_interface(std::string_view intf_name) {
     // load and validate interface.json and mark interface as seen
     const auto intf_definition = load_interface_file(intf_name);
 
@@ -747,9 +779,9 @@ json ManagerConfig::resolve_interface(const std::string& intf_name) {
     return intf_definition;
 }
 
-json ManagerConfig::load_interface_file(const std::string& intf_name) {
+json ManagerConfig::load_interface_file(std::string_view intf_name) {
     BOOST_LOG_FUNCTION();
-    const fs::path intf_path = this->ms.interfaces_dir / (intf_name + ".yaml");
+    const fs::path intf_path = this->ms.interfaces_dir / fmt::format("{}{}", intf_name, ext_yaml);
     try {
         EVLOG_debug << fmt::format("Loading interface file at: {}", fs::canonical(intf_path).string());
 
@@ -822,10 +854,9 @@ json ManagerConfig::load_interface_file(const std::string& intf_name) {
     }
 }
 
-std::list<json> ManagerConfig::resolve_error_ref(const std::string& reference) {
+std::list<json> ManagerConfig::resolve_error_ref(std::string_view reference) {
     BOOST_LOG_FUNCTION();
-    const std::string ref_prefix = "/errors/";
-    const std::string err_ref = reference.substr(ref_prefix.length());
+    const std::string_view err_ref = reference.substr(error_ref_prefix.length());
     const auto result = err_ref.find("#/");
     std::string err_namespace;
     std::string err_name;
@@ -866,7 +897,7 @@ json ManagerConfig::replace_error_refs(json& interface_json) {
     }
     json errors_new = json::object();
     for (auto& error_entry : interface_json.at("errors")) {
-        const std::list<json> errors = resolve_error_ref(error_entry.at("reference"));
+        const std::list<json> errors = resolve_error_ref(error_entry.at("reference").get<std::string_view>());
         for (auto& error : errors) {
             if (!errors_new.contains(error.at("namespace"))) {
                 errors_new[error.at("namespace")] = json::object();
@@ -894,7 +925,7 @@ void ManagerConfig::resolve_all_requirements() {
             module_config_connections_set.insert(req_id);
         }
         std::set<std::string> unknown_requirement_entries;
-        const std::set<std::string> manifest_module_requires_set =
+        const everest::config::Keys& manifest_module_requires_set =
             Config::keys(this->manifests[module_config.module_name]["requires"]);
 
         std::set_difference(module_config_connections_set.begin(), module_config_connections_set.end(),
@@ -1255,7 +1286,7 @@ Config::Config(const MQTTSettings& mqtt_settings, const json& serialized_config)
 
 namespace {
 everest::config::ConfigurationParameterCharacteristics
-get_characteristics(const std::string& name,
+get_characteristics(std::string_view name,
                     const std::vector<everest::config::ConfigurationParameter>& configuration_parameters) {
     for (const auto& configuration_parameter : configuration_parameters) {
         if (configuration_parameter.name == name) {
@@ -1354,16 +1385,22 @@ error::ErrorTypeMap Config::get_error_map() const {
     return this->error_map;
 }
 
-bool Config::module_provides(const std::string& module_name, const std::string& impl_id) {
-    const auto& provides = this->module_config_cache.at(module_name).provides_impl;
-    return (provides.find(impl_id) != provides.end());
+bool Config::module_provides(std::string_view module_name, std::string_view impl_id) {
+    auto module_config_cache_it = this->module_config_cache.find(module_name);
+    if (module_config_cache_it != this->module_config_cache.end()) {
+        const auto& provides = module_config_cache_it->second.provides_impl;
+        return (provides.find(impl_id) != provides.end());
+    }
+    return false;
 }
 
-const json& Config::get_module_cmds(const std::string& module_name, const std::string& impl_id) {
-    return this->module_config_cache.at(module_name).cmds.at(impl_id);
+const json& Config::get_module_cmds(std::string_view module_name, std::string_view impl_id) {
+    auto module_config_cache_it = this->module_config_cache.find(module_name);
+    auto cmds_it = module_config_cache_it->second.cmds.find(impl_id);
+    return cmds_it->second;
 }
 
-RequirementInitialization Config::get_requirement_initialization(const std::string& module_id) const {
+RequirementInitialization Config::get_requirement_initialization(std::string_view module_id) const {
     BOOST_LOG_FUNCTION();
 
     RequirementInitialization res;
@@ -1376,7 +1413,7 @@ RequirementInitialization Config::get_requirement_initialization(const std::stri
     return res;
 }
 
-ModuleConfigs Config::get_module_configs(const std::string& module_id) const {
+ModuleConfigs Config::get_module_configs(std::string_view module_id) const {
     BOOST_LOG_FUNCTION();
     ModuleConfigs module_configs;
 
@@ -1399,28 +1436,29 @@ ModuleConfig Config::get_module_config() const {
     return this->module_config;
 }
 
-std::optional<ModuleTierMappings> Config::get_module_3_tier_model_mappings(const std::string& module_id) const {
-    if (this->tier_mappings.find(module_id) == this->tier_mappings.end()) {
+std::optional<ModuleTierMappings> Config::get_module_3_tier_model_mappings(std::string_view module_id) const {
+    auto tier_mappings_it = this->tier_mappings.find(module_id);
+    if (tier_mappings_it == this->tier_mappings.end()) {
         return std::nullopt;
     }
-    return this->tier_mappings.at(module_id);
+    return tier_mappings_it->second;
 }
 
-std::optional<Mapping> Config::get_3_tier_model_mapping(const std::string& module_id,
-                                                        const std::string& impl_id) const {
+std::optional<Mapping> Config::get_3_tier_model_mapping(std::string_view module_id, std::string_view impl_id) const {
     const auto module_tier_mappings = this->get_module_3_tier_model_mappings(module_id);
     if (not module_tier_mappings.has_value()) {
         return std::nullopt;
     }
     const auto& mapping = module_tier_mappings.value();
-    if (mapping.implementations.find(impl_id) == mapping.implementations.end()) {
+    auto implementations_it = mapping.implementations.find(impl_id);
+    if (implementations_it == mapping.implementations.end()) {
         // if no specific implementation mapping is given, use the module mapping
         return mapping.module;
     }
-    return mapping.implementations.at(impl_id);
+    return implementations_it->second;
 }
 
-ModuleInfo Config::get_module_info(const std::string& module_id) const {
+ModuleInfo Config::get_module_info(std::string_view module_id) const {
     BOOST_LOG_FUNCTION();
 
     ModuleInfo module_info;
@@ -1440,7 +1478,7 @@ std::optional<TelemetryConfig> Config::get_telemetry_config() {
     return this->module_config.telemetry_config;
 }
 
-json Config::get_interface_definition(const std::string& interface_name) const {
+json Config::get_interface_definition(std::string_view interface_name) const {
     BOOST_LOG_FUNCTION();
     return this->interface_definitions.value(interface_name, json());
 }
@@ -1448,7 +1486,7 @@ json Config::get_interface_definition(const std::string& interface_name) const {
 void Config::populate_module_config_cache() {
     for (const auto& [module_id, module_name] : this->module_names) {
         this->module_config_cache[module_name] = ConfigCache();
-        const std::set<std::string> provided_impls = Config::keys(this->manifests.at(module_name).at("provides"));
+        const everest::config::Keys& provided_impls = Config::keys(this->manifests.at(module_name).at("provides"));
         this->interfaces[module_name] = json({});
         this->module_config_cache[module_name].provides_impl = provided_impls;
         for (const auto& impl_id : provided_impls) {
@@ -1502,7 +1540,7 @@ void Config::ref_loader(const json_uri& uri, json& schema) {
     EVTHROW(EverestInternalError(fmt::format("{} is not supported for schema loading at the moment\n", uri.url())));
 }
 
-json Config::load_all_manifests(const std::string& modules_dir, const std::string& schemas_dir) {
+json Config::load_all_manifests(std::string_view modules_dir, std::string_view schemas_dir) {
     BOOST_LOG_FUNCTION();
 
     json manifests = json({});
@@ -1533,10 +1571,10 @@ json Config::load_all_manifests(const std::string& modules_dir, const std::strin
     return manifests;
 }
 
-std::set<std::string> Config::keys(const json& object) {
+everest::config::Keys Config::keys(const json& object) {
     BOOST_LOG_FUNCTION();
 
-    std::set<std::string> keys;
+    everest::config::Keys keys;
     if (!object.is_object()) {
         if (object.is_null() || object.empty()) {
             // if the object is null we should return an empty set

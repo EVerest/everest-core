@@ -32,6 +32,11 @@ target_include_directories(evse_security
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+set_target_properties(evse_security
+    PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
+)
+
 #############
 # Logging configuration
 #############

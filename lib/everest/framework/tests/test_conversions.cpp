@@ -2,7 +2,11 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #include <catch2/catch_all.hpp>
 
+#include <chrono>
+#include <iostream>
+
 #include <utils/conversions.hpp>
+#include <utils/date.hpp>
 #include <utils/types.hpp>
 
 SCENARIO("Check conversions", "[!throws]") {
@@ -56,6 +60,16 @@ SCENARIO("Check conversions", "[!throws]") {
             Everest::CmdResultError cmd_result_error_from_json = cmd_result_error_json;
             CHECK(json(cmd_result_error) == cmd_result_error_json);
             CHECK(json(cmd_result_error_from_json) == cmd_result_error_json);
+        }
+    }
+
+    GIVEN("Valid timestamp") {
+        THEN("It should parse") {
+            const auto now_utc = date::utc_clock::now();
+            const auto now_str = Everest::Date::to_rfc3339(now_utc);
+            const auto tp_from_slow = Everest::Date::from_rfc3339_slow(now_str);
+            const auto tp_from_fast = Everest::Date::from_rfc3339(now_str);
+            CHECK(tp_from_slow == tp_from_fast);
         }
     }
 }

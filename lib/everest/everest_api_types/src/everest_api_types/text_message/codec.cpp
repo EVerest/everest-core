@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "text_message/codec.hpp"
 #include "nlohmann/json.hpp"
@@ -13,13 +13,11 @@
 namespace everest::lib::API::V1_0::types::text_message {
 
 std::string serialize(MessageFormat val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(MessageContent const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::ostream& operator<<(std::ostream& os, MessageFormat const& val) {
@@ -33,15 +31,11 @@ std::ostream& operator<<(std::ostream& os, MessageContent const& val) {
 }
 
 template <> MessageFormat deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    MessageFormat obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> MessageContent deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    MessageContent obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 } // namespace everest::lib::API::V1_0::types::text_message

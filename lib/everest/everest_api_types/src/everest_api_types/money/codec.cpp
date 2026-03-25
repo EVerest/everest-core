@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "money/codec.hpp"
 #include "money/API.hpp"
@@ -12,20 +12,16 @@
 namespace everest::lib::API::V1_0::types::money {
 
 std::string serialize(CurrencyCode val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 std::string serialize(Currency val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 std::string serialize(MoneyAmount val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 std::string serialize(Price val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 std::ostream& operator<<(std::ostream& os, CurrencyCode const& val) {
     os << serialize(val);
@@ -45,26 +41,18 @@ std::ostream& operator<<(std::ostream& os, Price const& val) {
 }
 
 template <> CurrencyCode deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    CurrencyCode obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> Currency deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    Currency obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> MoneyAmount deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    MoneyAmount obj = data;
-    return obj;
+    return json::parse(val);
 }
 template <> Price deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    Price obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 } // namespace everest::lib::API::V1_0::types::money

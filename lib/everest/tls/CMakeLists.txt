@@ -30,10 +30,32 @@ target_link_libraries(tls
         OpenSSL::Crypto
         everest::evse_security
         everest::util
-    PRIVATE
-        everest::framework
+)
+
+set_target_properties(tls
+    PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
 )
 
 if(EVEREST_CORE_BUILD_TESTING)
     add_subdirectory(tests)
+endif()
+
+if(DISABLE_EDM)
+    install(
+        TARGETS
+            tls
+        EXPORT everest-tls-targets
+        LIBRARY
+    )
+
+    evc_setup_package(
+        NAME everest-tls
+        EXPORT everest-tls-targets
+        NAMESPACE everest
+        ADDITIONAL_CONTENT
+            "find_dependency(everest-util)"
+            "find_dependency(everest-evse-security)"
+            "find_dependency(OpenSSL)"
+    )
 endif()

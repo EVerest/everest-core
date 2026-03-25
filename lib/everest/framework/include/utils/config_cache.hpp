@@ -3,16 +3,16 @@
 #ifndef UTILS_CONFIG_CACHE_HPP
 #define UTILS_CONFIG_CACHE_HPP
 
+#include <map>
 #include <set>
 #include <string>
-#include <unordered_map>
 
 #include <utils/types.hpp>
 
 namespace Everest {
 struct ConfigCache {
-    std::set<std::string> provides_impl;
-    std::unordered_map<std::string, nlohmann::json> cmds;
+    std::set<std::string, std::less<>> provides_impl;
+    std::map<std::string, nlohmann::json, std::less<>> cmds;
 };
 
 } // namespace Everest

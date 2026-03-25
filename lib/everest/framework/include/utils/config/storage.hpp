@@ -24,7 +24,7 @@ public:
     /// \brief Writes given EVerest \p module_configs to persistent storage
     /// \param config EVerest config
     /// \return
-    virtual GenericResponseStatus write_module_configs(const std::map<ModuleId, ModuleConfig>& module_configs) = 0;
+    virtual GenericResponseStatus write_module_configs(const ModuleConfigurations& module_configs) = 0;
 
     /// \brief Writes EVerest config \p settings to persistent storage
     /// \param settings EVerest settings configuration

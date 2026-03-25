@@ -8,15 +8,13 @@
 #include <string_view>
 
 #include <boost/any.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <everest/logging.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
 #include <date/date.h>
 #include <date/tz.h>
+#include <everest/helpers/helpers.hpp>
 #include <framework/everest.hpp>
 #include <utils/conversions.hpp>
 #include <utils/date.hpp>
@@ -280,10 +278,11 @@ void Everest::check_code() {
     for (const auto& element : module_manifest.at("provides").items()) {
         const auto& impl_id = element.key();
         const auto& impl_manifest = element.value();
-        const auto interface_definition = this->config.get_interface_definition(impl_manifest.at("interface"));
+        const auto interface_definition =
+            this->config.get_interface_definition(impl_manifest.at("interface").get<std::string_view>());
 
         std::set<std::string> cmds_not_registered;
-        std::set<std::string> impl_manifest_cmds_set;
+        std::set<std::string, std::less<>> impl_manifest_cmds_set;
         if (interface_definition.contains("cmds")) {
             impl_manifest_cmds_set = Config::keys(interface_definition.at("cmds"));
         }
@@ -312,7 +311,7 @@ void Everest::disconnect() {
     this->mqtt_abstraction->disconnect();
 }
 
-json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json json_args) {
+json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, const json& json_args) {
     BOOST_LOG_FUNCTION();
 
     // resolve requirement
@@ -320,14 +319,14 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     const auto& connection = connections.at(req.index);
 
     // extract manifest definition of this command
-    const json cmd_definition = get_cmd_definition(connection.module_id, connection.implementation_id, cmd_name, true);
+    const json& cmd_definition = get_cmd_definition(connection.module_id, connection.implementation_id, cmd_name, true);
 
-    const json return_type = cmd_definition.at("result").at("type");
-
-    std::set<std::string> arg_names = Config::keys(json_args);
+    const json& return_type = cmd_definition.at("result").at("type");
 
     // check args against manifest
     if (this->validate_data_with_schema) {
+        std::set<std::string, std::less<>> arg_names = Config::keys(json_args);
+
         if (cmd_definition.at("arguments").size() != json_args.size()) {
             EVLOG_AND_THROW(EverestApiError(
                 fmt::format("Call to {}->{}({}): Argument count does not match manifest!",
@@ -336,7 +335,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
         }
 
         std::set<std::string> unknown_arguments;
-        std::set<std::string> cmd_arguments;
+        std::set<std::string, std::less<>> cmd_arguments;
         if (cmd_definition.contains("arguments")) {
             cmd_arguments = Config::keys(cmd_definition.at("arguments"));
         }
@@ -350,9 +349,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
                 this->config.printable_identifier(connection.module_id, connection.implementation_id), cmd_name,
                 fmt::join(arg_names, ","), fmt::join(arg_names, ","), fmt::join(cmd_arguments, ","))));
         }
-    }
 
-    if (this->validate_data_with_schema) {
         for (const auto& arg_name : arg_names) {
             try {
                 json_validator validator(
@@ -369,7 +366,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
         }
     }
 
-    const std::string call_id = boost::uuids::to_string(boost::uuids::random_generator()());
+    const std::string call_id = everest::helpers::get_uuid();
 
     std::promise<CmdResult> res_promise;
     std::future<CmdResult> res_future = res_promise.get_future();
@@ -459,7 +456,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
     return result.result.value();
 }
 
-void Everest::publish_var(const std::string& impl_id, const std::string& var_name, json value) {
+void Everest::publish_var(const std::string& impl_id, const std::string& var_name, const json& value) {
     BOOST_LOG_FUNCTION();
 
     // check arguments
@@ -493,8 +490,7 @@ void Everest::publish_var(const std::string& impl_id, const std::string& var_nam
 
     const auto var_topic = fmt::format("{}/var/{}", this->config.mqtt_prefix(this->module_id, impl_id), var_name);
 
-    const json var_publish_data = {{"data", value}};
-    MqttMessagePayload payload{MqttMessageType::Var, var_publish_data};
+    MqttMessagePayload payload{MqttMessageType::Var, json{{"data", value}}};
 
     // FIXME(kai): implement an efficient way of choosing qos for each variable
     this->mqtt_abstraction->publish(var_topic, payload, QOS::QOS2);
@@ -509,10 +505,10 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
     const auto& connections = this->config.resolve_requirement(this->module_id, req.id);
     const auto& connection = connections.at(req.index);
 
-    const auto requirement_module_id = connection.module_id;
-    const auto module_name = this->config.get_module_name(requirement_module_id);
-    const auto requirement_impl_id = connection.implementation_id;
-    const auto requirement_impl_manifest = this->config.get_interface_definitions().at(
+    const auto& requirement_module_id = connection.module_id;
+    const auto& module_name = this->config.get_module_name(requirement_module_id);
+    const auto& requirement_impl_id = connection.implementation_id;
+    const auto& requirement_impl_manifest = this->config.get_interface_definitions().at(
         this->config.get_interfaces().at(module_name).at(requirement_impl_id));
 
     if (!requirement_impl_manifest.at("vars").contains(var_name)) {
@@ -521,7 +517,7 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
                         this->config.printable_identifier(requirement_module_id, requirement_impl_id), var_name)));
     }
 
-    const auto requirement_manifest_vardef = requirement_impl_manifest.at("vars").at(var_name);
+    const auto& requirement_manifest_vardef = requirement_impl_manifest.at("vars").at(var_name);
 
     const auto handler = [this, requirement_module_id, requirement_impl_id, requirement_manifest_vardef, var_name,
                           callback](const std::string&, json const& data) {
@@ -881,7 +877,7 @@ void Everest::provide_cmd(const std::string& impl_id, const std::string& cmd_nam
     const auto wrapper = [this, cmd_topic, impl_id, cmd_name, handler, cmd_definition](const std::string&, json data) {
         BOOST_LOG_FUNCTION();
 
-        std::set<std::string> arg_names;
+        std::set<std::string, std::less<>> arg_names;
         if (cmd_definition.contains("arguments")) {
             arg_names = Config::keys(cmd_definition.at("arguments"));
         }
@@ -1017,7 +1013,7 @@ void Everest::provide_cmd(const cmd& cmd) {
     // extract manifest definition of this command
     json cmd_definition = get_cmd_definition(this->module_id, impl_id, cmd_name, false);
 
-    std::set<std::string> arg_names;
+    std::set<std::string, std::less<>> arg_names;
     for (const auto& arg_type : arg_types) {
         arg_names.insert(arg_type.first);
     }
@@ -1030,7 +1026,7 @@ void Everest::provide_cmd(const cmd& cmd) {
     }
 
     std::set<std::string> unknown_arguments;
-    std::set<std::string> cmd_arguments;
+    std::set<std::string, std::less<>> cmd_arguments;
     if (cmd_definition.contains("arguments")) {
         cmd_arguments = Config::keys(cmd_definition.at("arguments"));
     }

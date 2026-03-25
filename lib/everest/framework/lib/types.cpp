@@ -64,7 +64,7 @@ std::string mqtt_message_type_to_string(MqttMessageType type) {
     }
 }
 
-MqttMessageType string_to_mqtt_message_type(const std::string& str) {
+MqttMessageType string_to_mqtt_message_type(std::string_view str) {
     if (str == "Var") {
         return MqttMessageType::Var;
     } else if (str == "Cmd") {
@@ -89,7 +89,7 @@ MqttMessageType string_to_mqtt_message_type(const std::string& str) {
         return MqttMessageType::GlobalReady;
     }
 
-    throw std::runtime_error("Unknown MQTT message type string: " + str);
+    throw std::runtime_error(fmt::format("Unknown MQTT message type string: {}", str));
 }
 
 NLOHMANN_JSON_NAMESPACE_BEGIN

@@ -63,6 +63,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//lib/everest/io:io",
+        "//lib/everest/helpers",
         "//lib/everest/log:liblog",
         "//lib/everest/sqlite:everest-sqlite",
         "//lib/everest/util",

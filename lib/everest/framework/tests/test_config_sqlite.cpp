@@ -17,8 +17,8 @@ Everest::ManagerSettings get_example_settings() {
     return Everest::ManagerSettings(bin_dir + "valid_config/", bin_dir + "valid_config/config.yaml");
 }
 
-std::map<ModuleId, ModuleConfig> get_example_module_configs() {
-    std::map<ModuleId, ModuleConfig> module_configs;
+ModuleConfigurations get_example_module_configs() {
+    ModuleConfigurations module_configs;
     ModuleConfig module_config;
     module_config.module_name = "example_module";
     module_config.standalone = true;

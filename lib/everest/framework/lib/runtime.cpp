@@ -525,12 +525,12 @@ int ModuleLoader::initialize() {
 
         ModuleAdapter module_adapter;
 
-        module_adapter.call = [&everest](const Requirement& req, const std::string& cmd_name, Parameters args) {
-            return everest.call_cmd(req, cmd_name, std::move(args));
+        module_adapter.call = [&everest](const Requirement& req, const std::string& cmd_name, const Parameters& args) {
+            return everest.call_cmd(req, cmd_name, args);
         };
 
-        module_adapter.publish = [&everest](const std::string& param1, const std::string& param2, Value param3) {
-            return everest.publish_var(param1, param2, std::move(param3));
+        module_adapter.publish = [&everest](const std::string& req, const std::string& var_name, const Value& value) {
+            return everest.publish_var(req, var_name, value);
         };
 
         module_adapter.subscribe = [&everest](const Requirement& req, const std::string& var_name,

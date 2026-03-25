@@ -12,55 +12,49 @@
 namespace Everest {
 
 namespace {
-// Helper to split string by delimiter
-std::vector<std::string> split_topic(const std::string& topic, char delimiter = '/') {
-    std::vector<std::string> result;
-    std::istringstream stream(topic);
-    std::string part;
-    while (std::getline(stream, part, delimiter)) {
-        result.push_back(part);
-    }
-    return result;
-}
-
-// NOLINTNEXTLINE(misc-no-recursion)
-bool check_topic_matches(const std::string& full_topic, const std::string& wildcard_topic) {
+bool check_topic_matches(std::string_view full_topic, std::string_view wildcard_topic) {
     // Verbatim match
     if (full_topic == wildcard_topic) {
         return true;
     }
 
-    // Check if wildcard ends with "/#" and matches base
-    if (wildcard_topic.size() >= 2 && wildcard_topic.compare(wildcard_topic.size() - 2, 2, "/#") == 0) {
-        std::string start = wildcard_topic.substr(0, wildcard_topic.size() - 2);
-        if (check_topic_matches(full_topic, start)) {
+    std::size_t full_topic_pos = 0;
+    std::size_t wildcard_topic_pos = 0;
+
+    while (wildcard_topic_pos < wildcard_topic.size()) {
+        // Always match on the first multi-level wildcard found
+        if (wildcard_topic[wildcard_topic_pos] == '#') {
             return true;
         }
-    }
 
-    std::vector<std::string> full_split = split_topic(full_topic);
-    std::vector<std::string> wildcard_split = split_topic(wildcard_topic);
+        std::size_t wildcard_topic_next = wildcard_topic.find('/', wildcard_topic_pos);
+        std::size_t wildcard_topic_substr_len = (wildcard_topic_next == std::string_view::npos)
+                                                    ? std::string_view::npos
+                                                    : wildcard_topic_next - wildcard_topic_pos;
+        std::string_view wildcard_topic_substr = wildcard_topic.substr(wildcard_topic_pos, wildcard_topic_substr_len);
 
-    for (std::size_t partno = 0; partno < full_split.size(); ++partno) {
-        if (partno >= wildcard_split.size()) {
+        std::size_t full_topic_next = full_topic.find('/', full_topic_pos);
+        std::size_t full_topic_substr_len =
+            (full_topic_next == std::string_view::npos) ? std::string_view::npos : full_topic_next - full_topic_pos;
+        std::string_view full_topic_substr = full_topic.substr(full_topic_pos, full_topic_substr_len);
+
+        if (wildcard_topic_substr != "+" && wildcard_topic_substr != full_topic_substr) {
             return false;
         }
 
-        const std::string& full_part = full_split[partno];
-        const std::string& wildcard_part = wildcard_split[partno];
-
-        if (wildcard_part == "#") {
-            return true;
+        if (wildcard_topic_next == std::string_view::npos) {
+            return full_topic_next == std::string_view::npos;
         }
 
-        if (wildcard_part == "+" || wildcard_part == full_part) {
-            continue;
+        if (full_topic_next == std::string_view::npos) {
+            return wildcard_topic.substr(wildcard_topic_next + 1) == "#";
         }
 
-        return false;
+        wildcard_topic_pos = wildcard_topic_next + 1;
+        full_topic_pos = full_topic_next + 1;
     }
 
-    return full_split.size() == wildcard_split.size();
+    return full_topic_pos >= full_topic.size();
 }
 
 // Pure function: collects all handlers whose registered topic (with MQTT wildcard support)
@@ -126,8 +120,11 @@ void MessageHandler::add(const ParsedMessage& message) {
 
     MqttMessageType msg_type = MqttMessageType::ExternalMQTT; // Default to ExternalMQTT if msg_type is not present
 
-    if (message.data.is_object() && message.data.contains("msg_type")) {
-        msg_type = string_to_mqtt_message_type(message.data.at("msg_type").get<std::string>());
+    if (message.data.is_object()) {
+        auto msg_type_it = message.data.find("msg_type");
+        if (msg_type_it != message.data.end() && msg_type_it->is_string()) {
+            msg_type = string_to_mqtt_message_type(msg_type_it->get<std::string>());
+        }
     }
 
     if (msg_type == MqttMessageType::CmdResult || msg_type == MqttMessageType::GetConfigResponse) {
@@ -287,19 +284,16 @@ void MessageHandler::run_external_mqtt_worker() {
 }
 
 void MessageHandler::handle_operation_message(const std::string& topic, const json& payload) {
-    json data;
     MqttMessageType msg_type = MqttMessageType::ExternalMQTT;
 
     // Determine message type
-    if (payload.contains("msg_type")) {
-        msg_type = string_to_mqtt_message_type(payload.at("msg_type").get<std::string>());
+    auto msg_type_it = payload.find("msg_type");
+    if (msg_type_it != payload.end() && msg_type_it->is_string()) {
+        msg_type = string_to_mqtt_message_type(msg_type_it->get_ref<const std::string&>());
     }
 
-    if (payload.contains("data")) {
-        data = payload.at("data");
-    } else {
-        data = payload;
-    }
+    auto data_it = payload.find("data");
+    const json& data = (data_it != payload.end()) ? *data_it : payload;
 
     switch (msg_type) {
     case MqttMessageType::Var:
@@ -327,12 +321,13 @@ void MessageHandler::handle_operation_message(const std::string& topic, const js
 }
 
 void MessageHandler::handle_result_message(const std::string& topic, const json& payload) {
-    if (!payload.contains("msg_type")) {
+    auto msg_type_it = payload.find("msg_type");
+    if (msg_type_it == payload.end()) {
         EVLOG_warning << "Received cmd_result message without msg_type: " << payload;
         return;
     }
 
-    const auto msg_type = string_to_mqtt_message_type(payload.at("msg_type").get<std::string>());
+    const auto msg_type = string_to_mqtt_message_type(msg_type_it->get<std::string>());
 
     if (msg_type == MqttMessageType::CmdResult) {
         handle_cmd_result(topic, payload);
@@ -404,8 +399,9 @@ void MessageHandler::handle_var_message(const std::string& topic, const json& da
         handler_copy = copy_shared_handler(handle->var, topic);
     }
 
+    const auto& json_data = data.at("data");
     for (const auto& handler : handler_copy) {
-        (*handler->handler)(topic, data.at("data"));
+        (*handler->handler)(topic, json_data);
     }
 }
 
@@ -471,7 +467,7 @@ void MessageHandler::handle_module_ready_message(const std::string& topic, const
 
 void MessageHandler::handle_cmd_result(const std::string& topic, const json& payload) {
     const auto& data = payload.at("data").at("data");
-    const auto id = data.at("id").get<std::string>();
+    const auto& id = data.at("id").get<std::string>();
 
     std::shared_ptr<TypedHandler> handler_copy;
     {

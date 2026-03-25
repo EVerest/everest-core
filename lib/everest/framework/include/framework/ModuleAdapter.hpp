@@ -74,9 +74,9 @@ struct ErrorStateMonitor;
 struct ErrorFactory;
 } // namespace error
 struct ModuleAdapter {
-    using CallFunc = std::function<Result(const Requirement&, const std::string&, Parameters)>;
-    using PublishFunc = std::function<void(const std::string&, const std::string&, Value)>;
-    using SubscribeFunc = std::function<void(const Requirement&, const std::string&, ValueCallback)>;
+    using CallFunc = std::function<Result(const Requirement&, const std::string&, const Parameters&)>;
+    using PublishFunc = std::function<void(const std::string&, const std::string&, const Value&)>;
+    using SubscribeFunc = std::function<void(const Requirement&, const std::string&, const ValueCallback&)>;
     using GetErrorManagerImplFunc = std::function<std::shared_ptr<error::ErrorManagerImpl>(const std::string&)>;
     using GetErrorStateMonitorImplFunc = std::function<std::shared_ptr<error::ErrorStateMonitor>(const std::string&)>;
     using GetErrorFactoryFunc = std::function<std::shared_ptr<error::ErrorFactory>(const std::string&)>;

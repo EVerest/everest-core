@@ -11,6 +11,12 @@ build:ci --copt=-g0
 build:ci --repository_cache=~/.cache/bazel-repo-cache
 build:ci --disk_cache=~/.cache/bazel-disk-cache
 
+# workaround for goption.c:169:14: error: two or more data types in declaration specifiers on armv7
+build:armv7-linux-gnueabihf --repo_env=BAZEL_CONLYOPTS="-std=gnu17"
+build:aarch64-linux-gnu --repo_env=BAZEL_CONLYOPTS=""
+build:aarch64-linux-musl --repo_env=BAZEL_CONLYOPTS=""
+build:armv7-linux-musleabihf --repo_env=BAZEL_CONLYOPTS=""
+
 # With our setup Bazel links every binary statically to `libframework.a` If you
 # want to link dynamically to `libframework.so` use `--dynamic_mode=fully`.
 # See https://bazel.build/docs/user-manual#dynamic-mode for more details. If
