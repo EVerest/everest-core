@@ -118,7 +118,8 @@
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "WriteOnly"
+          "mutability": "WriteOnly",
+          "value": "DEADBEEFDEADBEEF"
         }
       ],
       "description": "Per-slot basic auth password",

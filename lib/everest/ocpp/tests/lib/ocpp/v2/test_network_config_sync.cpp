@@ -357,6 +357,56 @@ TEST_F(NetworkConfigSyncTest, MigrateFromBlobWithApnPopulatesApnFields) {
     EXPECT_EQ(result->apn->apn.get(), "internet");
 }
 
+TEST_F(NetworkConfigSyncTest, MigrateFromBlobPullsBasicAuthPasswordFromSecurityCtrlr) {
+    NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
+
+    // Set a known BasicAuthPassword in SecurityCtrlr (the global password)
+    const std::string expected_password = "MySecurePassword1234";
+    dm->set_value(ControllerComponentVariables::BasicAuthPassword.component,
+                  ControllerComponentVariables::BasicAuthPassword.variable.value(), AttributeEnum::Actual,
+                  expected_password, "test");
+
+    // Build a blob whose profile does NOT contain a basicAuthPassword (typical legacy format)
+    SetNetworkProfileRequest req;
+    req.configurationSlot = 1;
+    req.connectionData = make_basic_profile(1, "wss://auth.example.com/ocpp");
+    ASSERT_FALSE(req.connectionData.basicAuthPassword.has_value());
+
+    seed_blob(*dm, make_blob({req}));
+    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
+
+    // After migration, the per-slot BasicAuthPassword must have been populated from SecurityCtrlr
+    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    ASSERT_TRUE(result.has_value());
+    ASSERT_TRUE(result->basicAuthPassword.has_value())
+        << "Migration must populate per-slot BasicAuthPassword from SecurityCtrlr when blob has none";
+    EXPECT_EQ(result->basicAuthPassword->get(), expected_password);
+}
+
+TEST_F(NetworkConfigSyncTest, MigrateFromBlobPreservesBlobBasicAuthPassword) {
+    NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
+
+    // Set a different password in SecurityCtrlr
+    dm->set_value(ControllerComponentVariables::BasicAuthPassword.component,
+                  ControllerComponentVariables::BasicAuthPassword.variable.value(), AttributeEnum::Actual,
+                  "GlobalPassword12345678", "test");
+
+    // Build a blob whose profile DOES contain a basicAuthPassword
+    SetNetworkProfileRequest req;
+    req.configurationSlot = 1;
+    req.connectionData = make_basic_profile(1, "wss://auth.example.com/ocpp");
+    req.connectionData.basicAuthPassword = CiString<64>("SlotSpecificPassword!");
+
+    seed_blob(*dm, make_blob({req}));
+    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
+
+    // The per-slot password from the blob must be used, not the SecurityCtrlr password
+    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    ASSERT_TRUE(result.has_value());
+    ASSERT_TRUE(result->basicAuthPassword.has_value());
+    EXPECT_EQ(result->basicAuthPassword->get(), "SlotSpecificPassword!");
+}
+
 // ---------------------------------------------------------------------------
 // Optional variable clearing on overwrite (Step 3 / Piet comment 4)
 // ---------------------------------------------------------------------------
