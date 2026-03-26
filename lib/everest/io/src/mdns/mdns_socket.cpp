@@ -57,4 +57,10 @@ bool mdns_socket::query(std::string const& what) {
     return tx(payload);
 }
 
+bool mdns_socket::announce(mDNS_discovery const& service, std::string const& service_type) {
+    PayloadT payload;
+    payload.buffer = create_mdns_response(service, service_type);
+    return tx(payload);
+}
+
 } // namespace everest::lib::io::mdns

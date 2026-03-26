@@ -8,6 +8,7 @@
 #include <array>
 #include <cstdint>
 #include <everest/io/event/unique_fd.hpp>
+#include <everest/io/mdns/mdns.hpp>
 #include <everest/io/udp/udp_payload.hpp>
 #include <everest/io/udp/udp_socket.hpp>
 #include <functional>
@@ -37,6 +38,9 @@ public:
     bool rx(udp::udp_payload& payload);
 
     bool query(std::string const& what);
+
+    /// Send an mDNS response advertising the given service
+    bool announce(mDNS_discovery const& service, std::string const& service_type);
 
 private:
     std::string m_remote;
