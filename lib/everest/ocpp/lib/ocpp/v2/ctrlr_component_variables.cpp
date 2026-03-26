@@ -1933,10 +1933,18 @@ void migrate_from_blob_if_needed(DeviceModelInterface& dm) {
             return;
         }
 
+        // Read the global BasicAuthPassword from SecurityCtrlr so we can populate per-slot passwords
+        // during migration when the blob does not contain one (the legacy format stored it separately).
+        const auto security_ctrlr_password =
+            dm.get_optional_value<std::string>(ControllerComponentVariables::BasicAuthPassword);
+
         int imported = 0;
         for (const auto& profile_json : profiles) {
             const int slot = profile_json.at("configurationSlot").get<int>();
-            const NetworkConnectionProfile profile = profile_json.at("connectionData");
+            NetworkConnectionProfile profile = profile_json.at("connectionData");
+            if (!profile.basicAuthPassword.has_value() && security_ctrlr_password.has_value()) {
+                profile.basicAuthPassword = CiString<64>(security_ctrlr_password.value());
+            }
             if (write_profile_to_device_model(dm, slot, profile, "internal")) {
                 ++imported;
             } else {
