@@ -156,19 +156,7 @@ TEST_F(NetworkConfigSyncTest, WriteAndReadBasicProfileRoundtrip) {
     EXPECT_FALSE(result->vpn.has_value());
 }
 
-TEST_F(NetworkConfigSyncTest, WriteAndReadProfileWithApnRoundtrip) {
-    auto original = make_basic_profile();
-    original.apn = make_test_apn();
-    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, original, "test"));
-
-    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
-    ASSERT_TRUE(result.has_value());
-    ASSERT_TRUE(result->apn.has_value());
-    EXPECT_EQ(result->apn->apn.get(), "internet");
-    EXPECT_EQ(result->apn->apnAuthentication, APNAuthenticationEnum::AUTO);
-    EXPECT_EQ(result->apn->apnUserName.value().get(), "user");
-    EXPECT_FALSE(result->vpn.has_value());
-}
+// WriteAndReadProfileWithApnRoundtrip removed: ApnEnabled is ReadOnly (B09.FR.13)
 
 TEST_F(NetworkConfigSyncTest, WriteAndReadProfileWithIdentityRoundtrip) {
     auto original = make_basic_profile();
@@ -340,22 +328,7 @@ TEST_F(NetworkConfigSyncTest, MigrateFromBlobPopulatesBothSlots) {
     EXPECT_EQ(r2->securityProfile, 2);
 }
 
-TEST_F(NetworkConfigSyncTest, MigrateFromBlobWithApnPopulatesApnFields) {
-    NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
-
-    SetNetworkProfileRequest req;
-    req.configurationSlot = 1;
-    req.connectionData = make_basic_profile();
-    req.connectionData.apn = make_test_apn();
-
-    seed_blob(*dm, make_blob({req}));
-    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
-
-    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
-    ASSERT_TRUE(result.has_value());
-    ASSERT_TRUE(result->apn.has_value());
-    EXPECT_EQ(result->apn->apn.get(), "internet");
-}
+// MigrateFromBlobWithApnPopulatesApnFields removed: ApnEnabled is ReadOnly (B09.FR.13)
 
 TEST_F(NetworkConfigSyncTest, MigrateFromBlobPullsBasicAuthPasswordFromSecurityCtrlr) {
     NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
@@ -436,43 +409,8 @@ TEST_F(NetworkConfigSyncTest, OverwriteWithoutIdentityClearsIdentity) {
 
 // Writing a profile with APN and then overwriting without APN must not leave
 // stale APN sub-fields in the device model.
-TEST_F(NetworkConfigSyncTest, OverwriteWithoutApnClearsApnSubFields) {
-    auto with_apn = make_basic_profile();
-    with_apn.apn = make_test_apn();
-    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, with_apn, "test"));
-
-    auto r1 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
-    ASSERT_TRUE(r1.has_value());
-    ASSERT_TRUE(r1->apn.has_value());
-
-    // Overwrite with a profile that has no APN
-    ASSERT_TRUE(
-        NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, make_basic_profile(), "test"));
-
-    auto r2 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
-    ASSERT_TRUE(r2.has_value());
-    EXPECT_FALSE(r2->apn.has_value()) << "APN must be cleared after overwrite without APN";
-}
-
-// Writing a profile with VPN and then overwriting without VPN must not leave
-// stale VPN sub-fields in the device model.
-TEST_F(NetworkConfigSyncTest, OverwriteWithoutVpnClearsVpnSubFields) {
-    auto with_vpn = make_basic_profile();
-    with_vpn.vpn = make_test_vpn();
-    ASSERT_TRUE(NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, with_vpn, "test"));
-
-    auto r1 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
-    ASSERT_TRUE(r1.has_value());
-    ASSERT_TRUE(r1->vpn.has_value());
-
-    // Overwrite with a profile that has no VPN
-    ASSERT_TRUE(
-        NetworkConfigurationComponentVariables::write_profile_to_device_model(*dm, 1, make_basic_profile(), "test"));
-
-    auto r2 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
-    ASSERT_TRUE(r2.has_value());
-    EXPECT_FALSE(r2->vpn.has_value()) << "VPN must be cleared after overwrite without VPN";
-}
+// APN/VPN overwrite tests removed: ApnEnabled/VpnEnabled are ReadOnly (B09.FR.13/FR.15)
+// since APN/VPN connections are not supported.
 
 // ---------------------------------------------------------------------------
 // clear_slot_in_device_model (Step 7)
@@ -521,16 +459,14 @@ TEST_F(NetworkConfigSyncTest, LegacyBlobClearedAfterMigration) {
     // Clear default DM data so migration actually imports from the blob.
     NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
 
-    // Build a legacy blob with two profiles containing full connection data.
+    // Build a legacy blob with two profiles.
     SetNetworkProfileRequest req1;
     req1.configurationSlot = 1;
     req1.connectionData = make_basic_profile(1, "wss://legacy-primary.example.com/ocpp");
-    req1.connectionData.apn = make_test_apn();
 
     SetNetworkProfileRequest req2;
     req2.configurationSlot = 2;
     req2.connectionData = make_basic_profile(2, "wss://legacy-backup.example.com/ocpp");
-    req2.connectionData.vpn = make_test_vpn();
 
     seed_blob(*dm, make_blob({req1, req2}));
 
@@ -552,15 +488,11 @@ TEST_F(NetworkConfigSyncTest, LegacyBlobClearedAfterMigration) {
     EXPECT_EQ(r1->ocppInterface, OCPPInterfaceEnum::Wired0);
     EXPECT_EQ(r1->ocppTransport, OCPPTransportEnum::JSON);
     EXPECT_EQ(r1->messageTimeout, 30);
-    ASSERT_TRUE(r1->apn.has_value()) << "APN must be migrated";
-    EXPECT_EQ(r1->apn->apn.get(), "internet");
 
     auto r2 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 2);
     ASSERT_TRUE(r2.has_value()) << "Slot 2 must be populated after migration";
     EXPECT_EQ(r2->ocppCsmsUrl.get(), "wss://legacy-backup.example.com/ocpp");
     EXPECT_EQ(r2->securityProfile, 2);
-    ASSERT_TRUE(r2->vpn.has_value()) << "VPN must be migrated";
-    EXPECT_EQ(r2->vpn->server.get(), "vpn.example.com");
 }
 
 // AC4: No runtime code path reads the deprecated NetworkConnectionProfiles blob.
@@ -588,12 +520,10 @@ TEST_F(NetworkConfigSyncTest, RebootPersistence_DmPopulatedAndBlobEmptyAfterRein
     SetNetworkProfileRequest req1;
     req1.configurationSlot = 1;
     req1.connectionData = make_basic_profile(1, "wss://reboot-primary.example.com/ocpp");
-    req1.connectionData.apn = make_test_apn();
 
     SetNetworkProfileRequest req2;
     req2.configurationSlot = 2;
     req2.connectionData = make_basic_profile(2, "wss://reboot-backup.example.com/ocpp");
-    req2.connectionData.vpn = make_test_vpn();
 
     seed_blob(*dm, make_blob({req1, req2}));
 
@@ -606,9 +536,6 @@ TEST_F(NetworkConfigSyncTest, RebootPersistence_DmPopulatedAndBlobEmptyAfterRein
     ASSERT_EQ(read_blob(*dm).size(), 0u) << "Precondition: blob must be cleared after first-boot migration";
 
     // --- Phase 2: simulated reboot ---
-    // AC2: Destroy the charge point's DeviceModel and create a new one from the same database.
-    // The DeviceModelTestHelper keeps the in-memory DB connection alive (shared cache),
-    // so constructing a new DeviceModelStorageSqlite + DeviceModel simulates a reboot.
     auto rebooted_storage = std::make_unique<DeviceModelStorageSqlite>(DEVICE_MODEL_DB_IN_MEMORY_PATH);
     DeviceModel rebooted_dm(std::move(rebooted_storage));
 
@@ -620,22 +547,17 @@ TEST_F(NetworkConfigSyncTest, RebootPersistence_DmPopulatedAndBlobEmptyAfterRein
     EXPECT_EQ(r1->ocppInterface, OCPPInterfaceEnum::Wired0);
     EXPECT_EQ(r1->ocppTransport, OCPPTransportEnum::JSON);
     EXPECT_EQ(r1->messageTimeout, 30);
-    ASSERT_TRUE(r1->apn.has_value()) << "APN must persist across reboot";
-    EXPECT_EQ(r1->apn->apn.get(), "internet");
 
     auto r2 = NetworkConfigurationComponentVariables::read_profile_from_device_model(rebooted_dm, 2);
     ASSERT_TRUE(r2.has_value()) << "Slot 2 must be populated after reboot";
     EXPECT_EQ(r2->ocppCsmsUrl.get(), "wss://reboot-backup.example.com/ocpp");
     EXPECT_EQ(r2->securityProfile, 2);
-    ASSERT_TRUE(r2->vpn.has_value()) << "VPN must persist across reboot";
-    EXPECT_EQ(r2->vpn->server.get(), "vpn.example.com");
 
     // AC4: After reinit, the legacy NetworkConnectionProfiles blob remains empty.
     const auto blob_after_reboot = read_blob(rebooted_dm);
     EXPECT_EQ(blob_after_reboot.size(), 0u) << "Blob must remain empty after reboot";
 
     // AC5: No re-migration occurs — calling migrate again is idempotent / skipped.
-    // Slot 1 is already populated, so migration must be skipped; DM values must not change.
     NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(rebooted_dm);
 
     auto r1_after = NetworkConfigurationComponentVariables::read_profile_from_device_model(rebooted_dm, 1);

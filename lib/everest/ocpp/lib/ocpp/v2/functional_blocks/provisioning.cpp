@@ -152,6 +152,23 @@ Provisioning::get_variables(const std::vector<GetVariableData>& get_variable_dat
             get_variable_result.attributeValue = request_value_response.value.value();
         }
         get_variable_result.attributeStatus = request_value_response.status;
+
+        // B09.FR.28: Return per-slot Identity when GetVariables asks for SecurityCtrlr.Identity
+        const ComponentVariable cv = {get_variable_data.component, get_variable_data.variable, std::nullopt};
+        if (cv == ControllerComponentVariables::SecurityCtrlrIdentity &&
+            get_variable_result.attributeStatus == GetVariableStatusEnum::Accepted) {
+            const auto active_slot_opt =
+                this->context.device_model.get_optional_value<int>(ControllerComponentVariables::ActiveNetworkProfile);
+            if (active_slot_opt.has_value()) {
+                const auto slot_cv = NetworkConfigurationComponentVariables::get_component_variable(
+                    active_slot_opt.value(), NetworkConfigurationComponentVariables::Identity);
+                if (const auto slot_id = this->context.device_model.get_optional_value<std::string>(slot_cv);
+                    slot_id.has_value() && !slot_id->empty()) {
+                    get_variable_result.attributeValue = slot_id.value();
+                }
+            }
+        }
+
         response.push_back(get_variable_result);
     }
     return response;
@@ -379,6 +396,7 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
     if (!this->validate_network_profile_callback.has_value()) {
         const auto warning = "No callback registered to validate network profile";
         EVLOG_warning << warning;
+        status_info.reasonCode = "InternalError";
         status_info.additionalInfo = warning;
         response.statusInfo = status_info;
         response.status = SetNetworkProfileStatusEnum::Rejected;
@@ -391,6 +409,7 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
         this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile)) {
         const auto warning = "CSMS attempted to set a network profile with a lower securityProfile";
         EVLOG_warning << warning;
+        status_info.reasonCode = "NoSecurityDowngrade";
         status_info.additionalInfo = warning;
         response.statusInfo = status_info;
         response.status = SetNetworkProfileStatusEnum::Rejected;
@@ -403,6 +422,7 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
         SetNetworkProfileStatusEnum::Accepted) {
         const auto warning = "CSMS attempted to set a network profile that could not be validated.";
         EVLOG_warning << warning;
+        status_info.reasonCode = "InvalidNetworkConf";
         status_info.additionalInfo = warning;
         response.statusInfo = status_info;
         response.status = SetNetworkProfileStatusEnum::Rejected;
@@ -416,6 +436,7 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
                                                                 VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL)) {
         const auto warning = "CSMS attempted to set a network profile that could not be written to the device model";
         EVLOG_warning << warning;
+        status_info.reasonCode = "InvalidNetworkConf";
         status_info.additionalInfo = warning;
         response.statusInfo = status_info;
         response.status = SetNetworkProfileStatusEnum::Rejected;
@@ -534,6 +555,34 @@ void Provisioning::handle_variable_changed(const SetVariableData& set_variable_d
         if (this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile) < 3) {
             // TODO: A01.FR.11 log the change of BasicAuth in Security Log
             this->context.connectivity_manager.set_websocket_authorization_key(set_variable_data.attributeValue.get());
+        }
+        // B09.FR.27: Clear per-slot BasicAuthPassword from active NetworkConfiguration slots
+        const auto priority_str = this->context.device_model.get_optional_value<std::string>(
+            ControllerComponentVariables::NetworkConfigurationPriority);
+        if (priority_str.has_value()) {
+            for (const auto& slot_str : ocpp::split_string(priority_str.value(), ',')) {
+                const int slot = std::stoi(slot_str);
+                const auto cv = NetworkConfigurationComponentVariables::get_component_variable(
+                    slot, NetworkConfigurationComponentVariables::BasicAuthPassword);
+                this->context.device_model.set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "",
+                                                     VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
+            }
+            EVLOG_info << "Cleared per-slot BasicAuthPassword from active NetworkConfiguration slots (B09.FR.27)";
+        }
+    }
+    if (component_variable == ControllerComponentVariables::SecurityCtrlrIdentity) {
+        // B09.FR.26: Clear per-slot Identity from active NetworkConfiguration slots
+        const auto priority_str = this->context.device_model.get_optional_value<std::string>(
+            ControllerComponentVariables::NetworkConfigurationPriority);
+        if (priority_str.has_value()) {
+            for (const auto& slot_str : ocpp::split_string(priority_str.value(), ',')) {
+                const int slot = std::stoi(slot_str);
+                const auto cv = NetworkConfigurationComponentVariables::get_component_variable(
+                    slot, NetworkConfigurationComponentVariables::Identity);
+                this->context.device_model.set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "",
+                                                     VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
+            }
+            EVLOG_info << "Cleared per-slot Identity from active NetworkConfiguration slots (B09.FR.26)";
         }
     }
     if (component_variable == ControllerComponentVariables::HeartbeatInterval and
@@ -682,6 +731,23 @@ std::optional<std::string> Provisioning::validate_set_variable(const SetVariable
                 }
 
                 const auto& network_profile = *profile_opt;
+
+                // Validate URL scheme matches security profile
+                const std::string url = network_profile.ocppCsmsUrl.get();
+                const bool is_wss = url.find("wss://") == 0;
+                const bool is_ws = url.find("ws://") == 0;
+                if (is_wss && network_profile.securityProfile < 2) {
+                    EVLOG_warning << "configurationSlot " << configuration_slot
+                                  << ": wss:// URL requires securityProfile >= 2, got "
+                                  << network_profile.securityProfile;
+                    return "InvalidNetworkConf";
+                }
+                if (is_ws && network_profile.securityProfile >= 2) {
+                    EVLOG_warning << "configurationSlot " << configuration_slot
+                                  << ": ws:// URL is not allowed with securityProfile >= 2, got "
+                                  << network_profile.securityProfile;
+                    return "InvalidNetworkConf";
+                }
 
                 if (network_profile.securityProfile <= active_security_profile) {
                     continue;

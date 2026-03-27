@@ -364,7 +364,8 @@ ConnectivityManager::get_ws_connection_options(const std::int32_t configuration_
         std::optional<std::string> basic_auth_password;
         const auto slot_pwd_cv = NetworkConfigurationComponentVariables::get_component_variable(
             configuration_slot, NetworkConfigurationComponentVariables::BasicAuthPassword);
-        if (const auto slot_pwd = this->device_model.get_optional_value<std::string>(slot_pwd_cv)) {
+        if (const auto slot_pwd = this->device_model.get_optional_value<std::string>(slot_pwd_cv);
+            slot_pwd.has_value() && !slot_pwd->empty()) {
             basic_auth_password = slot_pwd.value();
             EVLOG_debug << "Using per-slot BasicAuthPassword for slot " << configuration_slot;
         } else {
@@ -532,7 +533,22 @@ void ConnectivityManager::reload_network_profiles() {
 
 bool ConnectivityManager::set_network_profile(const int32_t slot, const NetworkConnectionProfile& profile,
                                               const std::string& source) {
-    if (!NetworkConfigurationComponentVariables::write_profile_to_device_model(this->device_model, slot, profile,
+    NetworkConnectionProfile merged_profile = profile;
+    const auto active_slot = get_active_network_configuration_slot();
+    const auto active_profile =
+        NetworkConfigurationComponentVariables::read_profile_from_device_model(this->device_model, active_slot);
+    if (active_profile.has_value()) {
+        if (!merged_profile.basicAuthPassword.has_value() && active_profile->basicAuthPassword.has_value()) {
+            merged_profile.basicAuthPassword = active_profile->basicAuthPassword;
+            EVLOG_info << "Populating BasicAuthPassword from active slot " << active_slot;
+        }
+        if (!merged_profile.identity.has_value() && active_profile->identity.has_value()) {
+            merged_profile.identity = active_profile->identity;
+            EVLOG_info << "Populating Identity from active slot " << active_slot;
+        }
+    }
+
+    if (!NetworkConfigurationComponentVariables::write_profile_to_device_model(this->device_model, slot, merged_profile,
                                                                                source)) {
         return false;
     }
