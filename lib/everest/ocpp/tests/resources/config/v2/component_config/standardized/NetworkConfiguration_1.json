@@ -133,7 +133,7 @@
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadWrite"
+          "mutability": "ReadOnly"
         }
       ],
       "description": "APN enabled",
@@ -149,7 +149,7 @@
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadWrite"
+          "mutability": "ReadOnly"
         }
       ],
       "description": "VPN enabled",
@@ -374,7 +374,7 @@
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadOnly"
+          "mutability": "ReadWrite"
         }
       ],
       "description": "OCPP version used for this connection",

@@ -45,7 +45,7 @@
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "OptionList",
-        "valuesList": "Wired0,Wired1,Wired2,Wired3,Wireless0,Wireless1,Wireless2,Wireless3"
+        "valuesList": "Wired0,Wired1,Wired2,Wired3,Wireless0,Wireless1,Wireless2,Wireless3,Any"
       },
       "attributes": [
         {
@@ -134,7 +134,7 @@
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadWrite"
+          "mutability": "ReadOnly"
         }
       ],
       "description": "APN enabled",
@@ -150,7 +150,7 @@
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadWrite"
+          "mutability": "ReadOnly"
         }
       ],
       "description": "VPN enabled",
@@ -375,7 +375,7 @@
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadOnly"
+          "mutability": "ReadWrite"
         }
       ],
       "description": "OCPP version used for this connection",
