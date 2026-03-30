@@ -492,6 +492,36 @@ void ConnectivityManager::on_websocket_stopped_connecting(ocpp::WebsocketCloseRe
     }
 }
 
+void ConnectivityManager::append_slot_to_network_configuration_priority_if_absent(const int32_t slot,
+                                                                                  const std::string& source) {
+    if (!ControllerComponentVariables::NetworkConfigurationPriority.variable.has_value()) {
+        return;
+    }
+
+    const auto priority_str =
+        this->device_model.get_optional_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority);
+    const auto slot_str = std::to_string(slot);
+    bool slot_found = false;
+    if (priority_str.has_value()) {
+        for (const auto& s : ocpp::split_string(priority_str.value(), ',')) {
+            if (s == slot_str) {
+                slot_found = true;
+                break;
+            }
+        }
+    }
+    if (!slot_found) {
+        std::string new_priority = priority_str.value_or("");
+        if (!new_priority.empty()) {
+            new_priority += ',';
+        }
+        new_priority += slot_str;
+        this->device_model.set_value(ControllerComponentVariables::NetworkConfigurationPriority.component,
+                                     ControllerComponentVariables::NetworkConfigurationPriority.variable.value(),
+                                     AttributeEnum::Actual, new_priority, source);
+    }
+}
+
 void ConnectivityManager::cache_network_connection_profiles() {
     this->cached_network_connection_profiles.clear();
     this->network_connection_slots.clear();
@@ -553,31 +583,7 @@ bool ConnectivityManager::set_network_profile(const int32_t slot, const NetworkC
         return false;
     }
 
-    // B09.FR.11: Add slot to NetworkConfigurationPriority if not already present
-    if (ControllerComponentVariables::NetworkConfigurationPriority.variable.has_value()) {
-        const auto priority_str = this->device_model.get_optional_value<std::string>(
-            ControllerComponentVariables::NetworkConfigurationPriority);
-        const auto slot_str = std::to_string(slot);
-        bool slot_found = false;
-        if (priority_str.has_value()) {
-            for (const auto& s : ocpp::split_string(priority_str.value(), ',')) {
-                if (s == slot_str) {
-                    slot_found = true;
-                    break;
-                }
-            }
-        }
-        if (!slot_found) {
-            std::string new_priority = priority_str.value_or("");
-            if (!new_priority.empty()) {
-                new_priority += ',';
-            }
-            new_priority += slot_str;
-            this->device_model.set_value(ControllerComponentVariables::NetworkConfigurationPriority.component,
-                                         ControllerComponentVariables::NetworkConfigurationPriority.variable.value(),
-                                         AttributeEnum::Actual, new_priority, source);
-        }
-    }
+    this->append_slot_to_network_configuration_priority_if_absent(slot, source);
 
     try {
         cache_network_connection_profiles();

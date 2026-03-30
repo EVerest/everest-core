@@ -32,12 +32,7 @@ bool allow_set_read_only_value(const Component& component, const Variable& varia
     return component == ControllerComponents::AuthCacheCtrlr or component == ControllerComponents::LocalAuthListCtrlr or
            component == ControllerComponents::OCPPCommCtrlr or component == ControllerComponents::SecurityCtrlr or
            variable == EvseComponentVariables::AvailabilityState or variable == EvseComponentVariables::Power or
-           variable == ConnectorComponentVariables::AvailabilityState or
-           variable == NetworkConfigurationComponentVariables::OcppVersion or
-           variable == NetworkConfigurationComponentVariables::CsmsRootCertificateHashAlgorithm or
-           variable == NetworkConfigurationComponentVariables::CsmsRootCertificateIssuerKeyHash or
-           variable == NetworkConfigurationComponentVariables::CsmsRootCertificateIssuerNameHash or
-           variable == NetworkConfigurationComponentVariables::CsmsRootCertificateSerialNumber;
+           variable == ConnectorComponentVariables::AvailabilityState;
 }
 
 } // namespace
