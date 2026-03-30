@@ -401,16 +401,8 @@ async def test_set_network_configuration_apn(
         wait_for_bootnotification=True
     )
 
-    # Enable APN for slot 2
+    # Set APN details for slot 2 (ApnEnabled is ReadOnly, set internally)
     set_vars = [
-        SetVariableDataType(
-            component=ComponentType(
-                name="NetworkConfiguration", instance="2"
-            ),
-            variable=VariableType(name="ApnEnabled"),
-            attribute_type=AttributeEnumType.actual,
-            attribute_value="true",
-        ),
         SetVariableDataType(
             component=ComponentType(
                 name="NetworkConfiguration", instance="2"
@@ -433,7 +425,7 @@ async def test_set_network_configuration_apn(
         set_variable_data=set_vars
     )
 
-    assert validate_set_variables_success(response, 3), \
+    assert validate_set_variables_success(response, 2), \
         f"Failed to set APN configuration: {response}"
 
 
@@ -471,16 +463,8 @@ async def test_set_network_configuration_vpn(
         wait_for_bootnotification=True
     )
 
-    # Enable VPN for slot 2
+    # Set VPN details for slot 2 (VpnEnabled is ReadOnly, set internally)
     set_vars = [
-        SetVariableDataType(
-            component=ComponentType(
-                name="NetworkConfiguration", instance="2"
-            ),
-            variable=VariableType(name="VpnEnabled"),
-            attribute_type=AttributeEnumType.actual,
-            attribute_value="true",
-        ),
         SetVariableDataType(
             component=ComponentType(
                 name="NetworkConfiguration", instance="2"
@@ -503,7 +487,7 @@ async def test_set_network_configuration_vpn(
         set_variable_data=set_vars
     )
 
-    assert validate_set_variables_success(response, 3), \
+    assert validate_set_variables_success(response, 2), \
         f"Failed to set VPN configuration: {response}"
 
 
@@ -858,9 +842,7 @@ async def test_set_network_configuration_with_apn_via_set_variables(
     )
 
     # TC_B_105_CSMS: Set NetworkConfiguration slot 2 (non-active) with complete APN configuration
-    # As per spec: OcppCsmsUrl, OcppInterface, OcppTransport, MessageTimeout, SecurityProfile,
-    # Identity, BasicAuthPassword, VpnEnabled=false, ApnEnabled=true, Apn, ApnUserName,
-    # ApnPassword, ApnAuthentication
+    # ApnEnabled and VpnEnabled are ReadOnly (set internally), so they are not included here
     set_vars = [
         SetVariableDataType(
             component=ComponentType(name="NetworkConfiguration", instance="2"),
@@ -906,18 +888,6 @@ async def test_set_network_configuration_with_apn_via_set_variables(
         ),
         SetVariableDataType(
             component=ComponentType(name="NetworkConfiguration", instance="2"),
-            variable=VariableType(name="VpnEnabled"),
-            attribute_type=AttributeEnumType.actual,
-            attribute_value="false",
-        ),
-        SetVariableDataType(
-            component=ComponentType(name="NetworkConfiguration", instance="2"),
-            variable=VariableType(name="ApnEnabled"),
-            attribute_type=AttributeEnumType.actual,
-            attribute_value="true",
-        ),
-        SetVariableDataType(
-            component=ComponentType(name="NetworkConfiguration", instance="2"),
             variable=VariableType(name="Apn"),
             attribute_type=AttributeEnumType.actual,
             attribute_value="configured_apn_url",
@@ -947,24 +917,9 @@ async def test_set_network_configuration_with_apn_via_set_variables(
     )
 
     # Validate that all variables were successfully set
-    # As per TC_B_105_CSMS: Each variable should have setVariableResult with attributeStatus = Accepted
     assert validate_set_variables_success(
         response, len(set_vars)
     ), f"Failed to set NetworkConfiguration with APN via SetVariables: {response}"
-
-    # Verify ApnEnabled is accepted in the response
-    results = response.set_variable_result
-    apn_enabled_result = [
-        r
-        for r in results
-        if r.get("variable", {}).get("name") == "ApnEnabled"
-    ]
-    assert (
-        len(apn_enabled_result) > 0
-    ), "ApnEnabled variable not in response"
-    assert (
-        apn_enabled_result[0].get("attribute_status") == "Accepted"
-    ), f"ApnEnabled not set successfully: {apn_enabled_result[0]}"
 
 
 @pytest.mark.asyncio
@@ -1438,14 +1393,8 @@ async def test_network_configuration_vpn_configuration(
         wait_for_bootnotification=True
     )
 
-    # Set complete VPN configuration on slot 2
+    # Set complete VPN configuration on slot 2 (VpnEnabled is ReadOnly, set internally)
     set_vars = [
-        SetVariableDataType(
-            component=ComponentType(name="NetworkConfiguration", instance="2"),
-            variable=VariableType(name="VpnEnabled"),
-            attribute_type=AttributeEnumType.actual,
-            attribute_value="true",
-        ),
         SetVariableDataType(
             component=ComponentType(name="NetworkConfiguration", instance="2"),
             variable=VariableType(name="VpnServer"),
@@ -1492,20 +1441,6 @@ async def test_network_configuration_vpn_configuration(
     assert validate_set_variables_success(
         response, len(set_vars)
     ), f"Failed to set complete VPN configuration: {response}"
-
-    # Verify VpnEnabled is accepted in the response
-    results = response.set_variable_result
-    vpn_enabled_result = [
-        r
-        for r in results
-        if r.get("variable", {}).get("name") == "VpnEnabled"
-    ]
-    assert (
-        len(vpn_enabled_result) > 0
-    ), "VpnEnabled variable not in response"
-    assert (
-        vpn_enabled_result[0].get("attribute_status") == "Accepted"
-    ), f"VpnEnabled not set successfully: {vpn_enabled_result[0]}"
 
 
 @pytest.mark.asyncio
