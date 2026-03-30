@@ -5,10 +5,9 @@
 
 #include <everest/logging.hpp>
 
-#include <ocpp/common/utils.hpp>
 #include <ocpp/v2/comparators.hpp>
+#include <ocpp/v2/device_model_helpers.hpp>
 #include <ocpp/v2/device_model_interface.hpp>
-#include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
 namespace v2 {
