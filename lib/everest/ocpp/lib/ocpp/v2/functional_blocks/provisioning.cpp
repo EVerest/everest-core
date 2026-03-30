@@ -418,6 +418,20 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
         return;
     }
 
+    const auto profile_validation =
+        this->validate_network_connection_profile(msg.configurationSlot, msg.connectionData);
+    if (profile_validation.has_value()) {
+        const auto warning = "CSMS attempted to set a network profile with invalid URL/security configuration";
+        EVLOG_warning << warning;
+        status_info.reasonCode = profile_validation.value();
+        status_info.additionalInfo = warning;
+        response.statusInfo = status_info;
+        response.status = SetNetworkProfileStatusEnum::Rejected;
+        const ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
+        this->context.message_dispatcher.dispatch_call_result(call_result);
+        return;
+    }
+
     if (this->validate_network_profile_callback.value()(msg.configurationSlot, msg.connectionData) !=
         SetNetworkProfileStatusEnum::Accepted) {
         const auto warning = "CSMS attempted to set a network profile that could not be validated.";
@@ -676,104 +690,145 @@ void Provisioning::handle_variables_changed(const std::map<SetVariableData, SetV
     this->diagnostics.process_triggered_monitors();
 }
 
+std::optional<std::string>
+Provisioning::validate_set_network_configuration_slot(const SetVariableData& set_variable_data,
+                                                      const ComponentVariable& cv) {
+    try {
+        const int slot = std::stoi(cv.component.instance.value().get());
+        const auto active_slot_opt =
+            this->context.device_model.get_optional_value<int>(ControllerComponentVariables::ActiveNetworkProfile);
+
+        if (active_slot_opt.has_value() && slot == active_slot_opt.value()) {
+            EVLOG_warning << "Cannot set NetworkConfiguration variable for slot " << slot
+                          << " which is the currently active slot";
+            return "PriorityNetworkConf";
+        }
+
+        // B09.FR.35: Reject security profile downgrades
+        if (cv.variable.value().name == "SecurityProfile") {
+            try {
+                const int new_profile = std::stoi(set_variable_data.attributeValue.get());
+                const int active_profile =
+                    this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
+                if (new_profile < active_profile) {
+                    EVLOG_warning << "Cannot downgrade SecurityProfile from " << active_profile << " to "
+                                  << new_profile;
+                    return "NoSecurityDowngrade";
+                }
+            } catch (const std::exception& e) {
+                EVLOG_warning << "Error validating SecurityProfile: " << e.what();
+                return "InvalidNetworkConf";
+            }
+        }
+
+        // Validate that the resulting profile (current state + proposed change) has consistent
+        // URL scheme / security profile / certificate configuration
+        auto profile_opt =
+            NetworkConfigurationComponentVariables::read_profile_from_device_model(this->context.device_model, slot);
+        if (profile_opt.has_value()) {
+            auto profile = *profile_opt;
+            // Apply the proposed change to the profile copy before validation
+            if (cv.variable.value().name == "SecurityProfile") {
+                profile.securityProfile = std::stoi(set_variable_data.attributeValue.get());
+            } else if (cv.variable.value().name == "OcppCsmsUrl") {
+                profile.ocppCsmsUrl = CiString<2000>(set_variable_data.attributeValue.get());
+            }
+            const auto result = this->validate_network_connection_profile(slot, profile);
+            if (result.has_value()) {
+                return result;
+            }
+        }
+    } catch (const std::exception& e) {
+        EVLOG_warning << "Error validating NetworkConfiguration: " << e.what();
+        return "InvalidNetworkConf";
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string> Provisioning::validate_network_connection_profile(const int32_t configuration_slot,
+                                                                             const NetworkConnectionProfile& profile) {
+    const auto active_security_profile =
+        this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
+
+    // Validate URL scheme matches security profile
+    const std::string url = profile.ocppCsmsUrl.get();
+    const bool is_wss = url.find("wss://") == 0;
+    const bool is_ws = url.find("ws://") == 0;
+    if (is_wss && profile.securityProfile < 2) {
+        EVLOG_warning << "configurationSlot " << configuration_slot
+                      << ": wss:// URL requires securityProfile >= 2, got " << profile.securityProfile;
+        return "InvalidNetworkConf";
+    }
+    if (is_ws && profile.securityProfile >= 2) {
+        EVLOG_warning << "configurationSlot " << configuration_slot
+                      << ": ws:// URL is not allowed with securityProfile >= 2, got " << profile.securityProfile;
+        return "InvalidNetworkConf";
+    }
+
+    if (profile.securityProfile <= active_security_profile) {
+        return std::nullopt;
+    }
+
+    if (profile.securityProfile == 3 and
+        this->context.evse_security
+                .get_leaf_certificate_info(ocpp::CertificateSigningUseEnum::ChargingStationCertificate)
+                .status != ocpp::GetCertificateInfoStatus::Accepted) {
+        EVLOG_warning << "SecurityProfile of configurationSlot: " << configuration_slot
+                      << " is 3 but no CSMS Leaf Certificate is installed";
+        return "InvalidNetworkConf";
+    }
+    if (profile.securityProfile >= 2 and
+        !this->context.evse_security.is_ca_certificate_installed(ocpp::CaCertificateType::CSMS)) {
+        EVLOG_warning << "SecurityProfile of configurationSlot: " << configuration_slot
+                      << " is >= 2 but no CSMS Root Certifciate is installed";
+        return "InvalidNetworkConf";
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string>
+Provisioning::validate_network_configuration_priority(const SetVariableData& set_variable_data) {
+    const auto network_configuration_priorities = ocpp::split_string(set_variable_data.attributeValue.get(), ',');
+
+    try {
+        for (const auto& configuration_slot_str : network_configuration_priorities) {
+            const int slot = std::stoi(configuration_slot_str);
+            const auto profile_opt = NetworkConfigurationComponentVariables::read_profile_from_device_model(
+                this->context.device_model, slot);
+
+            if (!profile_opt.has_value()) {
+                EVLOG_warning << "Could not find network profile for configurationSlot: " << configuration_slot_str;
+                return "InvalidNetworkConf";
+            }
+
+            const auto result = this->validate_network_connection_profile(slot, *profile_opt);
+            if (result.has_value()) {
+                return result;
+            }
+        }
+    } catch (const std::invalid_argument& e) {
+        EVLOG_warning << "NetworkConfigurationPriority contains at least one value which is not an integer: "
+                      << set_variable_data.attributeValue.get();
+        return "InvalidNetworkConf";
+    }
+    return std::nullopt;
+}
+
 std::optional<std::string> Provisioning::validate_set_variable(const SetVariableData& set_variable_data) {
     const ComponentVariable cv = {set_variable_data.component, set_variable_data.variable, std::nullopt};
 
     // B09.FR.21/22: Reject changes to the currently active NetworkConfiguration slot
     if (cv.component.name == "NetworkConfiguration" && cv.component.instance.has_value() && cv.variable.has_value()) {
-        try {
-            const int slot = std::stoi(cv.component.instance.value().get());
-            const auto active_slot_opt =
-                this->context.device_model.get_optional_value<int>(ControllerComponentVariables::ActiveNetworkProfile);
-
-            if (active_slot_opt.has_value() && slot == active_slot_opt.value()) {
-                EVLOG_warning << "Cannot set NetworkConfiguration variable for slot " << slot
-                              << " which is the currently active slot";
-                return "PriorityNetworkConf";
-            }
-
-            // B09.FR.35: Reject security profile downgrades
-            if (cv.variable.value().name == "SecurityProfile") {
-                try {
-                    const int new_profile = std::stoi(set_variable_data.attributeValue.get());
-                    const int active_profile =
-                        this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
-                    if (new_profile < active_profile) {
-                        EVLOG_warning << "Cannot downgrade SecurityProfile from " << active_profile << " to "
-                                      << new_profile;
-                        return "NoSecurityDowngrade";
-                    }
-                } catch (const std::exception& e) {
-                    EVLOG_warning << "Error validating SecurityProfile: " << e.what();
-                    return "InvalidNetworkConf";
-                }
-            }
-        } catch (const std::exception& e) {
-            EVLOG_warning << "Error validating NetworkConfiguration: " << e.what();
-            return "InvalidNetworkConf";
+        const auto result = this->validate_set_network_configuration_slot(set_variable_data, cv);
+        if (result.has_value()) {
+            return result;
         }
     }
 
     if (cv == ControllerComponentVariables::NetworkConfigurationPriority) {
-        const auto network_configuration_priorities = ocpp::split_string(set_variable_data.attributeValue.get(), ',');
-        const auto active_security_profile =
-            this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
-
-        try {
-            for (const auto& configuration_slot : network_configuration_priorities) {
-                const int slot = std::stoi(configuration_slot);
-                const auto profile_opt = NetworkConfigurationComponentVariables::read_profile_from_device_model(
-                    this->context.device_model, slot);
-
-                if (!profile_opt.has_value()) {
-                    EVLOG_warning << "Could not find network profile for configurationSlot: " << configuration_slot;
-                    return "InvalidNetworkConf";
-                }
-
-                const auto& network_profile = *profile_opt;
-
-                // Validate URL scheme matches security profile
-                const std::string url = network_profile.ocppCsmsUrl.get();
-                const bool is_wss = url.find("wss://") == 0;
-                const bool is_ws = url.find("ws://") == 0;
-                if (is_wss && network_profile.securityProfile < 2) {
-                    EVLOG_warning << "configurationSlot " << configuration_slot
-                                  << ": wss:// URL requires securityProfile >= 2, got "
-                                  << network_profile.securityProfile;
-                    return "InvalidNetworkConf";
-                }
-                if (is_ws && network_profile.securityProfile >= 2) {
-                    EVLOG_warning << "configurationSlot " << configuration_slot
-                                  << ": ws:// URL is not allowed with securityProfile >= 2, got "
-                                  << network_profile.securityProfile;
-                    return "InvalidNetworkConf";
-                }
-
-                if (network_profile.securityProfile <= active_security_profile) {
-                    continue;
-                }
-
-                if (network_profile.securityProfile == 3 and
-                    this->context.evse_security
-                            .get_leaf_certificate_info(ocpp::CertificateSigningUseEnum::ChargingStationCertificate)
-                            .status != ocpp::GetCertificateInfoStatus::Accepted) {
-                    EVLOG_warning << "SecurityProfile of configurationSlot: " << configuration_slot
-                                  << " is 3 but no CSMS Leaf Certificate is installed";
-                    return "InvalidNetworkConf";
-                }
-                if (network_profile.securityProfile >= 2 and
-                    !this->context.evse_security.is_ca_certificate_installed(ocpp::CaCertificateType::CSMS)) {
-                    EVLOG_warning << "SecurityProfile of configurationSlot: " << configuration_slot
-                                  << " is >= 2 but no CSMS Root Certifciate is installed";
-                    return "InvalidNetworkConf";
-                }
-            }
-        } catch (const std::invalid_argument& e) {
-            EVLOG_warning << "NetworkConfigurationPriority contains at least one value which is not an integer: "
-                          << set_variable_data.attributeValue.get();
-            return "InvalidNetworkConf";
-        }
+        return this->validate_network_configuration_priority(set_variable_data);
     }
+
     return std::nullopt;
     // TODO(piet): other special validating of variables requested to change can be added here...
 }

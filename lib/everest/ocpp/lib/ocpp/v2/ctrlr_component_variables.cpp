@@ -1813,6 +1813,10 @@ std::optional<NetworkConnectionProfile> read_profile_from_device_model(DeviceMod
             profile.vpn = vpn;
         }
 
+        if (const auto ver_opt = get_optional_value<std::string>(dm, get_component_variable(slot, OcppVersion))) {
+            profile.ocppVersion = conversions::string_to_ocppversion_enum(ver_opt.value());
+        }
+
         return profile;
     } catch (const std::exception& e) {
         EVLOG_error << "Error reading profile from device model for slot " << slot << ": " << e.what();
@@ -1889,6 +1893,10 @@ bool write_profile_to_device_model(DeviceModelInterface& dm, int32_t slot, const
             set(VpnEnabled, "false");
         }
 
+        if (profile.ocppVersion.has_value()) {
+            set(OcppVersion, conversions::ocppversion_enum_to_string(profile.ocppVersion.value()));
+        }
+
         return true;
     } catch (const std::exception& e) {
         EVLOG_error << "Error writing profile to device model for slot " << slot << ": " << e.what();
@@ -1936,7 +1944,7 @@ void migrate_from_blob_if_needed(DeviceModelInterface& dm) {
         // Read the global BasicAuthPassword from SecurityCtrlr so we can populate per-slot passwords
         // during migration when the blob does not contain one (the legacy format stored it separately).
         const auto security_ctrlr_password =
-            dm.get_optional_value<std::string>(ControllerComponentVariables::BasicAuthPassword);
+            get_optional_value<std::string>(dm, ControllerComponentVariables::BasicAuthPassword);
 
         int imported = 0;
         for (const auto& profile_json : profiles) {
@@ -1966,11 +1974,33 @@ void migrate_from_blob_if_needed(DeviceModelInterface& dm) {
 
 void clear_slot_in_device_model(DeviceModelInterface& dm, int32_t slot) {
     static const std::vector<const Variable*> all_vars = {
-        &OcppCsmsUrl,       &SecurityProfile,   &OcppInterface, &OcppTransport,    &MessageTimeout,
-        &Identity,          &BasicAuthPassword, &ApnEnabled,    &VpnEnabled,       &Apn,
-        &ApnUserName,       &ApnPassword,       &SimPin,        &PreferredNetwork, &UseOnlyPreferredNetwork,
-        &ApnAuthentication, &VpnServer,         &VpnUser,       &VpnPassword,      &VpnKey,
-        &VpnType,           &VpnGroup,
+        &OcppCsmsUrl,
+        &SecurityProfile,
+        &OcppInterface,
+        &OcppTransport,
+        &MessageTimeout,
+        &Identity,
+        &BasicAuthPassword,
+        &ApnEnabled,
+        &VpnEnabled,
+        &Apn,
+        &ApnUserName,
+        &ApnPassword,
+        &SimPin,
+        &PreferredNetwork,
+        &UseOnlyPreferredNetwork,
+        &ApnAuthentication,
+        &VpnServer,
+        &VpnUser,
+        &VpnPassword,
+        &VpnKey,
+        &VpnType,
+        &VpnGroup,
+        &OcppVersion,
+        &CsmsRootCertificateHashAlgorithm,
+        &CsmsRootCertificateIssuerKeyHash,
+        &CsmsRootCertificateIssuerNameHash,
+        &CsmsRootCertificateSerialNumber,
     };
     for (const auto* var : all_vars) {
         const auto cv = get_component_variable(slot, *var);
