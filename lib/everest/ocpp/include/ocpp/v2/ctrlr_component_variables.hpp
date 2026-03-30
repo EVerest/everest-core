@@ -4,12 +4,17 @@
 #ifndef OCPP_V2_CTRLR_COMPONENT_VARIABLES
 #define OCPP_V2_CTRLR_COMPONENT_VARIABLES
 
+#include <cstdint>
+#include <optional>
 #include <set>
 
 #include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
 namespace v2 {
+
+class DeviceModelInterface;
+
 ///
 /// \brief Required ComponentVariable.
 ///
@@ -439,6 +444,11 @@ extern const Variable CsmsRootCertificateIssuerKeyHash;
 extern const Variable CsmsRootCertificateIssuerNameHash;
 extern const Variable CsmsRootCertificateSerialNumber;
 ComponentVariable get_component_variable(const std::int32_t slot, const Variable& variable);
+std::optional<NetworkConnectionProfile> read_profile_from_device_model(DeviceModelInterface& dm, int32_t slot);
+bool write_profile_to_device_model(DeviceModelInterface& dm, int32_t slot, const NetworkConnectionProfile& profile,
+                                   const std::string& source);
+void migrate_from_blob_if_needed(DeviceModelInterface& dm);
+void clear_slot_in_device_model(DeviceModelInterface& dm, int32_t slot);
 } // namespace NetworkConfigurationComponentVariables
 
 } // namespace v2
