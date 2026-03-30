@@ -448,8 +448,8 @@ void ConnectivityManager::on_websocket_connected(OcppProtocolVersion protocol) {
             const auto nc_cv = NetworkConfigurationComponentVariables::get_component_variable(
                 actual_configuration_slot, NetworkConfigurationComponentVariables::OcppVersion);
             if (nc_cv.variable.has_value()) {
-                this->device_model.set_read_only_value(nc_cv.component, nc_cv.variable.value(), AttributeEnum::Actual,
-                                                       version_str, VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
+                this->device_model.set_value(nc_cv.component, nc_cv.variable.value(), AttributeEnum::Actual,
+                                             version_str, VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
             }
         }
     }
