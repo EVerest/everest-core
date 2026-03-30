@@ -390,7 +390,7 @@
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadOnly"
+          "mutability": "ReadWrite"
         }
       ],
       "description": "Hash algorithm of the CSMS root certificate",
@@ -406,7 +406,7 @@
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadOnly"
+          "mutability": "ReadWrite"
         }
       ],
       "description": "Issuer key hash of the CSMS root certificate",
@@ -422,7 +422,7 @@
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadOnly"
+          "mutability": "ReadWrite"
         }
       ],
       "description": "Issuer name hash of the CSMS root certificate",
@@ -438,7 +438,7 @@
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadOnly"
+          "mutability": "ReadWrite"
         }
       ],
       "description": "Serial number of the CSMS root certificate",

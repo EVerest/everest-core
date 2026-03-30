@@ -252,6 +252,9 @@ private:
     ///
     int get_next_configuration_slot(std::int32_t configuration_slot);
 
+    /// \brief Append the given slot to NetworkConfigurationPriority if it is not already listed (B09.FR.11)
+    void append_slot_to_network_configuration_priority_if_absent(int32_t slot, const std::string& source);
+
     /// \brief Cache all the network connection profiles
     void cache_network_connection_profiles();
 
