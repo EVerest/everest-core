@@ -1829,7 +1829,7 @@ bool write_profile_to_device_model(DeviceModelInterface& dm, int32_t slot, const
     try {
         auto set = [&](const Variable& var, const std::string& val) {
             const auto cv = get_component_variable(slot, var);
-            return dm.set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, val, source);
+            return dm.set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, val, source, true);
         };
 
         if (set(OcppCsmsUrl, profile.ocppCsmsUrl.get()) != SetVariableStatusEnum::Accepted) {
@@ -2004,7 +2004,7 @@ void clear_slot_in_device_model(DeviceModelInterface& dm, int32_t slot) {
     };
     for (const auto* var : all_vars) {
         const auto cv = get_component_variable(slot, *var);
-        dm.set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "", "internal");
+        dm.set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "", "internal", true);
     }
     EVLOG_debug << "Cleared NetworkConfiguration[" << slot << "] from device model";
 }
