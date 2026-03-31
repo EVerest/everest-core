@@ -258,6 +258,9 @@ private:
     /// \brief Cache all the network connection profiles
     void cache_network_connection_profiles();
 
+    /// \brief Log an error if all cached profiles have security_profile 0
+    void warn_if_all_security_level_zero() const;
+
     /// \brief Removes all connection profiles from the cache that have a security profile lower than the currently
     /// connected security profile
     void check_cache_for_invalid_security_profiles();
