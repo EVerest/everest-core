@@ -1025,8 +1025,6 @@ async def test_b09_b10(
         **r.get_variable_result[0]
     )
     assert get_variables_result.attribute_status == GetVariableStatusEnumType.accepted
-    initial_url = get_variables_result.attribute_value
-
     # invalid security profile
     r: call_result201.SetNetworkProfile = (
         await charge_point_v201.set_network_profile_req(

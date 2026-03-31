@@ -541,10 +541,18 @@ void ConnectivityManager::cache_network_connection_profiles() {
         }
     }
 
-    if (!this->cached_network_connection_profiles.empty() &&
-        !this->device_model.get_optional_value<bool>(ControllerComponentVariables::AllowSecurityLevelZeroConnections)
-             .value_or(false) &&
-        std::none_of(this->cached_network_connection_profiles.begin(), this->cached_network_connection_profiles.end(),
+    this->warn_if_all_security_level_zero();
+}
+
+void ConnectivityManager::warn_if_all_security_level_zero() const {
+    if (this->cached_network_connection_profiles.empty()) {
+        return;
+    }
+    if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::AllowSecurityLevelZeroConnections)
+            .value_or(false)) {
+        return;
+    }
+    if (std::none_of(this->cached_network_connection_profiles.begin(), this->cached_network_connection_profiles.end(),
                      [](const SetNetworkProfileRequest& profile) {
                          return profile.connectionData.securityProfile !=
                                 security::OCPP_1_6_ONLY_UNSECURED_TRANSPORT_WITHOUT_BASIC_AUTHENTICATION;
