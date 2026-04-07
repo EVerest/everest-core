@@ -13,6 +13,10 @@ void {{ info.class_name }}::init() {
 void {{ info.class_name }}::ready() {
 
 }
+
+void {{ info.class_name }}::shutdown() {
+
+}
 {% for cmd in cmds %}
 
 {{ handle_cmd_signature(cmd, info.class_name, '::'+info.interface) }}{

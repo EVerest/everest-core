@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #include "Example.hpp"
 
 namespace module {
@@ -14,6 +14,11 @@ void Example::ready() {
     invoke_ready(*p_store);
 
     mqtt.publish("external/topic", "data");
+}
+
+void Example::shutdown() {
+    invoke_shutdown(*p_example);
+    invoke_shutdown(*p_store);
 }
 
 } // namespace module

@@ -49,6 +49,7 @@ private:
 
     virtual void init() override;
     virtual void ready() override;
+    void shutdown() override;
 
     {{ insert_block(info.blocks.private_defs, indent=4) }}
 };

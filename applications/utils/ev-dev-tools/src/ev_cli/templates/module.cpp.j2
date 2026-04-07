@@ -16,4 +16,10 @@ void {{ info.class_name }}::ready() {
     {% endfor %}
 }
 
+void {{ info.class_name }}::shutdown() {
+    {% for impl in provides %}
+    invoke_shutdown(*p_{{ impl.id }});
+    {% endfor %}
+}
+
 } // namespace module

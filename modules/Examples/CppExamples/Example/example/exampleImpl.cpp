@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #include "exampleImpl.hpp"
 
 // initial cpp template for interface example_child
@@ -16,6 +16,9 @@ void exampleImpl::init() {
 void exampleImpl::ready() {
     publish_max_current(config.current);
     mod->r_kvs->call_store("test", "test");
+}
+
+void exampleImpl::shutdown() {
 }
 
 bool exampleImpl::handle_uses_something(std::string& key) {
