@@ -1023,10 +1023,9 @@ async def test_network_configuration_reject_priority_slot_changes(
     test_controller: TestController,
 ):
     """
-    TC_B_108_CS: Reject SetVariables on slots in NetworkConfigurationPriority
-    B09.FR.21, B09.FR.22 - Verify that attempts to change configuration on slots
-    that are in the NetworkConfigurationPriority list are rejected with
-    "PriorityNetworkConf" reason code.
+    TC_B_108_CS: Reject SetVariables on the currently active NetworkConfiguration slot
+    B09.FR.22 - Verify that attempts to change configuration on the active slot
+    are rejected with "ActiveNetworkConf" reason code.
     """
     log.info(
         "##################### TC_B_108_CS: Reject Changes to Priority Slots #################"
@@ -1050,10 +1049,10 @@ async def test_network_configuration_reject_priority_slot_changes(
         set_variable_data=[set_var]
     )
 
-    # Validate that the change was rejected with PriorityNetworkConf reason
+    # Validate that the change was rejected with ActiveNetworkConf reason
     assert validate_set_variables_rejected(
-        response, "PriorityNetworkConf"
-    ), f"Expected SetVariables to be rejected with PriorityNetworkConf, but got: {response}"
+        response, "ActiveNetworkConf"
+    ), f"Expected SetVariables to be rejected with ActiveNetworkConf, but got: {response}"
 
 
 @pytest.mark.asyncio
