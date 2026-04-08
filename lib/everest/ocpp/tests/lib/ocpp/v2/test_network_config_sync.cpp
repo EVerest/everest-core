@@ -925,10 +925,10 @@ static SetVariableData make_set_variable_data(int slot, const std::string& varia
     return svd;
 }
 
-// Helper: check if a SetVariableResult was rejected due to active slot protection (B09.FR.21/22)
+// Helper: check if a SetVariableResult was rejected due to active slot protection (B09.FR.22)
 static bool is_rejected_by_active_slot(const SetVariableResult& result) {
     return result.attributeStatus == SetVariableStatusEnum::Rejected && result.attributeStatusInfo.has_value() &&
-           result.attributeStatusInfo->reasonCode.get() == "PriorityNetworkConf";
+           result.attributeStatusInfo->reasonCode.get() == "ActiveNetworkConf";
 }
 
 class ProvisioningActiveSlotTest : public ::testing::Test {
@@ -1042,22 +1042,15 @@ TEST_F(ProvisioningActiveSlotTest, AllowOcppTransportOnNonActiveSlot) {
     EXPECT_FALSE(is_rejected_by_active_slot(result)) << "OcppTransport on non-active slot must not be blocked";
 }
 
-// B09.FR.22: When slot 2 is in the priority list, slot 2 writes are rejected but slot 1 writes are allowed
+// B09.FR.22: When slot 2 is active, slot 2 writes are rejected but slot 1 writes are allowed
 TEST_F(ProvisioningActiveSlotTest, ActiveSlot2RejectsSlot2AllowsSlot1) {
     set_active_slot(2);
 
-    // Set NetworkConfigurationPriority to only include slot 2
-    ASSERT_TRUE(ControllerComponentVariables::NetworkConfigurationPriority.variable.has_value());
-    auto status = dm->set_value(ControllerComponentVariables::NetworkConfigurationPriority.component,
-                                ControllerComponentVariables::NetworkConfigurationPriority.variable.value(),
-                                AttributeEnum::Actual, "2", "test");
-    ASSERT_EQ(status, SetVariableStatusEnum::Accepted);
-
     auto result2 = set_single_variable(make_set_variable_data(2, "OcppCsmsUrl", "wss://new.example.com"));
-    EXPECT_TRUE(is_rejected_by_active_slot(result2)) << "Must reject SetVariables on priority-listed slot 2";
+    EXPECT_TRUE(is_rejected_by_active_slot(result2)) << "Must reject SetVariables on active slot 2";
 
     auto result1 = set_single_variable(make_set_variable_data(1, "OcppCsmsUrl", "wss://other.example.com"));
-    EXPECT_FALSE(is_rejected_by_active_slot(result1)) << "Must allow SetVariables on non-priority slot 1";
+    EXPECT_FALSE(is_rejected_by_active_slot(result1)) << "Must allow SetVariables on non-active slot 1";
 }
 
 // ---------------------------------------------------------------------------
