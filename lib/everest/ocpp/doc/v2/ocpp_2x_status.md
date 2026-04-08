@@ -437,7 +437,7 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | B09.FR.18 <br> (2.1)  | ✅     | Uses per-slot Identity/BasicAuthPassword when set |
 | B09.FR.20 <br> (2.1)  | ✅     |        |
 | B09.FR.21 <br> (2.1)  |        | CSMS requirement |
-| B09.FR.22 <br> (2.1)  | ✅     | Rejects with reasonCode "PriorityNetworkConf" |
+| B09.FR.22 <br> (2.1)  | ✅     | Rejects active slot with reasonCode "ActiveNetworkConf" |
 | B09.FR.23 <br> (2.1)  | ✅     |        |
 | B09.FR.26 <br> (2.1)  | ✅     | Clears per-slot Identity when SecurityCtrlr.Identity changes |
 | B09.FR.27 <br> (2.1)  | ✅     | Clears per-slot BasicAuthPassword when SecurityCtrlr changes |
