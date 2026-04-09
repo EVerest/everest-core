@@ -1470,7 +1470,7 @@ async def test_network_configuration_dm_end_to_end(
     1. Migration from legacy NetworkConnectionProfiles blob to DM variables on boot
     2. GetVariables reads correct values from NetworkConfiguration[1]
     3. SetVariables updates a non-active slot and the change persists (read-back)
-    4. SetVariables on the active slot is rejected with PriorityNetworkConf
+    4. SetVariables on the active slot is rejected with ActiveNetworkConf
     """
     log.info(
         "##################### US-006: NetworkConfiguration DM End-to-End #################"
@@ -1643,10 +1643,10 @@ async def test_network_configuration_dm_end_to_end(
     )
 
     assert validate_set_variables_rejected(
-        response, "PriorityNetworkConf"
+        response, "ActiveNetworkConf"
     ), (
         f"SetVariables on active slot 1 should be rejected with "
-        f"PriorityNetworkConf, but got: {response}"
+        f"ActiveNetworkConf, but got: {response}"
     )
 
-    log.info("Step 4 PASSED: SetVariables on active slot 1 rejected with PriorityNetworkConf")
+    log.info("Step 4 PASSED: SetVariables on active slot 1 rejected with ActiveNetworkConf")
