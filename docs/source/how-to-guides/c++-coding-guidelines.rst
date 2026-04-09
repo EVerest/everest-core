@@ -1,6 +1,6 @@
-##################################
+#####################
 C++ Coding Guidelines
-##################################
+#####################
 
 This how-to-guide describes best practices for developing C++ code for
 EVerest.
@@ -33,7 +33,7 @@ The EVerest clang format container ensures a consistent output using a specific
 version of clang format. Unfortunately different versions of clang format
 give different results even with the same ``.clang-format`` configuration file.
 
-The docker container for clang-format is `here:<https://github.com/EVerest/everest-ci>`.
+The docker container for clang-format is `here <https://github.com/EVerest/everest-ci>`_.
 
 File Naming
 ===========
@@ -68,7 +68,7 @@ Naming
 - function parameters should not match member variables or local variables
 - the `this` pointer should only be used when absolutely required
 
-Example header file called `ocpp/OcppDataModel.hpp`:
+Example header file called ``ocpp/OcppDataModel.hpp``:
 
   .. code-block:: cpp
 
@@ -83,31 +83,31 @@ Example header file called `ocpp/OcppDataModel.hpp`:
 
     class OcppDataModel : public OcppDataModelBase {
     private:
-      int _num_connectors{-1};
+        int m_num_connectors{-1};
 
     public:
-      OcppDataModel() = default;
-      OcppDataModel(int num_connectors) : _num_connectors(num_connectors) {
-      }
+        OcppDataModel() = default;
+        OcppDataModel(int num_connectors) : m_num_connectors(num_connectors) {
+        }
 
-      /// \brief check if the object has been configured
-      /// \returns true when there is at least one connector
-      bool isConfigured() const {
-        return _num_connectors > 0;
-      }
+        /// \brief check if the object has been configured
+        /// \returns true when there is at least one connector
+        bool isConfigured() const {
+            return m_num_connectors > 0;
+        }
 
-      /// \brief initialise with the count of connectors
-      /// \param[in] count - the number of detected connectors
-      void initialise(int count);
+        /// \brief initialise with the count of connectors
+        /// \param[in] count - the number of detected connectors
+        void initialise(int count);
 
-      operator const OcppDataModelBase&() const {
-        return *this;
-      }
+        operator const OcppDataModelBase&() const {
+            return *this;
+        }
     };
 
     } // namespace ocpp
 
-Example source file called `ocpp/OcppDataModel.cpp`:
+Example source file called ``ocpp/OcppDataModel.cpp``:
 
   .. code-block:: cpp
 
@@ -116,13 +116,13 @@ Example source file called `ocpp/OcppDataModel.cpp`:
 
     namespace {
     int internal_function(int parameter) {
-      return parameter * 4 + 1;
+        return parameter * 4 + 1;
     }
 
     namespace ocpp {
 
     void OcppDataModel::initialise(int count) {
-      _num_connectors = internal_function(count);
+        m_num_connectors = internal_function(count);
     }
 
     } // namespace ocpp
@@ -136,18 +136,18 @@ often require this and it may be needed for inlining.
 Member variable initialisers should be provided. The following links gives examples
 of the different types and their uses:
 
-- `Initialisation <https://en.cppreference.com/w/cpp/language/initialization.html>`
-- `Non-static data members <https://en.cppreference.com/w/cpp/language/data_members.html>`
+- `Initialisation <https://en.cppreference.com/w/cpp/language/initialization.html>`_
+- `Non-static data members <https://en.cppreference.com/w/cpp/language/data_members.html>`_
 
 e.g.
 
-```
-struct s {
-  std::string s3 = "hello";    // 1. copy-initialization
-  std::string s4 = {"hello"};  // 2. list-initialization (since C++11)
-  std::string s5{'a'};         // 3. list-initialization (since C++11)
-};
-```
+.. code-block:: cpp
+
+    struct s {
+        std::string s3 = "hello";    // 1. copy-initialization
+        std::string s4 = {"hello"};  // 2. list-initialization (since C++11)
+        std::string s5{'a'};         // 3. list-initialization (since C++11)
+    };
 
 List initialisation is preferred. Be consistent with usage and avoid mixing
 initialisation types (especially 2. and 3.).
@@ -167,12 +167,12 @@ Coding Style
 
 - minimise the use of early returns from a function
 - try to keep functions short so they can be seen on a single screen
-- always include a `default:` clause in a switch statement
-- add doxygen comments using `///` and `\brief` …
+- always include a ``default:`` clause in a switch statement
+- add doxygen comments using ``///`` and ``\brief`` …
 - try to use meaningful variable names
-- use `#pragma once` as the include guard
+- use ``#pragma once`` as the include guard
 - avoid throwing exceptions - keep use of exceptions contained within your class
-- use `RAII <https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization>` where possible
+- use `RAII <https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization>`_ where possible
 - use existing utility functions (*)
 - minimise external dependencies and ensure a compatible licence exists
 - design with testing in mind - ensure that your code can be unit tested
@@ -182,16 +182,16 @@ Coding Style
 * there are a growing set of utility classes and functions in the lib directory.
   Including thread safe queues and object protection (monitor) and bit flags based
   on enumerations. Where possible use existing implementations and consider generalising new functions
-  for inclusion into the `util`` library.
+  for inclusion into the ``util`` library.
 
-If in doubt have a look at existing code and consider the `Google style guide <https://google.github.io/styleguide/cppguide.html>`
+If in doubt have a look at existing code and consider the `Google style guide <https://google.github.io/styleguide/cppguide.html>`_
 
 Suggesting a Change
 ===================
 
-`Zulip <https://lfenergy.zulipchat.com/>` can be used as a starting point to interact with the community about
+`Zulip <https://lfenergy.zulipchat.com/>`_ can be used as a starting point to interact with the community about
 a change, or enhancement. Once there is some consensus on an approach an issue
-should be raised in the `EVerest github <https://github.com/EVerest/EVerest/issues>`.
+should be raised in the `EVerest github <https://github.com/EVerest/EVerest/issues>`_.
 
 See :doc:`Contributing to EVerest </project/contributing>` for
 more information on how to contribute.

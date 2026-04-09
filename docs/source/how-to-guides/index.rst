@@ -135,3 +135,4 @@ Have a look at this categorized list of all guides:
     pionix-belay-box
     integrate-tariff-and-cost
     devcontainer-usage/index
+    c++-coding-guidelines
