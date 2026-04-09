@@ -1,0 +1,1422 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:everest:config_service_API'
+info:
+  title: 'EVerest API definition for the Config Service'
+  version: 1.0.0
+  description: >-
+    API for EVerest modules and clients to interact with the Config Service.
+    Provides configuration slot management, module control requests, and
+    publication of active slot and configuration update events.
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
+  tags:
+    - name: EVerest
+    - name: ConfigService
+servers:
+  default:
+    pathname: 'everest_api/1/config_service/'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+defaultContentType: application/json
+
+channels:
+  send_request_list_all_slots:
+    address: 'm2e/list_all_slots'
+    messages:
+      send_request_list_all_slots:
+        $ref: '#/components/messages/send_request_list_all_slots'
+  receive_reply_list_all_slots:
+    address: null
+    messages:
+      receive_reply_list_all_slots:
+        $ref: '#/components/messages/receive_reply_list_all_slots'
+
+  send_request_get_active_slot:
+    address: 'm2e/get_active_slot'
+    messages:
+      send_request_get_active_slot:
+        $ref: '#/components/messages/send_request_get_active_slot'
+  receive_reply_get_active_slot:
+    address: null
+    messages:
+      receive_reply_get_active_slot:
+        $ref: '#/components/messages/receive_reply_get_active_slot'
+
+  send_request_mark_active_slot:
+    address: 'm2e/mark_active_slot'
+    messages:
+      send_request_mark_active_slot:
+        $ref: '#/components/messages/send_request_mark_active_slot'
+  receive_reply_mark_active_slot:
+    address: null
+    messages:
+      receive_reply_mark_active_slot:
+        $ref: '#/components/messages/receive_reply_mark_active_slot'
+
+  send_request_stop_modules:
+    address: 'm2e/stop_modules'
+    messages:
+      send_request_stop_modules:
+        $ref: '#/components/messages/send_request_stop_modules'
+  receive_reply_stop_modules:
+    address: null
+    messages:
+      receive_reply_stop_modules:
+        $ref: '#/components/messages/receive_reply_stop_modules'
+
+  send_request_restart_modules:
+    address: 'm2e/restart_modules'
+    messages:
+      send_request_restart_modules:
+        $ref: '#/components/messages/send_request_restart_modules'
+  receive_reply_restart_modules:
+    address: null
+    messages:
+      receive_reply_restart_modules:
+        $ref: '#/components/messages/receive_reply_restart_modules'
+
+  send_request_delete_slot:
+    address: 'm2e/delete_slot'
+    messages:
+      send_request_delete_slot:
+        $ref: '#/components/messages/send_request_delete_slot'
+  receive_reply_delete_slot:
+    address: null
+    messages:
+      receive_reply_delete_slot:
+        $ref: '#/components/messages/receive_reply_delete_slot'
+
+  send_request_duplicate_slot:
+    address: 'm2e/duplicate_slot'
+    messages:
+      send_request_duplicate_slot:
+        $ref: '#/components/messages/send_request_duplicate_slot'
+  receive_reply_duplicate_slot:
+    address: null
+    messages:
+      receive_reply_duplicate_slot:
+        $ref: '#/components/messages/receive_reply_duplicate_slot'
+
+  send_request_load_from_yaml:
+    address: 'm2e/load_from_yaml'
+    messages:
+      send_request_load_from_yaml:
+        $ref: '#/components/messages/send_request_load_from_yaml'
+  receive_reply_load_from_yaml:
+    address: null
+    messages:
+      receive_reply_load_from_yaml:
+        $ref: '#/components/messages/receive_reply_load_from_yaml'
+
+  send_request_set_config_parameters:
+    address: 'm2e/set_config_parameters'
+    messages:
+      send_request_set_config_parameters:
+        $ref: '#/components/messages/send_request_set_config_parameters'
+  receive_reply_set_config_parameters:
+    address: null
+    messages:
+      receive_reply_set_config_parameters:
+        $ref: '#/components/messages/receive_reply_set_config_parameters'
+
+  send_request_get_configuration:
+    address: 'm2e/get_configuration'
+    messages:
+      send_request_get_configuration:
+        $ref: '#/components/messages/send_request_get_configuration'
+  receive_reply_get_configuration:
+    address: null
+    messages:
+      receive_reply_get_configuration:
+        $ref: '#/components/messages/receive_reply_get_configuration'
+
+  receive_active_slot:
+    address: 'e2m/active_slot'
+    messages:
+      receive_active_slot:
+        $ref: '#/components/messages/receive_active_slot'
+
+  receive_config_updates:
+    address: 'e2m/config_updates'
+    messages:
+      receive_config_updates:
+        $ref: '#/components/messages/receive_config_updates'
+
+  receive_execution_status:
+    address: 'e2m/execution_status'
+    messages:
+      receive_execution_status:
+        $ref: '#/components/messages/receive_execution_status'
+
+operations:
+  send_request_list_all_slots:
+    title: 'List all slots'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_list_all_slots'
+    description: 'Request a list of configuration slots stored in the database.'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_list_all_slots'
+
+  receive_reply_list_all_slots:
+    title: 'Reply to list_all_slots request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_list_all_slots'
+
+  send_request_get_active_slot:
+    title: 'Get active slot'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_get_active_slot'
+    description: 'Request the currently active configuration slot.'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_get_active_slot'
+
+  receive_reply_get_active_slot:
+    title: 'Reply to get_active_slot request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_get_active_slot'
+
+  send_request_mark_active_slot:
+    title: 'Mark active slot'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_mark_active_slot'
+    description: 'Request that a slot become active on the next restart.'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_mark_active_slot'
+
+  receive_reply_mark_active_slot:
+    title: 'Reply to mark_active_slot request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_mark_active_slot'
+
+  send_request_stop_modules:
+    title: 'Stop modules'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_stop_modules'
+    description: 'Request EVerest to stop all currently running modules.'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_stop_modules'
+
+  receive_reply_stop_modules:
+    title: 'Reply to stop_modules request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_stop_modules'
+
+  send_request_restart_modules:
+    title: 'Restart modules'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_restart_modules'
+    description: 'Request EVerest to restart or start modules.'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_restart_modules'
+
+  receive_reply_restart_modules:
+    title: 'Reply to restart_modules request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_restart_modules'
+
+  send_request_delete_slot:
+    title: 'Delete slot'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_delete_slot'
+    description: 'Request deletion of a configuration slot.'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_delete_slot'
+
+  receive_reply_delete_slot:
+    title: 'Reply to delete_slot request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_delete_slot'
+
+  send_request_duplicate_slot:
+    title: 'Duplicate slot'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_duplicate_slot'
+    description: 'Request duplication of a configuration slot.'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_duplicate_slot'
+
+  receive_reply_duplicate_slot:
+    title: 'Reply to duplicate_slot request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_duplicate_slot'
+
+  send_request_load_from_yaml:
+    title: 'Load from YAML'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_load_from_yaml'
+    description: 'Request creation of a new slot from a YAML configuration string.'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_load_from_yaml'
+
+  receive_reply_load_from_yaml:
+    title: 'Reply to load_from_yaml request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_load_from_yaml'
+
+  send_request_set_config_parameters:
+    title: 'Set configuration parameters'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_set_config_parameters'
+    description: 'Request updates of configuration parameters within a slot.'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_set_config_parameters'
+
+  receive_reply_set_config_parameters:
+    title: 'Reply to set_config_parameters request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_set_config_parameters'
+
+  send_request_get_configuration:
+    title: 'Get configuration'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_get_configuration'
+    description: 'Request the complete module configuration for a slot.'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_get_configuration'
+
+  receive_reply_get_configuration:
+    title: 'Reply to get_configuration request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_get_configuration'
+
+  receive_active_slot:
+    title: 'Receive active slot update'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_active_slot'
+    description: 'Published when the active configuration slot changes or its start status changes.'
+
+  receive_config_updates:
+    title: 'Receive configuration updates'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_config_updates'
+    description: 'Published when configuration parameters of any slot change.'
+
+  receive_execution_status:
+    title: 'Receive execution status'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_execution_status'
+    description: 'Published when EVerest execution status changes.'
+
+components:
+  messages:
+    send_request_list_all_slots:
+      name: send_request_list_all_slots
+      title: 'List all slots request'
+      summary: 'Request a list of all configuration slots.'
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - headers
+          - payload
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: Address to send the response to.
+          payload:
+            type: object
+            description: Empty request payload
+      examples:
+        - summary: "Request all configuration slots"
+          payload:
+            headers:
+              replyTo: arbitrary/reply/topic
+            payload: {}
+    receive_reply_list_all_slots:
+      name: receive_reply_list_all_slots
+      title: 'List all slots reply'
+      summary: 'Reply containing all stored configuration slots.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ListSlotIdsResult'
+      examples:
+        - summary: "List of configuration slots"
+          payload:
+            slots:
+              - slot_id: 1
+                last_updated: "2026-04-08T16:00:00Z"
+                is_valid: true
+                description: "Production_AC_v1"
+                config_file_path: "/var/opt/everest/slots/slot_1.yaml"
+              - slot_id: 2
+                last_updated: "2026-03-15T09:30:00Z"
+                is_valid: false
+                description: "Testing_DC_Fast"
+
+    send_request_get_active_slot:
+      name: send_request_get_active_slot
+      title: 'Get active slot request'
+      summary: 'Request the currently active configuration slot.'
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - headers
+          - payload
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: Address to send the response to.
+          payload:
+            type: object
+            description: Empty request payload
+      examples:
+        - summary: "Request active slot"
+          payload:
+            headers:
+              replyTo: arbitrary/reply/topic
+            payload: {}
+    receive_reply_get_active_slot:
+      name: receive_reply_get_active_slot
+      title: 'Get active slot reply'
+      summary: 'Reply containing the currently active slot.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/GetActiveSlotIdResult'
+      examples:
+        - summary: "Active slot ID"
+          payload:
+            slot_id: 1
+
+    send_request_mark_active_slot:
+      name: send_request_mark_active_slot
+      title: 'Mark active slot request'
+      summary: 'Request to mark a specific slot as active on the next restart.'
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - headers
+          - payload
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: Address to send the response to.
+          payload:
+            $ref: '#/components/schemas/MarkActiveSlotRequest'
+      examples:
+        - summary: "Mark slot 1 as active"
+          payload:
+            headers:
+              replyTo: arbitrary/reply/topic
+            payload:
+              slot_id: 1
+    receive_reply_mark_active_slot:
+      name: receive_reply_mark_active_slot
+      title: 'Mark active slot reply'
+      summary: 'Reply indicating whether the active slot change was accepted.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/MarkActiveSlotResult'
+      examples:
+        - summary: "Slot does not exist"
+          payload: "DoesNotExist"
+
+    send_request_stop_modules:
+      name: send_request_stop_modules
+      title: 'Stop modules request'
+      summary: 'Request EVerest to stop all currently running modules.'
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - headers
+          - payload
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: Address to send the response to.
+          payload:
+            type: object
+            description: Empty request payload
+      examples:
+        - summary: "Request to stop all modules"
+          payload:
+            headers:
+              replyTo: arbitrary/reply/topic
+            payload: {}
+    receive_reply_stop_modules:
+      name: receive_reply_stop_modules
+      title: 'Stop modules reply'
+      summary: 'Reply indicating the result of stopping modules.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/StopModulesResult'
+      examples:
+        - summary: "No modules to stop"
+          payload:
+            result: "NoModulesToStop"
+
+    send_request_restart_modules:
+      name: send_request_restart_modules
+      title: 'Restart modules request'
+      summary: 'Request EVerest to restart or start modules.'
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - headers
+          - payload
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: Address to send the response to.
+          payload:
+            type: object
+            description: Empty request payload
+      examples:
+        - summary: "Request to restart modules"
+          payload:
+            headers:
+              replyTo: arbitrary/reply/topic
+            payload: {}
+    receive_reply_restart_modules:
+      name: receive_reply_restart_modules
+      title: 'Restart modules reply'
+      summary: 'Reply indicating the result of restarting modules.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/StartModulesResult'
+      examples:
+        - summary: "Modules restarting"
+          payload:
+            result: "Restarting"
+
+    send_request_delete_slot:
+      name: send_request_delete_slot
+      title: 'Delete slot request'
+      summary: 'Request deletion of a configuration slot.'
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - headers
+          - payload
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: Address to send the response to.
+          payload:
+            $ref: '#/components/schemas/DeleteSlotRequest'
+      examples:
+        - summary: "Delete slot 2"
+          payload:
+            headers:
+              replyTo: arbitrary/reply/topic
+            payload:
+              slot_id: 2
+    receive_reply_delete_slot:
+      name: receive_reply_delete_slot
+      title: 'Delete slot reply'
+      summary: 'Reply indicating the result of deleting a slot.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DeleteSlotResult'
+      examples:
+        - summary: "Cannot delete active slot"
+          payload:
+            result: "CannotDeleteActiveSlot"
+
+    send_request_duplicate_slot:
+      name: send_request_duplicate_slot
+      title: 'Duplicate slot request'
+      summary: 'Request duplication of a configuration slot.'
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - headers
+          - payload
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: Address to send the response to.
+          payload:
+            $ref: '#/components/schemas/DuplicateSlotRequest'
+      examples:
+        - summary: "Duplicate slot 1 with new description"
+          payload:
+            headers:
+              replyTo: arbitrary/reply/topic
+            payload:
+              slot_id: 1
+              new_description: "Backup of Config XYZ"
+    receive_reply_duplicate_slot:
+      name: receive_reply_duplicate_slot
+      title: 'Duplicate slot reply'
+      summary: 'Reply indicating the result of duplicating a slot.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DuplicateSlotResult'
+      examples:
+        - summary: "Slot successfully duplicated"
+          payload:
+            success: true
+            slot_id: 5
+
+    send_request_load_from_yaml:
+      name: send_request_load_from_yaml
+      title: 'Load from YAML request'
+      summary: 'Request creation of a new slot from YAML configuration.'
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - headers
+          - payload
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: Address to send the response to.
+          payload:
+            $ref: '#/components/schemas/LoadFromYamlRequest'
+      examples:
+        - summary: "Load configuration from YAML"
+          payload:
+            headers:
+              replyTo: arbitrary/reply/topic
+            payload:
+              raw_yaml: |
+                store:
+                  module: Store
+                example:
+                  config_implementation:
+                    example:
+                      current: 42
+                      enum_test: one
+                      enum_test2: 2
+                  connections:
+                    kvs:
+                      - module_id: store
+                        implementation_id: main
+                  module: Example
+                example_user:
+                  connections:
+                    example:
+                      - module_id: example
+                        implementation_id: example
+                  module: ExampleUser
+              description: "Example configuration loaded from YAML"
+    receive_reply_load_from_yaml:
+      name: receive_reply_load_from_yaml
+      title: 'Load from YAML reply'
+      summary: 'Reply indicating whether loading YAML succeeded.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/LoadFromYamlResult'
+      examples:
+        - summary: "YAML loaded successfully"
+          payload:
+            success: true
+            slot_id: 5
+
+    send_request_set_config_parameters:
+      name: send_request_set_config_parameters
+      title: 'Set configuration parameters request'
+      summary: 'Request updates to configuration parameters within a slot.'
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - headers
+          - payload
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: Address to send the response to.
+          payload:
+            $ref: '#/components/schemas/ConfigurationParameterUpdateRequest'
+      examples:
+        - summary: "Update configuration parameters"
+          payload:
+            headers:
+              replyTo: arbitrary/reply/topic
+            payload:
+              slot_id: 1
+              parameter_updates:
+                - cfg_param_id:
+                    module_id: "evse_manager_main"
+                    parameter_name: "max_current"
+                  value: "16"
+                - cfg_param_id:
+                    module_id: "ocpp"
+                    parameter_name: "ChargePointId"
+                    implementation_id: "main"
+                  value: "CP_001"
+    receive_reply_set_config_parameters:
+      name: receive_reply_set_config_parameters
+      title: 'Set configuration parameters reply'
+      summary: 'Reply containing the result of each parameter update.'
+      contentType: application/json
+      payload:
+        type: array
+        items:
+          $ref: '#/components/schemas/ConfigurationParameterUpdateRequestResult'
+      examples:
+        - summary: "Parameter update results"
+          payload:
+            - results:
+                - "WillApplyOnRestart"
+                - "Applied"
+
+    send_request_get_configuration:
+      name: send_request_get_configuration
+      title: 'Get configuration request'
+      summary: 'Request the module configuration tree for a slot.'
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - headers
+          - payload
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: Address to send the response to.
+          payload:
+            $ref: '#/components/schemas/GetConfigurationRequest'
+      examples:
+        - summary: "Get configuration for slot 1"
+          payload:
+            headers:
+              replyTo: arbitrary/reply/topic
+            payload:
+              slot_id: 1
+    receive_reply_get_configuration:
+      name: receive_reply_get_configuration
+      title: 'Get configuration reply'
+      summary: 'Reply containing the module configuration tree.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/GetConfigurationResult'
+      examples:
+        - summary: "Module configuration tree"
+          payload:
+            status: "Success"
+            module_configurations:
+              - module_id: "evse_manager_main"
+                module_name: "EvseManager"
+                connections:
+                  connections:
+                    - requirement_id: "board_support"
+                      fulfillments:
+                        - module_id: "yeti_board"
+                          implementation_id: "board_support"
+                          index: 0
+                mapping:
+                  module:
+                    evse: 1
+                    connector: 1
+                  implementations:
+                    - implementation_id: "board_support"
+                      mapping:
+                        evse: 1
+                        connector: 1
+                module_configuration_parameters:
+                  - name: "session_logging"
+                    value: "true"
+                    characteristics:
+                      datatype: "Boolean"
+                      mutability: "ReadWrite"
+                      activation_policy: "RequiresRestart"
+                implementation_configuration_parameters:
+                  - implementation_id: "board_support"
+                    configuration_parameters:
+                      - name: "max_current"
+                        value: "32"
+                        characteristics:
+                          datatype: "Integer"
+                          mutability: "ReadWrite"
+                          activation_policy: "Immediate"
+                          unit: "A"
+
+    receive_active_slot:
+      name: receive_active_slot
+      title: 'Active slot update'
+      summary: 'Published update for slot status changes. Indicates when a slot starts running, fails to start, or when a restart is triggered for a specific slot.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ActiveSlotUpdateNotice'
+      examples:
+        - summary: "Slot successfully started and is now running"
+          payload:
+            tstamp: "2026-03-30T17:45:00Z"
+            slot_id: 1
+            status: "Running"
+        - summary: "Slot failed to start"
+          payload:
+            tstamp: "2026-03-30T17:46:00Z"
+            slot_id: 2
+            status: "FailedToStart"
+        - summary: "Restart triggered for slot (system may still be running with previous slot)"
+          payload:
+            tstamp: "2026-03-30T17:47:00Z"
+            slot_id: 1
+            status: "RestartTriggered"
+
+    receive_config_updates:
+      name: receive_config_updates
+      title: 'Configuration update notification'
+      summary: 'Published when configuration parameters of any slot change.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ConfigurationParameterUpdateNotice'
+      examples:
+        - summary: "Configuration parameters changed"
+          payload:
+            tstamp: "2026-03-30T17:45:00Z"
+            slot_id: 1
+            update_results:
+              - results:
+                  - "WillApplyOnRestart"
+            origin:
+              external: false
+              identifier: "ocpp_module"
+
+    receive_execution_status:
+      name: receive_execution_status
+      title: 'Execution status update'
+      summary: 'Published when EVerest execution status changes.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ExecutionStatusUpdateNotice'
+      examples:
+        - summary: "Config service only mode"
+          payload:
+            status: "ConfigServiceOnly"
+
+  schemas:
+    ConfigMetadata:
+      description: Metadata for a configuration slot stored in the database.
+      type: object
+      additionalProperties: true
+      properties:
+        slot_id:
+          type: integer
+        last_updated:
+          type: string
+          description: 'Timestamp of the last update.'
+        is_valid:
+          type: boolean
+        description:
+          type: string
+        config_file_path:
+          type: string
+      required:
+        - slot_id
+        - last_updated
+        - is_valid
+    ListSlotIdsResult:
+      description: A list of Metadata for all configuration slots stored in the database.
+      type: object
+      additionalProperties: true
+      required:
+        - slots
+      properties:
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfigMetadata'
+    GetActiveSlotIdResult:
+      description: The slot ID of the currently active configuration slot.
+      type: object
+      additionalProperties: true
+      properties:
+        slot_id:
+          type: integer
+    MarkActiveSlotRequest:
+      description: A request to mark a configuration slot as active, consisting of the slot_id of the slot to be marked as active.
+      type: object
+      additionalProperties: true
+      properties:
+        slot_id:
+          type: integer
+      required:
+        - slot_id
+    MarkActiveSlotResultEnum:
+      description: |
+        Result when requesting to mark a slot as active.
+        - Success: Accepted and slot will be marked active on next restart
+        - AlreadyActive: Accepted, but slot is already marked active, thus no change will be made
+        - DoesNotExist: Rejected, because the specified slot_id does not exist
+        - Rejected: Rejected for other reasons
+      type: string
+      enum:
+        - Success
+        - AlreadyActive
+        - DoesNotExist
+        - Rejected
+    MarkActiveSlotResult:
+      description: Result when requesting to mark a slot as active.
+      type: object
+      additionalProperties: true
+      properties:
+        result:
+          $ref: '#/components/schemas/MarkActiveSlotResultEnum'
+        slot_id:
+          type: integer
+      required:
+        - result
+        - slot_id
+    StopModulesResultEnum:
+      description: |
+        Result when requesting to stop the modules.
+        - Stopping: Accepted and modules are being stopped
+        - NoModulesToStop: Accepted, but there are no modules currently running, thus no change will be made
+        - Rejected: Rejected for other reasons
+      type: string
+      enum:
+        - Stopping
+        - NoModulesToStop
+        - Rejected
+    StopModulesResult:
+      description: Result when requesting to stop the modules.
+      type: object
+      additionalProperties: true
+      properties:
+        result:
+          $ref: '#/components/schemas/StopModulesResultEnum'
+      required:
+        - result
+    StartModulesResultEnum:
+      description: |
+        Result when requesting to (re)start the modules.
+        - Starting: Accepted and modules are being started
+        - Restarting: Accepted and modules are being stopped and started again
+        - NoActiveSlot: Rejected, because there is no valid active configuration slot to start modules with
+        - Rejected: Rejected for other reasons
+      type: string
+      enum:
+        - Starting
+        - Restarting
+        - NoActiveSlot
+        - Rejected
+    StartModulesResult:
+      description: Result when requesting to (re)start the modules.
+      type: object
+      additionalProperties: true
+      properties:
+        result:
+          $ref: '#/components/schemas/StartModulesResultEnum'
+      required:
+        - result
+    DeleteSlotRequest:
+      description: A request to delete a configuration slot, consisting of the slot_id of the slot to be deleted.
+      type: object
+      additionalProperties: true
+      properties:
+        slot_id:
+          type: integer
+      required:
+        - slot_id
+    DeleteSlotResultEnum:
+      description: |
+        Result when requesting to delete a configuration slot.
+        - Success: Accepted and slot will be deleted
+        - CannotDeleteActiveSlot: Rejected, because the specified slot is currently active
+        - DoesNotExist: Rejected, because the specified slot_id does not exist
+        - Rejected: Rejected for other reasons
+      type: string
+      enum:
+        - Success
+        - CannotDeleteActiveSlot
+        - DoesNotExist
+        - Rejected
+    DeleteSlotResult:
+      description: Result when requesting to delete a configuration slot.
+      type: object
+      additionalProperties: true
+      properties:
+        result:
+          $ref: '#/components/schemas/DeleteSlotResultEnum'
+      required:
+        - result
+    DuplicateSlotRequest:
+      description: A request to duplicate a configuration slot, consisting of the slot_id of the slot to be duplicated and a description for the new slot.
+      type: object
+      additionalProperties: true
+      properties:
+        slot_id:
+          type: integer
+        new_description:
+          type: string
+      required:
+        - slot_id
+    DuplicateSlotResult:
+      description: Result when requesting to duplicate a configuration slot, includes the slot ID of the newly created slot if successful.
+      type: object
+      additionalProperties: true
+      properties:
+        success:
+          type: boolean
+        slot_id:
+          type: integer
+      required:
+        - success
+    LoadFromYamlRequest:
+      description: A request to create a new configuration slot from a YAML configuration, consisting of the raw YAML string of the configuration and optionally a description for the new slot.
+      type: object
+      additionalProperties: true
+      properties:
+        raw_yaml:
+          type: string
+        description:
+          type: string
+      required:
+        - raw_yaml
+    LoadFromYamlResult:
+      description: Result when requesting to create a new slot from a YAML configuration, includes the slot ID of the newly created slot if successful.
+      type: object
+      additionalProperties: true
+      properties:
+        success:
+          type: boolean
+        slot_id:
+          type: integer
+      required:
+        - success
+    ConfigurationParameterIdentifier:
+      description: Identifier for a configuration parameter, consisting of the module it belongs to, the parameter name, and optionally the implementation it belongs to (for implementation-specific parameters).
+      type: object
+      additionalProperties: true
+      properties:
+        module_id:
+          type: string
+        parameter_name:
+          type: string
+        implementation_id:
+          type: string
+      required:
+        - module_id
+        - parameter_name
+    ConfigurationParameterUpdate:
+      description: A configuration parameter update, consisting of the parameter identifier, and the new value.
+      type: object
+      additionalProperties: true
+      properties:
+        cfg_param_id:
+          $ref: '#/components/schemas/ConfigurationParameterIdentifier'
+        value:
+          type: string
+      required:
+        - cfg_param_id
+        - value
+    ConfigurationParameterUpdateRequest:
+      description: A request to update a configuration parameter, consisting of the slot_id and and array of parameter updates (parameter id and new value).
+      type: object
+      additionalProperties: true
+      properties:
+        slot_id:
+          type: integer
+        parameter_updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfigurationParameterUpdate'
+      required:
+        - slot_id
+        - parameter_updates
+    ConfigurationParameterUpdateResultEnum:
+      description: |
+        Result for a configuration parameter update request for a single parameter.
+        - Applied: Update was accepted and applied successfully. If the parameter has "Immediate" activation policy, the change is already effective. If the parameter has "RequiresRestart" activation policy, the change will become effective on the next start of the slot (which may be immediately if modules are being restarted, or on the next restart if modules are currently running).
+        - WillApplyOnRestart: Update was accepted and applied successfully. The change will become effective on the next start of the slot (which may be immediately if modules are being restarted, or on the next restart if modules are currently running).
+        - DoesNotExist: Rejected, because the specified configuration parameter does not exist
+        - Rejected: Rejected for other reasons (e.g. invalid value format, invalid value for enum, etc.)
+      type: string
+      enum:
+        - Applied
+        - WillApplyOnRestart
+        - DoesNotExist
+        - Rejected
+    ConfigurationParameterUpdateRequestResult:
+      description: Result for a configuration parameter update request.
+      type: object
+      additionalProperties: true
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfigurationParameterUpdateResultEnum'
+      required:
+        - results
+    GetConfigurationRequest:
+      description: A request to get the module configuration tree for a configuration slot, consisting of the slot_id of the slot to get the configuration for.
+      type: object
+      additionalProperties: true
+      properties:
+        slot_id:
+          type: integer
+      required:
+        - slot_id
+    Mapping:
+      description: EVSE and connector sth. can be mapped to.
+      type: object
+      additionalProperties: true
+      properties:
+        evse:
+          type: integer
+        connector:
+          type: integer
+      required:
+        - evse
+    ImplMapping:
+      description: Mapping of an EVerest interface implementation to a EVSE/connector.
+      type: object
+      additionalProperties: true
+      properties:
+        implementation_id:
+          type: string
+        mapping:
+          $ref: '#/components/schemas/Mapping'
+      required:
+        - implementation_id
+        - mapping
+    ModuleTierMappings:
+      description: Mapping of an EVerest module to EVSEs/connectors, and mapping of its implementations to EVSEs/connectors.
+      type: object
+      additionalProperties: true
+      properties:
+        module:
+          $ref: '#/components/schemas/Mapping'
+        implementations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplMapping'
+      required:
+        - module
+        - implementations
+    ReqFulfillment:
+      description: Fulfillment of a module requirement by another module's implementation.
+      type: object
+      additionalProperties: true
+      properties:
+        module_id:
+          type: string
+        implementation_id:
+          type: string
+        index:
+          type: integer
+      required:
+        - module_id
+        - implementation_id
+        - index
+    ModuleConnection:
+      description: Connection of a module requirement to fulfillments by other modules' implementations.
+      type: object
+      additionalProperties: true
+      properties:
+        requirement_id:
+          type: string
+        fulfillments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReqFulfillment'
+      required:
+        - requirement_id
+        - fulfillments
+    ModuleConnections:
+      description: A list of connections between module requirements and their fulfillments.
+      type: object
+      additionalProperties: true
+      properties:
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModuleConnection'
+      required:
+        - connections
+    ConfigurationParameterDatatype:
+      description: Data type of a configuration parameter.
+      type: string
+      enum:
+        - String
+        - Decimal
+        - Integer
+        - Boolean
+    ConfigurationParameterMutability:
+      description: Mutability of a configuration parameter.
+      type: string
+      enum:
+        - ReadOnly
+        - ReadWrite
+        - WriteOnly
+    ConfigurationActivationPolicy:
+      description: Activation policy of a configuration parameter, indicating when changes to the parameter take effect.
+      type: string
+      enum:
+        - Immediate
+        - RequiresRestart
+    ConfigurationParameterCharacteristics:
+      description: Characteristics of a configuration parameter, including its data type, mutability, activation policy, and optionally its unit.
+      type: object
+      additionalProperties: true
+      properties:
+        datatype:
+          $ref: '#/components/schemas/ConfigurationParameterDatatype'
+        mutability:
+          $ref: '#/components/schemas/ConfigurationParameterMutability'
+        activation_policy:
+          $ref: '#/components/schemas/ConfigurationActivationPolicy'
+        unit:
+          type: string
+      required:
+        - datatype
+        - mutability
+        - activation_policy
+    ConfigurationParameter:
+      description: A configuration parameter, consisting of its name, value, and characteristics.
+      type: object
+      additionalProperties: true
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+        characteristics:
+          $ref: '#/components/schemas/ConfigurationParameterCharacteristics'
+      required:
+        - name
+        - value
+        - characteristics
+    ImplementationConfigurationParameter:
+      description: An implementation-specific configuration parameter, consisting of the implementation it belongs to, and the parameter details.
+      type: object
+      additionalProperties: true
+      properties:
+        implementation_id:
+          type: string
+        configuration_parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfigurationParameter'
+      required:
+        - implementation_id
+        - configuration_parameters
+    ModuleConfiguration:
+      description: Configuration details of a module, including its connections, mapping, and configuration parameters.
+      type: object
+      additionalProperties: true
+      properties:
+        module_id:
+          type: string
+        module_name:
+          type: string
+        connections:
+          $ref: '#/components/schemas/ModuleConnections'
+        mapping:
+          $ref: '#/components/schemas/ModuleTierMappings'
+        module_configuration_parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfigurationParameter'
+        implementation_configuration_parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplementationConfigurationParameter'
+      required:
+        - module_id
+        - module_name
+        - connections
+        - module_configuration_parameters
+        - implementation_configuration_parameters
+    ActiveSlotStatusEnum:
+      description: |
+        Status of the active slot.
+        - Running: The slot is currently active and running.
+        - FailedToStart: The slot is currently marked active but failed to start.
+        - RestartTriggered: A restart has been triggered for the slot, but it has not started yet. This status may be published after when a restart is requested.
+      type: string
+      enum:
+        - Running
+        - FailedToStart
+        - RestartTriggered
+    GetConfigurationStatusEnum:
+      description: |
+        Status of a get configuration request.
+        - Success: Request was successful and the response contains the requested configuration details.
+        - SlotDoesNotExist: Request was rejected because the specified slot_id does not exist.
+      type: string
+      enum:
+        - Success
+        - SlotDoesNotExist
+    GetConfigurationResult:
+      description: Result of a get configuration request, containing the status of the request and the requested module configuration details if successful.
+      type: object
+      additionalProperties: true
+      properties:
+        status:
+          $ref: '#/components/schemas/GetConfigurationStatusEnum'
+        module_configurations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModuleConfiguration'
+      required:
+        - status
+    OriginOfChange:
+      description: |
+        Origin of a configuration change. This can be used to indicate whether a change was triggered by an external request (e.g. via the API)
+        or by an EVerest module (e.g. OCPP). The identifier is the module_id for changes triggered by EVerest modules, and can be used to identify
+        external clients if they provide an identifier when making API requests.
+      type: object
+      additionalProperties: true
+      properties:
+        external:
+          type: boolean
+        identifier:
+          type: string
+      required:
+        - external
+    ActiveSlotUpdateNotice:
+      description: An update regarding the active slot. Indicates when a slot starts running, or fails to do so, or when a restart is triggered.
+      type: object
+      additionalProperties: true
+      properties:
+        tstamp:
+          type: string
+        slot_id:
+          type: integer
+          description: 'The slot ID relevant to the status update. For "Running": currently active slot. For "FailedToStart": slot that failed to start. For "RestartTriggered": slot that will be restarted (system may still be running with previous slot).'
+        status:
+          $ref: '#/components/schemas/ActiveSlotStatus'
+      required:
+        - tstamp
+        - slot_id
+        - status
+    ConfigurationParameterUpdateResultRecord:
+      description: A record of the result of a configuration parameter update, consisting of update and its result.
+      type: object
+      additionalProperties: true
+      properties:
+        update:
+          $ref: '#/components/schemas/ConfigurationParameterUpdate'
+        result:
+          $ref: '#/components/schemas/ConfigurationParameterUpdateResultEnum'
+      required:
+        - update
+        - result
+    ConfigurationParameterUpdateNotice:
+      description: A notice regarding a configuration parameter update, consisting of the update and the result of the update (no rejected updates included).
+      type: object
+      additionalProperties: true
+      properties:
+        tstamp:
+          type: string
+        slot_id:
+          type: integer
+        update_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfigurationParameterUpdateResult'
+        origin:
+          $ref: '#/components/schemas/OriginOfChange'
+      required:
+        - tstamp
+        - slot_id
+        - update_results
+        - origin
+    ExecutionStatusEnum:
+      description: |
+        Execution status of EVerest.
+        - Running: EVerest is running: The ConfigServiceAPI and the EVerest modules are running.
+        - NotRunning: No part of EVerest is running.
+        - ConfigServiceOnly: EVerest is running in a mode where only the ConfigServiceAPI is active, but no modules are running.
+      type: string
+      enum:
+        - Running
+        - NotRunning
+        - ConfigServiceOnly
+    ExecutionStatusUpdateNotice:
+      description: Execution status of EVerest.
+      type: object
+      additionalProperties: true
+      properties:
+        status:
+          $ref: '#/components/schemas/ExecutionStatusEnum'
+      required:
+        - status
