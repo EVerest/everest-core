@@ -1267,6 +1267,7 @@ TEST_F(CompositeScheduleTestFixtureV2, OfflineDuration_Online) {
     expected_period.limit = 2000.0;
     expected_period.numberPhases = 3;
     expected_period.setpoint = -2000.0;
+    expected_period.operationMode = OperationModeEnum::CentralSetpoint;
     expected_period.startPeriod = 0;
 
     CompositeSchedule expected_schedule{};
@@ -1303,6 +1304,7 @@ TEST_F(CompositeScheduleTestFixtureV2, OfflineDuration_OfflineNotLongEnough) {
     expected_period.limit = 2000.0;
     expected_period.numberPhases = 3;
     expected_period.setpoint = -2000.0;
+    expected_period.operationMode = OperationModeEnum::CentralSetpoint;
     expected_period.startPeriod = 0;
 
     CompositeSchedule expected_schedule{};
@@ -1395,6 +1397,7 @@ TEST_F(CompositeScheduleTestFixtureV2, OfflineDuration_OfflineTooLong_ValidAfter
 
     // Profile with CentralSetpoint is preferred after being online again
     expected_period.setpoint = -2000.0;
+    expected_period.operationMode = OperationModeEnum::CentralSetpoint;
     expected_schedule.chargingSchedulePeriod = {expected_period};
 
     actual_schedule = handler->calculate_composite_schedule(start_time, end_time, DEFAULT_EVSE_ID,
@@ -1438,6 +1441,99 @@ TEST_F(CompositeScheduleTestFixtureV2, OfflineDuration_OfflineTooLong_InvalidAft
                                                                  ChargingRateUnitEnum::W, false, false);
 
     ASSERT_EQ(actual_schedule, expected_schedule);
+}
+
+TEST_F(CompositeScheduleTestFixtureV2, Q03_CentralSetpoint_PreservedInCompositeSchedule) {
+    // Create a TxProfile with CentralSetpoint operationMode and a setpoint
+    ChargingSchedulePeriod period{};
+    period.startPeriod = 0;
+    period.limit = 7000.0F;
+    period.setpoint = 5000.0F;
+    period.operationMode = OperationModeEnum::CentralSetpoint;
+    period.numberPhases = 3;
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::W, {period}, ocpp::DateTime("2024-01-17T17:00:00")), TX_ID);
+
+    ON_CALL(*database_handler, get_charging_profiles_for_evse(DEFAULT_EVSE_ID))
+        .WillByDefault(testing::Return(std::vector<ChargingProfile>{profile}));
+
+    evse_manager->open_transaction(DEFAULT_EVSE_ID, TX_ID);
+
+    const DateTime start_time = ocpp::DateTime("2024-01-17T17:00:00");
+    const DateTime end_time = ocpp::DateTime("2024-01-17T18:00:00");
+
+    CompositeSchedule result = handler->calculate_composite_schedule(start_time, end_time, DEFAULT_EVSE_ID,
+                                                                     ChargingRateUnitEnum::W, false, false);
+
+    ASSERT_FALSE(result.chargingSchedulePeriod.empty());
+    EXPECT_EQ(result.chargingSchedulePeriod.front().operationMode, OperationModeEnum::CentralSetpoint);
+    EXPECT_EQ(result.chargingSchedulePeriod.front().setpoint, 5000.0F);
+}
+
+TEST_F(CompositeScheduleTestFixtureV2, Q03_NoSetpoint_OperationModeIsNullopt) {
+    // Create a TxProfile with only a limit (no setpoint, no operationMode)
+    ChargingSchedulePeriod period{};
+    period.startPeriod = 0;
+    period.limit = 7000.0F;
+    period.numberPhases = 3;
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::W, {period}, ocpp::DateTime("2024-01-17T17:00:00")), TX_ID);
+
+    ON_CALL(*database_handler, get_charging_profiles_for_evse(DEFAULT_EVSE_ID))
+        .WillByDefault(testing::Return(std::vector<ChargingProfile>{profile}));
+
+    evse_manager->open_transaction(DEFAULT_EVSE_ID, TX_ID);
+
+    const DateTime start_time = ocpp::DateTime("2024-01-17T17:00:00");
+    const DateTime end_time = ocpp::DateTime("2024-01-17T18:00:00");
+
+    CompositeSchedule result = handler->calculate_composite_schedule(start_time, end_time, DEFAULT_EVSE_ID,
+                                                                     ChargingRateUnitEnum::W, false, false);
+
+    ASSERT_FALSE(result.chargingSchedulePeriod.empty());
+    EXPECT_FALSE(result.chargingSchedulePeriod.front().operationMode.has_value());
+}
+
+TEST_F(CompositeScheduleTestFixtureV2, Q03_MultiplePeriodsWithDifferentOperationModes) {
+    // Two periods: first ChargingOnly, second CentralSetpoint
+    ChargingSchedulePeriod period1{};
+    period1.startPeriod = 0;
+    period1.limit = 7000.0F;
+    period1.operationMode = OperationModeEnum::ChargingOnly;
+    period1.numberPhases = 3;
+
+    ChargingSchedulePeriod period2{};
+    period2.startPeriod = 1800;
+    period2.setpoint = 5000.0F;
+    period2.limit = 7000.0F;
+    period2.operationMode = OperationModeEnum::CentralSetpoint;
+    period2.numberPhases = 3;
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::W, {period1, period2}, ocpp::DateTime("2024-01-17T17:00:00")),
+        TX_ID);
+
+    ON_CALL(*database_handler, get_charging_profiles_for_evse(DEFAULT_EVSE_ID))
+        .WillByDefault(testing::Return(std::vector<ChargingProfile>{profile}));
+
+    evse_manager->open_transaction(DEFAULT_EVSE_ID, TX_ID);
+
+    const DateTime start_time = ocpp::DateTime("2024-01-17T17:00:00");
+    const DateTime end_time = ocpp::DateTime("2024-01-17T18:00:00");
+
+    CompositeSchedule result = handler->calculate_composite_schedule(start_time, end_time, DEFAULT_EVSE_ID,
+                                                                     ChargingRateUnitEnum::W, false, false);
+
+    ASSERT_GE(result.chargingSchedulePeriod.size(), 2);
+    // ChargingOnly with no setpoint results in nullopt operationMode (nullopt defaults to ChargingOnly)
+    EXPECT_FALSE(result.chargingSchedulePeriod[0].operationMode.has_value());
+    EXPECT_EQ(result.chargingSchedulePeriod[1].operationMode, OperationModeEnum::CentralSetpoint);
+    EXPECT_EQ(result.chargingSchedulePeriod[1].setpoint, 5000.0F);
 }
 
 } // namespace ocpp::v2

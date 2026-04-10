@@ -25,6 +25,7 @@ struct IntermediatePeriod {
     PeriodLimit power_setpoint;
     std::optional<std::int32_t> numberPhases;
     std::optional<std::int32_t> phaseToUse;
+    std::optional<OperationModeEnum> operationMode;
 };
 
 using IntermediateProfile = std::vector<IntermediatePeriod>;
@@ -49,6 +50,7 @@ struct period_entry_t {
     PeriodLimit setpoint;
     std::optional<std::int32_t> number_phases;
     std::optional<std::int32_t> phase_to_use;
+    std::optional<OperationModeEnum> operationMode;
     std::int32_t stack_level;
     ChargingRateUnitEnum charging_rate_unit;
     std::optional<float> min_charging_rate;
@@ -57,7 +59,8 @@ struct period_entry_t {
         return (start == other.start) && (end == other.end) && (limit == other.limit) &&
                (discharge_limit == other.discharge_limit) && (setpoint == other.setpoint) &&
                (number_phases == other.number_phases) && (stack_level == other.stack_level) &&
-               (charging_rate_unit == other.charging_rate_unit) && (min_charging_rate == other.min_charging_rate);
+               (charging_rate_unit == other.charging_rate_unit) && (min_charging_rate == other.min_charging_rate) &&
+               (operationMode == other.operationMode);
     }
 };
 

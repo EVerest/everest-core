@@ -75,6 +75,7 @@ enum class ProfileValidationResultEnum {
     ChargingSchedulePeriodNoPhaseForDC,
     ChargingSchedulePeriodNoFreqWattCurve,
     ChargingSchedulePeriodSignDifference,
+    ChargingSchedulePeriodSetpointOutOfRange,
     ChargingStationMaxProfileCannotBeRelative,
     ChargingStationMaxProfileEvseIdGreaterThanZero,
     DuplicateTxDefaultProfileFound,

@@ -19,24 +19,27 @@ TEST_F(CompositeScheduleTestFixtureV21, setpoint_tx_profile) {
     period1.numberPhases = 1;
     period1.setpoint = 1500.0; // overriden by limit
     period1.dischargeLimit = -2000.0;
+    period1.operationMode = OperationModeEnum::CentralSetpoint;
     ChargingSchedulePeriod period2;
     period2.startPeriod = 1080;
     period2.limit = 11000.0;
     period2.numberPhases = 1;
     period2.setpoint = -8000.0;
     period2.dischargeLimit = -10000.0;
+    period2.operationMode = OperationModeEnum::CentralSetpoint;
     ChargingSchedulePeriod period3;
     period3.startPeriod = 14000;
     period3.limit = 6000.0;
     period3.numberPhases = 1;
     period3.setpoint = -5000.0; // overriden by dischargeLimit
     period3.dischargeLimit = -5000.0;
+    period3.operationMode = OperationModeEnum::CentralSetpoint;
     ChargingSchedulePeriod period4;
     period4.startPeriod = 28000;
     period4.limit = 15000.0;
     period4.numberPhases = 1;
     period4.setpoint = -4000.0;
-    // period4.operationMode = OperationModeEnum::CentralSetpoint;
+    period4.operationMode = OperationModeEnum::CentralSetpoint;
     CompositeSchedule expected;
     expected.chargingSchedulePeriod = {period1, period2, period3, period4};
     expected.evseId = DEFAULT_EVSE_ID;
@@ -64,22 +67,26 @@ TEST_F(CompositeScheduleTestFixtureV21, V2MaxOverridesHigherLimits) {
     period1.dischargeLimit = -23.0;
     period1.setpoint = 10.0;
     period1.numberPhases = 1;
+    period1.operationMode = OperationModeEnum::CentralSetpoint;
     ChargingSchedulePeriod period2;
     period2.startPeriod = 3600;
     period2.limit = 20.0;
     period2.dischargeLimit = -23.0;
     period2.setpoint = 20.0;
     period2.numberPhases = 1;
+    period2.operationMode = OperationModeEnum::CentralSetpoint;
     ChargingSchedulePeriod period3;
     period3.startPeriod = 7200;
     period3.limit = 30.0;
     period3.setpoint = 28.0;
     period3.numberPhases = 1;
+    period3.operationMode = OperationModeEnum::CentralSetpoint;
     ChargingSchedulePeriod period4;
     period4.startPeriod = 10800;
     period4.limit = 40.0;
     period4.setpoint = 28.0;
     period4.numberPhases = 1;
+    period4.operationMode = OperationModeEnum::CentralSetpoint;
     CompositeSchedule expected;
     expected.chargingSchedulePeriod = {period1, period2, period3, period4};
     expected.evseId = DEFAULT_EVSE_ID;
@@ -217,6 +224,7 @@ TEST_F(CompositeScheduleTestFixtureV21, V2ChargingRateUnitCombine) {
     period1.dischargeLimit = -1000.0;
     period1.dischargeLimit_L2 = -1000.0;
     period1.dischargeLimit_L3 = -1000.0;
+    period1.operationMode = OperationModeEnum::CentralSetpoint;
     ChargingSchedulePeriod period2; // TxProfile stacklevel 0
     period2.startPeriod = 2400;
     period2.limit = 400.0;
@@ -229,6 +237,7 @@ TEST_F(CompositeScheduleTestFixtureV21, V2ChargingRateUnitCombine) {
     period2.setpoint = 400.0;
     period2.setpoint_L2 = 400.0;
     period2.setpoint_L3 = 400.0;
+    period2.operationMode = OperationModeEnum::CentralSetpoint;
     ChargingSchedulePeriod period3; // Charging station max profile
     period3.startPeriod = 3000;
     period3.limit = 43700.0;
@@ -275,6 +284,7 @@ TEST_F(CompositeScheduleTestFixtureV21, V2Different_Number_Phases) {
     period1.numberPhases = 1;
     period1.dischargeLimit = -900.0;
     period1.setpoint = 160.0;
+    period1.operationMode = OperationModeEnum::CentralSetpoint;
     ChargingSchedulePeriod period2; // Charging station max profile
     period2.startPeriod = 3000;
     period2.limit = 190.0;
@@ -314,6 +324,7 @@ TEST_F(CompositeScheduleTestFixtureV21, V2Different_Number_Phases_W) {
     period1.numberPhases = 1;
     period1.dischargeLimit = -900.0 * 230;
     period1.setpoint = 160.0 * 230;
+    period1.operationMode = OperationModeEnum::CentralSetpoint;
     ChargingSchedulePeriod period2; // Charging station max profile
     period2.startPeriod = 3000;
     period2.limit = 190.0 * 230;
