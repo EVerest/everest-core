@@ -672,9 +672,8 @@ IntermediateProfile merge_profiles_by_lowest_limit(const std::vector<Intermediat
             // operationMode follows the period that contributed the winning setpoint.
             // If the new period has a setpoint and an operationMode, and the setpoint changed from
             // the previous value, the new period's operationMode takes precedence.
-            const bool new_period_has_setpoint =
-                !is_equal(new_period.current_setpoint.limit, NO_SETPOINT_SPECIFIED) ||
-                !is_equal(new_period.power_setpoint.limit, NO_SETPOINT_SPECIFIED);
+            const bool new_period_has_setpoint = !is_equal(new_period.current_setpoint.limit, NO_SETPOINT_SPECIFIED) ||
+                                                 !is_equal(new_period.power_setpoint.limit, NO_SETPOINT_SPECIFIED);
             if (new_period_has_setpoint && new_period.operationMode.has_value()) {
                 const bool setpoint_changed = (period.current_setpoint != prev_current_setpoint) ||
                                               (period.power_setpoint != prev_power_setpoint);
