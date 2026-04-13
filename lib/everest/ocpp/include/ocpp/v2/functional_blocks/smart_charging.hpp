@@ -236,6 +236,18 @@ protected:
                                                            std::optional<EvseInterface*> evse_opt = std::nullopt) const;
 
     ///
+    /// \brief V2X.05: Ensure every charging schedule period has setpoint within [dischargeLimit, limit].
+    ///
+    /// Stored profiles keep their clamping behavior in the composite schedule, so this must not
+    /// run from validate_profile_schedules which is reused during composite-schedule calculation.
+    ///
+    /// \param profile  Charging profile to validate.
+    /// \return ProfileValidationResultEnum::Valid when all setpoints lie in range (or not set),
+    ///         otherwise ChargingSchedulePeriodSetpointOutOfRange.
+    ///
+    ProfileValidationResultEnum validate_setpoint_within_limit_range(const ChargingProfile& profile) const;
+
+    ///
     /// \brief Checks a given \p profile does not have an id that conflicts with an existing profile
     /// of type ChargingStationExternalConstraints
     ///

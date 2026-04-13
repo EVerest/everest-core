@@ -774,8 +774,7 @@ TEST_F(SmartChargingTestV21, V2X05_SetpointExceedsLimit_Rejected) {
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
         create_charge_schedule(ChargingRateUnitEnum::W, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
 
-    auto mock_evse = testing::NiceMock<EvseMock>();
-    auto sut = smart_charging.validate_profile_schedules(profile, &mock_evse);
+    auto sut = smart_charging.validate_setpoint_within_limit_range(profile);
 
     EXPECT_EQ(sut, ProfileValidationResultEnum::ChargingSchedulePeriodSetpointOutOfRange);
 }
@@ -791,8 +790,7 @@ TEST_F(SmartChargingTestV21, V2X05_SetpointBelowDischargeLimit_Rejected) {
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
         create_charge_schedule(ChargingRateUnitEnum::W, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
 
-    auto mock_evse = testing::NiceMock<EvseMock>();
-    auto sut = smart_charging.validate_profile_schedules(profile, &mock_evse);
+    auto sut = smart_charging.validate_setpoint_within_limit_range(profile);
 
     EXPECT_EQ(sut, ProfileValidationResultEnum::ChargingSchedulePeriodSetpointOutOfRange);
 }
@@ -809,8 +807,7 @@ TEST_F(SmartChargingTestV21, V2X05_SetpointWithinRange_Accepted) {
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
         create_charge_schedule(ChargingRateUnitEnum::W, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
 
-    auto mock_evse = testing::NiceMock<EvseMock>();
-    auto sut = smart_charging.validate_profile_schedules(profile, &mock_evse);
+    auto sut = smart_charging.validate_setpoint_within_limit_range(profile);
 
     EXPECT_EQ(sut, ProfileValidationResultEnum::Valid);
 }
@@ -825,8 +822,7 @@ TEST_F(SmartChargingTestV21, V2X05_SetpointWithNoLimits_Accepted) {
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
         create_charge_schedule(ChargingRateUnitEnum::W, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
 
-    auto mock_evse = testing::NiceMock<EvseMock>();
-    auto sut = smart_charging.validate_profile_schedules(profile, &mock_evse);
+    auto sut = smart_charging.validate_setpoint_within_limit_range(profile);
 
     EXPECT_EQ(sut, ProfileValidationResultEnum::Valid);
 }
