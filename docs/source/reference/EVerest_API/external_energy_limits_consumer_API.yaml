@@ -32,6 +32,12 @@ channels:
       send_set_external_limits:
         $ref: '#/components/messages/send_set_external_limits'
 
+  receive_capabilities:
+    address: 'e2m/capabilities'
+    messages:
+      receive_capabilities:
+        $ref: '#/components/messages/receive_capabilities'
+
   receive_heartbeat:
     address: 'e2m/heartbeat'
     messages:
@@ -211,6 +217,23 @@ components:
                   }
                 }
               ]
+            }
+
+    receive_capabilities:
+      name: receive_capabilities
+      title: 'Receive energy node capabilities'
+      summary: 'Capabilities of the energy node'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CapabilityLimits'
+      examples:
+        - summary: ""
+          payload:
+            {
+              "max_current_A": 16,
+              "max_phase_count": 3,
+              "nominal_voltage_V": 230,
+              "total_power_W": 11040
             }
 
     receive_heartbeat:
@@ -510,6 +533,34 @@ components:
         source:
           description: Source of the setpoint
           type: string
+    CapabilityLimits:
+      description: Configured/rated maximum limits of an energy node
+      type: object
+      additionalProperties: true
+      required:
+        - max_current_A
+        - max_phase_count
+        - nominal_voltage_V
+        - total_power_W
+      properties:
+        max_current_A:
+          description: Max current limit (per phase) in Ampere.
+          type: number
+          minimum: 0
+        max_phase_count:
+          description: Number of phases covered by this fuse
+          type: integer
+          minimum: 0
+          maximum: 3
+        nominal_voltage_V:
+          description: Nominal AC voltage between a single phase and neutral in Volt
+          type: number
+          minimum: 1
+        total_power_W:
+          description: >-
+            Total power limit in Watt.
+            For AC energy nodes, this usually is: nominal_voltage_V x max_current_A x max_phase_count
+          type: number
 
     CommunicationCheck:
       type: boolean

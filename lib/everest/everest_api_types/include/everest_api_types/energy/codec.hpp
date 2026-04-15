@@ -21,6 +21,7 @@ std::string serialize(ScheduleResEntry const& val) noexcept;
 std::string serialize(ScheduleSetpointEntry const& val) noexcept;
 std::string serialize(ExternalLimits const& val) noexcept;
 std::string serialize(EnforcedLimits const& val) noexcept;
+std::string serialize(CapabilityLimits const& val) noexcept;
 
 std::ostream& operator<<(std::ostream& os, NumberWithSource const& val);
 std::ostream& operator<<(std::ostream& os, IntegerWithSource const& val);
@@ -34,6 +35,7 @@ std::ostream& operator<<(std::ostream& os, ScheduleResEntry const& val);
 std::ostream& operator<<(std::ostream& os, ScheduleSetpointEntry const& val);
 std::ostream& operator<<(std::ostream& os, ExternalLimits const& val);
 std::ostream& operator<<(std::ostream& os, EnforcedLimits const& val);
+std::ostream& operator<<(std::ostream& os, CapabilityLimits const& val);
 
 template <class T> T deserialize(std::string const& val);
 template <class T> std::optional<T> try_deserialize(std::string const& val) {

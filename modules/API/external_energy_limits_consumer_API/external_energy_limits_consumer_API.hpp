@@ -71,6 +71,7 @@ private:
     void generate_api_var_enforced_limits();
     void generate_api_var_communication_check();
     void generate_api_cmd_set_external_limits();
+    void generate_api_var_capabilities();
 
     void setup_heartbeat_generator();
 
