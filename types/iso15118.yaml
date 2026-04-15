@@ -1904,3 +1904,191 @@ types:
       ev_termination_explanation:
         description: Contains the EV termination explanation
         type: string
+  SalesTariffEntry:
+    description: >-
+      One entry of an OCPP 2.x SalesTariff, carrying an e-price level for a relative
+      time interval. Models the OCPP SalesTariffEntryType body so the ISO 15118 stack
+      can reproduce the SalesTariff in the SAScheduleTuple (ISO 15118-2) or the
+      AbsolutePriceSchedule (ISO 15118-20). ConsumptionCost is intentionally omitted
+      until a concrete producer requires it.
+    type: object
+    required:
+      - relative_time_interval_start
+      - e_price_level
+    properties:
+      relative_time_interval_start:
+        description: Start of the interval, in seconds relative to the SalesTariff start.
+        type: integer
+      relative_time_interval_duration:
+        description: Duration of the interval in seconds. Absent means "until next entry or end".
+        type: integer
+      e_price_level:
+        description: >-
+          Discrete e-price level indicator for the interval. 0 is the lowest price,
+          num_e_price_levels - 1 is the highest.
+        type: integer
+        minimum: 0
+  SalesTariff:
+    description: >-
+      OCPP 2.x SalesTariff body carried through the OCPP → ISO 15118 schedule handoff.
+      Signature material (OCPP 2.1 signatureValue on ChargingProfileType) travels
+      separately alongside the enclosing OcppEvChargingSchedule as base64.
+    type: object
+    required:
+      - id
+      - sales_tariff_entry
+    properties:
+      id:
+        description: SalesTariff identifier (SalesTariffID in ISO 15118-2).
+        type: integer
+      sales_tariff_description:
+        description: Human-readable description.
+        type: string
+      num_e_price_levels:
+        description: Number of distinct e-price levels used in sales_tariff_entry.
+        type: integer
+        minimum: 0
+      sales_tariff_entry:
+        description: Ordered list of sales tariff entries.
+        type: array
+        minItems: 1
+        items:
+          type: object
+          $ref: /iso15118#/SalesTariffEntry
+  OcppEvChargingSchedule:
+    description: >-
+      A single composite charging schedule computed by libocpp for an HLC (ISO 15118)
+      transaction, carried in OCPP shape to the ISO 15118 stack for conversion into
+      SAScheduleTuple (EvseV2G for 15118-2) or ScheduleTuple (Evse15118D20 for 15118-20).
+      Mirrors the subset of OCPP ChargingSchedule needed for K15 handoff, plus the
+      SalesTariff body and the OCPP 2.1 signatureValue transported verbatim as base64.
+    type: object
+    required:
+      - id
+      - charging_rate_unit
+      - charging_schedule_period
+    properties:
+      id:
+        description: >-
+          Composite schedule id matching the source ChargingSchedule.id. Used by the EV
+          in PowerDeliveryReq to identify the selected schedule (= SAScheduleTupleID).
+        type: integer
+      charging_rate_unit:
+        description: OCPP ChargingRateUnit (e.g. "A" or "W").
+        type: string
+      duration:
+        description: Duration of the schedule in seconds.
+        type: integer
+      start_schedule:
+        description: RFC3339 timestamp at which the schedule starts.
+        type: string
+      min_charging_rate:
+        description: Minimum charging rate in the applicable unit.
+        type: number
+      charging_schedule_period:
+        description: Ordered list of charging schedule periods.
+        type: array
+        minItems: 1
+        items:
+          type: object
+          $ref: /ocpp#/ChargingSchedulePeriod
+      sales_tariff:
+        description: >-
+          Optional SalesTariff body matching the source TxProfile ChargingSchedule.
+          Absent when CSMS did not provide one.
+        type: object
+        $ref: /iso15118#/SalesTariff
+      sales_tariff_signature_base64:
+        description: >-
+          (OCPP 2.1 only) Base64 encoding of ChargingProfileType.signatureValue for this
+          schedule. Absent on OCPP 2.0.1, where signed SalesTariffs are not supported.
+          The ISO 15118 stack decodes this when populating the iso2 signature fields on
+          the SalesTariff.
+        type: string
+  OcppEvChargingSchedules:
+    description: >-
+      Bundle of up to three OCPP composite schedules delivered from libocpp to the ISO
+      15118 stack for K15 handoff. Up-to-three slots satisfy OCPP 2.1 K15.FR.22
+      (cross-stackLevel combination); OCPP 2.0.1 normally carries a single schedule per
+      K15.FR.18. selected_charging_schedule_id allows libocpp to propagate a CSMS-
+      preselected schedule so the ISO stack can mark it in its response.
+    type: object
+    required:
+      - transaction_id
+      - schedules
+    properties:
+      transaction_id:
+        description: >-
+          OCPP transaction id the bundle is bound to. The ISO 15118 stack uses this to
+          correlate the bundle with the active HLC session.
+        type: string
+      schedules:
+        description: One to three composite schedules in slot order.
+        type: array
+        minItems: 1
+        maxItems: 3
+        items:
+          type: object
+          $ref: /iso15118#/OcppEvChargingSchedule
+      selected_charging_schedule_id:
+        description: (OCPP 2.1) If CSMS preselected a schedule, its id. Absent otherwise.
+        type: integer
+  SetChargingSchedulesStatus:
+    description: Acceptance status returned by the ISO stack for set_ev_charging_schedules.
+    type: string
+    enum:
+      - Accepted
+      - Rejected
+  SetChargingSchedulesResult:
+    description: Result of the set_ev_charging_schedules command.
+    type: object
+    required:
+      - status
+    properties:
+      status:
+        description: Whether the ISO 15118 stack accepted and installed the bundle.
+        type: string
+        $ref: /iso15118#/SetChargingSchedulesStatus
+      status_info:
+        description: Optional human-readable reason when status is Rejected.
+        type: string
+  NotifyEvScheduleStatus:
+    description: >-
+      Enum mirroring OCPP NotifyEVChargingNeedsStatusEnumType so the ISO 15118 stack
+      learns the CSMS decision and gates the ChargeParameterDiscoveryRes accordingly
+      (K15.FR.03/04/05/08).
+    type: string
+    enum:
+      - Accepted
+      - Rejected
+      - Processing
+      - NoChargingProfile
+  SelectedEvChargingSchedule:
+    description: >-
+      EV-selected schedule feedback from the ISO 15118 PowerDeliveryReq (15118-2) or
+      equivalent 15118-20 state. Carries the OCPP charging profile the EV transmitted
+      (if any) and the SAScheduleTupleID (= OcppEvChargingSchedule.id) the EV picked.
+      libocpp uses this to build NotifyEVChargingScheduleRequest (K15.FR.10, FR.21).
+    type: object
+    required:
+      - sa_schedule_tuple_id
+    properties:
+      sa_schedule_tuple_id:
+        description: Id of the SAScheduleTuple / schedule chosen by the EV.
+        type: integer
+      selected_charging_schedule_id:
+        description: >-
+          (OCPP 2.1) Id of the selected OcppEvChargingSchedule within the bundle
+          (populates NotifyEVChargingScheduleRequest.selectedChargingScheduleId per
+          K15.FR.21).
+        type: integer
+      ev_charging_schedule:
+        description: >-
+          Optional OCPP ChargingSchedule derived from the EV-provided charging profile
+          in PowerDeliveryReq (ISO 15118-2) or the equivalent 15118-20 exchange. The
+          ISO 15118 stack translates the native 15118 profile into this OCPP shape so
+          libocpp can populate NotifyEVChargingScheduleRequest directly (K15.FR.10).
+          Absent when the EV did not return a profile (K15.FR.19 fallback applies in
+          libocpp).
+        type: object
+        $ref: /ocpp#/ChargingSchedule

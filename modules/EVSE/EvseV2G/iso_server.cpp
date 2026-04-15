@@ -444,6 +444,15 @@ static void publish_iso_power_delivery_req(struct v2g_context* ctx,
         }
         publish_DcEvStatus(ctx, v2g_power_delivery_req->DC_EVPowerDeliveryParameter.DC_EVStatus);
     }
+
+    // EVerest#1199: forward the EV-selected SAScheduleTupleID upstream so libocpp can emit
+    // NotifyEVChargingScheduleRequest (K15.FR.10 / FR.21). Only fires on the Start progress
+    // path where the EV commits to a schedule.
+    if (v2g_power_delivery_req->ChargeProgress == iso2_chargeProgressType_Start and
+        ctx->publish_ev_selected_schedule_cb) {
+        const auto tuple_id = static_cast<int32_t>(v2g_power_delivery_req->SAScheduleTupleID);
+        ctx->publish_ev_selected_schedule_cb(tuple_id, std::nullopt);
+    }
 }
 
 /*!

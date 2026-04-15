@@ -23,6 +23,16 @@ public:
     virtual void handle_set_get_certificate_response(types::iso15118::ResponseExiStreamStatus& certificate_response) {
         std::cout << "iso15118_extensionsImplBase::handle_set_get_certificate_response called" << std::endl;
     }
+
+    virtual void handle_set_notify_ev_schedule_status(types::iso15118::NotifyEvScheduleStatus& status) {
+        std::cout << "iso15118_extensionsImplBase::handle_set_notify_ev_schedule_status called" << std::endl;
+    }
+
+    virtual types::iso15118::SetChargingSchedulesResult
+    handle_set_ev_charging_schedules(types::iso15118::OcppEvChargingSchedules& charging_schedules) {
+        std::cout << "iso15118_extensionsImplBase::handle_set_ev_charging_schedules called" << std::endl;
+        return {types::iso15118::SetChargingSchedulesStatus::Rejected, std::nullopt};
+    }
 };
 
 } // namespace module::stub

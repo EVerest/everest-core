@@ -16,10 +16,13 @@
 #include <ocpp/v2/profile.hpp>
 #include <ocpp/v2/utils.hpp>
 
+#include <algorithm>
 #include <ocpp/v2/messages/ClearChargingProfile.hpp>
 #include <ocpp/v2/messages/GetChargingProfiles.hpp>
 #include <ocpp/v2/messages/GetCompositeSchedule.hpp>
+
 #include <ocpp/v2/messages/NotifyEVChargingNeeds.hpp>
+#include <ocpp/v2/messages/NotifyEVChargingSchedule.hpp>
 #include <ocpp/v2/messages/ReportChargingProfiles.hpp>
 #include <ocpp/v2/messages/SetChargingProfile.hpp>
 
@@ -117,6 +120,109 @@ bool has_non_finite_float(const ChargingSchedule& schedule) {
         return true;
     }
     return schedule.limitAtSoC.has_value() && non_finite(schedule.limitAtSoC.value().limit);
+}
+
+/// \brief Result of the K15.FR.09 / K16.FR.04 / K18.FR.09 boundary check: validity flag plus a
+/// human-readable reason (empty on success) used only for EVLOG output.
+struct BoundaryCheckResult {
+    bool valid{true};
+    std::string reason;
+};
+
+/// \brief Pick the CSMS-sent schedule to compare against when the EV returned an id that may or
+/// may not match one of the cached schedules. If the EV's id matches one of the cached schedules
+/// we use that; otherwise we fall back to the first (lowest stack) entry so the bound is still
+/// enforced — the EV is not allowed to pick an id outside the CSMS envelope.
+const ChargingSchedule* pick_csms_reference(const ChargingSchedule& ev_schedule,
+                                            const std::vector<ChargingSchedule>& csms_schedules) {
+    for (const auto& c : csms_schedules) {
+        if (c.id == ev_schedule.id) {
+            return &c;
+        }
+    }
+    return &csms_schedules.front();
+}
+
+/// \brief Locate the CSMS schedule period covering the EV period starting at \p start_period.
+/// Returns nullptr if no such period exists (start past the end of the CSMS schedule). The CSMS
+/// periods are sorted by startPeriod (same convention as the rest of libocpp composite logic).
+const ChargingSchedulePeriod* find_csms_period_at(std::int32_t start_period,
+                                                  const std::vector<ChargingSchedulePeriod>& csms_periods) {
+    const ChargingSchedulePeriod* match = nullptr;
+    for (const auto& p : csms_periods) {
+        if (p.startPeriod <= start_period) {
+            match = &p;
+        } else {
+            break;
+        }
+    }
+    return match;
+}
+
+/// \brief K15.FR.09 / K16.FR.04 / K18.FR.09: verify the EV-returned ChargingSchedule is within
+/// the boundaries of the CSMS-sent composite schedule.
+///
+/// Empty \p csms_schedules (no cached HLC handoff on this EVSE) returns valid — no envelope to
+/// enforce. Otherwise the check covers:
+///   - chargingRateUnit must match
+///   - each EV period's limit must not exceed the CSMS limit at the same time offset
+///   - limit sign must match (no reverse direction when CSMS was unidirectional positive)
+///   - numberPhases must match when both sides specify it
+///   - the EV schedule must not extend past the CSMS schedule's duration window
+BoundaryCheckResult verify_ev_profile_within_boundaries(const ChargingSchedule& ev_schedule,
+                                                        const std::vector<ChargingSchedule>& csms_schedules) {
+    if (csms_schedules.empty()) {
+        return {true, {}};
+    }
+
+    const ChargingSchedule* ref = pick_csms_reference(ev_schedule, csms_schedules);
+    if (ref == nullptr) {
+        return {true, {}};
+    }
+    const ChargingSchedule& csms = *ref;
+
+    if (ev_schedule.chargingRateUnit != csms.chargingRateUnit) {
+        return {false, "chargingRateUnit mismatch"};
+    }
+
+    // Time window: if the CSMS schedule has an explicit duration, the EV schedule must fit.
+    if (csms.duration.has_value()) {
+        const auto csms_end = csms.duration.value();
+        std::int32_t ev_end = 0;
+        if (ev_schedule.duration.has_value()) {
+            ev_end = ev_schedule.duration.value();
+        } else if (not ev_schedule.chargingSchedulePeriod.empty()) {
+            ev_end = ev_schedule.chargingSchedulePeriod.back().startPeriod;
+        }
+        if (ev_end > csms_end) {
+            return {false, "schedule exceeds CSMS time window"};
+        }
+    }
+
+    for (const auto& ev_period : ev_schedule.chargingSchedulePeriod) {
+        const auto* csms_period = find_csms_period_at(ev_period.startPeriod, csms.chargingSchedulePeriod);
+        if (csms_period == nullptr) {
+            return {false, "no CSMS period covers EV startPeriod"};
+        }
+
+        if (ev_period.limit.has_value() and csms_period->limit.has_value()) {
+            const auto ev_limit = ev_period.limit.value();
+            const auto csms_limit = csms_period->limit.value();
+            if (csms_limit >= 0.0f and ev_limit < 0.0f) {
+                return {false, "limit sign invalid"};
+            }
+            if (ev_limit > csms_limit) {
+                return {false, "limit exceeds CSMS bound"};
+            }
+        }
+
+        if (ev_period.numberPhases.has_value() and csms_period->numberPhases.has_value() and
+            ev_period.numberPhases.value() != csms_period->numberPhases.value()) {
+            return {false, "numberPhases mismatch"};
+        }
+    }
+
+    return {true, {}};
 }
 } // namespace
 namespace conversions {
@@ -327,12 +433,77 @@ const std::map<OperationModeEnum, LimitsSetpointsForOperationMode> limits_setpoi
     {OperationModeEnum::LocalLoadBalancing, {{}, {}}},
     {OperationModeEnum::Idle, {{}, {}}}};
 
-SmartCharging::SmartCharging(const FunctionalBlockContext& functional_block_context,
-                             std::function<void()> set_charging_profiles_callback,
-                             StopTransactionCallback stop_transaction_callback) :
+namespace {
+constexpr std::size_t MAX_SA_SCHEDULE_TUPLES = 3;
+
+// K15.FR.22 composition helper: higher stackLevel wins for overlapping effects, so we sort
+// descending and pick the highest stack level available at each slot as the base schedule.
+struct StackLevelDesc {
+    bool operator()(const ChargingProfile* a, const ChargingProfile* b) const {
+        return a->stackLevel > b->stackLevel;
+    }
+};
+} // namespace
+
+std::vector<SaScheduleSlot> compute_sa_schedule_list(const std::vector<ChargingProfile>& all_profiles,
+                                                     const std::string& transaction_id) {
+    std::vector<const ChargingProfile*> tx_profiles;
+    for (const auto& profile : all_profiles) {
+        if (profile.chargingProfilePurpose != ChargingProfilePurposeEnum::TxProfile) {
+            continue;
+        }
+        if (not profile.transactionId.has_value() or profile.transactionId.value().get() != transaction_id) {
+            continue;
+        }
+        tx_profiles.push_back(&profile);
+    }
+    if (tx_profiles.empty()) {
+        return {};
+    }
+
+    std::sort(tx_profiles.begin(), tx_profiles.end(), StackLevelDesc{});
+
+    std::vector<SaScheduleSlot> slots;
+    slots.reserve(MAX_SA_SCHEDULE_TUPLES);
+    for (std::size_t k = 0; k < MAX_SA_SCHEDULE_TUPLES; ++k) {
+        std::optional<ChargingSchedule> base;
+        std::optional<SalesTariff> tariff;
+        for (const auto* profile : tx_profiles) {
+            if (k >= profile->chargingSchedule.size()) {
+                continue;
+            }
+            const auto& schedule_k = profile->chargingSchedule[k];
+            if (not base.has_value()) {
+                // Highest-stackLevel schedule at this slot becomes the base; preserve its
+                // SalesTariff. Period merging across stack levels is deferred to the full
+                // composite-schedule engine; for K15 handoff the highest-stackLevel body is
+                // used as-is, matching K01.FR.01 precedence.
+                base = schedule_k;
+                tariff = schedule_k.salesTariff;
+            }
+        }
+        if (base.has_value()) {
+            SaScheduleSlot slot;
+            slot.schedule = base.value();
+            slot.sales_tariff = tariff;
+            slot.signature_value_b64 = std::nullopt; // 2.1 signature is carried separately.
+            slots.push_back(std::move(slot));
+        }
+    }
+
+    return slots;
+}
+
+SmartCharging::SmartCharging(
+    const FunctionalBlockContext& functional_block_context, std::function<void()> set_charging_profiles_callback,
+    StopTransactionCallback stop_transaction_callback,
+    std::optional<NotifyEVChargingNeedsResponseCallback> notify_ev_charging_needs_response_callback,
+    std::optional<TransferEVChargingSchedulesCallback> transfer_ev_charging_schedules_callback) :
     context(functional_block_context),
     set_charging_profiles_callback(set_charging_profiles_callback),
-    stop_transaction_callback(stop_transaction_callback) {
+    stop_transaction_callback(stop_transaction_callback),
+    notify_ev_charging_needs_response_callback(std::move(notify_ev_charging_needs_response_callback)),
+    transfer_ev_charging_schedules_callback(std::move(transfer_ev_charging_schedules_callback)) {
 }
 
 void SmartCharging::handle_message(const ocpp::EnhancedMessage<MessageType>& message) {
@@ -1159,6 +1330,104 @@ void SmartCharging::notify_ev_charging_needs_req(const NotifyEVChargingNeedsRequ
 
     const ocpp::Call<NotifyEVChargingNeedsRequest> call(request);
     this->context.message_dispatcher.dispatch_call(call);
+
+    // Track the HLC session so we can gate the ISO 15118 stack on the CSMS decision
+    // (K15.FR.03/04/05) and enforce the 60-second ChargeParameterDiscoveryRes budget (K15.FR.08).
+    const auto& tx = this->context.evse_manager.get_evse(request.evseId).get_transaction();
+    if (tx == nullptr) {
+        return; // No active transaction on this EVSE; no scheduling handoff to track.
+    }
+    const std::string transaction_id = tx->transactionId.get();
+
+    auto state = EvScheduleState{};
+    state.evse_id = request.evseId;
+    state.timeout_timer = std::make_unique<Everest::SteadyTimer>();
+    state.timeout_timer->timeout(
+        [this, transaction_id]() {
+            // 60-second timeout: surface NoChargingProfile to the ISO 15118 stack so it falls
+            // back to a default/unlimited schedule (K15.FR.04, K15.FR.08).
+            std::int32_t evse_id = 0;
+            bool fire = false;
+            {
+                auto handle = this->ev_schedule_state.handle();
+                auto it = handle->find(transaction_id);
+                if (it != handle->end() and not it->second.response_received) {
+                    evse_id = it->second.evse_id;
+                    fire = true;
+                    handle->erase(it);
+                }
+            }
+            if (fire and this->notify_ev_charging_needs_response_callback.has_value()) {
+                this->notify_ev_charging_needs_response_callback.value()(
+                    evse_id, NotifyEVChargingNeedsStatusEnum::NoChargingProfile);
+            }
+        },
+        EV_SCHEDULE_TIMEOUT);
+
+    // Destroy any prior entry's timer OUTSIDE the monitor lock: ~SteadyTimer joins its worker
+    // thread, and that worker may be parked on this->ev_schedule_state.handle() (callback at
+    // smart_charging.cpp:1177-1194). Destroying under the lock would deadlock.
+    std::unique_ptr<Everest::SteadyTimer> expiring_timer;
+    {
+        auto handle = this->ev_schedule_state.handle();
+        auto it = handle->find(transaction_id);
+        if (it != handle->end()) {
+            expiring_timer = std::move(it->second.timeout_timer);
+        }
+        (*handle)[transaction_id] = std::move(state);
+    }
+    // expiring_timer (if any) goes out of scope here — ~Timer joins with no monitor held.
+}
+
+void SmartCharging::notify_ev_charging_schedule_req(std::int32_t evse_id, std::int32_t sa_schedule_tuple_id,
+                                                    std::optional<std::int32_t> selected_charging_schedule_id,
+                                                    const std::optional<ChargingSchedule>& ev_charging_schedule) {
+    NotifyEVChargingScheduleRequest request;
+    request.evseId = evse_id;
+    request.timeBase = ocpp::DateTime{};
+
+    if (ev_charging_schedule.has_value()) {
+        request.chargingSchedule = ev_charging_schedule.value();
+    } else {
+        // K15.FR.19: EV did not return a profile; the CS SHOULD echo a schedule that matches the
+        // SAScheduleTuple the EV selected. Caller should normally provide ev_charging_schedule;
+        // the empty fallback here keeps the message well-formed.
+        request.chargingSchedule.chargingRateUnit = ChargingRateUnitEnum::A;
+    }
+    // Tie the reported schedule id to the tuple the EV picked, as recommended by K15.FR.19.
+    request.chargingSchedule.id = sa_schedule_tuple_id;
+
+    if (this->context.ocpp_version == OcppProtocolVersion::v21) {
+        // K15.FR.21 (OCPP 2.1 only).
+        request.selectedChargingScheduleId = selected_charging_schedule_id;
+    }
+
+    // K15.FR.09 / K16.FR.04 / K18.FR.09: verify the EV-returned schedule is within the bounds of
+    // the CSMS-sent composite schedule cached at handoff time. If it is not, fire the
+    // renegotiation callback so the CS asks the EV to renegotiate against a compliant envelope.
+    // The NotifyEVChargingSchedule message is still dispatched upstream — the CSMS needs to see
+    // the EV proposal regardless.
+    if (ev_charging_schedule.has_value()) {
+        std::vector<ChargingSchedule> csms_cached;
+        {
+            auto cache = this->last_handed_off_schedules.handle();
+            auto it = cache->find(evse_id);
+            if (it != cache->end()) {
+                csms_cached = it->second;
+            }
+        }
+        const auto check = verify_ev_profile_within_boundaries(ev_charging_schedule.value(), csms_cached);
+        if (not check.valid) {
+            EVLOG_warning << "K15.FR.09: EV schedule out of bounds on evse " << evse_id << ": " << check.reason
+                          << "; firing renegotiation";
+            if (this->trigger_schedule_renegotiation_callback.has_value()) {
+                this->trigger_schedule_renegotiation_callback.value()(evse_id);
+            }
+        }
+    }
+
+    const ocpp::Call<NotifyEVChargingScheduleRequest> call(request);
+    this->context.message_dispatcher.dispatch_call(call);
 }
 
 void SmartCharging::handle_set_charging_profile_req(Call<SetChargingProfileRequest> call) {
@@ -1196,10 +1465,98 @@ void SmartCharging::handle_set_charging_profile_req(Call<SetChargingProfileReque
         return;
     }
 
+    // K15.FR.17: a TxProfile arriving before the CS has sent NotifyEVChargingNeeds for this
+    // transaction SHOULD be rejected with InvalidMessageSeq so the CSMS resends after the
+    // request. We only apply this rule on HLC-capable builds (callback wired) and only for a
+    // genuinely fresh tx (no prior TxProfile accepted and stored for this transactionId), so
+    // K16 renegotiations still pass through.
+    if (this->notify_ev_charging_needs_response_callback.has_value() and
+        msg.chargingProfile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile and
+        msg.chargingProfile.transactionId.has_value()) {
+        const std::string tx_id = msg.chargingProfile.transactionId.value().get();
+        bool notify_already_sent = false;
+        {
+            auto handle = this->ev_schedule_state.handle();
+            notify_already_sent = (handle->find(tx_id) != handle->end());
+        }
+        if (not notify_already_sent) {
+            const auto existing = this->context.database_handler.get_charging_profiles_for_evse(msg.evseId);
+            const bool has_prior_tx_profile = std::any_of(existing.begin(), existing.end(), [&tx_id](const auto& p) {
+                return p.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile and
+                       p.transactionId.has_value() and p.transactionId.value().get() == tx_id;
+            });
+            if (not has_prior_tx_profile) {
+                response.status = ChargingProfileStatusEnum::Rejected;
+                response.statusInfo = StatusInfo();
+                // K18.FR.17 and K19.FR.13 prescribe "InvalidMessageSequence" (22 chars) for the
+                // 15118-20 rejection path, but StatusInfoType.reasonCode is CiString<20> per the
+                // OCPP 2.1 Ed.2 JSON schema — the full word overflows at runtime. K15.FR.17's
+                // "InvalidMessageSeq" is the only value that fits the schema, so we emit it for
+                // both 15118-2 and 15118-20; the K18/K19 deviation is a documented spec erratum.
+                response.statusInfo->reasonCode = "InvalidMessageSeq";
+                const ocpp::CallResult<SetChargingProfileResponse> call_result(response, call.uniqueId);
+                this->context.message_dispatcher.dispatch_call_result(call_result);
+                return;
+            }
+        }
+    }
+
     response = this->conform_validate_and_add_profile(msg.chargingProfile, msg.evseId);
     if (response.status == ChargingProfileStatusEnum::Accepted) {
         EVLOG_debug << "Accepting SetChargingProfileRequest";
         this->set_charging_profiles_callback();
+
+        // K15.FR.07: if this TxProfile matches an HLC transaction awaiting a schedule, compute
+        // composite schedule(s) and forward them to the ISO 15118 stack via callback.
+        const bool is_tx_profile = msg.chargingProfile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile;
+        if (is_tx_profile and msg.chargingProfile.transactionId.has_value() and
+            this->transfer_ev_charging_schedules_callback.has_value()) {
+            const std::string tx_id = msg.chargingProfile.transactionId.value().get();
+            std::int32_t evse_id = 0;
+            bool awaiting = false;
+            // Move the timer out of the map under the lock, erase, release the handle,
+            // then call stop() and let the unique_ptr destruct — ~SteadyTimer joins its
+            // worker thread, which may itself be waiting on this monitor in the timeout
+            // callback (smart_charging.cpp:1177-1194). Destroying under the lock deadlocks.
+            std::unique_ptr<Everest::SteadyTimer> expiring_timer;
+            {
+                auto handle = this->ev_schedule_state.handle();
+                auto it = handle->find(tx_id);
+                if (it != handle->end()) {
+                    awaiting = true;
+                    evse_id = it->second.evse_id;
+                    expiring_timer = std::move(it->second.timeout_timer);
+                    handle->erase(it);
+                }
+            }
+            if (expiring_timer) {
+                expiring_timer->stop();
+            }
+            // expiring_timer destructs here — ~Timer joins with no monitor held.
+            if (awaiting) {
+                // K15.FR.22: compose up to three ChargingSchedules by combining schedules from
+                // all TxProfiles installed for this transaction across stackLevels. For a single
+                // TxProfile this degenerates to its own schedules (K15.FR.18 recommended shape).
+                const auto all_profiles = this->context.database_handler.get_charging_profiles_for_evse(evse_id);
+                const auto slots = compute_sa_schedule_list(all_profiles, tx_id);
+
+                std::vector<ChargingSchedule> schedules;
+                std::vector<std::optional<SalesTariff>> tariffs;
+                std::vector<std::optional<std::string>> signature_value_b64;
+                schedules.reserve(slots.size());
+                tariffs.reserve(slots.size());
+                signature_value_b64.reserve(slots.size());
+                for (const auto& slot : slots) {
+                    schedules.push_back(slot.schedule);
+                    tariffs.push_back(slot.sales_tariff);
+                    // OCPP 2.1 Ed.2 adds ChargingProfileType.signatureValue for signed
+                    // SalesTariffs; libocpp does not model it yet, so passthrough is nullopt.
+                    signature_value_b64.push_back(slot.signature_value_b64);
+                }
+                this->transfer_ev_charging_schedules_callback.value()(evse_id, tx_id, schedules, tariffs,
+                                                                      signature_value_b64, std::nullopt);
+            }
+        }
     } else {
         std::string reason_code = "Unspecified";
         std::string additional_info = "Unknown";
@@ -1314,43 +1671,55 @@ void SmartCharging::handle_notify_ev_charging_needs_response(const EnhancedMessa
     EVLOG_debug << "Received NotifyEVChargingNeedsResponse: " << response.msg
                 << "\nwith messageId: " << response.uniqueId;
     const bool is_15118_20 = request.msg.chargingNeeds.v2xChargingParameters.has_value();
-    switch (response.msg.status) {
+    const auto status = response.msg.status;
+
+    // Mark state as response-received so the 60s timeout won't double-fire the callback.
+    // For non-Accepted statuses, clear the entry since the ISO stack will fall through.
+    // Move the timer out before erasing and destruct it AFTER releasing the monitor: the
+    // timer's worker thread may be waiting on the same monitor in the timeout callback
+    // (smart_charging.cpp:1177-1194); destroying under the lock would deadlock ~Timer's join.
+    std::unique_ptr<Everest::SteadyTimer> expiring_timer;
+    {
+        auto handle = this->ev_schedule_state.handle();
+        for (auto it = handle->begin(); it != handle->end(); ++it) {
+            if (it->second.evse_id == request.msg.evseId) {
+                it->second.response_status = status;
+                it->second.response_received = true;
+                if (status != NotifyEVChargingNeedsStatusEnum::Accepted) {
+                    expiring_timer = std::move(it->second.timeout_timer);
+                    handle->erase(it);
+                }
+                break;
+            }
+        }
+    }
+    // expiring_timer (if any) destructs here — ~Timer joins with no monitor held.
+
+    switch (status) {
     case NotifyEVChargingNeedsStatusEnum::Accepted:
-        // K15.FR.03 - ISO15118-2
-        // K18.FR.03 - Scheduled Mode
-        // K19.FR.03 - Dynamic Mode
-        // TODO(mlitre) Support HLC smart charging
-        // Wait for schedule, aka SetChargingProfileRequest
+        // K15.FR.03 - ISO15118-2; K18.FR.03 / K19.FR.03. ISO stack waits for SetChargingProfile.
+        if (this->notify_ev_charging_needs_response_callback.has_value()) {
+            this->notify_ev_charging_needs_response_callback.value()(request.msg.evseId, status);
+        }
         break;
     case NotifyEVChargingNeedsStatusEnum::Rejected:
-        // K18.FR.22 - Scheduled Mode
-        // K19.FR.15 - Dynamic Mode
+        // K18.FR.22 - Scheduled Mode; K19.FR.15 - Dynamic Mode.
         if (this->context.ocpp_version == OcppProtocolVersion::v201 or !is_15118_20) {
-            // K15.FR.04 - ISO15118-2
-            // TODO(mlitre): Support HLC smart charging
-            // Start without waiting for schedule, equivalent to NoChargingProfile
+            // K15.FR.04 - ISO15118-2: start without waiting, equivalent to NoChargingProfile.
             [[fallthrough]];
         } else {
-            // Start service renegotiation or Stop transaction based on OCPP version
-            // Also check ISO15118 version
-            // Service renegotiation should not technically be possible so stop transaction
-            // Q01.FR.06 - V2X Authorization
-            // K18.FR.23 - Scheduled Mode
-            // K19.FR.16 - Dynamic Mode
+            // V2X under 15118-20: stop the transaction instead of falling through
+            // (Q01.FR.06 / K18.FR.23 / K19.FR.16).
             stop_transaction_callback(request.msg.evseId, ReasonEnum::ReqEnergyTransferRejected);
             break;
         }
     case NotifyEVChargingNeedsStatusEnum::Processing:
-        // Q01.FR.07 should receive profile soon, but since it is V2X should we wait or just start and do service
-        // renegotiation after? It seems like we don't have to wait
-        // K15.FR.05 - ISO15118-2
-        // K18.FR.05 - Scheduled Mode
-        // K19.FR.05 - Dynamic Mode
+        // K15.FR.05 - ISO15118-2; K18.FR.05 / K19.FR.05. Late profile triggers renegotiation (K16).
     case NotifyEVChargingNeedsStatusEnum::NoChargingProfile:
-        // K18.FR.04 - Scheduled Mode
-        // K19.FR.04 - Dynamic Mode
-        // TODO(mlitre): Support HLC smart charging
-        // Start without waiting for schedule, schedule renegotiation will be calculated as per use case K16
+        // K18.FR.04 / K19.FR.04. ISO stack falls through to a default/unlimited schedule.
+        if (this->notify_ev_charging_needs_response_callback.has_value()) {
+            this->notify_ev_charging_needs_response_callback.value()(request.msg.evseId, status);
+        }
         break;
     }
 }

@@ -11,7 +11,9 @@
 
 #include <atomic>
 #include <cstdint>
+#include <functional>
 #include <netinet/in.h>
+#include <optional>
 #include <pthread.h>
 #include <vector>
 
@@ -256,6 +258,16 @@ struct v2g_context {
                                       immediately without response message) */
     std::atomic<bool> terminate_connection_on_failed_response;
     std::atomic<bool> contactor_is_closed; /* Actual contactor state */
+
+    /* OCPP HLC smart charging (K15) coordination — set by iso15118_extensions cmd handlers.
+     * hlc_schedule_wait: true once OCPP signals NotifyEVChargingNeedsResponse=Accepted so the ISO
+     *   state machine holds ChargeParameterDiscoveryRes at EVSEProcessing::Ongoing until either
+     *   set_ev_charging_schedules fills the list or a fallback status arrives.
+     * publish_ev_selected_schedule_cb: injected by iso15118_extensionsImpl so the state machine
+     *   can forward the EV-selected SAScheduleTupleID + profile upstream to the OCPP module. */
+    std::atomic<bool> hlc_schedule_wait{false};
+    std::function<void(int32_t sa_schedule_tuple_id, const std::optional<int32_t>& selected_schedule_id)>
+        publish_ev_selected_schedule_cb;
 
     struct {
         bool meter_info_is_used;

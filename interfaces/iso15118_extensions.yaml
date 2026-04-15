@@ -10,6 +10,33 @@ cmds:
         description: The response raw exi stream and the status from the CSMS system
         type: object
         $ref: /iso15118#/ResponseExiStreamStatus
+  set_notify_ev_schedule_status:
+    description: >-
+      Signals to the ISO 15118 stack the outcome of the CSMS NotifyEVChargingNeedsResponse
+      for the ongoing HLC session (OCPP 2.x K15.FR.03/04/05). On Accepted the stack waits
+      for a subsequent set_ev_charging_schedules before completing ChargeParameterDiscoveryRes
+      (15118-2) or ScheduleExchangeRes (15118-20); on Rejected / Processing / NoChargingProfile
+      it falls back to its default schedule per K15.FR.04.
+    arguments:
+      status:
+        description: CSMS decision propagated to the ISO stack.
+        type: string
+        $ref: /iso15118#/NotifyEvScheduleStatus
+  set_ev_charging_schedules:
+    description: >-
+      Delivers up to three composite charging schedules (from the CSMS TxProfile) to the
+      ISO 15118 stack so they can be converted into SAScheduleTuple (15118-2) or
+      ScheduleTuple (15118-20) and returned to the EV. Tariff bodies and the OCPP 2.1
+      signatureValue (base64) travel alongside each schedule. K15.FR.07, FR.22.
+    arguments:
+      charging_schedules:
+        description: Bundle of composite schedules, identified by transaction_id.
+        type: object
+        $ref: /iso15118#/OcppEvChargingSchedules
+    result:
+      description: Whether the ISO stack accepted and installed the bundle.
+      type: object
+      $ref: /iso15118#/SetChargingSchedulesResult
 vars:
   iso15118_certificate_request:
     description: >-
@@ -34,3 +61,10 @@ vars:
     description: >-
       Indicates whether service renegotiation is supported or not.
     type: boolean
+  ev_selected_schedule:
+    description: >-
+      EV-selected schedule feedback from the ISO 15118 PowerDeliveryReq (15118-2) or the
+      equivalent 15118-20 state. The OCPP module forwards this to libocpp, which emits a
+      NotifyEVChargingScheduleRequest to the CSMS (K15.FR.10, FR.21).
+    type: object
+    $ref: /iso15118#/SelectedEvChargingSchedule

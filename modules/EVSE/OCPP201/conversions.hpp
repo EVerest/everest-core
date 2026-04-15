@@ -281,6 +281,29 @@ to_everest_allowed_energy_transfer_mode(const ocpp::v2::EnergyTransferModeEnum& 
 /// std::vector<types::iso15118::EnergyTransferMode>
 std::vector<types::iso15118::EnergyTransferMode> to_everest_allowed_energy_transfer_modes(
     const std::vector<ocpp::v2::EnergyTransferModeEnum>& allowed_energy_transfer_modes);
+
+/// \brief Convert the libocpp NotifyEVChargingNeedsStatusEnum to the everest enum used on
+/// the iso15118_extensions interface.
+types::iso15118::NotifyEvScheduleStatus
+to_everest_notify_ev_schedule_status(ocpp::v2::NotifyEVChargingNeedsStatusEnum status);
+
+/// \brief Convert a libocpp SalesTariff body into the everest SalesTariff mirror. ConsumptionCost
+/// entries are intentionally dropped — the ISO 15118 handoff only needs price-level information.
+types::iso15118::SalesTariff to_everest_sales_tariff(const ocpp::v2::SalesTariff& tariff);
+
+/// \brief Bundle up to three libocpp ChargingSchedules with their matching SalesTariff bodies
+/// and OCPP 2.1 signatureValue (base64) into an OcppEvChargingSchedules ready for the ISO
+/// 15118 stack. The three input vectors MUST have the same length.
+types::iso15118::OcppEvChargingSchedules to_everest_ev_charging_schedules(
+    const std::string& transaction_id, const std::vector<ocpp::v2::ChargingSchedule>& schedules,
+    const std::vector<std::optional<ocpp::v2::SalesTariff>>& tariffs,
+    const std::vector<std::optional<std::string>>& signature_value_b64,
+    const std::optional<std::int32_t>& selected_charging_schedule_id);
+
+/// \brief Extract (tuple_id, selected_charging_schedule_id, optional<ocpp ChargingSchedule>) from
+/// the everest SelectedEvChargingSchedule as libocpp's on_ev_selected_charging_schedule expects.
+std::tuple<std::int32_t, std::optional<std::int32_t>, std::optional<ocpp::v2::ChargingSchedule>>
+to_ocpp_ev_selected_schedule(const types::iso15118::SelectedEvChargingSchedule& selected);
 } // namespace conversions
 } // namespace module
 

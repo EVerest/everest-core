@@ -41,6 +41,7 @@
 #include <ocpp/v2/messages/ClearChargingProfile.hpp>
 #include <ocpp/v2/messages/GetChargingProfiles.hpp>
 #include <ocpp/v2/messages/GetCompositeSchedule.hpp>
+#include <ocpp/v2/messages/NotifyEVChargingSchedule.hpp>
 #include <ocpp/v2/messages/SetChargingProfile.hpp>
 
 using ::testing::_;
@@ -1903,6 +1904,225 @@ TEST_F(SmartChargingTest, K01_ValidateTxProfile_EmptyChargingSchedule) {
 
     auto sut = smart_charging.conform_and_validate_profile(profile, DEFAULT_EVSE_ID);
     ASSERT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ChargingProfileEmptyChargingSchedules));
+}
+
+// --- EVerest#1199: OCPP ↔ ISO 15118 schedule handoff ---
+
+TEST_F(SmartChargingTest, K15FR21_NotifyEvChargingSchedule_SelectedIdOmittedOnV201) {
+    // OCPP 2.0.1 must not populate selectedChargingScheduleId (K15.FR.21 is 2.1 only).
+    ocpp_version.store(OcppProtocolVersion::v201);
+
+    NotifyEVChargingScheduleRequest captured;
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([&captured](const json& call, bool) {
+        captured = call.at(ocpp::CALL_PAYLOAD).get<NotifyEVChargingScheduleRequest>();
+    }));
+
+    ChargingSchedule schedule;
+    schedule.id = 42;
+    schedule.chargingRateUnit = ChargingRateUnitEnum::A;
+    smart_charging.notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, 42, 7, schedule);
+
+    EXPECT_EQ(captured.evseId, DEFAULT_EVSE_ID);
+    EXPECT_EQ(captured.chargingSchedule.id, 42);
+    EXPECT_FALSE(captured.selectedChargingScheduleId.has_value());
+}
+
+TEST_F(SmartChargingTest, K15FR21_NotifyEvChargingSchedule_SelectedIdPopulatedOnV21) {
+    // OCPP 2.1 SHOULD set selectedChargingScheduleId to the id of the schedule the EV selected.
+    ocpp_version.store(OcppProtocolVersion::v21);
+
+    NotifyEVChargingScheduleRequest captured;
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([&captured](const json& call, bool) {
+        captured = call.at(ocpp::CALL_PAYLOAD).get<NotifyEVChargingScheduleRequest>();
+    }));
+
+    ChargingSchedule schedule;
+    schedule.id = 42;
+    schedule.chargingRateUnit = ChargingRateUnitEnum::A;
+    smart_charging.notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, 42, 7, schedule);
+
+    ASSERT_TRUE(captured.selectedChargingScheduleId.has_value());
+    EXPECT_EQ(captured.selectedChargingScheduleId.value(), 7);
+    EXPECT_EQ(captured.chargingSchedule.id, 42);
+}
+
+// K15.FR.22: compose up to three SA schedules by combining stack levels slot-wise.
+TEST(SaScheduleCompositionTest, K15FR22_EmptyWhenNoTxProfileForTransaction) {
+    EXPECT_TRUE(compute_sa_schedule_list({}, "tx-1").empty());
+
+    auto other_tx = create_charging_profile(1, ChargingProfilePurposeEnum::TxProfile,
+                                            create_charge_schedule(ChargingRateUnitEnum::A), std::string{"tx-other"});
+    EXPECT_TRUE(compute_sa_schedule_list({other_tx}, "tx-1").empty());
+}
+
+TEST(SaScheduleCompositionTest, K15FR22_SingleTxProfileEmitsItsSchedulesInOrder) {
+    auto periods = create_charging_schedule_periods({0, 1800, 3600});
+    auto s1 = create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    s1.id = 10;
+    auto s2 = create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    s2.id = 20;
+
+    auto profile = create_charging_profile(1, ChargingProfilePurposeEnum::TxProfile,
+                                           std::vector<ChargingSchedule>{s1, s2}, std::string{"tx-1"});
+
+    const auto slots = compute_sa_schedule_list({profile}, "tx-1");
+    ASSERT_EQ(slots.size(), 2);
+    EXPECT_EQ(slots[0].schedule.id, 10);
+    EXPECT_EQ(slots[1].schedule.id, 20);
+}
+
+TEST(SaScheduleCompositionTest, K15FR22_StackLevelPrecedencePicksHighest) {
+    auto periods = create_charging_schedule_periods({0});
+    auto low = create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    low.id = 1;
+    auto high = create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    high.id = 99;
+
+    auto low_profile = create_charging_profile(
+        1, ChargingProfilePurposeEnum::TxProfile, std::vector<ChargingSchedule>{low}, std::string{"tx-1"},
+        ChargingProfileKindEnum::Absolute, /*stack_level=*/0);
+    auto high_profile = create_charging_profile(
+        2, ChargingProfilePurposeEnum::TxProfile, std::vector<ChargingSchedule>{high}, std::string{"tx-1"},
+        ChargingProfileKindEnum::Absolute, /*stack_level=*/5);
+
+    const auto slots = compute_sa_schedule_list({low_profile, high_profile}, "tx-1");
+    ASSERT_EQ(slots.size(), 1);
+    EXPECT_EQ(slots[0].schedule.id, 99);
+}
+
+TEST(SaScheduleCompositionTest, K15FR22_CapsAtThreeSlotsAcrossStackLevels) {
+    auto periods = create_charging_schedule_periods({0});
+    auto mk_schedule = [&](int id) {
+        auto s = create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00"));
+        s.id = id;
+        return s;
+    };
+
+    auto a = create_charging_profile(1, ChargingProfilePurposeEnum::TxProfile,
+                                     std::vector<ChargingSchedule>{mk_schedule(10), mk_schedule(11), mk_schedule(12),
+                                                                    mk_schedule(13)},
+                                     std::string{"tx-1"}, ChargingProfileKindEnum::Absolute, 1);
+
+    const auto slots = compute_sa_schedule_list({a}, "tx-1");
+    ASSERT_EQ(slots.size(), 3);
+    EXPECT_EQ(slots[0].schedule.id, 10);
+    EXPECT_EQ(slots[1].schedule.id, 11);
+    EXPECT_EQ(slots[2].schedule.id, 12);
+}
+
+TEST_F(SmartChargingTest, K15FR21_NotifyEvChargingSchedule_NoEvScheduleUsesFallback) {
+    // When the EV did not return a profile we still emit a well-formed message; the id of the
+    // fallback schedule matches the SAScheduleTupleId the EV picked (K15.FR.19).
+    ocpp_version.store(OcppProtocolVersion::v201);
+
+    NotifyEVChargingScheduleRequest captured;
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([&captured](const json& call, bool) {
+        captured = call.at(ocpp::CALL_PAYLOAD).get<NotifyEVChargingScheduleRequest>();
+    }));
+
+    smart_charging.notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, 7, std::nullopt, std::nullopt);
+
+    EXPECT_EQ(captured.chargingSchedule.id, 7);
+}
+
+/// \brief K15.FR.09 / K16.FR.04 / K18.FR.09 — boundary check of the EV-returned ChargingSchedule
+/// against the CSMS-sent composite schedule cached at handoff time.
+class K15BoundaryCheckFixture : public K16RenegotiationFixture {
+protected:
+    // Build a single-period ChargingSchedule. Kept minimal so tests only exercise the
+    // boundary-check axes: chargingRateUnit, limit, numberPhases, duration/window.
+    ChargingSchedule make_schedule(ChargingRateUnitEnum unit, float limit,
+                                   std::optional<std::int32_t> number_phases = DEFAULT_NR_PHASES,
+                                   std::optional<std::int32_t> duration = std::nullopt) {
+        auto periods = create_charging_schedule_periods(0, number_phases, std::nullopt, limit);
+        return create_charge_schedule(unit, periods, ocpp::DateTime("2024-01-17T17:00:00"), duration);
+    }
+};
+
+// In-bounds EV schedule does not trigger renegotiation.
+TEST_F(K15BoundaryCheckFixture, K15FR09_InBoundsProfileDoesNotFireRenegotiation) {
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/32.0f);
+    drive_initial_handoff(initial);
+
+    // EV returns a schedule whose limit is strictly below the CSMS envelope.
+    auto ev_schedule = make_schedule(ChargingRateUnitEnum::A, /*limit=*/16.0f);
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call).Times(0);
+
+    smart_charging_hlc->notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, /*sa_schedule_tuple_id=*/1,
+                                                        /*selected_charging_schedule_id=*/std::nullopt, ev_schedule);
+}
+
+// EV schedule asks for a higher limit than the CSMS bound → renegotiation fires, but the
+// NotifyEVChargingSchedule message is still dispatched to the CSMS.
+TEST_F(K15BoundaryCheckFixture, K15FR09_LimitExceedsCsmsFiresRenegotiation) {
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/16.0f);
+    drive_initial_handoff(initial);
+
+    auto ev_schedule = make_schedule(ChargingRateUnitEnum::A, /*limit=*/32.0f);
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
+
+    smart_charging_hlc->notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, /*sa_schedule_tuple_id=*/1,
+                                                        /*selected_charging_schedule_id=*/std::nullopt, ev_schedule);
+}
+
+// chargingRateUnit mismatch (CSMS sent A, EV responds with W) → renegotiation fires.
+TEST_F(K15BoundaryCheckFixture, K15FR09_UnitMismatchFiresRenegotiation) {
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/32.0f);
+    drive_initial_handoff(initial);
+
+    // CSMS schedule is in Amps (make_tx_profile uses A); EV returns Watts.
+    auto ev_schedule = make_schedule(ChargingRateUnitEnum::W, /*limit=*/1000.0f);
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
+
+    smart_charging_hlc->notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, /*sa_schedule_tuple_id=*/1,
+                                                        /*selected_charging_schedule_id=*/std::nullopt, ev_schedule);
+}
+
+// EV schedule's duration extends past the CSMS schedule's duration → renegotiation fires.
+TEST_F(K15BoundaryCheckFixture, K15FR09_OutOfWindowFiresRenegotiation) {
+    // Construct an initial profile whose composite has an explicit duration. We bypass
+    // make_tx_profile so we can set duration on the schedule.
+    auto period = create_charging_schedule_periods(0, DEFAULT_NR_PHASES, std::nullopt, 32.0f);
+    auto schedule = create_charge_schedule(ChargingRateUnitEnum::A, period, ocpp::DateTime("2024-01-17T17:00:00"),
+                                           /*duration=*/3600);
+    auto initial = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile, schedule,
+                                           DEFAULT_TX_ID, ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+    drive_initial_handoff(initial);
+
+    // EV schedule extends to 7200s — past the CSMS 3600s window.
+    auto ev_schedule = make_schedule(ChargingRateUnitEnum::A, /*limit=*/16.0f, DEFAULT_NR_PHASES, /*duration=*/7200);
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
+
+    smart_charging_hlc->notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, /*sa_schedule_tuple_id=*/1,
+                                                        /*selected_charging_schedule_id=*/std::nullopt, ev_schedule);
+}
+
+// EV flips sign on the limit (CSMS was positive / unidirectional) → renegotiation fires.
+TEST_F(K15BoundaryCheckFixture, K15FR09_NegativeLimitFiresRenegotiation) {
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/32.0f);
+    drive_initial_handoff(initial);
+
+    auto ev_schedule = make_schedule(ChargingRateUnitEnum::A, /*limit=*/-10.0f);
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
+
+    smart_charging_hlc->notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, /*sa_schedule_tuple_id=*/1,
+                                                        /*selected_charging_schedule_id=*/std::nullopt, ev_schedule);
+}
+
+// Empty cache (no prior HLC handoff for this EVSE) → permissive fallback, no renegotiation fire.
+TEST_F(K15BoundaryCheckFixture, K15FR09_EmptyCacheSkipsBoundaryCheck) {
+    // No drive_initial_handoff here — last_handed_off_schedules is empty for DEFAULT_EVSE_ID.
+    auto ev_schedule = make_schedule(ChargingRateUnitEnum::A, /*limit=*/9999.0f);
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call).Times(0);
+
+    smart_charging_hlc->notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, /*sa_schedule_tuple_id=*/1,
+                                                        /*selected_charging_schedule_id=*/std::nullopt, ev_schedule);
 }
 
 } // namespace ocpp::v2

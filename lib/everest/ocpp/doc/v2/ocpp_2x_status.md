@@ -1877,7 +1877,7 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | K15.FR.06            | ⛽️    |        |
 | K15.FR.07            | 🌐     |        |
 | K15.FR.08            | 🌐     |        |
-| K15.FR.09            | ⛽️    |        |
+| K15.FR.09            | ✅     | verify_ev_profile_within_boundaries in smart_charging.cpp |
 | K15.FR.10            |        |        |
 | K15.FR.11            |        |        |
 | K15.FR.12            |        |        |
@@ -1899,7 +1899,7 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | K16.FR.01            |        |        |
 | K16.FR.02 <br> (2.1) |        |        |
 | K16.FR.03            |        |        |
-| K16.FR.04 <br> (2.1) |        |        |
+| K16.FR.04 <br> (2.1) | ✅     | verify_ev_profile_within_boundaries in smart_charging.cpp |
 | K16.FR.05 <br> (2.1) |        |        |
 | K16.FR.06            |        |        |
 | K16.FR.07            |        |        |
@@ -1947,7 +1947,7 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | K18.FR.06 |        |        |
 | K18.FR.07 |        |        |
 | K18.FR.08 |        |        |
-| K18.FR.09 |        |        |
+| K18.FR.09 | ✅     | verify_ev_profile_within_boundaries in smart_charging.cpp |
 | K18.FR.10 |        |        |
 | K18.FR.11 |        |        |
 | K18.FR.12 |        |        |

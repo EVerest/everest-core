@@ -1820,5 +1820,94 @@ std::vector<types::iso15118::EnergyTransferMode> to_everest_allowed_energy_trans
     return value;
 }
 
+types::iso15118::NotifyEvScheduleStatus
+to_everest_notify_ev_schedule_status(ocpp::v2::NotifyEVChargingNeedsStatusEnum status) {
+    switch (status) {
+    case ocpp::v2::NotifyEVChargingNeedsStatusEnum::Accepted:
+        return types::iso15118::NotifyEvScheduleStatus::Accepted;
+    case ocpp::v2::NotifyEVChargingNeedsStatusEnum::Rejected:
+        return types::iso15118::NotifyEvScheduleStatus::Rejected;
+    case ocpp::v2::NotifyEVChargingNeedsStatusEnum::Processing:
+        return types::iso15118::NotifyEvScheduleStatus::Processing;
+    case ocpp::v2::NotifyEVChargingNeedsStatusEnum::NoChargingProfile:
+        return types::iso15118::NotifyEvScheduleStatus::NoChargingProfile;
+    }
+    throw std::out_of_range("Could not convert NotifyEVChargingNeedsStatusEnum");
+}
+
+types::iso15118::SalesTariff to_everest_sales_tariff(const ocpp::v2::SalesTariff& tariff) {
+    types::iso15118::SalesTariff out;
+    out.id = tariff.id;
+    if (tariff.salesTariffDescription.has_value()) {
+        out.sales_tariff_description = tariff.salesTariffDescription.value().get();
+    }
+    if (tariff.numEPriceLevels.has_value()) {
+        out.num_e_price_levels = tariff.numEPriceLevels.value();
+    }
+    for (const auto& entry : tariff.salesTariffEntry) {
+        types::iso15118::SalesTariffEntry everest_entry;
+        everest_entry.relative_time_interval_start = entry.relativeTimeInterval.start;
+        everest_entry.relative_time_interval_duration = entry.relativeTimeInterval.duration;
+        if (entry.ePriceLevel.has_value()) {
+            everest_entry.e_price_level = entry.ePriceLevel.value();
+        }
+        out.sales_tariff_entry.push_back(std::move(everest_entry));
+    }
+    return out;
+}
+
+namespace {
+types::iso15118::OcppEvChargingSchedule
+to_everest_ev_charging_schedule(const ocpp::v2::ChargingSchedule& schedule,
+                                const std::optional<ocpp::v2::SalesTariff>& tariff,
+                                const std::optional<std::string>& signature_value_b64) {
+    types::iso15118::OcppEvChargingSchedule out;
+    out.id = schedule.id;
+    out.charging_rate_unit = ocpp::v2::conversions::charging_rate_unit_enum_to_string(schedule.chargingRateUnit);
+    out.duration = schedule.duration;
+    if (schedule.startSchedule.has_value()) {
+        out.start_schedule = schedule.startSchedule.value().to_rfc3339();
+    }
+    out.min_charging_rate = schedule.minChargingRate;
+    for (const auto& period : schedule.chargingSchedulePeriod) {
+        out.charging_schedule_period.push_back(to_everest_charging_schedule_period(period));
+    }
+    if (tariff.has_value()) {
+        out.sales_tariff = to_everest_sales_tariff(tariff.value());
+    }
+    out.sales_tariff_signature_base64 = signature_value_b64;
+    return out;
+}
+} // namespace
+
+types::iso15118::OcppEvChargingSchedules to_everest_ev_charging_schedules(
+    const std::string& transaction_id, const std::vector<ocpp::v2::ChargingSchedule>& schedules,
+    const std::vector<std::optional<ocpp::v2::SalesTariff>>& tariffs,
+    const std::vector<std::optional<std::string>>& signature_value_b64,
+    const std::optional<std::int32_t>& selected_charging_schedule_id) {
+    types::iso15118::OcppEvChargingSchedules bundle;
+    bundle.transaction_id = transaction_id;
+    bundle.selected_charging_schedule_id = selected_charging_schedule_id;
+    bundle.schedules.reserve(schedules.size());
+    for (std::size_t i = 0; i < schedules.size(); ++i) {
+        const auto& tariff = (i < tariffs.size()) ? tariffs[i] : std::optional<ocpp::v2::SalesTariff>{};
+        const auto& signature = (i < signature_value_b64.size()) ? signature_value_b64[i] : std::optional<std::string>{};
+        bundle.schedules.push_back(to_everest_ev_charging_schedule(schedules[i], tariff, signature));
+    }
+    return bundle;
+}
+
+std::tuple<std::int32_t, std::optional<std::int32_t>, std::optional<ocpp::v2::ChargingSchedule>>
+to_ocpp_ev_selected_schedule(const types::iso15118::SelectedEvChargingSchedule& selected) {
+    std::optional<ocpp::v2::ChargingSchedule> ocpp_schedule;
+    if (selected.ev_charging_schedule.has_value()) {
+        // ev_charging_schedule is delivered as types::ocpp::ChargingSchedule (the everest mirror).
+        // Convert via JSON round-trip so field-by-field mapping isn't duplicated here.
+        nlohmann::json j = selected.ev_charging_schedule.value();
+        ocpp_schedule = j.get<ocpp::v2::ChargingSchedule>();
+    }
+    return {selected.sa_schedule_tuple_id, selected.selected_charging_schedule_id, std::move(ocpp_schedule)};
+}
+
 } // namespace conversions
 } // namespace module

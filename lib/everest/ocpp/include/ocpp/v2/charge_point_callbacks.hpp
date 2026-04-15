@@ -11,6 +11,7 @@
 #include <ocpp/v2/messages/DataTransfer.hpp>
 #include <ocpp/v2/messages/GetDisplayMessages.hpp>
 #include <ocpp/v2/messages/GetLog.hpp>
+#include <ocpp/v2/messages/NotifyEVChargingNeeds.hpp>
 #include <ocpp/v2/messages/RequestStartTransaction.hpp>
 #include <ocpp/v2/messages/ReserveNow.hpp>
 #include <ocpp/v2/messages/SetDisplayMessage.hpp>
@@ -115,6 +116,24 @@ struct Callbacks {
 
     /// \brief Callback for indicating when a charging profile is received and was accepted.
     std::function<void()> set_charging_profiles_callback;
+
+    /// \brief Callback invoked with the CSMS NotifyEVChargingNeedsResponse status for an
+    /// ongoing HLC (ISO 15118) session so the ISO 15118 stack can gate
+    /// ChargeParameterDiscoveryRes on the CSMS decision (K15.FR.03/04/05).
+    std::optional<std::function<void(int32_t evse_id, NotifyEVChargingNeedsStatusEnum status)>>
+        notify_ev_charging_needs_response_callback;
+
+    /// \brief Callback invoked when a TxProfile for the HLC transaction has been accepted
+    /// and composite schedules have been computed. Carries up to three OCPP ChargingSchedules
+    /// (K15.FR.22 on 2.1; single on 2.0.1 per K15.FR.18), the matching SalesTariff bodies,
+    /// the OCPP 2.1 signatureValue (base64, absent on 2.0.1) and an optional CSMS-
+    /// preselected schedule id. The application wires this to the ISO 15118 stack.
+    std::optional<std::function<void(int32_t evse_id, const std::string& transaction_id,
+                                     const std::vector<ChargingSchedule>& schedules,
+                                     const std::vector<std::optional<SalesTariff>>& tariffs,
+                                     const std::vector<std::optional<std::string>>& signature_value_b64,
+                                     const std::optional<int32_t>& selected_charging_schedule_id)>>
+        transfer_ev_charging_schedules_callback;
 
     /// \brief  Callback for when a bootnotification response is received
     std::optional<std::function<void(const ocpp::v2::BootNotificationResponse& boot_notification_response)>>

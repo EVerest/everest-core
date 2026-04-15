@@ -910,6 +910,47 @@ void OCPP201::ready() {
 
     callbacks.set_charging_profiles_callback = charging_schedules_callback;
 
+    // EVerest#1199: fan the CSMS NotifyEVChargingNeedsResponse status out to the ISO 15118 stack so
+    // the EV's ChargeParameterDiscoveryRes is gated on the CSMS decision (K15.FR.03/04/05/08).
+    callbacks.notify_ev_charging_needs_response_callback =
+        [this](int32_t evse_id, ocpp::v2::NotifyEVChargingNeedsStatusEnum status) {
+            auto everest_status = conversions::to_everest_notify_ev_schedule_status(status);
+            for (const auto& extension : this->r_extensions_15118) {
+                const auto mapping = extension->get_mapping();
+                if (mapping.has_value() and mapping->evse == evse_id) {
+                    extension->call_set_notify_ev_schedule_status(everest_status);
+                    return;
+                }
+            }
+            EVLOG_warning << "No ISO 15118 extension mapped to EVSE " << evse_id
+                          << "; cannot relay NotifyEVChargingNeedsResponse status";
+        };
+
+    // EVerest#1199: deliver accepted TxProfile composite schedules (with tariff bodies and the
+    // OCPP 2.1 signatureValue passthrough) to the ISO 15118 stack for SA schedule construction.
+    callbacks.transfer_ev_charging_schedules_callback =
+        [this](int32_t evse_id, const std::string& transaction_id,
+               const std::vector<ocpp::v2::ChargingSchedule>& schedules,
+               const std::vector<std::optional<ocpp::v2::SalesTariff>>& tariffs,
+               const std::vector<std::optional<std::string>>& signature_value_b64,
+               const std::optional<int32_t>& selected_charging_schedule_id) {
+            auto bundle = conversions::to_everest_ev_charging_schedules(
+                transaction_id, schedules, tariffs, signature_value_b64, selected_charging_schedule_id);
+            for (const auto& extension : this->r_extensions_15118) {
+                const auto mapping = extension->get_mapping();
+                if (mapping.has_value() and mapping->evse == evse_id) {
+                    const auto result = extension->call_set_ev_charging_schedules(bundle);
+                    if (result.status != types::iso15118::SetChargingSchedulesStatus::Accepted) {
+                        EVLOG_warning << "ISO 15118 stack rejected set_ev_charging_schedules for EVSE "
+                                      << evse_id << " (transaction " << transaction_id << ")";
+                    }
+                    return;
+                }
+            }
+            EVLOG_warning << "No ISO 15118 extension mapped to EVSE " << evse_id
+                          << "; cannot deliver composite ChargingSchedules";
+        };
+
     callbacks.time_sync_callback = [this](const ocpp::DateTime& current_time) {
         this->r_system->call_set_system_time(current_time.to_rfc3339());
     };
@@ -1307,6 +1348,26 @@ void OCPP201::init_evse_subscriptions() {
                                      "Renegotiation Supported'!";
                 }
             });
+
+        extension->subscribe_ev_selected_schedule([this, extensions_id](
+                                                      const types::iso15118::SelectedEvChargingSchedule& selected) {
+            if (!this->started) {
+                EVLOG_info << "ISO15118 ev_selected_schedule received before OCPP was initialized, ignoring";
+                return;
+            }
+            const auto& mapping = this->r_extensions_15118.at(extensions_id)->get_mapping();
+            if (not mapping.has_value()) {
+                EVLOG_warning << "ISO15118 Extension interface mapping not set! Not forwarding 'ev_selected_schedule'";
+                return;
+            }
+            try {
+                auto [tuple_id, selected_id, ocpp_schedule] = conversions::to_ocpp_ev_selected_schedule(selected);
+                this->charge_point->on_ev_selected_charging_schedule(mapping->evse, tuple_id, selected_id,
+                                                                     ocpp_schedule);
+            } catch (const std::exception& e) {
+                EVLOG_warning << "Could not convert SelectedEvChargingSchedule to OCPP: " << e.what();
+            }
+        });
 
         extensions_id++;
     }

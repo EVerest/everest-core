@@ -248,6 +248,19 @@ public:
     /// the CSMS \param request specifies the parameters sent from the EV to the charging station
     virtual void on_ev_charging_needs(const NotifyEVChargingNeedsRequest& request) = 0;
 
+    /// \brief Event handler that should be called when the ISO 15118 stack reports the EV's selected
+    /// schedule from PowerDeliveryReq (15118-2) or the equivalent 15118-20 state. Triggers a
+    /// NotifyEVChargingScheduleRequest to the CSMS (K15.FR.10, and K15.FR.21 on OCPP 2.1).
+    /// \param evse_id                        EVSE on which the HLC transaction runs
+    /// \param sa_schedule_tuple_id           Id of the SAScheduleTuple / schedule chosen by the EV
+    /// \param selected_charging_schedule_id  OCPP 2.1 selectedChargingScheduleId (ignored on 2.0.1)
+    /// \param ev_charging_schedule           Optional OCPP ChargingSchedule derived from the EV
+    ///                                       profile in PowerDeliveryReq; absent when the EV did
+    ///                                       not return a profile (K15.FR.19 fallback applies)
+    virtual void on_ev_selected_charging_schedule(int32_t evse_id, int32_t sa_schedule_tuple_id,
+                                                  std::optional<int32_t> selected_charging_schedule_id,
+                                                  const std::optional<ChargingSchedule>& ev_charging_schedule) = 0;
+
     /// @}  // End handlers group
 
     /// @}
@@ -590,6 +603,10 @@ public:
     void on_reservation_status(const std::int32_t reservation_id, const ReservationUpdateStatusEnum status) override;
 
     void on_ev_charging_needs(const NotifyEVChargingNeedsRequest& request) override;
+
+    void on_ev_selected_charging_schedule(int32_t evse_id, int32_t sa_schedule_tuple_id,
+                                          std::optional<int32_t> selected_charging_schedule_id,
+                                          const std::optional<ChargingSchedule>& ev_charging_schedule) override;
 
     std::optional<DataTransferResponse> data_transfer_req(const CiString<255>& vendorId,
                                                           const std::optional<CiString<50>>& messageId,
