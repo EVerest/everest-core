@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
 
+#include <boost/asio/io_context.hpp>
+
 #include <component_state_manager_mock.hpp>
 #include <connectivity_manager_mock.hpp>
 #include <device_model_test_helper.hpp>
@@ -24,6 +26,7 @@
 #include <ocpp/v2/functional_blocks/meter_values.hpp>
 #include <ocpp/v2/functional_blocks/provisioning.hpp>
 #include <ocpp/v2/functional_blocks/security.hpp>
+#include <ocpp/v2/functional_blocks/tariff_and_cost.hpp>
 #include <ocpp/v2/functional_blocks/transaction.hpp>
 #include <ocpp/v2/messages/Get15118EVCertificate.hpp>
 #include <ocpp/v2/messages/SetNetworkProfile.hpp>
@@ -954,8 +957,15 @@ protected:
     ::testing::NiceMock<TransactionMock> transaction;
     std::atomic<RegistrationStatusEnum> registration_status{RegistrationStatusEnum::Accepted};
 
+    // TariffAndCost dependencies — callbacks are taken by non-const reference, must outlive tariff_and_cost
+    boost::asio::io_context io_context;
+    std::optional<TariffMessageCallback> tariff_message_cb;
+    std::optional<SetRunningCostCallback> set_running_cost_cb;
+    std::optional<DefaultPriceCallback> default_price_cb;
+
     std::unique_ptr<FunctionalBlockContext> fb_context;
     std::unique_ptr<MessageQueue<MessageType>> message_queue;
+    std::unique_ptr<TariffAndCost> tariff_and_cost;
     std::unique_ptr<Provisioning> provisioning;
 
     ProvisioningActiveSlotTest() : dm_helper() {
@@ -970,6 +980,9 @@ protected:
         MessageQueueConfig<MessageType> mq_config;
         message_queue = std::make_unique<MessageQueue<MessageType>>([](json) { return false; }, mq_config, nullptr);
 
+        tariff_and_cost = std::make_unique<TariffAndCost>(*fb_context, meter_values, tariff_message_cb,
+                                                          set_running_cost_cb, default_price_cb, io_context);
+
         provisioning = std::make_unique<Provisioning>(
             *fb_context, *message_queue, ocsp_updater, availability, meter_values, security, diagnostics, transaction,
             std::nullopt,                                                    // time_sync_callback
@@ -979,7 +992,7 @@ protected:
             [](auto, auto) {},                                               // reset_callback
             [](auto, auto) { return RequestStartStopStatusEnum::Accepted; }, // stop_transaction
             std::nullopt,                                                    // variable_changed_callback
-            registration_status);
+            *tariff_and_cost, registration_status);
     }
 
     // Set the ActiveNetworkProfile in the DM to simulate an active connection on the given slot
