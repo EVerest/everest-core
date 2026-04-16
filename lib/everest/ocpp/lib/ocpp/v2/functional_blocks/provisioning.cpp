@@ -705,6 +705,19 @@ Provisioning::validate_set_network_configuration_slot(const SetVariableData& set
             return "ActiveNetworkConf";
         }
 
+        const auto priority_slot_opt = this->context.device_model.get_optional_value<std::string>(
+            ControllerComponentVariables::NetworkConfigurationPriority);
+        const auto priority_list = priority_slot_opt.has_value() ? ocpp::split_string(priority_slot_opt.value(), ',')
+                                                                 : std::vector<std::string>{};
+        if (priority_slot_opt.has_value() &&
+            std::find_if(priority_list.cbegin(), priority_list.cend(), [slot](const std::string priority_slot) {
+                return std::stoi(priority_slot) == slot;
+            }) != priority_list.cend()) {
+            EVLOG_warning << "Cannot set NetworkConfiguration variable for slot " << slot
+                          << " which is a priority network profile";
+            return "PriorityNetworkConf";
+        }
+
         // B09.FR.35: Reject security profile downgrades
         if (cv.variable.value().name == "SecurityProfile") {
             try {
@@ -813,7 +826,7 @@ Provisioning::validate_network_configuration_priority(const SetVariableData& set
 std::optional<std::string> Provisioning::validate_set_variable(const SetVariableData& set_variable_data) {
     const ComponentVariable cv = {set_variable_data.component, set_variable_data.variable, std::nullopt};
 
-    // B09.FR.21/22: Reject changes to the currently active NetworkConfiguration slot
+    // B09.FR.21/22: Reject changes to the currently active NetworkConfiguration slot or a priority network slot
     if (cv.component.name == "NetworkConfiguration" && cv.component.instance.has_value() && cv.variable.has_value()) {
         const auto result = this->validate_set_network_configuration_slot(set_variable_data, cv);
         if (result.has_value()) {
