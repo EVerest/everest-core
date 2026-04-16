@@ -41,7 +41,12 @@ static Everest::PtrContainer<{{info.class_name }}> mod_ptr {};
 {% for impl in provides %}
 static {{ impl.id }}::Conf {{ impl.id }}_config;
 {% endfor %}
+{% if info.module_rwconfig|length > 0 %}
+static RwConf module_rwconf;
+static Conf module_conf(module_rwconf);
+{% else %}
 static Conf module_conf;
+{% endif %}
 static ModuleInfo module_info;
 
 {% if info.enable_global_errors %}
@@ -63,6 +68,8 @@ std::shared_ptr<Everest::config::ConfigServiceClient> get_config_service_client(
 }
 
 void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
+    using namespace Everest::config;
+
     EVLOG_debug << "init() called on module {{ info.name }}";
 
     // populate config for provided implementations
@@ -71,16 +78,36 @@ void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
     {% for item in impl.config %}
     {{ impl.id }}_config.{{ item.name }} = std::get<{{ item.cpp_type }}>({{ impl.id }}_config_input["{{ item.name }}"]);
     {% endfor %}
-
     {% endfor %}
-    {% if info.module_config|length %}
 
     {% for item in info.module_config %}
     module_conf.{{ item.name }} = std::get<{{ item.cpp_type }}>(module_configs["!module"]["{{ item.name }}"]);
     {% endfor %}
-    {% endif %}
+    {% for item in info.module_rwconfig %}
+    module_rwconf.{{ item.name }} = std::get<{{ item.cpp_type }}>(module_configs["!module"]["{{ item.name }}"]);
+    {% endfor %}
 
     module_info = mod_info;
+
+    {% for item in info.module_rwconfig %}
+    {% if loop.first %}
+    // register runtime config change handlers for rw parameters
+    auto config_client = adapter.get_config_service_client();
+    if (config_client) {
+    {% endif %}
+        config_client->register_config_change_handler("{{ item.name }}",
+            [](const std::string& new_value) -> Everest::config::ConfigChangeResult {
+    {% if item.cpp_type == "std::string" %}
+                return mod_ptr->on_{{ item.name }}_changed(new_value);
+    {% else %}
+                const auto typed_value = conversions::ConfigFromString<{{ item.cpp_type }}>(new_value);
+                return mod_ptr->on_{{ item.name }}_changed(typed_value);
+    {% endif %}
+            });
+    {% if loop.last %}
+    }
+    {% endif %}
+    {% endfor %}
 
     mod_ptr->init();
 }
@@ -149,7 +176,11 @@ std::vector<Everest::cmd> everest_register(const RequirementInitialization& requ
     {%- for requirement in requires -%}
     std::move(r_{{ requirement.id }}){{ ', ' }}
     {%- endfor -%}
+    {% if info.module_rwconfig|length > 0 %}
+    module_conf, module_rwconf);
+    {% else %}
     module_conf);
+    {% endif %}
 
     mod_ptr.set(&module);
 
@@ -158,6 +189,7 @@ std::vector<Everest::cmd> everest_register(const RequirementInitialization& requ
 
 } // namespace module
 
+#ifndef LD_EV_EXCLUDE_MAIN
 int main(int argc, char* argv[]) {
 #ifdef EVEREST_COVERAGE_ENABLED
     everest::helpers::install_signal_handlers_for_gcov();
@@ -170,3 +202,4 @@ int main(int argc, char* argv[]) {
 
     return module_loader.initialize();
 }
+#endif

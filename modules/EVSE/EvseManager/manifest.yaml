@@ -120,7 +120,7 @@ config:
   cable_check_enable_imd_self_test_relays_open:
     description: >-
       Enable self testing of IMD at the beginning of cable check where the relays may still be open.
-      The voltage is set by the cable_check_relays_open_voltage_V config option and may differ from the 
+      The voltage is set by the cable_check_relays_open_voltage_V config option and may differ from the
       voltage that is later used to perform the isolation resistance sample.
       cable_check_wait_number_of_imd_measurements needs to be >=1 in this case as no isolation resistance checking
       can be performed at this stage.
@@ -419,7 +419,7 @@ config:
     default: None
   hlc_charge_loop_without_energy_timeout_s:
     description: >-
-      Timeout (s) to allow HLC charge loop to continue without available energy; 
+      Timeout (s) to allow HLC charge loop to continue without available energy;
       when exceeded, the HLC session is stopped and PWM is disabled until energy returns.
       If set too long, some EVs stop the session on their own. Then it cannot be resumed
       when energy is available again.
