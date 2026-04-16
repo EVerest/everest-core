@@ -453,6 +453,16 @@ void ConnectivityManager::on_websocket_connected(OcppProtocolVersion protocol) {
             }
         }
     }
+    if (network_connection_profile.has_value()) {
+        this->device_model.set_value(ControllerComponents::SecurityCtrlr,
+                                     NetworkConfigurationComponentVariables::SecurityProfile, AttributeEnum::Actual,
+                                     std::to_string(network_connection_profile->securityProfile),
+                                     VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
+        this->device_model.set_value(ControllerComponents::SecurityCtrlr,
+                                     NetworkConfigurationComponentVariables::Identity, AttributeEnum::Actual,
+                                     network_connection_profile->identity.value(),
+                                     VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
+    }
 
     if (this->websocket_connected_callback.has_value() and network_connection_profile.has_value()) {
         this->websocket_connected_callback.value()(actual_configuration_slot, network_connection_profile.value(),
