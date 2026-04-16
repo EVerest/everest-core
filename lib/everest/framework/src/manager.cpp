@@ -27,6 +27,7 @@
 #include <everest/logging.hpp>
 #include <framework/everest.hpp>
 #include <framework/runtime.hpp>
+#include <config_service_api.hpp>
 #include <utils/config.hpp>
 #include <utils/config/config_service_core.hpp>
 #include <utils/config/slot_manager.hpp>
@@ -803,6 +804,10 @@ int boot(const po::variables_map& vm) {
 
     auto config_service = std::make_unique<config::MqttConfigServiceHandler>(*mqtt_abstraction, *config_service_core);
 
+    // TODO(CB): Startup the ConfigServiceAPI in its own thread and make sure it is fully initialized before starting the modules
+
+    auto config_service_api = std::make_unique<config::ConfigServiceAPI>(*mqtt_abstraction, *config_service);
+
     auto module_handles =
         start_modules(*config, *mqtt_abstraction, ignored_modules, standalone_modules, ms, status_fifo, retain_topics);
     bool modules_started = true;
@@ -918,6 +923,8 @@ int boot(const po::variables_map& vm) {
         }
 #endif
     }
+
+    // TODO(CB): Stop the ConfigServiceAPI gracefully
 
     return EXIT_SUCCESS;
 }
