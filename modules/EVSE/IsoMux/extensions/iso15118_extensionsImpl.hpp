@@ -35,7 +35,7 @@ protected:
     // command handler functions (virtual)
     virtual void
     handle_set_get_certificate_response(types::iso15118::ResponseExiStreamStatus& certificate_response) override;
-    virtual void handle_set_notify_ev_schedule_status(types::iso15118::NotifyEvScheduleStatus& status) override;
+    virtual void handle_set_hlc_schedule_wait(bool& wait) override;
     virtual types::iso15118::SetChargingSchedulesResult
     handle_set_ev_charging_schedules(types::iso15118::OcppEvChargingSchedules& charging_schedules) override;
 

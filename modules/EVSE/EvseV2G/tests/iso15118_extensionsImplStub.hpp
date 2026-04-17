@@ -24,8 +24,8 @@ public:
         std::cout << "iso15118_extensionsImplBase::handle_set_get_certificate_response called" << std::endl;
     }
 
-    virtual void handle_set_notify_ev_schedule_status(types::iso15118::NotifyEvScheduleStatus& status) {
-        std::cout << "iso15118_extensionsImplBase::handle_set_notify_ev_schedule_status called" << std::endl;
+    virtual void handle_set_hlc_schedule_wait(bool& wait) {
+        std::cout << "iso15118_extensionsImplBase::handle_set_hlc_schedule_wait called" << std::endl;
     }
 
     virtual types::iso15118::SetChargingSchedulesResult

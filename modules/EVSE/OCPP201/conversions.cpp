@@ -1820,19 +1820,8 @@ std::vector<types::iso15118::EnergyTransferMode> to_everest_allowed_energy_trans
     return value;
 }
 
-types::iso15118::NotifyEvScheduleStatus
-to_everest_notify_ev_schedule_status(ocpp::v2::NotifyEVChargingNeedsStatusEnum status) {
-    switch (status) {
-    case ocpp::v2::NotifyEVChargingNeedsStatusEnum::Accepted:
-        return types::iso15118::NotifyEvScheduleStatus::Accepted;
-    case ocpp::v2::NotifyEVChargingNeedsStatusEnum::Rejected:
-        return types::iso15118::NotifyEvScheduleStatus::Rejected;
-    case ocpp::v2::NotifyEVChargingNeedsStatusEnum::Processing:
-        return types::iso15118::NotifyEvScheduleStatus::Processing;
-    case ocpp::v2::NotifyEVChargingNeedsStatusEnum::NoChargingProfile:
-        return types::iso15118::NotifyEvScheduleStatus::NoChargingProfile;
-    }
-    throw std::out_of_range("Could not convert NotifyEVChargingNeedsStatusEnum");
+bool is_hlc_schedule_wait(ocpp::v2::NotifyEVChargingNeedsStatusEnum status) {
+    return status == ocpp::v2::NotifyEVChargingNeedsStatusEnum::Accepted;
 }
 
 types::iso15118::SalesTariff to_everest_sales_tariff(const ocpp::v2::SalesTariff& tariff) {
@@ -1880,18 +1869,20 @@ to_everest_ev_charging_schedule(const ocpp::v2::ChargingSchedule& schedule,
 }
 } // namespace
 
-types::iso15118::OcppEvChargingSchedules to_everest_ev_charging_schedules(
-    const std::string& transaction_id, const std::vector<ocpp::v2::ChargingSchedule>& schedules,
-    const std::vector<std::optional<ocpp::v2::SalesTariff>>& tariffs,
-    const std::vector<std::optional<std::string>>& signature_value_b64,
-    const std::optional<std::int32_t>& selected_charging_schedule_id) {
+types::iso15118::OcppEvChargingSchedules
+to_everest_ev_charging_schedules(const std::string& transaction_id,
+                                 const std::vector<ocpp::v2::ChargingSchedule>& schedules,
+                                 const std::vector<std::optional<ocpp::v2::SalesTariff>>& tariffs,
+                                 const std::vector<std::optional<std::string>>& signature_value_b64,
+                                 const std::optional<std::int32_t>& selected_charging_schedule_id) {
     types::iso15118::OcppEvChargingSchedules bundle;
     bundle.transaction_id = transaction_id;
     bundle.selected_charging_schedule_id = selected_charging_schedule_id;
     bundle.schedules.reserve(schedules.size());
     for (std::size_t i = 0; i < schedules.size(); ++i) {
         const auto& tariff = (i < tariffs.size()) ? tariffs[i] : std::optional<ocpp::v2::SalesTariff>{};
-        const auto& signature = (i < signature_value_b64.size()) ? signature_value_b64[i] : std::optional<std::string>{};
+        const auto& signature =
+            (i < signature_value_b64.size()) ? signature_value_b64[i] : std::optional<std::string>{};
         bundle.schedules.push_back(to_everest_ev_charging_schedule(schedules[i], tariff, signature));
     }
     return bundle;

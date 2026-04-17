@@ -51,11 +51,11 @@ void iso15118_extensionsImpl::handle_set_get_certificate_response(
     }
 }
 
-void iso15118_extensionsImpl::handle_set_notify_ev_schedule_status(types::iso15118::NotifyEvScheduleStatus& status) {
+void iso15118_extensionsImpl::handle_set_hlc_schedule_wait(bool& wait) {
     if (mod->selected_iso20()) {
-        mod->r_ext20->call_set_notify_ev_schedule_status(status);
+        mod->r_ext20->call_set_hlc_schedule_wait(wait);
     } else {
-        mod->r_ext2->call_set_notify_ev_schedule_status(status);
+        mod->r_ext2->call_set_hlc_schedule_wait(wait);
     }
 }
 

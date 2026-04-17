@@ -33,23 +33,18 @@ void iso15118_extensionsImpl::handle_set_get_certificate_response(
     // your code for cmd set_get_certificate_response goes here
 }
 
-void iso15118_extensionsImpl::handle_set_notify_ev_schedule_status(types::iso15118::NotifyEvScheduleStatus& status) {
+void iso15118_extensionsImpl::handle_set_hlc_schedule_wait(bool& wait) {
     auto handle = g_schedule_coordination.handle();
-    switch (status) {
-    case types::iso15118::NotifyEvScheduleStatus::Accepted:
+    if (wait) {
         // K15.FR.03: hold ScheduleExchangeRes at Ongoing until the CSMS schedule arrives.
         handle->wait_for_schedule = true;
         handle->bundle_ready = false;
         handle->fallback_requested = false;
-        break;
-    case types::iso15118::NotifyEvScheduleStatus::Rejected:
-    case types::iso15118::NotifyEvScheduleStatus::Processing:
-    case types::iso15118::NotifyEvScheduleStatus::NoChargingProfile:
+    } else {
         handle->wait_for_schedule = false;
         handle->fallback_requested = true;
-        break;
     }
-    EVLOG_info << "ISO 15118-20 HLC schedule status = " << types::iso15118::notify_ev_schedule_status_to_string(status);
+    EVLOG_info << "ISO 15118-20 HLC schedule wait = " << (wait ? "true" : "false");
 }
 
 types::iso15118::SetChargingSchedulesResult iso15118_extensionsImpl::handle_set_ev_charging_schedules(

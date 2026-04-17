@@ -10,18 +10,17 @@ cmds:
         description: The response raw exi stream and the status from the CSMS system
         type: object
         $ref: /iso15118#/ResponseExiStreamStatus
-  set_notify_ev_schedule_status:
+  set_hlc_schedule_wait:
     description: >-
-      Signals to the ISO 15118 stack the outcome of the CSMS NotifyEVChargingNeedsResponse
-      for the ongoing HLC session (OCPP 2.x K15.FR.03/04/05). On Accepted the stack waits
-      for a subsequent set_ev_charging_schedules before completing ChargeParameterDiscoveryRes
-      (15118-2) or ScheduleExchangeRes (15118-20); on Rejected / Processing / NoChargingProfile
-      it falls back to its default schedule per K15.FR.04.
+      Tell the ISO 15118 stack whether to wait in ChargeParameterDiscovery
+      for an externally-supplied SA schedule. When true, the stack holds
+      EVSEProcessing=Ongoing until set_ev_charging_schedules delivers a
+      bundle or the module's cpd_timeout_ms deadline elapses. When false,
+      the stack falls back to a locally synthesized default SAScheduleList.
     arguments:
-      status:
-        description: CSMS decision propagated to the ISO stack.
-        type: string
-        $ref: /iso15118#/NotifyEvScheduleStatus
+      wait:
+        description: True to hold for an upstream schedule, false to serve default.
+        type: boolean
   set_ev_charging_schedules:
     description: >-
       Delivers up to three composite charging schedules (from the CSMS TxProfile) to the

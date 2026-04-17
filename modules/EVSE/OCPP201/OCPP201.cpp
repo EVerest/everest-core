@@ -912,19 +912,19 @@ void OCPP201::ready() {
 
     // EVerest#1199: fan the CSMS NotifyEVChargingNeedsResponse status out to the ISO 15118 stack so
     // the EV's ChargeParameterDiscoveryRes is gated on the CSMS decision (K15.FR.03/04/05/08).
-    callbacks.notify_ev_charging_needs_response_callback =
-        [this](int32_t evse_id, ocpp::v2::NotifyEVChargingNeedsStatusEnum status) {
-            auto everest_status = conversions::to_everest_notify_ev_schedule_status(status);
-            for (const auto& extension : this->r_extensions_15118) {
-                const auto mapping = extension->get_mapping();
-                if (mapping.has_value() and mapping->evse == evse_id) {
-                    extension->call_set_notify_ev_schedule_status(everest_status);
-                    return;
-                }
+    callbacks.notify_ev_charging_needs_response_callback = [this](int32_t evse_id,
+                                                                  ocpp::v2::NotifyEVChargingNeedsStatusEnum status) {
+        bool wait = conversions::is_hlc_schedule_wait(status);
+        for (const auto& extension : this->r_extensions_15118) {
+            const auto mapping = extension->get_mapping();
+            if (mapping.has_value() and mapping->evse == evse_id) {
+                extension->call_set_hlc_schedule_wait(wait);
+                return;
             }
-            EVLOG_warning << "No ISO 15118 extension mapped to EVSE " << evse_id
-                          << "; cannot relay NotifyEVChargingNeedsResponse status";
-        };
+        }
+        EVLOG_warning << "No ISO 15118 extension mapped to EVSE " << evse_id
+                      << "; cannot relay HLC schedule-wait signal";
+    };
 
     // EVerest#1199: deliver accepted TxProfile composite schedules (with tariff bodies and the
     // OCPP 2.1 signatureValue passthrough) to the ISO 15118 stack for SA schedule construction.

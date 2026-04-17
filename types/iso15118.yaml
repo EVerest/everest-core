@@ -2052,17 +2052,6 @@ types:
       status_info:
         description: Optional human-readable reason when status is Rejected.
         type: string
-  NotifyEvScheduleStatus:
-    description: >-
-      Enum mirroring OCPP NotifyEVChargingNeedsStatusEnumType so the ISO 15118 stack
-      learns the CSMS decision and gates the ChargeParameterDiscoveryRes accordingly
-      (K15.FR.03/04/05/08).
-    type: string
-    enum:
-      - Accepted
-      - Rejected
-      - Processing
-      - NoChargingProfile
   SelectedEvChargingSchedule:
     description: >-
       EV-selected schedule feedback from the ISO 15118 PowerDeliveryReq (15118-2) or
