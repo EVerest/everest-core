@@ -217,10 +217,19 @@ BoundaryCheckResult verify_ev_profile_within_boundaries(const ChargingSchedule& 
         if (ev_period.limit.has_value() and csms_period->limit.has_value()) {
             const auto ev_limit = ev_period.limit.value();
             const auto csms_limit = csms_period->limit.value();
-            if (csms_limit >= 0.0f and ev_limit < 0.0f) {
+            // V2X: a negative csms_limit is a discharge envelope. An EV flipping direction
+            // (charging while CSMS said discharge-only or vice-versa) is a sign violation.
+            const bool csms_allows_charge = csms_limit > 0.0f;
+            const bool csms_allows_discharge = csms_limit < 0.0f;
+            const bool ev_is_charge = ev_limit > 0.0f;
+            const bool ev_is_discharge = ev_limit < 0.0f;
+            if ((csms_allows_charge and ev_is_discharge) or (csms_allows_discharge and ev_is_charge)) {
                 return {false, "limit sign invalid"};
             }
-            if (ev_limit > csms_limit) {
+            // Magnitude check: regardless of sign, |ev| must not exceed |csms|. For the
+            // discharge envelope (csms_limit=-16 A, ev_limit=-5 A) the EV's smaller-magnitude
+            // discharge is inside the bound and MUST NOT trigger renegotiation.
+            if (std::abs(ev_limit) > std::abs(csms_limit)) {
                 return {false, "limit exceeds CSMS bound"};
             }
         }

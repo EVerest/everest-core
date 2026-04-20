@@ -2420,6 +2420,59 @@ TEST_F(K15BoundaryCheckFixture, K15FR09_EmptyCacheSkipsBoundaryCheck) {
                                                         /*selected_charging_schedule_id=*/std::nullopt, ev_schedule);
 }
 
+// V2X discharge envelope: the CSMS permits up to 16 A of discharge (csms_limit=-16).
+// An EV that asks for a conservative 5 A discharge is WITHIN the bound — but the old
+// `ev_limit > csms_limit` check flipped the semantics on negatives and fired spurious
+// renegotiation. Magnitude compare is what the spec means for V2X.
+TEST_F(K15BoundaryCheckFixture, K15FR09_NegativeEnvelopeAllowsSmallerDischarge) {
+    // CSMS allows discharge up to 16 A (negative sign = discharge direction).
+    ChargingSchedule cached = make_schedule(ChargingRateUnitEnum::A, /*limit=*/-16.0f);
+    {
+        auto handle = smart_charging_hlc->last_handed_off_schedules.handle();
+        (*handle)[DEFAULT_EVSE_ID] = {cached};
+    }
+
+    // EV picks a more conservative discharge of 5 A — still within the envelope.
+    auto ev_schedule = make_schedule(ChargingRateUnitEnum::A, /*limit=*/-5.0f);
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call).Times(0);
+
+    smart_charging_hlc->notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, /*sa_schedule_tuple_id=*/0,
+                                                        /*selected_charging_schedule_id=*/std::nullopt, ev_schedule);
+}
+
+// Symmetric case: EV asks for MORE discharge than the CSMS envelope allows.
+TEST_F(K15BoundaryCheckFixture, K15FR09_NegativeEnvelopeRejectsLargerDischarge) {
+    ChargingSchedule cached = make_schedule(ChargingRateUnitEnum::A, /*limit=*/-10.0f);
+    {
+        auto handle = smart_charging_hlc->last_handed_off_schedules.handle();
+        (*handle)[DEFAULT_EVSE_ID] = {cached};
+    }
+
+    auto ev_schedule = make_schedule(ChargingRateUnitEnum::A, /*limit=*/-20.0f);
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
+
+    smart_charging_hlc->notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, /*sa_schedule_tuple_id=*/0,
+                                                        /*selected_charging_schedule_id=*/std::nullopt, ev_schedule);
+}
+
+// Sign flip the other way: CSMS permits discharge only, EV asks to charge. Must renegotiate.
+TEST_F(K15BoundaryCheckFixture, K15FR09_NegativeEnvelopeRejectsChargeRequest) {
+    ChargingSchedule cached = make_schedule(ChargingRateUnitEnum::A, /*limit=*/-16.0f);
+    {
+        auto handle = smart_charging_hlc->last_handed_off_schedules.handle();
+        (*handle)[DEFAULT_EVSE_ID] = {cached};
+    }
+
+    auto ev_schedule = make_schedule(ChargingRateUnitEnum::A, /*limit=*/5.0f);
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
+
+    smart_charging_hlc->notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, /*sa_schedule_tuple_id=*/0,
+                                                        /*selected_charging_schedule_id=*/std::nullopt, ev_schedule);
+}
+
 // EvseV2G maps OCPP schedule ids into SAScheduleTupleID's 1..255 range via
 // ((id - 1) % 255) + 1. For schedule ids > 255, the biased id differs from the original, so a
 // raw id-compare in pick_csms_reference silently falls back to front() and bounds-checks the EV

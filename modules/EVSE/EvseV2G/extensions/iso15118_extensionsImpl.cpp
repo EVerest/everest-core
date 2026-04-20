@@ -13,18 +13,40 @@
 namespace module {
 namespace extensions {
 
-namespace {
-// Convert a watt value into an iso2 PhysicalValue (value + exponent, base unit W).
+namespace testing_internal {
+// Convert a watt value into an iso2 PhysicalValue (value + exponent, base unit W). The iso2
+// PhysicalValueType has a signed-16-bit Value and a Multiplier in -3..3. Any watt value whose
+// magnitude still exceeds INT16_MAX after scaling by 10^3 (i.e. > ~32.767 MW) cannot be
+// represented — clamp to INT16_MIN/INT16_MAX and warn so the wire value is at least defined.
+// Pre-C++20, narrowing an out-of-range double to int16_t is implementation-defined; an explicit
+// clamp makes the outcome portable.
 void set_pmax_watts(iso2_PhysicalValueType& dst, double watts) {
+    constexpr int8_t MAX_MULTIPLIER = 3;
+    constexpr auto INT16_MAX_V = std::numeric_limits<int16_t>::max();
+    constexpr auto INT16_MIN_V = std::numeric_limits<int16_t>::min();
+
     int8_t multiplier = 0;
     double scaled = watts;
-    while (std::abs(scaled) > std::numeric_limits<int16_t>::max() and multiplier < 3) {
+    while (std::abs(scaled) > INT16_MAX_V and multiplier < MAX_MULTIPLIER) {
         scaled /= 10.0;
         ++multiplier;
     }
+
+    int16_t value = 0;
+    if (scaled > INT16_MAX_V) {
+        EVLOG_warning << "PMax " << watts << " W exceeds iso2 wire range; clamping to " << INT16_MAX_V << " * 10^"
+                      << static_cast<int>(multiplier);
+        value = INT16_MAX_V;
+    } else if (scaled < INT16_MIN_V) {
+        EVLOG_warning << "PMax " << watts << " W exceeds iso2 wire range; clamping to " << INT16_MIN_V << " * 10^"
+                      << static_cast<int>(multiplier);
+        value = INT16_MIN_V;
+    } else {
+        value = static_cast<int16_t>(scaled);
+    }
     dst.Multiplier = multiplier;
     dst.Unit = iso2_unitSymbolType_W;
-    dst.Value = static_cast<int16_t>(scaled);
+    dst.Value = value;
 }
 
 // Best-effort conversion of an OCPP ChargingSchedulePeriod limit (in W or A) to a wattage number
@@ -37,9 +59,32 @@ double period_limit_to_watts(const types::ocpp::ChargingSchedulePeriod& period, 
     }
     return period.limit * assumed_voltage;
 }
-} // namespace
 
-namespace testing_internal {
+// Choose the nominal voltage to translate amp-denominated OCPP schedule limits into watts.
+// AC sessions: use the manifest-configured evse_ac_nominal_voltage (typically 230 V).
+// DC sessions: the AC default (230 V) under-reports PMax by ~1.7x on 400 V DC architectures,
+// which is a silent data-integrity bug for the EV's envelope math. Prefer the reported DC
+// EVSEMaximumVoltageLimit when populated; otherwise a conservative 400 V fallback.
+// A caller is expected to warn once per bundle when an amp-denominated schedule falls on a
+// DC session so the heuristic is visible.
+double resolve_nominal_voltage(const struct v2g_context* ctx) {
+    constexpr double AC_DEFAULT_V = 230.0;
+    constexpr double DC_FALLBACK_V = 400.0;
+    if (ctx == nullptr) {
+        return AC_DEFAULT_V;
+    }
+    if (ctx->is_dc_charger) {
+        if (ctx->evse_v2g_data.evse_maximum_voltage_limit_is_used != 0U) {
+            const auto& pv = ctx->evse_v2g_data.evse_maximum_voltage_limit;
+            return static_cast<double>(pv.Value) * std::pow(10.0, pv.Multiplier);
+        }
+        return DC_FALLBACK_V;
+    }
+    return ctx->basic_config.evse_ac_nominal_voltage > 0
+               ? static_cast<double>(ctx->basic_config.evse_ac_nominal_voltage)
+               : AC_DEFAULT_V;
+}
+
 // K16 renegotiation latch: set evse_notification to ReNegotiation when currently None,
 // so the next DC/AC response builder emits EVSENotification=ReNegotiation and the EV
 // renegotiates (K16.FR.02/11). StopCharging has precedence and is never clobbered.
@@ -68,6 +113,12 @@ void trigger_renegotiation_if_idle(struct v2g_context* ctx) {
     pthread_mutex_unlock(&ctx->mqtt_lock);
 }
 } // namespace testing_internal
+
+namespace {
+using testing_internal::period_limit_to_watts;
+using testing_internal::resolve_nominal_voltage;
+using testing_internal::set_pmax_watts;
+} // namespace
 
 void iso15118_extensionsImpl::init() {
     if (!v2g_ctx) {
@@ -149,8 +200,13 @@ types::iso15118::SetChargingSchedulesResult iso15118_extensionsImpl::handle_set_
         const std::size_t period_count =
             std::min<std::size_t>(source.charging_schedule_period.size(), iso2_PMaxScheduleEntryType_12_ARRAY_SIZE);
         tuple.PMaxSchedule.PMaxScheduleEntry.arrayLen = static_cast<uint16_t>(period_count);
-        const double assumed_voltage =
-            v2g_ctx->basic_config.evse_ac_nominal_voltage > 0 ? v2g_ctx->basic_config.evse_ac_nominal_voltage : 230.0;
+        const double assumed_voltage = resolve_nominal_voltage(v2g_ctx);
+        if (v2g_ctx->is_dc_charger and source.charging_rate_unit != "W") {
+            // Single warning per tuple; amp-denominated schedules on DC sessions are translated
+            // heuristically and may mis-report the envelope at the EVSE's actual operating voltage.
+            EVLOG_warning << "DC session with amp-denominated schedule (id=" << source.id
+                          << "); translating PMax using nominal voltage " << assumed_voltage << " V";
+        }
         // OCPP ChargingSchedulePeriod::start_period is signed (per spec a non-negative offset
         // in seconds). Clamp rather than wrap on unsigned cast so a malformed negative value
         // cannot produce a multi-gigasecond interval on the wire.
