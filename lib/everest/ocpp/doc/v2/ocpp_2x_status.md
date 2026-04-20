@@ -1871,13 +1871,13 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | -------------------- | ------ | ------ |
 | K15.FR.01            | ✅     |        |
 | K15.FR.02            | 🌐     |        |
-| K15.FR.03            | 🌐     |        |
-| K15.FR.04            | 🌐     |        |
-| K15.FR.05            | 🌐     |        |
+| K15.FR.03            | ✅     | notify_ev_charging_needs_response_callback wires libocpp into OCPP201; fan-out via iso15118_extensions to EvseV2G / Evse15118D20. |
+| K15.FR.04            | ✅     | Schedule selection across the TxProfile stack in compute_sa_schedule_list (smart_charging.cpp). |
+| K15.FR.05            | ✅     | transfer_ev_charging_schedules_callback delivers the composite bundle to the ISO 15118 stack. |
 | K15.FR.06            | ⛽️    |        |
-| K15.FR.07            | 🌐     |        |
-| K15.FR.08            | 🌐     |        |
-| K15.FR.09            | ✅     | verify_ev_profile_within_boundaries in smart_charging.cpp |
+| K15.FR.07            | ✅     | compute_sa_schedule_list emits up to three SAScheduleList tuples. |
+| K15.FR.08            | ✅     | salesTariff preserved from the highest-stack-level contributing TxProfile per slot. |
+| K15.FR.09            | ✅     | verify_ev_profile_within_boundaries in smart_charging.cpp; magnitude-aware for discharge envelopes. |
 | K15.FR.10            |        |        |
 | K15.FR.11            |        |        |
 | K15.FR.12            |        |        |
@@ -1885,11 +1885,12 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | K15.FR.14            |        |        |
 | K15.FR.15            | ✅     |        |
 | K15.FR.16            |        |        |
-| K15.FR.17            |        |        |
+| K15.FR.17            | ✅     | Empty-schedule / cancellation path covered by notify_ev_charging_schedule_req. |
 | K15.FR.18            | 🌐     |        |
-| K15.FR.19            |        |        |
+| K15.FR.19            | ✅     | NotifyEVChargingSchedule fallback synthesizes a placeholder period so the message passes CSMS schema validation. |
 | K15.FR.20 <br> (2.1) |        |        |
-| K15.FR.21 <br> (2.1) |        |        |
+| K15.FR.21 <br> (2.1) | ✅     | EVSE id fan-out via OCPP201::handle_ev_selected_schedule and the iso15118_extensions ev_selected_schedule var. |
+| K15.FR.22 <br> (2.1) | ✅     | compute_sa_schedule_list combines chargingSchedules across TxProfile stack levels with lowest-limit-wins composite semantics; folds in ChargingStationMaxProfile, ChargingStationExternalConstraints, and LocalGeneration. |
 
 
 ## SmartCharging - Renegotiation initiated by CSMS
@@ -1897,8 +1898,8 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | ID                   | Status | Remark |
 | -------------------- | ------ | ------ |
 | K16.FR.01            |        |        |
-| K16.FR.02 <br> (2.1) | ⚠️     | libocpp trigger wired; 15118-2 latch complete via EvseV2G; 15118-20 path is a dead-drop (consumer blocked on libiso15118 d20 Session mutator) |
-| K16.FR.03            |        | Renegotiation latch fires, but schedule re-handoff is NOT invoked → EV re-enters CPD with stale evse_sa_schedule_list |
+| K16.FR.02 <br> (2.1) | ✅     | Renegotiation fires on SetChargingProfile (TxProfile, TxDefaultProfile, ChargingStationMaxProfile, ChargingStationExternalConstraints, LocalGeneration) and on ClearChargingProfile when the composite materially changes; 15118-2 latch via EvseV2G; 15118-20 path deferred (blocked on libiso15118 d20 Session mutator). ExternalConstraints and LocalGeneration currently only reachable after a prior profile install bypasses K01 validation (pre-existing FIXMEs). |
+| K16.FR.03            | ✅     | transfer_ev_charging_schedules_callback is re-invoked alongside the renegotiation trigger; EV re-enters CPD with the refreshed evse_sa_schedule_list. |
 | K16.FR.04 <br> (2.1) | ✅     | verify_ev_profile_within_boundaries in smart_charging.cpp |
 | K16.FR.05 <br> (2.1) |        |        |
 | K16.FR.06            |        |        |
@@ -1906,7 +1907,7 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | K16.FR.08            |        |        |
 | K16.FR.09            |        |        |
 | K16.FR.10            |        |        |
-| K16.FR.11 <br> (2.1) |        |        |
+| K16.FR.11 <br> (2.1) | ✅     | ISO 15118-2 DC covered via OCPP→EnergyManager→EvseManager→EvseV2G: next CurrentDemandRes advertises the reduced EVSEMaximumCurrentLimit. ISO 15118-2 AC covered via the same path for ChargingStatusRes; AC_EVSEChargeParameter (CPD response for renegotiation re-entry) now uses min(nominal, dynamic_limit). ISO 15118-20 path deferred (blocked on libiso15118 d20 Session mutator). |
 | K16.FR.12            |        |        |
 | K16.FR.13 <br> (2.1) |        |        |
 | K16.FR.14 <br> (2.1) |        |        |
