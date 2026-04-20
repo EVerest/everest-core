@@ -69,6 +69,7 @@ option(ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES "Automatically generate and 
 option(EVEREST_ENABLE_RUN_SCRIPT_GENERATION "Enables the generation of run scripts (convenience scripts for starting available configurations)" ON)
 option(EVEREST_BUILD_DOCS "Build EVerest documentation" OFF)
 option(EVEREST_SKIP_BUILD_API_DOC "Skip building the async API html doc for the EVerest API" OFF)
+option(EVEREST_API_TYPES_LIB_MINIFIED_JSON "Format JSON output as minified for the EVerest API types" OFF)
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(EVEREST_ENABLE_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag" OFF)

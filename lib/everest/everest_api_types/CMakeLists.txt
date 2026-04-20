@@ -5,8 +5,15 @@ ev_register_library_target(everest_api_types)
 
 add_dependencies(everest_api_types generate_cpp_files)
 
+option(EVEREST_API_TYPES_LIB_MINIFIED_JSON
+    "Serialize JSON without indentation (compact output)" OFF)
+
 target_compile_options(everest_api_types
   PUBLIC  -Wall -Wextra -pedantic -Werror=switch)
+
+if(EVEREST_API_TYPES_LIB_MINIFIED_JSON)
+    target_compile_definitions(everest_api_types PUBLIC EVEREST_API_TYPES_LIB_MINIFIED_JSON)
+endif()
 
 set_target_properties(everest_api_types PROPERTIES
   VERSION 0.1.0
