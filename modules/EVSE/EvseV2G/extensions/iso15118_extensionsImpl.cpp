@@ -151,17 +151,28 @@ types::iso15118::SetChargingSchedulesResult iso15118_extensionsImpl::handle_set_
         tuple.PMaxSchedule.PMaxScheduleEntry.arrayLen = static_cast<uint16_t>(period_count);
         const double assumed_voltage =
             v2g_ctx->basic_config.evse_ac_nominal_voltage > 0 ? v2g_ctx->basic_config.evse_ac_nominal_voltage : 230.0;
+        // OCPP ChargingSchedulePeriod::start_period is signed (per spec a non-negative offset
+        // in seconds). Clamp rather than wrap on unsigned cast so a malformed negative value
+        // cannot produce a multi-gigasecond interval on the wire.
+        auto clamped_start = [](std::int32_t raw) -> std::uint32_t {
+            if (raw < 0) {
+                EVLOG_warning << "ChargingSchedulePeriod start_period=" << raw << " is negative; clamping to 0";
+                return 0U;
+            }
+            return static_cast<std::uint32_t>(raw);
+        };
         for (std::size_t p = 0; p < period_count; ++p) {
             const auto& period = source.charging_schedule_period[p];
             auto& entry = tuple.PMaxSchedule.PMaxScheduleEntry.array[p];
 
             set_pmax_watts(entry.PMax, period_limit_to_watts(period, source.charging_rate_unit, assumed_voltage));
-            entry.RelativeTimeInterval.start = static_cast<uint32_t>(period.start_period);
+            const auto start = clamped_start(period.start_period);
+            entry.RelativeTimeInterval.start = start;
             const auto next_start = (p + 1 < period_count)
-                                        ? static_cast<uint32_t>(source.charging_schedule_period[p + 1].start_period)
-                                        : static_cast<uint32_t>(source.duration.value_or(0));
-            if (next_start > static_cast<uint32_t>(period.start_period)) {
-                entry.RelativeTimeInterval.duration = next_start - static_cast<uint32_t>(period.start_period);
+                                        ? clamped_start(source.charging_schedule_period[p + 1].start_period)
+                                        : static_cast<std::uint32_t>(std::max(0, source.duration.value_or(0)));
+            if (next_start > start) {
+                entry.RelativeTimeInterval.duration = next_start - start;
                 entry.RelativeTimeInterval.duration_isUsed = 1;
             } else {
                 entry.RelativeTimeInterval.duration_isUsed = 0;

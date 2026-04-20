@@ -130,17 +130,30 @@ struct BoundaryCheckResult {
 };
 
 /// \brief Pick the CSMS-sent schedule to compare against when the EV returned an id that may or
-/// may not match one of the cached schedules. If the EV's id matches one of the cached schedules
-/// we use that; otherwise we fall back to the first (lowest stack) entry so the bound is still
-/// enforced — the EV is not allowed to pick an id outside the CSMS envelope.
-const ChargingSchedule* pick_csms_reference(const ChargingSchedule& ev_schedule,
+/// may not match one of the cached schedules. Direct id equality first; if that misses, try the
+/// SAScheduleTupleID bias that EvseV2G applies to cap OCPP schedule ids into 1..255 on the iso2
+/// wire (`((id - 1) % 255) + 1`). Cached schedules whose original id > 255 get biased on the wire
+/// and the EV echoes back the biased value — a raw compare would silently fall back to front()
+/// and bounds-check the EV against the wrong tuple on multi-tuple handoffs. Final fallback is
+/// front() so the bound is still enforced — the EV is not allowed to pick an id outside the CSMS
+/// envelope.
+/// Precondition: \p csms_schedules must be non-empty (the caller handles the empty case).
+const ChargingSchedule& pick_csms_reference(const ChargingSchedule& ev_schedule,
                                             const std::vector<ChargingSchedule>& csms_schedules) {
     for (const auto& c : csms_schedules) {
         if (c.id == ev_schedule.id) {
-            return &c;
+            return c;
         }
     }
-    return &csms_schedules.front();
+    // SAScheduleTupleID must be 1..255 per [V2G2-773]; EvseV2G maps OCPP ids into that range.
+    auto biased = [](std::int32_t id) -> std::int32_t { return id > 0 ? ((id - 1) % 255) + 1 : id; };
+    const auto ev_biased = biased(ev_schedule.id);
+    for (const auto& c : csms_schedules) {
+        if (biased(c.id) == ev_biased) {
+            return c;
+        }
+    }
+    return csms_schedules.front();
 }
 
 /// \brief Locate the CSMS schedule period covering the EV period starting at \p start_period.
@@ -175,11 +188,7 @@ BoundaryCheckResult verify_ev_profile_within_boundaries(const ChargingSchedule& 
         return {true, {}};
     }
 
-    const ChargingSchedule* ref = pick_csms_reference(ev_schedule, csms_schedules);
-    if (ref == nullptr) {
-        return {true, {}};
-    }
-    const ChargingSchedule& csms = *ref;
+    const ChargingSchedule& csms = pick_csms_reference(ev_schedule, csms_schedules);
 
     if (ev_schedule.chargingRateUnit != csms.chargingRateUnit) {
         return {false, "chargingRateUnit mismatch"};
@@ -1392,39 +1401,41 @@ void SmartCharging::notify_ev_charging_needs_req(const NotifyEVChargingNeedsRequ
     auto state = EvScheduleState{};
     state.evse_id = request.evseId;
     state.timeout_timer = std::make_unique<Everest::SteadyTimer>();
-    state.timeout_timer->timeout(
-        [this, transaction_id]() {
-            // 60-second timeout: surface NoChargingProfile to the ISO 15118 stack so it falls
-            // back to a default/unlimited schedule (K15.FR.04, K15.FR.08).
-            std::int32_t evse_id = 0;
-            bool fire = false;
-            {
-                auto handle = this->ev_schedule_state.handle();
-                auto it = handle->find(transaction_id);
-                if (it != handle->end() and not it->second.response_received) {
-                    evse_id = it->second.evse_id;
-                    fire = true;
-                    handle->erase(it);
-                }
-            }
-            if (fire and this->notify_ev_charging_needs_response_callback.has_value()) {
-                this->notify_ev_charging_needs_response_callback.value()(
-                    evse_id, NotifyEVChargingNeedsStatusEnum::NoChargingProfile);
-            }
-        },
-        EV_SCHEDULE_TIMEOUT);
 
     // Destroy any prior entry's timer OUTSIDE the monitor lock: ~SteadyTimer joins its worker
-    // thread, and that worker may be parked on this->ev_schedule_state.handle() (callback at
-    // smart_charging.cpp:1177-1194). Destroying under the lock would deadlock.
+    // thread, and that worker may be parked on this->ev_schedule_state.handle(). Destroying
+    // under the lock would deadlock. Arm the new timer AFTER the insertion so its callback can
+    // never fire into an empty map — safe at 60 s today, but a mandatory invariant for any
+    // future timeout shortening.
     std::unique_ptr<Everest::SteadyTimer> expiring_timer;
     {
         auto handle = this->ev_schedule_state.handle();
-        auto it = handle->find(transaction_id);
-        if (it != handle->end()) {
-            expiring_timer = std::move(it->second.timeout_timer);
+        auto existing = handle->find(transaction_id);
+        if (existing != handle->end()) {
+            expiring_timer = std::move(existing->second.timeout_timer);
         }
-        (*handle)[transaction_id] = std::move(state);
+        auto [it, inserted] = handle->insert_or_assign(transaction_id, std::move(state));
+        it->second.timeout_timer->timeout(
+            [this, transaction_id]() {
+                // 60-second timeout: surface NoChargingProfile to the ISO 15118 stack so it falls
+                // back to a default/unlimited schedule (K15.FR.04, K15.FR.08).
+                std::int32_t evse_id = 0;
+                bool fire = false;
+                {
+                    auto handle = this->ev_schedule_state.handle();
+                    auto it = handle->find(transaction_id);
+                    if (it != handle->end() and not it->second.response_received) {
+                        evse_id = it->second.evse_id;
+                        fire = true;
+                        handle->erase(it);
+                    }
+                }
+                if (fire and this->notify_ev_charging_needs_response_callback.has_value()) {
+                    this->notify_ev_charging_needs_response_callback.value()(
+                        evse_id, NotifyEVChargingNeedsStatusEnum::NoChargingProfile);
+                }
+            },
+            EV_SCHEDULE_TIMEOUT);
     }
     // expiring_timer (if any) goes out of scope here — ~Timer joins with no monitor held.
 }
@@ -1440,9 +1451,17 @@ void SmartCharging::notify_ev_charging_schedule_req(std::int32_t evse_id, std::i
         request.chargingSchedule = ev_charging_schedule.value();
     } else {
         // K15.FR.19: EV did not return a profile; the CS SHOULD echo a schedule that matches the
-        // SAScheduleTuple the EV selected. Caller should normally provide ev_charging_schedule;
-        // the empty fallback here keeps the message well-formed.
+        // SAScheduleTuple the EV selected. Caller has no EV-side data, so synthesize a minimal
+        // well-formed schedule: one period starting at offset 0 with a zero limit (the OCPP JSON
+        // schema requires chargingSchedulePeriod minItems=1; an empty array would be rejected).
+        // The warning surfaces the substitution for the CSMS operator.
+        EVLOG_warning << "NotifyEVChargingSchedule: no EV-side schedule on evse " << evse_id
+                      << "; synthesizing empty-period fallback";
         request.chargingSchedule.chargingRateUnit = ChargingRateUnitEnum::A;
+        ChargingSchedulePeriod placeholder{};
+        placeholder.startPeriod = 0;
+        placeholder.limit = 0;
+        request.chargingSchedule.chargingSchedulePeriod.push_back(placeholder);
     }
     // Tie the reported schedule id to the tuple the EV picked, as recommended by K15.FR.19.
     request.chargingSchedule.id = sa_schedule_tuple_id;

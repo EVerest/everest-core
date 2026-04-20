@@ -2035,7 +2035,10 @@ TEST(SaScheduleCompositionTest, K15FR22_CapsAtThreeSlotsAcrossStackLevels) {
 
 TEST_F(SmartChargingTest, K15FR21_NotifyEvChargingSchedule_NoEvScheduleUsesFallback) {
     // When the EV did not return a profile we still emit a well-formed message; the id of the
-    // fallback schedule matches the SAScheduleTupleId the EV picked (K15.FR.19).
+    // fallback schedule matches the SAScheduleTupleId the EV picked (K15.FR.19). The fallback
+    // chargingSchedule must carry at least one chargingSchedulePeriod — the OCPP JSON schema
+    // marks chargingSchedulePeriod as a required array with minItems=1, so an empty array would
+    // be CSMS-rejected.
     ocpp_version.store(OcppProtocolVersion::v201);
 
     NotifyEVChargingScheduleRequest captured;
@@ -2046,6 +2049,10 @@ TEST_F(SmartChargingTest, K15FR21_NotifyEvChargingSchedule_NoEvScheduleUsesFallb
     smart_charging.notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, 7, std::nullopt, std::nullopt);
 
     EXPECT_EQ(captured.chargingSchedule.id, 7);
+    ASSERT_FALSE(captured.chargingSchedule.chargingSchedulePeriod.empty())
+        << "K15.FR.19 fallback must include at least one chargingSchedulePeriod";
+    EXPECT_EQ(captured.chargingSchedule.chargingSchedulePeriod.front().startPeriod, 0)
+        << "First period must start at offset 0 per K01.FR.31";
 }
 
 /// \brief K16 renegotiation tests — Set/ClearChargingProfile during an active HLC session.
@@ -2410,6 +2417,35 @@ TEST_F(K15BoundaryCheckFixture, K15FR09_EmptyCacheSkipsBoundaryCheck) {
     EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call).Times(0);
 
     smart_charging_hlc->notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, /*sa_schedule_tuple_id=*/1,
+                                                        /*selected_charging_schedule_id=*/std::nullopt, ev_schedule);
+}
+
+// EvseV2G maps OCPP schedule ids into SAScheduleTupleID's 1..255 range via
+// ((id - 1) % 255) + 1. For schedule ids > 255, the biased id differs from the original, so a
+// raw id-compare in pick_csms_reference silently falls back to front() and bounds-checks the EV
+// against the WRONG tuple. Cache two schedules with large distinct ids; expect the match to pick
+// the tuple whose biased id equals the EV's reported id.
+TEST_F(K15BoundaryCheckFixture, K15FR09_MultiTupleCacheMatchesBiasedId) {
+    // Seed the cache directly with two schedules whose ids require biasing on the wire.
+    // biased(300) = 299 % 255 + 1 = 45
+    // biased(500) = 499 % 255 + 1 = 245
+    ChargingSchedule cached_first = make_schedule(ChargingRateUnitEnum::A, /*limit=*/16.0f);
+    cached_first.id = 300;
+    ChargingSchedule cached_second = make_schedule(ChargingRateUnitEnum::A, /*limit=*/32.0f);
+    cached_second.id = 500;
+    {
+        auto handle = smart_charging_hlc->last_handed_off_schedules.handle();
+        (*handle)[DEFAULT_EVSE_ID] = {cached_first, cached_second};
+    }
+
+    // EV picks the second tuple (id=500) — reports it via the biased SAScheduleTupleID (245).
+    // Its limit matches cached_second's 32 A envelope, so no renegotiation should fire.
+    auto ev_schedule = make_schedule(ChargingRateUnitEnum::A, /*limit=*/32.0f);
+    ev_schedule.id = 245;
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call).Times(0);
+
+    smart_charging_hlc->notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, /*sa_schedule_tuple_id=*/245,
                                                         /*selected_charging_schedule_id=*/std::nullopt, ev_schedule);
 }
 

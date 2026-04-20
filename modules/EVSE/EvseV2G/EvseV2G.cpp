@@ -49,7 +49,17 @@ void EvseV2G::init() {
         throw std::runtime_error("Failed to create v2g context");
     }
 
-    v2g_ctx->basic_config.cpd_timeout_ms = static_cast<long long int>(config.cpd_timeout_ms);
+    // Non-positive values either elide the wait entirely (0) or put the deadline in the past
+    // (negative). Fall back to the manifest default so cpd_handoff_self_heal is not trivially
+    // triggered by a misconfiguration.
+    constexpr long long int CPD_TIMEOUT_MS_DEFAULT = 60000;
+    long long int cpd_timeout_ms = static_cast<long long int>(config.cpd_timeout_ms);
+    if (cpd_timeout_ms <= 0) {
+        EVLOG_warning << "cpd_timeout_ms=" << cpd_timeout_ms << " is invalid (must be > 0); falling back to default "
+                      << CPD_TIMEOUT_MS_DEFAULT << " ms";
+        cpd_timeout_ms = CPD_TIMEOUT_MS_DEFAULT;
+    }
+    v2g_ctx->basic_config.cpd_timeout_ms = cpd_timeout_ms;
 
     (void)openssl::set_log_handler(log_handler);
     tls::Server::configure_signal_handler(SIGUSR1);

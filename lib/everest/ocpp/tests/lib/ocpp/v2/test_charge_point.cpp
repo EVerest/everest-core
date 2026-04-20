@@ -489,6 +489,49 @@ TEST_F(ChargePointCommonTestFixtureV2,
     EXPECT_TRUE(callbacks.all_callbacks_valid(device_model, evse_connector_structure));
 }
 
+TEST_F(ChargePointCommonTestFixtureV2,
+       K15FR03_CallbacksValidityChecksIfOptionalNotifyEvChargingNeedsResponseCallbackIsNotSetOrNotNull) {
+    configure_callbacks_with_mocks();
+
+    callbacks.notify_ev_charging_needs_response_callback = nullptr;
+    EXPECT_FALSE(callbacks.all_callbacks_valid(device_model, evse_connector_structure));
+
+    testing::MockFunction<void(int32_t evse_id, NotifyEVChargingNeedsStatusEnum status)>
+        notify_ev_charging_needs_response_callback_mock;
+    callbacks.notify_ev_charging_needs_response_callback =
+        notify_ev_charging_needs_response_callback_mock.AsStdFunction();
+    EXPECT_TRUE(callbacks.all_callbacks_valid(device_model, evse_connector_structure));
+}
+
+TEST_F(ChargePointCommonTestFixtureV2,
+       K15FR22_CallbacksValidityChecksIfOptionalTransferEvChargingSchedulesCallbackIsNotSetOrNotNull) {
+    configure_callbacks_with_mocks();
+
+    callbacks.transfer_ev_charging_schedules_callback = nullptr;
+    EXPECT_FALSE(callbacks.all_callbacks_valid(device_model, evse_connector_structure));
+
+    testing::MockFunction<void(int32_t evse_id, const std::string& transaction_id,
+                               const std::vector<ChargingSchedule>& schedules,
+                               const std::vector<std::optional<SalesTariff>>& tariffs,
+                               const std::vector<std::optional<std::string>>& signature_value_b64,
+                               const std::optional<int32_t>& selected_charging_schedule_id)>
+        transfer_ev_charging_schedules_callback_mock;
+    callbacks.transfer_ev_charging_schedules_callback = transfer_ev_charging_schedules_callback_mock.AsStdFunction();
+    EXPECT_TRUE(callbacks.all_callbacks_valid(device_model, evse_connector_structure));
+}
+
+TEST_F(ChargePointCommonTestFixtureV2,
+       K16FR02_CallbacksValidityChecksIfOptionalTriggerScheduleRenegotiationCallbackIsNotSetOrNotNull) {
+    configure_callbacks_with_mocks();
+
+    callbacks.trigger_schedule_renegotiation_callback = nullptr;
+    EXPECT_FALSE(callbacks.all_callbacks_valid(device_model, evse_connector_structure));
+
+    testing::MockFunction<void(std::int32_t evse_id)> trigger_schedule_renegotiation_callback_mock;
+    callbacks.trigger_schedule_renegotiation_callback = trigger_schedule_renegotiation_callback_mock.AsStdFunction();
+    EXPECT_TRUE(callbacks.all_callbacks_valid(device_model, evse_connector_structure));
+}
+
 TEST_F(ChargePointCommonTestFixtureV2, ReservationAvailableReserveNowCallbackNotSet) {
     configure_callbacks_with_mocks();
     device_model->set_value(ControllerComponentVariables::ReservationCtrlrAvailable.component,

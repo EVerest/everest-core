@@ -249,12 +249,13 @@ protected:
     /// Protected (not private) so TestSmartCharging can inspect map contents in unit tests.
     everest::lib::util::monitor<std::map<std::string, EvScheduleState>> ev_schedule_state;
 
-private:
     /// \brief Per-EVSE snapshot of the last composite schedule vector handed off via
     /// transfer_ev_charging_schedules_callback. Presence of an entry also serves as the
     /// "HLC handoff active" flag for K16.FR.02 / K16.FR.11 change detection.
+    /// Protected (not private) so TestSmartCharging can seed / inspect the cache directly.
     everest::lib::util::monitor<std::map<std::int32_t, std::vector<ChargingSchedule>>> last_handed_off_schedules;
 
+private:
     /// \brief Budget for a CSMS SetChargingProfile after NotifyEVChargingNeedsResponse(Accepted).
     /// K15.FR.08 sets the ISO 15118 ChargeParameterDiscoveryRes timeout at 60 s.
     static constexpr std::chrono::seconds EV_SCHEDULE_TIMEOUT{60};

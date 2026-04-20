@@ -36,6 +36,10 @@ bool Callbacks::all_callbacks_valid(std::shared_ptr<DeviceModelAbstract> device_
         (!this->transaction_event_callback.has_value() or this->transaction_event_callback.value() != nullptr) and
         (!this->transaction_event_response_callback.has_value() or
          this->transaction_event_response_callback.value() != nullptr) and
+        (!this->notify_ev_charging_needs_response_callback.has_value() or
+         this->notify_ev_charging_needs_response_callback.value() != nullptr) and
+        (!this->transfer_ev_charging_schedules_callback.has_value() or
+         this->transfer_ev_charging_schedules_callback.value() != nullptr) and
         (!this->trigger_schedule_renegotiation_callback.has_value() or
          this->trigger_schedule_renegotiation_callback.value() != nullptr);
 

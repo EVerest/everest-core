@@ -133,6 +133,7 @@ public:
     using SmartCharging::ev_schedule_state;
     using SmartCharging::get_reported_profiles;
     using SmartCharging::get_valid_profiles;
+    using SmartCharging::last_handed_off_schedules;
     using SmartCharging::SmartCharging;
     using SmartCharging::validate_evse_exists;
     using SmartCharging::validate_profile_schedules;
