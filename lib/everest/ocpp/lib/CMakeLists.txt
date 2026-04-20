@@ -109,6 +109,7 @@ if(LIBOCPP_ENABLE_V2)
             ocpp/v2/functional_blocks/tariff_and_cost.cpp
             ocpp/v2/functional_blocks/transaction.cpp
             ocpp/v21/functional_blocks/bidirectional.cpp
+            ocpp/v21/functional_blocks/der_control.cpp
     )
     add_subdirectory(ocpp/v2/messages)
     add_subdirectory(ocpp/v21/messages)

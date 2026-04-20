@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for DCDERCtrlr EVSE 1",
+  "name": "DCDERCtrlr",
+  "evse_id": 1,
+  "type": "object",
+  "properties": {
+    "DCDERCtrlrAvailable": {
+      "variable_name": "Available",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": false
+        }
+      ],
+      "description": "Whether DC DER control is supported by this EVSE. Default disabled; set to true to enable DER control on this EVSE.",
+      "default": false,
+      "type": "boolean"
+    },
+    "DCDERCtrlrModesSupported": {
+      "variable_name": "ModesSupported",
+      "characteristics": {
+        "valuesList": "EnterService,FreqDroop,FreqWatt,FixedPFAbsorb,FixedPFInject,FixedVar,Gradients,HFMustTrip,HFMayTrip,HVMustTrip,HVMomCess,HVMayTrip,LimitMaxDischarge,LFMustTrip,LVMustTrip,LVMomCess,LVMayTrip,PowerMonitoringMustTrip,VoltVar,VoltWatt,WattPF,WattVar",
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly",
+          "value": "FreqDroop,FreqWatt,VoltWatt,LimitMaxDischarge,VoltVar,FixedVar,EnterService,Gradients"
+        }
+      ],
+      "description": "List of DER control modes supported by the DC inverter of this EVSE.",
+      "type": "string"
+    }
+  },
+  "required": []
+}

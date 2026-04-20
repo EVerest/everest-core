@@ -31,6 +31,7 @@
 #include <ocpp/v2/functional_blocks/transaction.hpp>
 
 #include <ocpp/v21/functional_blocks/bidirectional.hpp>
+#include <ocpp/v21/functional_blocks/der_control.hpp>
 
 #include <ocpp/v2/messages/LogStatusNotification.hpp>
 #include <ocpp/v2/messages/RequestStopTransaction.hpp>
@@ -653,6 +654,24 @@ void ChargePoint::initialize(const std::map<std::int32_t, std::int32_t>& evse_co
             *this->functional_block_context, this->callbacks.update_allowed_energy_transfer_modes_callback);
     }
 
+    // Check if any EVSE supports DER control (DC or AC DERCtrlr)
+    const bool der_available =
+        std::any_of(evse_connector_structure.begin(), evse_connector_structure.end(), [this](const auto& entry) {
+            const auto& [evse, connectors] = entry;
+            return this->device_model
+                       ->get_optional_value<bool>(
+                           DERComponentVariables::get_dc_component_variable(evse, DERComponentVariables::Available))
+                       .value_or(false) ||
+                   this->device_model
+                       ->get_optional_value<bool>(
+                           DERComponentVariables::get_ac_component_variable(evse, DERComponentVariables::Available))
+                       .value_or(false);
+        });
+
+    if (der_available) {
+        this->der_control = std::make_unique<v21::DERControl>(*this->functional_block_context);
+    }
+
     Variable field_length = {"FieldLength"};
     field_length.instance = "Get15118EVCertificateResponse.exiResponse";
     this->device_model->set_value(ControllerComponents::OCPPCommCtrlr, field_length, AttributeEnum::Actual,
@@ -756,7 +775,17 @@ void ChargePoint::handle_message(const EnhancedMessage<v2::MessageType>& message
             } else {
                 send_not_implemented_error(message.uniqueId, message.messageTypeId);
             }
-
+            break;
+        case MessageType::SetDERControl:
+        case MessageType::GetDERControl:
+        case MessageType::ClearDERControl:
+            if (this->der_control != nullptr) {
+                this->der_control->handle_message(message);
+            } else {
+                send_not_implemented_error(message.uniqueId, message.messageTypeId);
+            }
+            break;
+        case MessageType::NotifyDERStartStopResponse:
             break;
         case MessageType::Authorize:
         case MessageType::AuthorizeResponse:
@@ -852,24 +881,18 @@ void ChargePoint::handle_message(const EnhancedMessage<v2::MessageType>& message
         case MessageType::BatterySwapResponse:
         case MessageType::ChangeTransactionTariff:
         case MessageType::ChangeTransactionTariffResponse:
-        case MessageType::ClearDERControl:
-        case MessageType::ClearDERControlResponse:
         case MessageType::ClearTariffs:
         case MessageType::ClearTariffsResponse:
         case MessageType::ClosePeriodicEventStream:
         case MessageType::ClosePeriodicEventStreamResponse:
         case MessageType::GetCRL:
         case MessageType::GetCRLResponse:
-        case MessageType::GetDERControl:
-        case MessageType::GetDERControlResponse:
         case MessageType::GetPeriodicEventStream:
         case MessageType::GetPeriodicEventStreamResponse:
         case MessageType::GetTariffs:
         case MessageType::GetTariffsResponse:
         case MessageType::NotifyDERAlarm:
         case MessageType::NotifyDERAlarmResponse:
-        case MessageType::NotifyDERStartStop:
-        case MessageType::NotifyDERStartStopResponse:
         case MessageType::NotifyPeriodicEventStream:
         case MessageType::NotifyPeriodicEventStreamResponse:
         case MessageType::NotifyPriorityCharging:
@@ -884,7 +907,9 @@ void ChargePoint::handle_message(const EnhancedMessage<v2::MessageType>& message
         case MessageType::RequestBatterySwapResponse:
         case MessageType::SetDefaultTariff:
         case MessageType::SetDefaultTariffResponse:
-        case MessageType::SetDERControl:
+        case MessageType::ClearDERControlResponse:
+        case MessageType::GetDERControlResponse:
+        case MessageType::NotifyDERStartStop:
         case MessageType::SetDERControlResponse:
         case MessageType::UpdateDynamicSchedule:
         case MessageType::UpdateDynamicScheduleResponse:

@@ -15,7 +15,7 @@ namespace v2 {
 ///
 struct RequiredComponentVariable : ComponentVariable {
     /// \brief Constructor
-    RequiredComponentVariable() : required_for({OcppProtocolVersion::v201, OcppProtocolVersion::v21}){};
+    RequiredComponentVariable() : required_for({OcppProtocolVersion::v201, OcppProtocolVersion::v21}) {};
 
     ///
     /// \brief RequiredComponentVariable
@@ -409,6 +409,14 @@ extern const Variable VehicleCertificateRoot;
 Variable get_protocol_supported_by_ev(const std::int32_t priority);
 ComponentVariable get_component_variable(const std::int32_t evse_id, const Variable& variable);
 } // namespace ConnectedEvComponentVariables
+
+namespace DERComponentVariables {
+extern const Variable Available;
+extern const Variable ModesSupported;
+ComponentVariable get_dc_component_variable(const std::int32_t evse_id, const Variable& variable);
+ComponentVariable get_ac_component_variable(const std::int32_t evse_id, const Variable& variable);
+} // namespace DERComponentVariables
+
 
 } // namespace v2
 } // namespace ocpp

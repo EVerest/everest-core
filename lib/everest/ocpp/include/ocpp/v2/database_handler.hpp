@@ -199,7 +199,82 @@ public:
 
     virtual CiString<20> get_charging_limit_source_for_profile(const int profile_id) = 0;
 
+    // DER Control persistence (OCPP 2.1 R04)
+
+    /// \brief Inserts or updates a DER control in DER_CONTROLS table
+    virtual void insert_or_update_der_control(const std::string& control_id, bool is_default,
+                                              const std::string& control_type, bool is_superseded, int32_t priority,
+                                              const std::optional<std::string>& start_time,
+                                              const std::optional<float>& duration,
+                                              const std::string& control_json) = 0;
+
+    /// \brief Retrieves a single DER control by control_id
+    virtual std::optional<std::string> get_der_control(const std::string& control_id) = 0;
+
+    /// \brief Total number of rows currently in DER_CONTROLS. Used by the DER control
+    /// handler to cap the table so a CSMS cannot grow the DB unbounded by issuing
+    /// SetDERControl with ever-unique controlIds.
+    virtual std::size_t count_der_controls() = 0;
+
+    /// \brief Retrieves all DER controls
+    virtual std::vector<std::string> get_all_der_controls() = 0;
+
+    /// \brief Retrieves DER controls matching optional filter criteria
+    virtual std::vector<std::string>
+    get_der_controls_matching_criteria(const std::optional<bool>& is_default,
+                                       const std::optional<std::string>& control_type,
+                                       const std::optional<std::string>& control_id) = 0;
+
+    /// \brief Deletes a DER control by control_id. Returns true if a row was deleted.
+    virtual bool delete_der_control(const std::string& control_id) = 0;
+
+    /// \brief Deletes a DER control whose CONTROL_ID AND IS_DEFAULT both match.
+    /// Returns true if a row was deleted. Needed for R04.FR.42 so ClearDERControl
+    /// scoped by isDefault won't accidentally delete a row of the opposite kind.
+    virtual bool delete_der_control_by_id_and_default(const std::string& control_id, bool is_default) = 0;
+
+    /// \brief Deletes DER controls matching is_default and optional control_type. Returns number of rows deleted.
+    virtual int delete_der_controls_matching_criteria(bool is_default,
+                                                      const std::optional<std::string>& control_type) = 0;
+
+    /// \brief Updates the is_superseded flag for a DER control
+    virtual void update_der_control_superseded(const std::string& control_id, bool is_superseded) = 0;
+
+    /// \brief R04.FR.07: record that \p new_control_id, once activated, will supersede
+    /// \p existing_control_id. The flip is performed later by a scheduled-check pass.
+    virtual void set_der_control_pending_supersede(const std::string& new_control_id,
+                                                   const std::string& existing_control_id) = 0;
+
+    /// \brief R04.FR.07: clear the pending-supersede pointer for \p control_id after
+    /// the deferred supersede has been performed.
+    virtual void clear_der_control_pending_supersede(const std::string& control_id) = 0;
+
+    /// \brief A pending-supersede activation: when \p new_id 's start time has arrived,
+    /// \p existing_id should be flipped to isSuperseded=true and \p new_id started.
+    struct PendingSupersedeActivation {
+        std::string new_id;
+        std::string existing_id;
+    };
+
+    /// \brief R04.FR.07: return all rows whose PENDING_SUPERSEDE_ID is set and whose
+    /// START_TIME is at or before \p now. Caller is responsible for performing the
+    /// flip + notify + clear inside a transaction.
+    virtual std::vector<PendingSupersedeActivation>
+    get_der_control_pending_supersede_activations(const DateTime& now) = 0;
+
+    /// \brief R04.FR.20/21: return all scheduled, non-superseded rows with
+    /// START_TIME <= \p now that have not yet been flagged STARTED_NOTIFIED.
+    /// Caller emits NotifyDERStartStop(started=true) for each and then calls
+    /// \ref mark_der_control_started_notified on the same id.
+    virtual std::vector<std::string> get_der_controls_needing_start_notify(const DateTime& now) = 0;
+
+    /// \brief R04.FR.20/21: flag a row as having had its start notification emitted.
+    virtual void mark_der_control_started_notified(const std::string& control_id) = 0;
+
     virtual std::unique_ptr<everest::db::sqlite::StatementInterface> new_statement(const std::string& sql) = 0;
+
+    /// \brief Begin a database transaction. Destructor rolls back unless commit() is called.
+    [[nodiscard]] virtual std::unique_ptr<everest::db::sqlite::TransactionInterface> begin_transaction() = 0;
 };
 
 class DatabaseHandler : public DatabaseHandlerInterface, public common::DatabaseHandlerCommon {
@@ -285,7 +360,32 @@ public:
     std::map<std::int32_t, std::vector<v2::ChargingProfile>> get_all_charging_profiles_group_by_evse() override;
     CiString<20> get_charging_limit_source_for_profile(const int profile_id) override;
 
+    // DER Control persistence
+    void insert_or_update_der_control(const std::string& control_id, bool is_default, const std::string& control_type,
+                                      bool is_superseded, int32_t priority,
+                                      const std::optional<std::string>& start_time,
+                                      const std::optional<float>& duration, const std::string& control_json) override;
+    std::optional<std::string> get_der_control(const std::string& control_id) override;
+    std::size_t count_der_controls() override;
+    std::vector<std::string> get_all_der_controls() override;
+    std::vector<std::string> get_der_controls_matching_criteria(const std::optional<bool>& is_default,
+                                                                const std::optional<std::string>& control_type,
+                                                                const std::optional<std::string>& control_id) override;
+    bool delete_der_control(const std::string& control_id) override;
+    bool delete_der_control_by_id_and_default(const std::string& control_id, bool is_default) override;
+    int delete_der_controls_matching_criteria(bool is_default, const std::optional<std::string>& control_type) override;
+    void update_der_control_superseded(const std::string& control_id, bool is_superseded) override;
+
     std::unique_ptr<everest::db::sqlite::StatementInterface> new_statement(const std::string& sql) override;
+
+    void set_der_control_pending_supersede(const std::string& new_control_id,
+                                           const std::string& existing_control_id) override;
+    void clear_der_control_pending_supersede(const std::string& control_id) override;
+    std::vector<PendingSupersedeActivation> get_der_control_pending_supersede_activations(const DateTime& now) override;
+    std::vector<std::string> get_der_controls_needing_start_notify(const DateTime& now) override;
+    void mark_der_control_started_notified(const std::string& control_id) override;
+
+    [[nodiscard]] std::unique_ptr<everest::db::sqlite::TransactionInterface> begin_transaction() override;
 };
 
 } // namespace v2

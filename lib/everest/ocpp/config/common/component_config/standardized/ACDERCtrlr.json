@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for ACDERCtrlr",
+  "name": "ACDERCtrlr",
+  "type": "object",
+  "properties": {
+    "ACDERCtrlrAvailable": {
+      "variable_name": "Available",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly",
+          "value": false
+        }
+      ],
+      "description": "Whether AC DER control is supported by this EVSE. When true, the Charging Station can emulate DER control using ISO 15118-20 ChargeLoop messages to control the inverter in the EV.",
+      "default": false,
+      "type": "boolean"
+    },
+    "ACDERCtrlrModesSupported": {
+      "variable_name": "ModesSupported",
+      "characteristics": {
+        "valuesList": "EnterService,FreqDroop,FreqWatt,FixedPFAbsorb,FixedPFInject,FixedVar,Gradients,HFMustTrip,HFMayTrip,HVMustTrip,HVMomCess,HVMayTrip,LimitMaxDischarge,LFMustTrip,LVMustTrip,LVMomCess,LVMayTrip,PowerMonitoringMustTrip,VoltVar,VoltWatt,WattPF,WattVar",
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "List of DER control modes that the EVSE of the Charging Station can emulate using ISO 15118-20 ChargeLoop messages to control the inverter in the EV.",
+      "type": "string"
+    }
+  },
+  "required": []
+}
