@@ -20,7 +20,7 @@ class DeviceModelInterface;
 ///
 struct RequiredComponentVariable : ComponentVariable {
     /// \brief Constructor
-    RequiredComponentVariable() : required_for({OcppProtocolVersion::v201, OcppProtocolVersion::v21}){};
+    RequiredComponentVariable() : required_for({OcppProtocolVersion::v201, OcppProtocolVersion::v21}) {};
 
     ///
     /// \brief RequiredComponentVariable
@@ -450,6 +450,13 @@ bool write_profile_to_device_model(DeviceModelInterface& dm, int32_t slot, const
 void migrate_from_blob_if_needed(DeviceModelInterface& dm);
 void clear_slot_in_device_model(DeviceModelInterface& dm, int32_t slot);
 } // namespace NetworkConfigurationComponentVariables
+
+namespace DERComponentVariables {
+extern const Variable Available;
+extern const Variable ModesSupported;
+ComponentVariable get_dc_component_variable(const std::int32_t evse_id, const Variable& variable);
+ComponentVariable get_ac_component_variable(const std::int32_t evse_id, const Variable& variable);
+} // namespace DERComponentVariables
 
 } // namespace v2
 } // namespace ocpp

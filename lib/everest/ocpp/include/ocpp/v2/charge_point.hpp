@@ -46,6 +46,14 @@ class TariffAndCostInterface;
 class TransactionInterface;
 class BidirectionalInterface;
 
+} // namespace v2
+
+namespace v21 {
+class DERControlInterface;
+} // namespace v21
+
+namespace v2 {
+
 class DatabaseHandler;
 class DeviceModelAbstract;
 class DeviceModelStorageInterface;
@@ -366,6 +374,7 @@ private:
     std::unique_ptr<ProvisioningInterface> provisioning;
     std::unique_ptr<RemoteTransactionControlInterface> remote_transaction_control;
     std::unique_ptr<BidirectionalInterface> bidirectional;
+    std::unique_ptr<v21::DERControlInterface> der_control;
 
     // utility
     std::shared_ptr<MessageQueue<v2::MessageType>> message_queue;

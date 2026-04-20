@@ -1544,6 +1544,31 @@ ComponentVariable get_component_variable(const std::int32_t evse_id, const Varia
 
 } // namespace ConnectedEvComponentVariables
 
+namespace DERComponentVariables {
+
+const Variable Available = {"Available"};
+const Variable ModesSupported = {"ModesSupported"};
+
+ComponentVariable get_dc_component_variable(const std::int32_t evse_id, const Variable& variable) {
+    EVSE evse = {evse_id};
+    const Component component = {"DCDERCtrlr", evse};
+    ComponentVariable component_variable;
+    component_variable.component = component;
+    component_variable.variable = variable;
+    return component_variable;
+}
+
+ComponentVariable get_ac_component_variable(const std::int32_t evse_id, const Variable& variable) {
+    EVSE evse = {evse_id};
+    const Component component = {"ACDERCtrlr", evse};
+    ComponentVariable component_variable;
+    component_variable.component = component;
+    component_variable.variable = variable;
+    return component_variable;
+}
+
+} // namespace DERComponentVariables
+
 const std::vector<std::pair<ComponentVariable, std::vector<RequiredComponentVariable>>>
     required_component_available_variables{
         {ControllerComponentVariables::LocalAuthListCtrlrAvailable,

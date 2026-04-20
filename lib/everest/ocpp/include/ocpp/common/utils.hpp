@@ -4,6 +4,7 @@
 #define OCPP_COMMON_UTILS_HPP
 
 #include <limits>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -23,6 +24,9 @@ bool is_boolean(const std::string& value);
 bool is_equal(const float& value1, const float& value2, const double& epsilon = std::numeric_limits<double>::epsilon());
 bool is_equal(const double& value1, const double& value2,
               const double& epsilon = std::numeric_limits<double>::epsilon());
+
+/// \brief True if \p v is empty, or holds a value that is not NaN and not +/-Inf.
+bool is_finite_opt(const std::optional<float>& v);
 
 ///
 /// \brief Split string on a given character.

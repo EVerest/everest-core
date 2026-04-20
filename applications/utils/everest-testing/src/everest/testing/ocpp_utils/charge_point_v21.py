@@ -363,3 +363,31 @@ class ChargePoint21(cp):
     async def notify_allowed_energy_transfer_request(self, **kwargs):
         payload = call.NotifyAllowedEnergyTransfer(**kwargs)
         return await self.call(payload)
+
+    # --- OCPP 2.1 R04: DER Control (CSMS -> CS) ---
+
+    async def set_der_control_req(self, **kwargs):
+        payload = call.SetDERControl(**kwargs)
+        return await self.call(payload)
+
+    async def get_der_control_req(self, **kwargs):
+        payload = call.GetDERControl(**kwargs)
+        return await self.call(payload)
+
+    async def clear_der_control_req(self, **kwargs):
+        payload = call.ClearDERControl(**kwargs)
+        return await self.call(payload)
+
+    # --- OCPP 2.1 R04: DER Control (CS -> CSMS) response handlers ---
+
+    @on(Action.notify_der_start_stop)
+    def on_notify_der_start_stop(self, **kwargs):
+        return call_result.NotifyDERStartStop()
+
+    @on(Action.notify_der_alarm)
+    def on_notify_der_alarm(self, **kwargs):
+        return call_result.NotifyDERAlarm()
+
+    @on(Action.report_der_control)
+    def on_report_der_control(self, **kwargs):
+        return call_result.ReportDERControl()
