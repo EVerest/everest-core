@@ -359,6 +359,31 @@ TEST_F(NetworkConfigSyncTest, MigrateFromBlobPullsBasicAuthPasswordFromSecurityC
     EXPECT_EQ(result->basicAuthPassword->get(), expected_password);
 }
 
+// Migration must not propagate the factory sentinel password "DEADBEEFDEADBEEF" into per-slot
+// BasicAuthPassword overrides — otherwise chargers upgraded before the operator sets a real
+// global password would silently advertise the sentinel on the next reconnect.
+TEST_F(NetworkConfigSyncTest, MigrateFromBlobRefusesToCopyFactorySentinelBasicAuthPassword) {
+    NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
+
+    // SecurityCtrlr.BasicAuthPassword holds the factory sentinel (20 chars, passes length check)
+    dm->set_value(ControllerComponentVariables::BasicAuthPassword.component,
+                  ControllerComponentVariables::BasicAuthPassword.variable.value(), AttributeEnum::Actual,
+                  "DEADBEEFDEADBEEF", "test");
+
+    SetNetworkProfileRequest req;
+    req.configurationSlot = 1;
+    req.connectionData = make_basic_profile(1, "wss://sentinel.example.com/ocpp");
+    ASSERT_FALSE(req.connectionData.basicAuthPassword.has_value());
+
+    seed_blob(*dm, make_blob({req}));
+    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
+
+    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_FALSE(result->basicAuthPassword.has_value())
+        << "Per-slot BasicAuthPassword must remain unset when the only source is the factory sentinel";
+}
+
 TEST_F(NetworkConfigSyncTest, MigrateFromBlobPreservesBlobBasicAuthPassword) {
     NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
 
@@ -928,10 +953,12 @@ static SetVariableData make_set_variable_data(int slot, const std::string& varia
     return svd;
 }
 
-// Helper: check if a SetVariableResult was rejected due to active slot protection (B09.FR.22)
+// Helper: check if a SetVariableResult was rejected due to priority-slot protection (B09.FR.22).
+// The spec mandates a single reasonCode "PriorityNetworkConf" for every slot listed in
+// NetworkConfigurationPriority, including the currently active slot.
 static bool is_rejected_by_active_slot(const SetVariableResult& result) {
     return result.attributeStatus == SetVariableStatusEnum::Rejected && result.attributeStatusInfo.has_value() &&
-           result.attributeStatusInfo->reasonCode.get() == "ActiveNetworkConf";
+           result.attributeStatusInfo->reasonCode.get() == "PriorityNetworkConf";
 }
 
 class ProvisioningActiveSlotTest : public ::testing::Test {
@@ -1055,15 +1082,22 @@ TEST_F(ProvisioningActiveSlotTest, AllowOcppTransportOnNonActiveSlot) {
     EXPECT_FALSE(is_rejected_by_active_slot(result)) << "OcppTransport on non-active slot must not be blocked";
 }
 
-// B09.FR.22: When slot 2 is active, slot 2 writes are rejected but slot 1 writes are allowed
+// B09.FR.22: When slot 2 is active, slot 2 writes are rejected. If slot 1 is NOT in the current
+// NetworkConfigurationPriority list, SetVariables on slot 1 must be allowed.
 TEST_F(ProvisioningActiveSlotTest, ActiveSlot2RejectsSlot2AllowsSlot1) {
+    // Narrow NetworkConfigurationPriority to only slot 2 so slot 1 is not a priority member.
+    ASSERT_EQ(dm->set_value(ControllerComponentVariables::NetworkConfigurationPriority.component,
+                            ControllerComponentVariables::NetworkConfigurationPriority.variable.value(),
+                            AttributeEnum::Actual, "2", "test"),
+              SetVariableStatusEnum::Accepted);
     set_active_slot(2);
 
     auto result2 = set_single_variable(make_set_variable_data(2, "OcppCsmsUrl", "wss://new.example.com"));
-    EXPECT_TRUE(is_rejected_by_active_slot(result2)) << "Must reject SetVariables on active slot 2";
+    EXPECT_TRUE(is_rejected_by_active_slot(result2)) << "Must reject SetVariables on active/priority slot 2";
 
     auto result1 = set_single_variable(make_set_variable_data(1, "OcppCsmsUrl", "wss://other.example.com"));
-    EXPECT_FALSE(is_rejected_by_active_slot(result1)) << "Must allow SetVariables on non-active slot 1";
+    EXPECT_FALSE(is_rejected_by_active_slot(result1))
+        << "Must allow SetVariables on slot 1 when it is not in NetworkConfigurationPriority";
 }
 
 // ---------------------------------------------------------------------------

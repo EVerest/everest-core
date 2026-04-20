@@ -1269,7 +1269,7 @@ std::optional<int> ChargePoint::get_priority_from_configuration_slot(const int c
     return this->connectivity_manager->get_priority_from_configuration_slot(configuration_slot);
 }
 
-const std::vector<int>& ChargePoint::get_network_connection_slots() const {
+std::vector<int> ChargePoint::get_network_connection_slots() const {
     return this->connectivity_manager->get_network_connection_slots();
 }
 
