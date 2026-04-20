@@ -67,5 +67,13 @@ types::iso15118::SetChargingSchedulesResult iso15118_extensionsImpl::handle_set_
     return mod->r_ext2->call_set_ev_charging_schedules(charging_schedules);
 }
 
+void iso15118_extensionsImpl::handle_trigger_schedule_renegotiation(int& evse_id) {
+    if (mod->selected_iso20()) {
+        mod->r_ext20->call_trigger_schedule_renegotiation(evse_id);
+    } else {
+        mod->r_ext2->call_trigger_schedule_renegotiation(evse_id);
+    }
+}
+
 } // namespace extensions
 } // namespace module

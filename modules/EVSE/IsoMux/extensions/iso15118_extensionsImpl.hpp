@@ -38,6 +38,7 @@ protected:
     virtual void handle_set_hlc_schedule_wait(bool& wait) override;
     virtual types::iso15118::SetChargingSchedulesResult
     handle_set_ev_charging_schedules(types::iso15118::OcppEvChargingSchedules& charging_schedules) override;
+    virtual void handle_trigger_schedule_renegotiation(int& evse_id) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

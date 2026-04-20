@@ -941,8 +941,8 @@ void OCPP201::ready() {
                 if (mapping.has_value() and mapping->evse == evse_id) {
                     const auto result = extension->call_set_ev_charging_schedules(bundle);
                     if (result.status != types::iso15118::SetChargingSchedulesStatus::Accepted) {
-                        EVLOG_warning << "ISO 15118 stack rejected set_ev_charging_schedules for EVSE "
-                                      << evse_id << " (transaction " << transaction_id << ")";
+                        EVLOG_warning << "ISO 15118 stack rejected set_ev_charging_schedules for EVSE " << evse_id
+                                      << " (transaction " << transaction_id << ")";
                     }
                     return;
                 }
@@ -950,6 +950,21 @@ void OCPP201::ready() {
             EVLOG_warning << "No ISO 15118 extension mapped to EVSE " << evse_id
                           << "; cannot deliver composite ChargingSchedules";
         };
+
+    // K16.FR.02 / FR.11: fan the CSMS-driven schedule renegotiation signal to the ISO 15118 stack so
+    // the EV sees EVSENotification=ReNegotiation (15118-2) or ScheduleRenegotiation=true (15118-20)
+    // on the next response frame.
+    callbacks.trigger_schedule_renegotiation_callback = [this](int32_t evse_id) {
+        for (const auto& extension : this->r_extensions_15118) {
+            const auto mapping = extension->get_mapping();
+            if (mapping.has_value() and mapping->evse == evse_id) {
+                extension->call_trigger_schedule_renegotiation(evse_id);
+                return;
+            }
+        }
+        EVLOG_warning << "No ISO 15118 extension mapped to EVSE " << evse_id
+                      << "; cannot trigger schedule renegotiation";
+    };
 
     callbacks.time_sync_callback = [this](const ocpp::DateTime& current_time) {
         this->r_system->call_set_system_time(current_time.to_rfc3339());

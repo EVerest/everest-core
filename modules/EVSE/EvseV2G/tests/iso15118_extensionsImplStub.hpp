@@ -33,6 +33,11 @@ public:
         std::cout << "iso15118_extensionsImplBase::handle_set_ev_charging_schedules called" << std::endl;
         return {types::iso15118::SetChargingSchedulesStatus::Rejected, std::nullopt};
     }
+
+    virtual void handle_trigger_schedule_renegotiation(int& evse_id) {
+        std::cout << "iso15118_extensionsImplBase::handle_trigger_schedule_renegotiation called with evse_id="
+                  << evse_id << std::endl;
+    }
 };
 
 } // namespace module::stub

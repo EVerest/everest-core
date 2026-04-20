@@ -211,6 +211,49 @@ target_link_libraries(${V2GCTX_NAME}
 add_test(${V2GCTX_NAME} ${V2GCTX_NAME})
 ev_register_test_target(${V2GCTX_NAME})
 
+set(TRIGGER_RENEG_NAME trigger_renegotiation_test)
+add_executable(${TRIGGER_RENEG_NAME})
+
+target_include_directories(${TRIGGER_RENEG_NAME} PRIVATE
+    .. ../connection ${TESTS_INCLUDE_DIR}
+    ${GENERATED_INCLUDE_DIR}
+    ${CMAKE_BINARY_DIR}/generated/modules/${MODULE_NAME}
+    ${CMAKE_BINARY_DIR}/generated/include
+)
+add_dependencies(${TRIGGER_RENEG_NAME} generate_cpp_files)
+
+target_compile_definitions(${TRIGGER_RENEG_NAME} PRIVATE
+    -DUNIT_TEST
+    -DLIBEVSE_CRYPTO_SUPPLIER_OPENSSL
+)
+
+target_sources(${TRIGGER_RENEG_NAME} PRIVATE
+    trigger_renegotiation_test.cpp
+    log.cpp
+    ../extensions/iso15118_extensionsImpl.cpp
+    ../iso_server_handoff.cpp
+    ../v2g_ctx.cpp
+    ../tools.cpp
+)
+
+target_link_libraries(${TRIGGER_RENEG_NAME}
+    PRIVATE
+        GTest::gtest_main
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        cbv2g::din
+        cbv2g::iso2
+        cbv2g::tp
+        everest::framework
+        everest::log
+        everest::evse_security
+        everest::tls
+        -levent -lpthread -levent_pthreads
+)
+
+add_test(${TRIGGER_RENEG_NAME} ${TRIGGER_RENEG_NAME})
+ev_register_test_target(${TRIGGER_RENEG_NAME})
+
 set(ISO_SERVER_HANDOFF_NAME iso_server_handoff_test)
 add_executable(${ISO_SERVER_HANDOFF_NAME})
 

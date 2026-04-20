@@ -31,13 +31,43 @@ void set_pmax_watts(iso2_PhysicalValueType& dst, double watts) {
 // when the schedule unit is "W". For "A" we fall back to assuming EVSE nominal voltage so the
 // limit is translated into a sensible PMax; refinement is a follow-up.
 double period_limit_to_watts(const types::ocpp::ChargingSchedulePeriod& period, const std::string& rate_unit,
-                              double assumed_voltage) {
+                             double assumed_voltage) {
     if (rate_unit == "W") {
         return period.limit;
     }
     return period.limit * assumed_voltage;
 }
 } // namespace
+
+namespace testing_internal {
+// K16 renegotiation latch: set evse_notification to ReNegotiation when currently None,
+// so the next DC/AC response builder emits EVSENotification=ReNegotiation and the EV
+// renegotiates (K16.FR.02/11). StopCharging has precedence and is never clobbered.
+// A re-entry while ReNegotiation is already pending is a no-op. Holds mqtt_lock to
+// serialize with the ISO state machine and signals mqtt_cond so any waiter observes
+// the change immediately.
+void trigger_renegotiation_if_idle(struct v2g_context* ctx) {
+    if (ctx == nullptr) {
+        return;
+    }
+    pthread_mutex_lock(&ctx->mqtt_lock);
+    switch (ctx->evse_v2g_data.evse_notification) {
+    case iso2_EVSENotificationType_None:
+        ctx->evse_v2g_data.evse_notification = iso2_EVSENotificationType_ReNegotiation;
+        break;
+    case iso2_EVSENotificationType_StopCharging:
+        EVLOG_debug << "K16 renegotiation trigger ignored: StopCharging latched";
+        break;
+    case iso2_EVSENotificationType_ReNegotiation:
+        // Latch already pending; no-op.
+        break;
+    default:
+        break;
+    }
+    pthread_cond_signal(&ctx->mqtt_cond);
+    pthread_mutex_unlock(&ctx->mqtt_lock);
+}
+} // namespace testing_internal
 
 void iso15118_extensionsImpl::init() {
     if (!v2g_ctx) {
@@ -90,8 +120,8 @@ void iso15118_extensionsImpl::handle_set_hlc_schedule_wait(bool& wait) {
     pthread_mutex_unlock(&v2g_ctx->mqtt_lock);
 }
 
-types::iso15118::SetChargingSchedulesResult
-iso15118_extensionsImpl::handle_set_ev_charging_schedules(types::iso15118::OcppEvChargingSchedules& charging_schedules) {
+types::iso15118::SetChargingSchedulesResult iso15118_extensionsImpl::handle_set_ev_charging_schedules(
+    types::iso15118::OcppEvChargingSchedules& charging_schedules) {
     if (charging_schedules.schedules.empty()) {
         return {types::iso15118::SetChargingSchedulesStatus::Rejected, std::string("empty schedules")};
     }
@@ -104,8 +134,8 @@ iso15118_extensionsImpl::handle_set_ev_charging_schedules(types::iso15118::OcppE
     pthread_mutex_lock(&v2g_ctx->mqtt_lock);
 
     // Populate one SAScheduleTuple per OCPP composite schedule (up to 3 per K15.FR.22 / V2G2-773).
-    const auto tuple_count = std::min<std::size_t>(charging_schedules.schedules.size(),
-                                                    iso2_SAScheduleTupleType_3_ARRAY_SIZE);
+    const auto tuple_count =
+        std::min<std::size_t>(charging_schedules.schedules.size(), iso2_SAScheduleTupleType_3_ARRAY_SIZE);
     auto& schedule_list = v2g_ctx->evse_v2g_data.evse_sa_schedule_list;
     for (std::size_t k = 0; k < tuple_count; ++k) {
         const auto& source = charging_schedules.schedules[k];
@@ -116,12 +146,11 @@ iso15118_extensionsImpl::handle_set_ev_charging_schedules(types::iso15118::OcppE
         tuple.SAScheduleTupleID = static_cast<uint8_t>(((raw_id - 1) % 255) + 1);
 
         // PMaxSchedule: translate each OCPP ChargingSchedulePeriod into a PMaxScheduleEntry.
-        const std::size_t period_count = std::min<std::size_t>(source.charging_schedule_period.size(),
-                                                                iso2_PMaxScheduleEntryType_12_ARRAY_SIZE);
+        const std::size_t period_count =
+            std::min<std::size_t>(source.charging_schedule_period.size(), iso2_PMaxScheduleEntryType_12_ARRAY_SIZE);
         tuple.PMaxSchedule.PMaxScheduleEntry.arrayLen = static_cast<uint16_t>(period_count);
-        const double assumed_voltage = v2g_ctx->basic_config.evse_ac_nominal_voltage > 0
-                                           ? v2g_ctx->basic_config.evse_ac_nominal_voltage
-                                           : 230.0;
+        const double assumed_voltage =
+            v2g_ctx->basic_config.evse_ac_nominal_voltage > 0 ? v2g_ctx->basic_config.evse_ac_nominal_voltage : 230.0;
         for (std::size_t p = 0; p < period_count; ++p) {
             const auto& period = source.charging_schedule_period[p];
             auto& entry = tuple.PMaxSchedule.PMaxScheduleEntry.array[p];
@@ -158,6 +187,11 @@ iso15118_extensionsImpl::handle_set_ev_charging_schedules(types::iso15118::OcppE
     pthread_mutex_unlock(&v2g_ctx->mqtt_lock);
 
     return {types::iso15118::SetChargingSchedulesStatus::Accepted, std::nullopt};
+}
+
+void iso15118_extensionsImpl::handle_trigger_schedule_renegotiation(int& evse_id) {
+    EVLOG_info << "trigger_schedule_renegotiation received for evse " << evse_id;
+    testing_internal::trigger_renegotiation_if_idle(v2g_ctx);
 }
 
 } // namespace extensions

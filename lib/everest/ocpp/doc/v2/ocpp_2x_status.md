@@ -1897,8 +1897,8 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | ID                   | Status | Remark |
 | -------------------- | ------ | ------ |
 | K16.FR.01            |        |        |
-| K16.FR.02 <br> (2.1) |        |        |
-| K16.FR.03            |        |        |
+| K16.FR.02 <br> (2.1) | ⚠️     | libocpp trigger wired; 15118-2 latch complete via EvseV2G; 15118-20 path is a dead-drop (consumer blocked on libiso15118 d20 Session mutator) |
+| K16.FR.03            |        | Renegotiation latch fires, but schedule re-handoff is NOT invoked → EV re-enters CPD with stale evse_sa_schedule_list |
 | K16.FR.04 <br> (2.1) | ✅     | verify_ev_profile_within_boundaries in smart_charging.cpp |
 | K16.FR.05 <br> (2.1) |        |        |
 | K16.FR.06            |        |        |

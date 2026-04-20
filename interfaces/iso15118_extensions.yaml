@@ -36,6 +36,16 @@ cmds:
       description: Whether the ISO stack accepted and installed the bundle.
       type: object
       $ref: /iso15118#/SetChargingSchedulesResult
+  trigger_schedule_renegotiation:
+    description: >-
+      Signal to the ISO 15118 stack that the CSMS composite schedule for this EVSE has changed
+      and the EV should be asked to renegotiate (OCPP 2.1 K16.FR.02 / K16.FR.11). The ISO 15118-2
+      backend sets EVSENotification=ReNegotiation on the next CurrentDemandRes/ChargingStatusRes;
+      the ISO 15118-20 backend sets ScheduleRenegotiation=true on the next ChargeLoopRes.
+    arguments:
+      evse_id:
+        description: EVSE whose composite schedule has changed.
+        type: integer
 vars:
   iso15118_certificate_request:
     description: >-
