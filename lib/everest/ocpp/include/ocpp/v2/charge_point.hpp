@@ -336,7 +336,7 @@ public:
     /// priority.
     /// @return The network connection slots
     ///
-    virtual const std::vector<int>& get_network_connection_slots() const = 0;
+    virtual std::vector<int> get_network_connection_slots() const = 0;
 };
 
 /// \brief Class implements OCPP2.0.1 Charging Station
@@ -616,7 +616,7 @@ public:
 
     std::optional<int> get_priority_from_configuration_slot(const int configuration_slot) const override;
 
-    const std::vector<int>& get_network_connection_slots() const override;
+    std::vector<int> get_network_connection_slots() const override;
 
     void send_not_implemented_error(const MessageId unique_message_id, const MessageTypeId message_type_id);
 

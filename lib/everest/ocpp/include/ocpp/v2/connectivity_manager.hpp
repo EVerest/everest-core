@@ -7,6 +7,8 @@
 #include <ocpp/v2/messages/SetNetworkProfile.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 
+#include <everest/util/async/monitor.hpp>
+
 #include <atomic>
 #include <chrono>
 #include <functional>
@@ -75,12 +77,12 @@ public:
     ///
     virtual std::optional<std::int32_t> get_priority_from_configuration_slot(const int configuration_slot) const = 0;
 
-    /// @brief Get the network connection slots sorted by priority.
+    /// @brief Get a snapshot of the network connection slots sorted by priority.
     /// Each item in the vector contains the configured configuration slots, where the slot with index 0 has the highest
-    /// priority.
+    /// priority. A copy is returned so callers do not observe mid-mutation state through a reference.
     /// @return The network connection slots
     ///
-    virtual const std::vector<int>& get_network_connection_slots() const = 0;
+    virtual std::vector<int> get_network_connection_slots() const = 0;
 
     /// \brief Check if the websocket is connected
     /// \return True is the websocket is connected, else false
@@ -160,15 +162,25 @@ private:
     std::optional<ConfigureNetworkConnectionProfileCallback> configure_network_connection_profile_callback;
 
     Everest::SteadyTimer websocket_timer;
-    std::optional<std::int32_t> pending_configuration_slot;
     bool wants_to_be_connected;
-    std::int32_t active_network_configuration_priority;
-    int last_known_security_level;
-    /// @brief Local cached network connection profiles
-    std::vector<SetNetworkProfileRequest> cached_network_connection_profiles;
-    /// @brief local cached network connection priorities
-    std::vector<std::int32_t> network_connection_slots;
     OcppProtocolVersion connected_ocpp_version;
+
+    /// @brief Mutable shared state, accessed concurrently from the OCPP message-handling thread,
+    /// the websocket callback thread, and the websocket_timer thread. All access goes through the
+    /// monitor handle, which acquires a recursive mutex for the handle's lifetime.
+    struct NetCfgState {
+        /// Cached NetworkConnectionProfile entries reflecting the per-slot NetworkConfiguration DM variables.
+        std::vector<SetNetworkProfileRequest> cached_profiles;
+        /// Ordered list of configuration slots (highest priority first) derived from NetworkConfigurationPriority.
+        std::vector<std::int32_t> slots;
+        /// Index into \c slots of the slot currently considered active.
+        std::int32_t active_priority{0};
+        /// Slot currently being evaluated by \c try_connect_websocket (overrides active_priority if set).
+        std::optional<std::int32_t> pending_configuration_slot;
+        /// Last SecurityProfile value observed when pruning invalid profiles from the cache.
+        int last_known_security_level{0};
+    };
+    mutable everest::lib::util::monitor<NetCfgState, std::recursive_mutex> m_state;
 
 public:
     ConnectivityManager(DeviceModelAbstract& device_model, std::shared_ptr<EvseSecurity> evse_security,
@@ -188,7 +200,7 @@ public:
     std::optional<NetworkConnectionProfile>
     get_network_connection_profile(const std::int32_t configuration_slot) const override;
     std::optional<std::int32_t> get_priority_from_configuration_slot(const int configuration_slot) const override;
-    const std::vector<int>& get_network_connection_slots() const override;
+    std::vector<int> get_network_connection_slots() const override;
     bool is_websocket_connected() override;
     std::chrono::time_point<std::chrono::steady_clock> get_time_disconnected() const override;
     void connect(std::optional<std::int32_t> network_profile_slot = std::nullopt) override;
@@ -234,32 +246,33 @@ private:
 
     ///
     /// \brief Get the active network configuration slot in use.
-    /// \return The active slot the network is connected to or the pending slot.
+    /// \return The active slot (or pending slot override) if one is available, std::nullopt if the slot
+    ///         list is empty or the current priority index would be out of range.
     ///
-    int get_active_network_configuration_slot() const;
+    std::optional<int> get_active_network_configuration_slot() const;
 
     ///
     /// \brief Get the network configuration slot of the given priority.
     /// \param priority The priority to get the configuration slot.
-    /// \return The configuration slot.
+    /// \return The configuration slot if \p priority is a valid index, std::nullopt otherwise.
     ///
-    int get_configuration_slot_from_priority(const int priority);
+    std::optional<int> get_configuration_slot_from_priority(const int priority);
 
     ///
     /// \brief Get the next prioritized network configuration slot of the given configuration slot.
     /// \param configuration_slot The current configuration slot.
-    /// \return The next prioritized configuration slot.
+    /// \return The next prioritized configuration slot, or std::nullopt if the slot list is empty.
     ///
-    int get_next_configuration_slot(std::int32_t configuration_slot);
+    std::optional<int> get_next_configuration_slot(std::int32_t configuration_slot);
 
-    /// \brief Append the given slot to NetworkConfigurationPriority if it is not already listed (B09.FR.11)
+    /// \brief Append the given slot to NetworkConfigurationPriority if it is not already listed.
     void append_slot_to_network_configuration_priority_if_absent(int32_t slot, const std::string& source);
 
     /// \brief Cache all the network connection profiles
     void cache_network_connection_profiles();
 
-    /// \brief Log an error if all cached profiles have security_profile 0
-    void warn_if_all_security_level_zero() const;
+    /// \brief Log an error if all cached profiles have security_profile 0. Caller must hold the state lock.
+    void warn_if_all_security_level_zero_locked(const NetCfgState& state) const;
 
     /// \brief Removes all connection profiles from the cache that have a security profile lower than the currently
     /// connected security profile

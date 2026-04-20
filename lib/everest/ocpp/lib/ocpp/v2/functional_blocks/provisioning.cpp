@@ -153,18 +153,39 @@ Provisioning::get_variables(const std::vector<GetVariableData>& get_variable_dat
         }
         get_variable_result.attributeStatus = request_value_response.status;
 
-        // B09.FR.28: Return per-slot Identity when GetVariables asks for SecurityCtrlr.Identity
+        // B09.FR.28: Return the per-slot Identity for the currently active profile. Gate on that
+        // slot still being listed in NetworkConfigurationPriority — after a security escalation
+        // prunes a slot from the priority list, its per-slot Identity may still be readable from
+        // the device model but no longer represents the active identity and must not leak out.
         const ComponentVariable cv = {get_variable_data.component, get_variable_data.variable, std::nullopt};
         if (cv == ControllerComponentVariables::SecurityCtrlrIdentity &&
             get_variable_result.attributeStatus == GetVariableStatusEnum::Accepted) {
             const auto active_slot_opt =
                 this->context.device_model.get_optional_value<int>(ControllerComponentVariables::ActiveNetworkProfile);
             if (active_slot_opt.has_value()) {
-                const auto slot_cv = NetworkConfigurationComponentVariables::get_component_variable(
-                    active_slot_opt.value(), NetworkConfigurationComponentVariables::Identity);
-                if (const auto slot_id = this->context.device_model.get_optional_value<std::string>(slot_cv);
-                    slot_id.has_value() && !slot_id->empty()) {
-                    get_variable_result.attributeValue = slot_id.value();
+                const auto priority_opt = this->context.device_model.get_optional_value<std::string>(
+                    ControllerComponentVariables::NetworkConfigurationPriority);
+                bool active_slot_in_priority = false;
+                if (priority_opt.has_value()) {
+                    for (const auto& slot_str : ocpp::split_string(priority_opt.value(), ',')) {
+                        try {
+                            if (std::stoi(slot_str) == active_slot_opt.value()) {
+                                active_slot_in_priority = true;
+                                break;
+                            }
+                        } catch (const std::exception& e) {
+                            EVLOG_debug << "Skipping non-integer token in NetworkConfigurationPriority '" << slot_str
+                                        << "': " << e.what();
+                        }
+                    }
+                }
+                if (active_slot_in_priority) {
+                    const auto slot_cv = NetworkConfigurationComponentVariables::get_component_variable(
+                        active_slot_opt.value(), NetworkConfigurationComponentVariables::Identity);
+                    if (const auto slot_id = this->context.device_model.get_optional_value<std::string>(slot_cv);
+                        slot_id.has_value() && !slot_id->empty()) {
+                        get_variable_result.attributeValue = slot_id.value();
+                    }
                 }
             }
         }
@@ -405,6 +426,21 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
         return;
     }
 
+    // B09.FR.05: If configurationSlot is not listed in NetworkConfigurationPriority.valuesList,
+    // reject with reasonCode "InvalidConfSlot" before validating the profile contents.
+    if (!this->is_slot_allowed_by_priority_values_list(msg.configurationSlot)) {
+        const auto warning = "CSMS attempted to set a network profile on a configurationSlot that is not in "
+                             "NetworkConfigurationPriority.valuesList";
+        EVLOG_warning << warning << ": slot=" << msg.configurationSlot;
+        status_info.reasonCode = "InvalidConfSlot";
+        status_info.additionalInfo = warning;
+        response.statusInfo = status_info;
+        response.status = SetNetworkProfileStatusEnum::Rejected;
+        const ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
+        this->context.message_dispatcher.dispatch_call_result(call_result);
+        return;
+    }
+
     if (msg.connectionData.securityProfile <
         this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile)) {
         const auto warning = "CSMS attempted to set a network profile with a lower securityProfile";
@@ -445,15 +481,17 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
         return;
     }
 
-    // Write the profile to NetworkConfiguration device model variables and refresh the cache (B09.FR.09 / B09.FR.11/12)
+    // Write the profile to NetworkConfiguration device model variables and refresh the cache (B09.FR.09 /
+    // B09.FR.11/12). B09.FR.03: if the profile is semantically valid but the device-model write fails, respond with
+    // status `Failed` (as opposed to `Rejected`, which is reserved for invalid content per B09.FR.02).
     if (!this->context.connectivity_manager.set_network_profile(msg.configurationSlot, msg.connectionData,
                                                                 VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL)) {
-        const auto warning = "CSMS attempted to set a network profile that could not be written to the device model";
+        const auto warning = "Network profile could not be written to the device model";
         EVLOG_warning << warning;
-        status_info.reasonCode = "InvalidNetworkConf";
+        status_info.reasonCode = "InternalError";
         status_info.additionalInfo = warning;
         response.statusInfo = status_info;
-        response.status = SetNetworkProfileStatusEnum::Rejected;
+        response.status = SetNetworkProfileStatusEnum::Failed;
         const ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
         this->context.message_dispatcher.dispatch_call_result(call_result);
         return;
@@ -567,37 +605,21 @@ void Provisioning::handle_variable_changed(const SetVariableData& set_variable_d
 
     if (component_variable == ControllerComponentVariables::BasicAuthPassword) {
         if (this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile) < 3) {
-            // TODO: A01.FR.11 log the change of BasicAuth in Security Log
             this->context.connectivity_manager.set_websocket_authorization_key(set_variable_data.attributeValue.get());
         }
-        // B09.FR.27: Clear per-slot BasicAuthPassword from active NetworkConfiguration slots
-        const auto priority_str = this->context.device_model.get_optional_value<std::string>(
-            ControllerComponentVariables::NetworkConfigurationPriority);
-        if (priority_str.has_value()) {
-            for (const auto& slot_str : ocpp::split_string(priority_str.value(), ',')) {
-                const int slot = std::stoi(slot_str);
-                const auto cv = NetworkConfigurationComponentVariables::get_component_variable(
-                    slot, NetworkConfigurationComponentVariables::BasicAuthPassword);
-                this->context.device_model.set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "",
-                                                     VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
-            }
-            EVLOG_info << "Cleared per-slot BasicAuthPassword from active NetworkConfiguration slots (B09.FR.27)";
-        }
+        // A01.FR.11: log the change of BasicAuthPassword via a SecurityEventNotification.
+        // The event payload must not contain the new password value.
+        const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
+        this->security.security_event_notification_req(CiString<50>(security_event),
+                                                       CiString<255>("BasicAuthPassword changed"), true,
+                                                       utils::is_critical(security_event));
+        // B09.FR.27: Clear the per-slot BasicAuthPassword override on the currently active
+        // NetworkConfiguration slot so the new global value is used.
+        this->clear_active_slot_variable(NetworkConfigurationComponentVariables::BasicAuthPassword, "B09.FR.27");
     }
     if (component_variable == ControllerComponentVariables::SecurityCtrlrIdentity) {
-        // B09.FR.26: Clear per-slot Identity from active NetworkConfiguration slots
-        const auto priority_str = this->context.device_model.get_optional_value<std::string>(
-            ControllerComponentVariables::NetworkConfigurationPriority);
-        if (priority_str.has_value()) {
-            for (const auto& slot_str : ocpp::split_string(priority_str.value(), ',')) {
-                const int slot = std::stoi(slot_str);
-                const auto cv = NetworkConfigurationComponentVariables::get_component_variable(
-                    slot, NetworkConfigurationComponentVariables::Identity);
-                this->context.device_model.set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "",
-                                                     VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
-            }
-            EVLOG_info << "Cleared per-slot Identity from active NetworkConfiguration slots (B09.FR.26)";
-        }
+        // B09.FR.26: Clear the per-slot Identity override on the currently active NetworkConfiguration slot.
+        this->clear_active_slot_variable(NetworkConfigurationComponentVariables::Identity, "B09.FR.26");
     }
     if (component_variable == ControllerComponentVariables::HeartbeatInterval and
         this->registration_status == RegistrationStatusEnum::Accepted) {
@@ -696,26 +718,35 @@ Provisioning::validate_set_network_configuration_slot(const SetVariableData& set
     try {
         const int slot = std::stoi(cv.component.instance.value().get());
 
-        // B09.FR.22: Reject changes to the currently active NetworkConfiguration slot
+        // B09.FR.22: Reject SetVariables targeting the currently active slot or any slot listed
+        // in the current NetworkConfigurationPriority. The spec mandates a single reasonCode
+        // `PriorityNetworkConf` for every such slot (no separate "active" reason code).
         const auto active_slot_opt =
             this->context.device_model.get_optional_value<int>(ControllerComponentVariables::ActiveNetworkProfile);
         if (active_slot_opt.has_value() && slot == active_slot_opt.value()) {
             EVLOG_warning << "Cannot set NetworkConfiguration variable for slot " << slot
                           << " which is the currently active network profile";
-            return "ActiveNetworkConf";
+            return "PriorityNetworkConf";
         }
 
         const auto priority_slot_opt = this->context.device_model.get_optional_value<std::string>(
             ControllerComponentVariables::NetworkConfigurationPriority);
-        const auto priority_list = priority_slot_opt.has_value() ? ocpp::split_string(priority_slot_opt.value(), ',')
-                                                                 : std::vector<std::string>{};
-        if (priority_slot_opt.has_value() &&
-            std::find_if(priority_list.cbegin(), priority_list.cend(), [slot](const std::string priority_slot) {
-                return std::stoi(priority_slot) == slot;
-            }) != priority_list.cend()) {
-            EVLOG_warning << "Cannot set NetworkConfiguration variable for slot " << slot
-                          << " which is a priority network profile";
-            return "PriorityNetworkConf";
+        if (priority_slot_opt.has_value()) {
+            for (const auto& priority_slot_str : ocpp::split_string(priority_slot_opt.value(), ',')) {
+                int priority_slot = 0;
+                try {
+                    priority_slot = std::stoi(priority_slot_str);
+                } catch (const std::exception& e) {
+                    EVLOG_warning << "NetworkConfigurationPriority contains non-integer token '" << priority_slot_str
+                                  << "': " << e.what();
+                    continue;
+                }
+                if (priority_slot == slot) {
+                    EVLOG_warning << "Cannot set NetworkConfiguration variable for slot " << slot
+                                  << " which is a priority network profile";
+                    return "PriorityNetworkConf";
+                }
+            }
         }
 
         // B09.FR.35: Reject security profile downgrades
@@ -872,6 +903,48 @@ Provisioning::set_variables_internal(const std::vector<SetVariableData>& set_var
     }
 
     return response;
+}
+
+void Provisioning::clear_active_slot_variable(const Variable& variable, const std::string& reason_tag) {
+    const auto active_slot_opt =
+        this->context.device_model.get_optional_value<int>(ControllerComponentVariables::ActiveNetworkProfile);
+    if (!active_slot_opt.has_value()) {
+        return;
+    }
+    const auto cv = NetworkConfigurationComponentVariables::get_component_variable(active_slot_opt.value(), variable);
+    if (!cv.variable.has_value()) {
+        return;
+    }
+    this->context.device_model.set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "",
+                                         VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
+    EVLOG_info << "Cleared " << variable.name.get() << " on active NetworkConfiguration slot "
+               << active_slot_opt.value() << " (" << reason_tag << ")";
+}
+
+bool Provisioning::is_slot_allowed_by_priority_values_list(int32_t slot) {
+    if (!ControllerComponentVariables::NetworkConfigurationPriority.variable.has_value()) {
+        return true;
+    }
+    const auto meta = this->context.device_model.get_variable_meta_data(
+        ControllerComponentVariables::NetworkConfigurationPriority.component,
+        ControllerComponentVariables::NetworkConfigurationPriority.variable.value());
+    if (meta.has_value() && meta->characteristics.valuesList.has_value() &&
+        !meta->characteristics.valuesList.value().get().empty()) {
+        for (const auto& allowed_str : ocpp::split_string(meta->characteristics.valuesList.value().get(), ',')) {
+            try {
+                if (std::stoi(allowed_str) == slot) {
+                    return true;
+                }
+            } catch (const std::exception& e) {
+                EVLOG_debug << "Skipping non-integer token in NetworkConfigurationPriority.valuesList '" << allowed_str
+                            << "': " << e.what();
+            }
+        }
+        return false;
+    }
+    // If no valuesList is configured, fall back to allowing any slot — the spec only requires
+    // the check when valuesList is defined on the NetworkConfigurationPriority variable.
+    return true;
 }
 
 namespace {

@@ -1913,12 +1913,21 @@ void migrate_from_blob_if_needed(DeviceModelInterface& dm) {
             return;
         }
 
-        // Check if DM slots are already populated — skip migration if any slot has a configured URL
+        // Check if DM slots are already populated — skip migration if any slot has a configured URL.
+        // A malformed token in NetworkConfigurationPriority must not abort the whole migration;
+        // skip the offending entry and keep scanning the remaining slots.
         const auto priority_str =
             get_optional_value<std::string>(dm, ControllerComponentVariables::NetworkConfigurationPriority);
         if (priority_str.has_value() && !priority_str.value().empty()) {
             for (const auto& slot_str : ocpp::split_string(priority_str.value(), ',')) {
-                const int slot = std::stoi(slot_str);
+                int slot = 0;
+                try {
+                    slot = std::stoi(slot_str);
+                } catch (const std::exception& e) {
+                    EVLOG_warning << "Skipping non-integer token '" << slot_str
+                                  << "' in NetworkConfigurationPriority during migration check: " << e.what();
+                    continue;
+                }
                 const auto url_cv = get_component_variable(slot, OcppCsmsUrl);
                 const auto url_opt = get_optional_value<std::string>(dm, url_cv);
                 if (url_opt.has_value() && !url_opt.value().empty()) {
@@ -1943,14 +1952,27 @@ void migrate_from_blob_if_needed(DeviceModelInterface& dm) {
 
         // Read the global BasicAuthPassword from SecurityCtrlr so we can populate per-slot passwords
         // during migration when the blob does not contain one (the legacy format stored it separately).
+        // The historical factory sentinel (a repeat of "DEADBEEF") must never be propagated into
+        // per-slot DM overrides, because once a per-slot value is set it shadows the global fallback.
+        static constexpr std::size_t basic_auth_password_max_length = 64;
+        static const std::string factory_sentinel_password = "DEADBEEFDEADBEEF";
         const auto security_ctrlr_password =
             get_optional_value<std::string>(dm, ControllerComponentVariables::BasicAuthPassword);
+        const bool security_ctrlr_password_is_usable =
+            security_ctrlr_password.has_value() && !security_ctrlr_password->empty() &&
+            security_ctrlr_password.value() != factory_sentinel_password &&
+            security_ctrlr_password->size() <= basic_auth_password_max_length;
+        if (security_ctrlr_password.has_value() && security_ctrlr_password->size() > basic_auth_password_max_length) {
+            EVLOG_warning << "SecurityCtrlr.BasicAuthPassword exceeds the per-slot BasicAuthPassword length limit ("
+                          << security_ctrlr_password->size() << " > " << basic_auth_password_max_length
+                          << "); not propagating to migrated slots";
+        }
 
         int imported = 0;
         for (const auto& profile_json : profiles) {
             const int slot = profile_json.at("configurationSlot").get<int>();
             NetworkConnectionProfile profile = profile_json.at("connectionData");
-            if (!profile.basicAuthPassword.has_value() && security_ctrlr_password.has_value()) {
+            if (!profile.basicAuthPassword.has_value() && security_ctrlr_password_is_usable) {
                 profile.basicAuthPassword = CiString<64>(security_ctrlr_password.value());
             }
             if (write_profile_to_device_model(dm, slot, profile, "internal")) {

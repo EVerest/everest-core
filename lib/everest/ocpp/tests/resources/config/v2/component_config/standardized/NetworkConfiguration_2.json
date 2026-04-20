@@ -108,6 +108,7 @@
       "characteristics": {
         "supportsMonitoring": false,
         "dataType": "string",
+        "minLimit": 16,
         "maxLimit": 64
       },
       "attributes": [

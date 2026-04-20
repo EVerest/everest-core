@@ -8,6 +8,8 @@
 #include <string>
 #include <type_traits>
 
+#include <everest/logging.hpp>
+
 #include <ocpp/common/utils.hpp>
 #include <ocpp/v2/device_model_interface.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
@@ -126,7 +128,12 @@ std::optional<T> get_optional_value(const DeviceModelInterface& dm, const Compon
     }
     try {
         return to_specific_type<T>(value);
-    } catch (const std::exception&) {
+    } catch (const std::exception& e) {
+        // Conversion failed: the value is present in the DM but cannot be represented as T
+        // (malformed integer, malformed bool, out-of-range, etc.). Log at warning level so a
+        // caller seeing std::nullopt can distinguish "absent" from "present-but-unparseable".
+        EVLOG_warning << "Failed to convert device model value '" << value << "' to requested type for component '"
+                      << component_id.name.get() << "', variable '" << variable_id.name.get() << "': " << e.what();
         return std::nullopt;
     }
 }
