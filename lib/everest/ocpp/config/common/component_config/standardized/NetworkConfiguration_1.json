@@ -113,13 +113,13 @@
       "characteristics": {
         "supportsMonitoring": false,
         "dataType": "string",
+        "minLimit": 16,
         "maxLimit": 64
       },
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "WriteOnly",
-          "value": "DEADBEEFDEADBEEF"
+          "mutability": "WriteOnly"
         }
       ],
       "description": "Per-slot basic auth password",

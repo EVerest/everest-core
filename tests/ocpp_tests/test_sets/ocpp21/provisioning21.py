@@ -1025,7 +1025,7 @@ async def test_network_configuration_reject_priority_slot_changes(
     """
     TC_B_108_CS: Reject SetVariables on the currently active NetworkConfiguration slot
     B09.FR.22 - Verify that attempts to change configuration on the active slot
-    are rejected with "ActiveNetworkConf" reason code.
+    are rejected with "PriorityNetworkConf" reason code.
     """
     log.info(
         "##################### TC_B_108_CS: Reject Changes to Priority Slots #################"
@@ -1049,10 +1049,10 @@ async def test_network_configuration_reject_priority_slot_changes(
         set_variable_data=[set_var]
     )
 
-    # Validate that the change was rejected with ActiveNetworkConf reason
+    # Validate that the change was rejected with PriorityNetworkConf reason
     assert validate_set_variables_rejected(
-        response, "ActiveNetworkConf"
-    ), f"Expected SetVariables to be rejected with ActiveNetworkConf, but got: {response}"
+        response, "PriorityNetworkConf"
+    ), f"Expected SetVariables to be rejected with PriorityNetworkConf, but got: {response}"
 
 
 @pytest.mark.asyncio
@@ -1470,7 +1470,7 @@ async def test_network_configuration_dm_end_to_end(
     1. Migration from legacy NetworkConnectionProfiles blob to DM variables on boot
     2. GetVariables reads correct values from NetworkConfiguration[1]
     3. SetVariables updates a non-active slot and the change persists (read-back)
-    4. SetVariables on the active slot is rejected with ActiveNetworkConf
+    4. SetVariables on the active slot is rejected with PriorityNetworkConf
     """
     log.info(
         "##################### US-006: NetworkConfiguration DM End-to-End #################"
@@ -1643,10 +1643,10 @@ async def test_network_configuration_dm_end_to_end(
     )
 
     assert validate_set_variables_rejected(
-        response, "ActiveNetworkConf"
+        response, "PriorityNetworkConf"
     ), (
         f"SetVariables on active slot 1 should be rejected with "
-        f"ActiveNetworkConf, but got: {response}"
+        f"PriorityNetworkConf, but got: {response}"
     )
 
-    log.info("Step 4 PASSED: SetVariables on active slot 1 rejected with ActiveNetworkConf")
+    log.info("Step 4 PASSED: SetVariables on active slot 1 rejected with PriorityNetworkConf")
