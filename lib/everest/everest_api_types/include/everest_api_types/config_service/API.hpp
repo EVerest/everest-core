@@ -60,6 +60,7 @@ enum class ConfigurationParameterDatatype {
     Decimal,
     Integer,
     Boolean,
+    Unknown,
 };
 
 using ConfigurationParameterType = ConfigurationParameterDatatype;
@@ -182,7 +183,7 @@ struct ExecutionStatusUpdateNotice {
 
 struct Mapping {
     int32_t evse;
-    int32_t connector;
+    std::optional<int32_t> connector;
 };
 
 struct ImplMapping {
@@ -191,7 +192,7 @@ struct ImplMapping {
 };
 
 struct ModuleTierMappings {
-    Mapping module;
+    std::optional<Mapping> module;
     std::vector<ImplMapping> implementations;
 };
 
@@ -204,10 +205,6 @@ struct ReqFulfillment {
 struct ModuleConnection {
     std::string requirement_id;
     std::vector<ReqFulfillment> fulfillments;
-};
-
-struct ModuleConnections {
-    std::vector<ModuleConnection> connections;
 };
 
 struct ConfigurationParameterCharacteristics {
@@ -231,7 +228,7 @@ struct ImplementationConfigurationParameter {
 struct ModuleConfiguration {
     std::string module_id;
     std::string module_name;
-    ModuleConnections connections;
+    std::vector<ModuleConnection> connections;
     ModuleTierMappings mapping;
     std::vector<ConfigurationParameter> module_configuration_parameters;
     std::vector<ImplementationConfigurationParameter> implementation_configuration_parameters;

@@ -304,6 +304,9 @@ void to_json(json& j, ConfigurationParameterDatatype const& k) noexcept {
     case ConfigurationParameterDatatype::Boolean:
         j = "Boolean";
         return;
+    case ConfigurationParameterDatatype::Unknown:
+        j = "Unknown";
+        return;
     }
 
     j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::ConfigurationParameterDatatype";
@@ -325,6 +328,10 @@ void from_json(const json& j, ConfigurationParameterDatatype& k) {
     }
     if (s == "Boolean") {
         k = ConfigurationParameterDatatype::Boolean;
+        return;
+    }
+    if (s == "Unknown") {
+        k = ConfigurationParameterDatatype::Unknown;
         return;
     }
 
@@ -671,12 +678,17 @@ void from_json(const json& j, ExecutionStatusUpdateNotice& k) {
 }
 
 void to_json(json& j, Mapping const& k) noexcept {
-    j = json{{"evse", k.evse}, {"connector", k.connector}};
+    j = json{{"evse", k.evse}};
+    if (k.connector) {
+        j["connector"] = *k.connector;
+    }
 }
 
 void from_json(const json& j, Mapping& k) {
     k.evse = j.at("evse");
-    k.connector = j.at("connector");
+    if (j.contains("connector")) {
+        k.connector = j.at("connector");
+    }
 }
 
 void to_json(json& j, ImplMapping const& k) noexcept {
@@ -689,11 +701,16 @@ void from_json(const json& j, ImplMapping& k) {
 }
 
 void to_json(json& j, ModuleTierMappings const& k) noexcept {
-    j = json{{"module", k.module}, {"implementations", k.implementations}};
+    if (k.module) {
+        j["module"] = *k.module;
+        j["implementations"] = k.implementations;
+    }
 }
 
 void from_json(const json& j, ModuleTierMappings& k) {
-    k.module = j.at("module");
+    if (j.contains("module")) {
+        k.module = j.at("module");
+    }
     for (auto& item : j.at("implementations")) {
         k.implementations.push_back(item);
     }
@@ -717,16 +734,6 @@ void from_json(const json& j, ModuleConnection& k) {
     k.requirement_id = j.at("requirement_id");
     for (auto& item : j.at("fulfillments")) {
         k.fulfillments.push_back(item);
-    }
-}
-
-void to_json(json& j, ModuleConnections const& k) noexcept {
-    j = json{{"connections", k.connections}};
-}
-
-void from_json(const json& j, ModuleConnections& k) {
-    for (auto& item : j.at("connections")) {
-        k.connections.push_back(item);
     }
 }
 

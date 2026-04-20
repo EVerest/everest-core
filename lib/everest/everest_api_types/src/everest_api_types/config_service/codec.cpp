@@ -190,11 +190,6 @@ std::string serialize(ModuleConnection const& val) noexcept {
     return result.dump(json_indent);
 }
 
-std::string serialize(ModuleConnections const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
-}
-
 std::string serialize(ConfigurationParameterCharacteristics const& val) noexcept {
     json result = val;
     return result.dump(json_indent);
@@ -421,11 +416,6 @@ std::ostream& operator<<(std::ostream& os, ReqFulfillment const& val) {
 }
 
 std::ostream& operator<<(std::ostream& os, ModuleConnection const& val) {
-    os << serialize(val);
-    return os;
-}
-
-std::ostream& operator<<(std::ostream& os, ModuleConnections const& val) {
     os << serialize(val);
     return os;
 }
@@ -693,12 +683,6 @@ template <> ReqFulfillment deserialize<>(std::string const& val) {
 template <> ModuleConnection deserialize<>(std::string const& val) {
     auto data = json::parse(val);
     ModuleConnection obj = data;
-    return obj;
-}
-
-template <> ModuleConnections deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    ModuleConnections obj = data;
     return obj;
 }
 

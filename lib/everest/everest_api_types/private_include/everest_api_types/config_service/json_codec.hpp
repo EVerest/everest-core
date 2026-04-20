@@ -118,9 +118,6 @@ void from_json(const json& j, ReqFulfillment& k);
 void to_json(json& j, ModuleConnection const& k) noexcept;
 void from_json(const json& j, ModuleConnection& k);
 
-void to_json(json& j, ModuleConnections const& k) noexcept;
-void from_json(const json& j, ModuleConnections& k);
-
 void to_json(json& j, ConfigurationParameterCharacteristics const& k) noexcept;
 void from_json(const json& j, ConfigurationParameterCharacteristics& k);
 

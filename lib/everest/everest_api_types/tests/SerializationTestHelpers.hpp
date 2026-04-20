@@ -22,7 +22,7 @@ template <class T> T codec_test(T const& original_object) {
     EXPECT_EQ(stream_serialization_result, basic_serialization_result);
 
     // deserialization
-    T result_object;
+    T result_object{};
     auto success = everest::lib::API::deserialize(basic_serialization_result, result_object);
     EXPECT_TRUE(success);
 
