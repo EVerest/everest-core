@@ -1,7 +1,8 @@
 add_executable(manager)
 target_sources(manager
     PRIVATE
-        config_service_api.cpp
+        config_service_api/config_service_api.cpp
+        config_service_api/wrapper.cpp
         system_unix.cpp
         manager.cpp
 )

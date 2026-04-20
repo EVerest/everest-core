@@ -216,6 +216,7 @@ DuplicateSlotResult SqliteConfigSlotManager::duplicate_slot(int source_slot_id,
 
         transaction->commit();
         this->db->execute_statement("PRAGMA foreign_keys = OFF;");
+        // TODO(CB): Should this update "last_updated" of the new slot to the current time?
         return {true, new_id};
     } catch (const std::exception& e) {
         EVLOG_error << "Failed to duplicate slot " << source_slot_id << ": " << e.what();

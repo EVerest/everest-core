@@ -56,28 +56,6 @@ channels:
       receive_reply_mark_active_slot:
         $ref: '#/components/messages/receive_reply_mark_active_slot'
 
-  send_request_stop_modules:
-    address: 'm2e/stop_modules'
-    messages:
-      send_request_stop_modules:
-        $ref: '#/components/messages/send_request_stop_modules'
-  receive_reply_stop_modules:
-    address: null
-    messages:
-      receive_reply_stop_modules:
-        $ref: '#/components/messages/receive_reply_stop_modules'
-
-  send_request_restart_modules:
-    address: 'm2e/restart_modules'
-    messages:
-      send_request_restart_modules:
-        $ref: '#/components/messages/send_request_restart_modules'
-  receive_reply_restart_modules:
-    address: null
-    messages:
-      receive_reply_restart_modules:
-        $ref: '#/components/messages/receive_reply_restart_modules'
-
   send_request_delete_slot:
     address: 'm2e/delete_slot'
     messages:
@@ -145,11 +123,6 @@ channels:
       receive_config_updates:
         $ref: '#/components/messages/receive_config_updates'
 
-  receive_execution_status:
-    address: 'e2m/execution_status'
-    messages:
-      receive_execution_status:
-        $ref: '#/components/messages/receive_execution_status'
 
 operations:
   send_request_list_all_slots:
@@ -205,42 +178,6 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_reply_mark_active_slot'
-
-  send_request_stop_modules:
-    title: 'Stop modules'
-    action: send
-    channel:
-      $ref: '#/channels/send_request_stop_modules'
-    description: 'Request EVerest to stop all currently running modules.'
-    reply:
-      address:
-        location: "$message.header#/replyTo"
-      channel:
-        $ref: '#/channels/receive_reply_stop_modules'
-
-  receive_reply_stop_modules:
-    title: 'Reply to stop_modules request'
-    action: receive
-    channel:
-      $ref: '#/channels/receive_reply_stop_modules'
-
-  send_request_restart_modules:
-    title: 'Restart modules'
-    action: send
-    channel:
-      $ref: '#/channels/send_request_restart_modules'
-    description: 'Request EVerest to restart or start modules.'
-    reply:
-      address:
-        location: "$message.header#/replyTo"
-      channel:
-        $ref: '#/channels/receive_reply_restart_modules'
-
-  receive_reply_restart_modules:
-    title: 'Reply to restart_modules request'
-    action: receive
-    channel:
-      $ref: '#/channels/receive_reply_restart_modules'
 
   send_request_delete_slot:
     title: 'Delete slot'
@@ -346,12 +283,6 @@ operations:
       $ref: '#/channels/receive_config_updates'
     description: 'Published when configuration parameters of any slot change.'
 
-  receive_execution_status:
-    title: 'Receive execution status'
-    action: receive
-    channel:
-      $ref: '#/channels/receive_execution_status'
-    description: 'Published when EVerest execution status changes.'
 
 components:
   messages:
@@ -362,9 +293,6 @@ components:
       contentType: application/json
       payload:
         type: object
-        required:
-          - headers
-          - payload
         properties:
           headers:
             type: object
@@ -372,15 +300,11 @@ components:
               replyTo:
                 type: string
                 description: Address to send the response to.
-          payload:
-            type: object
-            description: Empty request payload
       examples:
         - summary: "Request all configuration slots"
           payload:
             headers:
               replyTo: arbitrary/reply/topic
-            payload: {}
     receive_reply_list_all_slots:
       name: receive_reply_list_all_slots
       title: 'List all slots reply'
@@ -409,9 +333,6 @@ components:
       contentType: application/json
       payload:
         type: object
-        required:
-          - headers
-          - payload
         properties:
           headers:
             type: object
@@ -419,15 +340,11 @@ components:
               replyTo:
                 type: string
                 description: Address to send the response to.
-          payload:
-            type: object
-            description: Empty request payload
       examples:
         - summary: "Request active slot"
           payload:
             headers:
               replyTo: arbitrary/reply/topic
-            payload: {}
     receive_reply_get_active_slot:
       name: receive_reply_get_active_slot
       title: 'Get active slot reply'
@@ -448,7 +365,6 @@ components:
       payload:
         type: object
         required:
-          - headers
           - payload
         properties:
           headers:
@@ -475,83 +391,9 @@ components:
         $ref: '#/components/schemas/MarkActiveSlotResult'
       examples:
         - summary: "Slot does not exist"
-          payload: "DoesNotExist"
-
-    send_request_stop_modules:
-      name: send_request_stop_modules
-      title: 'Stop modules request'
-      summary: 'Request EVerest to stop all currently running modules.'
-      contentType: application/json
-      payload:
-        type: object
-        required:
-          - headers
-          - payload
-        properties:
-          headers:
-            type: object
-            properties:
-              replyTo:
-                type: string
-                description: Address to send the response to.
           payload:
-            type: object
-            description: Empty request payload
-      examples:
-        - summary: "Request to stop all modules"
-          payload:
-            headers:
-              replyTo: arbitrary/reply/topic
-            payload: {}
-    receive_reply_stop_modules:
-      name: receive_reply_stop_modules
-      title: 'Stop modules reply'
-      summary: 'Reply indicating the result of stopping modules.'
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/StopModulesResult'
-      examples:
-        - summary: "No modules to stop"
-          payload:
-            result: "NoModulesToStop"
-
-    send_request_restart_modules:
-      name: send_request_restart_modules
-      title: 'Restart modules request'
-      summary: 'Request EVerest to restart or start modules.'
-      contentType: application/json
-      payload:
-        type: object
-        required:
-          - headers
-          - payload
-        properties:
-          headers:
-            type: object
-            properties:
-              replyTo:
-                type: string
-                description: Address to send the response to.
-          payload:
-            type: object
-            description: Empty request payload
-      examples:
-        - summary: "Request to restart modules"
-          payload:
-            headers:
-              replyTo: arbitrary/reply/topic
-            payload: {}
-    receive_reply_restart_modules:
-      name: receive_reply_restart_modules
-      title: 'Restart modules reply'
-      summary: 'Reply indicating the result of restarting modules.'
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/StartModulesResult'
-      examples:
-        - summary: "Modules restarting"
-          payload:
-            result: "Restarting"
+            result: "DoesNotExist"
+            slot_id: 2
 
     send_request_delete_slot:
       name: send_request_delete_slot
@@ -561,7 +403,6 @@ components:
       payload:
         type: object
         required:
-          - headers
           - payload
         properties:
           headers:
@@ -599,7 +440,6 @@ components:
       payload:
         type: object
         required:
-          - headers
           - payload
         properties:
           headers:
@@ -639,7 +479,6 @@ components:
       payload:
         type: object
         required:
-          - headers
           - payload
         properties:
           headers:
@@ -699,7 +538,6 @@ components:
       payload:
         type: object
         required:
-          - headers
           - payload
         properties:
           headers:
@@ -751,7 +589,6 @@ components:
       payload:
         type: object
         required:
-          - headers
           - payload
         properties:
           headers:
@@ -784,12 +621,11 @@ components:
               - module_id: "evse_manager_main"
                 module_name: "EvseManager"
                 connections:
-                  connections:
-                    - requirement_id: "board_support"
-                      fulfillments:
-                        - module_id: "yeti_board"
-                          implementation_id: "board_support"
-                          index: 0
+                  - requirement_id: "board_support"
+                    fulfillments:
+                      - module_id: "yeti_board"
+                        implementation_id: "board_support"
+                        index: 0
                 mapping:
                   module:
                     evse: 1
@@ -854,23 +690,23 @@ components:
             tstamp: "2026-03-30T17:45:00Z"
             slot_id: 1
             update_results:
-              - results:
-                  - "WillApplyOnRestart"
+              - update:
+                  cfg_param_id:
+                    module_id: "evse_manager_main"
+                    parameter_name: "max_current"
+                  value: "16"
+                result: "Applied"
+              - update:
+                  cfg_param_id:
+                    module_id: "ocpp"
+                    parameter_name: "ChargePointId"
+                    implementation_id: "main"
+                  value: "CP_001"
+                result: "WillApplyOnRestart"
             origin:
               external: false
               identifier: "ocpp_module"
 
-    receive_execution_status:
-      name: receive_execution_status
-      title: 'Execution status update'
-      summary: 'Published when EVerest execution status changes.'
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/ExecutionStatusUpdateNotice'
-      examples:
-        - summary: "Config service only mode"
-          payload:
-            status: "ConfigServiceOnly"
 
   schemas:
     ConfigMetadata:
@@ -945,48 +781,6 @@ components:
       required:
         - result
         - slot_id
-    StopModulesResultEnum:
-      description: |
-        Result when requesting to stop the modules.
-        - Stopping: Accepted and modules are being stopped
-        - NoModulesToStop: Accepted, but there are no modules currently running, thus no change will be made
-        - Rejected: Rejected for other reasons
-      type: string
-      enum:
-        - Stopping
-        - NoModulesToStop
-        - Rejected
-    StopModulesResult:
-      description: Result when requesting to stop the modules.
-      type: object
-      additionalProperties: true
-      properties:
-        result:
-          $ref: '#/components/schemas/StopModulesResultEnum'
-      required:
-        - result
-    StartModulesResultEnum:
-      description: |
-        Result when requesting to (re)start the modules.
-        - Starting: Accepted and modules are being started
-        - Restarting: Accepted and modules are being stopped and started again
-        - NoActiveSlot: Rejected, because there is no valid active configuration slot to start modules with
-        - Rejected: Rejected for other reasons
-      type: string
-      enum:
-        - Starting
-        - Restarting
-        - NoActiveSlot
-        - Rejected
-    StartModulesResult:
-      description: Result when requesting to (re)start the modules.
-      type: object
-      additionalProperties: true
-      properties:
-        result:
-          $ref: '#/components/schemas/StartModulesResultEnum'
-      required:
-        - result
     DeleteSlotRequest:
       description: A request to delete a configuration slot, consisting of the slot_id of the slot to be deleted.
       type: object
@@ -1200,17 +994,6 @@ components:
       required:
         - requirement_id
         - fulfillments
-    ModuleConnections:
-      description: A list of connections between module requirements and their fulfillments.
-      type: object
-      additionalProperties: true
-      properties:
-        connections:
-          type: array
-          items:
-            $ref: '#/components/schemas/ModuleConnection'
-      required:
-        - connections
     ConfigurationParameterDatatype:
       description: Data type of a configuration parameter.
       type: string
@@ -1246,6 +1029,10 @@ components:
           $ref: '#/components/schemas/ConfigurationActivationPolicy'
         unit:
           type: string
+        min_value:
+          type: integer
+        max_value:
+          type: integer
       required:
         - datatype
         - mutability
@@ -1279,6 +1066,60 @@ components:
       required:
         - implementation_id
         - configuration_parameters
+    TelemetryConfig:
+      description: The telemetry ID for a module.
+      type: object
+      additionalProperties: true
+      properties:
+        id:
+          type: integer
+    ModuleConfigAccess:
+      description: Access settings for a module's configuration, indicating which configuration parameters the module is allowed to read or write.
+      type: object
+      additionalProperties: true
+      properties:
+        module_id:
+          type: string
+          description: The module for whose configuration the access control settings apply to.
+        allow_read:
+          type: boolean
+          description: Whether configuration parameters of the module are allowed to be read.
+        allow_write:
+          type: boolean
+          description: Whether configuration parameters of the module are allowed to be written.
+        allow_set_read_only:
+          type: boolean
+          description: Whether configuration parameters of the module are allowed to be written if they are marked as "ReadOnly".
+      required:
+        - module_id
+        - allow_read
+        - allow_write
+        - allow_set_read_only
+    ConfigAccess:
+      description: Controls which configuration a module has access to.
+      type: object
+      additionalProperties: true
+      properties:
+        allow_global_read:
+          type: boolean
+          description: Whether the module is allowed to read configuration parameters globally.
+        allow_global_write:
+          type: boolean
+          description: Whether the module is allowed to write configuration parameters globally.
+        allow_set_read_only:
+          type: boolean
+          description: Whether the module is allowed to write configuration parameters that are marked as "ReadOnly" globally.
+        module_config_access:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModuleConfigAccess'
+    ConfigAccessControl:
+      description: Access control settings for configuration
+      type: object
+      additionalProperties: true
+      properties:
+        config:
+          $ref: '#/components/schemas/ConfigAccess'
     ModuleConfiguration:
       description: Configuration details of a module, including its connections, mapping, and configuration parameters.
       type: object
@@ -1289,7 +1130,9 @@ components:
         module_name:
           type: string
         connections:
-          $ref: '#/components/schemas/ModuleConnections'
+          type: array
+          items:
+            $ref: '#/components/schemas/ModuleConnection'
         mapping:
           $ref: '#/components/schemas/ModuleTierMappings'
         module_configuration_parameters:
@@ -1300,12 +1143,26 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ImplementationConfigurationParameter'
+        standalone:
+          type: boolean
+          description: Indicates whether the module is started standalone.
+        telemetry_enabled:
+          type: boolean
+          description: Indicates whether telemetry is enabled for the module.
+        telemetry_config:
+          $ref: '#/components/schemas/TelemetryConfig'
+        config_access:
+          $ref: '#/components/schemas/ConfigAccessControl'
       required:
         - module_id
         - module_name
         - connections
+        - mapping
         - module_configuration_parameters
         - implementation_configuration_parameters
+        - standalone
+        - telemetry_enabled
+        - config_access
     ActiveSlotStatusEnum:
       description: |
         Status of the active slot.
@@ -1401,23 +1258,3 @@ components:
         - slot_id
         - update_results
         - origin
-    ExecutionStatusEnum:
-      description: |
-        Execution status of EVerest.
-        - Running: EVerest is running: The ConfigServiceAPI and the EVerest modules are running.
-        - NotRunning: No part of EVerest is running.
-        - ConfigServiceOnly: EVerest is running in a mode where only the ConfigServiceAPI is active, but no modules are running.
-      type: string
-      enum:
-        - Running
-        - NotRunning
-        - ConfigServiceOnly
-    ExecutionStatusUpdateNotice:
-      description: Execution status of EVerest.
-      type: object
-      additionalProperties: true
-      properties:
-        status:
-          $ref: '#/components/schemas/ExecutionStatusEnum'
-      required:
-        - status

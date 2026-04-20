@@ -24,10 +24,10 @@
 #include <fmt/core.h>
 #include <fmt/ranges.h>
 
+#include <config_service_api/config_service_api.hpp>
 #include <everest/logging.hpp>
 #include <framework/everest.hpp>
 #include <framework/runtime.hpp>
-#include <config_service_api.hpp>
 #include <utils/config.hpp>
 #include <utils/config/config_service_core.hpp>
 #include <utils/config/slot_manager.hpp>
@@ -804,9 +804,14 @@ int boot(const po::variables_map& vm) {
 
     auto config_service = std::make_unique<config::MqttConfigServiceHandler>(*mqtt_abstraction, *config_service_core);
 
-    // TODO(CB): Startup the ConfigServiceAPI in its own thread and make sure it is fully initialized before starting the modules
-
-    auto config_service_api = std::make_unique<config::ConfigServiceAPI>(*mqtt_abstraction, *config_service);
+    std::unique_ptr<Everest::config::api::ConfigServiceAPI> config_service_api;
+    // TODO(CB): Anything to take care of when stopping the ConfigServiceAPI? Right now we just let it be killed when
+    // manager is killed, but maybe we want to stop it gracefully at some point?
+    if (vm.count("configuration-api")) {
+        EVLOG_info << "Starting configuration_API";
+        config_service_api =
+            std::make_unique<Everest::config::api::ConfigServiceAPI>(*mqtt_abstraction, *config_service_core);
+    }
 
     auto module_handles =
         start_modules(*config, *mqtt_abstraction, ignored_modules, standalone_modules, ms, status_fifo, retain_topics);
@@ -950,6 +955,7 @@ int main(int argc, char* argv[]) {
     desc.add_options()("config", po::value<std::string>(),
                        "Full path to a config file.  If the file does not exist and has no extension, it will be "
                        "looked up in the default config directory");
+    desc.add_options()("configuration-api", "Start the ConfigServiceAPI");
     desc.add_options()(
         "db", po::value<std::string>(),
         "Full path to the configuration database file. Required. "

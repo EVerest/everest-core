@@ -15,16 +15,6 @@ std::string serialize(MarkActiveSlotResultEnum val) noexcept {
     return result.dump(json_indent);
 }
 
-std::string serialize(StopModulesResultEnum val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
-}
-
-std::string serialize(StartModulesResultEnum val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
-}
-
 std::string serialize(DeleteSlotResultEnum val) noexcept {
     json result = val;
     return result.dump(json_indent);
@@ -36,11 +26,6 @@ std::string serialize(ConfigurationParameterUpdateResultEnum val) noexcept {
 }
 
 std::string serialize(ActiveSlotStatusEnum val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
-}
-
-std::string serialize(ExecutionStatusEnum val) noexcept {
     json result = val;
     return result.dump(json_indent);
 }
@@ -65,11 +50,6 @@ std::string serialize(GetConfigurationStatusEnum val) noexcept {
     return result.dump(json_indent);
 }
 
-std::string serialize(ApplyMode val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
-}
-
 std::string serialize(ConfigMetadata const& val) noexcept {
     json result = val;
     return result.dump(json_indent);
@@ -86,16 +66,6 @@ std::string serialize(GetActiveSlotIdResult const& val) noexcept {
 }
 
 std::string serialize(MarkActiveSlotResult const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
-}
-
-std::string serialize(StopModulesResult const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
-}
-
-std::string serialize(StartModulesResult const& val) noexcept {
     json result = val;
     return result.dump(json_indent);
 }
@@ -150,17 +120,7 @@ std::string serialize(ConfigurationParameterUpdateResultRecord const& val) noexc
     return result.dump(json_indent);
 }
 
-std::string serialize(ConfigurationParameterUpdateResult const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
-}
-
 std::string serialize(ConfigurationParameterUpdateNotice const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
-}
-
-std::string serialize(ExecutionStatusUpdateNotice const& val) noexcept {
     json result = val;
     return result.dump(json_indent);
 }
@@ -205,6 +165,26 @@ std::string serialize(ImplementationConfigurationParameter const& val) noexcept 
     return result.dump(json_indent);
 }
 
+std::string serialize(TelemetryConfig const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
+std::string serialize(ModuleConfigAccess const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
+std::string serialize(ConfigAccess const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
+std::string serialize(ConfigAccessControl const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
 std::string serialize(ModuleConfiguration const& val) noexcept {
     json result = val;
     return result.dump(json_indent);
@@ -245,16 +225,6 @@ std::ostream& operator<<(std::ostream& os, MarkActiveSlotResultEnum const& val) 
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, StopModulesResultEnum const& val) {
-    os << serialize(val);
-    return os;
-}
-
-std::ostream& operator<<(std::ostream& os, StartModulesResultEnum const& val) {
-    os << serialize(val);
-    return os;
-}
-
 std::ostream& operator<<(std::ostream& os, DeleteSlotResultEnum const& val) {
     os << serialize(val);
     return os;
@@ -266,11 +236,6 @@ std::ostream& operator<<(std::ostream& os, ConfigurationParameterUpdateResultEnu
 }
 
 std::ostream& operator<<(std::ostream& os, ActiveSlotStatusEnum const& val) {
-    os << serialize(val);
-    return os;
-}
-
-std::ostream& operator<<(std::ostream& os, ExecutionStatusEnum const& val) {
     os << serialize(val);
     return os;
 }
@@ -295,11 +260,6 @@ std::ostream& operator<<(std::ostream& os, GetConfigurationStatusEnum const& val
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, ApplyMode const& val) {
-    os << serialize(val);
-    return os;
-}
-
 std::ostream& operator<<(std::ostream& os, ConfigMetadata const& val) {
     os << serialize(val);
     return os;
@@ -316,16 +276,6 @@ std::ostream& operator<<(std::ostream& os, GetActiveSlotIdResult const& val) {
 }
 
 std::ostream& operator<<(std::ostream& os, MarkActiveSlotResult const& val) {
-    os << serialize(val);
-    return os;
-}
-
-std::ostream& operator<<(std::ostream& os, StopModulesResult const& val) {
-    os << serialize(val);
-    return os;
-}
-
-std::ostream& operator<<(std::ostream& os, StartModulesResult const& val) {
     os << serialize(val);
     return os;
 }
@@ -380,17 +330,7 @@ std::ostream& operator<<(std::ostream& os, ConfigurationParameterUpdateResultRec
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, ConfigurationParameterUpdateResult const& val) {
-    os << serialize(val);
-    return os;
-}
-
 std::ostream& operator<<(std::ostream& os, ConfigurationParameterUpdateNotice const& val) {
-    os << serialize(val);
-    return os;
-}
-
-std::ostream& operator<<(std::ostream& os, ExecutionStatusUpdateNotice const& val) {
     os << serialize(val);
     return os;
 }
@@ -431,6 +371,26 @@ std::ostream& operator<<(std::ostream& os, ConfigurationParameter const& val) {
 }
 
 std::ostream& operator<<(std::ostream& os, ImplementationConfigurationParameter const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, TelemetryConfig const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, ModuleConfigAccess const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, ConfigAccess const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, ConfigAccessControl const& val) {
     os << serialize(val);
     return os;
 }
@@ -476,18 +436,6 @@ template <> MarkActiveSlotResultEnum deserialize(std::string const& val) {
     return obj;
 }
 
-template <> StopModulesResultEnum deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    StopModulesResultEnum obj = data;
-    return obj;
-}
-
-template <> StartModulesResultEnum deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    StartModulesResultEnum obj = data;
-    return obj;
-}
-
 template <> DeleteSlotResultEnum deserialize<>(std::string const& val) {
     auto data = json::parse(val);
     DeleteSlotResultEnum obj = data;
@@ -503,12 +451,6 @@ template <> ConfigurationParameterUpdateResultEnum deserialize<>(std::string con
 template <> ActiveSlotStatusEnum deserialize<>(std::string const& val) {
     auto data = json::parse(val);
     ActiveSlotStatusEnum obj = data;
-    return obj;
-}
-
-template <> ExecutionStatusEnum deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    ExecutionStatusEnum obj = data;
     return obj;
 }
 
@@ -536,12 +478,6 @@ template <> GetConfigurationStatusEnum deserialize<>(std::string const& val) {
     return obj;
 }
 
-template <> ApplyMode deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    ApplyMode obj = data;
-    return obj;
-}
-
 template <> ConfigMetadata deserialize<>(std::string const& val) {
     auto data = json::parse(val);
     ConfigMetadata obj = data;
@@ -563,18 +499,6 @@ template <> GetActiveSlotIdResult deserialize<>(std::string const& val) {
 template <> MarkActiveSlotResult deserialize<>(std::string const& val) {
     auto data = json::parse(val);
     MarkActiveSlotResult obj = data;
-    return obj;
-}
-
-template <> StopModulesResult deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    StopModulesResult obj = data;
-    return obj;
-}
-
-template <> StartModulesResult deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    StartModulesResult obj = data;
     return obj;
 }
 
@@ -638,21 +562,9 @@ template <> ConfigurationParameterUpdateResultRecord deserialize<>(std::string c
     return obj;
 }
 
-template <> ConfigurationParameterUpdateResult deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    ConfigurationParameterUpdateResult obj = data;
-    return obj;
-}
-
 template <> ConfigurationParameterUpdateNotice deserialize<>(std::string const& val) {
     auto data = json::parse(val);
     ConfigurationParameterUpdateNotice obj = data;
-    return obj;
-}
-
-template <> ExecutionStatusUpdateNotice deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    ExecutionStatusUpdateNotice obj = data;
     return obj;
 }
 
@@ -701,6 +613,30 @@ template <> ConfigurationParameter deserialize<>(std::string const& val) {
 template <> ImplementationConfigurationParameter deserialize<>(std::string const& val) {
     auto data = json::parse(val);
     ImplementationConfigurationParameter obj = data;
+    return obj;
+}
+
+template <> TelemetryConfig deserialize<>(std::string const& val) {
+    auto data = json::parse(val);
+    TelemetryConfig obj = data;
+    return obj;
+}
+
+template <> ModuleConfigAccess deserialize<>(std::string const& val) {
+    auto data = json::parse(val);
+    ModuleConfigAccess obj = data;
+    return obj;
+}
+
+template <> ConfigAccess deserialize<>(std::string const& val) {
+    auto data = json::parse(val);
+    ConfigAccess obj = data;
+    return obj;
+}
+
+template <> ConfigAccessControl deserialize<>(std::string const& val) {
+    auto data = json::parse(val);
+    ConfigAccessControl obj = data;
     return obj;
 }
 

@@ -53,85 +53,6 @@ void from_json(const json& j, MarkActiveSlotResultEnum& k) {
                             "everest::lib::API::V1_0::types::config_service::MarkActiveSlotResultEnum");
 }
 
-void to_json(json& j, StopModulesResultEnum const& k) noexcept {
-    switch (k) {
-    case StopModulesResultEnum::Stopping:
-        j = "Stopping";
-        return;
-    case StopModulesResultEnum::NoModulesToStop:
-        j = "NoModulesToStop";
-        return;
-    case StopModulesResultEnum::Rejected:
-        j = "Rejected";
-        return;
-    }
-
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::StopModulesResultEnum";
-}
-
-void from_json(const json& j, StopModulesResultEnum& k) {
-    std::string s = j;
-    if (s == "Stopping") {
-        k = StopModulesResultEnum::Stopping;
-        return;
-    }
-    if (s == "NoModulesToStop") {
-        k = StopModulesResultEnum::NoModulesToStop;
-        return;
-    }
-    if (s == "Rejected") {
-        k = StopModulesResultEnum::Rejected;
-        return;
-    }
-
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type "
-                            "everest::lib::API::V1_0::types::config_service::StopModulesResultEnum");
-}
-
-void to_json(json& j, StartModulesResultEnum const& k) noexcept {
-    switch (k) {
-    case StartModulesResultEnum::Starting:
-        j = "Starting";
-        return;
-    case StartModulesResultEnum::Restarting:
-        j = "Restarting";
-        return;
-    case StartModulesResultEnum::NoActiveSlot:
-        j = "NoActiveSlot";
-        return;
-    case StartModulesResultEnum::Rejected:
-        j = "Rejected";
-        return;
-    }
-
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::StartModulesResultEnum";
-}
-
-void from_json(const json& j, StartModulesResultEnum& k) {
-    std::string s = j;
-    if (s == "Starting") {
-        k = StartModulesResultEnum::Starting;
-        return;
-    }
-    if (s == "Restarting") {
-        k = StartModulesResultEnum::Restarting;
-        return;
-    }
-    if (s == "NoActiveSlot") {
-        k = StartModulesResultEnum::NoActiveSlot;
-        return;
-    }
-    if (s == "Rejected") {
-        k = StartModulesResultEnum::Rejected;
-        return;
-    }
-
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type "
-                            "everest::lib::API::V1_0::types::config_service::StartModulesResultEnum");
-}
-
 void to_json(json& j, DeleteSlotResultEnum const& k) noexcept {
     switch (k) {
     case DeleteSlotResultEnum::Success:
@@ -252,42 +173,6 @@ void from_json(const json& j, ActiveSlotStatusEnum& k) {
     throw std::out_of_range(
         "Provided string " + s +
         " could not be converted to enum of type everest::lib::API::V1_0::types::config_service::ActiveSlotStatusEnum");
-}
-
-void to_json(json& j, ExecutionStatusEnum const& k) noexcept {
-    switch (k) {
-    case ExecutionStatusEnum::Running:
-        j = "Running";
-        return;
-    case ExecutionStatusEnum::NotRunning:
-        j = "NotRunning";
-        return;
-    case ExecutionStatusEnum::ConfigServiceOnly:
-        j = "ConfigServiceOnly";
-        return;
-    }
-
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::ExecutionStatusEnum";
-}
-
-void from_json(const json& j, ExecutionStatusEnum& k) {
-    std::string s = j;
-    if (s == "Running") {
-        k = ExecutionStatusEnum::Running;
-        return;
-    }
-    if (s == "NotRunning") {
-        k = ExecutionStatusEnum::NotRunning;
-        return;
-    }
-    if (s == "ConfigServiceOnly") {
-        k = ExecutionStatusEnum::ConfigServiceOnly;
-        return;
-    }
-
-    throw std::out_of_range(
-        "Provided string " + s +
-        " could not be converted to enum of type everest::lib::API::V1_0::types::config_service::ExecutionStatusEnum");
 }
 
 void to_json(json& j, ConfigurationParameterDatatype const& k) noexcept {
@@ -434,35 +319,6 @@ void from_json(const json& j, GetConfigurationStatusEnum& k) {
                             "everest::lib::API::V1_0::types::config_service::GetConfigurationStatusEnum");
 }
 
-void to_json(json& j, ApplyMode const& k) noexcept {
-    switch (k) {
-    case ApplyMode::Immediate:
-        j = "Immediate";
-        return;
-    case ApplyMode::OnRestart:
-        j = "OnRestart";
-        return;
-    }
-
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::ApplyMode";
-}
-
-void from_json(const json& j, ApplyMode& k) {
-    std::string s = j;
-    if (s == "Immediate") {
-        k = ApplyMode::Immediate;
-        return;
-    }
-    if (s == "OnRestart") {
-        k = ApplyMode::OnRestart;
-        return;
-    }
-
-    throw std::out_of_range(
-        "Provided string " + s +
-        " could not be converted to enum of type everest::lib::API::V1_0::types::config_service::ApplyMode");
-}
-
 void to_json(json& j, ConfigMetadata const& k) noexcept {
     j = json{{"slot_id", k.slot_id}, {"last_updated", k.last_updated}, {"is_valid", k.is_valid}};
     if (k.description) {
@@ -515,22 +371,6 @@ void to_json(json& j, MarkActiveSlotResult const& k) noexcept {
 void from_json(const json& j, MarkActiveSlotResult& k) {
     k.result = j.at("result");
     k.slot_id = j.at("slot_id");
-}
-
-void to_json(json& j, StopModulesResult const& k) noexcept {
-    j = json{{"result", k.result}};
-}
-
-void from_json(const json& j, StopModulesResult& k) {
-    k.result = j.at("result");
-}
-
-void to_json(json& j, StartModulesResult const& k) noexcept {
-    j = json{{"result", k.result}};
-}
-
-void from_json(const json& j, StartModulesResult& k) {
-    k.result = j.at("result");
 }
 
 void to_json(json& j, DeleteSlotResult const& k) noexcept {
@@ -647,17 +487,8 @@ void from_json(const json& j, ConfigurationParameterUpdateResultRecord& k) {
     k.result = j.at("result");
 }
 
-void to_json(json& j, ConfigurationParameterUpdateResult const& k) noexcept {
-    j = json{{"update", k.update}, {"result", k.result}};
-}
-
-void from_json(const json& j, ConfigurationParameterUpdateResult& k) {
-    k.update = j.at("update");
-    k.result = j.at("result");
-}
-
 void to_json(json& j, ConfigurationParameterUpdateNotice const& k) noexcept {
-    j = json{{"tstamp", k.tstamp}, {"slot_id", k.slot_id}, {"update_results", k.update_results}, {"origin", k.origin}};
+    j = json{{"tstamp", k.tstamp}, {"slot_id", k.slot_id}, {"update_results", k.update_results}}; // TODO(CB) : Missing internally:, {"origin", k.origin}};
 }
 
 void from_json(const json& j, ConfigurationParameterUpdateNotice& k) {
@@ -666,15 +497,7 @@ void from_json(const json& j, ConfigurationParameterUpdateNotice& k) {
     for (auto& item : j.at("update_results")) {
         k.update_results.push_back(item);
     }
-    k.origin = j.at("origin");
-}
-
-void to_json(json& j, ExecutionStatusUpdateNotice const& k) noexcept {
-    j = json{{"status", k.status}};
-}
-
-void from_json(const json& j, ExecutionStatusUpdateNotice& k) {
-    k.status = j.at("status");
+    // TODO(CB) : Missing internally: k.origin = j.at("origin");
 }
 
 void to_json(json& j, Mapping const& k) noexcept {
@@ -742,6 +565,12 @@ void to_json(json& j, ConfigurationParameterCharacteristics const& k) noexcept {
     if (k.unit) {
         j["unit"] = *k.unit;
     }
+    if (k.min_value) {
+        j["min_value"] = *k.min_value;
+    }
+    if (k.max_value) {
+        j["max_value"] = *k.max_value;
+    }
 }
 
 void from_json(const json& j, ConfigurationParameterCharacteristics& k) {
@@ -750,6 +579,12 @@ void from_json(const json& j, ConfigurationParameterCharacteristics& k) {
     k.activation_policy = j.at("activation_policy");
     if (j.contains("unit")) {
         k.unit = j.at("unit");
+    }
+    if (j.contains("min_value")) {
+        k.min_value = j.at("min_value");
+    }
+    if (j.contains("max")) {
+        k.max_value = j.at("max_value");
     }
 }
 
@@ -774,13 +609,72 @@ void from_json(const json& j, ImplementationConfigurationParameter& k) {
     }
 }
 
+void to_json(json& j, TelemetryConfig const& k) noexcept {
+    j = json{{"id", k.id}};
+}
+
+void from_json(const json& j, TelemetryConfig& k) {
+    k.id = j.at("id");
+}
+
+void to_json(json& j, ModuleConfigAccess const& k) noexcept {
+    j = json{{"module_id", k.module_id},
+             {"allow_read", k.allow_read},
+             {"allow_write", k.allow_write},
+             {"allow_set_read_only", k.allow_set_read_only}};
+}
+
+void from_json(const json& j, ModuleConfigAccess& k) {
+    k.module_id = j.at("module_id");
+    k.allow_read = j.at("allow_read");
+    k.allow_write = j.at("allow_write");
+    k.allow_set_read_only = j.at("allow_set_read_only");
+}
+
+void to_json(json& j, ConfigAccess const& k) noexcept {
+    j = json{{"allow_global_read", k.allow_global_read},
+             {"allow_global_write", k.allow_global_write},
+             {"allow_set_read_only", k.allow_set_read_only},
+             {"module_config_access", k.module_config_access}};
+}
+
+void from_json(const json& j, ConfigAccess& k) {
+    k.allow_global_read = j.at("allow_global_read");
+    k.allow_global_write = j.at("allow_global_write");
+    k.allow_set_read_only = j.at("allow_set_read_only");
+    for (auto& item : j.at("module_config_access")) {
+        k.module_config_access.push_back(item);
+    }
+}
+
+void to_json(json& j, ConfigAccessControl const& k) noexcept {
+    j = json{};
+    if (k.config) {
+        j["config"] = *k.config;
+    }
+}
+
+void from_json(const json& j, ConfigAccessControl& k) {
+    if (j.contains("config")) {
+        k.config = j.at("config");
+    } else {
+        k.config = std::nullopt;
+    }
+}
+
 void to_json(json& j, ModuleConfiguration const& k) noexcept {
     j = json{{"module_id", k.module_id},
              {"module_name", k.module_name},
              {"connections", k.connections},
              {"mapping", k.mapping},
              {"module_configuration_parameters", k.module_configuration_parameters},
-             {"implementation_configuration_parameters", k.implementation_configuration_parameters}};
+             {"implementation_configuration_parameters", k.implementation_configuration_parameters},
+             {"standalone", k.standalone},
+             {"telemetry_enabled", k.telemetry_enabled}};
+    if (k.telemetry_config) {
+        j["telemetry_config"] = *k.telemetry_config;
+    }
+    j["config_access"] = k.config_access;
 }
 
 void from_json(const json& j, ModuleConfiguration& k) {
@@ -794,6 +688,12 @@ void from_json(const json& j, ModuleConfiguration& k) {
     for (auto& item : j.at("implementation_configuration_parameters")) {
         k.implementation_configuration_parameters.push_back(item);
     }
+    k.standalone = j.at("standalone");
+    k.telemetry_enabled = j.at("telemetry_enabled");
+    if (j.contains("telemetry_config")) {
+        k.telemetry_config = j.at("telemetry_config");
+    }
+    k.config_access = j["config_access"];
 }
 
 void to_json(json& j, GetConfigurationResult const& k) noexcept {

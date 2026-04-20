@@ -16,19 +16,6 @@ enum class MarkActiveSlotResultEnum {
     Rejected,
 };
 
-enum class StopModulesResultEnum {
-    Stopping,
-    NoModulesToStop,
-    Rejected,
-};
-
-enum class StartModulesResultEnum {
-    Starting,
-    Restarting,
-    NoActiveSlot,
-    Rejected,
-};
-
 enum class DeleteSlotResultEnum {
     Success,
     CannotDeleteActiveSlot,
@@ -49,12 +36,6 @@ enum class ActiveSlotStatusEnum {
     RestartTriggered,
 };
 
-enum class ExecutionStatusEnum {
-    Running,
-    NotRunning,
-    ConfigServiceOnly,
-};
-
 enum class ConfigurationParameterDatatype {
     String,
     Decimal,
@@ -63,6 +44,7 @@ enum class ConfigurationParameterDatatype {
     Unknown,
 };
 
+// TODO(CB): Why is this here?!
 using ConfigurationParameterType = ConfigurationParameterDatatype;
 
 enum class ConfigurationParameterMutability {
@@ -71,6 +53,8 @@ enum class ConfigurationParameterMutability {
     WriteOnly,
 };
 
+// TODO(CB): Do we need this? Would be used to mark configurations as "immediate" vs "requires restart" when querying
+// the configuration (not to be confused with the Result of a configuration parameter update, which can be "applied" or "will apply on restart")
 enum class ConfigurationActivationPolicy {
     Immediate,
     RequiresRestart,
@@ -79,11 +63,6 @@ enum class ConfigurationActivationPolicy {
 enum class GetConfigurationStatusEnum {
     Success,
     SlotDoesNotExist,
-};
-
-enum class ApplyMode {
-    Immediate,
-    OnRestart,
 };
 
 struct ConfigMetadata {
@@ -105,14 +84,6 @@ struct GetActiveSlotIdResult {
 struct MarkActiveSlotResult {
     MarkActiveSlotResultEnum result;
     int32_t slot_id;
-};
-
-struct StopModulesResult {
-    StopModulesResultEnum result;
-};
-
-struct StartModulesResult {
-    StartModulesResultEnum result;
 };
 
 struct DeleteSlotResult {
@@ -165,20 +136,11 @@ struct ConfigurationParameterUpdateResultRecord {
     ConfigurationParameterUpdateResultEnum result;
 };
 
-struct ConfigurationParameterUpdateResult {
-    ConfigurationParameterUpdate update;
-    ConfigurationParameterUpdateResultEnum result;
-};
-
 struct ConfigurationParameterUpdateNotice {
     std::string tstamp;
     int32_t slot_id;
-    std::vector<ConfigurationParameterUpdateResult> update_results;
-    OriginOfChange origin;
-};
-
-struct ExecutionStatusUpdateNotice {
-    ExecutionStatusEnum status;
+    std::vector<ConfigurationParameterUpdateResultRecord> update_results;
+    //     OriginOfChange origin;  // TODO(CB): Not part of the internal Config Service
 };
 
 struct Mapping {
@@ -212,6 +174,8 @@ struct ConfigurationParameterCharacteristics {
     ConfigurationParameterMutability mutability;
     ConfigurationActivationPolicy activation_policy;
     std::optional<std::string> unit;
+    std::optional<int32_t> min_value;
+    std::optional<int32_t> max_value;
 };
 
 struct ConfigurationParameter {
@@ -225,6 +189,28 @@ struct ImplementationConfigurationParameter {
     std::vector<ConfigurationParameter> configuration_parameters;
 };
 
+struct TelemetryConfig {
+    int32_t id;
+};
+
+struct ModuleConfigAccess {
+    std::string module_id;
+    bool allow_read;
+    bool allow_write;
+    bool allow_set_read_only;
+};
+
+struct ConfigAccess {
+    bool allow_global_read;
+    bool allow_global_write;
+    bool allow_set_read_only;
+    std::vector<ModuleConfigAccess> module_config_access;
+};
+
+struct ConfigAccessControl {
+    std::optional<ConfigAccess> config;
+};
+
 struct ModuleConfiguration {
     std::string module_id;
     std::string module_name;
@@ -232,6 +218,10 @@ struct ModuleConfiguration {
     ModuleTierMappings mapping;
     std::vector<ConfigurationParameter> module_configuration_parameters;
     std::vector<ImplementationConfigurationParameter> implementation_configuration_parameters;
+    bool standalone;
+    bool telemetry_enabled;
+    std::optional<TelemetryConfig> telemetry_config;
+    ConfigAccessControl config_access;
 };
 
 struct GetConfigurationResult {
