@@ -41,6 +41,7 @@
 #include <ocpp/v2/messages/ClearChargingProfile.hpp>
 #include <ocpp/v2/messages/GetChargingProfiles.hpp>
 #include <ocpp/v2/messages/GetCompositeSchedule.hpp>
+#include <ocpp/v2/messages/NotifyEVChargingNeeds.hpp>
 #include <ocpp/v2/messages/NotifyEVChargingSchedule.hpp>
 #include <ocpp/v2/messages/SetChargingProfile.hpp>
 
@@ -103,6 +104,19 @@ protected:
         return TestSmartCharging(*functional_block_context, set_charging_profiles_callback_mock.AsStdFunction(),
                                  stop_transaction_callback_mock.AsStdFunction());
     }
+
+    /// \brief Builds a TestSmartCharging with the HLC handoff + K16 renegotiation callbacks
+    /// wired. Existing K01FR07 tests assume these callbacks are NOT wired (they implicitly
+    /// disable K15.FR.17's InvalidMessageSeq path), so only tests that exercise HLC flows use
+    /// this helper — via the `smart_charging_hlc` unique_ptr.
+    std::unique_ptr<TestSmartCharging> create_smart_charging_with_hlc() {
+        return std::make_unique<TestSmartCharging>(*functional_block_context,
+                                                   set_charging_profiles_callback_mock.AsStdFunction(),
+                                                   stop_transaction_callback_mock.AsStdFunction(),
+                                                   notify_ev_charging_needs_response_callback_mock.AsStdFunction(),
+                                                   transfer_ev_charging_schedules_callback_mock.AsStdFunction(),
+                                                   trigger_schedule_renegotiation_callback_mock.AsStdFunction());
+    }
     std::string uuid() {
         std::stringstream s;
         s << uuid_generator();
@@ -147,6 +161,15 @@ protected:
     MockFunction<void()> set_charging_profiles_callback_mock;
     MockFunction<RequestStartStopStatusEnum(const std::int32_t evse_id, const ReasonEnum& stop_reason)>
         stop_transaction_callback_mock;
+    MockFunction<void(std::int32_t evse_id, NotifyEVChargingNeedsStatusEnum status)>
+        notify_ev_charging_needs_response_callback_mock;
+    MockFunction<void(std::int32_t evse_id, const std::string& transaction_id,
+                      const std::vector<ChargingSchedule>& schedules,
+                      const std::vector<std::optional<SalesTariff>>& tariffs,
+                      const std::vector<std::optional<std::string>>& signature_value_b64,
+                      const std::optional<std::int32_t>& selected_charging_schedule_id)>
+        transfer_ev_charging_schedules_callback_mock;
+    MockFunction<void(std::int32_t evse_id)> trigger_schedule_renegotiation_callback_mock;
     std::unique_ptr<FunctionalBlockContext> functional_block_context;
     TestSmartCharging smart_charging = create_smart_charging();
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
@@ -1978,12 +2001,12 @@ TEST(SaScheduleCompositionTest, K15FR22_StackLevelPrecedencePicksHighest) {
     auto high = create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00"));
     high.id = 99;
 
-    auto low_profile = create_charging_profile(
-        1, ChargingProfilePurposeEnum::TxProfile, std::vector<ChargingSchedule>{low}, std::string{"tx-1"},
-        ChargingProfileKindEnum::Absolute, /*stack_level=*/0);
-    auto high_profile = create_charging_profile(
-        2, ChargingProfilePurposeEnum::TxProfile, std::vector<ChargingSchedule>{high}, std::string{"tx-1"},
-        ChargingProfileKindEnum::Absolute, /*stack_level=*/5);
+    auto low_profile =
+        create_charging_profile(1, ChargingProfilePurposeEnum::TxProfile, std::vector<ChargingSchedule>{low},
+                                std::string{"tx-1"}, ChargingProfileKindEnum::Absolute, /*stack_level=*/0);
+    auto high_profile =
+        create_charging_profile(2, ChargingProfilePurposeEnum::TxProfile, std::vector<ChargingSchedule>{high},
+                                std::string{"tx-1"}, ChargingProfileKindEnum::Absolute, /*stack_level=*/5);
 
     const auto slots = compute_sa_schedule_list({low_profile, high_profile}, "tx-1");
     ASSERT_EQ(slots.size(), 1);
@@ -1998,10 +2021,10 @@ TEST(SaScheduleCompositionTest, K15FR22_CapsAtThreeSlotsAcrossStackLevels) {
         return s;
     };
 
-    auto a = create_charging_profile(1, ChargingProfilePurposeEnum::TxProfile,
-                                     std::vector<ChargingSchedule>{mk_schedule(10), mk_schedule(11), mk_schedule(12),
-                                                                    mk_schedule(13)},
-                                     std::string{"tx-1"}, ChargingProfileKindEnum::Absolute, 1);
+    auto a = create_charging_profile(
+        1, ChargingProfilePurposeEnum::TxProfile,
+        std::vector<ChargingSchedule>{mk_schedule(10), mk_schedule(11), mk_schedule(12), mk_schedule(13)},
+        std::string{"tx-1"}, ChargingProfileKindEnum::Absolute, 1);
 
     const auto slots = compute_sa_schedule_list({a}, "tx-1");
     ASSERT_EQ(slots.size(), 3);
@@ -2023,6 +2046,271 @@ TEST_F(SmartChargingTest, K15FR21_NotifyEvChargingSchedule_NoEvScheduleUsesFallb
     smart_charging.notify_ev_charging_schedule_req(DEFAULT_EVSE_ID, 7, std::nullopt, std::nullopt);
 
     EXPECT_EQ(captured.chargingSchedule.id, 7);
+}
+
+/// \brief K16 renegotiation tests — Set/ClearChargingProfile during an active HLC session.
+///
+/// Shared setup sequence for the K16 tests:
+///  1. Open a transaction on an EVSE.
+///  2. Dispatch `notify_ev_charging_needs_req` to populate the per-tx HLC coordination state.
+///  3. Send an initial SetChargingProfile (TxProfile) for that tx — the existing K15.FR.07 path
+///     fires `transfer_ev_charging_schedules_callback` and caches the handed-off schedule.
+///  4. Drive the renegotiation scenario (second SetChargingProfile with same or different limit,
+///     or a ClearChargingProfile).
+class K16RenegotiationFixture : public SmartChargingTest {
+protected:
+    std::unique_ptr<TestSmartCharging> smart_charging_hlc;
+
+    void SetUp() override {
+        SmartChargingTest::SetUp();
+        smart_charging_hlc = create_smart_charging_with_hlc();
+    }
+
+    // Build a TxProfile with a single-period schedule at the given limit, so two profiles
+    // with different limits produce materially different composite schedules.
+    ChargingProfile make_tx_profile(std::int32_t profile_id, std::int32_t stack_level, float limit) {
+        auto period = create_charging_schedule_periods(0, DEFAULT_NR_PHASES, std::nullopt, limit);
+        auto schedule = create_charge_schedule(ChargingRateUnitEnum::A, period, ocpp::DateTime("2024-01-17T17:00:00"));
+        return create_charging_profile(profile_id, ChargingProfilePurposeEnum::TxProfile, schedule, DEFAULT_TX_ID,
+                                       ChargingProfileKindEnum::Absolute, stack_level);
+    }
+
+    // Drive the initial HLC handoff for DEFAULT_TX_ID on DEFAULT_EVSE_ID. After this call the
+    // `last_handed_off_schedules` cache for DEFAULT_EVSE_ID is populated with the schedule of
+    // the given profile, and the per-tx `ev_schedule_state` entry has been erased.
+    void drive_initial_handoff(const ChargingProfile& initial_profile) {
+        evse_manager->open_transaction(DEFAULT_EVSE_ID, DEFAULT_TX_ID);
+
+        NotifyEVChargingNeedsRequest needs_req;
+        needs_req.evseId = DEFAULT_EVSE_ID;
+        needs_req.chargingNeeds.requestedEnergyTransfer = EnergyTransferModeEnum::AC_three_phase;
+        EXPECT_CALL(mock_dispatcher, dispatch_call(_, _));
+        smart_charging_hlc->notify_ev_charging_needs_req(needs_req);
+
+        SetChargingProfileRequest set_req;
+        set_req.evseId = DEFAULT_EVSE_ID;
+        set_req.chargingProfile = initial_profile;
+        auto initial_set =
+            request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(set_req);
+
+        EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+        EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+        EXPECT_CALL(transfer_ev_charging_schedules_callback_mock, Call(DEFAULT_EVSE_ID, DEFAULT_TX_ID, _, _, _, _));
+        smart_charging_hlc->handle_message(initial_set);
+        ::testing::Mock::VerifyAndClearExpectations(&mock_dispatcher);
+        ::testing::Mock::VerifyAndClearExpectations(&set_charging_profiles_callback_mock);
+        ::testing::Mock::VerifyAndClearExpectations(&transfer_ev_charging_schedules_callback_mock);
+    }
+};
+
+// Second SetChargingProfile with a materially different schedule fires renegotiation,
+// and also re-delivers the recomputed composite schedule so the ISO stack serves the
+// new bundle when the EV re-enters CPD (K16.FR.03). Without the re-delivery, the
+// ReNegotiation latch fires but evse_sa_schedule_list is stale.
+TEST_F(K16RenegotiationFixture, K16FR02_DifferentScheduleTriggersRenegotiation) {
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/16.0f);
+    drive_initial_handoff(initial);
+
+    // Same profile id + same stack_level → replaces the existing profile (K01FR05).
+    auto updated = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/32.0f);
+    SetChargingProfileRequest set_req;
+    set_req.evseId = DEFAULT_EVSE_ID;
+    set_req.chargingProfile = updated;
+    auto second_set = request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(set_req);
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    // K16.FR.03: the recomputed composite schedule must be delivered to the ISO stack
+    // alongside the renegotiation trigger, otherwise the EV sees the old bundle on re-CPD.
+    EXPECT_CALL(transfer_ev_charging_schedules_callback_mock, Call(DEFAULT_EVSE_ID, DEFAULT_TX_ID, _, _, _, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
+
+    smart_charging_hlc->handle_message(second_set);
+}
+
+// A no-op re-send (same schedule content) must NOT fire renegotiation.
+TEST_F(K16RenegotiationFixture, K16FR02_IdenticalScheduleDoesNotTriggerRenegotiation) {
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/16.0f);
+    drive_initial_handoff(initial);
+
+    // Re-send with the SAME profile id + SAME stack_level + SAME schedule: replaces the
+    // existing profile (K01FR05) but leaves composite_schedule materially unchanged.
+    auto resend = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/16.0f);
+    SetChargingProfileRequest set_req;
+    set_req.evseId = DEFAULT_EVSE_ID;
+    set_req.chargingProfile = resend;
+    auto second_set = request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(set_req);
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    EXPECT_CALL(transfer_ev_charging_schedules_callback_mock, Call).Times(0);
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call).Times(0);
+
+    smart_charging_hlc->handle_message(second_set);
+}
+
+// Without a prior HLC handoff for this EVSE (no cache entry), a SetChargingProfile that slips
+// past K15.FR.17 (e.g. a station-wide TxDefaultProfile or a TxProfile on an EVSE the CS never
+// called NotifyEVChargingNeeds for) must NOT fire the renegotiation callback. We exercise a
+// TxDefaultProfile because K15.FR.17 and the K15.FR.07 transfer path both ignore non-TxProfiles,
+// so only the K16 check could plausibly fire — and it must not, since no handoff was cached.
+TEST_F(K16RenegotiationFixture, K16FR02_NoPriorHandoffDoesNotTriggerRenegotiation) {
+    evse_manager->open_transaction(DEFAULT_EVSE_ID, DEFAULT_TX_ID);
+
+    auto periods = create_charging_schedule_periods(0, DEFAULT_NR_PHASES, std::nullopt, 16.0f);
+    auto schedule = create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto default_profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxDefaultProfile, schedule,
+        /*transaction_id=*/std::nullopt, ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+    SetChargingProfileRequest set_req;
+    set_req.evseId = DEFAULT_EVSE_ID;
+    set_req.chargingProfile = default_profile;
+    auto msg = request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(set_req);
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    EXPECT_CALL(transfer_ev_charging_schedules_callback_mock, Call).Times(0);
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call).Times(0);
+
+    smart_charging_hlc->handle_message(msg);
+}
+
+// After an accepted ClearChargingProfile the cache entry is invalidated; a subsequent
+// SetChargingProfile must be treated as a fresh start — no renegotiation callback.
+TEST_F(K16RenegotiationFixture, K16FR02_ClearChargingProfileInvalidatesCache) {
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/16.0f);
+    drive_initial_handoff(initial);
+
+    // ClearChargingProfile Accepted → invalidate cached handoff for this EVSE.
+    ClearChargingProfileRequest clear_req;
+    clear_req.chargingProfileId = DEFAULT_PROFILE_ID;
+    auto clear_msg =
+        request_to_enhanced_message<ClearChargingProfileRequest, MessageType::ClearChargingProfile>(clear_req);
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    smart_charging_hlc->handle_message(clear_msg);
+    ::testing::Mock::VerifyAndClearExpectations(&mock_dispatcher);
+    ::testing::Mock::VerifyAndClearExpectations(&set_charging_profiles_callback_mock);
+
+    // A fresh SetChargingProfile on the same tx must NOT trigger renegotiation because the
+    // cache was cleared (no active HLC handoff record). After ClearChargingProfile wiped the
+    // previously-accepted TxProfile and the NotifyEVChargingNeeds coordination entry is already
+    // gone, K15.FR.17 rejects this profile as InvalidMessageSeq — that's correct, the CSMS
+    // must re-send NotifyEVChargingNeeds. Either way the renegotiation callback must not fire.
+    auto next = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/32.0f);
+    SetChargingProfileRequest set_req;
+    set_req.evseId = DEFAULT_EVSE_ID;
+    set_req.chargingProfile = next;
+    auto msg = request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(set_req);
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call).Times(::testing::AnyNumber());
+    EXPECT_CALL(transfer_ev_charging_schedules_callback_mock, Call).Times(0);
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call).Times(0);
+
+    smart_charging_hlc->handle_message(msg);
+}
+
+// delete_transaction_tx_profiles (called at transaction end) invalidates the cache so that a
+// new HLC session on the same EVSE is treated as a fresh handoff, not a K16 renegotiation.
+TEST_F(K16RenegotiationFixture, K16FR02_DeleteTransactionInvalidatesCache) {
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/16.0f);
+    drive_initial_handoff(initial);
+
+    smart_charging_hlc->delete_transaction_tx_profiles(DEFAULT_TX_ID);
+
+    // A new tx on the same EVSE, fresh HLC handoff. There is no K16 renegotiation callback
+    // because the cache for this evse was cleared; the initial handoff path fires as normal.
+    const std::string new_tx_id = "20c75ff7-74f5-44f5-9d01-f649f3ac7b78";
+    evse_manager->open_transaction(DEFAULT_EVSE_ID, new_tx_id);
+
+    NotifyEVChargingNeedsRequest needs_req;
+    needs_req.evseId = DEFAULT_EVSE_ID;
+    needs_req.chargingNeeds.requestedEnergyTransfer = EnergyTransferModeEnum::AC_three_phase;
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _));
+    smart_charging_hlc->notify_ev_charging_needs_req(needs_req);
+
+    auto period = create_charging_schedule_periods(0, DEFAULT_NR_PHASES, std::nullopt, 32.0f);
+    auto schedule = create_charge_schedule(ChargingRateUnitEnum::A, period, ocpp::DateTime("2024-01-17T18:00:00"));
+    auto new_profile = create_charging_profile(DEFAULT_PROFILE_ID + 10, ChargingProfilePurposeEnum::TxProfile, schedule,
+                                               new_tx_id, ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+
+    SetChargingProfileRequest set_req;
+    set_req.evseId = DEFAULT_EVSE_ID;
+    set_req.chargingProfile = new_profile;
+    auto msg = request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(set_req);
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    EXPECT_CALL(transfer_ev_charging_schedules_callback_mock, Call(DEFAULT_EVSE_ID, new_tx_id, _, _, _, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call).Times(0);
+
+    smart_charging_hlc->handle_message(msg);
+}
+
+// Regression: if a transaction ends before the CSMS responds to NotifyEVChargingNeeds, the
+// per-tx ev_schedule_state entry (and its armed 60 s timer) must be cleaned up. Otherwise
+// the dangling timer can fire into a subsequent session on the same EVSE, canceling that
+// session's legitimate HLC wait.
+TEST_F(K16RenegotiationFixture, DeleteTransactionClearsEvScheduleState) {
+    evse_manager->open_transaction(DEFAULT_EVSE_ID, DEFAULT_TX_ID);
+
+    NotifyEVChargingNeedsRequest needs_req;
+    needs_req.evseId = DEFAULT_EVSE_ID;
+    needs_req.chargingNeeds.requestedEnergyTransfer = EnergyTransferModeEnum::AC_three_phase;
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _));
+    smart_charging_hlc->notify_ev_charging_needs_req(needs_req);
+
+    {
+        auto handle = smart_charging_hlc->ev_schedule_state.handle();
+        ASSERT_EQ(handle->count(DEFAULT_TX_ID), 1u);
+    }
+
+    smart_charging_hlc->delete_transaction_tx_profiles(DEFAULT_TX_ID);
+
+    {
+        auto handle = smart_charging_hlc->ev_schedule_state.handle();
+        EXPECT_EQ(handle->count(DEFAULT_TX_ID), 0u);
+    }
+}
+
+// The initial HLC handoff populates the cache; a second SetChargingProfile with the same
+// content is the positive control for the "identical schedule" path. Kept separate to pin
+// down the caching write-site behavior distinct from the change-detection fire-site.
+TEST_F(K16RenegotiationFixture, K16FR02_InitialHandoffCachesScheduleForSecondCheck) {
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/16.0f);
+    drive_initial_handoff(initial);
+
+    // With the cache populated, a SECOND profile with the SAME content is treated as a no-op
+    // renegotiation (silence). If the cache were not written on initial handoff, the second
+    // SetChargingProfile would have no prior entry and NoPriorHandoff would apply — either way
+    // the callback does not fire, so we cross-check by changing limit AFTER: callback fires.
+    auto resend = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/16.0f);
+    SetChargingProfileRequest set_req1;
+    set_req1.evseId = DEFAULT_EVSE_ID;
+    set_req1.chargingProfile = resend;
+    auto second_set = request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(set_req1);
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call).Times(0);
+    smart_charging_hlc->handle_message(second_set);
+    ::testing::Mock::VerifyAndClearExpectations(&mock_dispatcher);
+    ::testing::Mock::VerifyAndClearExpectations(&set_charging_profiles_callback_mock);
+    ::testing::Mock::VerifyAndClearExpectations(&trigger_schedule_renegotiation_callback_mock);
+
+    // Now change the limit and confirm the cache is still in place (i.e. the initial handoff
+    // *did* write it, and the identical-resend did not invalidate).
+    auto changed = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/32.0f);
+    SetChargingProfileRequest set_req2;
+    set_req2.evseId = DEFAULT_EVSE_ID;
+    set_req2.chargingProfile = changed;
+    auto third_set = request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(set_req2);
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
+    smart_charging_hlc->handle_message(third_set);
 }
 
 /// \brief K15.FR.09 / K16.FR.04 / K18.FR.09 — boundary check of the EV-returned ChargingSchedule

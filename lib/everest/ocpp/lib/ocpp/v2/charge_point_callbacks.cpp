@@ -35,7 +35,9 @@ bool Callbacks::all_callbacks_valid(std::shared_ptr<DeviceModelAbstract> device_
         (!this->data_transfer_callback.has_value() or this->data_transfer_callback.value() != nullptr) and
         (!this->transaction_event_callback.has_value() or this->transaction_event_callback.value() != nullptr) and
         (!this->transaction_event_response_callback.has_value() or
-         this->transaction_event_response_callback.value() != nullptr);
+         this->transaction_event_response_callback.value() != nullptr) and
+        (!this->trigger_schedule_renegotiation_callback.has_value() or
+         this->trigger_schedule_renegotiation_callback.value() != nullptr);
 
     if (valid) {
         if (device_model->get_optional_value<bool>(ControllerComponentVariables::DisplayMessageCtrlrAvailable)

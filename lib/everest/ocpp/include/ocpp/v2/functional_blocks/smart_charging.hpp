@@ -35,10 +35,15 @@ using NotifyEVChargingNeedsResponseCallback =
 /// translated into up to three composite ChargingSchedules ready for the ISO 15118 stack
 /// (K15.FR.07). Carries the SalesTariff body and OCPP 2.1 signatureValue base64 alongside.
 using TransferEVChargingSchedulesCallback = std::function<void(
-    std::int32_t evse_id, const std::string& transaction_id,
-    const std::vector<ChargingSchedule>& schedules, const std::vector<std::optional<SalesTariff>>& tariffs,
+    std::int32_t evse_id, const std::string& transaction_id, const std::vector<ChargingSchedule>& schedules,
+    const std::vector<std::optional<SalesTariff>>& tariffs,
     const std::vector<std::optional<std::string>>& signature_value_b64,
     const std::optional<std::int32_t>& selected_charging_schedule_id)>;
+
+/// \brief Callback fired when a SetChargingProfile for an active HLC transaction recomputes
+/// the composite schedule and the result materially differs from the last schedule handed
+/// off via TransferEVChargingSchedulesCallback (K16.FR.02 / K16.FR.11).
+using ScheduleRenegotiationCallback = std::function<void(std::int32_t evse_id)>;
 
 struct LimitsSetpointsForOperationMode;
 
@@ -189,10 +194,9 @@ public:
     virtual void notify_ev_charging_needs_req(const NotifyEVChargingNeedsRequest& req) = 0;
 
     /// \brief Dispatches a NotifyEVChargingScheduleRequest to the CSMS (K15.FR.10/FR.21).
-    virtual void
-    notify_ev_charging_schedule_req(std::int32_t evse_id, std::int32_t sa_schedule_tuple_id,
-                                    std::optional<std::int32_t> selected_charging_schedule_id,
-                                    const std::optional<ChargingSchedule>& ev_charging_schedule) = 0;
+    virtual void notify_ev_charging_schedule_req(std::int32_t evse_id, std::int32_t sa_schedule_tuple_id,
+                                                 std::optional<std::int32_t> selected_charging_schedule_id,
+                                                 const std::optional<ChargingSchedule>& ev_charging_schedule) = 0;
 };
 
 /// \brief One composite charging schedule slot for the ISO 15118 SAScheduleList, with the
@@ -218,7 +222,7 @@ struct SaScheduleSlot {
 /// \return Up to three SaScheduleSlot entries, in order of slot index (slot 0 first).
 ///         Empty vector if no TxProfile for \p transaction_id has any ChargingSchedule.
 std::vector<SaScheduleSlot> compute_sa_schedule_list(const std::vector<ChargingProfile>& all_profiles,
-                                                    const std::string& transaction_id);
+                                                     const std::string& transaction_id);
 
 /// \brief Per-HLC-transaction coordination state tracking the NotifyEVChargingNeeds lifecycle
 /// and the 60-second ChargeParameterDiscoveryReq budget (K15.FR.08).
@@ -237,23 +241,31 @@ private: // Members
     StopTransactionCallback stop_transaction_callback;
     std::optional<NotifyEVChargingNeedsResponseCallback> notify_ev_charging_needs_response_callback;
     std::optional<TransferEVChargingSchedulesCallback> transfer_ev_charging_schedules_callback;
+    std::optional<ScheduleRenegotiationCallback> trigger_schedule_renegotiation_callback;
 
+protected:
     /// \brief In-flight HLC transactions awaiting either a CSMS TxProfile, the NotifyEVChargingNeeds
     /// response, or the 60-second timeout. Keyed by transaction id (from NotifyEVChargingNeeds.req).
+    /// Protected (not private) so TestSmartCharging can inspect map contents in unit tests.
     everest::lib::util::monitor<std::map<std::string, EvScheduleState>> ev_schedule_state;
+
+private:
+    /// \brief Per-EVSE snapshot of the last composite schedule vector handed off via
+    /// transfer_ev_charging_schedules_callback. Presence of an entry also serves as the
+    /// "HLC handoff active" flag for K16.FR.02 / K16.FR.11 change detection.
+    everest::lib::util::monitor<std::map<std::int32_t, std::vector<ChargingSchedule>>> last_handed_off_schedules;
 
     /// \brief Budget for a CSMS SetChargingProfile after NotifyEVChargingNeedsResponse(Accepted).
     /// K15.FR.08 sets the ISO 15118 ChargeParameterDiscoveryRes timeout at 60 s.
     static constexpr std::chrono::seconds EV_SCHEDULE_TIMEOUT{60};
 
 public:
-    SmartCharging(const FunctionalBlockContext& functional_block_context,
-                  std::function<void()> set_charging_profiles_callback,
-                  StopTransactionCallback stop_transaction_callback,
-                  std::optional<NotifyEVChargingNeedsResponseCallback> notify_ev_charging_needs_response_callback =
-                      std::nullopt,
-                  std::optional<TransferEVChargingSchedulesCallback> transfer_ev_charging_schedules_callback =
-                      std::nullopt);
+    SmartCharging(
+        const FunctionalBlockContext& functional_block_context, std::function<void()> set_charging_profiles_callback,
+        StopTransactionCallback stop_transaction_callback,
+        std::optional<NotifyEVChargingNeedsResponseCallback> notify_ev_charging_needs_response_callback = std::nullopt,
+        std::optional<TransferEVChargingSchedulesCallback> transfer_ev_charging_schedules_callback = std::nullopt,
+        std::optional<ScheduleRenegotiationCallback> trigger_schedule_renegotiation_callback = std::nullopt);
     void handle_message(const ocpp::EnhancedMessage<MessageType>& message) override;
     GetCompositeScheduleResponse get_composite_schedule(const GetCompositeScheduleRequest& request) override;
     std::optional<CompositeSchedule> get_composite_schedule(std::int32_t evse_id, std::chrono::seconds duration,

@@ -135,6 +135,12 @@ struct Callbacks {
                                      const std::optional<int32_t>& selected_charging_schedule_id)>>
         transfer_ev_charging_schedules_callback;
 
+    /// \brief Fires when a SetChargingProfileRequest recomputes the composite schedule for an
+    /// active HLC session and the result differs from the previous schedule handed off via
+    /// transfer_ev_charging_schedules_callback (K16.FR.02 / K16.FR.11). The application wires
+    /// this to the ISO 15118 stack to trigger a renegotiation.
+    std::optional<std::function<void(std::int32_t evse_id)>> trigger_schedule_renegotiation_callback;
+
     /// \brief  Callback for when a bootnotification response is received
     std::optional<std::function<void(const ocpp::v2::BootNotificationResponse& boot_notification_response)>>
         boot_notification_callback;

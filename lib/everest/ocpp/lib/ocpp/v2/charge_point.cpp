@@ -442,8 +442,8 @@ void ChargePoint::on_ev_selected_charging_schedule(int32_t evse_id, int32_t sa_s
     if (this->smart_charging == nullptr) {
         return;
     }
-    this->smart_charging->notify_ev_charging_schedule_req(evse_id, sa_schedule_tuple_id,
-                                                           selected_charging_schedule_id, ev_charging_schedule);
+    this->smart_charging->notify_ev_charging_schedule_req(evse_id, sa_schedule_tuple_id, selected_charging_schedule_id,
+                                                          ev_charging_schedule);
 }
 
 void ChargePoint::initialize(const std::map<std::int32_t, std::int32_t>& evse_connector_structure,
@@ -617,9 +617,9 @@ void ChargePoint::initialize(const std::map<std::int32_t, std::int32_t>& evse_co
             .value_or(false)) {
         this->smart_charging = std::make_unique<SmartCharging>(
             *this->functional_block_context, this->callbacks.set_charging_profiles_callback,
-            this->callbacks.stop_transaction_callback,
-            this->callbacks.notify_ev_charging_needs_response_callback,
-            this->callbacks.transfer_ev_charging_schedules_callback);
+            this->callbacks.stop_transaction_callback, this->callbacks.notify_ev_charging_needs_response_callback,
+            this->callbacks.transfer_ev_charging_schedules_callback,
+            this->callbacks.trigger_schedule_renegotiation_callback);
     }
 
     this->tariff_and_cost = std::make_unique<TariffAndCost>(

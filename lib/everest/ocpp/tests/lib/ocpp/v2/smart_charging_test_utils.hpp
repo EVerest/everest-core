@@ -130,6 +130,7 @@ public:
     using SmartCharging::add_profile;
     using SmartCharging::calculate_composite_schedule;
     using SmartCharging::clear_profiles;
+    using SmartCharging::ev_schedule_state;
     using SmartCharging::get_reported_profiles;
     using SmartCharging::get_valid_profiles;
     using SmartCharging::SmartCharging;
