@@ -384,6 +384,23 @@ private: // Functions
     void handle_set_charging_profile_req(Call<SetChargingProfileRequest> call);
     void handle_clear_charging_profile_req(Call<ClearChargingProfileRequest> call);
     void handle_get_charging_profiles_req(Call<GetChargingProfilesRequest> call);
+
+    /// \brief K16.FR.02 — widen renegotiation trigger surface. After any profile mutation on an
+    /// EVSE that has an active HLC handoff cache entry, recompute the composite schedule from
+    /// the DB snapshot and compare against the cached snapshot. If the composite materially
+    /// changed, re-deliver the recomputed bundle to the ISO stack (K16.FR.03), update the cache,
+    /// and fire the renegotiation callback. Purpose-agnostic per spec: any profile purpose
+    /// (TxProfile, TxDefaultProfile, ChargingStationMaxProfile, ChargingStationExternalConstraints,
+    /// LocalGeneration) — and any path that mutates the profile set (SetChargingProfile,
+    /// ClearChargingProfile) — funnels through here.
+    ///
+    /// Early-returns when:
+    /// - `trigger_schedule_renegotiation_callback` is not wired (non-HLC build)
+    /// - there is no prior handoff cache entry for `evse_id` (no active HLC session to
+    ///   renegotiate)
+    /// - the EVSE has no active transaction (nothing to renegotiate against)
+    /// - the recomputed composite is materially equal to the cached one
+    void evaluate_composite_change_and_trigger_k16(std::int32_t evse_id);
     void handle_get_composite_schedule_req(Call<GetCompositeScheduleRequest> call);
     void handle_notify_ev_charging_needs_response(const EnhancedMessage<MessageType>& call_result);
 

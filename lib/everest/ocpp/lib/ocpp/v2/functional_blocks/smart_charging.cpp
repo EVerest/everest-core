@@ -245,15 +245,29 @@ BoundaryCheckResult verify_ev_profile_within_boundaries(const ChargingSchedule& 
 
 /// \brief Materiality check for two ChargingSchedule vectors, used by K16 change detection.
 /// Falls back to JSON serialization — which is already the wire-level equality for OCPP — so
-/// every field that affects EV behavior (chargingRateUnit, periods, limits, phases, durations,
-/// startSchedule, minChargingRate, salesTariff body, etc.) is compared without hand-rolling a
-/// struct-walker that would need to be kept in sync with ocpp_types.hpp.
+/// every field that affects EV behavior (chargingRateUnit, periods, limits, phases, duration,
+/// minChargingRate, salesTariff body, etc.) is compared without hand-rolling a struct-walker
+/// that would need to be kept in sync with ocpp_types.hpp. `startSchedule` is erased from
+/// both sides before serialization: `compute_sa_schedule_list` stamps `startSchedule` with
+/// the handler's current time on every call, so two back-to-back computes of the same inputs
+/// produce schedules that differ by sub-millisecond jitter in this field alone. For K16
+/// change detection, a sub-millisecond move of the anchor is not a composite change worth
+/// firing a renegotiation — the shape (periods, limits, duration, phases, tariff) is what
+/// the EV reacts to. `id` is also erased because `compute_sa_schedule_list` inherits the id
+/// from the highest-stack-level TxProfile's kth schedule, which can legitimately change when
+/// a new profile of a different purpose is installed even though the composite is unchanged.
 bool schedules_materially_equal(const std::vector<ChargingSchedule>& a, const std::vector<ChargingSchedule>& b) {
     if (a.size() != b.size()) {
         return false;
     }
     for (std::size_t i = 0; i < a.size(); ++i) {
-        if (json(a[i]) != json(b[i])) {
+        ChargingSchedule lhs = a[i];
+        ChargingSchedule rhs = b[i];
+        lhs.startSchedule = std::nullopt;
+        rhs.startSchedule = std::nullopt;
+        lhs.id = 0;
+        rhs.id = 0;
+        if (json(lhs) != json(rhs)) {
             return false;
         }
     }
@@ -1640,6 +1654,80 @@ void SmartCharging::notify_ev_charging_schedule_req(std::int32_t evse_id, std::i
     this->context.message_dispatcher.dispatch_call(call);
 }
 
+void SmartCharging::evaluate_composite_change_and_trigger_k16(std::int32_t evse_id) {
+    // K16.FR.02: purpose-agnostic composite-change detector. Runs after any profile mutation
+    // (SetChargingProfile for any purpose that can affect the composite, ClearChargingProfile).
+    // Gates:
+    //   1) HLC build: the renegotiation callback must be wired.
+    //   2) Prior handoff: an entry in `last_handed_off_schedules[evse_id]` is the sole source
+    //      of truth that an HLC session is active for this EVSE. Without one, there is no
+    //      cached composite to compare against and no EV to renegotiate with.
+    //   3) Active transaction on this EVSE: required to key `compute_sa_schedule_list` by the
+    //      transaction id, and to have something to renegotiate in the first place.
+    if (not this->trigger_schedule_renegotiation_callback.has_value()) {
+        return;
+    }
+
+    std::vector<ChargingSchedule> cached;
+    {
+        auto cache = this->last_handed_off_schedules.handle();
+        auto it = cache->find(evse_id);
+        if (it == cache->end()) {
+            return;
+        }
+        cached = it->second;
+    }
+
+    // K16.FR.02 is keyed by transaction — the ReNegotiation latch ties to an HLC session on
+    // the EVSE. If the transaction ended in between the handoff and this mutation, the cache
+    // should already have been cleared via `delete_transaction_tx_profiles`. Guard defensively.
+    const auto& tx = this->context.evse_manager.get_evse(evse_id).get_transaction();
+    if (tx == nullptr) {
+        return;
+    }
+    const std::string tx_id = tx->transactionId.get();
+
+    // Station-wide profiles (evse_id=0) cap, fill, or add headroom to the composite. The
+    // evse-scoped query alone would miss them, so union both sets before feeding
+    // compute_sa_schedule_list.
+    auto all_profiles = this->context.database_handler.get_charging_profiles_for_evse(evse_id);
+    auto station_wide_profiles = this->context.database_handler.get_charging_profiles_for_evse(0);
+    all_profiles.insert(all_profiles.end(), std::make_move_iterator(station_wide_profiles.begin()),
+                        std::make_move_iterator(station_wide_profiles.end()));
+    const auto slots = compute_sa_schedule_list(all_profiles, tx_id, evse_id, this->context.device_model,
+                                                this->context.ocpp_version.load(), std::nullopt, ocpp::DateTime{});
+    std::vector<ChargingSchedule> recomputed;
+    std::vector<std::optional<SalesTariff>> tariffs;
+    std::vector<std::optional<std::string>> signature_value_b64;
+    recomputed.reserve(slots.size());
+    tariffs.reserve(slots.size());
+    signature_value_b64.reserve(slots.size());
+    for (const auto& slot : slots) {
+        recomputed.push_back(slot.schedule);
+        tariffs.push_back(slot.sales_tariff);
+        signature_value_b64.push_back(slot.signature_value_b64);
+    }
+
+    if (schedules_materially_equal(cached, recomputed)) {
+        return;
+    }
+
+    // K16.FR.03: re-deliver the recomputed composite schedule to the ISO stack BEFORE firing
+    // the renegotiation trigger, so the EV sees the fresh bundle when it re-enters CPD in
+    // response to the ReNegotiation latch. Without this, evse_sa_schedule_list still holds
+    // the prior tuples.
+    if (this->transfer_ev_charging_schedules_callback.has_value()) {
+        this->transfer_ev_charging_schedules_callback.value()(evse_id, tx_id, recomputed, tariffs, signature_value_b64,
+                                                              std::nullopt);
+    }
+    {
+        auto cache = this->last_handed_off_schedules.handle();
+        (*cache)[evse_id] = recomputed;
+    }
+    EVLOG_info << "K16: firing schedule renegotiation for evse " << evse_id;
+    this->trigger_schedule_renegotiation_callback.value()(evse_id);
+}
+
 void SmartCharging::handle_set_charging_profile_req(Call<SetChargingProfileRequest> call) {
     EVLOG_debug << "Received SetChargingProfileRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
     auto msg = call.msg;
@@ -1747,7 +1835,14 @@ void SmartCharging::handle_set_charging_profile_req(Call<SetChargingProfileReque
                 // K15.FR.22: compose up to three ChargingSchedules by combining schedules from
                 // all TxProfiles installed for this transaction across stackLevels. For a single
                 // TxProfile this degenerates to its own schedules (K15.FR.18 recommended shape).
-                const auto all_profiles = this->context.database_handler.get_charging_profiles_for_evse(evse_id);
+                // Union evse-scoped profiles with station-wide (evse_id=0) so caps
+                // (ChargingStationMaxProfile / ExternalConstraints) and headroom (LocalGeneration)
+                // fold into the composite — get_charging_profiles_for_evse(evse_id) alone would
+                // miss those (see database_handler.cpp: SQL filters WHERE EVSE_ID = @evse_id).
+                auto all_profiles = this->context.database_handler.get_charging_profiles_for_evse(evse_id);
+                auto station_wide = this->context.database_handler.get_charging_profiles_for_evse(0);
+                all_profiles.insert(all_profiles.end(), std::make_move_iterator(station_wide.begin()),
+                                    std::make_move_iterator(station_wide.end()));
                 const auto slots =
                     compute_sa_schedule_list(all_profiles, tx_id, evse_id, this->context.device_model,
                                              this->context.ocpp_version.load(), std::nullopt, ocpp::DateTime{});
@@ -1774,52 +1869,35 @@ void SmartCharging::handle_set_charging_profile_req(Call<SetChargingProfileReque
                 (*cache)[evse_id] = std::move(schedules);
                 EVLOG_debug << "K16: cached HLC handoff schedule for evse " << evse_id;
             } else {
-                // K16.FR.02 / FR.11: TxProfile for a tx not currently awaiting handoff — if this
-                // EVSE had a prior handoff (cache entry present), recompute the composite and
-                // fire the renegotiation callback when it differs materially from the cache.
-                std::vector<ChargingSchedule> cached;
-                bool have_prior = false;
-                {
-                    auto cache = this->last_handed_off_schedules.handle();
-                    auto it = cache->find(msg.evseId);
-                    if (it != cache->end()) {
-                        cached = it->second;
-                        have_prior = true;
-                    }
+                // K16.FR.02 / FR.11: TxProfile for a tx not currently awaiting handoff —
+                // funnel through the purpose-agnostic helper so the trigger logic is uniform
+                // with the non-TxProfile paths below.
+                this->evaluate_composite_change_and_trigger_k16(msg.evseId);
+            }
+        }
+        // K16.FR.02: non-TxProfile purposes (TxDefaultProfile, ChargingStationMaxProfile,
+        // LocalGeneration) can also change the composite for an active HLC session. The
+        // helper no-ops when there is no prior handoff for the EVSE. For station-wide profiles
+        // the SetChargingProfileRequest carries evseId=0, so fan out across every EVSE that
+        // currently has a cached handoff.
+        const bool is_tx_profile_already_handled =
+            msg.chargingProfile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile;
+        if (not is_tx_profile_already_handled) {
+            std::vector<std::int32_t> evse_ids_with_handoff;
+            {
+                auto cache = this->last_handed_off_schedules.handle();
+                evse_ids_with_handoff.reserve(cache->size());
+                for (const auto& [id, _] : *cache) {
+                    evse_ids_with_handoff.push_back(id);
                 }
-                if (have_prior and this->trigger_schedule_renegotiation_callback.has_value()) {
-                    const auto all_profiles = this->context.database_handler.get_charging_profiles_for_evse(msg.evseId);
-                    const auto slots =
-                        compute_sa_schedule_list(all_profiles, tx_id, msg.evseId, this->context.device_model,
-                                                 this->context.ocpp_version.load(), std::nullopt, ocpp::DateTime{});
-                    std::vector<ChargingSchedule> recomputed;
-                    std::vector<std::optional<SalesTariff>> tariffs;
-                    std::vector<std::optional<std::string>> signature_value_b64;
-                    recomputed.reserve(slots.size());
-                    tariffs.reserve(slots.size());
-                    signature_value_b64.reserve(slots.size());
-                    for (const auto& slot : slots) {
-                        recomputed.push_back(slot.schedule);
-                        tariffs.push_back(slot.sales_tariff);
-                        signature_value_b64.push_back(slot.signature_value_b64);
-                    }
-                    if (not schedules_materially_equal(cached, recomputed)) {
-                        // K16.FR.03: re-deliver the recomputed composite schedule to the ISO stack
-                        // BEFORE firing the renegotiation trigger, so the EV sees the fresh bundle
-                        // when it re-enters ChargeParameterDiscovery in response to the ReNegotiation
-                        // latch. Without this, evse_sa_schedule_list still holds the prior tuples.
-                        if (this->transfer_ev_charging_schedules_callback.has_value()) {
-                            this->transfer_ev_charging_schedules_callback.value()(
-                                msg.evseId, tx_id, recomputed, tariffs, signature_value_b64, std::nullopt);
-                        }
-                        {
-                            auto cache = this->last_handed_off_schedules.handle();
-                            (*cache)[msg.evseId] = recomputed;
-                        }
-                        EVLOG_info << "K16: firing schedule renegotiation for evse " << msg.evseId;
-                        this->trigger_schedule_renegotiation_callback.value()(msg.evseId);
-                    }
+            }
+            // evseId == 0 signals a station-wide profile per OCPP 2.0.1 / 2.1 K01 semantics.
+            if (msg.evseId == 0) {
+                for (const auto id : evse_ids_with_handoff) {
+                    this->evaluate_composite_change_and_trigger_k16(id);
                 }
+            } else {
+                this->evaluate_composite_change_and_trigger_k16(msg.evseId);
             }
         }
     } else {
@@ -1862,19 +1940,39 @@ void SmartCharging::handle_clear_charging_profile_req(Call<ClearChargingProfileR
 
     if (response.status == ClearChargingProfileStatusEnum::Accepted) {
         this->set_charging_profiles_callback();
-        // K16.FR.02 / FR.11: clearing profiles invalidates any cached HLC handoff snapshot so a
-        // subsequent SetChargingProfile does not spuriously trigger a renegotiation against
-        // stale schedules. If the request had no evseId criterion, clear all entries.
+
+        // K16.FR.02: a clear that removes any profile contributing to the active composite
+        // changes the composite and MUST fire renegotiation. Funnel through the purpose-
+        // agnostic helper for every EVSE that currently has a prior handoff — the helper
+        // no-ops when the composite is unchanged. If the composite becomes empty (all
+        // contributing profiles gone), the recomputed schedule vector is empty and
+        // schedules_materially_equal returns false → the helper still fires a renegotiation
+        // with an empty bundle, which correctly lets the EV know its schedule is void.
+        std::vector<std::int32_t> evse_ids_with_handoff;
+        {
+            auto cache = this->last_handed_off_schedules.handle();
+            evse_ids_with_handoff.reserve(cache->size());
+            for (const auto& [id, _] : *cache) {
+                evse_ids_with_handoff.push_back(id);
+            }
+        }
         const bool scoped_to_evse =
             msg.chargingProfileCriteria.has_value() and msg.chargingProfileCriteria.value().evseId.has_value();
-        auto cache = this->last_handed_off_schedules.handle();
         if (scoped_to_evse) {
             const auto cleared_evse = msg.chargingProfileCriteria.value().evseId.value();
-            cache->erase(cleared_evse);
-            EVLOG_debug << "K16: invalidated cached schedule for evse " << cleared_evse << " on profile clear";
+            // evseId=0 in ClearChargingProfile targets station-wide profiles; fan out to all
+            // HLC sessions so we re-evaluate each against the shrunken profile set.
+            if (cleared_evse == 0) {
+                for (const auto id : evse_ids_with_handoff) {
+                    this->evaluate_composite_change_and_trigger_k16(id);
+                }
+            } else {
+                this->evaluate_composite_change_and_trigger_k16(cleared_evse);
+            }
         } else {
-            cache->clear();
-            EVLOG_debug << "K16: cleared all cached schedules on unscoped profile clear";
+            for (const auto id : evse_ids_with_handoff) {
+                this->evaluate_composite_change_and_trigger_k16(id);
+            }
         }
     }
 

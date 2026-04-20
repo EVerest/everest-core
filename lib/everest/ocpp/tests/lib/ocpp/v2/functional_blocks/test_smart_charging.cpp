@@ -2332,28 +2332,246 @@ TEST_F(K16RenegotiationFixture, K16FR02_NoPriorHandoffDoesNotTriggerRenegotiatio
     smart_charging_hlc->handle_message(msg);
 }
 
-// After an accepted ClearChargingProfile the cache entry is invalidated; a subsequent
-// SetChargingProfile must be treated as a fresh start — no renegotiation callback.
-TEST_F(K16RenegotiationFixture, K16FR02_ClearChargingProfileInvalidatesCache) {
+// K16.FR.02 spec (OCPP 2.1 Ed.2): "When the composite schedule for the EVSE changes, the
+// Charging Station SHALL initiate schedule renegotiation with the EV." The requirement is
+// purpose-agnostic — a ChargingStationMaxProfile that caps the TxProfile below its own
+// limit changes the composite and MUST fire renegotiation.
+TEST_F(K16RenegotiationFixture, K16FR02_ChargingStationMaxProfileTriggersRenegotiation) {
+    // Initial handoff at 32 A. Cache is seeded with a 32 A composite for DEFAULT_EVSE_ID.
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/32.0f);
+    drive_initial_handoff(initial);
+
+    // Station-wide ChargingStationMaxProfile at 16 A — caps the TxProfile composite to 16 A.
+    auto cap_periods = create_charging_schedule_periods(0, DEFAULT_NR_PHASES, std::nullopt, 16.0f);
+    auto cap_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::A, cap_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto cs_max = create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
+                                          cap_schedule, /*transaction_id=*/std::nullopt,
+                                          ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+    SetChargingProfileRequest set_req;
+    set_req.evseId = STATION_WIDE_ID; // ChargingStationMaxProfile installs station-wide
+    set_req.chargingProfile = cs_max;
+    auto msg = request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(set_req);
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    // K16.FR.03: refresh the ISO bundle before firing the ReNegotiation latch.
+    EXPECT_CALL(transfer_ev_charging_schedules_callback_mock, Call(DEFAULT_EVSE_ID, DEFAULT_TX_ID, _, _, _, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
+
+    smart_charging_hlc->handle_message(msg);
+}
+
+// K16.FR.02: a TxDefaultProfile change that alters the composite must fire renegotiation.
+// TxProfile wins over TxDefaultProfile for overlapping periods (K01.FR.04/05) — TxDefault
+// only fills the window *after* the TxProfile's duration. To exercise the K16 trigger for
+// TxDefault, the initial TxProfile declares an explicit short duration; the TxDefault then
+// alters the tail of the composite.
+TEST_F(K16RenegotiationFixture, K16FR02_TxDefaultProfileTriggersRenegotiation) {
+    // Initial TxProfile: 32 A for 1 hour. Beyond that, the composite falls back to defaults.
+    auto tx_periods = create_charging_schedule_periods(0, DEFAULT_NR_PHASES, std::nullopt, 32.0f);
+    auto tx_schedule = create_charge_schedule(ChargingRateUnitEnum::A, tx_periods,
+                                              ocpp::DateTime("2024-01-17T17:00:00"), /*duration=*/3600);
+    auto initial = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile, tx_schedule,
+                                           DEFAULT_TX_ID, ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+    drive_initial_handoff(initial);
+
+    // Add a TxDefaultProfile at 10 A: fills the post-TxProfile window of the composite
+    // (K01.FR.04 ordering: TxProfile wins where it applies; TxDefault fills the gap).
+    auto def_periods = create_charging_schedule_periods(0, DEFAULT_NR_PHASES, std::nullopt, 10.0f);
+    auto def_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::A, def_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto tx_default = create_charging_profile(DEFAULT_PROFILE_ID + 2, ChargingProfilePurposeEnum::TxDefaultProfile,
+                                              def_schedule, /*transaction_id=*/std::nullopt,
+                                              ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+    SetChargingProfileRequest set_req;
+    set_req.evseId = DEFAULT_EVSE_ID;
+    set_req.chargingProfile = tx_default;
+    auto msg = request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(set_req);
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    EXPECT_CALL(transfer_ev_charging_schedules_callback_mock, Call(DEFAULT_EVSE_ID, DEFAULT_TX_ID, _, _, _, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
+
+    smart_charging_hlc->handle_message(msg);
+}
+
+// K16.FR.02: a ChargingStationExternalConstraints change (note: SetChargingProfile rejects
+// this purpose per K01.FR.22, so we install the profile directly via add_profile — the
+// concrete trigger surface in libocpp is any call path that notifies the smart-charging
+// block of a composite change. The helper evaluates the composite regardless of the
+// originating path.) Here we simulate a fresh SetChargingProfile of a different purpose
+// (TxDefaultProfile) landing AFTER a prior ExternalConstraints install, and verify the
+// composite-change path fires even when the new profile itself isn't ExternalConstraints.
+TEST_F(K16RenegotiationFixture, K16FR02_ChargingStationExternalConstraintsTriggersRenegotiation) {
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/32.0f);
+    drive_initial_handoff(initial);
+
+    // Install a ChargingStationExternalConstraints directly (SetChargingProfile rejects this
+    // purpose per K01.FR.22). This bypasses the K16 helper. Then send a second
+    // SetChargingProfile for an unrelated purpose to drive the helper; the composite now
+    // reflects the prior ExternalConstraints cap, so the helper must fire renegotiation.
+    auto ext_periods = create_charging_schedule_periods(0, DEFAULT_NR_PHASES, std::nullopt, 12.0f);
+    auto ext_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::A, ext_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto external = create_charging_profile(
+        DEFAULT_PROFILE_ID + 3, ChargingProfilePurposeEnum::ChargingStationExternalConstraints, ext_schedule,
+        /*transaction_id=*/std::nullopt, ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+    smart_charging_hlc->add_profile(external, STATION_WIDE_ID);
+
+    // Now a station-wide TxDefaultProfile lands via SetChargingProfile. The helper recomputes:
+    // with ExternalConstraints capping at 12 A, the composite shrinks from the cached 32 A.
+    auto tx_def_periods = create_charging_schedule_periods(0, DEFAULT_NR_PHASES, std::nullopt, 32.0f);
+    auto tx_def_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::A, tx_def_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto tx_default = create_charging_profile(DEFAULT_PROFILE_ID + 4, ChargingProfilePurposeEnum::TxDefaultProfile,
+                                              tx_def_schedule, /*transaction_id=*/std::nullopt,
+                                              ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL + 1);
+    SetChargingProfileRequest set_req;
+    set_req.evseId = STATION_WIDE_ID;
+    set_req.chargingProfile = tx_default;
+    auto msg = request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(set_req);
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    EXPECT_CALL(transfer_ev_charging_schedules_callback_mock, Call(DEFAULT_EVSE_ID, DEFAULT_TX_ID, _, _, _, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
+
+    smart_charging_hlc->handle_message(msg);
+}
+
+// K16.FR.02: a LocalGeneration change that alters the composite (K15.FR.22 headroom
+// addition) must fire renegotiation. Note: libocpp currently rejects LocalGeneration via
+// SetChargingProfile (see smart_charging.cpp FIXME), so the LocalGeneration profile is
+// installed directly via add_profile; the K16 helper is driven indirectly via a
+// ChargingStationMaxProfile SetChargingProfile whose cap + the LocalGeneration headroom
+// together produce a composite that differs from the pre-existing cached composite.
+TEST_F(K16RenegotiationFixture, K16FR02_LocalGenerationTriggersRenegotiation) {
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/32.0f);
+    drive_initial_handoff(initial);
+
+    // Install a LocalGeneration profile directly (bypasses the SetChargingProfile rejection).
+    // LocalGeneration at 8 A adds headroom; the composite stays at 32 A since LocalGeneration
+    // only raises the sum-cap, not the underlying TxProfile limit. But once we add a
+    // ChargingStationMaxProfile cap below, the LocalGeneration contribution shows up: the
+    // cap + gen sum to a higher effective ceiling than the cap alone.
+    auto gen_periods = create_charging_schedule_periods(0, DEFAULT_NR_PHASES, std::nullopt, 8.0f);
+    auto gen_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::A, gen_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto gen = create_charging_profile(
+        DEFAULT_PROFILE_ID + 5, ChargingProfilePurposeEnum::LocalGeneration, gen_schedule,
+        /*transaction_id=*/std::nullopt, ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+    smart_charging_hlc->add_profile(gen, STATION_WIDE_ID);
+
+    // Now a station-wide ChargingStationMaxProfile at 16 A — caps the 32 A TxProfile and the
+    // LocalGeneration (8 A) folds in as headroom. Composite changes from 32 A to cap+gen.
+    auto cap_periods = create_charging_schedule_periods(0, DEFAULT_NR_PHASES, std::nullopt, 16.0f);
+    auto cap_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::A, cap_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto cs_max = create_charging_profile(DEFAULT_PROFILE_ID + 8, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
+                                          cap_schedule, /*transaction_id=*/std::nullopt,
+                                          ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+    SetChargingProfileRequest set_req;
+    set_req.evseId = STATION_WIDE_ID;
+    set_req.chargingProfile = cs_max;
+    auto msg = request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(set_req);
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    EXPECT_CALL(transfer_ev_charging_schedules_callback_mock, Call(DEFAULT_EVSE_ID, DEFAULT_TX_ID, _, _, _, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
+
+    smart_charging_hlc->handle_message(msg);
+}
+
+// K16.FR.02: clearing a ChargingStationMaxProfile that was previously capping the composite
+// widens the composite (the cap is gone). Must fire renegotiation.
+TEST_F(K16RenegotiationFixture, K16FR02_ClearChargingProfileWithPriorHandoffTriggersRenegotiation) {
+    // Seed the DB with a ChargingStationMaxProfile that caps the TxProfile composite.
+    auto cap_periods = create_charging_schedule_periods(0, DEFAULT_NR_PHASES, std::nullopt, 16.0f);
+    auto cap_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::A, cap_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto cs_max = create_charging_profile(DEFAULT_PROFILE_ID + 6, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
+                                          cap_schedule, /*transaction_id=*/std::nullopt,
+                                          ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+    smart_charging_hlc->add_profile(cs_max, STATION_WIDE_ID);
+
+    // Initial handoff: TxProfile at 32 A, capped to 16 A by the prior ChargingStationMaxProfile.
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/32.0f);
+    drive_initial_handoff(initial);
+
+    // Clear the cap. Composite widens back to 32 A — must fire renegotiation.
+    ClearChargingProfileRequest clear_req;
+    clear_req.chargingProfileId = DEFAULT_PROFILE_ID + 6;
+    auto clear_msg =
+        request_to_enhanced_message<ClearChargingProfileRequest, MessageType::ClearChargingProfile>(clear_req);
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    EXPECT_CALL(transfer_ev_charging_schedules_callback_mock, Call(DEFAULT_EVSE_ID, DEFAULT_TX_ID, _, _, _, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
+
+    smart_charging_hlc->handle_message(clear_msg);
+}
+
+// K16.FR.02 negative: a SetChargingProfile whose composite effect is masked by an existing
+// tighter profile leaves the composite unchanged — must NOT fire renegotiation.
+TEST_F(K16RenegotiationFixture, K16FR02_NonChangingProfileDoesNotTriggerRenegotiation) {
+    // Initial handoff at 16 A.
     auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/16.0f);
     drive_initial_handoff(initial);
 
-    // ClearChargingProfile Accepted → invalidate cached handoff for this EVSE.
+    // A higher-stack-level TxDefaultProfile at 32 A is MASKED by the 16 A TxProfile
+    // (lowest-limit-wins). The composite stays at 16 A — no renegotiation.
+    auto masked_periods = create_charging_schedule_periods(0, DEFAULT_NR_PHASES, std::nullopt, 32.0f);
+    auto masked_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::A, masked_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto masked = create_charging_profile(
+        DEFAULT_PROFILE_ID + 7, ChargingProfilePurposeEnum::TxDefaultProfile, masked_schedule,
+        /*transaction_id=*/std::nullopt, ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL + 20);
+    SetChargingProfileRequest set_req;
+    set_req.evseId = DEFAULT_EVSE_ID;
+    set_req.chargingProfile = masked;
+    auto msg = request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(set_req);
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
+    EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    EXPECT_CALL(transfer_ev_charging_schedules_callback_mock, Call).Times(0);
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call).Times(0);
+
+    smart_charging_hlc->handle_message(msg);
+}
+
+// K16.FR.02 widening: clearing the only TxProfile for an active HLC tx empties the composite.
+// The empty composite differs materially from the cached non-empty bundle, so the helper
+// fires renegotiation (K16.FR.02) and re-delivers the empty bundle to the ISO stack
+// (K16.FR.03) so the EV sees the void schedule on CPD re-entry. After the helper runs, the
+// cache is updated to the empty bundle. A subsequent SetChargingProfile on the same tx is
+// rejected by K15.FR.17 (InvalidMessageSeq — no prior TxProfile remains for the tx), so no
+// downstream callbacks fire.
+TEST_F(K16RenegotiationFixture, K16FR02_ClearChargingProfileEmptiesCompositeFiresRenegotiation) {
+    auto initial = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/16.0f);
+    drive_initial_handoff(initial);
+
+    // ClearChargingProfile Accepted → composite empties → renegotiation fires.
     ClearChargingProfileRequest clear_req;
     clear_req.chargingProfileId = DEFAULT_PROFILE_ID;
     auto clear_msg =
         request_to_enhanced_message<ClearChargingProfileRequest, MessageType::ClearChargingProfile>(clear_req);
     EXPECT_CALL(mock_dispatcher, dispatch_call_result(_));
     EXPECT_CALL(set_charging_profiles_callback_mock, Call);
+    EXPECT_CALL(transfer_ev_charging_schedules_callback_mock, Call(DEFAULT_EVSE_ID, DEFAULT_TX_ID, _, _, _, _));
+    EXPECT_CALL(trigger_schedule_renegotiation_callback_mock, Call(DEFAULT_EVSE_ID));
     smart_charging_hlc->handle_message(clear_msg);
     ::testing::Mock::VerifyAndClearExpectations(&mock_dispatcher);
     ::testing::Mock::VerifyAndClearExpectations(&set_charging_profiles_callback_mock);
+    ::testing::Mock::VerifyAndClearExpectations(&transfer_ev_charging_schedules_callback_mock);
+    ::testing::Mock::VerifyAndClearExpectations(&trigger_schedule_renegotiation_callback_mock);
 
-    // A fresh SetChargingProfile on the same tx must NOT trigger renegotiation because the
-    // cache was cleared (no active HLC handoff record). After ClearChargingProfile wiped the
-    // previously-accepted TxProfile and the NotifyEVChargingNeeds coordination entry is already
-    // gone, K15.FR.17 rejects this profile as InvalidMessageSeq — that's correct, the CSMS
-    // must re-send NotifyEVChargingNeeds. Either way the renegotiation callback must not fire.
+    // A fresh SetChargingProfile on the same tx is rejected (K15.FR.17 InvalidMessageSeq:
+    // the prior TxProfile is gone and no NotifyEVChargingNeeds coordination entry exists).
+    // No downstream callbacks fire.
     auto next = make_tx_profile(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL, /*limit=*/32.0f);
     SetChargingProfileRequest set_req;
     set_req.evseId = DEFAULT_EVSE_ID;

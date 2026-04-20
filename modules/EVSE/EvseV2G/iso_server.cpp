@@ -1380,7 +1380,13 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         populate_ac_evse_status(conn->ctx, &res->AC_EVSEChargeParameter.AC_EVSEStatus);
 
         /* Max current */
-        float max_current = conn->ctx->basic_config.evse_ac_nominal_current;
+        // K16.FR.11: advertise the smaller of the hardware nominal capability and the
+        // EnergyManager-published runtime limit so renegotiation-driven CPD re-entry
+        // sees the reduced envelope. `evse_ac_current_limit` is 0 until the first
+        // EnergyManager update — fall back to the hardware nominal in that window.
+        const float nominal = conn->ctx->basic_config.evse_ac_nominal_current;
+        const float dynamic_limit = conn->ctx->basic_config.evse_ac_current_limit;
+        const float max_current = (dynamic_limit > 0.0f) ? std::min(nominal, dynamic_limit) : nominal;
         populate_physical_value_float(&res->AC_EVSEChargeParameter.EVSEMaxCurrent, max_current, 1,
                                       iso2_unitSymbolType_A);
 
