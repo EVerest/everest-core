@@ -37,6 +37,7 @@ struct Conf {
     int tls_timeout;
     bool verify_contract_cert_chain;
     int auth_timeout_pnc;
+    int cpd_timeout_ms;
     int auth_timeout_eim;
     bool enable_sdp_server;
 };

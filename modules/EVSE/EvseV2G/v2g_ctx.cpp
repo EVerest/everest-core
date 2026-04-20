@@ -129,6 +129,8 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     ctx->evse_v2g_data.evse_status_code[PHASE_WELDING] = iso2_DC_EVSEStatusCodeType_EVSE_NotReady;
     ctx->evse_v2g_data.evse_status_code[PHASE_STOP] = iso2_DC_EVSEStatusCodeType_EVSE_NotReady;
     memset(ctx->evse_v2g_data.evse_processing, iso2_EVSEProcessingType_Ongoing, PHASE_LENGTH);
+    ctx->hlc_schedule_wait.store(false);
+    ctx->hlc_schedule_deadline_ms = 0;
     ctx->evse_v2g_data.evse_processing[PHASE_PARAMETER] = iso2_EVSEProcessingType_Finished; // Skip parameter phase
 
     if (ctx->hlc_pause_active != true) {

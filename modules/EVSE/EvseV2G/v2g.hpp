@@ -45,6 +45,12 @@
 
 #define SA_SCHEDULE_DURATION 86400
 
+// Default ceiling on the ChargeParameterDiscovery handoff wait window.
+// When the configurable cpd_timeout_ms elapses with no schedule delivered,
+// the stack transitions EVSEProcessing to Finished and serves the default
+// SAScheduleList.
+constexpr long long int CPD_TIMEOUT_DEFAULT_MS = 60000;
+
 #define ISO_15118_2013_MSG_DEF "urn:iso:15118:2:2013:MsgDef"
 #define ISO_15118_2013_MAJOR   2
 #define ISO_15118_2013_MINOR   0
@@ -237,6 +243,7 @@ struct v2g_context {
         float evse_ac_current_limit;   // default is 0
         float evse_ac_nominal_current; // default is 0
         float evse_ac_nominal_voltage; // default is 230
+        long long int cpd_timeout_ms;  // ceiling on CPD handoff wait
     } basic_config;                    // This config will not reseted after beginning of a new charging session
 
     /* actual charging state */
@@ -259,13 +266,13 @@ struct v2g_context {
     std::atomic<bool> terminate_connection_on_failed_response;
     std::atomic<bool> contactor_is_closed; /* Actual contactor state */
 
-    /* OCPP HLC smart charging (K15) coordination — set by iso15118_extensions cmd handlers.
-     * hlc_schedule_wait: true once OCPP signals NotifyEVChargingNeedsResponse=Accepted so the ISO
-     *   state machine holds ChargeParameterDiscoveryRes at EVSEProcessing::Ongoing until either
-     *   set_ev_charging_schedules fills the list or a fallback status arrives.
-     * publish_ev_selected_schedule_cb: injected by iso15118_extensionsImpl so the state machine
-     *   can forward the EV-selected SAScheduleTupleID + profile upstream to the OCPP module. */
+    /* HLC schedule handoff: the stack holds ChargeParameterDiscoveryRes at
+     * EVSEProcessing=Ongoing while waiting for an externally-supplied schedule.
+     * hlc_schedule_wait is armed externally; cleared when a schedule arrives,
+     * a "do not wait" signal arrives, or the deadline elapses. */
     std::atomic<bool> hlc_schedule_wait{false};
+    long long int hlc_schedule_deadline_ms{0}; // monotonic ms; 0 == disarmed
+
     std::function<void(int32_t sa_schedule_tuple_id, const std::optional<int32_t>& selected_schedule_id)>
         publish_ev_selected_schedule_cb;
 

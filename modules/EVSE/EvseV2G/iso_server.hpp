@@ -146,4 +146,13 @@ static const struct iso_state iso_dc_states[] = {
  */
 enum v2g_event iso_handle_request(v2g_connection* conn);
 
+/// Self-heal the HLC handoff: if the deadline has elapsed while wait is
+/// armed, clear wait, disarm the deadline, and flip EVSEProcessing to
+/// Finished. Caller must hold ctx->mqtt_lock.
+void cpd_handoff_self_heal(struct v2g_context* ctx);
+
+/// True if a late-arriving schedule bundle should be dropped because
+/// the session has already advanced past the CPD phase.
+bool cpd_handoff_should_drop_bundle(const struct v2g_context* ctx);
+
 #endif /* ISO_SERVER_HPP */

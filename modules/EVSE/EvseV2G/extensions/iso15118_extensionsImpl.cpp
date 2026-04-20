@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 #include "iso15118_extensionsImpl.hpp"
+#include "iso_server.hpp" // cpd_handoff_should_drop_bundle
 #include "log.hpp"
+#include "tools.hpp" // getmonotonictime
 #include "v2g_ctx.hpp"
 
 #include <algorithm>
@@ -76,6 +78,7 @@ void iso15118_extensionsImpl::handle_set_notify_ev_schedule_status(types::iso151
     case types::iso15118::NotifyEvScheduleStatus::Accepted:
         // K15.FR.03: hold ChargeParameterDiscoveryRes at Ongoing until the CSMS schedule arrives.
         v2g_ctx->hlc_schedule_wait.store(true);
+        v2g_ctx->hlc_schedule_deadline_ms = getmonotonictime() + v2g_ctx->basic_config.cpd_timeout_ms;
         v2g_ctx->evse_v2g_data.evse_processing[PHASE_PARAMETER] = iso2_EVSEProcessingType_Ongoing;
         break;
     case types::iso15118::NotifyEvScheduleStatus::Rejected:
@@ -84,6 +87,7 @@ void iso15118_extensionsImpl::handle_set_notify_ev_schedule_status(types::iso151
         // K15.FR.04/05: fall through to the default schedule. libocpp triggers K16 renegotiation
         // later if/when the CSMS sends a profile.
         v2g_ctx->hlc_schedule_wait.store(false);
+        v2g_ctx->hlc_schedule_deadline_ms = 0;
         v2g_ctx->evse_v2g_data.evse_processing[PHASE_PARAMETER] = iso2_EVSEProcessingType_Finished;
         break;
     }
@@ -95,6 +99,11 @@ types::iso15118::SetChargingSchedulesResult
 iso15118_extensionsImpl::handle_set_ev_charging_schedules(types::iso15118::OcppEvChargingSchedules& charging_schedules) {
     if (charging_schedules.schedules.empty()) {
         return {types::iso15118::SetChargingSchedulesStatus::Rejected, std::string("empty schedules")};
+    }
+
+    if (cpd_handoff_should_drop_bundle(v2g_ctx)) {
+        dlog(DLOG_LEVEL_WARNING, "schedule bundle arrived after CPD exit; dropping");
+        return {types::iso15118::SetChargingSchedulesStatus::Rejected, std::string("CPD phase already exited")};
     }
 
     pthread_mutex_lock(&v2g_ctx->mqtt_lock);
@@ -147,6 +156,7 @@ iso15118_extensionsImpl::handle_set_ev_charging_schedules(types::iso15118::OcppE
 
     // Release the ISO state machine now that a bundle is ready (K15.FR.07).
     v2g_ctx->hlc_schedule_wait.store(false);
+    v2g_ctx->hlc_schedule_deadline_ms = 0;
     v2g_ctx->evse_v2g_data.evse_processing[PHASE_PARAMETER] = iso2_EVSEProcessingType_Finished;
 
     pthread_cond_signal(&v2g_ctx->mqtt_cond);

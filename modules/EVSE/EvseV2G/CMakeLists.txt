@@ -42,6 +42,7 @@ target_sources(${MODULE_NAME}
     PRIVATE
         "connection/connection.cpp"
         "iso_server.cpp"
+        "iso_server_handoff.cpp"
         "din_server.cpp"
         "log.cpp"
         "sdp.cpp"

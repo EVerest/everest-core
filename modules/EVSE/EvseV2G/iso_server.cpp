@@ -110,6 +110,13 @@ static v2g_event iso_validate_response_code(iso2_responseCodeType* const v2g_res
     return next_event;
 }
 
+/// Synthesize a single-entry default SAScheduleTuple from local hardware
+/// knobs (AC nominal current × voltage, or DC max_power) when no external
+/// schedule bundle has been supplied. Caller must hold ctx->mqtt_lock if
+/// concurrent writers exist.
+static void synthesize_default_sa_schedule(struct v2g_context* ctx,
+                                           const struct iso2_ChargeParameterDiscoveryReqType* req, int64_t pmax);
+
 /*!
  * \brief populate_ac_evse_status This function configures the evse_status struct
  * \param ctx is the V2G context
@@ -119,6 +126,37 @@ static void populate_ac_evse_status(struct v2g_context* ctx, struct iso2_AC_EVSE
     evse_status->EVSENotification = (iso2_EVSENotificationType)ctx->evse_v2g_data.evse_notification;
     evse_status->NotificationMaxDelay = ctx->evse_v2g_data.notification_max_delay;
     evse_status->RCD = ctx->evse_v2g_data.rcd;
+}
+
+static void synthesize_default_sa_schedule(struct v2g_context* ctx,
+                                           const struct iso2_ChargeParameterDiscoveryReqType* req, int64_t pmax) {
+    int64_t departure_time_duration = req->AC_EVChargeParameter.DepartureTime;
+    if (ctx->is_dc_charger == false) {
+        populate_physical_value(&ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
+                                     .PMaxSchedule.PMaxScheduleEntry.array[0]
+                                     .PMax,
+                                pmax, iso2_unitSymbolType_W);
+    } else {
+        ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].PMaxSchedule.PMaxScheduleEntry.array[0].PMax =
+            ctx->evse_v2g_data.power_capabilities.max_power;
+    }
+    if (departure_time_duration == 0) {
+        departure_time_duration = SA_SCHEDULE_DURATION;
+    }
+    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
+        .PMaxSchedule.PMaxScheduleEntry.array[0]
+        .RelativeTimeInterval.start = 0;
+    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
+        .PMaxSchedule.PMaxScheduleEntry.array[0]
+        .RelativeTimeInterval.duration_isUsed = 1;
+
+    constexpr auto PAUSE_DURATION = 60 * 30;
+    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
+        .PMaxSchedule.PMaxScheduleEntry.array[0]
+        .RelativeTimeInterval.duration =
+        ctx->evse_v2g_data.no_energy_pause == NoEnergyPauseStatus::None ? departure_time_duration : PAUSE_DURATION;
+    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0].PMaxSchedule.PMaxScheduleEntry.arrayLen = 1;
+    ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.arrayLen = 1;
 }
 
 /*!
@@ -1276,7 +1314,10 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
     }
 
     res->EVSEChargeParameter_isUsed = 0;
+    pthread_mutex_lock(&conn->ctx->mqtt_lock);
+    cpd_handoff_self_heal(conn->ctx);
     res->EVSEProcessing = (iso2_EVSEProcessingType)conn->ctx->evse_v2g_data.evse_processing[PHASE_PARAMETER];
+    pthread_mutex_unlock(&conn->ctx->mqtt_lock);
 
     int64_t pmax{0};
 
@@ -1298,37 +1339,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
     if (res->EVSEProcessing == iso2_EVSEProcessingType_Finished) {
         /* If processing is finished, configure SASchedule list */
         if (conn->ctx->evse_v2g_data.evse_sa_schedule_list_is_used == false) {
-            int64_t departure_time_duration = req->AC_EVChargeParameter.DepartureTime;
-            /* If not configured, configure SA-schedule automatically for AC charging */
-            if (conn->ctx->is_dc_charger == false) {
-                populate_physical_value(&conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
-                                             .PMaxSchedule.PMaxScheduleEntry.array[0]
-                                             .PMax,
-                                        pmax, iso2_unitSymbolType_W);
-            } else {
-                conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
-                    .PMaxSchedule.PMaxScheduleEntry.array[0]
-                    .PMax = conn->ctx->evse_v2g_data.power_capabilities.max_power;
-            }
-            if (departure_time_duration == 0) {
-                departure_time_duration = SA_SCHEDULE_DURATION; // one day, per spec
-            }
-            conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
-                .PMaxSchedule.PMaxScheduleEntry.array[0]
-                .RelativeTimeInterval.start = 0;
-            conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
-                .PMaxSchedule.PMaxScheduleEntry.array[0]
-                .RelativeTimeInterval.duration_isUsed = 1;
-
-            constexpr auto PAUSE_DURATION = 60 * 30;
-            conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
-                .PMaxSchedule.PMaxScheduleEntry.array[0]
-                .RelativeTimeInterval.duration = conn->ctx->evse_v2g_data.no_energy_pause == NoEnergyPauseStatus::None
-                                                     ? departure_time_duration
-                                                     : PAUSE_DURATION;
-            conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
-                .PMaxSchedule.PMaxScheduleEntry.arrayLen = 1;
-            conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.arrayLen = 1;
+            synthesize_default_sa_schedule(conn->ctx, req, pmax);
         }
 
         res->SAScheduleList = conn->ctx->evse_v2g_data.evse_sa_schedule_list;

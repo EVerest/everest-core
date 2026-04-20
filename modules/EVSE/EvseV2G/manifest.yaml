@@ -63,6 +63,16 @@ config:
       Write 0 if the EVSE should wait indefinitely for PnC authorization.
     type: integer
     default: 55
+  cpd_timeout_ms:
+    description: >-
+      Ceiling in milliseconds on the HLC ChargeParameterDiscovery handoff
+      wait window. If no externally-supplied SA schedule arrives within
+      this window, the stack falls back to a locally synthesized default
+      SAScheduleTuple. Raise this value on slow systems where the upstream
+      schedule source needs more headroom. Set equal to or slightly above
+      any upstream timeout to avoid double-fallback races.
+    type: integer
+    default: 60000
   auth_timeout_eim:
     description: >-
       Defines how many seconds the EVSE should wait for authorization in EIM case,

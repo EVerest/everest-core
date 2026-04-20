@@ -210,3 +210,45 @@ target_link_libraries(${V2GCTX_NAME}
 
 add_test(${V2GCTX_NAME} ${V2GCTX_NAME})
 ev_register_test_target(${V2GCTX_NAME})
+
+set(ISO_SERVER_HANDOFF_NAME iso_server_handoff_test)
+add_executable(${ISO_SERVER_HANDOFF_NAME})
+
+target_include_directories(${ISO_SERVER_HANDOFF_NAME} PRIVATE
+    .. ../connection ${TESTS_INCLUDE_DIR}
+    ${GENERATED_INCLUDE_DIR}
+    ${CMAKE_BINARY_DIR}/generated/modules/${MODULE_NAME}
+    ${CMAKE_BINARY_DIR}/generated/include
+)
+add_dependencies(${ISO_SERVER_HANDOFF_NAME} generate_cpp_files)
+
+target_compile_definitions(${ISO_SERVER_HANDOFF_NAME} PRIVATE
+    -DUNIT_TEST
+    -DLIBEVSE_CRYPTO_SUPPLIER_OPENSSL
+)
+
+target_sources(${ISO_SERVER_HANDOFF_NAME} PRIVATE
+    iso_server_handoff_test.cpp
+    log.cpp
+    ../v2g_ctx.cpp
+    ../tools.cpp
+    ../iso_server_handoff.cpp
+)
+
+target_link_libraries(${ISO_SERVER_HANDOFF_NAME}
+    PRIVATE
+        GTest::gtest_main
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        cbv2g::din
+        cbv2g::iso2
+        cbv2g::tp
+        everest::framework
+        everest::log
+        everest::evse_security
+        everest::tls
+        -levent -lpthread -levent_pthreads
+)
+
+add_test(${ISO_SERVER_HANDOFF_NAME} ${ISO_SERVER_HANDOFF_NAME})
+ev_register_test_target(${ISO_SERVER_HANDOFF_NAME})

@@ -49,6 +49,8 @@ void EvseV2G::init() {
         throw std::runtime_error("Failed to create v2g context");
     }
 
+    v2g_ctx->basic_config.cpd_timeout_ms = static_cast<long long int>(config.cpd_timeout_ms);
+
     (void)openssl::set_log_handler(log_handler);
     tls::Server::configure_signal_handler(SIGUSR1);
     v2g_ctx->tls_server = &tls_server;
