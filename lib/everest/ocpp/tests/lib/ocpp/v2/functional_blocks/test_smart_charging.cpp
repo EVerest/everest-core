@@ -1970,15 +1970,27 @@ TEST_F(SmartChargingTest, K15FR21_NotifyEvChargingSchedule_SelectedIdPopulatedOn
 }
 
 // K15.FR.22: compose up to three SA schedules by combining stack levels slot-wise.
-TEST(SaScheduleCompositionTest, K15FR22_EmptyWhenNoTxProfileForTransaction) {
-    EXPECT_TRUE(compute_sa_schedule_list({}, "tx-1").empty());
+//
+// Fixture wraps a DeviceModelTestHelper so tests have a live DeviceModel to pass into
+// compute_sa_schedule_list (required by the Task 1 signature extension, preparing for
+// the Task 8 body rewrite that consults CompositeScheduleConfig).
+class SaScheduleCompositionTest : public ::testing::Test {
+protected:
+    DeviceModelTestHelper device_model_test_helper;
+    DeviceModel& dm() {
+        return *device_model_test_helper.get_device_model();
+    }
+};
+
+TEST_F(SaScheduleCompositionTest, K15FR22_EmptyWhenNoTxProfileForTransaction) {
+    EXPECT_TRUE(compute_sa_schedule_list({}, "tx-1", DEFAULT_EVSE_ID, dm(), OcppProtocolVersion::v21).empty());
 
     auto other_tx = create_charging_profile(1, ChargingProfilePurposeEnum::TxProfile,
                                             create_charge_schedule(ChargingRateUnitEnum::A), std::string{"tx-other"});
-    EXPECT_TRUE(compute_sa_schedule_list({other_tx}, "tx-1").empty());
+    EXPECT_TRUE(compute_sa_schedule_list({other_tx}, "tx-1", DEFAULT_EVSE_ID, dm(), OcppProtocolVersion::v21).empty());
 }
 
-TEST(SaScheduleCompositionTest, K15FR22_SingleTxProfileEmitsItsSchedulesInOrder) {
+TEST_F(SaScheduleCompositionTest, K15FR22_SingleTxProfileEmitsItsSchedulesInOrder) {
     auto periods = create_charging_schedule_periods({0, 1800, 3600});
     auto s1 = create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00"));
     s1.id = 10;
@@ -1988,19 +2000,25 @@ TEST(SaScheduleCompositionTest, K15FR22_SingleTxProfileEmitsItsSchedulesInOrder)
     auto profile = create_charging_profile(1, ChargingProfilePurposeEnum::TxProfile,
                                            std::vector<ChargingSchedule>{s1, s2}, std::string{"tx-1"});
 
-    const auto slots = compute_sa_schedule_list({profile}, "tx-1");
+    const auto slots = compute_sa_schedule_list({profile}, "tx-1", DEFAULT_EVSE_ID, dm(), OcppProtocolVersion::v21);
     ASSERT_EQ(slots.size(), 2);
     EXPECT_EQ(slots[0].schedule.id, 10);
     EXPECT_EQ(slots[1].schedule.id, 20);
 }
 
-TEST(SaScheduleCompositionTest, K15FR22_StackLevelPrecedencePicksHighest) {
-    auto periods = create_charging_schedule_periods({0});
-    auto low = create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00"));
-    low.id = 1;
-    auto high = create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00"));
-    high.id = 99;
+// K15.FR.22 + K08.FR.04: per slot, combine chargingSchedules across stack levels
+// using lowest-limit-wins composite semantics; not highest-stack-level-wins.
+TEST_F(SaScheduleCompositionTest, K15FR22_StackLevelsCombineByLowestLimit) {
+    auto lower_limit_periods = create_charging_schedule_periods_with_limit({0}, 16.0f);
+    auto higher_limit_periods = create_charging_schedule_periods_with_limit({0}, 32.0f);
 
+    auto low =
+        create_charge_schedule(ChargingRateUnitEnum::A, lower_limit_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto high =
+        create_charge_schedule(ChargingRateUnitEnum::A, higher_limit_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+
+    // Low-limit profile at lower stack level; high-limit at higher stack. Current
+    // "highest stack wins" code would pick 32 A; K08.FR.04 lowest-limit wins must pick 16 A.
     auto low_profile =
         create_charging_profile(1, ChargingProfilePurposeEnum::TxProfile, std::vector<ChargingSchedule>{low},
                                 std::string{"tx-1"}, ChargingProfileKindEnum::Absolute, /*stack_level=*/0);
@@ -2008,12 +2026,144 @@ TEST(SaScheduleCompositionTest, K15FR22_StackLevelPrecedencePicksHighest) {
         create_charging_profile(2, ChargingProfilePurposeEnum::TxProfile, std::vector<ChargingSchedule>{high},
                                 std::string{"tx-1"}, ChargingProfileKindEnum::Absolute, /*stack_level=*/5);
 
-    const auto slots = compute_sa_schedule_list({low_profile, high_profile}, "tx-1");
+    const auto slots =
+        compute_sa_schedule_list({low_profile, high_profile}, "tx-1", DEFAULT_EVSE_ID, dm(), OcppProtocolVersion::v21,
+                                 ocpp::DateTime("2024-01-17T17:00:00"), ocpp::DateTime("2024-01-17T17:00:00"));
     ASSERT_EQ(slots.size(), 1);
-    EXPECT_EQ(slots[0].schedule.id, 99);
+    ASSERT_FALSE(slots[0].schedule.chargingSchedulePeriod.empty());
+    // Lowest-limit wins: the 16 A cap dominates even though stack_level=5 offers 32 A.
+    ASSERT_TRUE(slots[0].schedule.chargingSchedulePeriod[0].limit.has_value());
+    EXPECT_FLOAT_EQ(slots[0].schedule.chargingSchedulePeriod[0].limit.value(), 16.0f);
 }
 
-TEST(SaScheduleCompositionTest, K15FR22_CapsAtThreeSlotsAcrossStackLevels) {
+TEST_F(SaScheduleCompositionTest, K15FR22_NonOverlappingPeriodsUnion) {
+    // Two TxProfiles whose effective windows only partially overlap — short one ends,
+    // long one continues with its own limit. The resulting lowest-limit composite must
+    // reveal both time bands (union) rather than collapse to the highest-stack schedule.
+    auto short_periods = create_charging_schedule_periods_with_limit({0}, 10.0f);
+    auto long_periods = create_charging_schedule_periods_with_limit({0}, 20.0f);
+
+    auto s_short = create_charge_schedule(ChargingRateUnitEnum::A, short_periods, ocpp::DateTime("2024-01-17T17:00:00"),
+                                          /*duration=*/3600);
+    auto s_long = create_charge_schedule(ChargingRateUnitEnum::A, long_periods, ocpp::DateTime("2024-01-17T17:00:00"),
+                                         /*duration=*/7200);
+
+    auto a = create_charging_profile(1, ChargingProfilePurposeEnum::TxProfile, std::vector<ChargingSchedule>{s_short},
+                                     std::string{"tx-1"}, ChargingProfileKindEnum::Absolute, 1);
+    auto b = create_charging_profile(2, ChargingProfilePurposeEnum::TxProfile, std::vector<ChargingSchedule>{s_long},
+                                     std::string{"tx-1"}, ChargingProfileKindEnum::Absolute, 2);
+
+    const auto slots =
+        compute_sa_schedule_list({a, b}, "tx-1", DEFAULT_EVSE_ID, dm(), OcppProtocolVersion::v21,
+                                 ocpp::DateTime("2024-01-17T17:00:00"), ocpp::DateTime("2024-01-17T17:00:00"));
+    ASSERT_EQ(slots.size(), 1);
+    ASSERT_EQ(slots[0].schedule.chargingSchedulePeriod.size(), 2);
+    EXPECT_EQ(slots[0].schedule.chargingSchedulePeriod[0].startPeriod, 0);
+    ASSERT_TRUE(slots[0].schedule.chargingSchedulePeriod[0].limit.has_value());
+    EXPECT_FLOAT_EQ(slots[0].schedule.chargingSchedulePeriod[0].limit.value(), 10.0f);
+    EXPECT_EQ(slots[0].schedule.chargingSchedulePeriod[1].startPeriod, 3600);
+    ASSERT_TRUE(slots[0].schedule.chargingSchedulePeriod[1].limit.has_value());
+    EXPECT_FLOAT_EQ(slots[0].schedule.chargingSchedulePeriod[1].limit.value(), 20.0f);
+}
+
+TEST_F(SaScheduleCompositionTest, K15FR07_ChargingStationMaxProfileCapsTxProfile) {
+    auto tx_periods = create_charging_schedule_periods_with_limit({0}, 32.0f);
+    auto cap_periods = create_charging_schedule_periods_with_limit({0}, 20.0f);
+
+    auto tx_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::A, tx_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto cap_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::A, cap_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+
+    auto tx_profile = create_charging_profile(1, ChargingProfilePurposeEnum::TxProfile,
+                                              std::vector<ChargingSchedule>{tx_schedule}, std::string{"tx-1"});
+    // ChargingStationMaxProfile is station-wide (no transactionId).
+    auto cs_max = create_charging_profile(2, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
+                                          std::vector<ChargingSchedule>{cap_schedule}, std::nullopt);
+
+    const auto slots =
+        compute_sa_schedule_list({tx_profile, cs_max}, "tx-1", DEFAULT_EVSE_ID, dm(), OcppProtocolVersion::v21,
+                                 ocpp::DateTime("2024-01-17T17:00:00"), ocpp::DateTime("2024-01-17T17:00:00"));
+    ASSERT_EQ(slots.size(), 1);
+    ASSERT_FALSE(slots[0].schedule.chargingSchedulePeriod.empty());
+    ASSERT_TRUE(slots[0].schedule.chargingSchedulePeriod[0].limit.has_value());
+    EXPECT_FLOAT_EQ(slots[0].schedule.chargingSchedulePeriod[0].limit.value(), 20.0f);
+}
+
+TEST_F(SaScheduleCompositionTest, K15FR07_ChargingStationExternalConstraintsCapsTxProfile) {
+    auto tx_periods = create_charging_schedule_periods_with_limit({0}, 32.0f);
+    auto cap_periods = create_charging_schedule_periods_with_limit({0}, 20.0f);
+
+    auto tx_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::A, tx_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto cap_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::A, cap_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+
+    auto tx_profile = create_charging_profile(1, ChargingProfilePurposeEnum::TxProfile,
+                                              std::vector<ChargingSchedule>{tx_schedule}, std::string{"tx-1"});
+    // ChargingStationExternalConstraints is station-wide (no transactionId).
+    auto external = create_charging_profile(2, ChargingProfilePurposeEnum::ChargingStationExternalConstraints,
+                                            std::vector<ChargingSchedule>{cap_schedule}, std::nullopt);
+
+    const auto slots =
+        compute_sa_schedule_list({tx_profile, external}, "tx-1", DEFAULT_EVSE_ID, dm(), OcppProtocolVersion::v21,
+                                 ocpp::DateTime("2024-01-17T17:00:00"), ocpp::DateTime("2024-01-17T17:00:00"));
+    ASSERT_EQ(slots.size(), 1);
+    ASSERT_FALSE(slots[0].schedule.chargingSchedulePeriod.empty());
+    ASSERT_TRUE(slots[0].schedule.chargingSchedulePeriod[0].limit.has_value());
+    EXPECT_FLOAT_EQ(slots[0].schedule.chargingSchedulePeriod[0].limit.value(), 20.0f);
+}
+
+TEST_F(SaScheduleCompositionTest, K15FR22_LocalGenerationAddsHeadroom) {
+    // K27 semantics: a TxProfile/TxDefaultProfile of 5000W + LocalGeneration of 2000W
+    // yields a composite headroom of 7000W — the local generation adds grid capacity
+    // rather than capping it.
+    auto gen_periods = create_charging_schedule_periods_with_limit({0}, 2000.0f);
+    auto gen_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::W, gen_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+
+    auto tx_periods = create_charging_schedule_periods_with_limit({0}, 5000.0f);
+    auto tx_schedule =
+        create_charge_schedule(ChargingRateUnitEnum::W, tx_periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto tx_profile = create_charging_profile(1, ChargingProfilePurposeEnum::TxProfile,
+                                              std::vector<ChargingSchedule>{tx_schedule}, std::string{"tx-1"});
+    auto gen_profile = create_charging_profile(2, ChargingProfilePurposeEnum::LocalGeneration,
+                                               std::vector<ChargingSchedule>{gen_schedule}, std::nullopt);
+
+    const auto slots =
+        compute_sa_schedule_list({tx_profile, gen_profile}, "tx-1", DEFAULT_EVSE_ID, dm(), OcppProtocolVersion::v21,
+                                 ocpp::DateTime("2024-01-17T17:00:00"), ocpp::DateTime("2024-01-17T17:00:00"));
+    ASSERT_EQ(slots.size(), 1);
+    ASSERT_FALSE(slots[0].schedule.chargingSchedulePeriod.empty());
+    ASSERT_TRUE(slots[0].schedule.chargingSchedulePeriod[0].limit.has_value());
+    EXPECT_FLOAT_EQ(slots[0].schedule.chargingSchedulePeriod[0].limit.value(), 7000.0f);
+}
+
+TEST_F(SaScheduleCompositionTest, K15FR22_SalesTariffPreservedFromHighestStackLevel) {
+    auto periods = create_charging_schedule_periods_with_limit({0}, 16.0f);
+    auto s_low = create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00"));
+    auto s_high = create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00"));
+
+    SalesTariff tariff;
+    tariff.id = 42;
+    tariff.salesTariffDescription = "peak";
+    s_high.salesTariff = tariff;
+
+    auto low_p = create_charging_profile(1, ChargingProfilePurposeEnum::TxProfile, std::vector<ChargingSchedule>{s_low},
+                                         std::string{"tx-1"}, ChargingProfileKindEnum::Absolute, /*stack_level=*/0);
+    auto high_p =
+        create_charging_profile(2, ChargingProfilePurposeEnum::TxProfile, std::vector<ChargingSchedule>{s_high},
+                                std::string{"tx-1"}, ChargingProfileKindEnum::Absolute, /*stack_level=*/5);
+
+    const auto slots =
+        compute_sa_schedule_list({low_p, high_p}, "tx-1", DEFAULT_EVSE_ID, dm(), OcppProtocolVersion::v21,
+                                 ocpp::DateTime("2024-01-17T17:00:00"), ocpp::DateTime("2024-01-17T17:00:00"));
+    ASSERT_EQ(slots.size(), 1);
+    ASSERT_TRUE(slots[0].sales_tariff.has_value());
+    EXPECT_EQ(slots[0].sales_tariff->id, 42);
+}
+
+TEST_F(SaScheduleCompositionTest, K15FR22_CapsAtThreeSlotsAcrossStackLevels) {
     auto periods = create_charging_schedule_periods({0});
     auto mk_schedule = [&](int id) {
         auto s = create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00"));
@@ -2026,7 +2176,7 @@ TEST(SaScheduleCompositionTest, K15FR22_CapsAtThreeSlotsAcrossStackLevels) {
         std::vector<ChargingSchedule>{mk_schedule(10), mk_schedule(11), mk_schedule(12), mk_schedule(13)},
         std::string{"tx-1"}, ChargingProfileKindEnum::Absolute, 1);
 
-    const auto slots = compute_sa_schedule_list({a}, "tx-1");
+    const auto slots = compute_sa_schedule_list({a}, "tx-1", DEFAULT_EVSE_ID, dm(), OcppProtocolVersion::v21);
     ASSERT_EQ(slots.size(), 3);
     EXPECT_EQ(slots[0].schedule.id, 10);
     EXPECT_EQ(slots[1].schedule.id, 11);

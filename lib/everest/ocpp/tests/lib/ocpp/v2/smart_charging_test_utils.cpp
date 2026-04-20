@@ -220,6 +220,18 @@ std::vector<ChargingSchedulePeriod> create_charging_schedule_periods(const std::
     return charging_schedule_periods;
 }
 
+std::vector<ChargingSchedulePeriod>
+create_charging_schedule_periods_with_limit(const std::vector<std::int32_t>& start_periods, float limit) {
+    auto charging_schedule_periods = std::vector<ChargingSchedulePeriod>();
+    for (auto start_period : start_periods) {
+        ChargingSchedulePeriod charging_schedule_period;
+        charging_schedule_period.startPeriod = start_period;
+        charging_schedule_period.limit = limit;
+        charging_schedule_periods.push_back(charging_schedule_period);
+    }
+    return charging_schedule_periods;
+}
+
 std::vector<ChargingSchedulePeriod> create_charging_schedule_periods_with_phases(std::int32_t start_period,
                                                                                  std::int32_t numberPhases,
                                                                                  std::int32_t phaseToUse) {

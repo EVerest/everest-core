@@ -211,18 +211,30 @@ struct SaScheduleSlot {
 /// combining TxProfile schedules across stack levels slot-wise (K15.FR.22 on OCPP 2.1).
 ///
 /// Picks the TxProfiles that apply to \p transaction_id (matching transactionId) from
-/// \p all_profiles, groups them by stackLevel (highest-precedence first), and for each
-/// slot k ∈ {0, 1, 2} selects the k-th ChargingSchedule from each group and composes
-/// them into a single ChargingSchedule. The SalesTariff body (and 2.1 signature) from
-/// the highest-stack-level contributing profile is preserved per slot, matching the
-/// composite-precedence model (higher stackLevel overrides lower).
+/// \p all_profiles and, for each slot k ∈ {0, 1, 2}, composes the k-th chargingSchedule
+/// from each contributing TxProfile using lowest-limit-wins composite semantics
+/// (K08.FR.04). Station-wide profiles fold in: ChargingStationMaxProfile and
+/// ChargingStationExternalConstraints additionally cap the result (K15.FR.07), the
+/// TxDefaultProfile fills gaps where no TxProfile period applies, and LocalGeneration
+/// adds headroom by summing (K27). The SalesTariff from the highest-stack-level
+/// contributing TxProfile at slot k is preserved; the 2.1 signature is carried
+/// separately via signature_value_b64.
 ///
 /// \param all_profiles  Charging profiles currently installed for the EVSE (DB snapshot).
 /// \param transaction_id  OCPP transaction id the SAScheduleList is built for.
+/// \param evse_id  EVSE the composite applies to (reserved for future per-EVSE caps).
+/// \param device_model  DeviceModelAbstract read for CompositeScheduleConfig defaults.
+/// \param ocpp_version  Protocol version (affects three-phase handling in primitives).
+/// \param session_start  Optional session anchor for Relative/Recurring profiles.
+/// \param now  Evaluation time; defaults to construction-time DateTime.
 /// \return Up to three SaScheduleSlot entries, in order of slot index (slot 0 first).
 ///         Empty vector if no TxProfile for \p transaction_id has any ChargingSchedule.
 std::vector<SaScheduleSlot> compute_sa_schedule_list(const std::vector<ChargingProfile>& all_profiles,
-                                                     const std::string& transaction_id);
+                                                     const std::string& transaction_id, std::int32_t evse_id,
+                                                     DeviceModelAbstract& device_model,
+                                                     const OcppProtocolVersion ocpp_version,
+                                                     std::optional<ocpp::DateTime> session_start = std::nullopt,
+                                                     ocpp::DateTime now = ocpp::DateTime{});
 
 /// \brief Per-HLC-transaction coordination state tracking the NotifyEVChargingNeeds lifecycle
 /// and the 60-second ChargeParameterDiscoveryReq budget (K15.FR.08).

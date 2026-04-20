@@ -471,17 +471,79 @@ const std::map<OperationModeEnum, LimitsSetpointsForOperationMode> limits_setpoi
 namespace {
 constexpr std::size_t MAX_SA_SCHEDULE_TUPLES = 3;
 
-// K15.FR.22 composition helper: higher stackLevel wins for overlapping effects, so we sort
-// descending and pick the highest stack level available at each slot as the base schedule.
+// Descending stackLevel ordering — used to preserve salesTariff from the highest-stack
+// contributing TxProfile per slot (K15.FR.22 metadata preservation).
 struct StackLevelDesc {
     bool operator()(const ChargingProfile* a, const ChargingProfile* b) const {
         return a->stackLevel > b->stackLevel;
     }
 };
+
+struct CompositeScheduleConfig {
+    std::vector<ChargingProfilePurposeEnum> purposes_to_ignore;
+    float current_limit{};
+    float power_limit{};
+    std::int32_t default_number_phases{};
+    float supply_voltage{};
+
+    CompositeScheduleConfig(DeviceModelAbstract& device_model, bool is_offline) :
+        purposes_to_ignore{utils::get_purposes_to_ignore(
+            device_model.get_optional_value<std::string>(ControllerComponentVariables::IgnoredProfilePurposesOffline)
+                .value_or(""),
+            is_offline)} {
+
+        this->current_limit = static_cast<float>(
+            device_model.get_optional_value<int>(ControllerComponentVariables::CompositeScheduleDefaultLimitAmps)
+                .value_or(DEFAULT_LIMIT_AMPS));
+
+        this->power_limit = static_cast<float>(
+            device_model.get_optional_value<int>(ControllerComponentVariables::CompositeScheduleDefaultLimitWatts)
+                .value_or(DEFAULT_LIMIT_WATTS));
+
+        this->default_number_phases =
+            device_model.get_optional_value<int>(ControllerComponentVariables::CompositeScheduleDefaultNumberPhases)
+                .value_or(DEFAULT_AND_MAX_NUMBER_PHASES);
+
+        this->supply_voltage = static_cast<float>(
+            device_model.get_optional_value<int>(ControllerComponentVariables::SupplyVoltage).value_or(LOW_VOLTAGE));
+    }
+};
+
+// Helper: collect all profiles matching any of the given purposes into a new vector.
+std::vector<ChargingProfile> filter_profiles_by_purposes(const std::vector<ChargingProfile>& profiles,
+                                                         std::initializer_list<ChargingProfilePurposeEnum> purposes) {
+    std::vector<ChargingProfile> out;
+    out.reserve(profiles.size());
+    for (const auto& profile : profiles) {
+        for (const auto purpose : purposes) {
+            if (profile.chargingProfilePurpose == purpose) {
+                out.push_back(profile);
+                break;
+            }
+        }
+    }
+    return out;
+}
+
+// Helper: does `all_profiles` contain at least one profile with the given purpose?
+bool has_profile_with_purpose(const std::vector<ChargingProfile>& profiles, ChargingProfilePurposeEnum purpose) {
+    for (const auto& profile : profiles) {
+        if (profile.chargingProfilePurpose == purpose) {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace
 
 std::vector<SaScheduleSlot> compute_sa_schedule_list(const std::vector<ChargingProfile>& all_profiles,
-                                                     const std::string& transaction_id) {
+                                                     const std::string& transaction_id, std::int32_t evse_id,
+                                                     DeviceModelAbstract& device_model,
+                                                     const OcppProtocolVersion ocpp_version,
+                                                     std::optional<ocpp::DateTime> session_start, ocpp::DateTime now) {
+    (void)evse_id; // SA schedule composition is inherently EVSE-scoped via its inputs.
+
     std::vector<const ChargingProfile*> tx_profiles;
     for (const auto& profile : all_profiles) {
         if (profile.chargingProfilePurpose != ChargingProfilePurposeEnum::TxProfile) {
@@ -496,34 +558,134 @@ std::vector<SaScheduleSlot> compute_sa_schedule_list(const std::vector<ChargingP
         return {};
     }
 
+    // Sort by descending stackLevel. The highest-stack TxProfile that contributes a slot-k
+    // chargingSchedule with a salesTariff is the preserved source (K15.FR.22 metadata rule).
     std::sort(tx_profiles.begin(), tx_profiles.end(), StackLevelDesc{});
+
+    const CompositeScheduleConfig config{device_model, /*is_offline=*/false};
+    // ChargingRateUnit of the SAScheduleList follows the first contributing TxProfile.
+    const ChargingRateUnitEnum unit = tx_profiles.front()->chargingSchedule.front().chargingRateUnit;
+
+    // Station-wide profiles that fold into every slot k (caps + headroom + tx-default).
+    const auto cs_max_profiles =
+        filter_profiles_by_purposes(all_profiles, {ChargingProfilePurposeEnum::ChargingStationMaxProfile});
+    const auto external_profiles =
+        filter_profiles_by_purposes(all_profiles, {ChargingProfilePurposeEnum::ChargingStationExternalConstraints});
+    const auto gen_profiles = filter_profiles_by_purposes(all_profiles, {ChargingProfilePurposeEnum::LocalGeneration});
+    const auto tx_default_profiles =
+        filter_profiles_by_purposes(all_profiles, {ChargingProfilePurposeEnum::TxDefaultProfile});
+    const bool has_local_generation =
+        has_profile_with_purpose(all_profiles, ChargingProfilePurposeEnum::LocalGeneration);
 
     std::vector<SaScheduleSlot> slots;
     slots.reserve(MAX_SA_SCHEDULE_TUPLES);
+
     for (std::size_t k = 0; k < MAX_SA_SCHEDULE_TUPLES; ++k) {
-        std::optional<ChargingSchedule> base;
-        std::optional<SalesTariff> tariff;
+        // Build derived TxProfile copies that carry only the kth chargingSchedule. Profiles
+        // whose chargingSchedule vector is shorter than k+1 simply don't contribute to slot k.
+        std::vector<ChargingProfile> slot_tx_profiles;
+        const ChargingProfile* sales_tariff_source = nullptr;
+        const ChargingProfile* top_contributor = nullptr;
+        std::int32_t max_duration = 0;
+        bool any_has_duration = false;
         for (const auto* profile : tx_profiles) {
             if (k >= profile->chargingSchedule.size()) {
                 continue;
             }
-            const auto& schedule_k = profile->chargingSchedule[k];
-            if (not base.has_value()) {
-                // Highest-stackLevel schedule at this slot becomes the base; preserve its
-                // SalesTariff. Period merging across stack levels is deferred to the full
-                // composite-schedule engine; for K15 handoff the highest-stackLevel body is
-                // used as-is, matching K01.FR.01 precedence.
-                base = schedule_k;
-                tariff = schedule_k.salesTariff;
+            ChargingProfile derived = *profile;
+            derived.chargingSchedule = {profile->chargingSchedule[k]};
+            if (derived.chargingSchedule.front().duration.has_value()) {
+                any_has_duration = true;
+                max_duration = std::max(max_duration, derived.chargingSchedule.front().duration.value());
+            }
+            slot_tx_profiles.push_back(std::move(derived));
+            if (top_contributor == nullptr) {
+                top_contributor = profile;
+            }
+            // Preserve salesTariff from the highest-stackLevel TxProfile that carries one at slot k.
+            if (sales_tariff_source == nullptr and profile->chargingSchedule[k].salesTariff.has_value()) {
+                sales_tariff_source = profile;
             }
         }
-        if (base.has_value()) {
-            SaScheduleSlot slot;
-            slot.schedule = base.value();
-            slot.sales_tariff = tariff;
-            slot.signature_value_b64 = std::nullopt; // 2.1 signature is carried separately.
-            slots.push_back(std::move(slot));
+        if (slot_tx_profiles.empty()) {
+            break; // K15.FR.22 emits at most three tuples — stop when no TxProfile feeds slot k.
         }
+
+        // Horizon: longest duration across contributing slot_tx_profiles, capped at 24h. When
+        // no TxProfile declares a duration, use the full 24h horizon to let open-ended profiles
+        // propagate through the composite engine.
+        const std::int32_t horizon_seconds =
+            any_has_duration ? std::min<std::int32_t>(24 * 3600, max_duration) : (24 * 3600);
+
+        const auto start = session_start.value_or(now);
+        const auto end = ocpp::DateTime{start.to_time_point() + std::chrono::seconds{horizon_seconds}};
+
+        // K15.FR.22 + K08.FR.04: per-slot lowest-limit composite across TxProfile stack levels.
+        // Process each slot-k TxProfile separately (one IntermediateProfile each) and reduce
+        // with merge_profiles_by_lowest_limit; calculate_all_profiles on the combined vector
+        // would collapse by highest-stack precedence rather than lowest-limit, so that path is
+        // unsuitable here.
+        std::vector<IntermediateProfile> per_stack_tx_intermediates;
+        per_stack_tx_intermediates.reserve(slot_tx_profiles.size());
+        for (const auto& profile : slot_tx_profiles) {
+            const std::vector<ChargingProfile> single{profile};
+            auto periods =
+                calculate_all_profiles(start, end, session_start, single, ChargingProfilePurposeEnum::TxProfile);
+            per_stack_tx_intermediates.push_back(generate_profile_from_periods(periods, start, end));
+        }
+        auto tx_intermediate = merge_profiles_by_lowest_limit(per_stack_tx_intermediates, ocpp_version);
+
+        // TxDefaultProfile: folds in where no TxProfile period applies.
+        auto tx_default_periods = calculate_all_profiles(start, end, session_start, tx_default_profiles,
+                                                         ChargingProfilePurposeEnum::TxDefaultProfile);
+        auto tx_default_intermediate = generate_profile_from_periods(tx_default_periods, start, end);
+
+        auto tx_combined = merge_tx_profile_with_tx_default_profile(tx_intermediate, tx_default_intermediate);
+
+        // Station-wide caps: ChargingStationMaxProfile + ChargingStationExternalConstraints.
+        auto cs_max_periods = calculate_all_profiles(start, end, session_start, cs_max_profiles,
+                                                     ChargingProfilePurposeEnum::ChargingStationMaxProfile);
+        auto cs_max_intermediate = generate_profile_from_periods(cs_max_periods, start, end);
+
+        auto ext_periods = calculate_all_profiles(start, end, session_start, external_profiles,
+                                                  ChargingProfilePurposeEnum::ChargingStationExternalConstraints);
+        auto ext_intermediate = generate_profile_from_periods(ext_periods, start, end);
+
+        auto capped =
+            merge_profiles_by_lowest_limit({tx_combined, cs_max_intermediate, ext_intermediate}, ocpp_version);
+
+        // LocalGeneration adds headroom (K27): sum with the capped profile. Only apply when
+        // LocalGeneration profiles exist — `merge_profiles_by_summing_limits` fills defaults for
+        // NO_LIMIT inputs, which would spuriously widen `capped` above its real limit otherwise.
+        IntermediateProfile final_intermediate;
+        if (has_local_generation) {
+            auto gen_periods = calculate_all_profiles(start, end, session_start, gen_profiles,
+                                                      ChargingProfilePurposeEnum::LocalGeneration);
+            auto gen_intermediate = generate_profile_from_periods(gen_periods, start, end);
+            final_intermediate = merge_profiles_by_summing_limits({capped, gen_intermediate}, config.current_limit,
+                                                                  config.power_limit, ocpp_version);
+        } else {
+            final_intermediate = std::move(capped);
+        }
+
+        const float default_limit = unit == ChargingRateUnitEnum::A ? config.current_limit : config.power_limit;
+
+        // Preserve the schedule id from the highest-stackLevel TxProfile that contributes a
+        // kth chargingSchedule (tx_profiles is sorted descending by stackLevel), so K15
+        // emission carries the EV-relevant identifier the CSMS authored.
+        const auto& top_schedule_k = top_contributor->chargingSchedule[k];
+
+        SaScheduleSlot slot;
+        slot.schedule = top_schedule_k;
+        slot.schedule.chargingRateUnit = unit;
+        slot.schedule.chargingSchedulePeriod = convert_intermediate_into_schedule(
+            final_intermediate, unit, default_limit, config.default_number_phases, config.supply_voltage);
+        slot.schedule.startSchedule = start;
+        slot.schedule.duration = horizon_seconds;
+        slot.sales_tariff =
+            (sales_tariff_source != nullptr) ? sales_tariff_source->chargingSchedule[k].salesTariff : std::nullopt;
+        slot.signature_value_b64 = std::nullopt; // 2.1 signature is carried separately.
+        slots.push_back(std::move(slot));
     }
 
     return slots;
@@ -803,36 +965,6 @@ ProfileValidationResultEnum SmartCharging::conform_and_validate_profile(Charging
 }
 
 namespace {
-struct CompositeScheduleConfig {
-    std::vector<ChargingProfilePurposeEnum> purposes_to_ignore;
-    float current_limit{};
-    float power_limit{};
-    std::int32_t default_number_phases{};
-    float supply_voltage{};
-
-    CompositeScheduleConfig(DeviceModelAbstract& device_model, bool is_offline) :
-        purposes_to_ignore{utils::get_purposes_to_ignore(
-            device_model.get_optional_value<std::string>(ControllerComponentVariables::IgnoredProfilePurposesOffline)
-                .value_or(""),
-            is_offline)} {
-
-        this->current_limit = static_cast<float>(
-            device_model.get_optional_value<int>(ControllerComponentVariables::CompositeScheduleDefaultLimitAmps)
-                .value_or(DEFAULT_LIMIT_AMPS));
-
-        this->power_limit = static_cast<float>(
-            device_model.get_optional_value<int>(ControllerComponentVariables::CompositeScheduleDefaultLimitWatts)
-                .value_or(DEFAULT_LIMIT_WATTS));
-
-        this->default_number_phases =
-            device_model.get_optional_value<int>(ControllerComponentVariables::CompositeScheduleDefaultNumberPhases)
-                .value_or(DEFAULT_AND_MAX_NUMBER_PHASES);
-
-        this->supply_voltage = static_cast<float>(
-            device_model.get_optional_value<int>(ControllerComponentVariables::SupplyVoltage).value_or(LOW_VOLTAGE));
-    }
-};
-
 std::vector<IntermediateProfile> generate_evse_intermediates(std::vector<ChargingProfile>&& evse_profiles,
                                                              const std::vector<ChargingProfile>& station_wide_profiles,
                                                              const ocpp::DateTime& start_time,
@@ -1616,7 +1748,9 @@ void SmartCharging::handle_set_charging_profile_req(Call<SetChargingProfileReque
                 // all TxProfiles installed for this transaction across stackLevels. For a single
                 // TxProfile this degenerates to its own schedules (K15.FR.18 recommended shape).
                 const auto all_profiles = this->context.database_handler.get_charging_profiles_for_evse(evse_id);
-                const auto slots = compute_sa_schedule_list(all_profiles, tx_id);
+                const auto slots =
+                    compute_sa_schedule_list(all_profiles, tx_id, evse_id, this->context.device_model,
+                                             this->context.ocpp_version.load(), std::nullopt, ocpp::DateTime{});
 
                 std::vector<ChargingSchedule> schedules;
                 std::vector<std::optional<SalesTariff>> tariffs;
@@ -1655,7 +1789,9 @@ void SmartCharging::handle_set_charging_profile_req(Call<SetChargingProfileReque
                 }
                 if (have_prior and this->trigger_schedule_renegotiation_callback.has_value()) {
                     const auto all_profiles = this->context.database_handler.get_charging_profiles_for_evse(msg.evseId);
-                    const auto slots = compute_sa_schedule_list(all_profiles, tx_id);
+                    const auto slots =
+                        compute_sa_schedule_list(all_profiles, tx_id, msg.evseId, this->context.device_model,
+                                                 this->context.ocpp_version.load(), std::nullopt, ocpp::DateTime{});
                     std::vector<ChargingSchedule> recomputed;
                     std::vector<std::optional<SalesTariff>> tariffs;
                     std::vector<std::optional<std::string>> signature_value_b64;
