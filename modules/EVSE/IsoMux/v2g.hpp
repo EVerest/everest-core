@@ -130,7 +130,7 @@ struct v2g_context {
 
     uint32_t network_read_timeout;     /* in milli seconds */
     uint32_t network_read_timeout_tls; /* in milli seconds */
-    bool selected_iso20{false};
+    std::atomic<bool> selected_iso20{false};
     std::atomic_bool iso20_proxy_enabled{true};
 
     enum tls_security_level tls_security;

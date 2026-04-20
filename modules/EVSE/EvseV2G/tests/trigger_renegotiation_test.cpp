@@ -7,7 +7,11 @@
 // The helper sets v2g_ctx->evse_v2g_data.evse_notification to ReNegotiation
 // when the notification is currently None, preserves StopCharging precedence,
 // and is a no-op when a ReNegotiation latch is already pending.
+#include <atomic>
+#include <cstdint>
 #include <memory>
+#include <type_traits>
+#include <utility>
 
 #include <cbv2g/iso_2/iso2_msgDefDatatypes.h>
 
@@ -37,6 +41,14 @@ void trigger_renegotiation_if_idle(struct v2g_context* ctx);
 // Tests construct their own v2g_context via v2g_ctx_create and pass it to the helper;
 // they do not use this global.
 struct v2g_context* v2g_ctx = nullptr;
+
+// evse_notification is written from the command-handler thread (handle_stop_charging),
+// the iso_server / din_server response builders, and the K16 renegotiation latch in the
+// extension thread. Only the latch currently holds mqtt_lock, so the field must itself
+// be atomic to avoid torn reads/writes across threads.
+static_assert(
+    std::is_same_v<decltype(std::declval<v2g_context&>().evse_v2g_data.evse_notification), std::atomic<std::uint8_t>>,
+    "v2g_context::evse_v2g_data::evse_notification must be std::atomic<std::uint8_t>");
 
 namespace {
 

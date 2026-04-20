@@ -541,7 +541,7 @@ static enum v2g_event handle_din_charge_parameter(struct v2g_connection* conn) {
         conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
 
     res->DC_EVSEChargeParameter.DC_EVSEStatus.EVSENotification =
-        (din_EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
+        static_cast<din_EVSENotificationType>(conn->ctx->evse_v2g_data.evse_notification.load());
     res->DC_EVSEChargeParameter.DC_EVSEStatus.EVSEStatusCode =
         (true == conn->ctx->intl_emergency_shutdown)
             ? din_DC_EVSEStatusCodeType_EVSE_EmergencyShutdown
@@ -680,7 +680,8 @@ static enum v2g_event handle_din_power_delivery(struct v2g_connection* conn) {
     res->AC_EVSEStatus_isUsed = (unsigned int)0;
     res->DC_EVSEStatus.EVSEIsolationStatus = (din_isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
-    res->DC_EVSEStatus.EVSENotification = (din_EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
+    res->DC_EVSEStatus.EVSENotification =
+        static_cast<din_EVSENotificationType>(conn->ctx->evse_v2g_data.evse_notification.load());
     res->DC_EVSEStatus.NotificationMaxDelay = conn->ctx->evse_v2g_data.notification_max_delay;
     res->DC_EVSEStatus.EVSEStatusCode =
         (conn->ctx->intl_emergency_shutdown == true)
@@ -759,7 +760,7 @@ static enum v2g_event handle_din_cable_check(struct v2g_connection* conn) {
     res->DC_EVSEStatus.EVSEIsolationStatus = (din_isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
     res->DC_EVSEStatus.EVSENotification =
-        static_cast<din_EVSENotificationType>(conn->ctx->evse_v2g_data.evse_notification);
+        static_cast<din_EVSENotificationType>(conn->ctx->evse_v2g_data.evse_notification.load());
     res->DC_EVSEStatus.NotificationMaxDelay = static_cast<uint32_t>(conn->ctx->evse_v2g_data.notification_max_delay);
     res->EVSEProcessing = (conn->ctx->evse_v2g_data.evse_processing[PHASE_ISOLATION] == (uint8_t)0)
                               ? din_EVSEProcessingType_Finished
@@ -819,7 +820,8 @@ static enum v2g_event handle_din_pre_charge(struct v2g_connection* conn) {
 
     res->DC_EVSEStatus.EVSEIsolationStatus = (din_isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
-    res->DC_EVSEStatus.EVSENotification = (din_EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
+    res->DC_EVSEStatus.EVSENotification =
+        static_cast<din_EVSENotificationType>(conn->ctx->evse_v2g_data.evse_notification.load());
     res->DC_EVSEStatus.EVSEStatusCode =
         (conn->ctx->intl_emergency_shutdown == true)
             ? din_DC_EVSEStatusCodeType_EVSE_EmergencyShutdown
@@ -857,7 +859,8 @@ static enum v2g_event handle_din_current_demand(struct v2g_connection* conn) {
 
     res->DC_EVSEStatus.EVSEIsolationStatus = (din_isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
-    res->DC_EVSEStatus.EVSENotification = (din_EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
+    res->DC_EVSEStatus.EVSENotification =
+        static_cast<din_EVSENotificationType>(conn->ctx->evse_v2g_data.evse_notification.load());
     res->DC_EVSEStatus.EVSEStatusCode =
         (conn->ctx->intl_emergency_shutdown == true)
             ? din_DC_EVSEStatusCodeType_EVSE_EmergencyShutdown
@@ -913,7 +916,8 @@ static enum v2g_event handle_din_welding_detection(struct v2g_connection* conn) 
 
     res->DC_EVSEStatus.EVSEIsolationStatus = (din_isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
-    res->DC_EVSEStatus.EVSENotification = (din_EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
+    res->DC_EVSEStatus.EVSENotification =
+        static_cast<din_EVSENotificationType>(conn->ctx->evse_v2g_data.evse_notification.load());
     res->DC_EVSEStatus.EVSEStatusCode =
         (conn->ctx->intl_emergency_shutdown == true)
             ? din_DC_EVSEStatusCodeType_EVSE_EmergencyShutdown

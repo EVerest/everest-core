@@ -249,7 +249,7 @@ struct v2g_context {
     /* actual charging state */
     enum V2gMsgTypeId last_v2g_msg;    /* holds the current v2g msg type */
     enum V2gMsgTypeId current_v2g_msg; /* holds the last v2g msg type */
-    int state;                         /* holds the current state id */
+    std::atomic<int> state;            /* holds the current state id */
     bool is_dc_charger; /* Is set to true if it is a DC charger. Value is configured after configuration of the
                            supported energy type */
     bool debugMode;     /* To activate/deactivate the debug mode */
@@ -289,7 +289,7 @@ struct v2g_context {
         uint32_t notification_max_delay;
         uint8_t evse_isolation_status;
         unsigned int evse_isolation_status_is_used;
-        uint8_t evse_notification;
+        std::atomic<uint8_t> evse_notification;
         uint8_t evse_status_code[PHASE_LENGTH];
         uint8_t evse_processing[PHASE_LENGTH];
         struct v2g_evse_id evse_id;

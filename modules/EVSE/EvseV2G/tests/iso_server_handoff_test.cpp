@@ -5,8 +5,10 @@
 //   cpd_handoff_self_heal        — deadline-based transition to Finished
 //   cpd_handoff_should_drop_bundle — late-bundle rejection after CPD exit
 
+#include <atomic>
 #include <gtest/gtest.h>
 #include <limits>
+#include <type_traits>
 
 #include "din_server.hpp"
 #include "iso_server.hpp"
@@ -14,6 +16,12 @@
 #include "v2g_ctx.hpp"
 
 namespace {
+
+// v2g_context::state is read from the extension thread (cpd_handoff_should_drop_bundle)
+// while the iso_server thread writes it from inside request handlers. Enforce atomicity
+// so a plain int can never be reintroduced without breaking this compile-time guard.
+static_assert(std::is_same_v<decltype(v2g_context::state), std::atomic<int>>,
+              "v2g_context::state must be std::atomic<int> to avoid the CPD drop-guard data race");
 
 struct HandoffFixture : public ::testing::Test {
     v2g_context ctx{};

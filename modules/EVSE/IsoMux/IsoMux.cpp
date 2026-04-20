@@ -7,7 +7,15 @@
 #include "log.hpp"
 #include "sdp.hpp"
 
+#include <atomic>
 #include <everest/tls/openssl_util.hpp>
+#include <type_traits>
+
+// selected_iso20 is written from the SDP/connection acceptor thread and read from
+// the command-handler and extension threads on every IsoMux dispatch. Enforce
+// atomicity at compile time so the cross-thread access cannot regress to a plain bool.
+static_assert(std::is_same_v<decltype(v2g_context::selected_iso20), std::atomic<bool>>,
+              "v2g_context::selected_iso20 must be std::atomic<bool> for cross-thread safety");
 namespace {
 void log_handler(openssl::log_level_t level, const std::string& str) {
     switch (level) {
