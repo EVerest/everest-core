@@ -330,6 +330,7 @@ EverestDeviceModelStorage::EverestDeviceModelStorage(
     const std::map<int32_t, std::vector<types::iso15118::EnergyTransferMode>>& evse_supported_energy_transfers,
     const std::map<int32_t, bool>& evse_service_renegotiation_supported, const std::filesystem::path& db_path,
     const std::filesystem::path& migration_files_path,
+    std::unique_ptr<VariableMapping> variable_mapping,
     std::shared_ptr<Everest::config::ConfigServiceClient> config_service_client) :
     r_evse_manager(r_evse_manager),
     r_extensions_15118(r_extensions_15118),
@@ -418,8 +419,6 @@ EverestDeviceModelStorage::EverestDeviceModelStorage(
     this->device_model_storage = std::make_unique<ocpp::v2::DeviceModelStorageSqlite>(db_path);
 
     this->init_evse_components_and_variables(evse_hardware_capabilities_map, evse_supported_energy_transfers);
-    this->init_everest_config();
-    this->init_hw_capabilities(evse_hardware_capabilities_map);
 }
 
 std::vector<DeviceModelVariable> EverestDeviceModelStorage::build_everest_config_variables(
