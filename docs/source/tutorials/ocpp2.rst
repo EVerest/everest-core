@@ -421,6 +421,16 @@ Here is a quick list of things you should remember when adding OCPP201 to your E
      it is required to connect a module implementing this interface.
      EVerest currently does not provide a display module that implements this
      interface.
+   - extensions_15118 (interface: iso15118_extensions, 0 to 128):
+     Required for HLC (ISO 15118) smart charging. This connection carries
+     the OCPP → ISO 15118 schedule-bundle handoff (K15), the K16
+     renegotiation trigger, the ``ev_selected_schedule`` echo back from
+     the EV, and the Plug&Charge certificate request/response bridge.
+     Modules typically used to fullfill this requirement:
+     :ref:`IsoMux <everest_modules_IsoMux>` (when both ISO 15118-2 and
+     ISO 15118-20 may be negotiated), or :ref:`EvseV2G
+     <everest_modules_EvseV2G>` / :ref:`Evse15118D20
+     <everest_modules_Evse15118D20>` directly.
 
 3. Make sure to configure the OCPP201 module as part of the token_provider (implementation_id: auth_provider) and token_validator (implementation_id: auth_validator)
    connections of the Auth module (if you use it). Please see the documentation of the auth module for more information.

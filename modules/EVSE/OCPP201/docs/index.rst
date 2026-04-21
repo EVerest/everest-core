@@ -269,12 +269,26 @@ connection represents one ISO15118 module.
 
 This module makes use of the following commands of this interface:
 
-* **set_get_certificate_response** to report that the charging station received a **DataTransfer.conf(Get15118EVCertificateResponse)** from  
+* **set_get_certificate_response** to report that the charging station received a **DataTransfer.conf(Get15118EVCertificateResponse)** from
   the CSMS (EV Contract installation for Plug&Charge)
+* **set_hlc_schedule_wait** to signal the ISO 15118 stack that it must gate
+  ``ChargeParameterDiscoveryRes`` until the OCPP charging-schedule bundle
+  arrives (K15 handoff)
+* **set_ev_charging_schedules** to deliver the OCPP composite
+  ``ChargingSchedule`` bundle (up to three entries) that the ISO 15118
+  stack translates into ``SAScheduleTuples`` (K15.FR.05 / FR.07)
+* **trigger_schedule_renegotiation** to ask the ISO 15118 stack to
+  latch ``EVSENotification=ReNegotiation`` on the next wire response,
+  driving the EV back into CPD with the refreshed bundle (K16)
 
 The interface is used to receive the following variables:
 
 * **iso15118_certificate_request** to trigger a **DataTransfer.req(Get15118EVCertificateRequest)** as part of the Plug&Charge process
+* **ev_selected_schedule** — the ``SAScheduleTupleID`` the EV picked from
+  the bundle plus the ``ChargingSchedule`` it returned; forwarded to
+  libocpp via ``on_ev_selected_charging_schedule`` for the K15.FR.09 /
+  K16.FR.04 CSMS-bounds check and for ``NotifyEVChargingSchedule``
+  reporting upstream
 
 Error Handling
 ==============
