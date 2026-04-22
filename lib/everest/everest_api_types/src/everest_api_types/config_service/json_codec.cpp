@@ -488,7 +488,9 @@ void from_json(const json& j, ConfigurationParameterUpdateResultRecord& k) {
 }
 
 void to_json(json& j, ConfigurationParameterUpdateNotice const& k) noexcept {
-    j = json{{"tstamp", k.tstamp}, {"slot_id", k.slot_id}, {"update_results", k.update_results}}; // TODO(CB) : Missing internally:, {"origin", k.origin}};
+    j = json{{"tstamp", k.tstamp},
+             {"slot_id", k.slot_id},
+             {"update_results", k.update_results}}; // TODO(CB) : Missing internally:, {"origin", k.origin}};
 }
 
 void from_json(const json& j, ConfigurationParameterUpdateNotice& k) {

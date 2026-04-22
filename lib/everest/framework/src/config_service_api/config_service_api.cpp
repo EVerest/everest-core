@@ -151,9 +151,9 @@ void ConfigServiceAPI::generate_api_cmd_load_from_yaml() {
                 if (!res.success) {
                     EVLOG_warning << "Loading from YAML error_message: " << res.error_message;
                 }
-                auto ext_res =
-                    API_wrapper::to_external_api(res); // TODO(CB): This ignores the description for now - maybe we want
-                                                       // to add that to the config_service interface as well or drop it?
+                auto ext_res = API_wrapper::to_external_api(
+                    res); // TODO(CB): This ignores the description for now - maybe we want
+                          // to add that to the config_service interface as well or drop it?
 
                 mqtt_abstraction.publish(msg.replyTo, serialize(ext_res));
                 return true;
@@ -170,18 +170,18 @@ void ConfigServiceAPI::generate_api_cmd_set_config_parameters() {
         if (deserialize(data, msg)) {
             API_types_ext::ConfigurationParameterUpdateRequest payload;
             if (deserialize(msg.payload, payload)) {
-                std::vector<Everest::config::ConfigParameterUpdate> updates_internal =
-                    srcToTarVec(payload.parameter_updates, [](const API_types_ext::ConfigurationParameterUpdate& update_ext) {
+                std::vector<Everest::config::ConfigParameterUpdate> updates_internal = srcToTarVec(
+                    payload.parameter_updates, [](const API_types_ext::ConfigurationParameterUpdate& update_ext) {
                         return API_wrapper::to_internal_api(update_ext);
                     });
 
                 auto int_res = config_service.set_config_parameters(payload.slot_id, updates_internal);
 
                 API_types_ext::ConfigurationParameterUpdateRequestResult response{};
-                response.results =
-                    srcToTarVec(int_res, [](const auto& result) {
-                        return API_wrapper::to_external_api(result);
-                    });  // TODO(CB): We might want to add the slot_id to the response as well, for better logging on the client side?
+                response.results = srcToTarVec(int_res, [](const auto& result) {
+                    return API_wrapper::to_external_api(result);
+                }); // TODO(CB): We might want to add the slot_id to the response as well, for better logging on the
+                    // client side?
                 mqtt_abstraction.publish(msg.replyTo, serialize(response));
                 return true;
             }

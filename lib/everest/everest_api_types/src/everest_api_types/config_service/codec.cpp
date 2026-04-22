@@ -2,11 +2,11 @@
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "config_service/codec.hpp"
-#include <string>
-#include "nlohmann/json.hpp"
 #include "config_service/API.hpp"
 #include "config_service/json_codec.hpp"
+#include "nlohmann/json.hpp"
 #include "utilities/constants.hpp"
+#include <string>
 
 namespace everest::lib::API::V1_0::types::config_service {
 

@@ -196,7 +196,8 @@ to_internal_api(ConfigurationParameterUpdateResultEnum_External const& val) {
         return TarT::Rejected;
     }
     throw std::out_of_range(
-        "Unexpected value for everest::lib::API::V1_0::types::config_service::ConfigurationParameterUpdateResultEnum_External");
+        "Unexpected value for "
+        "everest::lib::API::V1_0::types::config_service::ConfigurationParameterUpdateResultEnum_External");
 }
 
 ConfigurationParameterUpdateResultEnum_External
@@ -213,8 +214,7 @@ to_external_api(ConfigurationParameterUpdateResultEnum_Internal const& val) {
     case SrcT::Rejected:
         return TarT::Rejected;
     }
-    throw std::out_of_range(
-        "Unexpected value for Everest::config::SetConfigParameterResult");
+    throw std::out_of_range("Unexpected value for Everest::config::SetConfigParameterResult");
 }
 
 ActiveSlotStatusEnum_Internal to_internal_api(ActiveSlotStatusEnum_External const& val) {
@@ -465,7 +465,9 @@ ReqFulfillment_Internal to_internal_api(ReqFulfillment_External const& val, cons
     ReqFulfillment_Internal result;
     result.module_id = val.module_id;
     result.implementation_id = val.implementation_id;
-    Requirement req{requirement_id, val.index};  // TODO(CB): This is a narrowing conversion; maybe use an appropriate cast or check for overflow?
+    Requirement req{
+        requirement_id,
+        val.index}; // TODO(CB): This is a narrowing conversion; maybe use an appropriate cast or check for overflow?
     result.requirement = req;
     return result;
 }
@@ -605,7 +607,8 @@ ConfigAccessControl_External to_external_api(ConfigAccessControl_Internal const&
     return result;
 }
 
-std::vector<Fulfillment> fulfillmentVecToInternal(const std::vector<ReqFulfillment_External>& fulfillments_external, const std::string& requirement_id) {
+std::vector<Fulfillment> fulfillmentVecToInternal(const std::vector<ReqFulfillment_External>& fulfillments_external,
+                                                  const std::string& requirement_id) {
     std::vector<Fulfillment> result;
     for (auto const& fulfillment_external : fulfillments_external) {
         result.push_back(to_internal_api(fulfillment_external, requirement_id));
@@ -618,7 +621,8 @@ ModuleConfiguration_Internal to_internal_api(ModuleConfiguration_External const&
     result.module_id = val.module_id;
     result.module_name = val.module_name;
     for (auto const& connection : val.connections) {
-        result.connections.emplace(connection.requirement_id, fulfillmentVecToInternal(connection.fulfillments, connection.requirement_id));
+        result.connections.emplace(connection.requirement_id,
+                                   fulfillmentVecToInternal(connection.fulfillments, connection.requirement_id));
     }
     result.mapping = to_internal_api(val.mapping);
 

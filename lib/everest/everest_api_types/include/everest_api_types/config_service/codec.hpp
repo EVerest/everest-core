@@ -97,7 +97,6 @@ std::ostream& operator<<(std::ostream& os, DuplicateSlotRequest const& val);
 std::ostream& operator<<(std::ostream& os, LoadFromYamlRequest const& val);
 std::ostream& operator<<(std::ostream& os, GetConfigurationRequest const& val);
 
-
 template <class T> T deserialize(std::string const& val);
 template <class T> std::optional<T> try_deserialize(std::string const& val) {
     try {

@@ -7,10 +7,10 @@
 #ifndef CONFIG_SERVICE_API_HPP_
 #define CONFIG_SERVICE_API_HPP_
 
-#include <utils/mqtt_abstraction.hpp>
-#include <utils/config_service_interface.hpp>
 #include <everest_api_types/config_service/API.hpp>
 #include <everest_api_types/utilities/Topics.hpp>
+#include <utils/config_service_interface.hpp>
+#include <utils/mqtt_abstraction.hpp>
 
 namespace ev_API = everest::lib::API;
 
