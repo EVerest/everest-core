@@ -581,7 +581,11 @@ event::unique_fd open_udp_multicast_socket(std::string const& multicast_group, s
 
 event::unique_fd open_mdns_socket(std::string const& interface_name) {
     auto ip = get_interface_address(interface_name);
-    return open_udp_multicast_socket("224.0.0.251", 5353, ip, "0.0.0.0", true, true);
+    auto sock = open_udp_multicast_socket("224.0.0.251", 5353, ip, "0.0.0.0", true, true);
+    if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface_name.c_str(), interface_name.length()) < 0) {
+        throw std::runtime_error("Failed to bind socket to device " + interface_name + " -> " + strerror(errno));
+    }
+    return sock;
 }
 
 void set_reuse_address(int fd) {
