@@ -34,7 +34,8 @@ Diagnostics::Diagnostics(const FunctionalBlockContext& context, AuthorizationInt
     context(context),
     authorization(authorization),
     monitoring_updater(
-        context.device_model, [this](const std::vector<EventData>& events) { this->notify_event_req(events); },
+        context.device_model, context.event_id_generator,
+        [this](const std::vector<EventData>& events) { this->notify_event_req(events); },
         [this]() { return !this->context.connectivity_manager.is_websocket_connected(); }),
     get_log_request_callback(get_log_request_callback),
     get_customer_information_callback(get_customer_information_callback),

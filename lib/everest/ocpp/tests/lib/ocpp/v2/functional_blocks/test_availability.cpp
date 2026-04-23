@@ -8,9 +8,11 @@
 
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/event_id_generator.hpp>
 #include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 
 #include <ocpp/v2/messages/Heartbeat.hpp>
+#include <ocpp/v2/messages/NotifyEvent.hpp>
 #include <ocpp/v2/messages/StatusNotification.hpp>
 
 #include "component_state_manager_mock.hpp"
@@ -43,6 +45,7 @@ protected: // Members
     EvseManagerFake evse_manager;
     ComponentStateManagerMock component_state_manager;
     std::atomic<ocpp::OcppProtocolVersion> ocpp_version;
+    EventIdGenerator event_id_generator;
     FunctionalBlockContext functional_block_context;
     MockFunction<void(const ocpp::DateTime& currentTime)> time_sync_callback;
     MockFunction<void()> all_connectors_unavailable_callback;
@@ -63,7 +66,8 @@ protected: // Functions
         ocpp_version(ocpp::OcppProtocolVersion::v201),
         functional_block_context{
             this->mock_dispatcher,       *this->device_model, this->connectivity_manager,    this->evse_manager,
-            this->database_handler_mock, this->evse_security, this->component_state_manager, this->ocpp_version},
+            this->database_handler_mock, this->evse_security, this->component_state_manager, this->ocpp_version,
+            this->event_id_generator},
         evse_1(evse_manager.get_mock(1)),
         evse_2(evse_manager.get_mock(2)),
         availability(std::make_unique<Availability>(functional_block_context, time_sync_callback.AsStdFunction(),
@@ -121,6 +125,43 @@ TEST_F(AvailabilityTest, status_notification_req) {
         EXPECT_FALSE(triggered);
     }));
 
+    availability->status_notification_req(1, 2, ConnectorStatusEnum::Unavailable, false);
+}
+
+TEST_F(AvailabilityTest, availability_state_notify_event_req_emits_g01_payload) {
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool /*triggered*/) {
+        const auto message = call[ocpp::CALL_PAYLOAD].get<NotifyEventRequest>();
+        ASSERT_EQ(message.eventData.size(), 1u);
+        const auto& ev = message.eventData[0];
+        EXPECT_EQ(ev.trigger, EventTriggerEnum::Delta);
+        EXPECT_EQ(ev.eventNotificationType, EventNotificationEnum::HardWiredNotification);
+        EXPECT_EQ(ev.component.name, "Connector");
+        ASSERT_TRUE(ev.component.evse.has_value());
+        EXPECT_EQ(ev.component.evse->id, 1);
+        EXPECT_EQ(ev.component.evse->connectorId.value_or(-1), 2);
+        EXPECT_EQ(ev.variable.name, "AvailabilityState");
+        EXPECT_EQ(ev.actualValue.get(), conversions::connector_status_enum_to_string(ConnectorStatusEnum::Unavailable));
+        EXPECT_FALSE(ev.variableMonitoringId.has_value());
+    }));
+    availability->availability_state_notify_event_req(1, 2, ConnectorStatusEnum::Unavailable, false);
+}
+
+TEST_F(AvailabilityTest, status_notification_req_dispatches_notify_event_on_v21) {
+    this->ocpp_version.store(ocpp::OcppProtocolVersion::v21);
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool /*triggered*/) {
+        const auto message = call[ocpp::CALL_PAYLOAD].get<NotifyEventRequest>();
+        ASSERT_EQ(message.eventData.size(), 1u);
+        EXPECT_EQ(message.eventData[0].variable.name, "AvailabilityState");
+    }));
+    availability->status_notification_req(1, 2, ConnectorStatusEnum::Unavailable, false);
+}
+
+TEST_F(AvailabilityTest, status_notification_req_keeps_status_notification_on_v201) {
+    this->ocpp_version.store(ocpp::OcppProtocolVersion::v201);
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool /*triggered*/) {
+        const auto message = call[ocpp::CALL_PAYLOAD].get<StatusNotificationRequest>();
+        EXPECT_EQ(message.connectorStatus, ConnectorStatusEnum::Unavailable);
+    }));
     availability->status_notification_req(1, 2, ConnectorStatusEnum::Unavailable, false);
 }
 

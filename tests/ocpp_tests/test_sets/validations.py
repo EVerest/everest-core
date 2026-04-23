@@ -242,6 +242,31 @@ def validate_status_notification_201(meta_data, msg, exp_payload):
     )
 
 
+def validate_notify_event_connector_availability_21(meta_data, msg, exp_payload):
+    """OCPP 2.1 G01 equivalent of validate_status_notification_201.
+
+    Accepts an expected StatusNotificationRequest-shaped payload (evse_id,
+    connector_id, connector_status) and verifies the corresponding
+    NotifyEventRequest carries the same fields under the G01 shape:
+    component.name == "Connector", variable.name == "AvailabilityState",
+    component.evse.{id, connectorId}, and actualValue == stringified
+    connector_status.
+    """
+    for ev in msg.payload.get("eventData", []):
+        component = ev.get("component", {})
+        variable = ev.get("variable", {})
+        evse = component.get("evse", {}) or {}
+        if (
+            component.get("name") == "Connector"
+            and variable.get("name") == "AvailabilityState"
+            and evse.get("id") == exp_payload.evse_id
+            and evse.get("connectorId") == exp_payload.connector_id
+            and ev.get("actualValue") == exp_payload.connector_status.value
+        ):
+            return True
+    return False
+
+
 def validate_notify_report_data_201(meta_data, msg, exp_payload):
     found_items = 0
 

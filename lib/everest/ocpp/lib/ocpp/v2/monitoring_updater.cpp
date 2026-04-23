@@ -134,11 +134,11 @@ EventData create_notify_event(std::int32_t unique_id, const std::string& reporte
 }
 } // namespace
 
-MonitoringUpdater::MonitoringUpdater(DeviceModelAbstract& device_model, notify_events notify_csms_events,
-                                     is_offline is_chargepoint_offline) :
+MonitoringUpdater::MonitoringUpdater(DeviceModelAbstract& device_model, EventIdGenerator& event_id_generator,
+                                     notify_events notify_csms_events, is_offline is_chargepoint_offline) :
     device_model(device_model),
     monitors_timer([this]() { this->process_monitors_internal(true, true); }),
-    unique_id(0),
+    event_id_generator(event_id_generator),
     notify_csms_events(std::move(notify_csms_events)),
     is_chargepoint_offline(std::move(is_chargepoint_offline)) {
 }
@@ -510,8 +510,8 @@ void MonitoringUpdater::process_monitor_meta_internal(UpdaterMonitorMeta& update
             const auto current_value = this->device_model.get_value<std::string>(comp_var);
 
             EventData notify_event =
-                std::move(create_notify_event(this->unique_id++, current_value, updater_meta_data.component,
-                                              updater_meta_data.variable, monitor_meta));
+                std::move(create_notify_event(this->event_id_generator.next(), current_value,
+                                              updater_meta_data.component, updater_meta_data.variable, monitor_meta));
 
             // Generate one event that will either be sent now, or later based on the offline state
             updater_meta_data.generated_monitor_events.push_back(std::move(notify_event));
@@ -529,9 +529,9 @@ void MonitoringUpdater::process_monitor_meta_internal(UpdaterMonitorMeta& update
                 reported_value = updater_meta_data.value_current;
             }
 
-            EventData notify_event =
-                std::move(create_notify_event(unique_id++, reported_value, updater_meta_data.component,
-                                              updater_meta_data.variable, updater_meta_data.monitor_meta));
+            EventData notify_event = std::move(
+                create_notify_event(this->event_id_generator.next(), reported_value, updater_meta_data.component,
+                                    updater_meta_data.variable, updater_meta_data.monitor_meta));
 
             // N07.FR.18 - the cleared attribute does not apply to deltas
             // N07.FR.19

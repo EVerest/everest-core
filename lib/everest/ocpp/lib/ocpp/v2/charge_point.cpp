@@ -550,7 +550,8 @@ void ChargePoint::initialize(const std::map<std::int32_t, std::int32_t>& evse_co
     // Construct functional blocks.
     functional_block_context = std::make_unique<FunctionalBlockContext>(
         *this->message_dispatcher, *this->device_model, *this->connectivity_manager, *this->evse_manager,
-        *this->database_handler, *this->evse_security, *this->component_state_manager, this->ocpp_version);
+        *this->database_handler, *this->evse_security, *this->component_state_manager, this->ocpp_version,
+        this->event_id_generator);
 
     this->data_transfer = std::make_unique<DataTransfer>(
         *this->functional_block_context, this->callbacks.data_transfer_callback, DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);

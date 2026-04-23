@@ -4,6 +4,7 @@
 #pragma once
 
 #include <ocpp/common/message_dispatcher.hpp>
+#include <ocpp/v2/event_id_generator.hpp>
 #include <ocpp/v2/types.hpp>
 
 namespace ocpp {
@@ -29,12 +30,13 @@ struct FunctionalBlockContext {
     EvseSecurity& evse_security;
     ComponentStateManagerInterface& component_state_manager;
     std::atomic<OcppProtocolVersion>& ocpp_version;
+    EventIdGenerator& event_id_generator;
 
     FunctionalBlockContext(MessageDispatcherInterface<MessageType>& message_dispatcher,
                            DeviceModelAbstract& device_model, ConnectivityManagerInterface& connectivity_manager,
                            EvseManagerInterface& evse_manager, DatabaseHandlerInterface& database_handler,
                            EvseSecurity& evse_security, ComponentStateManagerInterface& component_state_manager,
-                           std::atomic<OcppProtocolVersion>& ocpp_version) :
+                           std::atomic<OcppProtocolVersion>& ocpp_version, EventIdGenerator& event_id_generator) :
         message_dispatcher(message_dispatcher),
         device_model(device_model),
         connectivity_manager(connectivity_manager),
@@ -42,7 +44,8 @@ struct FunctionalBlockContext {
         database_handler(database_handler),
         evse_security(evse_security),
         component_state_manager(component_state_manager),
-        ocpp_version(ocpp_version) {
+        ocpp_version(ocpp_version),
+        event_id_generator(event_id_generator) {
     }
 };
 } // namespace v2

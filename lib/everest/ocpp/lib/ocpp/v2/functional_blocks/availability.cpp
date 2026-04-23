@@ -9,6 +9,7 @@
 #include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 
 #include <ocpp/v2/messages/Heartbeat.hpp>
+#include <ocpp/v2/messages/NotifyEvent.hpp>
 #include <ocpp/v2/messages/StatusNotification.hpp>
 
 namespace ocpp::v2 {
@@ -43,6 +44,11 @@ void Availability::handle_message(const ocpp::EnhancedMessage<MessageType>& mess
 
 void Availability::status_notification_req(const std::int32_t evse_id, const std::int32_t connector_id,
                                            const ConnectorStatusEnum status, const bool initiated_by_trigger_message) {
+    if (this->context.ocpp_version.load() == OcppProtocolVersion::v21) {
+        this->availability_state_notify_event_req(evse_id, connector_id, status, initiated_by_trigger_message);
+        return;
+    }
+
     StatusNotificationRequest req;
     req.connectorId = connector_id;
     req.evseId = evse_id;
@@ -50,6 +56,37 @@ void Availability::status_notification_req(const std::int32_t evse_id, const std
     req.connectorStatus = status;
 
     const ocpp::Call<StatusNotificationRequest> call(req);
+    this->context.message_dispatcher.dispatch_call(call, initiated_by_trigger_message);
+}
+
+void Availability::availability_state_notify_event_req(const std::int32_t evse_id, const std::int32_t connector_id,
+                                                       const ConnectorStatusEnum status,
+                                                       const bool initiated_by_trigger_message) {
+    EventData event;
+    event.eventId = this->context.event_id_generator.next();
+    event.timestamp = DateTime();
+    event.trigger = EventTriggerEnum::Delta;
+    event.eventNotificationType = EventNotificationEnum::HardWiredNotification;
+    event.actualValue = CiString<2500>(conversions::connector_status_enum_to_string(status));
+
+    Component component;
+    component.name = "Connector";
+    EVSE evse;
+    evse.id = evse_id;
+    evse.connectorId = connector_id;
+    component.evse = evse;
+    event.component = component;
+
+    Variable variable;
+    variable.name = "AvailabilityState";
+    event.variable = variable;
+
+    NotifyEventRequest req;
+    req.generatedAt = DateTime();
+    req.seqNo = 0;
+    req.eventData = {event};
+
+    const ocpp::Call<NotifyEventRequest> call(req);
     this->context.message_dispatcher.dispatch_call(call, initiated_by_trigger_message);
 }
 

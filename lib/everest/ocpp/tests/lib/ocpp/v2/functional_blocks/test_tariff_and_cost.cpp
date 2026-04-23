@@ -8,6 +8,7 @@
 
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/event_id_generator.hpp>
 #include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/functional_blocks/tariff_and_cost.hpp>
 #include <ocpp/v2/messages/CostUpdated.hpp>
@@ -48,6 +49,7 @@ protected:
     EvseManagerFake evse_manager;
     ComponentStateManagerMock component_state_manager;
     std::atomic<ocpp::OcppProtocolVersion> ocpp_version;
+    EventIdGenerator event_id_generator;
     FunctionalBlockContext functional_block_context;
     NiceMock<MeterValuesMock> meter_values_mock;
     boost::asio::io_context io_context;
@@ -64,7 +66,8 @@ protected:
         evse_manager(1),
         ocpp_version(ocpp::OcppProtocolVersion::v201),
         functional_block_context{mock_dispatcher,       *device_model, connectivity_manager,    evse_manager,
-                                 database_handler_mock, evse_security, component_state_manager, ocpp_version} {
+                                 database_handler_mock, evse_security, component_state_manager, ocpp_version,
+                                 event_id_generator} {
     }
 
     std::unique_ptr<TariffAndCost> make_tariff_and_cost() {

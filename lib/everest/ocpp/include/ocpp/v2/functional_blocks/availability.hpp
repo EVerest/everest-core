@@ -95,6 +95,15 @@ public:
     void status_notification_req(const std::int32_t evse_id, const std::int32_t connector_id,
                                  const ConnectorStatusEnum status,
                                  const bool initiated_by_trigger_message = false) override;
+
+    /// \brief Send the OCPP 2.1 G01 NotifyEvent for a connector AvailabilityState change.
+    ///
+    /// Used in place of StatusNotificationRequest on OCPP 2.1+ sessions; see G01 worked
+    /// example. Component is `Connector` with the EVSE/connector ids; variable is
+    /// `AvailabilityState`; actualValue is the stringified ConnectorStatusEnum.
+    void availability_state_notify_event_req(std::int32_t evse_id, std::int32_t connector_id,
+                                             ConnectorStatusEnum status, bool initiated_by_trigger_message);
+
     void heartbeat_req(const bool initiated_by_trigger_message = false) override;
 
     void handle_scheduled_change_availability_requests(const std::int32_t evse_id) override;
