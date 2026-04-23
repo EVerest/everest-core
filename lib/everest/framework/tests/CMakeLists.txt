@@ -22,6 +22,7 @@ target_sources(${TEST_TARGET_NAME} PRIVATE
     helpers.cpp
 )
 
+add_subdirectory(api)
 add_subdirectory(controller)
 
 target_link_libraries(${TEST_TARGET_NAME}

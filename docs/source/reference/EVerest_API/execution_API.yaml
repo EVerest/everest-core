@@ -1,0 +1,246 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:everest:execution_API'
+info:
+  title: 'EVerest API definition for the execution control'
+  version: 1.0.0
+  description: >-
+    API for EVerest modules and clients to control the modules execution status.
+    Provides facilities to (re)start and stop modules and monitor their execution status.
+  license:
+    name: Apache-2.0
+    url: https://opensource.org/licenses/Apache-2.0
+  tags:
+    - name: EVerest
+    - name: Execution
+servers:
+  default:
+    pathname: 'everest_api/1/execution/'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+defaultContentType: application/json
+
+channels:
+  send_request_stop_modules:
+    address: 'm2e/stop_modules'
+    messages:
+      send_request_stop_modules:
+        $ref: '#/components/messages/send_request_stop_modules'
+  receive_reply_stop_modules:
+    address: null
+    messages:
+      receive_reply_stop_modules:
+        $ref: '#/components/messages/receive_reply_stop_modules'
+
+  send_request_start_modules:
+    address: 'm2e/start_modules'
+    messages:
+      send_request_start_modules:
+        $ref: '#/components/messages/send_request_start_modules'
+  receive_reply_start_modules:
+    address: null
+    messages:
+      receive_reply_start_modules:
+        $ref: '#/components/messages/receive_reply_start_modules'
+
+
+  receive_status:
+    address: 'e2m/status'
+    messages:
+      receive_status:
+        $ref: '#/components/messages/receive_status'
+
+
+operations:
+  send_request_stop_modules:
+    title: 'Stop modules'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_stop_modules'
+    description: 'Request EVerest to stop all currently running modules.'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_stop_modules'
+
+  receive_reply_stop_modules:
+    title: 'Reply to stop_modules request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_stop_modules'
+
+  send_request_start_modules:
+    title: 'Start modules'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_start_modules'
+    description: 'Request EVerest to start modules.'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_start_modules'
+
+  receive_reply_start_modules:
+    title: 'Reply to start_modules request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_start_modules'
+
+  receive_status:
+    title: 'Receive execution status'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_status'
+    description: 'Published when EVerest execution status changes.'
+
+
+components:
+  messages:
+    send_request_stop_modules:
+      name: send_request_stop_modules
+      title: 'Stop modules request'
+      summary: 'Request EVerest to stop all currently running modules.'
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: Address to send the response to.
+      examples:
+        - summary: "Request to stop all modules"
+          payload:
+            headers:
+              replyTo: arbitrary/reply/topic
+    receive_reply_stop_modules:
+      name: receive_reply_stop_modules
+      title: 'Stop modules reply'
+      summary: 'Reply indicating the result of stopping modules.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/StopModulesResult'
+      examples:
+        - summary: "No modules to stop"
+          payload:
+            status: "NoModulesRunning"
+
+    send_request_start_modules:
+      name: send_request_start_modules
+      title: 'Start modules request'
+      summary: 'Request EVerest to Start modules.'
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: Address to send the response to.
+      examples:
+        - summary: "Request to start modules"
+          payload:
+            headers:
+              replyTo: arbitrary/reply/topic
+    receive_reply_start_modules:
+      name: receive_reply_start_modules
+      title: 'Start modules reply'
+      summary: 'Reply indicating the result of starting modules.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/StartModulesResult'
+      examples:
+        - summary: "Modules starting"
+          payload:
+            status: "Starting"
+
+    receive_status:
+      name: receive_status
+      title: 'Execution status update'
+      summary: 'Published when EVerest execution status changes.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ExecutionStatusUpdateNotice'
+      examples:
+        - summary: "Config service only mode"
+          payload:
+            module_status: "NotRunning"
+            configuration_service_available: true
+
+
+  schemas:
+    StopModulesResultEnum:
+      description: |
+        Possible results for stop module requests
+        - Stopping: Accepted and modules are commanded to stop but haven't done so yet
+        - NoModulesToStop: Accepted, but a no-op since there were no modules running
+        - Rejected: Rejected, for some reason (e.g. not allowed)
+      type: string
+      enum:
+        - Stopping
+        - NoModulesToStop
+        - Rejected
+    StartModulesResultEnum:
+      description: |
+        Possible results for start module requests
+        - Starting: Accepted and modules are commanded to start but haven't done so yet
+        - Restarting: Modules are commanded to stop and will be commanded to start once they have stopped
+        - NoConfigToStart: Accepted, but there is not configuration slot marked to boot from
+        - Rejected: Rejected, for some reason (e.g. not allowed)
+      type: string
+      enum:
+        - Starting
+        - Restarting
+        - NoConfigToStart
+        - Rejected
+    ModuleExecutionStatusEnum:
+      description: |
+        State of the modules
+        - Running: Accepted and modules are commanded to start but haven't done so yet
+        - NotRunning: Modules are commanded to stop and will be commanded to start afterwards
+      type: string
+      enum:
+        - Running
+        - NotRunning
+    StopModulesResult:
+      description: Result when requesting to stop the modules
+      type: object
+      additionalProperties: true
+      properties:
+        status:
+          $ref: '#/components/schemas/StopModulesResultEnum'
+      required:
+        - status
+    StartModulesResult:
+      description: Result when requesting to start the modules
+      type: object
+      additionalProperties: true
+      properties:
+        status:
+          $ref: '#/components/schemas/StartModulesResultEnum'
+      required:
+        - status
+    ExecutionStatusUpdateNotice:
+      description: Execution status summary.
+      type: object
+      additionalProperties: true
+      properties:
+        tstamp:
+          type: string
+          format: date-time
+          description: Timestamp of the status update in RFC3339 format
+        module_status:
+          $ref: '#/components/schemas/ModuleExecutionStatusEnum'
+        configuration_service_available:
+          type: boolean
+      required:
+        - tstamp
+        - module_status
+        - configuration_service_available

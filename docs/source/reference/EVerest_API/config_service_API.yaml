@@ -393,7 +393,6 @@ components:
         - summary: "Slot does not exist"
           payload:
             result: "DoesNotExist"
-            slot_id: 2
 
     send_request_delete_slot:
       name: send_request_delete_slot
@@ -641,7 +640,6 @@ components:
                     characteristics:
                       datatype: "Boolean"
                       mutability: "ReadWrite"
-                      activation_policy: "RequiresRestart"
                 implementation_configuration_parameters:
                   - implementation_id: "board_support"
                     configuration_parameters:
@@ -650,7 +648,6 @@ components:
                         characteristics:
                           datatype: "Integer"
                           mutability: "ReadWrite"
-                          activation_policy: "Immediate"
                           unit: "A"
 
     receive_active_slot:
@@ -776,11 +773,8 @@ components:
       properties:
         result:
           $ref: '#/components/schemas/MarkActiveSlotResultEnum'
-        slot_id:
-          type: integer
       required:
         - result
-        - slot_id
     DeleteSlotRequest:
       description: A request to delete a configuration slot, consisting of the slot_id of the slot to be deleted.
       type: object
@@ -852,10 +846,13 @@ components:
       properties:
         success:
           type: boolean
+        error_message:
+          type: string
         slot_id:
           type: integer
       required:
         - success
+        - error_message
     ConfigurationParameterIdentifier:
       description: Identifier for a configuration parameter, consisting of the module it belongs to, the parameter name, and optionally the implementation it belongs to (for implementation-specific parameters).
       type: object
@@ -899,7 +896,7 @@ components:
     ConfigurationParameterUpdateResultEnum:
       description: |
         Result for a configuration parameter update request for a single parameter.
-        - Applied: Update was accepted and applied successfully. If the parameter has "Immediate" activation policy, the change is already effective. If the parameter has "RequiresRestart" activation policy, the change will become effective on the next start of the slot (which may be immediately if modules are being restarted, or on the next restart if modules are currently running).
+        - Applied: Update was accepted and applied successfully. The change is effective immediately.
         - WillApplyOnRestart: Update was accepted and applied successfully. The change will become effective on the next start of the slot (which may be immediately if modules are being restarted, or on the next restart if modules are currently running).
         - DoesNotExist: Rejected, because the specified configuration parameter does not exist
         - Rejected: Rejected for other reasons (e.g. invalid value format, invalid value for enum, etc.)
@@ -1010,14 +1007,8 @@ components:
         - ReadOnly
         - ReadWrite
         - WriteOnly
-    ConfigurationActivationPolicy:
-      description: Activation policy of a configuration parameter, indicating when changes to the parameter take effect.
-      type: string
-      enum:
-        - Immediate
-        - RequiresRestart
     ConfigurationParameterCharacteristics:
-      description: Characteristics of a configuration parameter, including its data type, mutability, activation policy, and optionally its unit.
+      description: Characteristics of a configuration parameter, including its data type, mutability, and optionally its unit and min/max values.
       type: object
       additionalProperties: true
       properties:
@@ -1025,8 +1016,6 @@ components:
           $ref: '#/components/schemas/ConfigurationParameterDatatype'
         mutability:
           $ref: '#/components/schemas/ConfigurationParameterMutability'
-        activation_policy:
-          $ref: '#/components/schemas/ConfigurationActivationPolicy'
         unit:
           type: string
         min_value:
@@ -1036,7 +1025,6 @@ components:
       required:
         - datatype
         - mutability
-        - activation_policy
     ConfigurationParameter:
       description: A configuration parameter, consisting of its name, value, and characteristics.
       type: object

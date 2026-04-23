@@ -14,7 +14,8 @@ using namespace everest::lib::API::V1_0::types;
 // than other serializations because the to_json function may throw an error
 template <>
 everest::lib::API::V1_0::types::generic::RequestReply
-generate<everest::lib::API::V1_0::types::generic::RequestReply>(bool set_optional_fields) {
+generate<everest::lib::API::V1_0::types::generic::RequestReply>(bool set_optional_fields, int seed) {
+    (void)seed;  // Not used in this generator, but silence the compiler warning;
     RequestReply generated_object;
     generated_object.replyTo = "mdvChgNGIuAZPRzFEkDOLnsMUcJYyl";
     generated_object.payload = "{\"data\": { \"inner\" : 23, \"inner_str\":\"string\"}}";

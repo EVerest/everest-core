@@ -7,6 +7,7 @@
 
 #include "nlohmann/json.hpp"
 #include <stdexcept>
+#include <unordered_set>
 
 namespace everest::lib::API::V1_0::types::config_service {
 
@@ -261,35 +262,6 @@ void from_json(const json& j, ConfigurationParameterMutability& k) {
                             "everest::lib::API::V1_0::types::config_service::ConfigurationParameterMutability");
 }
 
-void to_json(json& j, ConfigurationActivationPolicy const& k) noexcept {
-    switch (k) {
-    case ConfigurationActivationPolicy::Immediate:
-        j = "Immediate";
-        return;
-    case ConfigurationActivationPolicy::RequiresRestart:
-        j = "RequiresRestart";
-        return;
-    }
-
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::ConfigurationActivationPolicy";
-}
-
-void from_json(const json& j, ConfigurationActivationPolicy& k) {
-    std::string s = j;
-    if (s == "Immediate") {
-        k = ConfigurationActivationPolicy::Immediate;
-        return;
-    }
-    if (s == "RequiresRestart") {
-        k = ConfigurationActivationPolicy::RequiresRestart;
-        return;
-    }
-
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type "
-                            "everest::lib::API::V1_0::types::config_service::ConfigurationActivationPolicy");
-}
-
 void to_json(json& j, GetConfigurationStatusEnum const& k) noexcept {
     switch (k) {
     case GetConfigurationStatusEnum::Success:
@@ -365,12 +337,11 @@ void from_json(const json& j, GetActiveSlotIdResult& k) {
 }
 
 void to_json(json& j, MarkActiveSlotResult const& k) noexcept {
-    j = json{{"result", k.result}, {"slot_id", k.slot_id}};
+    j = json{{"result", k.result}};
 }
 
 void from_json(const json& j, MarkActiveSlotResult& k) {
     k.result = j.at("result");
-    k.slot_id = j.at("slot_id");
 }
 
 void to_json(json& j, DeleteSlotResult const& k) noexcept {
@@ -396,7 +367,7 @@ void from_json(const json& j, DuplicateSlotResult& k) {
 }
 
 void to_json(json& j, LoadFromYamlResult const& k) noexcept {
-    j = json{{"success", k.success}};
+    j = json{{"success", k.success}, {"error_message", k.error_message}};
     if (k.slot_id) {
         j["slot_id"] = *k.slot_id;
     }
@@ -404,6 +375,7 @@ void to_json(json& j, LoadFromYamlResult const& k) noexcept {
 
 void from_json(const json& j, LoadFromYamlResult& k) {
     k.success = j.at("success");
+    k.error_message = j.at("error_message");
     if (j.contains("slot_id")) {
         k.slot_id = j.at("slot_id");
     }
@@ -528,8 +500,8 @@ void from_json(const json& j, ImplMapping& k) {
 void to_json(json& j, ModuleTierMappings const& k) noexcept {
     if (k.module) {
         j["module"] = *k.module;
-        j["implementations"] = k.implementations;
     }
+    j["implementations"] = k.implementations;
 }
 
 void from_json(const json& j, ModuleTierMappings& k) {
@@ -563,7 +535,7 @@ void from_json(const json& j, ModuleConnection& k) {
 }
 
 void to_json(json& j, ConfigurationParameterCharacteristics const& k) noexcept {
-    j = json{{"datatype", k.datatype}, {"mutability", k.mutability}, {"activation_policy", k.activation_policy}};
+    j = json{{"datatype", k.datatype}, {"mutability", k.mutability}};
     if (k.unit) {
         j["unit"] = *k.unit;
     }
@@ -578,14 +550,13 @@ void to_json(json& j, ConfigurationParameterCharacteristics const& k) noexcept {
 void from_json(const json& j, ConfigurationParameterCharacteristics& k) {
     k.datatype = j.at("datatype");
     k.mutability = j.at("mutability");
-    k.activation_policy = j.at("activation_policy");
     if (j.contains("unit")) {
         k.unit = j.at("unit");
     }
     if (j.contains("min_value")) {
         k.min_value = j.at("min_value");
     }
-    if (j.contains("max")) {
+    if (j.contains("max_value")) {
         k.max_value = j.at("max_value");
     }
 }
@@ -709,9 +680,14 @@ void to_json(json& j, GetConfigurationResult const& k) noexcept {
 void from_json(const json& j, GetConfigurationResult& k) {
     k.status = j.at("status");
     if (j.contains("module_configurations")) {
-        k.module_configurations = std::vector<ModuleConfiguration>{};
+        k.module_configurations.emplace<std::vector<ModuleConfiguration>>({});
+        std::unordered_set<std::string> seen_ids;
         for (auto& item : j.at("module_configurations")) {
-            k.module_configurations->push_back(item);
+            ModuleConfiguration mc = item;
+            if (!seen_ids.insert(mc.module_id).second) {
+                throw std::invalid_argument("Duplicate module_id in module_configurations: " + mc.module_id);
+            }
+            k.module_configurations->push_back(std::move(mc));
         }
     }
 }

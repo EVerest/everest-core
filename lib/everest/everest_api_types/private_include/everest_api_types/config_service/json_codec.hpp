@@ -28,9 +28,6 @@ void from_json(const json& j, ConfigurationParameterDatatype& k);
 void to_json(json& j, ConfigurationParameterMutability const& k) noexcept;
 void from_json(const json& j, ConfigurationParameterMutability& k);
 
-void to_json(json& j, ConfigurationActivationPolicy const& k) noexcept;
-void from_json(const json& j, ConfigurationActivationPolicy& k);
-
 void to_json(json& j, GetConfigurationStatusEnum const& k) noexcept;
 void from_json(const json& j, GetConfigurationStatusEnum& k);
 

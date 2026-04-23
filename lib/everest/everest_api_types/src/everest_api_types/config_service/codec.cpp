@@ -40,11 +40,6 @@ std::string serialize(ConfigurationParameterMutability val) noexcept {
     return result.dump(json_indent);
 }
 
-std::string serialize(ConfigurationActivationPolicy val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
-}
-
 std::string serialize(GetConfigurationStatusEnum val) noexcept {
     json result = val;
     return result.dump(json_indent);
@@ -246,11 +241,6 @@ std::ostream& operator<<(std::ostream& os, ConfigurationParameterDatatype const&
 }
 
 std::ostream& operator<<(std::ostream& os, ConfigurationParameterMutability const& val) {
-    os << serialize(val);
-    return os;
-}
-
-std::ostream& operator<<(std::ostream& os, ConfigurationActivationPolicy const& val) {
     os << serialize(val);
     return os;
 }
@@ -463,12 +453,6 @@ template <> ConfigurationParameterDatatype deserialize<>(std::string const& val)
 template <> ConfigurationParameterMutability deserialize<>(std::string const& val) {
     auto data = json::parse(val);
     ConfigurationParameterMutability obj = data;
-    return obj;
-}
-
-template <> ConfigurationActivationPolicy deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    ConfigurationActivationPolicy obj = data;
     return obj;
 }
 

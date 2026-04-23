@@ -15,7 +15,6 @@ std::string serialize(ConfigurationParameterUpdateResultEnum val) noexcept;
 std::string serialize(ActiveSlotStatusEnum val) noexcept;
 std::string serialize(ConfigurationParameterDatatype val) noexcept;
 std::string serialize(ConfigurationParameterMutability val) noexcept;
-std::string serialize(ConfigurationActivationPolicy val) noexcept;
 std::string serialize(GetConfigurationStatusEnum val) noexcept;
 
 std::string serialize(ConfigMetadata const& val) noexcept;
@@ -59,7 +58,6 @@ std::ostream& operator<<(std::ostream& os, ConfigurationParameterUpdateResultEnu
 std::ostream& operator<<(std::ostream& os, ActiveSlotStatusEnum const& val);
 std::ostream& operator<<(std::ostream& os, ConfigurationParameterDatatype const& val);
 std::ostream& operator<<(std::ostream& os, ConfigurationParameterMutability const& val);
-std::ostream& operator<<(std::ostream& os, ConfigurationActivationPolicy const& val);
 std::ostream& operator<<(std::ostream& os, GetConfigurationStatusEnum const& val);
 
 std::ostream& operator<<(std::ostream& os, ConfigMetadata const& val);

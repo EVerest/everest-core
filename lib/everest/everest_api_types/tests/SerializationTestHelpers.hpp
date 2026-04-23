@@ -3,9 +3,11 @@
 #pragma once
 
 #include "everest_api_types/utilities/codec.hpp"
+#include <algorithm>
 #include <gtest/gtest.h>
 #include <iterator>
 #include <list>
+#include <string>
 
 /*This function standardises test for the interactions between serialization,
  * stream serialization and deserialization of objects.
@@ -52,10 +54,25 @@ template <class T> void expect_opt_eq(std::optional<T> const& left, std::optiona
 }
 
 /*
- * Returns a struct of type T with all its mandatory fields set to example values
+ * Rotates the characters of s left by n positions (wraps around). Used to
+ * produce distinct string values at runtime from a single codegen-time literal.
+ */
+inline std::string rotate_string(std::string s, int n) {
+    if (s.empty())
+        return s;
+    const auto len = static_cast<int>(s.size());
+    n = ((n % len) + len) % len;
+    std::rotate(s.begin(), s.begin() + n, s.end());
+    return s;
+}
+
+/*
+ * Returns a struct of type T with all its mandatory fields set to example values.
+ * Pass a non-zero seed to obtain a distinct but deterministic variant of the object,
+ * which is used when generating vector elements.
  * There ought to be a concrete implementation for every struct in everest_api_types
  */
-template <class T> T generate(bool set_optional_fields = true);
+template <class T> T generate(bool set_optional_fields = true, int seed = 0);
 
 /*
  * Works like the GTest function EXPECT_EQ(T first, T second) but it also supports structs as inputs

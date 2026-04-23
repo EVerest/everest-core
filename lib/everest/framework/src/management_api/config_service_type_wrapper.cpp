@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
-#include <config_service_api/wrapper.hpp>
+#include "include/config_service_type_wrapper.hpp"
 
-namespace everest::config::api::types {
+namespace Everest::api::types::config_service {
 
 namespace {
-
-// TODO(CB): Makes sure all these helpers are actually used and remove the ones that are not needed.
 
 template <class SrcT, class ConvT>
 auto srcToTarOpt(std::optional<SrcT> const& src, ConvT const& converter)
@@ -46,9 +44,6 @@ template <class SrcT> auto vecToInternal(std::vector<SrcT> const& src) {
 }
 
 } // namespace
-
-// TODO(CB): For some types only one direction of conversion is actually needed. We should check which ones are actually
-// used and remove the unnecessary ones. (or keep them for round-trip-unit tests?)
 
 MarkActiveSlotResultEnum_Internal to_internal_api(MarkActiveSlotResultEnum_External const& val) {
     using SrcT = MarkActiveSlotResultEnum_External;
@@ -170,6 +165,7 @@ LoadFromYamlResult_Internal to_internal_api(LoadFromYamlResult_External const& v
     LoadFromYamlResult_Internal result;
     result.success = val.success;
     result.slot_id = val.slot_id;
+    result.error_message = val.error_message;
     return result;
 }
 
@@ -177,7 +173,7 @@ LoadFromYamlResult_External to_external_api(LoadFromYamlResult_Internal const& v
     LoadFromYamlResult_External result;
     result.success = val.success;
     result.slot_id = val.slot_id;
-    // TODO(CB): The internal type offers an error_message field that is currently not included in the external type.
+    result.error_message = val.error_message;
     return result;
 }
 
@@ -341,7 +337,11 @@ ConfigurationParameterIdentifier_Internal to_internal_api(ConfigurationParameter
     ConfigurationParameterIdentifier_Internal result;
     result.module_id = val.module_id;
     result.configuration_parameter_name = val.parameter_name;
-    result.module_implementation_id = val.implementation_id;
+    if (not val.implementation_id.has_value()) {
+        result.module_implementation_id = {"!module"};
+    } else {
+        result.module_implementation_id = val.implementation_id.value();
+    }
     return result;
 }
 
@@ -443,7 +443,6 @@ ModuleTierMappings_Internal to_internal_api(ModuleTierMappings_External const& v
     ModuleTierMappings_Internal result;
     result.module = optToInternal(val.module);
     for (auto const& impl_mapping : val.implementations) {
-        // TODO(CB): Is it required to set a value for each existing implementation_id?!
         result.implementations.emplace(impl_mapping.implementation_id,
                                        std::optional<Mapping_Internal>{to_internal_api(impl_mapping.mapping)});
     }
@@ -465,9 +464,11 @@ ReqFulfillment_Internal to_internal_api(ReqFulfillment_External const& val, cons
     ReqFulfillment_Internal result;
     result.module_id = val.module_id;
     result.implementation_id = val.implementation_id;
-    Requirement req{
-        requirement_id,
-        val.index}; // TODO(CB): This is a narrowing conversion; maybe use an appropriate cast or check for overflow?
+    if (val.index < 0 || val.index > std::numeric_limits<size_t>::max()) {
+        throw std::invalid_argument("Index in ReqFulfillment is out of range for internal representation: " +
+                                    std::to_string(val.index));
+    }
+    Requirement req{requirement_id, static_cast<size_t>(val.index)};
     result.requirement = req;
     return result;
 }
@@ -485,7 +486,6 @@ to_internal_api(ConfigurationParameterCharacteristics_External const& val) {
     ConfigurationParameterCharacteristics_Internal result;
     result.datatype = to_internal_api(val.datatype);
     result.mutability = to_internal_api(val.mutability);
-    //    result.activation_policy = to_internal_api(val.activation_policy); // missing in internal type
     result.unit = val.unit;
     result.min_value = val.min_value;
     result.max_value = val.max_value;
@@ -497,10 +497,6 @@ to_external_api(ConfigurationParameterCharacteristics_Internal const& val) {
     ConfigurationParameterCharacteristics_External result;
     result.datatype = to_external_api(val.datatype);
     result.mutability = to_external_api(val.mutability);
-    result.activation_policy = ::everest::lib::API::V1_0::types::config_service::ConfigurationActivationPolicy::
-        RequiresRestart; // TODO(CB): The activation policy is currently not included in the external type, so we
-                         // default to RequiresRestart for now. We might want to add this to the external type in the
-                         // future.
     result.unit = val.unit;
     result.min_value = val.min_value;
     result.max_value = val.max_value;
@@ -627,8 +623,7 @@ ModuleConfiguration_Internal to_internal_api(ModuleConfiguration_External const&
     result.mapping = to_internal_api(val.mapping);
 
     for (auto const& param : val.module_configuration_parameters) {
-        const std::string impl_id = "!module"; // TODO(CB): use special implementation_id to identify module
-                                               // configuration parameters - correct?!
+        const std::string impl_id = "!module";
         result.configuration_parameters[impl_id].push_back(to_internal_api(param));
     }
     for (auto const& impl_config_param : val.implementation_configuration_parameters) {
@@ -657,8 +652,7 @@ ModuleConfiguration_External to_external_api(ModuleConfiguration_Internal const&
     result.mapping = to_external_api(val.mapping);
 
     for (auto const& [impl_id, config_params] : val.configuration_parameters) {
-        if (impl_id == "!module") { // TODO(CB): use special implementation_id to identify module configuration
-                                    // parameters - correct?!
+        if (impl_id == "!module") {
             for (auto const& param : config_params) {
                 result.module_configuration_parameters.push_back(to_external_api(param));
             }
@@ -685,11 +679,6 @@ GetConfigurationResult_Internal to_internal_api(GetConfigurationResult_External 
     if (val.module_configurations) {
         result.module_configurations.emplace();
         for (auto const& module_config_external : val.module_configurations.value()) {
-            // TODO(CB): This assumes that module_id is unique across the vector, which should be the case but is not
-            // explicitly enforced by the type system. We might want to change the external type to already use a map to
-            // make this more explicit.
-            // TODO(CB): Or maybe we should catch this in the json_codec.cpp (throw if there are duplicate module_ids)
-            // to avoid silently dropping modules in case of duplicates?
             result.module_configurations[module_config_external.module_id] = to_internal_api(module_config_external);
         }
     }
@@ -708,4 +697,4 @@ GetConfigurationResult_External to_external_api(GetConfigurationResult_Internal 
     return result;
 }
 
-} // namespace everest::config::api::types
+} // namespace Everest::api::types::config_service

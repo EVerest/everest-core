@@ -1,8 +1,8 @@
+add_subdirectory(management_api)
+
 add_executable(manager)
 target_sources(manager
     PRIVATE
-        config_service_api/config_service_api.cpp
-        config_service_api/wrapper.cpp
         system_unix.cpp
         manager.cpp
 )
@@ -17,8 +17,8 @@ target_link_libraries(manager
     PRIVATE
         everest::framework
         Boost::program_options
+        management_api
         PkgConfig::libcap
-        everest::everest_api_types
 )
 
 if (EVEREST_ENABLE_ADMIN_PANEL_BACKEND)

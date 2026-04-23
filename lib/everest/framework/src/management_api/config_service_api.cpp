@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
-#include <config_service_api/config_service_api.hpp>
+#include <config_service_api.hpp>
 #include <everest/logging.hpp>
 #include <utils/date.hpp>
 
 #include <algorithm>
 #include <iterator>
 
-#include <config_service_api/wrapper.hpp>
+#include <config_service_type_wrapper.hpp>
 #include <everest_api_types/config_service/codec.hpp>
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/utilities/codec.hpp>
@@ -26,21 +26,18 @@ template <class SrcT, class ConvT> auto srcToTarVec(std::vector<SrcT> const& src
 }
 } // namespace
 
-namespace Everest::config::api {
+namespace Everest::api::config_service {
 
 namespace API_types = ev_API::V1_0::types;
 namespace API_types_ext = API_types::config_service;
 namespace API_generic = API_types::generic;
-namespace API_wrapper = ::everest::config::api::types;
+namespace API_wrapper = ::Everest::api::types::config_service;
 using ev_API::deserialize;
 
-ConfigServiceAPI::ConfigServiceAPI(MQTTAbstraction& mqtt_abstraction, ConfigServiceInterface& config_service) :
+ConfigServiceAPI::ConfigServiceAPI(MQTTAbstraction& mqtt_abstraction,
+                                   Everest::config::ConfigServiceInterface& config_service) :
     mqtt_abstraction(mqtt_abstraction), config_service(config_service) {
-
     topics.setup("_unused_", "config_service", 0);
-
-    // TODO(CB): Set this up in a proper manner (and use the correct topic)
-    mqtt_abstraction.publish("CONFIGTOPIC", std::string("RUNNING"), QOS::QOS2, true);
 
     generate_api_cmd_list_all_slots();
     generate_api_cmd_get_active_slot();
@@ -92,7 +89,7 @@ void ConfigServiceAPI::generate_api_cmd_mark_active_slot() {
                 auto int_res = config_service.mark_active_slot(payload.slot_id);
                 auto ext_res = API_wrapper::to_external_api(int_res);
 
-                API_types_ext::MarkActiveSlotResult response{ext_res, payload.slot_id};
+                API_types_ext::MarkActiveSlotResult response{ext_res};
                 mqtt_abstraction.publish(msg.replyTo, serialize(response));
                 return true;
             }
@@ -111,9 +108,7 @@ void ConfigServiceAPI::generate_api_cmd_delete_slot() {
                 auto int_res = config_service.delete_slot(payload.slot_id);
                 auto ext_res = API_wrapper::to_external_api(int_res);
 
-                API_types_ext::DeleteSlotResult response{
-                    ext_res}; // TODO(CB): We might want to add the slot_id to the response as well, for better logging
-                              // on the client side?
+                API_types_ext::DeleteSlotResult response{ext_res};
                 mqtt_abstraction.publish(msg.replyTo, serialize(response));
                 return true;
             }
@@ -147,13 +142,8 @@ void ConfigServiceAPI::generate_api_cmd_load_from_yaml() {
         if (deserialize(data, msg)) {
             API_types_ext::LoadFromYamlRequest payload;
             if (deserialize(msg.payload, payload)) {
-                auto res = config_service.load_from_yaml(payload.raw_yaml);
-                if (!res.success) {
-                    EVLOG_warning << "Loading from YAML error_message: " << res.error_message;
-                }
-                auto ext_res = API_wrapper::to_external_api(
-                    res); // TODO(CB): This ignores the description for now - maybe we want
-                          // to add that to the config_service interface as well or drop it?
+                auto res = config_service.load_from_yaml(payload.raw_yaml, payload.description);
+                auto ext_res = API_wrapper::to_external_api(res);
 
                 mqtt_abstraction.publish(msg.replyTo, serialize(ext_res));
                 return true;
@@ -178,10 +168,8 @@ void ConfigServiceAPI::generate_api_cmd_set_config_parameters() {
                 auto int_res = config_service.set_config_parameters(payload.slot_id, updates_internal);
 
                 API_types_ext::ConfigurationParameterUpdateRequestResult response{};
-                response.results = srcToTarVec(int_res, [](const auto& result) {
-                    return API_wrapper::to_external_api(result);
-                }); // TODO(CB): We might want to add the slot_id to the response as well, for better logging on the
-                    // client side?
+                response.results =
+                    srcToTarVec(int_res, [](const auto& result) { return API_wrapper::to_external_api(result); });
                 mqtt_abstraction.publish(msg.replyTo, serialize(response));
                 return true;
             }
@@ -198,9 +186,7 @@ void ConfigServiceAPI::generate_api_cmd_get_configuration() {
             API_types_ext::GetConfigurationRequest payload;
             if (deserialize(msg.payload, payload)) {
                 auto res = config_service.get_configuration(payload.slot_id);
-                auto ext_res = API_wrapper::to_external_api(
-                    res); // TODO(CB): This doesn't include capabilities (may not be required) and telemetry and access
-                          // (config), because the external type is lacking these
+                auto ext_res = API_wrapper::to_external_api(res);
 
                 mqtt_abstraction.publish(msg.replyTo, serialize(ext_res));
                 return true;
@@ -249,4 +235,4 @@ void ConfigServiceAPI::subscribe_api_topic(std::string const& var, ParseAndPubli
         }));
     mqtt_abstraction.register_handler(topic, handler, QOS::QOS2);
 }
-} // namespace Everest::config::api
+} // namespace Everest::api::config_service

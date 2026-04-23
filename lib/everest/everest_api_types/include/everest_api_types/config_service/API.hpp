@@ -45,21 +45,10 @@ enum class ConfigurationParameterDatatype {
     Unknown,
 };
 
-// TODO(CB): Why is this here?!
-using ConfigurationParameterType = ConfigurationParameterDatatype;
-
 enum class ConfigurationParameterMutability {
     ReadOnly,
     ReadWrite,
     WriteOnly,
-};
-
-// TODO(CB): Do we need this? Would be used to mark configurations as "immediate" vs "requires restart" when querying
-// the configuration (not to be confused with the Result of a configuration parameter update, which can be "applied" or
-// "will apply on restart")
-enum class ConfigurationActivationPolicy {
-    Immediate,
-    RequiresRestart,
 };
 
 enum class GetConfigurationStatusEnum {
@@ -85,7 +74,6 @@ struct GetActiveSlotIdResult {
 
 struct MarkActiveSlotResult {
     MarkActiveSlotResultEnum result;
-    int32_t slot_id;
 };
 
 struct DeleteSlotResult {
@@ -99,6 +87,7 @@ struct DuplicateSlotResult {
 
 struct LoadFromYamlResult {
     bool success;
+    std::string error_message;
     std::optional<int32_t> slot_id;
 };
 
@@ -174,7 +163,6 @@ struct ModuleConnection {
 struct ConfigurationParameterCharacteristics {
     ConfigurationParameterDatatype datatype;
     ConfigurationParameterMutability mutability;
-    ConfigurationActivationPolicy activation_policy;
     std::optional<std::string> unit;
     std::optional<int32_t> min_value;
     std::optional<int32_t> max_value;

@@ -3,18 +3,11 @@
 
 #pragma once
 
-#include <map>
-
 #include <everest_api_types/config_service/API.hpp>
 
-// TODO(CB): Are these pragmas required?
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wunused-function"
-#include "utils/config_service_interface.hpp"
-#pragma GCC diagnostic pop
+#include <utils/config_service_interface.hpp>
 
-namespace everest::config::api::types {
+namespace Everest::api::types::config_service {
 
 using MarkActiveSlotResultEnum_Internal = ::Everest::config::SetActiveSlotStatus;
 using MarkActiveSlotResultEnum_External = ::everest::lib::API::V1_0::types::config_service::MarkActiveSlotResultEnum;
@@ -56,13 +49,6 @@ using ConfigurationParameterMutability_External =
 
 ConfigurationParameterMutability_Internal to_internal_api(ConfigurationParameterMutability_External const& val);
 ConfigurationParameterMutability_External to_external_api(ConfigurationParameterMutability_Internal const& val);
-
-// using ConfigurationActivationPolicy_Internal = ::types::config_service::ConfigurationActivationPolicy;
-// using ConfigurationActivationPolicy_External =
-// ::everest::lib::API::V1_0::types::config_service::ConfigurationActivationPolicy;
-
-// ConfigurationActivationPolicy_Internal to_internal_api(ConfigurationActivationPolicy_External const& val);
-// ConfigurationActivationPolicy_External to_external_api(ConfigurationActivationPolicy_Internal const& val);
 
 using GetConfigurationStatusEnum_Internal = ::Everest::config::GetConfigurationStatus;
 using GetConfigurationStatusEnum_External =
@@ -209,4 +195,4 @@ using GetConfigurationResult_External = ::everest::lib::API::V1_0::types::config
 GetConfigurationResult_Internal to_internal_api(GetConfigurationResult_External const& val);
 GetConfigurationResult_External to_external_api(GetConfigurationResult_Internal const& val);
 
-} // namespace everest::config::api::types
+} // namespace Everest::api::types::config_service
