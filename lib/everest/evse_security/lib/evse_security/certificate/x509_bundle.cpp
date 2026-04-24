@@ -401,10 +401,17 @@ X509CertificateHierarchy& X509CertificateBundle::get_certificate_hierarchy() {
         hierarchy_invalidated = false;
 
         auto certificates = split();
-        hierarchy = X509CertificateHierarchy::build_hierarchy(certificates);
+        hierarchy = X509CertificateHierarchy::build_hierarchy(certificates, ignore_unhandled_critical_extensions);
     }
 
     return hierarchy;
+}
+
+void X509CertificateBundle::set_ignore_unhandled_critical_extensions(bool ignore) {
+    if (ignore_unhandled_critical_extensions != ignore) {
+        ignore_unhandled_critical_extensions = ignore;
+        invalidate_hierarchy();
+    }
 }
 
 std::string X509CertificateBundle::to_export_string() const {

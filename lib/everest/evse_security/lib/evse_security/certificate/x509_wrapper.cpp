@@ -87,13 +87,13 @@ void X509Wrapper::update_validity() {
 #endif
 }
 
-bool X509Wrapper::is_child(const X509Wrapper& parent) const {
+bool X509Wrapper::is_child(const X509Wrapper& parent, bool ignore_unhandled_critical_extensions) const {
     // A certif can't be it's own parent, use is_selfsigned if that is intended (operator ==)
     if (*this == parent) {
         return false;
     }
 
-    return CryptoSupplier::x509_is_child(get(), parent.get());
+    return CryptoSupplier::x509_is_child(get(), parent.get(), ignore_unhandled_critical_extensions);
 }
 
 bool X509Wrapper::is_selfsigned() const {
@@ -179,8 +179,9 @@ CertificateHashData X509Wrapper::get_certificate_hash_data() const {
     return certificate_hash_data;
 }
 
-CertificateHashData X509Wrapper::get_certificate_hash_data(const X509Wrapper& issuer) const {
-    if (CryptoSupplier::x509_is_child(get(), issuer.get()) == false) {
+CertificateHashData X509Wrapper::get_certificate_hash_data(const X509Wrapper& issuer,
+                                                           bool ignore_unhandled_critical_extensions) const {
+    if (CryptoSupplier::x509_is_child(get(), issuer.get(), ignore_unhandled_critical_extensions) == false) {
         throw std::logic_error("The specified issuer is not the correct issuer for this certificate.");
     }
 

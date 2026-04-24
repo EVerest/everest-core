@@ -226,6 +226,7 @@ struct v2g_context {
     tls::Server* tls_server;
 
     bool tls_key_logging;
+    bool tls_bypass_unhandled_critical_extensions;
 
     pthread_mutex_t mqtt_lock;
     pthread_cond_t mqtt_cond;

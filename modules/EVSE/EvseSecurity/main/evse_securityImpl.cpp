@@ -24,7 +24,13 @@ void evse_securityImpl::init() {
         private_key_password = this->mod->config.private_key_password;
     }
 
-    this->evse_security = std::make_unique<evse_security::EvseSecurity>(file_paths, private_key_password);
+    this->evse_security =
+        std::make_unique<evse_security::EvseSecurity>(file_paths, private_key_password,
+                                                      std::nullopt, // max_fs_usage_bytes
+                                                      std::nullopt, // max_fs_certificate_store_entries
+                                                      std::nullopt, // csr_expiry
+                                                      std::nullopt, // garbage_collect_time
+                                                      this->mod->config.ignore_unhandled_critical_extensions);
 }
 
 void evse_securityImpl::ready() {

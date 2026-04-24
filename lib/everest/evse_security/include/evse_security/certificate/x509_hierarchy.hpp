@@ -129,23 +129,36 @@ public:
 
     /// @brief Builds a proper certificate hierarchy from the provided certificates. The
     /// hierarchy can be incomplete, in case orphan certificates are present in the list
-    static X509CertificateHierarchy build_hierarchy(std::vector<X509Wrapper>& certificates);
+    /// @param ignore_unhandled_critical_extensions Forwarded to all underlying is_child checks so hierarchy
+    /// discovery succeeds across non-compliant certificates (e.g. CAs that mark SKI critical)
+    static X509CertificateHierarchy build_hierarchy(std::vector<X509Wrapper>& certificates,
+                                                    bool ignore_unhandled_critical_extensions = false);
 
-    template <typename... Args> static X509CertificateHierarchy build_hierarchy(Args... certificates) {
+    template <typename... Args>
+    static X509CertificateHierarchy build_hierarchy_with_flag(bool ignore_unhandled_critical_extensions,
+                                                              Args... certificates) {
         X509CertificateHierarchy ordered;
 
         (std::for_each(certificates.begin(), certificates.end(),
 #if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ < 9)
-                       [ordered_ptr = &ordered](X509Wrapper& cert) { ordered_ptr->insert(std::move(cert)); }),
+                       [ordered_ptr = &ordered, ignore_unhandled_critical_extensions](X509Wrapper& cert) {
+                           ordered_ptr->insert(std::move(cert), ignore_unhandled_critical_extensions);
+                       }),
 #else
-                       [&ordered](X509Wrapper& cert) { ordered.insert(std::move(cert)); }),
+                       [&ordered, ignore_unhandled_critical_extensions](X509Wrapper& cert) {
+                           ordered.insert(std::move(cert), ignore_unhandled_critical_extensions);
+                       }),
 #endif
          ...); // Fold expr
 
         // Prune the tree
-        ordered.prune();
+        ordered.prune(ignore_unhandled_critical_extensions);
 
         return ordered;
+    }
+
+    template <typename... Args> static X509CertificateHierarchy build_hierarchy(Args... certificates) {
+        return build_hierarchy_with_flag(false, std::move(certificates)...);
     }
 
 private:
@@ -153,12 +166,12 @@ private:
 
     /// @brief Inserts the certificate in the hierarchy. If it is not a root
     /// and a parent is not found, it will be inserted as a temporary orphan
-    void insert(X509Wrapper&& certificate);
+    void insert(X509Wrapper&& certificate, bool ignore_unhandled_critical_extensions = false);
 
     /// @brief After inserting all certificates in the hierarchy, attempts
     /// to parent all temporarly orphan certificates, marking the ones that
     /// were not successfully parented as permanently orphan
-    void prune();
+    void prune(bool ignore_unhandled_critical_extensions = false);
 
     std::vector<X509Node> hierarchy;
 };

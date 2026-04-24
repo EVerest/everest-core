@@ -11,6 +11,7 @@
 
 #include <everest/tls/openssl_util.hpp>
 
+#include <evse_security/crypto/openssl/openssl_crypto_supplier.hpp>
 #include <evse_security/crypto/openssl/openssl_provider.hpp>
 
 #include <openssl/bio.h>
@@ -537,7 +538,8 @@ certificate_list load_certificates(const std::vector<const char*>& filenames) {
     return result;
 }
 
-chain_info_t load_certificates(const char* leaf_file, const char* chain_file, const char* root_file) {
+chain_info_t load_certificates(const char* leaf_file, const char* chain_file, const char* root_file,
+                               bool ignore_unhandled_critical_extensions) {
     certificate_ptr leaf_cert{nullptr, nullptr};
     auto leaf = load_certificates(leaf_file);
     auto chain = load_certificates(chain_file);
@@ -553,7 +555,8 @@ chain_info_t load_certificates(const char* leaf_file, const char* chain_file, co
     }
 
     if (leaf_cert && !root.empty()) {
-        if (verify_certificate(leaf_cert.get(), root, chain) == verify_result_t::Verified) {
+        if (verify_certificate(leaf_cert.get(), root, chain, ignore_unhandled_critical_extensions) ==
+            verify_result_t::Verified) {
             return {std::move(leaf_cert), std::move(chain), std::move(root)};
         }
     }
@@ -574,12 +577,13 @@ bool verify_certificate_key(const X509* cert, const EVP_PKEY* pkey) {
     return X509_check_private_key(cert, pkey) == 1;
 }
 
-bool verify_chain(const chain_info_t& chain) {
-    return verify_certificate(chain.leaf.get(), chain.trust_anchors, chain.chain) == verify_result_t::Verified;
+bool verify_chain(const chain_info_t& chain, bool ignore_unhandled_critical_extensions) {
+    return verify_certificate(chain.leaf.get(), chain.trust_anchors, chain.chain,
+                              ignore_unhandled_critical_extensions) == verify_result_t::Verified;
 }
 
-bool verify_chain(const chain_t& chain) {
-    bool result = verify_chain(chain.chain);
+bool verify_chain(const chain_t& chain, bool ignore_unhandled_critical_extensions) {
+    bool result = verify_chain(chain.chain, ignore_unhandled_critical_extensions);
     result = result && verify_certificate_key(chain.chain.leaf.get(), chain.private_key.get());
     return result;
 }
@@ -666,7 +670,7 @@ DER certificate_to_der(const x509_st* cert) {
 }
 
 verify_result_t verify_certificate(const X509* cert, const certificate_list& trust_anchors,
-                                   const certificate_list& untrusted) {
+                                   const certificate_list& untrusted, bool ignore_unhandled_critical_extensions) {
     verify_result_t result = verify_result_t::Verified;
     auto* store_ctx = X509_STORE_CTX_new();
     auto* ta_store = X509_STORE_new();
@@ -718,6 +722,9 @@ verify_result_t verify_certificate(const X509* cert, const certificate_list& tru
         if (X509_STORE_CTX_init(store_ctx, ta_store, target, chain) != 1) {
             log_error("X509_STORE_CTX_init");
         } else {
+            if (ignore_unhandled_critical_extensions) {
+                X509_STORE_CTX_set_verify_cb(store_ctx, &evse_security::critical_extension_bypass_callback);
+            }
             if (X509_STORE_CTX_verify(store_ctx) != 1) {
                 const auto err = X509_STORE_CTX_get_error(store_ctx);
                 if (err != X509_V_OK) {

@@ -210,16 +210,17 @@ void ISO15118_chargerImpl::ready() {
     const iso15118::TbdConfig tbd_config = {
         {
             iso15118::config::CertificateBackend::EVEREST_LAYOUT,
-            {},                                 ///< config_string
-            path_chain,                         ///< path_certificate_chain
-            certificate_info.key,               ///< path_certificate_key
-            certificate_info.password,          ///< private_key_password
-            v2g_root_cert_path,                 ///< path_certificate_v2g_root
-            mo_root_cert_path,                  ///< path_certificate_mo_root
-            mod->config.enable_ssl_logging,     ///< enable_ssl_logging
-            mod->config.enable_tls_key_logging, ///< enable_tls_key_logging
-            mod->config.enforce_tls_1_3,        ///< enforce_tls_1_3
-            mod->config.tls_key_logging_path,   ///< tls_key_logging_path
+            {},                                                   ///< config_string
+            path_chain,                                           ///< path_certificate_chain
+            certificate_info.key,                                 ///< path_certificate_key
+            certificate_info.password,                            ///< private_key_password
+            v2g_root_cert_path,                                   ///< path_certificate_v2g_root
+            mo_root_cert_path,                                    ///< path_certificate_mo_root
+            mod->config.enable_ssl_logging,                       ///< enable_ssl_logging
+            mod->config.enable_tls_key_logging,                   ///< enable_tls_key_logging
+            mod->config.enforce_tls_1_3,                          ///< enforce_tls_1_3
+            mod->config.tls_key_logging_path,                     ///< tls_key_logging_path
+            mod->config.tls_bypass_unhandled_critical_extensions, ///< ignore_unhandled_critical_extensions
         },
         mod->config.device,
         convert_tls_negotiation_strategy(mod->config.tls_negotiation_strategy),

@@ -691,6 +691,24 @@ TEST(certificate, verifyFailWrongChain) {
     EXPECT_NE(::openssl::verify_certificate(client[0].get(), root, chain), openssl::verify_result_t::Verified);
 }
 
+TEST(certificate, verifyIgnoresUnhandledCriticalExtensions) {
+    auto leaf = ::openssl::load_certificates("server_critical_ski_cert.pem");
+    auto chain = ::openssl::load_certificates("server_ca_critical_ski_cert.pem");
+    auto root = ::openssl::load_certificates("server_root_cert.pem");
+
+    ASSERT_EQ(leaf.size(), 1);
+    ASSERT_EQ(chain.size(), 1);
+    ASSERT_EQ(root.size(), 1);
+
+    // strict mode: OpenSSL rejects the chain because the CA's critical
+    // subjectKeyIdentifier has no in-built handler.
+    EXPECT_NE(::openssl::verify_certificate(leaf[0].get(), root, chain), openssl::verify_result_t::Verified);
+
+    // lenient mode: the evse_security bypass callback accepts well-known
+    // RFC 5280 NIDs (subjectKeyIdentifier among them) and verification passes.
+    EXPECT_EQ(::openssl::verify_certificate(leaf[0].get(), root, chain, true), openssl::verify_result_t::Verified);
+}
+
 TEST(certificate, subjectName) {
     auto chain = ::openssl::load_certificates("client_chain.pem");
     EXPECT_GT(chain.size(), 0);

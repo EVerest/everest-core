@@ -36,7 +36,10 @@ public:
     ~X509Wrapper() = default;
 
     /// @brief Returns true if this certificate is the child of the provided parent
-    bool is_child(const X509Wrapper& parent) const;
+    /// @param ignore_unhandled_critical_extensions If true, bypasses X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION
+    /// during the underlying certificate verification when every critical extension on the certificate has a
+    /// well-known RFC 5280 NID. Required for hierarchy discovery across non-compliant certificates.
+    bool is_child(const X509Wrapper& parent, bool ignore_unhandled_critical_extensions = false) const;
 
     /// @brief Returns true if this certificate is self-signed
     bool is_selfsigned() const;
@@ -92,8 +95,11 @@ public:
     CertificateHashData get_certificate_hash_data() const;
 
     /// @brief Gets certificate hash data of certificate with an issuer
+    /// @param ignore_unhandled_critical_extensions Forwarded to the underlying is_child check so hierarchy
+    /// discovery can succeed across non-compliant certificates
     /// @return
-    CertificateHashData get_certificate_hash_data(const X509Wrapper& issuer) const;
+    CertificateHashData get_certificate_hash_data(const X509Wrapper& issuer,
+                                                  bool ignore_unhandled_critical_extensions = false) const;
 
     /// @brief Gets OCSP responder URL of certificate if present, else returns an empty string
     /// @return

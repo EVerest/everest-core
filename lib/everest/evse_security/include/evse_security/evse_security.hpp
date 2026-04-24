@@ -90,11 +90,16 @@ public:
     /// 'DEFAULT_CSR_EXPIRY'
     /// @param garbage_collect_time optional garbage collect time. How often we will delete expired CSRs and
     /// certificates. Defaults to 'DEFAULT_GARBAGE_COLLECT_TIME'
+    /// @param ignore_unhandled_critical_extensions if true, bypasses X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION when
+    /// every critical extension on the certificate has a well-known RFC 5280 NID. Intended for interoperability with
+    /// known non-compliant certificates (e.g. those that incorrectly mark SKI, AKI or CRL DP as critical). Defaults
+    /// to false.
     EvseSecurity(const FilePaths& file_paths, const std::optional<std::string>& private_key_password = std::nullopt,
                  const std::optional<std::uintmax_t>& max_fs_usage_bytes = std::nullopt,
                  const std::optional<std::uintmax_t>& max_fs_certificate_store_entries = std::nullopt,
                  const std::optional<std::chrono::seconds>& csr_expiry = std::nullopt,
-                 const std::optional<std::chrono::seconds>& garbage_collect_time = std::nullopt);
+                 const std::optional<std::chrono::seconds>& garbage_collect_time = std::nullopt,
+                 bool ignore_unhandled_critical_extensions = false);
 
     /// @brief Destructor
     ~EvseSecurity();
@@ -355,6 +360,8 @@ private:
     // FIXME(piet): map passwords to encrypted private key files
     // is there only one password for all private keys?
     std::optional<std::string> private_key_password; // used to decrypt encrypted private keys
+
+    bool ignore_unhandled_critical_extensions;
 
 // Define here all tests that require internal function usage
 #ifdef BUILD_TESTING_EVSE_SECURITY

@@ -20,6 +20,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
+#include <openssl/x509v3.h>
 
 #include <iso15118/detail/helper.hpp>
 #include <iso15118/detail/io/helper_ssl.hpp>
@@ -86,6 +87,92 @@ std::string convert_ssl_tls_versions_to_string(uint16_t version) {
 // the reason for this wrapper.
 auto x509_name_oneline(const X509_NAME* a, char* buf, int size) {
     return X509_NAME_oneline(a, buf, size);
+}
+
+// X509 verify callback that suppresses X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION when every critical
+// extension on the current cert has a well-known RFC 5280 NID. Truly unknown critical OIDs still
+// cause verification to fail and are logged with their NID/OID. Mirrors the version in
+// libevse_security (openssl_crypto_supplier.cpp) intentionally — duplicated here to avoid a libiso
+// build dependency on evse_security.
+int critical_extension_bypass_callback(int ok, X509_STORE_CTX* ctx) {
+    if (ok) {
+        return ok;
+    }
+
+    const int error = X509_STORE_CTX_get_error(ctx);
+    X509* cert = X509_STORE_CTX_get_current_cert(ctx);
+    if (error != X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION || cert == nullptr) {
+        return ok;
+    }
+
+    // RFC 5280 extension NIDs OpenSSL handles during path validation — safe to ignore if critical.
+    static constexpr std::array<int, 12> handled_nids = {
+        NID_basic_constraints,
+        NID_key_usage,
+        NID_ext_key_usage,
+        NID_subject_alt_name,
+        NID_name_constraints,
+        NID_certificate_policies,
+        NID_policy_constraints,
+        NID_inhibit_any_policy,
+        NID_authority_key_identifier,
+        NID_subject_key_identifier,
+        NID_crl_distribution_points,
+        NID_info_access,
+    };
+
+    bool has_unknown_critical = false;
+    std::string nids_log;
+
+    const int num_exts = X509_get_ext_count(cert);
+    for (int i = 0; i < num_exts; i++) {
+        X509_EXTENSION* ext = X509_get_ext(cert, i);
+        if (!X509_EXTENSION_get_critical(ext)) {
+            continue;
+        }
+        const int nid = OBJ_obj2nid(X509_EXTENSION_get_object(ext));
+        bool is_known = false;
+        for (const int known_nid : handled_nids) {
+            if (nid == known_nid) {
+                is_known = true;
+                const char* nid_name = OBJ_nid2sn(nid);
+                if (!nids_log.empty()) {
+                    nids_log += ", ";
+                }
+                if (nid_name != nullptr) {
+                    nids_log += nid_name;
+                    nids_log += "(" + std::to_string(nid) + ")";
+                } else {
+                    nids_log += "NID_" + std::to_string(nid);
+                }
+                break;
+            }
+        }
+        if (!is_known) {
+            has_unknown_critical = true;
+            const char* sn = OBJ_nid2sn(nid);
+            const char* ln = OBJ_nid2ln(nid);
+            char oid_buf[128] = {};
+            OBJ_obj2txt(oid_buf, sizeof(oid_buf), X509_EXTENSION_get_object(ext), 1);
+            char subject_buf[256] = {};
+            x509_name_oneline(X509_get_subject_name(cert), subject_buf, sizeof(subject_buf));
+            logf_warning("Unhandled critical X.509 extension with unknown NID: nid=%d sn=%s ln=%s oid=%s on "
+                         "certificate: %s",
+                         nid, (sn != nullptr ? sn : "?"), (ln != nullptr ? ln : "?"), oid_buf, subject_buf);
+            break;
+        }
+    }
+
+    if (!has_unknown_critical) {
+        char subject_buf[256] = {};
+        x509_name_oneline(X509_get_subject_name(cert), subject_buf, sizeof(subject_buf));
+        logf_info("Ignoring unhandled critical extension(s) with well-known NIDs [%s] on certificate: %s",
+                  nids_log.c_str(), subject_buf);
+        X509_STORE_CTX_set_error(ctx, X509_V_OK);
+        return 1;
+    }
+
+    return ok;
 }
 
 // I found no get or callback function for the supported_versions extension, so I wrote my own parser.
@@ -276,7 +363,10 @@ SSL_CTX* init_ssl(const config::SSLConfig& ssl_config) {
         logf_error("Verify OEM root not found!");
     }
 
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, nullptr);
+    // With SSL_VERIFY_NONE the callback is not invoked for client-cert validation; it is still
+    // invoked by OpenSSL's internal paths that walk the trust store (OCSP stapling, cert_cb, etc.).
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE,
+                       ssl_config.ignore_unhandled_critical_extensions ? &critical_extension_bypass_callback : nullptr);
 
     SSL_CTX_set_client_hello_cb(ctx, &client_hello_cb, nullptr);
 

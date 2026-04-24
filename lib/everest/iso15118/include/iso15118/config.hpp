@@ -33,6 +33,11 @@ struct SSLConfig {
     bool enable_tls_key_logging{false};
     bool enforce_tls_1_3{false};
     std::filesystem::path tls_key_logging_path{};
+    /// When true, install a verify callback on the SSL_CTX that suppresses
+    /// X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION for certificates whose critical extensions
+    /// all have well-known RFC 5280 NIDs. Truly unknown critical OIDs are still rejected
+    /// and logged. See evse_security::critical_extension_bypass_callback.
+    bool ignore_unhandled_critical_extensions{false};
 };
 
 } // namespace iso15118::config

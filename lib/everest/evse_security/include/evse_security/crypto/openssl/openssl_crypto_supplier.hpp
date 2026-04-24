@@ -6,7 +6,15 @@
 
 #include <evse_security/crypto/interface/crypto_supplier.hpp>
 
+#include <openssl/types.h>
+
 namespace evse_security {
+
+/// X509 verify callback that suppresses X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION when every
+/// critical extension on the current cert has a well-known RFC 5280 NID. Unknown/custom critical
+/// OIDs still cause verification to fail (and are logged). Signature matches both
+/// X509_STORE_CTX_set_verify_cb and SSL_CTX_set_verify.
+int critical_extension_bypass_callback(int ok, X509_STORE_CTX* ctx);
 
 class OpenSSLSupplier : public AbstractCryptoSupplier {
 public:
@@ -28,13 +36,14 @@ public:
     static std::string x509_get_common_name(X509Handle* handle);
     static bool x509_get_validity(X509Handle* handle, std::int64_t& out_valid_in, std::int64_t& out_valid_to);
     static bool x509_is_selfsigned(X509Handle* handle);
-    static bool x509_is_child(X509Handle* child, X509Handle* parent);
+    static bool x509_is_child(X509Handle* child, X509Handle* parent, bool ignore_unhandled_critical_extensions = false);
     static bool x509_is_equal(X509Handle* a, X509Handle* b);
     static X509Handle_ptr x509_duplicate_unique(X509Handle* handle);
     static CertificateValidationResult
     x509_verify_certificate_chain(X509Handle* target, const std::vector<X509Handle*>& parents,
                                   const std::vector<X509Handle*>& untrusted_subcas, bool allow_future_certificates,
-                                  const std::optional<fs::path> dir_path, const std::optional<fs::path> file_path);
+                                  const std::optional<fs::path> dir_path, const std::optional<fs::path> file_path,
+                                  bool ignore_unhandled_critical_extensions = false);
     static KeyValidationResult x509_check_private_key(X509Handle* handle, std::string private_key,
                                                       std::optional<std::string> password);
     static bool x509_verify_signature(X509Handle* handle, const std::vector<std::uint8_t>& signature,

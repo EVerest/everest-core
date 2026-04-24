@@ -75,6 +75,19 @@ config:
       Enable the built-in SDP server
     type: boolean
     default: true
+  tls_bypass_unhandled_critical_extensions:
+    description: >-
+      When true, the TLS server and client contexts install a verify callback that
+      suppresses X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION for certificates whose critical
+      extensions all have well-known RFC 5280 NIDs (basicConstraints, keyUsage,
+      extKeyUsage, subjectAltName, nameConstraints, certificatePolicies, policyConstraints,
+      inhibitAnyPolicy, authorityKeyIdentifier, subjectKeyIdentifier, crlDistributionPoints,
+      authorityInformationAccess). Enables interoperability with EV / V2G certificates
+      that mark extensions critical in ways OpenSSL's path-validation machinery doesn't
+      natively handle. Certificates carrying truly unknown critical OIDs are still
+      rejected and logged with the offending NID/OID.
+    type: boolean
+    default: false
 provides:
   charger:
     interface: ISO15118_charger
