@@ -1269,6 +1269,13 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
     int64_t pmax{0};
 
     if (conn->ctx->is_dc_charger == false) {
+        // check all values defined in AC_EVChargeParameterType
+        if (!IsPhysicalValueValid(iso2_EAmount, &req->AC_EVChargeParameter.EAmount) ||
+            !IsPhysicalValueValid(iso2_EVMaxVoltage, &req->AC_EVChargeParameter.EVMaxVoltage) ||
+            !IsPhysicalValueValid(iso2_EVMaxCurrent, &req->AC_EVChargeParameter.EVMaxCurrent) ||
+            !IsPhysicalValueValid(iso2_EVMinCurrent, &req->AC_EVChargeParameter.EVMinCurrent)) {
+                res->ResponseCode = iso2_responseCodeType_FAILED_WrongChargeParameter; // [V2G2-477]
+            }
         /* Determin max current and nominal voltage */
         /* Setup default params (before the departure time overrides) */
         float max_current = conn->ctx->basic_config.evse_ac_nominal_current;

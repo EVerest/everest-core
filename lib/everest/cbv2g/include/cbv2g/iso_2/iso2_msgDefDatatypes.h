@@ -28,6 +28,7 @@ extern "C" {
 
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "cbv2g/common/exi_basetypes.h"
 
@@ -575,6 +576,128 @@ struct iso2_PhysicalValueType {
     int16_t Value;
 
 };
+
+// Enum for PhysicalValueType element names from ISO 15118-2 Table 68
+ typedef enum
+ {
+    iso2_ChargingProfileEntryMaxPower,
+    iso2_EAmount,
+    iso2_EVEnergyCapacity,
+    iso2_EVEnergyRequest,
+    iso2_EVMaxCurrent,
+    iso2_EVMaximumCurrentLimit,
+    iso2_EVMaximumPowerLimit,
+    iso2_EVMaximumVoltageLimit,
+    iso2_EVMaxVoltage,
+    iso2_EVMinCurrent,
+    iso2_EVSECurrentRegulationTolerance,
+    iso2_EVSEEnergyToBeDelivered,
+    iso2_EVSEMaxCurrent,
+    iso2_EVSEMaximumCurrentLimit,
+    iso2_EVSEMaximumPowerLimit,
+    iso2_EVSEMaximumVoltageLimit,
+    iso2_EVSENominalVoltage,
+    iso2_EVSEMinimumCurrentLimit,
+    iso2_EVSEMinimumVoltageLimit,
+    iso2_EVSEPeakCurrentRipple,
+    iso2_EVSEPresentCurrent,
+    iso2_EVSEPresentVoltage,
+    iso2_EVTargetCurrent,
+    iso2_EVTargetVoltage,
+    iso2_PMax,
+    iso2_RemainingTimeToBulkSoC,
+    iso2_RemainingTimeToFullSoC,
+    iso2_StartValue,
+    // Sentinel value
+    iso2_PhysicalValueElementCount
+} iso2_PhysicalValueElement;
+
+inline const char *iso2_PhysicalValueElementToString(iso2_PhysicalValueElement element)
+{
+    static const char *const strings[iso2_PhysicalValueElementCount] = {
+        [iso2_ChargingProfileEntryMaxPower]   = "ChargingProfileEntryMaxPower",
+        [iso2_EAmount]                        = "EAmount",
+        [iso2_EVEnergyCapacity]               = "EVEnergyCapacity",
+        [iso2_EVEnergyRequest]                = "EVEnergyRequest",
+        [iso2_EVMaxCurrent]                   = "EVMaxCurrent",
+        [iso2_EVMaximumCurrentLimit]          = "EVMaximumCurrentLimit",
+        [iso2_EVMaximumPowerLimit]            = "EVMaximumPowerLimit",
+        [iso2_EVMaximumVoltageLimit]          = "EVMaximumVoltageLimit",
+        [iso2_EVMaxVoltage]                   = "EVMaxVoltage",
+        [iso2_EVMinCurrent]                   = "EVMinCurrent",
+        [iso2_EVSECurrentRegulationTolerance] = "EVSECurrentRegulationTolerance",
+        [iso2_EVSEEnergyToBeDelivered]        = "EVSEEnergyToBeDelivered",
+        [iso2_EVSEMaxCurrent]                 = "EVSEMaxCurrent",
+        [iso2_EVSEMaximumCurrentLimit]        = "EVSEMaximumCurrentLimit",
+        [iso2_EVSEMaximumPowerLimit]          = "EVSEMaximumPowerLimit",
+        [iso2_EVSEMaximumVoltageLimit]        = "EVSEMaximumVoltageLimit",
+        [iso2_EVSENominalVoltage]             = "EVSENominalVoltage",
+        [iso2_EVSEMinimumCurrentLimit]        = "EVSEMinimumCurrentLimit",
+        [iso2_EVSEMinimumVoltageLimit]        = "EVSEMinimumVoltageLimit",
+        [iso2_EVSEPeakCurrentRipple]          = "EVSEPeakCurrentRipple",
+        [iso2_EVSEPresentCurrent]             = "EVSEPresentCurrent",
+        [iso2_EVSEPresentVoltage]             = "EVSEPresentVoltage",
+        [iso2_EVTargetCurrent]                = "EVTargetCurrent",
+        [iso2_EVTargetVoltage]                = "EVTargetVoltage",
+        [iso2_PMax]                           = "PMax",
+        [iso2_RemainingTimeToBulkSoC]         = "RemainingTimeToBulkSoC",
+        [iso2_RemainingTimeToFullSoC]         = "RemainingTimeToFullSoC",
+        [iso2_StartValue]                     = "StartValue",
+    };
+
+    if (element < 0 || element >= iso2_PhysicalValueElementCount)
+    {
+        return "Unknown";
+    }
+
+    return strings[element];
+}
+
+struct iso2_PhysicalValueRange {
+    int16_t min;
+    int32_t max;
+};
+
+// Table 68 — Value range and unit definition for message elements using PhysicalValueType
+// ISO 15118-2:2014(E)
+static const struct iso2_PhysicalValueRange kPhysicalValueTypeRanges[] = {
+    {.min = 0,.max = 200000},  // ChargingProfileEntryMaxPower
+    {.min = 0,.max = 200000},  // EAmount
+    {.min = 0,.max = 200000},  // EVEnergyCapacity
+    {.min = 0,.max = 200000},  // EVEnergyRequest
+    {.min = 0,.max = 400},     // EVMaxCurrent
+    {.min = 0,.max = 400},     // EVMaximumCurrentLimit
+    {.min = 0,.max = 200000},  // EVMaximumPowerLimit
+    {.min = 0,.max = 1000},    // EVMaximumVoltageLimit
+    {.min = 0,.max = 1000},    // EVMaxVoltage
+    {.min = 0,.max = 400},     // EVMinCurrent
+    {.min = 0,.max = 400},     // EVSECurrentRegulationTolerance
+    {.min = 0,.max = 200000},  // EVSEEnergyToBeDelivered
+    {.min = 0,.max = 400},     // EVSEMaxCurrent
+    {.min = 0,.max = 400},     // EVSEMaximumCurrentLimit
+    {.min = 0,.max = 200000},  // EVSEMaximumPowerLimit
+    {.min = 0,.max = 1000},    // EVSEMaximumVoltageLimit
+    {.min = 0,.max = 1000},    // EVSENominalVoltage
+    {.min = 0,.max = 400},     // EVSEMinimumCurrentLimit
+    {.min = 0,.max = 1000},    // EVSEMinimumVoltageLimit
+    {.min = 0,.max = 400},     // EVSEPeakCurrentRipple
+    {.min = 0,.max = 400},     // EVSEPresentCurrent
+    {.min = 0,.max = 1000},    // EVSEPresentVoltage
+    {.min = 0,.max = 400},     // EVTargetCurrent
+    {.min = 0,.max = 1000},    // EVTargetVoltage
+    {.min = 0,.max = 200000},  // PMax
+    {.min = 0,.max = 172800},  // RemainingTimeToBulkSoC
+    {.min = 0,.max = 172800},  // RemainingTimeToFullSoC
+    {.min = 0,.max = 200000},  // StartValue
+};
+
+// Helper function for lookup
+inline const struct iso2_PhysicalValueRange* GetPhysicalValueRange(iso2_PhysicalValueElement element) {
+    if (element < iso2_PhysicalValueElementCount) {
+        return &kPhysicalValueTypeRanges[element];
+    }
+    return NULL;
+}
 
 // Element: definition=complex; name={urn:iso:15118:2:2013:MsgDataTypes}ConsumptionCost; type={urn:iso:15118:2:2013:MsgDataTypes}ConsumptionCostType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
