@@ -24,17 +24,47 @@ void to_json(json& j, const Capabilities& k) noexcept {
     if (k.max_import_voltage_V) {
         j["max_import_voltage_V"] = k.max_import_voltage_V.value();
     }
+    if (k.nominal_max_import_voltage_V) {
+        j["nominal_max_import_voltage_V"] = k.nominal_max_import_voltage_V.value();
+    }
     if (k.min_import_voltage_V) {
         j["min_import_voltage_V"] = k.min_import_voltage_V.value();
+    }
+    if (k.nominal_min_import_voltage_V) {
+        j["nominal_min_import_voltage_V"] = k.nominal_min_import_voltage_V.value();
     }
     if (k.max_import_current_A) {
         j["max_import_current_A"] = k.max_import_current_A.value();
     }
+    if (k.nominal_max_import_current_A) {
+        j["nominal_max_import_current_A"] = k.nominal_max_import_current_A.value();
+    }
     if (k.min_import_current_A) {
         j["min_import_current_A"] = k.min_import_current_A.value();
     }
+    if (k.nominal_min_import_current_A) {
+        j["nominal_min_import_current_A"] = k.nominal_min_import_current_A.value();
+    }
     if (k.max_import_power_W) {
         j["max_import_power_W"] = k.max_import_power_W.value();
+    }
+    if (k.nominal_max_import_power_W) {
+        j["nominal_max_import_power_W"] = k.nominal_max_import_power_W.value();
+    }
+    if (k.nominal_max_export_voltage_V) {
+        j["nominal_max_export_voltage_V"] = k.nominal_max_export_voltage_V.value();
+    }
+    if (k.nominal_min_export_voltage_V) {
+        j["nominal_min_export_voltage_V"] = k.nominal_min_export_voltage_V.value();
+    }
+    if (k.nominal_max_export_current_A) {
+        j["nominal_max_export_current_A"] = k.nominal_max_export_current_A.value();
+    }
+    if (k.nominal_min_export_current_A) {
+        j["nominal_min_export_current_A"] = k.nominal_min_export_current_A.value();
+    }
+    if (k.nominal_max_export_power_W) {
+        j["nominal_max_export_power_W"] = k.nominal_max_export_power_W.value();
     }
     if (k.conversion_efficiency_import) {
         j["conversion_efficiency_import"] = k.conversion_efficiency_import.value();
@@ -59,17 +89,47 @@ void from_json(const json& j, Capabilities& k) {
     if (j.contains("max_import_voltage_V")) {
         k.max_import_voltage_V.emplace(j.at("max_import_voltage_V"));
     }
+    if (j.contains("nominal_max_import_voltage_V")) {
+        k.nominal_max_import_voltage_V.emplace(j.at("nominal_max_import_voltage_V"));
+    }
     if (j.contains("min_import_voltage_V")) {
         k.min_import_voltage_V.emplace(j.at("min_import_voltage_V"));
+    }
+    if (j.contains("nominal_min_import_voltage_V")) {
+        k.nominal_min_import_voltage_V.emplace(j.at("nominal_min_import_voltage_V"));
     }
     if (j.contains("max_import_current_A")) {
         k.max_import_current_A.emplace(j.at("max_import_current_A"));
     }
+    if (j.contains("nominal_max_import_current_A")) {
+        k.nominal_max_import_current_A.emplace(j.at("nominal_max_import_current_A"));
+    }
     if (j.contains("min_import_current_A")) {
         k.min_import_current_A.emplace(j.at("min_import_current_A"));
     }
+    if (j.contains("nominal_min_import_current_A")) {
+        k.nominal_min_import_current_A.emplace(j.at("nominal_min_import_current_A"));
+    }
     if (j.contains("max_import_power_W")) {
         k.max_import_power_W.emplace(j.at("max_import_power_W"));
+    }
+    if (j.contains("nominal_max_import_power_W")) {
+        k.nominal_max_import_power_W.emplace(j.at("nominal_max_import_power_W"));
+    }
+    if (j.contains("nominal_max_export_voltage_V")) {
+        k.nominal_max_export_voltage_V.emplace(j.at("nominal_max_export_voltage_V"));
+    }
+    if (j.contains("nominal_min_export_voltage_V")) {
+        k.nominal_min_export_voltage_V.emplace(j.at("nominal_min_export_voltage_V"));
+    }
+    if (j.contains("nominal_max_export_current_A")) {
+        k.nominal_max_export_current_A.emplace(j.at("nominal_max_export_current_A"));
+    }
+    if (j.contains("nominal_min_export_current_A")) {
+        k.nominal_min_export_current_A.emplace(j.at("nominal_min_export_current_A"));
+    }
+    if (j.contains("nominal_max_export_power_W")) {
+        k.nominal_max_export_power_W.emplace(j.at("nominal_max_export_power_W"));
     }
     if (j.contains("conversion_efficiency_import")) {
         k.conversion_efficiency_import.emplace(j.at("conversion_efficiency_import"));
