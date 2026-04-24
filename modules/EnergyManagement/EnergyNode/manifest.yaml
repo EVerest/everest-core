@@ -1,5 +1,5 @@
 description: >-
-  This module is part of the Energy Tree and represents a simple current fuse.
+  This module is part of the Energy Tree and represents a simple current fuse on AC side.
 config:
   fuse_limit_A:
     description: >-
@@ -8,10 +8,21 @@ config:
     type: number
     minimum: 0.0
   phase_count:
-    description: phase count limit. Omit if not limited in this fuse.
+    description: phase count of this fuse
     type: integer
-    minimum: 0
+    minimum: 1
     maximum: 3
+    default: 3
+  nominal_voltage_V:
+    description: >-
+      Nominal AC voltage between a single phase and neutral in volt.
+      Used for e.g. power to current calculations when
+      enhance_external_schedule is enabled.
+      This allows configuration for different regions (e.g., 120V, 230V, 400V).
+    type: number
+    minimum: 1.0
+    maximum: 1000.0
+    default: 230.0
   enhance_external_schedule:
     description: >-
       When enabled, calculates per-phase current limits from total_power_W
@@ -20,15 +31,6 @@ config:
       the external schedules. Uses nominal_voltage_V for calculations.
     type: boolean
     default: false
-  nominal_voltage_V:
-    description: >-
-      Nominal voltage in volts used for power to current calculations when
-      enhance_external_schedule is enabled.
-      This allows configuration for different regions (e.g., 120V, 230V, 400V).
-    type: number
-    minimum: 1.0
-    maximum: 1000.0
-    default: 230.0
 provides:
   energy_grid:
     description: This is the chain interface to build the energy supply tree

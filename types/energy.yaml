@@ -375,6 +375,33 @@ types:
           description: One entry for the time series. Values are positive for import from grid and negative for export to grid.
           type: object
           $ref: /energy#/ScheduleResEntry
+  CapabilityLimits:
+    description: Configured/rated maximum limits of an energy node
+    type: object
+    required:
+      - max_current_A
+      - max_phase_count
+      - nominal_voltage_V
+      - total_power_W
+    properties:
+      max_current_A:
+        description: Max current limit (per phase) in Ampere.
+        type: number
+        minimum: 0
+      max_phase_count:
+        description: Number of phases covered by this fuse
+        type: integer
+        minimum: 1
+        maximum: 3
+      nominal_voltage_V:
+        description: Nominal AC voltage between a single phase and neutral in Volt
+        type: number
+        minimum: 1
+      total_power_W:
+        description: >-
+          Total power limit in Watt.
+          For AC energy nodes, this usually is: nominal_voltage_V x max_current_A x max_phase_count
+        type: number
   ExternalLimits:
     description: External Limits data type
     type: object

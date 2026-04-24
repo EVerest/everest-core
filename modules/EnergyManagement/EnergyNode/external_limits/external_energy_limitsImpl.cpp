@@ -10,6 +10,12 @@ void external_energy_limitsImpl::init() {
 }
 
 void external_energy_limitsImpl::ready() {
+    types::energy::CapabilityLimits capabilities{
+        static_cast<float>(mod->config.fuse_limit_A), mod->config.phase_count,
+        static_cast<float>(mod->config.nominal_voltage_V),
+        static_cast<float>(mod->config.nominal_voltage_V * mod->config.fuse_limit_A * mod->config.phase_count)};
+
+    this->publish_capabilities(capabilities);
 }
 
 void external_energy_limitsImpl::handle_set_external_limits(types::energy::ExternalLimits& value) {

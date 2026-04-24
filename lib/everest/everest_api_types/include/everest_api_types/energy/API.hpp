@@ -88,4 +88,11 @@ struct EnforcedLimits {
     std::vector<ScheduleResEntry> schedule;
 };
 
+struct CapabilityLimits {
+    float max_current_A;
+    int32_t max_phase_count;
+    float nominal_voltage_V;
+    float total_power_W;
+};
+
 } // namespace everest::lib::API::V1_0::types::energy

@@ -24,6 +24,7 @@ void external_energy_limits_consumer_API::init() {
 void external_energy_limits_consumer_API::ready() {
     invoke_ready(*p_main);
 
+    generate_api_var_capabilities();
     generate_api_cmd_set_external_limits();
 
     generate_api_var_communication_check();
@@ -57,6 +58,10 @@ void external_energy_limits_consumer_API::generate_api_cmd_set_external_limits()
         }
         return false;
     });
+}
+
+void external_energy_limits_consumer_API::generate_api_var_capabilities() {
+    r_energy_node->subscribe_capabilities(forward_api_var("capabilities"));
 }
 
 void external_energy_limits_consumer_API::generate_api_var_communication_check() {
