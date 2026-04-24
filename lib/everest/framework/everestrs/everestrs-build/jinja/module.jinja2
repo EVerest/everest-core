@@ -144,6 +144,11 @@ impl Module {
     ) -> &ModulePublisher {
         let runtime = &self.runtime;
         let connections = runtime.get_module_connections();
+        // Publishers hold a Weak<Runtime> so ModuleInner -> publishers ->
+        // Runtime -> sub_impl -> ModuleInner is not a cycle. Drop of the
+        // Module deterministically tears down Runtime, ModuleInner, and the
+        // mock subscribers inside it.
+        let runtime_weak = ::std::sync::Arc::downgrade(&::std::pin::Pin::into_inner(runtime.clone()));
         let inner = self.inner.get_or_init(|| {
             ::std::sync::Arc::new(ModuleInner {
                 on_ready,
@@ -163,27 +168,27 @@ impl Module {
                 publisher: ModulePublisher {
 {% for provide in provides %}
    {{ provide.implementation_id | identifier }}: {{provide.interface | title}}ServicePublisher {
-      implementation_id: "{{ provide.implementation_id }}",
-      runtime: runtime.clone(),
+        implementation_id: "{{ provide.implementation_id }}",
+        runtime: runtime_weak.clone(),
     },
 {% endfor %}
 {% for require in requires %}
     {% if require.min_connections == 1 and require.max_connections == 1 %}
         {{ require.implementation_id | identifier }}: {{require.interface | title}}ClientPublisher {
             implementation_id: "{{ require.implementation_id }}",
-            runtime: runtime.clone(),
+            runtime: runtime_weak.clone(),
             index: 0,
         },
     {% elif require.min_connections == require.max_connections %}
         {{ require.implementation_id | identifier }}_slots: ::core::array::from_fn(|i| {{require.interface | title}}ClientPublisher{
             implementation_id: "{{ require.implementation_id }}",
-            runtime: runtime.clone(),
+            runtime: runtime_weak.clone(),
             index: i,
         }),
     {% else %}
         {{ require.implementation_id | identifier }}_slots: (0..connections.get("{{require.implementation_id}}").cloned().unwrap_or(0)).map(|i| {{require.interface | title}}ClientPublisher{
             implementation_id: "{{ require.implementation_id }}",
-            runtime: runtime.clone(),
+            runtime: runtime_weak.clone(),
             index: i,
         }).collect(),
     {% endif %}
