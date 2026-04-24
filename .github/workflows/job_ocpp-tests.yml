@@ -33,7 +33,7 @@ on:
       ocpp_tests_artifact_name:
         description: 'The name of the OCPP tests artifact'
         value: ${{ jobs.ocpp-tests.outputs.ocpp_tests_artifact_name }}
-    
+
 
 jobs:
   ocpp-tests:

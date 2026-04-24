@@ -18,6 +18,8 @@ set -euo pipefail
 #   ocpp201         OCPP 2.0.1 tests only
 #   ocpp21          OCPP 2.1 tests only
 #
+#   eebus           EEBUS integration tests
+#
 # Options:
 #   -j N                 Parallel workers (default: nproc)
 #   --serial             Run tests serially
@@ -154,7 +156,8 @@ case "$SUITE" in
             async_api_tests/*.py \
             ocpp_tests/test_sets/ocpp16/*.py \
             ocpp_tests/test_sets/ocpp201/*.py \
-            ocpp_tests/test_sets/ocpp21/*.py
+            ocpp_tests/test_sets/ocpp21/*.py \
+            eebus_tests/eebus_tests.py
         ;;
 
     integration)
@@ -221,9 +224,16 @@ case "$SUITE" in
             ocpp_tests/test_sets/ocpp21/*.py
         ;;
 
+    eebus)
+        cd "$SCRIPT_DIR"
+        "$PYTHON" -m pytest "${PYTEST_ARGS[@]}" \
+            --junitxml="$JUNITXML" --html="$HTML" \
+            eebus_tests/eebus_tests.py
+        ;;
+
     *)
         echo "Unknown suite: $SUITE" >&2
-        echo "Valid suites: all, integration, core, framework, asyncapi, ocpp, ocpp16, ocpp201, ocpp21" >&2
+        echo "Valid suites: all, integration, core, framework, asyncapi, ocpp, ocpp16, ocpp201, ocpp21, eebus" >&2
         exit 1
         ;;
 
