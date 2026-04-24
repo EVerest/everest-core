@@ -117,6 +117,9 @@ public:
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     std::unique_ptr<ocpp::v2::ChargePoint> charge_point;
+    void charging_schedules_timer_callback();
+    void charging_schedules_timer_start();
+    void charging_schedules_timer_stop();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:

@@ -3,6 +3,9 @@
 #ifndef OCPP_V2_CONVERSIONS_HPP
 #define OCPP_V2_CONVERSIONS_HPP
 
+#include "ocpp/v2/messages/ChangeAvailability.hpp"
+#include "ocpp/v2/ocpp_enums.hpp"
+#include "ocpp/v2/ocpp_types.hpp"
 #include <generated/types/display_message.hpp>
 #include <generated/types/evse_manager.hpp>
 #include <generated/types/iso15118.hpp>
@@ -281,6 +284,17 @@ to_everest_allowed_energy_transfer_mode(const ocpp::v2::EnergyTransferModeEnum& 
 /// std::vector<types::iso15118::EnergyTransferMode>
 std::vector<types::iso15118::EnergyTransferMode> to_everest_allowed_energy_transfer_modes(
     const std::vector<ocpp::v2::EnergyTransferModeEnum>& allowed_energy_transfer_modes);
+
+ocpp::v2::OperationalStatusEnum to_ocpp_operational_status(types::ocpp::OperationalStatusEnumType value);
+types::ocpp::ChangeAvailabilityStatusEnumType
+to_everest_change_availability_status(ocpp::v2::ChangeAvailabilityStatusEnum value);
+types::ocpp::StatusInfoType to_everest_status_info(const ocpp::v2::StatusInfo& value);
+
+ocpp::v2::ChangeAvailabilityRequest
+to_ocpp_change_availability_request(const types::ocpp::ChangeAvailabilityRequest& request);
+types::ocpp::ChangeAvailabilityResponse
+to_everest_change_availability_response(const ocpp::v2::ChangeAvailabilityResponse& response);
+
 } // namespace conversions
 } // namespace module
 

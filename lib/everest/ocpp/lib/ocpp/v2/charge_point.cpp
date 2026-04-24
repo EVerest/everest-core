@@ -371,6 +371,13 @@ bool ChargePoint::on_charging_state_changed(const std::uint32_t evse_id, const C
     return true;
 }
 
+ChangeAvailabilityResponse ChargePoint::on_change_availability(const ChangeAvailabilityRequest& request) {
+    bool transaction_active;
+    const auto response = availability->change_availability_req(transaction_active, request);
+    availability->action_change_availability_req(transaction_active, request, response);
+    return response;
+}
+
 std::optional<std::string> ChargePoint::get_evse_transaction_id(std::int32_t evse_id) {
     const auto& tx = this->evse_manager->get_evse(evse_id).get_transaction();
 
@@ -1231,6 +1238,14 @@ std::map<SetVariableData, SetVariableResult>
 ChargePoint::set_variables(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source) {
     // set variables and allow setting of ReadOnly variables
     return this->provisioning->set_variables(set_variable_data_vector, source);
+}
+
+void ChargePoint::register_variable_listener(
+    std::function<void(const std::unordered_map<std::int64_t, VariableMonitoringMeta>& monitors,
+                       const Component& component, const Variable& variable,
+                       const VariableCharacteristics& characteristics, const VariableAttribute& attribute,
+                       const std::string& value_previous, const std::string& value_current)>&& listener) {
+    device_model->register_variable_listener(std::move(listener));
 }
 
 GetCompositeScheduleResponse ChargePoint::get_composite_schedule(const GetCompositeScheduleRequest& request) {

@@ -14,6 +14,9 @@
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
+#include <mutex>
+#include <ocpp/v2/ocpp_types.hpp>
+#include <set>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -29,6 +32,8 @@ public:
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
+    using MonitorListEntry = std::pair<ocpp::v2::Component, ocpp::v2::Variable>;
+    using MonitorList = std::set<MonitorListEntry>;
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
 
 protected:
@@ -46,6 +51,9 @@ protected:
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
+    MonitorList monitor_list;
+    void variable_changed(const ocpp::v2::Component& component, const ocpp::v2::Variable& variable,
+                          const std::string& value);
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
@@ -57,6 +65,7 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
+    std::mutex chargepoint_state_mutex; // mutex used for start/stop operations
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

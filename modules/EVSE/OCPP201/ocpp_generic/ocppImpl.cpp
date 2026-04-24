@@ -2,8 +2,17 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "ocppImpl.hpp"
+#include "everest/conversions/ocpp/evse_security_ocpp.hpp"
+#include "ocpp/v2/ocpp_types.hpp"
 #include <conversions.hpp>
 #include <everest/conversions/ocpp/ocpp_conversions.hpp>
+
+namespace {
+inline module::ocpp_generic::ocppImpl::MonitorListEntry convert(const types::ocpp::ComponentVariable& cv) {
+    using namespace module::conversions;
+    return {to_ocpp_component(cv.component), to_ocpp_variable(cv.variable)};
+}
+} // namespace
 
 namespace module {
 namespace ocpp_generic {
@@ -15,13 +24,35 @@ void ocppImpl::ready() {
 }
 
 bool ocppImpl::handle_stop() {
-    // your code for cmd stop goes here
-    return true;
+    // Disconnects the websocket connection and stops the OCPP communication.
+    // No OCPP messages will be stored and sent after a restart.
+
+    bool result{false};
+    if (mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle stop command";
+    } else {
+        std::lock_guard lock(chargepoint_state_mutex);
+        mod->charging_schedules_timer_stop();
+        mod->charge_point->stop();
+        result = true;
+    }
+    return result;
 }
 
 bool ocppImpl::handle_restart() {
-    // your code for cmd restart goes here
-    return true;
+    // Connects the websocket and enables OCPP communication after a previous
+    // stop call.
+
+    bool result{false};
+    if (mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle restart command";
+    } else {
+        std::lock_guard lock(chargepoint_state_mutex);
+        mod->charging_schedules_timer_start();
+        mod->charge_point->start(ocpp::v2::BootReasonEnum::ApplicationReset, true);
+        result = true;
+    }
+    return result;
 }
 
 void ocppImpl::handle_security_event(types::ocpp::SecurityEvent& event) {
@@ -85,12 +116,73 @@ ocppImpl::handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& req
 
 types::ocpp::ChangeAvailabilityResponse
 ocppImpl::handle_change_availability(types::ocpp::ChangeAvailabilityRequest& request) {
-    // your code for cmd change_availability goes here
-    return {};
+    using ChangeAvailabilityStatusEnum = ocpp::v2::ChangeAvailabilityStatusEnum;
+    ocpp::v2::ChangeAvailabilityResponse result;
+    result.status = ChangeAvailabilityStatusEnum::Rejected;
+
+    if (mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle change availability command";
+    } else {
+        bool process{true};
+        const auto ocpp_request = conversions::to_ocpp_change_availability_request(request);
+        if (request.evse.has_value()) {
+            const auto& evse = request.evse.value();
+            if (!evse.connector_id.has_value()) {
+                result.statusInfo = {"InvalidInput",
+                                     "No connector id specified; if the whole charging station is supposed to "
+                                     "be addressed, parameter evse "
+                                     "must have no value."};
+                process = false;
+            }
+        }
+
+        if (process) {
+            result = mod->charge_point->on_change_availability(ocpp_request);
+        }
+    }
+
+    return conversions::to_everest_change_availability_response(result);
 }
 
 void ocppImpl::handle_monitor_variables(std::vector<types::ocpp::ComponentVariable>& component_variables) {
-    // your code for cmd monitor_variables goes here
+    using namespace ocpp::v2;
+
+    if (mod->charge_point == nullptr) {
+        EVLOG_warning << "ChargePoint not initialized, cannot handle monitor variables command";
+    } else {
+        if (monitor_list.empty()) {
+            // register a handler
+            mod->charge_point->register_variable_listener(
+                [this](auto&, const Component& component, const Variable& variable, auto&, auto&, auto&,
+                       const std::string& value) { variable_changed(component, variable, value); });
+        }
+
+        // add variables to monitor list
+        for (const auto& cv : component_variables) {
+            // failures to insert are likely to be the same variable being
+            // requested again
+            (void)monitor_list.insert(convert(cv));
+        }
+    }
+}
+
+void ocppImpl::variable_changed(const ocpp::v2::Component& component, const ocpp::v2::Variable& variable,
+                                const std::string& value) {
+    using namespace conversions;
+
+    MonitorListEntry entry{component, variable};
+    if (const auto it = monitor_list.find(entry); it != monitor_list.end()) {
+        // monitor entry exists - publish
+        types::ocpp::EventData event_data;
+        event_data.component_variable.component = to_everest_component(component);
+        event_data.component_variable.variable = to_everest_variable(variable);
+        event_data.event_id = 0;
+        event_data.timestamp = ocpp::DateTime();
+        event_data.trigger = types::ocpp::EventTriggerEnum::Delta;
+        event_data.actual_value = value;
+        event_data.event_notification_type = types::ocpp::EventNotificationType::CustomMonitor;
+        publish_event_data(event_data);
+    }
 }
 
 } // namespace ocpp_generic
