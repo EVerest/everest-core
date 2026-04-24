@@ -256,6 +256,22 @@ protected:
         return handler;
     }
 
+    /// Variant of createSmartChargingHandler that wires up a real in-memory SQLite
+    /// DatabaseHandler (not a mock). Useful for tests that assert DB↔memory consistency,
+    /// e.g. ClearChargingProfile(connectorId=0) removing both the fan-out copies and the
+    /// DB row. Matches the pattern used by ClearingExpiredProfilesStartTime.
+    std::unique_ptr<SmartChargingHandler> createSmartChargingHandlerWithRealDb(const int number_of_connectors) {
+        for (int i = 0; i <= number_of_connectors; i++) {
+            addConnector(i);
+        }
+        auto database_connection = std::make_unique<everest::db::sqlite::Connection>("file::memory:?cache=shared");
+        database_connection->open_connection();
+        database_handler = std::make_shared<DatabaseHandler>(std::move(database_connection),
+                                                             std::filesystem::path(MIGRATION_FILES_LOCATION_V16), 2);
+        database_handler->open_connection();
+        return std::make_unique<SmartChargingHandler>(connectors, database_handler, *configuration);
+    }
+
     // Default values used within the tests
     std::map<std::int32_t, std::shared_ptr<Connector>> connectors;
     std::shared_ptr<DatabaseHandler> database_handler;
@@ -1568,6 +1584,142 @@ TEST_F(ChargepointTestFixture, ClearingExpiredProfilesStartTime) {
     EXPECT_EQ(handler.get_number_installed_profiles(), 0);
     EXPECT_EQ(db_profiles.size(), 0);
     EXPECT_EQ(valid_profiles.size(), 0);
+}
+
+/*
+ * ClearAllProfilesWithFilter tests for connectorId=0 scoping (OCPP 1.6 ClearChargingProfile).
+ *
+ * SetChargingProfile(connectorId=0, TxDefaultProfile) stores one DB row at CONNECTOR_ID=0 and
+ * fan-outs in-memory copies onto every physical connector (1..N). ClearChargingProfile with
+ * connectorId=0 must remove both: the DB row and every fan-out copy. These tests use a real
+ * in-memory SQLite DatabaseHandler so DB↔memory consistency is actually exercised.
+ */
+
+TEST_F(ChargepointTestFixture, ClearAllProfilesWithFilter__ConnectorId0_RemovesFannedOutTxDefault__ReturnsTrue) {
+    auto handler = createSmartChargingHandlerWithRealDb(2);
+
+    auto profile = createChargingProfile(createChargeSchedule(ChargingRateUnit::A));
+    handler->add_tx_default_profile(profile, 0);
+
+    // Fan-out invariant: every physical connector sees the profile; one row in the DB.
+    ASSERT_EQ(1, handler->get_valid_profiles(date_start_range, date_end_range, 1).size());
+    ASSERT_EQ(1, handler->get_valid_profiles(date_start_range, date_end_range, 2).size());
+    ASSERT_EQ(1, database_handler->get_charging_profiles().size());
+
+    const bool sut = handler->clear_all_profiles_with_filter(std::nullopt, 0, std::nullopt, std::nullopt, false);
+
+    ASSERT_TRUE(sut);
+    ASSERT_EQ(0, handler->get_valid_profiles(date_start_range, date_end_range, 1).size());
+    ASSERT_EQ(0, handler->get_valid_profiles(date_start_range, date_end_range, 2).size());
+    ASSERT_EQ(0, database_handler->get_charging_profiles().size());
+}
+
+TEST_F(ChargepointTestFixture, ClearAllProfilesWithFilter__ConnectorId0_StackLevelFilter__ReturnsTrue) {
+    auto handler = createSmartChargingHandlerWithRealDb(2);
+
+    auto profile_stack1 =
+        createChargingProfile(10, 1, ChargingProfilePurposeType::TxDefaultProfile, ChargingProfileKindType::Absolute,
+                              RecurrencyKindType::Daily, createChargeSchedule(ChargingRateUnit::A));
+    auto profile_stack2 =
+        createChargingProfile(20, 2, ChargingProfilePurposeType::TxDefaultProfile, ChargingProfileKindType::Absolute,
+                              RecurrencyKindType::Daily, createChargeSchedule(ChargingRateUnit::A));
+
+    handler->add_tx_default_profile(profile_stack1, 0);
+    handler->add_tx_default_profile(profile_stack2, 0);
+
+    ASSERT_EQ(2, handler->get_valid_profiles(date_start_range, date_end_range, 1).size());
+    ASSERT_EQ(2, handler->get_valid_profiles(date_start_range, date_end_range, 2).size());
+    ASSERT_EQ(2, database_handler->get_charging_profiles().size());
+
+    const bool sut = handler->clear_all_profiles_with_filter(std::nullopt, 0, 1, std::nullopt, false);
+
+    ASSERT_TRUE(sut);
+    // Only stack=1 cleared; stack=2 survives on every connector and in the DB.
+    auto remaining_c1 = handler->get_valid_profiles(date_start_range, date_end_range, 1);
+    auto remaining_c2 = handler->get_valid_profiles(date_start_range, date_end_range, 2);
+    ASSERT_EQ(1, remaining_c1.size());
+    ASSERT_EQ(1, remaining_c2.size());
+    ASSERT_EQ(20, remaining_c1[0].chargingProfileId);
+    ASSERT_EQ(20, remaining_c2[0].chargingProfileId);
+    auto db_remaining = database_handler->get_charging_profiles();
+    ASSERT_EQ(1, db_remaining.size());
+    ASSERT_EQ(20, db_remaining[0].chargingProfileId);
+}
+
+TEST_F(ChargepointTestFixture, ClearAllProfilesWithFilter__ConnectorId0_PurposeFilter__ReturnsTrue) {
+    auto handler = createSmartChargingHandlerWithRealDb(2);
+
+    auto cp_max = createChargingProfile(1, 1, ChargingProfilePurposeType::ChargePointMaxProfile,
+                                        ChargingProfileKindType::Absolute, RecurrencyKindType::Daily,
+                                        createChargeSchedule(ChargingRateUnit::A));
+    auto tx_default =
+        createChargingProfile(2, 1, ChargingProfilePurposeType::TxDefaultProfile, ChargingProfileKindType::Absolute,
+                              RecurrencyKindType::Daily, createChargeSchedule(ChargingRateUnit::A));
+
+    handler->add_charge_point_max_profile(cp_max);
+    handler->add_tx_default_profile(tx_default, 0);
+    ASSERT_EQ(2, database_handler->get_charging_profiles().size());
+
+    const bool sut = handler->clear_all_profiles_with_filter(std::nullopt, 0, std::nullopt,
+                                                             ChargingProfilePurposeType::TxDefaultProfile, false);
+
+    ASSERT_TRUE(sut);
+    // TxDefault gone from every connector and the DB. CPMax remains in both.
+    auto remaining = handler->get_valid_profiles(date_start_range, date_end_range, 1);
+    ASSERT_EQ(1, remaining.size());
+    ASSERT_EQ(ChargingProfilePurposeType::ChargePointMaxProfile, remaining[0].chargingProfilePurpose);
+    auto db_remaining = database_handler->get_charging_profiles();
+    ASSERT_EQ(1, db_remaining.size());
+    ASSERT_EQ(1, db_remaining[0].chargingProfileId);
+}
+
+TEST_F(ChargepointTestFixture, ClearAllProfilesWithFilter__ConnectorId0_AllProfileTypes__ReturnsTrue) {
+    auto handler = createSmartChargingHandlerWithRealDb(2);
+
+    auto cp_max = createChargingProfile(1, 1, ChargingProfilePurposeType::ChargePointMaxProfile,
+                                        ChargingProfileKindType::Absolute, RecurrencyKindType::Daily,
+                                        createChargeSchedule(ChargingRateUnit::A));
+    auto tx_default =
+        createChargingProfile(2, 1, ChargingProfilePurposeType::TxDefaultProfile, ChargingProfileKindType::Absolute,
+                              RecurrencyKindType::Daily, createChargeSchedule(ChargingRateUnit::A));
+
+    handler->add_charge_point_max_profile(cp_max);
+    handler->add_tx_default_profile(tx_default, 0);
+    ASSERT_EQ(2, database_handler->get_charging_profiles().size());
+
+    const bool sut = handler->clear_all_profiles_with_filter(std::nullopt, 0, std::nullopt, std::nullopt, false);
+
+    ASSERT_TRUE(sut);
+    ASSERT_EQ(0, handler->get_valid_profiles(date_start_range, date_end_range, 1).size());
+    ASSERT_EQ(0, handler->get_valid_profiles(date_start_range, date_end_range, 2).size());
+    ASSERT_EQ(0, database_handler->get_charging_profiles().size());
+}
+
+TEST_F(ChargepointTestFixture, ClearAllProfilesWithFilter__ConnectorIdN_LeavesConnector0Profiles__Unaffected) {
+    auto handler = createSmartChargingHandlerWithRealDb(2);
+
+    auto profile_at_0 =
+        createChargingProfile(10, 1, ChargingProfilePurposeType::TxDefaultProfile, ChargingProfileKindType::Absolute,
+                              RecurrencyKindType::Daily, createChargeSchedule(ChargingRateUnit::A));
+    handler->add_tx_default_profile(profile_at_0, 0);
+
+    // Regression guard: clearing at connectorId=2 must NOT wipe connector 1's fan-out copy.
+    // Note: the pre-existing clear_profiles helper deletes the DB row by profile id when it
+    // erases the in-memory copy on connector 2, even though the row's CONNECTOR_ID is 0 —
+    // this asymmetry is out of scope for the connector=0 fix.
+    const bool sut = handler->clear_all_profiles_with_filter(std::nullopt, 2, std::nullopt, std::nullopt, false);
+
+    ASSERT_TRUE(sut);
+    ASSERT_EQ(1, handler->get_valid_profiles(date_start_range, date_end_range, 1).size());
+    ASSERT_EQ(0, handler->get_valid_profiles(date_start_range, date_end_range, 2).size());
+}
+
+TEST_F(ChargepointTestFixture, ClearAllProfilesWithFilter__ConnectorId0_NoProfiles__ReturnsFalse) {
+    auto handler = createSmartChargingHandlerWithRealDb(2);
+
+    const bool sut = handler->clear_all_profiles_with_filter(std::nullopt, 0, std::nullopt, std::nullopt, false);
+    ASSERT_FALSE(sut);
+    ASSERT_EQ(0, database_handler->get_charging_profiles().size());
 }
 
 } // namespace v16

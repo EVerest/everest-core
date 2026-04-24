@@ -155,6 +155,13 @@ public:
 
     /// \brief Returns the connector_id of the given \p profile_id
     int get_connector_id(const int profile_id);
+
+    /// \brief Returns the ids of all charging profiles stored against the given \p connector_id
+    ///
+    /// Used to discover profiles whose install-time connector was 0 (i.e. ChargePointMaxProfile
+    /// and TxDefaultProfile installed at the charge-point level) so that ClearChargingProfile
+    /// with connectorId=0 can remove them along with their in-memory fan-out copies.
+    virtual std::vector<int32_t> get_charging_profile_ids_by_connector_id(const int connector_id);
 };
 
 } // namespace v16
