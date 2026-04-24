@@ -501,25 +501,28 @@ notice an `everest` topic popping up.
 
 We can now publish a command to our self-written module. For this, choose the topic::
 
-    everest/modules/tutorial_module_instance/impl/interface_impl_tutorial_module/cmd
+    everest/modules/tutorial_module_instance/impl/interface_impl_tutorial_module/cmd/command_tutorial
 
 and publish the JSON::
 
     {
-      "data": {
-        "args": {
-          "payload": "Hello World!"
-        },
-        "id": "00000000-0000-0000-0000-000000000042",
-        "origin": "manual_test"
-      },
-      "name": "command_tutorial",
-      "type": "call"
+        "msg_type": "Cmd",
+        "data": {
+            "args": {
+                "payload": "Hello World!"
+            },
+            "id": "00000000-0000-0000-0000-000000000042",
+            "origin": "manual_test"
+        }
     }
 
 Our module should return with a "everest" response (you may have to reselect
 the ``everest/tutorial_module_instance/interface_impl_tutorial_module/cmd``
 on the left to refresh this view.
+
+The response should be on topic::
+    
+    everest/modules/tutorial_module_instance/impl/interface_impl_tutorial_module/cmd/command_tutorial/response/manual_test
 
 .. image:: images/mqtt_explorer_example.png
 
