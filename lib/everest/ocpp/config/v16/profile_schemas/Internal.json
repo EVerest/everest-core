@@ -284,7 +284,7 @@
             "$comment": "Interval in seconds used to request OCSP revocation status information on the CSO Sub-CA certificates",
             "type": "integer",
             "readOnly": false,
-            "default": 604800,
+            "default": 43200,
             "minimum": 86400
         },
         "SeccLeafSubjectCommonName": {
