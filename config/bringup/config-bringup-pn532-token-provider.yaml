@@ -1,0 +1,16 @@
+active_modules:
+  tokenprovider:
+    module: PN532TokenProvider
+    config_implementation:
+      main:
+        serial_port: /dev/ttyUSB0
+        baud_rate: 115200
+        debug: true
+        read_timeout: 2
+  cli:
+    module: BUTokenProvider
+    standalone: true
+    connections:
+      token_provider:
+        - module_id: tokenprovider
+          implementation_id: main

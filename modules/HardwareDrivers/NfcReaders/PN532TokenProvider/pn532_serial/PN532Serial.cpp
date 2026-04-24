@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include <iostream>
+#include <string.h>
 #include <string>
 #include <thread>
 #include <unistd.h>
@@ -31,188 +32,159 @@ constexpr uint8_t COMMAND_SAM_CONFIGURATION_RESPONSE = 0x15;
 constexpr uint8_t COMMAND_IN_LIST_PASSIVE_TARGET = 0x4a;
 constexpr uint8_t COMMAND_IN_LIST_PASSIVE_TARGET_RESPONSE = 0x4b;
 
-PN532Serial::PN532Serial() {
-}
-
-PN532Serial::~PN532Serial() {
-}
-
 void PN532Serial::run() {
     readThreadHandle = std::thread(&PN532Serial::readThread, this);
 }
 
-void PN532Serial::resetDataRead() {
-    start_of_packet = 0;
-    packet_length = 0;
-    preamble_start_seen = false;
-    preamble_seen = false;
-    first_data = true;
-    data_length_checksum_valid = false;
-    tfi = 0;
-    command_code = 0;
-    data.clear();
-}
-
 void PN532Serial::readThread() {
     uint8_t buf[2048];
-
-    resetDataRead();
+    size_t n = 0;
+    ssize_t first_start_code_offset;
 
     while (true) {
         if (readThreadHandle.shouldExit()) {
             break;
         }
-        auto n = read(fd, buf, sizeof buf);
-        if (n == 0) {
+        auto c = read(fd, &buf[n], sizeof(buf) - n);
+        if (c == -1) {
+            EVLOG_error << "Read failed: " << strerror(errno) << " (" << errno << ")";
+            break;
+        }
+        if (c == 0) {
             continue;
         }
 
         if (this->debug) {
-            std::stringstream data_stream;
-            for (ssize_t i = 0; i < n; i++) {
-                data_stream << "0x" << std::setfill('0') << std::setw(2) << std::right << std::hex << (int)buf[i]
-                            << " ";
-            }
-
-            EVLOG_info << "Received bytes: " << data_stream.str();
-        }
-        for (ssize_t i = 0; i < n; i++) {
-            if (!preamble_seen) {
-                if (preamble_start_seen && buf[i] == 0xff) {
-                    preamble_seen = true;
-                    start_of_packet = i + 1;
-                    if (start_of_packet + 1 >= n) {
-                        if (this->debug) {
-                            EVLOG_warning << "Packet is not long enough to be parsed";
-                        }
-                        continue;
-                    } else {
-                        packet_length = buf[start_of_packet];
-                        auto packet_length_checksum = buf[start_of_packet + 1];
-                        auto checksum = (packet_length + packet_length_checksum) & 0x00ff;
-                        if (checksum == 0) {
-                            // data length checkum is valid
-                            data_length_checksum_valid = true;
-                        } else {
-                            // can be a valid ACK frame
-                        }
-                    }
-                    break;
-                } else {
-                    preamble_start_seen = false;
-                }
-
-                if (!preamble_start_seen && buf[i] == 0x00) {
-                    preamble_start_seen = true;
-                }
-            } else {
-                data.push_back(buf[i]);
-            }
+            EVLOG_info << "Received: " << hexdump(buf + n, c);
         }
 
-        if (packet_length == 0) {
-            if (start_of_packet + 1 < n) {
-                if (buf[start_of_packet + 1] == 0xff) {
-                    // ACK FRAME
-                    // TODO keep track of acks
-                }
-            } else {
-                if (this->debug) {
-                    EVLOG_warning << "Packet of length 0 received that is not a ACK Frame.";
-                }
-                resetDataRead();
+        n += c;
+
+    restart_buffer_analysis:
+        EVLOG_verbose << "buffer content (size: " << n << "): " << hexdump(buf, n);
+
+        // packet minimum size is 6 byte for ACK or NACK, other frames are larger
+        if (n < 6) {
+            continue;
+        }
+
+        first_start_code_offset = -1;
+
+        // we cannot assume that we receive the whole response in one read call
+        // because of different driver/interfaces, so we have to scan for well-known
+        // patterns or check whether it looks like a valid frame after a start code
+        // pattern; if we find one, we can delete it from the buffer and move the
+        // left-over buffer content to the front, then we must restart analyzing
+        // to be sure to handle any following frame immediately and don't wait
+        // until the next read call runs/returns
+        for (ssize_t i = 0; i <= n - 6; ++i) {
+            // check for ACK or NACKs
+            if (memcmp(&buf[i], ACK_FRAME.data(), ACK_FRAME.size()) == 0) {
+                EVLOG_debug << "Received ACK";
+                n = n - i - ACK_FRAME.size();
+                memmove(buf, buf + i + ACK_FRAME.size(), n);
+                goto restart_buffer_analysis;
             }
-        } else {
-            if (!data_length_checksum_valid) {
-                if (this->debug) {
-                    EVLOG_warning << "Data length checksum invalid";
-                }
-                resetDataRead();
-                continue;
+            if (memcmp(&buf[i], NACK_FRAME.data(), NACK_FRAME.size()) == 0) {
+                EVLOG_debug << "Received NACK";
+                n = n - i - NACK_FRAME.size();
+                memmove(buf, buf + i + NACK_FRAME.size(), n);
+                goto restart_buffer_analysis;
             }
 
-            // normal packet
-            if (first_data) {
-                tfi = buf[start_of_packet + 2];
-                command_code = buf[start_of_packet + 3];
-                first_data = false;
-                for (ssize_t i = start_of_packet + 4; i < n; i++) {
-                    data.push_back(buf[i]);
+            // check for start_code
+            if (memcmp(&buf[i], START_CODE.data(), START_CODE.size()) == 0) {
+                if (first_start_code_offset == -1) {
+                    first_start_code_offset = i;
                 }
-            }
 
-            if (data.size() < packet_length) {
-                // not enough bytes received for a complete message yet
-                continue;
-            } else {
+                auto len = buf[i + START_CODE.size()];
+                auto lcs = buf[i + START_CODE.size() + 1];
+
+                if (((len + lcs) & 0xff) != 0) {
+                    EVLOG_verbose << "package length checksum mismatch";
+                    continue;
+                }
+
+                // offset + start code size + len and lcs byte + data length + dcs and postamble
+                if (i + START_CODE.size() + 2 + len + 2 > n) {
+                    EVLOG_verbose << "frame still too short or length bogus";
+                    continue;
+                }
+
+                // accesses beyond i are safe below since we ensure that above
+                auto tfi = buf[i + START_CODE.size() + 2];
+                if (tfi != PN532_TO_HOST) {
+                    EVLOG_verbose << "frame is not a response";
+                    continue;
+                }
+
+                if (buf[i + START_CODE.size() + 2 + len + 1] != 0x00) {
+                    EVLOG_verbose << "postamble check failed";
+                    continue;
+                }
+
+                auto dcs_compl = 0;
+                for (size_t j = 0; j < len; ++j) {
+                    dcs_compl += buf[i + START_CODE.size() + 2 + j];
+                }
+                auto dcs = buf[i + START_CODE.size() + 2 + len];
+                if (((dcs_compl + dcs) & 0xff) != 0) {
+                    EVLOG_verbose << "package data checksum does not match";
+                    continue;
+                }
+
+                // all checks so far indicate that frame/packet looks good
+                command_code = buf[i + START_CODE.size() + 2 + 1];
+                data = std::vector<uint8_t>(&buf[i + START_CODE.size() + 2 + 1 + 1],
+                                            &buf[i + START_CODE.size() + 2 + len]);
                 parseData();
+
+                // discard processed data, the processed size is:
+                // offset (incl. preamble) + start code size + len and lcs byte + data length + dcs and postamble
+                auto processed_size = i + START_CODE.size() + 1 + 1 + data.size() + 1 + 1;
+                n = n - processed_size;
+                memmove(buf, buf + processed_size, n);
+                goto restart_buffer_analysis;
             }
         }
-        resetDataRead();
+
+        if (first_start_code_offset == -1) {
+            // no start code found so far: continue with outer loop and receive more data
+        } else {
+            // use first start code offset found and assume garbage before -> discard this
+            n -= first_start_code_offset;
+            memmove(buf, buf + first_start_code_offset, n);
+        }
     }
 }
 
 void PN532Serial::parseData() {
-    if (data.back() == 0x00 && data.size() >= 2) {
-        // last byte is 0x00 (postamble) removing it
-        data.pop_back();
-        auto packet_data_checksum = data.back();
-        data.pop_back();
+    if (command_code == COMMAND_GET_FIRMWARE_VERSION_RESPONSE && this->get_firmware_version_promise) {
+        PN532Response response;
+        if (data.size() == 4) {
+            EVLOG_debug << "Sending ACK";
+            serialWrite(ACK_FRAME);
 
-        uint8_t sum = tfi + command_code + packet_data_checksum;
-        for (auto element : data) {
-            sum += element;
+            response.valid = true;
+            response.message = std::make_shared<FirmwareVersion>(
+                data.at(FIRMWARE_VERSION_IC_POS), data.at(FIRMWARE_VERSION_VER_POS), data.at(FIRMWARE_VERSION_REV_POS),
+                data.at(FIRMWARE_VERSION_SUPPORT_POS));
+
+            this->get_firmware_version_promise->set_value(response);
+        } else {
+            EVLOG_debug << "Sending NACK";
+            serialWrite(NACK_FRAME);
         }
-        if (this->debug) {
-            EVLOG_info << "----- Parsing data -----";
-            std::stringstream data_stream;
-            EVLOG_info << std::right << std::hex << "Packet data checksum: 0x" << std::setfill('0') << std::setw(2)
-                       << (int)packet_data_checksum << " checksum result: 0x" << std::setfill('0') << std::setw(2)
-                       << (int)sum;
-            for (auto& element : data) {
-                data_stream << "0x" << std::setfill('0') << std::setw(2) << std::right << std::hex << (int)element
-                            << " ";
-            }
-            data_stream << "(length: " << std::dec << data.size() << ")";
-
-            EVLOG_info << "Raw data: " << data_stream.str();
-        }
-
-        if (sum == 0x00) {
-            if (this->debug) {
-                EVLOG_info << "Packet data checksum valid, command code: 0x" << std::setfill('0') << std::setw(2)
-                           << std::right << std::hex << (int)command_code;
-            }
-
-            if (command_code == COMMAND_GET_FIRMWARE_VERSION_RESPONSE && this->get_firmware_version_promise) {
-                PN532Response response;
-                if (data.size() == 4) {
-                    response.valid = true;
-                    response.message = std::make_shared<FirmwareVersion>(
-                        data.at(FIRMWARE_VERSION_IC_POS), data.at(FIRMWARE_VERSION_VER_POS),
-                        data.at(FIRMWARE_VERSION_REV_POS), data.at(FIRMWARE_VERSION_SUPPORT_POS));
-                }
-                this->get_firmware_version_promise->set_value(response);
-            } else if (command_code == COMMAND_SAM_CONFIGURATION_RESPONSE && this->configure_sam_promise) {
-                this->configure_sam_promise->set_value(true);
-            } else if (command_code == COMMAND_IN_LIST_PASSIVE_TARGET_RESPONSE &&
-                       this->in_list_passive_target_promise) {
-                parseInListPassiveTargetResponse();
-            }
-        }
-
-    } else {
-        if (this->debug) {
-            EVLOG_warning << "Last byte is NOT 0x00, something went wrong...";
-            std::stringstream data_stream;
-            for (auto& element : data) {
-                data_stream << "0x" << std::setfill('0') << std::setw(2) << std::right << std::hex << (int)element
-                            << " ";
-            }
-            data_stream << "(length: " << std::dec << data.size() << ")";
-
-            EVLOG_info << "Raw data: " << data_stream.str();
-        }
+    } else if (command_code == COMMAND_SAM_CONFIGURATION_RESPONSE && this->configure_sam_promise) {
+        EVLOG_debug << "Sending ACK";
+        serialWrite(ACK_FRAME);
+        this->configure_sam_promise->set_value(true);
+    } else if (command_code == COMMAND_IN_LIST_PASSIVE_TARGET_RESPONSE && this->in_list_passive_target_promise) {
+        // always send ACK for now
+        EVLOG_debug << "Sending ACK";
+        serialWrite(ACK_FRAME);
+        parseInListPassiveTargetResponse();
     }
 }
 
@@ -248,13 +220,8 @@ void PN532Serial::parseInListPassiveTargetResponse() {
 
                 if (this->debug) {
                     std::stringstream nfcid_stream;
-
-                    for (auto& element : target_data.nfcid) {
-                        nfcid_stream << "0x" << std::setfill('0') << std::setw(2) << std::right << std::hex
-                                     << (int)element << " ";
-                    }
-                    nfcid_stream << "(length: " << std::dec << target_data.nfcid.size() << ")";
-
+                    nfcid_stream << hexdump(target_data.nfcid);
+                    nfcid_stream << " (length: " << std::dec << target_data.nfcid.size() << ")";
                     EVLOG_info << "NFCID: " << nfcid_stream.str();
                 }
 
@@ -270,13 +237,8 @@ void PN532Serial::parseInListPassiveTargetResponse() {
 
                     if (this->debug) {
                         std::stringstream ats_stream;
-
-                        for (auto& element : target_data.ats) {
-                            ats_stream << "0x" << std::setfill('0') << std::setw(2) << std::right << std::hex
-                                       << (int)element << " ";
-                        }
-                        ats_stream << "(length: " << std::dec << target_data.ats.size() << ")";
-
+                        ats_stream << hexdump(target_data.ats);
+                        ats_stream << " (length: " << std::dec << target_data.ats.size() << ")";
                         EVLOG_info << "ATS: " << ats_stream.str();
                     }
                 }
@@ -293,7 +255,7 @@ void PN532Serial::parseInListPassiveTargetResponse() {
 std::future<bool> PN532Serial::configureSAM() {
     this->configure_sam_promise = std::make_unique<std::promise<bool>>();
     this->serialWriteCommand({
-        COMMAND_SAM_CONFIGURATION, // command codee
+        COMMAND_SAM_CONFIGURATION, // command code
         0x01,                      // normal mode
         0x00,                      // no timeout
         0x01                       // P70_IRQ pin driven by PN532
@@ -317,43 +279,51 @@ std::future<PN532Response> PN532Serial::inListPassiveTarget() {
     return this->in_list_passive_target_promise->get_future();
 }
 
-bool PN532Serial::serialWrite(std::vector<uint8_t> data) {
-    write(fd, data.data(), data.size());
+bool PN532Serial::serialWrite(const std::vector<uint8_t>& data) {
+    auto rv = write(fd, data.data(), data.size());
+
+    if (rv != data.size()) {
+        EVLOG_error << "Write failed: " << strerror(errno) << " (" << errno << ")";
+        return false;
+    }
 
     return true;
 }
 
-bool PN532Serial::serialWriteCommand(std::vector<uint8_t> data) {
-    std::vector<uint8_t> data_copy = data;
-    data_copy.push_back(host_to_pn532);
-    uint8_t sum = 0;
-    for (auto element : data_copy) {
-        sum += element;
+bool PN532Serial::serialWriteCommand(const std::vector<uint8_t>& data) {
+    // calculate packet length checksum
+    uint8_t lcs = data.size() + 1;
+    lcs = (uint8_t)-lcs;
+
+    // calculate data check sum
+    uint8_t dcs = HOST_TO_PN532;
+    for (auto element : data) {
+        dcs += element;
     }
-    uint8_t data_length_checksum = (~data_copy.size() & 0xFF) + 0x01;
-    uint8_t inverse = (~sum & 0xFF) + 0x01;
+    dcs = (uint8_t)-dcs;
 
-    if (inverse > 255) {
-        inverse = inverse - 255;
-    }
-
-    std::vector<uint8_t> serial_data = preamble;
-    serial_data.push_back(data_copy.size());
-    serial_data.push_back(data_length_checksum);
-    serial_data.push_back(host_to_pn532);
-
+    std::vector<uint8_t> serial_data;
+    // size: preamble + start code + LEN + LCS + TFI + data + DCS + postamble
+    serial_data.reserve(1 + START_CODE.size() + 1 + 1 + 1 + data.size() + 1 + 1);
+    serial_data.push_back(PREAMBLE);
+    serial_data.insert(serial_data.end(), START_CODE.begin(), START_CODE.end());
+    serial_data.push_back(data.size() + 1);
+    serial_data.push_back(lcs);
+    serial_data.push_back(HOST_TO_PN532);
     serial_data.insert(serial_data.end(), data.begin(), data.end());
-    serial_data.push_back(inverse);
-    serial_data.push_back(postamble);
+    serial_data.push_back(dcs);
+    serial_data.push_back(POSTAMBLE);
+
+    if (this->debug) {
+        EVLOG_info << "Sending bytes: " << hexdump(serial_data);
+    }
 
     return this->serialWrite(serial_data);
 }
 
 bool PN532Serial::reset() {
-    bool success = true;
-    this->serialWrite({0x55, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
-
-    return success;
+    return this->serialWrite(
+        {0x55, 0x55, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
 }
 
 void PN532Serial::enableDebug() {
