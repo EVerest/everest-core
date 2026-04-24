@@ -60,6 +60,7 @@ IntermediatePeriod default_intermediate_period() {
     empty.power_setpoint = {NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED};
     empty.numberPhases = std::nullopt;
     empty.phaseToUse = std::nullopt;
+    empty.operationMode = std::nullopt;
     return empty;
 }
 
@@ -111,6 +112,8 @@ void period_entry_t::init(const DateTime& in_start, int in_duration, const Charg
     setpoint.limit = in_period.setpoint.value_or(NO_SETPOINT_SPECIFIED);       // FIXME
     setpoint.limit_L2 = in_period.setpoint_L2.value_or(NO_SETPOINT_SPECIFIED); // FIXME
     setpoint.limit_L3 = in_period.setpoint_L3.value_or(NO_SETPOINT_SPECIFIED); // FIXME
+
+    operationMode = in_period.operationMode;
 
     min_charging_rate = in_profile.chargingSchedule.front().minChargingRate;
 }
@@ -463,6 +466,7 @@ IntermediateProfile generate_profile_from_periods(std::vector<period_entry_t>& p
             charging_schedule_period.current_discharge_limit = current_discharge_limit;
             charging_schedule_period.power_discharge_limit = power_discharge_limit;
             charging_schedule_period.numberPhases = chosen->number_phases;
+            charging_schedule_period.operationMode = chosen->operationMode;
             charging_schedule_period.phaseToUse = std::nullopt;
 
             // If the new ChargingSchedulePeriod.phaseToUse field is set, pass it on
@@ -488,6 +492,11 @@ namespace {
 using period_iterator = IntermediateProfile::const_iterator;
 using period_pair_vector = std::vector<std::pair<period_iterator, period_iterator>>;
 using IntermediateProfileRef = std::reference_wrapper<const IntermediateProfile>;
+
+// Per OCPP 2.1 Q02.FR.01, a missing operationMode is equivalent to ChargingOnly.
+inline OperationModeEnum effective_operation_mode(const std::optional<OperationModeEnum>& mode) {
+    return mode.value_or(OperationModeEnum::ChargingOnly);
+}
 
 inline std::vector<IntermediateProfileRef> convert_to_ref_vector(const std::vector<IntermediateProfile>& profiles) {
     std::vector<IntermediateProfileRef> references{};
@@ -529,7 +538,9 @@ IntermediateProfile combine_list_of_profiles(const std::vector<IntermediateProfi
             (period.power_discharge_limit != combined.back().power_discharge_limit) ||
             (period.current_setpoint != combined.back().current_setpoint) ||
             (period.power_setpoint != combined.back().power_setpoint) ||
-            (period.numberPhases != combined.back().numberPhases)) {
+            (period.numberPhases != combined.back().numberPhases) ||
+            (effective_operation_mode(period.operationMode) !=
+             effective_operation_mode(combined.back().operationMode))) {
             combined.push_back(period);
         }
 
@@ -586,7 +597,9 @@ IntermediateProfile merge_tx_profile_with_tx_default_profile(const IntermediateP
                 it->current_discharge_limit != default_period.current_discharge_limit ||
                 it->power_discharge_limit != default_period.power_discharge_limit ||
                 it->current_setpoint != default_period.current_setpoint ||
-                it->power_setpoint != default_period.power_setpoint) {
+                it->power_setpoint != default_period.power_setpoint ||
+                it->numberPhases != default_period.numberPhases ||
+                effective_operation_mode(it->operationMode) != effective_operation_mode(default_period.operationMode)) {
                 period.current_limit = it->current_limit;
                 period.power_limit = it->power_limit;
                 period.current_discharge_limit = it->current_discharge_limit;
@@ -594,6 +607,7 @@ IntermediateProfile merge_tx_profile_with_tx_default_profile(const IntermediateP
                 period.current_setpoint = it->current_setpoint;
                 period.power_setpoint = it->power_setpoint;
                 period.numberPhases = it->numberPhases;
+                period.operationMode = it->operationMode;
                 break;
             }
         }
@@ -654,11 +668,28 @@ IntermediateProfile merge_profiles_by_lowest_limit(const std::vector<Intermediat
             period.power_discharge_limit =
                 get_max_limit(period.power_discharge_limit, new_period.power_discharge_limit);
 
+            // Save setpoints before merge to detect which period's setpoint won
+            const auto prev_current_setpoint = period.current_setpoint;
+            const auto prev_power_setpoint = period.power_setpoint;
+
             // Only check value of first phase, as this one should be set as first.
             get_set_setpoint_limit(period.current_setpoint, new_period.current_setpoint, period.current_limit,
                                    period.current_discharge_limit);
             get_set_setpoint_limit(period.power_setpoint, new_period.power_setpoint, period.power_limit,
                                    period.power_discharge_limit);
+
+            // operationMode follows the period that contributed the winning setpoint.
+            // If the new period has a setpoint and an operationMode, and the setpoint changed from
+            // the previous value, the new period's operationMode takes precedence.
+            const bool new_period_has_setpoint = !is_equal(new_period.current_setpoint.limit, NO_SETPOINT_SPECIFIED) ||
+                                                 !is_equal(new_period.power_setpoint.limit, NO_SETPOINT_SPECIFIED);
+            if (new_period_has_setpoint && new_period.operationMode.has_value()) {
+                const bool setpoint_changed = (period.current_setpoint != prev_current_setpoint) ||
+                                              (period.power_setpoint != prev_power_setpoint);
+                if (setpoint_changed || !period.operationMode.has_value()) {
+                    period.operationMode = new_period.operationMode;
+                }
+            }
         }
 
         auto replace_max_with_no_limit = [](PeriodLimit& value, float max_value, float replacement) {
@@ -820,9 +851,12 @@ convert_intermediate_into_schedule(const IntermediateProfile& profile, ChargingR
                                                            period_out.setpoint_L2, period_out.setpoint_L3, true, false);
         }
 
+        period_out.operationMode = period.operationMode;
+
         if (output.empty() || (period_out.limit != output.back().limit) ||
             (period_out.numberPhases != output.back().numberPhases) || period_out.setpoint != output.back().setpoint ||
-            period_out.dischargeLimit != output.back().dischargeLimit) {
+            period_out.dischargeLimit != output.back().dischargeLimit ||
+            period_out.operationMode != output.back().operationMode) {
             output.push_back(period_out);
         }
     }

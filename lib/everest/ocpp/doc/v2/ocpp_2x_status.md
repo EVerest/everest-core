@@ -2584,6 +2584,11 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | V2X.03 |        |        |
 | V2X.04 |        |        |
 | V2X.05 |        |        |
+| V2X.06 |        |        |
+| V2X.07 |        |        |
+| V2X.08 |        |        |
+| V2X.09 |        |        |
+| V2X.10 |        |        |
 
 ## Bidirectional Power Transfer - V2X Authorization (New in OCPP 2.1)
 
@@ -2620,13 +2625,19 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | Q02.FR.06 |   ✅   |        |
 | Q02.FR.07 |   ✅   | The consumer of libocpp shall call `on_ev_charging_needs` when ChargeParameterDiscoveryReq is received via ISO15118       |
 
-## Bidirectional Power Transfer - Charging only (V2X control) before starting V2X (New in OCPP 2.1)
+## Bidirectional Power Transfer - Central V2X control with charging schedule (New in OCPP 2.1)
 
 | ID        | Status                        | Remark |
 | --------- | ----------------------------- | ------ |
 |           | OperationMode CentralSetpoint |        |
-| Q03.FR.01 |                               |        |
-| Q03.FR.02 |                               |        |
+| Q03.FR.01 |   🌐                          |        |
+| Q03.FR.02 |   🌐                          |        |
+| Q03.FR.03 |   🌐                          |        |
+
+## Bidirectional Power Transfer - Central V2X control with dynamic CSMS setpoint (New in OCPP 2.1)
+
+This use case adheres to requirements related to CentralSetpoint from Q03 and Dynamic charging profiles from
+K28 - Dynamic charging profiles from CSMS. There are no specific requirements for this use case.
 
 ## Bidirectional Power Transfer - External V2X setpoint control with a charging profile from CSMS (New in OCPP 2.1)
 

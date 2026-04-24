@@ -723,4 +723,99 @@ TEST(OCPPTypesTest, ChargingSchedule_Equality) {
     ASSERT_EQ(schedule1, schedule2);
 }
 
+// Mirrors the private default_intermediate_period() helper in profile.cpp so we can build
+// baseline IntermediatePeriod instances from tests without reaching into the anonymous namespace.
+IntermediatePeriod make_default_intermediate_period(std::int32_t start = 0) {
+    IntermediatePeriod p;
+    p.startPeriod = start;
+    p.current_limit = {NO_LIMIT_SPECIFIED, NO_LIMIT_SPECIFIED, NO_LIMIT_SPECIFIED};
+    p.power_limit = {NO_LIMIT_SPECIFIED, NO_LIMIT_SPECIFIED, NO_LIMIT_SPECIFIED};
+    p.current_discharge_limit = {NO_DISCHARGE_LIMIT_SPECIFIED, NO_DISCHARGE_LIMIT_SPECIFIED,
+                                 NO_DISCHARGE_LIMIT_SPECIFIED};
+    p.power_discharge_limit = {NO_DISCHARGE_LIMIT_SPECIFIED, NO_DISCHARGE_LIMIT_SPECIFIED,
+                               NO_DISCHARGE_LIMIT_SPECIFIED};
+    p.current_setpoint = {NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED};
+    p.power_setpoint = {NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED};
+    p.numberPhases = std::nullopt;
+    p.phaseToUse = std::nullopt;
+    p.operationMode = std::nullopt;
+    return p;
+}
+
+TEST(MergeTxProfileTest, OperationModeOnlyTxProfilePeriod_TxProfileWins) {
+    // tx_profile period carries a non-ChargingOnly operationMode with otherwise default limits/setpoints.
+    // The merge must treat that as a meaningful contribution so the operationMode propagates instead of
+    // silently falling through to tx_default.
+    auto tx_period = make_default_intermediate_period();
+    tx_period.operationMode = OperationModeEnum::CentralSetpoint;
+
+    auto default_period = make_default_intermediate_period();
+    default_period.current_limit = {32.0F, 32.0F, 32.0F};
+
+    IntermediateProfile tx_profile{tx_period};
+    IntermediateProfile tx_default_profile{default_period};
+
+    IntermediateProfile merged = merge_tx_profile_with_tx_default_profile(tx_profile, tx_default_profile);
+
+    ASSERT_FALSE(merged.empty());
+    ASSERT_TRUE(merged.front().operationMode.has_value());
+    EXPECT_EQ(merged.front().operationMode.value(), OperationModeEnum::CentralSetpoint);
+}
+
+TEST(MergeTxProfileTest, ExplicitChargingOnlyTxProfilePeriod_TreatedAsDefault) {
+    // Per OCPP 2.1 Q02.FR.01, a missing operationMode is equivalent to ChargingOnly. A tx_profile
+    // period that explicitly names ChargingOnly with no other content must therefore still be
+    // treated as "default", so tx_default wins the merge.
+    auto tx_period = make_default_intermediate_period();
+    tx_period.operationMode = OperationModeEnum::ChargingOnly;
+
+    auto default_period = make_default_intermediate_period();
+    default_period.current_limit = {32.0F, 32.0F, 32.0F};
+
+    IntermediateProfile tx_profile{tx_period};
+    IntermediateProfile tx_default_profile{default_period};
+
+    IntermediateProfile merged = merge_tx_profile_with_tx_default_profile(tx_profile, tx_default_profile);
+
+    ASSERT_FALSE(merged.empty());
+    EXPECT_EQ(merged.front().current_limit.limit, 32.0F);
+}
+
+TEST(MergeTxProfileTest, NumberPhasesOnlyTxProfilePeriod_TxProfileWins) {
+    // tx_profile period sets numberPhases with otherwise default limits/setpoints.
+    // The merge must treat that as a meaningful contribution so numberPhases propagates
+    // instead of silently falling through to tx_default.
+    auto tx_period = make_default_intermediate_period();
+    tx_period.numberPhases = 1;
+
+    auto default_period = make_default_intermediate_period();
+    default_period.current_limit = {32.0F, 32.0F, 32.0F};
+    default_period.numberPhases = 3;
+
+    IntermediateProfile tx_profile{tx_period};
+    IntermediateProfile tx_default_profile{default_period};
+
+    IntermediateProfile merged = merge_tx_profile_with_tx_default_profile(tx_profile, tx_default_profile);
+
+    ASSERT_FALSE(merged.empty());
+    ASSERT_TRUE(merged.front().numberPhases.has_value());
+    EXPECT_EQ(merged.front().numberPhases.value(), 1);
+}
+
+TEST(MergeTxProfileTest, EmptyTxProfilePeriod_TxDefaultWins) {
+    // Regression guard: a fully-default tx_profile period still falls through to tx_default.
+    auto tx_period = make_default_intermediate_period();
+
+    auto default_period = make_default_intermediate_period();
+    default_period.current_limit = {32.0F, 32.0F, 32.0F};
+
+    IntermediateProfile tx_profile{tx_period};
+    IntermediateProfile tx_default_profile{default_period};
+
+    IntermediateProfile merged = merge_tx_profile_with_tx_default_profile(tx_profile, tx_default_profile);
+
+    ASSERT_FALSE(merged.empty());
+    EXPECT_EQ(merged.front().current_limit.limit, 32.0F);
+}
+
 } // namespace
