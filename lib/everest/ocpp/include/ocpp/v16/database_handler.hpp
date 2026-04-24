@@ -73,6 +73,9 @@ public:
     /// table
     void update_transaction_csms_ack(const std::int32_t transaction_id);
 
+    /// \brief Returns the TransactionEntry for the given \p transaction_id, or std::nullopt if not found.
+    std::optional<TransactionEntry> get_transaction(const std::int32_t transaction_id);
+
     /// \brief Updates the START_TRANSACTION_MESSAGE_ID column for the transaction with the given \p session_id in the
     /// TRANSACTIONS table
     void update_start_transaction_message_id(const std::string& session_id,

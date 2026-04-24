@@ -3380,22 +3380,26 @@ DataTransferResponse ChargePointImpl::handle_set_session_cost(const RunningCostS
 
     const std::int32_t connector_id =
         this->transaction_handler->get_connector_from_transaction_id(std::stoi(cost.transaction_id));
-    std::string session_id = cost.transaction_id;
-    if (connector_id == -1) {
-        EVLOG_warning << "Set session cost failed: Could not set session id because transaction with transaction id "
-                      << cost.transaction_id << " is not found.";
-        return response;
-    }
 
-    const std::shared_ptr<Connector> connector = this->connectors.at(connector_id);
-    const std::shared_ptr<Transaction> transaction = this->transaction_handler->get_transaction(connector_id);
-    if (transaction == nullptr) {
-        EVLOG_warning << "Set session cost failed: Could not set session id because transaction with transaction id "
-                      << cost.transaction_id << " for connector " << connector_id << " is not found.";
-        return response;
-    }
+    std::string session_id;
+    std::shared_ptr<Connector> connector = nullptr;
 
-    session_id = transaction->get_session_id();
+    const auto transaction = (connector_id != -1) ? this->transaction_handler->get_transaction(connector_id) : nullptr;
+    if (transaction != nullptr) {
+        session_id = transaction->get_session_id();
+        connector = this->connectors.at(connector_id);
+    } else {
+        // Transaction is no longer in memory (FinalCost arrived after StopTransaction.conf).
+        // Fall back to the database, which durably stores the full transaction entry.
+        const auto db_entry = this->database_handler->get_transaction(std::stoi(cost.transaction_id));
+        if (!db_entry.has_value()) {
+            EVLOG_warning << "Set session cost failed: Could not find session_id for transaction_id "
+                          << cost.transaction_id << " in memory or database.";
+            return response;
+        }
+        session_id = db_entry.value().session_id;
+        connector = this->connectors.at(db_entry.value().connector);
+    }
 
     cost.transaction_id = session_id;
     cost.state = type;
