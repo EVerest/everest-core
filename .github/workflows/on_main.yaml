@@ -72,3 +72,6 @@ jobs:
       build_kit_artifact_name: ${{ needs.build-build-kit.outputs.build_kit_artifact_name }}
       build_kit_image_tag: ${{ needs.build-build-kit.outputs.build_kit_image_tag }}
       deploy_docs: true
+      instance_name: "nightly"
+      is_release: false
+      overwrite_existing_instance: true

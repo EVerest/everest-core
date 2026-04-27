@@ -2,6 +2,10 @@
 EVerest
 #######
 
+.. note::
+
+   Other versions of this documentation are available: `Version index <../versions_index.html>`_
+
 ********************
 Powering EV-Charging
 ********************

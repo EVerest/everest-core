@@ -70,6 +70,10 @@ html_title = f"EVerest Manual {release}"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+html_js_files = [
+    'version-switcher.js',
+]
+
 html_logo = '_static/everest_icon-color.png'
 html_favicon = '_static/favicon.png'
 
