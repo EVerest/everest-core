@@ -1,7 +1,7 @@
 [Unit]
 Description=EVerest
 Requires=mosquitto.service
-After=mosquitto.service
+After=mosquitto.service chargebridge.service
 ConditionFileNotEmpty=/etc/everest/config.yaml
 
 [Service]
