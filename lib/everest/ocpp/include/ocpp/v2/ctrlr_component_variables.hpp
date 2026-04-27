@@ -410,6 +410,13 @@ Variable get_protocol_supported_by_ev(const std::int32_t priority);
 ComponentVariable get_component_variable(const std::int32_t evse_id, const Variable& variable);
 } // namespace ConnectedEvComponentVariables
 
+namespace DERComponentVariables {
+extern const Variable Available;
+extern const Variable ModesSupported;
+ComponentVariable get_dc_component_variable(const std::int32_t evse_id, const Variable& variable);
+ComponentVariable get_ac_component_variable(const std::int32_t evse_id, const Variable& variable);
+} // namespace DERComponentVariables
+
 } // namespace v2
 } // namespace ocpp
 

@@ -1030,8 +1030,251 @@ CiString<20> DatabaseHandler::get_charging_limit_source_for_profile(const int pr
     return res;
 }
 
+// DER Control persistence
+
+void DatabaseHandler::insert_or_update_der_control(const std::string& control_id, bool is_default,
+                                                   const std::string& control_type, bool is_superseded,
+                                                   int32_t priority, const std::optional<std::string>& start_time,
+                                                   const std::optional<float>& duration,
+                                                   const std::string& control_json) {
+    const std::string sql = "INSERT OR REPLACE INTO DER_CONTROLS "
+                            "(CONTROL_ID, IS_DEFAULT, CONTROL_TYPE, IS_SUPERSEDED, PRIORITY, START_TIME, DURATION, "
+                            "CONTROL_JSON) VALUES "
+                            "(@control_id, @is_default, @control_type, @is_superseded, @priority, @start_time, "
+                            "@duration, @control_json)";
+    auto stmt = this->database->new_statement(sql);
+
+    stmt->bind_text("@control_id", control_id, SQLiteString::Transient);
+    stmt->bind_int("@is_default", is_default ? 1 : 0);
+    stmt->bind_text("@control_type", control_type, SQLiteString::Transient);
+    stmt->bind_int("@is_superseded", is_superseded ? 1 : 0);
+    stmt->bind_int("@priority", priority);
+    if (start_time.has_value()) {
+        stmt->bind_text("@start_time", start_time.value(), SQLiteString::Transient);
+    } else {
+        stmt->bind_null("@start_time");
+    }
+    if (duration.has_value()) {
+        stmt->bind_double("@duration", static_cast<double>(duration.value()));
+    } else {
+        stmt->bind_null("@duration");
+    }
+    stmt->bind_text("@control_json", control_json, SQLiteString::Transient);
+
+    if (stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+}
+
+std::optional<std::string> DatabaseHandler::get_der_control(const std::string& control_id) {
+    const std::string sql = "SELECT CONTROL_JSON FROM DER_CONTROLS WHERE CONTROL_ID = @control_id";
+    auto stmt = this->database->new_statement(sql);
+    stmt->bind_text("@control_id", control_id, SQLiteString::Transient);
+
+    if (stmt->step() == SQLITE_ROW) {
+        return std::string(stmt->column_text(0));
+    }
+    return std::nullopt;
+}
+
+std::size_t DatabaseHandler::count_der_controls() {
+    const std::string sql = "SELECT COUNT(*) FROM DER_CONTROLS";
+    auto stmt = this->database->new_statement(sql);
+    if (stmt->step() == SQLITE_ROW) {
+        const auto count = stmt->column_int(0);
+        return count < 0 ? 0U : static_cast<std::size_t>(count);
+    }
+    throw QueryExecutionException(this->database->get_error_message());
+}
+
+std::vector<std::string> DatabaseHandler::get_all_der_controls() {
+    std::vector<std::string> results;
+    const std::string sql = "SELECT CONTROL_JSON FROM DER_CONTROLS";
+    auto stmt = this->database->new_statement(sql);
+
+    while (stmt->step() == SQLITE_ROW) {
+        results.emplace_back(stmt->column_text(0));
+    }
+    return results;
+}
+
+std::vector<std::string>
+DatabaseHandler::get_der_controls_matching_criteria(const std::optional<bool>& is_default,
+                                                    const std::optional<std::string>& control_type,
+                                                    const std::optional<std::string>& control_id) {
+    std::vector<std::string> results;
+    std::string sql = "SELECT CONTROL_JSON FROM DER_CONTROLS";
+    std::vector<std::string> where_clauses;
+
+    if (is_default.has_value()) {
+        where_clauses.push_back("IS_DEFAULT = @is_default");
+    }
+    if (control_type.has_value()) {
+        where_clauses.push_back("CONTROL_TYPE = @control_type");
+    }
+    if (control_id.has_value()) {
+        where_clauses.push_back("CONTROL_ID = @control_id");
+    }
+
+    if (!where_clauses.empty()) {
+        sql += " WHERE ";
+        for (size_t i = 0; i < where_clauses.size(); ++i) {
+            if (i > 0) {
+                sql += " AND ";
+            }
+            sql += where_clauses[i];
+        }
+    }
+
+    auto stmt = this->database->new_statement(sql);
+
+    if (is_default.has_value()) {
+        stmt->bind_int("@is_default", is_default.value() ? 1 : 0);
+    }
+    if (control_type.has_value()) {
+        stmt->bind_text("@control_type", control_type.value(), SQLiteString::Transient);
+    }
+    if (control_id.has_value()) {
+        stmt->bind_text("@control_id", control_id.value(), SQLiteString::Transient);
+    }
+
+    while (stmt->step() == SQLITE_ROW) {
+        results.emplace_back(stmt->column_text(0));
+    }
+    return results;
+}
+
+bool DatabaseHandler::delete_der_control(const std::string& control_id) {
+    const std::string sql = "DELETE FROM DER_CONTROLS WHERE CONTROL_ID = @control_id";
+    auto stmt = this->database->new_statement(sql);
+    stmt->bind_text("@control_id", control_id, SQLiteString::Transient);
+
+    if (stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+    return stmt->changes() > 0;
+}
+
+bool DatabaseHandler::delete_der_control_by_id_and_default(const std::string& control_id, bool is_default) {
+    const std::string sql = "DELETE FROM DER_CONTROLS WHERE CONTROL_ID = @control_id AND IS_DEFAULT = @is_default";
+    auto stmt = this->database->new_statement(sql);
+    stmt->bind_text("@control_id", control_id, SQLiteString::Transient);
+    stmt->bind_int("@is_default", is_default ? 1 : 0);
+    if (stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+    return stmt->changes() > 0;
+}
+
+int DatabaseHandler::delete_der_controls_matching_criteria(bool is_default,
+                                                           const std::optional<std::string>& control_type) {
+    std::string sql = "DELETE FROM DER_CONTROLS WHERE IS_DEFAULT = @is_default";
+    if (control_type.has_value()) {
+        sql += " AND CONTROL_TYPE = @control_type";
+    }
+
+    auto stmt = this->database->new_statement(sql);
+    stmt->bind_int("@is_default", is_default ? 1 : 0);
+    if (control_type.has_value()) {
+        stmt->bind_text("@control_type", control_type.value(), SQLiteString::Transient);
+    }
+
+    if (stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+    return stmt->changes();
+}
+
+void DatabaseHandler::update_der_control_superseded(const std::string& control_id, bool is_superseded) {
+    const std::string sql = "UPDATE DER_CONTROLS SET IS_SUPERSEDED = @is_superseded WHERE CONTROL_ID = @control_id";
+    auto stmt = this->database->new_statement(sql);
+    stmt->bind_int("@is_superseded", is_superseded ? 1 : 0);
+    stmt->bind_text("@control_id", control_id, SQLiteString::Transient);
+
+    if (stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+}
+
 std::unique_ptr<StatementInterface> DatabaseHandler::new_statement(const std::string& sql) {
     return this->database->new_statement(sql);
+}
+
+void DatabaseHandler::set_der_control_pending_supersede(const std::string& new_control_id,
+                                                        const std::string& existing_control_id) {
+    const std::string sql = "UPDATE DER_CONTROLS SET PENDING_SUPERSEDE_ID = @pending WHERE CONTROL_ID = @control_id";
+    auto stmt = this->database->new_statement(sql);
+    stmt->bind_text("@pending", existing_control_id, SQLiteString::Transient);
+    stmt->bind_text("@control_id", new_control_id, SQLiteString::Transient);
+    if (stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+}
+
+void DatabaseHandler::clear_der_control_pending_supersede(const std::string& control_id) {
+    const std::string sql = "UPDATE DER_CONTROLS SET PENDING_SUPERSEDE_ID = NULL WHERE CONTROL_ID = @control_id";
+    auto stmt = this->database->new_statement(sql);
+    stmt->bind_text("@control_id", control_id, SQLiteString::Transient);
+    if (stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+}
+
+std::vector<std::string> DatabaseHandler::get_der_controls_needing_start_notify(const DateTime& now) {
+    const std::string sql = "SELECT CONTROL_ID FROM DER_CONTROLS WHERE IS_DEFAULT = 0 AND IS_SUPERSEDED = 0 AND "
+                            "STARTED_NOTIFIED = 0 AND START_TIME IS NOT NULL AND START_TIME <= @now";
+    auto stmt = this->database->new_statement(sql);
+    stmt->bind_text("@now", now.to_rfc3339(), SQLiteString::Transient);
+
+    std::vector<std::string> out;
+    while (true) {
+        const auto status = stmt->step();
+        if (status == SQLITE_DONE) {
+            break;
+        }
+        if (status != SQLITE_ROW) {
+            throw QueryExecutionException(this->database->get_error_message());
+        }
+        out.emplace_back(stmt->column_text(0));
+    }
+    return out;
+}
+
+void DatabaseHandler::mark_der_control_started_notified(const std::string& control_id) {
+    const std::string sql = "UPDATE DER_CONTROLS SET STARTED_NOTIFIED = 1 WHERE CONTROL_ID = @control_id";
+    auto stmt = this->database->new_statement(sql);
+    stmt->bind_text("@control_id", control_id, SQLiteString::Transient);
+    if (stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+}
+
+std::vector<DatabaseHandlerInterface::PendingSupersedeActivation>
+DatabaseHandler::get_der_control_pending_supersede_activations(const DateTime& now) {
+    const std::string sql = "SELECT CONTROL_ID, PENDING_SUPERSEDE_ID FROM DER_CONTROLS WHERE "
+                            "PENDING_SUPERSEDE_ID IS NOT NULL AND START_TIME IS NOT NULL AND START_TIME <= @now";
+    auto stmt = this->database->new_statement(sql);
+    stmt->bind_text("@now", now.to_rfc3339(), SQLiteString::Transient);
+
+    std::vector<PendingSupersedeActivation> out;
+    while (true) {
+        const auto status = stmt->step();
+        if (status == SQLITE_DONE) {
+            break;
+        }
+        if (status != SQLITE_ROW) {
+            throw QueryExecutionException(this->database->get_error_message());
+        }
+        PendingSupersedeActivation a;
+        a.new_id = stmt->column_text(0);
+        a.existing_id = stmt->column_text(1);
+        out.push_back(std::move(a));
+    }
+    return out;
+}
+
+std::unique_ptr<TransactionInterface> DatabaseHandler::begin_transaction() {
+    return this->database->begin_transaction();
 }
 
 } // namespace v2

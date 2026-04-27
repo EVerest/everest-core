@@ -2746,39 +2746,57 @@ CSMS setpoint and Dynamic charging profiles from K01. There are no specific requ
 
 ## DER Control - Configure DER control settings at Charging Station (New in OCPP 2.1)
 
-| ID        | Status             | Remark |
-| --------- | ------------------ | ------ |
-|           | SetDERControl      |        |
-| R04.FR.01 |                    |        |
-| R04.FR.02 |                    |        |
-| R04.FR.03 |                    |        |
-| R04.FR.04 |                    |        |
-| R04.FR.05 |                    |        |
-| R04.FR.06 |                    |        |
-| R04.FR.07 |                    |        |
-| R04.FR.08 |                    |        |
-| R04.FR.09 |                    |        |
-| R04.FR.10 |                    |        |
-| R04.FR.11 |                    |        |
-|           | NotifyDERStartStop |        |
-| R04.FR.20 |                    |        |
-| R04.FR.21 |                    |        |
-| R04.FR.23 |                    |        |
-|           | GetDERControl      |        |
-| R04.FR.30 |                    |        |
-| R04.FR.31 |                    |        |
-| R04.FR.32 |                    |        |
-| R04.FR.33 |                    |        |
-| R04.FR.34 |                    |        |
-| R04.FR.35 |                    |        |
-| R04.FR.36 |                    |        |
-|           | ClearDERControl    |        |
-| R04.FR.40 |                    |        |
-| R04.FR.41 |                    |        |
-| R04.FR.42 |                    |        |
-| R04.FR.43 |                    |        |
-| R04.FR.44 |                    |        |
-| R04.FR.45 |                    |        |
+| ID        | Status | Remark |
+| --------- | ------ | ------ |
+|           | **SetDERControl** | |
+| R04.FR.01 | ✅     | Unsupported controlType returns NotSupported |
+| R04.FR.02 | ✅     | New default control accepted |
+| R04.FR.03 | ✅     | Default supersedes existing lower-priority default (strictly lower value) |
+| R04.FR.04 | ⛽️     | Default accepted while scheduled active; apply deferred |
+| R04.FR.05 | ✅     | New scheduled control accepted |
+| R04.FR.06 | ✅     | Scheduled supersedes not-yet-active (strictly lower priority value) |
+| R04.FR.07 | ✅     | Active-scheduled supersede deferred until new.startTime (PENDING_SUPERSEDE_ID) |
+| R04.FR.08 | ✅     | New scheduled with higher priority value stored isSuperseded; supersededIds echoes new controlId |
+| R04.FR.09 | ⛽️     | Superseded controls not executed; apply deferred |
+| R04.FR.10 | ✅     | Delete expired controls atomically in scheduled-check sweep |
+| R04.FR.11 | ⛽️     | Default remains in DB after scheduled expires; apply deferred |
+| R04.FR.12 | 🌐     | CSMS SHALL NOT send isDefault=true with startTime/duration |
+| R04.FR.13 | ✅     | Default with startTime/duration rejected |
+| R04.FR.14 | 🌐     | CSMS SHALL NOT send isDefault=false for EnterService/Gradients |
+| R04.FR.15 | ✅     | Scheduled EnterService/Gradients rejected |
+| R04.FR.16 | ✅     | Control field must match controlType |
+| R04.FR.17 | ✅     | Multiple or wrong control fields rejected |
+| R04.FR.18 | ✅     | DC / AC: report supported types in {DC,AC}DERCtrlr.ModesSupported |
+| R04.FR.19 | 🌐     | CSMS SHOULD NOT send unsupported controlType |
+|           | **NotifyDERStartStop** | |
+| R04.FR.20 | ✅     | Send started=true on immediate start AND when future startTime becomes current |
+| R04.FR.21 | ✅     | Send started=true with supersededIds when superseding (immediate and deferred paths) |
+| R04.FR.22 | ✅     | Send started=false when control expires; scan + notify + delete is one DB transaction |
+|           | **GetDERControl** | |
+| R04.FR.30 | ✅     | No matching controls returns NotFound |
+| R04.FR.31 | ✅     | requestId propagated to ReportDERControl |
+| R04.FR.32 | ✅     | tbc flag for multi-message reports; default chunk size of 10 |
+| R04.FR.33 | ✅     | No filters returns all controls |
+| R04.FR.34 | ✅     | Filter by controlType |
+| R04.FR.35 | ✅     | Filter by controlId |
+| R04.FR.36 | ✅     | Unsupported controlType returns NotSupported |
+| R04.FR.37 | ✅     | Filter by isDefault only |
+|           | **ClearDERControl** | |
+| R04.FR.40 |        | (removed in Edition 2) |
+| R04.FR.41 | ✅     | controlType not found returns NotFound |
+| R04.FR.42 | ✅     | controlId lookup scoped by isDefault — wrong isDefault returns NotFound |
+| R04.FR.43 | ✅     | Unsupported controlType returns NotSupported |
+| R04.FR.44 | ✅     | Clear all by isDefault |
+| R04.FR.45 | ✅     | Clear by type and isDefault |
+| R04.FR.46 | ✅     | Clear by specific controlId |
+|           | **yUnits** | |
+| R04.FR.50 | ✅     | FreqWatt curve yUnit = PctMaxW or PctWAvail |
+| R04.FR.51 | ✅     | Trip curve yUnit = Not_Applicable |
+| R04.FR.52 | ✅     | VoltVar curve yUnit = PctMaxVar or PctVarAvail |
+| R04.FR.53 | ✅     | VoltWatt curve yUnit = PctMaxW or PctWAvail |
+| R04.FR.54 | ✅     | WattPF curve yUnit = Not_Applicable |
+| R04.FR.55 | ✅     | WattVar curve yUnit = PctMaxVar or PctVarAvail |
+| R04.FR.56 | ✅     | LimitMaxDischarge powerMonitoringMustTrip yUnit = Not_Applicable |
 
 ## DER Control - Charging station reporting a DER event (New in OCPP 2.1)
 
