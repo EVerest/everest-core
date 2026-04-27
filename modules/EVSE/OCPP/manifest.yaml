@@ -84,6 +84,9 @@ provides:
   session_cost:
     description: Send session cost
     interface: session_cost
+  ocpp_debug:
+    description: Debug OCPP interface.
+    interface: ocpp_debug
 requires:
   charger_information:
     interface: charger_information

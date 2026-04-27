@@ -36,6 +36,20 @@ void update_evcc_id_token(ocpp::v2::IdToken& id_token, const std::string& evcc_i
         id_token.additionalInfo = info_vector;
     }
 }
+
+std::string ocpp_protocol_version_to_string(const ocpp::OcppProtocolVersion ocpp_protocol_version) {
+    switch (ocpp_protocol_version) {
+    case ocpp::OcppProtocolVersion::v16:
+        return "1.6";
+    case ocpp::OcppProtocolVersion::v201:
+        return "2.0.1";
+    case ocpp::OcppProtocolVersion::v21:
+        return "2.1";
+    case ocpp::OcppProtocolVersion::Unknown:
+        return "Unknown";
+    }
+    return "Unknown";
+}
 } // namespace
 
 namespace module {
@@ -949,6 +963,30 @@ void OCPP201::ready() {
                    types::evse_manager::UpdateAllowedEnergyTransferModesResult::Accepted;
         }
         return false;
+    };
+
+    callbacks.ocpp_messages_callback = [this](const std::string& message, ocpp::MessageDirection direction) {
+        switch (direction) {
+        case ocpp::MessageDirection::CSMSToChargingStation: {
+            types::ocpp::Message ocpp_message;
+            ocpp_message.message = message;
+            ocpp_message.version = ocpp_protocol_version_to_string(this->ocpp_protocol_version);
+            ocpp_message.direction = types::ocpp::MessageDirection::CSMSToChargingStation;
+            p_ocpp_debug->publish_ocpp_message(ocpp_message);
+            break;
+        }
+        case ocpp::MessageDirection::ChargingStationToCSMS: {
+            types::ocpp::Message ocpp_message;
+            ocpp_message.message = message;
+            ocpp_message.version = ocpp_protocol_version_to_string(this->ocpp_protocol_version);
+            ocpp_message.direction = types::ocpp::MessageDirection::ChargingStationToCSMS;
+            p_ocpp_debug->publish_ocpp_message(ocpp_message);
+            break;
+        }
+        default:
+            // unknown message direction (ignored)
+            break;
+        }
     };
 
     {

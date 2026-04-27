@@ -1,0 +1,8 @@
+description: >-
+  This interface allows access to OCPP debug messages
+cmds: {}
+vars:
+  ocpp_message:
+    description: A serialized OCPP message
+    type: object
+    $ref: /ocpp#/Message

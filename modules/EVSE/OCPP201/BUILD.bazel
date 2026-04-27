@@ -4,6 +4,7 @@ IMPLS = [
     "auth_validator",
     "auth_provider",
     "data_transfer",
+    "ocpp_debug",
     "ocpp_generic",
     "session_cost",
 ]
