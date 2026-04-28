@@ -49,6 +49,7 @@ set(LIBOCPP_TEST_DEFAULT_LINK_LIBRARIES
         nlohmann_json::nlohmann_json
         date::date-tz
         everest::log
+        everest::util
         everest::evse_security
         everest::sqlite
 )

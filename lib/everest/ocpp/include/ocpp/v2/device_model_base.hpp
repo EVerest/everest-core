@@ -5,10 +5,9 @@
 
 #include <everest/logging.hpp>
 
-#include <ocpp/common/utils.hpp>
 #include <ocpp/v2/comparators.hpp>
+#include <ocpp/v2/device_model_helpers.hpp>
 #include <ocpp/v2/device_model_interface.hpp>
-#include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
 namespace v2 {
@@ -19,64 +18,6 @@ template <typename T> struct RequestDeviceModelResponse {
     GetVariableStatusEnum status;
     std::optional<T> value;
 };
-
-template <typename T> T to_specific_type(const std::string& value) {
-    static_assert(std::is_same_v<T, std::string> || std::is_same_v<T, int> || std::is_same_v<T, double> ||
-                      std::is_same_v<T, size_t> || std::is_same_v<T, DateTime> || std::is_same_v<T, bool> ||
-                      std::is_same_v<T, std::uint64_t>,
-                  "Requested unknown datatype");
-
-    if constexpr (std::is_same_v<T, std::string>) {
-        return value;
-    } else if constexpr (std::is_same_v<T, int>) {
-        return std::stoi(value);
-    } else if constexpr (std::is_same_v<T, double>) {
-        return std::stod(value);
-    } else if constexpr (std::is_same_v<T, std::size_t>) {
-        const std::size_t res = std::stoul(value);
-        return res;
-    } else if constexpr (std::is_same_v<T, DateTime>) {
-        return DateTime(value);
-    } else if constexpr (std::is_same_v<T, bool>) {
-        if (!is_boolean(value)) {
-            throw std::invalid_argument("Invalid boolean value: " + value);
-        }
-        return ocpp::conversions::string_to_bool(value);
-    } else if constexpr (std::is_same_v<T, std::uint64_t>) {
-        return std::stoull(value);
-    }
-}
-
-template <DataEnum T> auto to_specific_type_auto(const std::string& value) {
-    static_assert(T == DataEnum::string || T == DataEnum::integer || T == DataEnum::decimal ||
-                      T == DataEnum::dateTime || T == DataEnum::boolean,
-                  "Requested unknown datatype");
-
-    if constexpr (T == DataEnum::string) {
-        return to_specific_type<std::string>(value);
-    } else if constexpr (T == DataEnum::integer) {
-        return to_specific_type<int>(value);
-    } else if constexpr (T == DataEnum::decimal) {
-        return to_specific_type<double>(value);
-    } else if constexpr (T == DataEnum::dateTime) {
-        return to_specific_type<DateTime>(value);
-    } else if constexpr (T == DataEnum::boolean) {
-        return to_specific_type<bool>(value);
-    }
-}
-
-template <DataEnum T> bool is_type_numeric() {
-    static_assert(T == DataEnum::string || T == DataEnum::integer || T == DataEnum::decimal ||
-                      T == DataEnum::dateTime || T == DataEnum::boolean || T == DataEnum::OptionList ||
-                      T == DataEnum::SequenceList || T == DataEnum::MemberList,
-                  "Requested unknown datatype");
-
-    if constexpr (T == DataEnum::integer || T == DataEnum::decimal) {
-        return true;
-    } else {
-        return false;
-    }
-}
 
 /// \brief Base class for device model implementations, provides templated getters for variable attribute values
 class DeviceModelBase {

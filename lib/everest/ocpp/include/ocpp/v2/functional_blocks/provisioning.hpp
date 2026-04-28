@@ -128,7 +128,27 @@ private:
     /// already in \param request \return
     void handle_variable_changed(const SetVariableData& set_variable_data);
     void handle_variables_changed(const std::map<SetVariableData, SetVariableResult>& set_variable_results);
-    bool validate_set_variable(const SetVariableData& set_variable_data);
+    /// \brief Validate a SetVariable request
+    /// \param set_variable_data The variable data to validate
+    /// \return std::nullopt if valid, or a reason code string if rejected
+    std::optional<std::string> validate_set_variable(const SetVariableData& set_variable_data);
+    std::optional<std::string> validate_set_network_configuration_slot(const SetVariableData& set_variable_data,
+                                                                       const ComponentVariable& cv);
+    std::optional<std::string> validate_network_configuration_priority(const SetVariableData& set_variable_data);
+
+    /// \brief Validate URL scheme / security profile / certificate consistency for a single network profile
+    /// \return std::nullopt if valid, or a reason code string if rejected
+    std::optional<std::string> validate_network_connection_profile(int32_t configuration_slot,
+                                                                   const NetworkConnectionProfile& profile);
+
+    /// \brief B09.FR.26/27: Clear the given NetworkConfiguration variable on the currently active slot only.
+    /// Does nothing if no slot is currently active. \p reason_tag is a short spec reference used in log output.
+    void clear_active_slot_variable(const Variable& variable, const std::string& reason_tag);
+
+    /// \brief B09.FR.05: return true if \p slot is listed in NetworkConfigurationPriority.valuesList
+    /// (the set of slot values the station is configured to support). Falls back to the currently
+    /// set NetworkConfigurationPriority if the characteristics cannot be read.
+    bool is_slot_allowed_by_priority_values_list(int32_t slot);
 
     /// \brief Sets variables specified within \p set_variable_data_vector in the device model and returns the result.
     /// \param set_variable_data_vector contains data of the variables to set
