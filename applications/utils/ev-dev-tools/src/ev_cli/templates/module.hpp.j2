@@ -25,13 +25,66 @@
 
 namespace module {
 
-struct Conf {
-    {% for item in info.module_config %}
+struct RwConf {
+    {% for item in info.module_rwconfig %}
     {{ cpp_type(item) }} {{ item.name }};
     {% endfor %}
 };
 
+{% for item in info.module_rwconfig %}
+{% if loop.first %}
+struct RwConfUpdate {
+    using ConfigChangeResult = Everest::config::ConfigChangeResult;
+
+    virtual ~RwConfUpdate() = default;
+
+    // override in class {{ info.class_name }} adding the implementation to {{ info.class_name }}.cpp
+    // or inline
+    // e.g.
+    // ConfigChangeResult on_{{ item.name }}_changed(const {{ cpp_type(item) }}& value) override {
+    //     rw_config.{{ item.name }} = value;
+    //     return ConfigChangeResult::Accepted();
+    // }
+
+{% endif %}
+    virtual ConfigChangeResult on_{{ item.name }}_changed(const {{ cpp_type(item) }}& /* value */) {
+        return ConfigChangeResult::Rejected("handler not implemented");
+    }
+{% if loop.last %}
+};
+{% endif %}
+{% endfor %}
+
+struct Conf {
+    {% for item in info.module_config %}
+    {{ cpp_type(item) }} {{ item.name }};
+    {% endfor %}
+
+    {% for item in info.module_rwconfig %}
+    const {{ cpp_type(item) }}& {{ item.name }};
+    {% endfor %}
+
+    {% for item in info.module_rwconfig %}
+    {% if loop.first %}
+    Conf(const RwConf& rw):
+    {% endif %}
+    {% if loop.last %}
+    {{ item.name }}(rw.{{ item.name }}) {}
+    {% else %}
+    {{ item.name }}(rw.{{ item.name }}),
+    {% endif %}
+    {% else %}
+    Conf() = default;
+    Conf(const RwConf&) {
+    };
+    {% endfor %}
+};
+
+{% if info.module_rwconfig|length > 0 %}
+class {{ info.class_name }} : public Everest::ModuleBase, public RwConfUpdate {
+{% else %}
 class {{ info.class_name }} : public Everest::ModuleBase {
+{% endif %}
 public:
     {{ info.class_name }}() = delete;
     {{ info.class_name }}(
@@ -52,7 +105,12 @@ public:
         std::unique_ptr<{{ requirement.class_name }}> r_{{ requirement.id }},
         {% endif %}
         {% endfor %}
+        {% if info.module_rwconfig|length > 0 %}
+        Conf& config,
+        RwConf& rw_config
+        {% else %}
         Conf& config
+        {% endif %}
     ) :
         ModuleBase(info),
         {% if info.enable_external_mqtt %}
@@ -67,7 +125,12 @@ public:
         {% for requirement in requires %}
         r_{{ requirement.id }}(std::move(r_{{ requirement.id }})),
         {% endfor %}
+        {% if info.module_rwconfig|length > 0 %}
+        config(config),
+        rw_config(rw_config)
+        {% else %}
         config(config)
+        {% endif %}
     {};
 
     {% if info.enable_external_mqtt %}
@@ -87,6 +150,9 @@ public:
     {% endif %}
     {% endfor %}
     const Conf& config;
+    {% if info.module_rwconfig|length > 0 %}
+    RwConf& rw_config;
+    {% endif %}
 
     {{ insert_block(info.blocks.public_defs, indent=4) }}
 

@@ -39,6 +39,7 @@ using StringPairHandler = std::function<void(const std::string& topic, const std
 enum class HandlerType {
     Call,
     Result,
+    RuntimeConfigSet,
     SubscribeVar,
     SubscribeError,
     ConfigurationRequest,
@@ -90,6 +91,8 @@ enum class MqttMessageType {
     ClearError,            ///< Clear error message
     ConfigurationRequest,  ///< Configuration request (get or set)
     ConfigurationResponse, ///< Configuration response
+    SetConfigRequest,      ///< Set Configuration request
+    SetConfigResponse,     ///< Set Configuration response
     Telemetry,             ///< Telemetry message
     Heartbeat,             ///< Heartbeat message
     ModuleReady,           ///< Module ready message

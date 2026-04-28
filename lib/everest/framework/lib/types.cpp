@@ -53,6 +53,10 @@ std::string mqtt_message_type_to_string(MqttMessageType type) {
         return "ConfigurationRequest";
     case MqttMessageType::ConfigurationResponse:
         return "ConfigurationResponse";
+    case MqttMessageType::SetConfigRequest:
+        return "SetConfigRequest";
+    case MqttMessageType::SetConfigResponse:
+        return "SetConfigResponse";
     case MqttMessageType::Heartbeat:
         return "Heartbeat";
     case MqttMessageType::ModuleReady:
@@ -81,6 +85,10 @@ MqttMessageType string_to_mqtt_message_type(const std::string& str) {
         return MqttMessageType::ConfigurationRequest;
     } else if (str == "ConfigurationResponse") {
         return MqttMessageType::ConfigurationResponse;
+    } else if (str == "SetConfigRequest") {
+        return MqttMessageType::SetConfigRequest;
+    } else if (str == "SetConfigResponse") {
+        return MqttMessageType::SetConfigResponse;
     } else if (str == "Heartbeat") {
         return MqttMessageType::Heartbeat;
     } else if (str == "ModuleReady") {

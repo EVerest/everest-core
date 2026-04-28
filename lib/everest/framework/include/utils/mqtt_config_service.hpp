@@ -3,7 +3,9 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <memory>
+#include <string_view>
 #include <unordered_map>
 
 #include <utils/config/types.hpp>
@@ -120,8 +122,27 @@ struct ModuleIdType {
     bool operator<(const ModuleIdType& rhs) const;
 };
 
+struct ConfigChangeResult {
+    SetResponseStatus status;
+    std::string reason; ///< only meaningful when status == Rejected
+
+    static ConfigChangeResult Accepted() {
+        return {SetResponseStatus::Accepted, {}};
+    }
+
+    static ConfigChangeResult AcceptedRebootRequired() {
+        return {SetResponseStatus::RebootRequired, {}};
+    }
+
+    static ConfigChangeResult Rejected(const std::string& reason) {
+        return {SetResponseStatus::Rejected, reason};
+    }
+};
+
 class ConfigServiceClient {
 public:
+    using ConfigChangeHandler = std::function<ConfigChangeResult(const std::string& new_value)>;
+
     /// \brief ConfigService client using the provided \p mqtt_abstraction for the module identified by \p module_id
     /// \p module_names is a mapping of all module ids to module names/types for usage in get_module_configs()
     ConfigServiceClient(std::shared_ptr<MQTTAbstraction> mqtt_abstraction, const std::string& module_id,
@@ -142,10 +163,16 @@ public:
     /// \returns a result containing the configuration item or an error
     GetConfigResult get_config_value(const everest::config::ConfigurationParameterIdentifier& identifier);
 
+    void register_config_change_handler(const std::string_view name, ConfigChangeHandler handler);
+
 private:
     std::shared_ptr<MQTTAbstraction> mqtt_abstraction;
     std::string origin;
     std::unordered_map<std::string, std::string> module_names;
+    std::map<std::string, ConfigChangeHandler> change_callbacks;
+    std::shared_ptr<TypedHandler> change_token;
+
+    void mqtt_set_request(const nlohmann::json& data);
 };
 
 class MqttConfigServiceHandler {
@@ -165,6 +192,13 @@ private:
 };
 
 namespace conversions {
+
+// strings should already be valid
+template <typename T> T ConfigFromString(const std::string& value) = delete;
+template <> bool ConfigFromString<bool>(const std::string& value);
+template <> int ConfigFromString<int>(const std::string& value);
+template <> double ConfigFromString<double>(const std::string& value);
+
 std::string type_to_string(Type type);
 
 Type string_to_type(const std::string& type);
