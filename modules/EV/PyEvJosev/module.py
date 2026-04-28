@@ -87,6 +87,7 @@ class PyEVJosevModule():
 
         self._mod = m
         self._mod.init_done(self._ready)
+        self._mod.shutdown_handler(self._shutdown)
 
     def start_evcc_handler(self):
         while True:
@@ -101,6 +102,9 @@ class PyEVJosevModule():
 
     def _ready(self):
         log.debug("ready!")
+
+    def _shutdown(self):
+        log.debug("shutdown")
 
     # implementation handlers
 

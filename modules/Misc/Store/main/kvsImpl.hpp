@@ -51,6 +51,7 @@ private:
 
     virtual void init() override;
     virtual void ready() override;
+    void shutdown();
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     std::map<std::string, std::variant<std::nullptr_t, Array, Object, bool, double, int, std::string>> kvs{};

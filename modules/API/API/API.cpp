@@ -760,4 +760,11 @@ void API::ready() {
     });
 }
 
+void API::shutdown() {
+    this->running = false;
+    for (auto& api_thread : this->api_threads) {
+        api_thread.join();
+    }
+}
+
 } // namespace module

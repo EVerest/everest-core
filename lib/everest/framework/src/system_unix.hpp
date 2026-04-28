@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
+#include <cstdint>
+#include <poll.h>
 #include <sys/types.h>
 
 namespace Everest::system {
@@ -37,5 +40,17 @@ std::string set_caps(const std::vector<std::string>& capabilities);
 std::string set_real_user(const std::string& user_name);
 
 std::string set_user_and_capabilities(const std::string& run_as_user, const std::vector<std::string>& capabilities);
+
+class SignalPolling {
+public:
+    SignalPolling();
+
+    std::optional<uint32_t> poll_signal();
+
+private:
+    bool available = false;
+    int signal_fd = -1;
+    struct pollfd pollfds[1];
+};
 
 } // namespace Everest::system

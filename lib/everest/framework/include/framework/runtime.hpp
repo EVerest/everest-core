@@ -116,6 +116,7 @@ struct ModuleCallbacks {
     std::function<std::vector<cmd>(const RequirementInitialization& requirement_init)> everest_register;
     std::function<void(ModuleConfigs module_configs, const ModuleInfo& info)> init;
     std::function<void()> ready;
+    std::function<void()> shutdown;
 
     ModuleCallbacks() = default;
 
@@ -123,7 +124,7 @@ struct ModuleCallbacks {
         const std::function<void(ModuleAdapter module_adapter)>& register_module_adapter,
         const std::function<std::vector<cmd>(const RequirementInitialization& requirement_init)>& everest_register,
         const std::function<void(ModuleConfigs module_configs, const ModuleInfo& info)>& init,
-        const std::function<void()>& ready);
+        const std::function<void()>& ready, const std::function<void()>& shutdown = nullptr);
 };
 
 ///\brief Version information

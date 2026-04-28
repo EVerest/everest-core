@@ -90,6 +90,11 @@ void LdEverest::ready() {
     mod_ptr->ready();
 }
 
+void LdEverest::shutdown() {
+    EVLOG_debug << "shutdown() called on module {{ info.name }}";
+    mod_ptr->shutdown();
+}
+
 void register_module_adapter(Everest::ModuleAdapter module_adapter) {
     adapter = std::move(module_adapter);
 }
@@ -165,7 +170,7 @@ int main(int argc, char* argv[]) {
 
     auto module_loader = Everest::ModuleLoader(argc, argv, Everest::ModuleCallbacks(
         module::register_module_adapter, module::everest_register,
-        module::LdEverest::init, module::LdEverest::ready),
+        module::LdEverest::init, module::LdEverest::ready, module::LdEverest::shutdown),
         {PROJECT_NAME, PROJECT_VERSION, GIT_VERSION});
 
     return module_loader.initialize();

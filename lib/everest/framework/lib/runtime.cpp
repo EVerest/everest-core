@@ -425,8 +425,12 @@ ModuleCallbacks::ModuleCallbacks(
     const std::function<void(ModuleAdapter module_adapter)>& register_module_adapter,
     const std::function<std::vector<cmd>(const RequirementInitialization& requirement_init)>& everest_register,
     const std::function<void(ModuleConfigs module_configs, const ModuleInfo& info)>& init,
-    const std::function<void()>& ready) :
-    register_module_adapter(register_module_adapter), everest_register(everest_register), init(init), ready(ready) {
+    const std::function<void()>& ready, const std::function<void()>& shutdown) :
+    register_module_adapter(register_module_adapter),
+    everest_register(everest_register),
+    init(init),
+    ready(ready),
+    shutdown(shutdown) {
 }
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays): pass-through of argc and argv from main()
@@ -603,6 +607,10 @@ int ModuleLoader::initialize() {
         // this handler gets called when the global ready signal is received
         everest.register_on_ready_handler(this->callbacks.ready);
 
+        // register the modules shutdown handler with the framework
+        // this handler gets called when the global shutdown signal is received
+        everest.register_on_shutdown_handler(this->callbacks.shutdown);
+
         // the module should now be ready
         everest.signal_ready();
 
@@ -611,8 +619,6 @@ int ModuleLoader::initialize() {
                    << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << "ms]";
 
         everest.wait_for_main_loop_end();
-
-        EVLOG_info << "Exiting...";
     } catch (boost::exception& e) {
         EVLOG_critical << fmt::format("Caught top level boost::exception:\n{}", boost::diagnostic_information(e, true));
     } catch (std::exception& e) {

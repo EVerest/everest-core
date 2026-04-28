@@ -38,6 +38,7 @@ using json_uri = nlohmann::json_uri;
 using json_validator = nlohmann::json_schema::json_validator;
 
 const auto remote_cmd_res_timeout_seconds = 300;
+const auto remote_cmd_res_timeout_step = std::chrono::seconds(1);
 const std::array<std::string_view, 3> TELEMETRY_RESERVED_KEYS = {{"connector_id"}};
 constexpr auto ensure_ready_timeout_ms = 100;
 
@@ -49,6 +50,7 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
     module_id(std::move(module_id_)),
     ready_received(false),
     ready_processed(false),
+    shutdown_received(false),
     remote_cmd_res_timeout(remote_cmd_res_timeout_seconds),
     validate_data_with_schema(validate_data_with_schema),
     mqtt_everest_prefix(mqtt_abstraction->get_everest_prefix()),
@@ -69,6 +71,7 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
     this->telemetry_config = this->config.get_telemetry_config();
 
     this->on_ready = nullptr;
+    this->on_shutdown = nullptr;
 
     // setup error_manager_req_global if enabled + error_database + error_state_monitor
     if (this->module_manifest.contains("enable_global_errors") &&
@@ -204,6 +207,13 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
         std::make_shared<TypedHandler>(HandlerType::GlobalReady, std::make_shared<Handler>(handle_ready_wrapper));
     this->mqtt_abstraction->register_handler(fmt::format("{}ready", mqtt_everest_prefix), everest_ready, QOS::QOS2);
 
+    // register handler for global shutdown signal
+    Handler handle_shutdown_wrapper = [this](const std::string&, const json& data) { this->handle_shutdown(data); };
+    std::shared_ptr<TypedHandler> everest_shutdown =
+        std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(handle_shutdown_wrapper));
+    this->mqtt_abstraction->register_handler(fmt::format("{}shutdown", mqtt_everest_prefix), everest_shutdown,
+                                             QOS::QOS2);
+
     this->publish_metadata();
 }
 
@@ -267,6 +277,13 @@ void Everest::register_on_ready_handler(const std::function<void()>& handler) {
     BOOST_LOG_FUNCTION();
 
     this->on_ready = std::make_unique<std::function<void()>>(handler);
+}
+
+void Everest::register_on_shutdown_handler(const std::function<void()>& handler) {
+    BOOST_LOG_FUNCTION();
+    if (handler != nullptr) {
+        this->on_shutdown = std::make_unique<std::function<void()>>(handler);
+    }
 }
 
 std::optional<ModuleTierMappings> Everest::get_3_tier_model_mapping() {
@@ -416,8 +433,16 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
         std::chrono::steady_clock::now() + this->remote_cmd_res_timeout;
     std::future_status res_future_status = std::future_status::deferred;
     do {
-        res_future_status = res_future.wait_until(res_wait);
-    } while (res_future_status == std::future_status::deferred);
+        res_future_status = res_future.wait_for(remote_cmd_res_timeout_step);
+    } while (!this->shutdown_received &&
+             (res_future_status == std::future_status::deferred ||
+              (res_future_status == std::future_status::timeout && std::chrono::steady_clock::now() < res_wait)));
+
+    if (this->shutdown_received) {
+        EVLOG_AND_THROW(Shutdown(fmt::format(
+            "Shutting down while waiting for result of {}->{}()",
+            this->config.printable_identifier(connection.module_id, connection.implementation_id), cmd_name)));
+    }
 
     CmdResult result;
     if (res_future_status == std::future_status::timeout) {
@@ -822,6 +847,15 @@ void Everest::ensure_ready() const {
     }
 }
 
+void Everest::signal_shutdown() {
+    BOOST_LOG_FUNCTION();
+
+    EVLOG_info << "Module " << this->module_id << " requested shutdown of EVerest.";
+
+    // FIXME: maybe make this a publish tied to the module like with ready?
+    this->mqtt_abstraction->publish(fmt::format("{}shutdown", mqtt_everest_prefix), json(true));
+}
+
 ///
 /// \brief Ready handler for global readyness (e.g. all modules are ready now).
 /// This will called when receiving the global ready signal from manager.
@@ -861,6 +895,39 @@ void Everest::handle_ready(const json& data) {
 
     // TODO(kai): make heartbeat interval configurable, disable it completely until then
     // this->heartbeat_thread = std::thread(&Everest::heartbeat, this);
+}
+
+/// \brief Shutdown handler for shutting down the module
+void Everest::handle_shutdown(const json& data) {
+    BOOST_LOG_FUNCTION();
+
+    EVLOG_debug << fmt::format("handle_shutdown: {}", data.dump());
+
+    bool shutdown = false;
+
+    if (data.is_boolean()) {
+        shutdown = data.get<bool>();
+    }
+
+    // ignore non-truish shutdown signals
+    if (!shutdown) {
+        return;
+    }
+
+    if (this->shutdown_received) {
+        EVLOG_warning << "Ignoring repeated everest shutdown signal!";
+        return;
+    }
+    this->shutdown_received = true;
+
+    if (this->on_shutdown != nullptr) {
+        auto on_shutdown_handler = *on_shutdown;
+        on_shutdown_handler();
+    } else {
+        EVLOG_warning << "No shutdown handler registered for module " << this->module_id;
+    }
+
+    this->mqtt_abstraction->disconnect();
 }
 
 void Everest::provide_cmd(const std::string& impl_id, const std::string& cmd_name, const JsonCommand& handler) {
