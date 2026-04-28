@@ -88,7 +88,11 @@ MQTTAbstractionImpl::MQTTAbstractionImpl(const MQTTSettings& mqtt_settings) :
 }
 
 MQTTAbstractionImpl::~MQTTAbstractionImpl() {
-    // this->mqtt_mainloop_thread.join();
+    // Ensure the event loop thread is stopped before members are destroyed.
+    // Otherwise `Thread` may try to join while dependencies used by the thread
+    // (event handler/event fd/mqtt client) are already being torn down.
+    disconnect();
+    mqtt_mainloop_thread.stop();
 }
 
 bool MQTTAbstractionImpl::connect() {
@@ -120,7 +124,11 @@ bool MQTTAbstractionImpl::connect() {
 void MQTTAbstractionImpl::disconnect() {
     BOOST_LOG_FUNCTION();
 
+    this->running = false;
     this->disconnect_event.notify();
+    if (this->mqtt_client) {
+        this->mqtt_client->disconnect();
+    }
 
     // FIXME(kai): always set connected to false for the moment
     this->mqtt_is_connected = false;

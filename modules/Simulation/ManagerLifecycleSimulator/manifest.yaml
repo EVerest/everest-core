@@ -1,0 +1,10 @@
+description: Simulation module for manager lifecycle behavior (exit/block) over MQTT. Used to test manager crash recovery and shutdown handling.
+provides:
+  main:
+    interface: empty
+    description: Main interface (empty placeholder)
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Pionix GmbH and Contributors to EVerest

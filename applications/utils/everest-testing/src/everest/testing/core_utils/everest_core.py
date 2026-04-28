@@ -26,6 +26,9 @@ from ._configuration.everest_configuration_strategies.probe_module_configuration
     ProbeModuleConfigurationStrategy
 
 STARTUP_TIMEOUT = 30
+SHUTDOWN_TIMEOUT_SIGINT_SECONDS = 60
+SHUTDOWN_TIMEOUT_SIGTERM_SECONDS = 15
+SHUTDOWN_TIMEOUT_SIGKILL_SECONDS = 5
 
 Connections = dict[str, List[Requirement]]
 
@@ -221,13 +224,37 @@ class EverestCore:
         """Stops execution of EVerest by signaling SIGINT
         """
         logging.debug("CONTROLLER stop() function called...")
+        escalation_signal = None
         if self.process:
             # NOTE (aw): we could also call process.kill()
-            self.process.send_signal(SIGINT)
-            self.process.wait()
+            if self.process.poll() is None:
+                self.process.send_signal(SIGINT)
+                try:
+                    self.process.wait(timeout=SHUTDOWN_TIMEOUT_SIGINT_SECONDS)
+                except subprocess.TimeoutExpired:
+                    logging.warning(
+                        f"EVerest did not stop after SIGINT within {SHUTDOWN_TIMEOUT_SIGINT_SECONDS}s, sending SIGTERM"
+                    )
+                    escalation_signal = "SIGTERM"
+                    self.process.terminate()
+                    try:
+                        self.process.wait(timeout=SHUTDOWN_TIMEOUT_SIGTERM_SECONDS)
+                    except subprocess.TimeoutExpired:
+                        logging.warning(
+                            f"EVerest did not stop after SIGTERM within {SHUTDOWN_TIMEOUT_SIGTERM_SECONDS}s, sending SIGKILL"
+                        )
+                        escalation_signal = "SIGKILL"
+                        self.process.kill()
+                        self.process.wait(timeout=SHUTDOWN_TIMEOUT_SIGKILL_SECONDS)
 
         if self.log_reader_thread:
-            self.log_reader_thread.join()
+            self.log_reader_thread.join(timeout=5)
+
+        if escalation_signal is not None:
+            raise RuntimeError(
+                f"EVerest stop() required escalation to {escalation_signal}. "
+                "Tests must shut down cleanly via SIGINT only."
+            )
 
     def _create_testing_user_config(self):
         """Creates a user-config file to include the PyTestControlModule in the current SIL simulation.

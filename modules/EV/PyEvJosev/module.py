@@ -40,15 +40,15 @@ async def evcc_handler_main_loop(module_config: dict):
     patch_josev_config(evcc_config, module_config)
 
     exi_codec = ExificientEXICodec()
-
-    await EVCCHandler(
-        evcc_config=evcc_config,
-        iface=iface,
-        exi_codec=exi_codec,
-        ev_controller=SimEVController(evcc_config),
-    ).start()
-
-    exi_codec.shutdown()
+    try:
+        await EVCCHandler(
+            evcc_config=evcc_config,
+            iface=iface,
+            exi_codec=exi_codec,
+            ev_controller=SimEVController(evcc_config),
+        ).start()
+    finally:
+        exi_codec.shutdown()
 
 class PyEVJosevModule():
     def __init__(self) -> None:

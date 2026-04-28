@@ -2,6 +2,7 @@ add_executable(manager)
 target_sources(manager
     PRIVATE
         system_unix.cpp
+        manager_admin_panel.cpp
         manager.cpp
 )
 # generate version information header

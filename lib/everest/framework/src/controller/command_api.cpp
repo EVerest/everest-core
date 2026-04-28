@@ -27,6 +27,11 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
 
     if (cmd == "get_modules") {
         auto modules_list = json::object();
+        auto ensure_object_field = [](auto& target, const std::string& key) {
+            if (!target.contains(key) || !target.at(key).is_object()) {
+                target[key] = json::object();
+            }
+        };
 
         for (const auto& item : fs::directory_iterator(this->config.module_dir)) {
             if (!fs::is_directory(item)) {
@@ -41,12 +46,27 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
                 continue;
             }
 
-            modules_list[module_name] = Everest::load_yaml(manifest_path);
+            auto module_manifest = Everest::load_yaml(manifest_path);
+            if (!module_manifest.is_object()) {
+                module_manifest = json::object();
+            }
+
+            // Admin panel expects module interface maps to be object-like.
+            ensure_object_field(module_manifest, "provides");
+            ensure_object_field(module_manifest, "requires");
+            ensure_object_field(module_manifest, "metadata");
+
+            modules_list[module_name] = module_manifest;
         }
 
         return modules_list;
     } else if (cmd == "get_configs") {
         auto config_list = json::object();
+        auto ensure_object_field = [](auto& target, const std::string& key) {
+            if (!target.contains(key) || !target.at(key).is_object()) {
+                target[key] = json::object();
+            }
+        };
 
         for (const auto& item : fs::directory_iterator(this->config.configs_dir)) {
             if (!fs::is_regular_file(item)) {
@@ -57,8 +77,25 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
             }
 
             const auto config_name = item.path().stem().string();
+            auto loaded_config = Everest::load_yaml(item.path());
+            if (!loaded_config.is_object()) {
+                loaded_config = json::object();
+            }
 
-            config_list[config_name] = Everest::load_yaml(item.path());
+            // Keep response schema stable for admin panel code that iterates over object fields.
+            ensure_object_field(loaded_config, "active_modules");
+            ensure_object_field(loaded_config, "settings");
+            ensure_object_field(loaded_config, "x-module-layout");
+
+            auto& active_modules = loaded_config["active_modules"];
+            for (auto& [_, module_entry] : active_modules.items()) {
+                if (!module_entry.is_object()) {
+                    module_entry = json::object();
+                }
+                ensure_object_field(module_entry, "connections");
+            }
+
+            config_list[config_name] = loaded_config;
         }
 
         return config_list;
@@ -109,7 +146,7 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
     } else if (cmd == "restart_modules") {
         this->rpc.ipc_request("restart_modules", nullptr, true);
 
-        return nullptr;
+        return json{{"accepted", true}};
     } else if (cmd == "get_rpc_timeout") {
         return this->config.controller_rpc_timeout_ms;
     }

@@ -60,6 +60,7 @@ jobs:
       - setup-env
       - build-cmake-gcc
       - build-build-kit
+      - ocpp-tests
     with:
       runner: ${{ inputs.runner || 'ubuntu-24.04' }}
       build_kit_artifact_name: ${{ needs.build-build-kit.outputs.build_kit_artifact_name }}
