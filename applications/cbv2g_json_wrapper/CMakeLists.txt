@@ -21,6 +21,7 @@ set(WRAPPER_SOURCES
     src/cbv2g_json_wrapper.c
     src/json_utils.c
     src/apphand_converter.c
+    src/din_converter.c
 )
 
 add_library(cbv2g_json_wrapper SHARED ${WRAPPER_SOURCES})
@@ -79,4 +80,17 @@ if(BUILD_CBV2G_JSON_WRAPPER_TESTS)
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/cJSON
     )
     add_test(NAME cbv2g_test_apphand COMMAND cbv2g_test_apphand)
+
+    add_executable(cbv2g_test_din
+        tests/test_din.c
+    )
+    target_link_libraries(cbv2g_test_din
+        cbv2g_json_wrapper
+        cjson
+    )
+    target_include_directories(cbv2g_test_din PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/cJSON
+    )
+    add_test(NAME cbv2g_test_din COMMAND cbv2g_test_din)
 endif()

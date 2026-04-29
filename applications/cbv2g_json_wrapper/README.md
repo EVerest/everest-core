@@ -38,10 +38,10 @@ listed in `include/cbv2g_json_wrapper.h`.
 | Protocol | Namespace | Status |
 |----------|-----------|--------|
 | App Handshake (SAP) | `urn:iso:15118:2:2010:AppProtocol` | Supported |
+| DIN 70121 | `urn:din:70121:2012:MsgDef` | Supported |
 
-Additional protocol support (DIN 70121, ISO 15118-2) is added in
-subsequent PRs in this stack. ISO 15118-20 support is planned as a
-follow-up PR.
+Additional protocol support (ISO 15118-2) is added in subsequent PRs
+in this stack. ISO 15118-20 support is planned as a follow-up PR.
 
 ## Build
 

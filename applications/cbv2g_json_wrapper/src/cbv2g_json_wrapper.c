@@ -44,12 +44,12 @@ void cbv2g_clear_error(void) {
 }
 
 /* Determine protocol from namespace.
- * Only the App Handshake (SAP) protocol is dispatched in this PR.
- * Subsequent PRs extend this enum and switch with DIN, ISO 15118-2, and
+ * Subsequent PRs extend this enum and switch with ISO 15118-2 and
  * ISO 15118-20 cases. */
 typedef enum {
     PROTOCOL_UNKNOWN = 0,
-    PROTOCOL_SAP
+    PROTOCOL_SAP,
+    PROTOCOL_DIN
 } protocol_t;
 
 static protocol_t get_protocol(const char* ns) {
@@ -61,6 +61,9 @@ static protocol_t get_protocol(const char* ns) {
      * non-null-terminated input (CWE-126). */
     if (strncmp(ns, NS_SAP, sizeof(NS_SAP)) == 0) {
         return PROTOCOL_SAP;
+    }
+    if (strncmp(ns, NS_DIN_MSG_DEF, sizeof(NS_DIN_MSG_DEF)) == 0) {
+        return PROTOCOL_DIN;
     }
 
     return PROTOCOL_UNKNOWN;
@@ -93,6 +96,9 @@ int cbv2g_encode(const char* json_message,
         case PROTOCOL_SAP:
             return apphand_encode(json_message, output_buffer, buffer_size, output_length);
 
+        case PROTOCOL_DIN:
+            return din_encode(json_message, output_buffer, buffer_size, output_length);
+
         default:
             set_error("Unknown namespace: %s", ns);
             return CBV2G_ERROR_UNKNOWN_NAMESPACE;
@@ -124,6 +130,9 @@ int cbv2g_decode(const uint8_t* exi_data,
     switch (protocol) {
         case PROTOCOL_SAP:
             return apphand_decode(exi_data, exi_length, output_json, buffer_size);
+
+        case PROTOCOL_DIN:
+            return din_decode(exi_data, exi_length, output_json, buffer_size);
 
         default:
             set_error("Unknown namespace: %s", ns);

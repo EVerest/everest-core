@@ -18,4 +18,8 @@ void set_error(const char* format, ...);
 int apphand_encode(const char* json, uint8_t* out, size_t out_size, size_t* out_len);
 int apphand_decode(const uint8_t* exi, size_t exi_len, char* out, size_t out_size);
 
+/* DIN 70121 converter */
+int din_encode(const char* json, uint8_t* out, size_t out_size, size_t* out_len);
+int din_decode(const uint8_t* exi, size_t exi_len, char* out, size_t out_size);
+
 #endif /* CONVERTERS_H */

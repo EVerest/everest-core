@@ -49,10 +49,10 @@ extern "C" {
 #define CBV2G_ERROR_INTERNAL            -9
 
 /* Namespace constants matching Josev's Namespace enum.
- * Only the App Handshake (SAP) namespace is supported in this initial PR.
- * Per-protocol namespaces are added in subsequent PRs together with their
+ * Additional namespaces are added in subsequent PRs together with their
  * converter implementations. */
 #define NS_SAP                  "urn:iso:15118:2:2010:AppProtocol"
+#define NS_DIN_MSG_DEF          "urn:din:70121:2012:MsgDef"
 
 /**
  * @brief Encode a JSON message to EXI format
