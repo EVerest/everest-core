@@ -28,7 +28,7 @@ public:
     /// \param restart_fn     Callback to restart modules (optional stub).
     ConfigServiceCore(everest::config::ModuleConfigurations initial_module_configs,
                       const ConfigParseSettings& parse_settings,
-                      std::shared_ptr<everest::db::sqlite::ConnectionInterface> db_connection, int active_slot_id,
+                      std::shared_ptr<everest::db::sqlite::ConnectionInterface> db_connection, std::optional<int> active_slot_id,
                       std::function<StopModulesResult()> stop_fn = {},
                       std::function<RestartModulesResult()> restart_fn = {});
 

@@ -23,16 +23,34 @@ std::string now_rfc3339() {
 ConfigServiceCore::ConfigServiceCore(everest::config::ModuleConfigurations initial_module_configs,
                                      const ConfigParseSettings& parse_settings,
                                      std::shared_ptr<everest::db::sqlite::ConnectionInterface> db_connection,
-                                     int active_slot_id, std::function<StopModulesResult()> stop_fn,
+                                     std::optional<int> active_slot_id, std::function<StopModulesResult()> stop_fn,
                                      std::function<RestartModulesResult()> restart_fn) :
     module_configs_(std::move(initial_module_configs)),
     parse_settings_(parse_settings),
     slot_manager_(db_connection),
     db_(std::move(db_connection)),
-    active_slot_id_(active_slot_id),
     stop_fn_(std::move(stop_fn)),
-    restart_fn_(std::move(restart_fn)),
-    active_storage_(make_storage(active_slot_id)) {
+    restart_fn_(std::move(restart_fn)) {
+    int active_slot_id_from_db = slot_manager_.get_next_boot_slot_id();
+    // use the next_boot_slot_id from the db as active_slot_id if none was provided
+    if (active_slot_id.has_value()) {
+        // Booting with provided active_slot_id
+        active_slot_id_ = active_slot_id.value();
+    } else {
+        // No active_slot_id provided, using stored id from db
+        active_slot_id_ = active_slot_id_from_db;
+    }
+    if (slot_manager_.is_valid(active_slot_id_)) {
+        // TODO(CB): This is arguable - this is usually the reset-from-yaml scenario
+        // should the config be stored in the currently active slot, or always the default slot?
+        if (active_slot_id_ == active_slot_id_from_db) {
+            slot_manager_.set_next_boot_slot_id(active_slot_id_);
+        }
+        active_storage_ = make_storage(active_slot_id_);
+    } else {
+        // TODO(CB): What do we do now? (in the end it should end up in a confiuration_API-only mode, IF this API is
+        // active, otherwise the manager should quit)
+    }
 }
 
 std::unique_ptr<everest::config::SqliteStorage> ConfigServiceCore::make_storage(int slot_id) {
