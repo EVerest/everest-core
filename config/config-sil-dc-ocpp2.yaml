@@ -57,11 +57,11 @@ active_modules:
   slac:
     module: SlacSimulator
   imd:
+    module: IMDSimulator
     config_implementation:
       main:
         selftest_success: true
         resistance_F_Ohm: 900000
-    module: IMDSimulator
   ovm:
     module: OVMSimulator
     config_implementation:
@@ -133,10 +133,10 @@ active_modules:
         - module_id: grid_connection_point
           implementation_id: energy_grid
   grid_connection_point:
+    module: EnergyNode
     mapping:
       module:
         evse: 0
-    module: EnergyNode
     config_module:
       fuse_limit_A: 32
       phase_count: 3
@@ -202,4 +202,3 @@ active_modules:
           implementation_id: external_limits
   system:
     module: System
-  

@@ -133,10 +133,10 @@ active_modules:
         - module_id: grid_connection_point
           implementation_id: energy_grid
   grid_connection_point:
+    module: EnergyNode
     mapping:
       module:
         evse: 0
-    module: EnergyNode
     config_module:
       fuse_limit_A: 32
       phase_count: 3
@@ -204,4 +204,3 @@ active_modules:
           implementation_id: external_limits
   system:
     module: System
-  
