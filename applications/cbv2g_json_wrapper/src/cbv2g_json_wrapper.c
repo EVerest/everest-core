@@ -44,12 +44,12 @@ void cbv2g_clear_error(void) {
 }
 
 /* Determine protocol from namespace.
- * Subsequent PRs extend this enum and switch with ISO 15118-2 and
- * ISO 15118-20 cases. */
+ * Subsequent PRs extend this enum and switch with ISO 15118-20 cases. */
 typedef enum {
     PROTOCOL_UNKNOWN = 0,
     PROTOCOL_SAP,
-    PROTOCOL_DIN
+    PROTOCOL_DIN,
+    PROTOCOL_ISO2
 } protocol_t;
 
 static protocol_t get_protocol(const char* ns) {
@@ -64,6 +64,13 @@ static protocol_t get_protocol(const char* ns) {
     }
     if (strncmp(ns, NS_DIN_MSG_DEF, sizeof(NS_DIN_MSG_DEF)) == 0) {
         return PROTOCOL_DIN;
+    }
+    if (strncmp(ns, NS_ISO_V2_MSG_DEF, sizeof(NS_ISO_V2_MSG_DEF)) == 0) {
+        return PROTOCOL_ISO2;
+    }
+    if (strncmp(ns, NS_XML_DSIG, sizeof(NS_XML_DSIG)) == 0) {
+        /* xmldsig fragments (SignedInfo) ride on the ISO 15118-2 fragment encoder. */
+        return PROTOCOL_ISO2;
     }
 
     return PROTOCOL_UNKNOWN;
@@ -99,6 +106,9 @@ int cbv2g_encode(const char* json_message,
         case PROTOCOL_DIN:
             return din_encode(json_message, output_buffer, buffer_size, output_length);
 
+        case PROTOCOL_ISO2:
+            return iso2_encode(json_message, output_buffer, buffer_size, output_length);
+
         default:
             set_error("Unknown namespace: %s", ns);
             return CBV2G_ERROR_UNKNOWN_NAMESPACE;
@@ -133,6 +143,9 @@ int cbv2g_decode(const uint8_t* exi_data,
 
         case PROTOCOL_DIN:
             return din_decode(exi_data, exi_length, output_json, buffer_size);
+
+        case PROTOCOL_ISO2:
+            return iso2_decode(exi_data, exi_length, output_json, buffer_size);
 
         default:
             set_error("Unknown namespace: %s", ns);

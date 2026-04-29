@@ -53,6 +53,8 @@ extern "C" {
  * converter implementations. */
 #define NS_SAP                  "urn:iso:15118:2:2010:AppProtocol"
 #define NS_DIN_MSG_DEF          "urn:din:70121:2012:MsgDef"
+#define NS_ISO_V2_MSG_DEF       "urn:iso:15118:2:2013:MsgDef"
+#define NS_XML_DSIG             "http://www.w3.org/2000/09/xmldsig#"
 
 /**
  * @brief Encode a JSON message to EXI format

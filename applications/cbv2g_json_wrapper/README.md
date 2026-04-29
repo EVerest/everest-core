@@ -39,9 +39,10 @@ listed in `include/cbv2g_json_wrapper.h`.
 |----------|-----------|--------|
 | App Handshake (SAP) | `urn:iso:15118:2:2010:AppProtocol` | Supported |
 | DIN 70121 | `urn:din:70121:2012:MsgDef` | Supported |
+| ISO 15118-2 (incl. PnC) | `urn:iso:15118:2:2013:MsgDef` | Supported |
+| xmldsig fragments (PnC `SignedInfo`) | `http://www.w3.org/2000/09/xmldsig#` | Supported (routed via ISO 15118-2 fragment encoder) |
 
-Additional protocol support (ISO 15118-2) is added in subsequent PRs
-in this stack. ISO 15118-20 support is planned as a follow-up PR.
+ISO 15118-20 support is planned as a follow-up PR.
 
 ## Build
 

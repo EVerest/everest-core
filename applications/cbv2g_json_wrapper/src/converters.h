@@ -22,4 +22,8 @@ int apphand_decode(const uint8_t* exi, size_t exi_len, char* out, size_t out_siz
 int din_encode(const char* json, uint8_t* out, size_t out_size, size_t* out_len);
 int din_decode(const uint8_t* exi, size_t exi_len, char* out, size_t out_size);
 
+/* ISO 15118-2 converter (also handles xmldsig fragments via the iso2 fragment encoder) */
+int iso2_encode(const char* json, uint8_t* out, size_t out_size, size_t* out_len);
+int iso2_decode(const uint8_t* exi, size_t exi_len, char* out, size_t out_size);
+
 #endif /* CONVERTERS_H */
