@@ -19,8 +19,13 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string allowlist_file;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class LocalAllowlistTokenValidator : public Everest::ModuleBase {

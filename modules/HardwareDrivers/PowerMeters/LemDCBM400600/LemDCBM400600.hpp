@@ -19,6 +19,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string ip_address;
     int port;
@@ -45,6 +47,9 @@ struct Conf {
     double temperature_hysteresis_K;
     int temperature_min_time_as_valid_ms;
     int command_timeout_ms;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class LemDCBM400600 : public Everest::ModuleBase {

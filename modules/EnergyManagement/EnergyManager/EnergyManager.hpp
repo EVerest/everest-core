@@ -23,6 +23,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     double nominal_ac_voltage;
     int update_interval;
@@ -36,6 +38,9 @@ struct Conf {
     std::string switch_3ph1ph_switch_limit_stickyness;
     int switch_3ph1ph_power_hysteresis_W;
     int switch_3ph1ph_time_hysteresis_s;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class EnergyManager : public Everest::ModuleBase {

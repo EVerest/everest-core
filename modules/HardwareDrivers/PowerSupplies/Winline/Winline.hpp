@@ -19,6 +19,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string can_device;
     std::string module_addresses;
@@ -36,6 +38,9 @@ struct Conf {
     int altitude_setting_m;
     std::string input_mode;
     double module_current_limit_point;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class Winline : public Everest::ModuleBase {

@@ -19,7 +19,13 @@
 
 namespace module {
 
-struct Conf {};
+struct RwConf {};
+
+struct Conf {
+
+    Conf() = default;
+    Conf(const RwConf&){};
+};
 
 class AST_DC650 : public Everest::ModuleBase {
 public:

@@ -27,9 +27,14 @@ namespace API_types_ext = API_types::power_supply_DC;
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     int cfg_communication_check_to_s;
     int cfg_heartbeat_interval_ms;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class power_supply_DC_API : public Everest::ModuleBase {

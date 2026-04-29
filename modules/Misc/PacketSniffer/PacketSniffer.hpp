@@ -20,9 +20,14 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string device;
     std::string session_logging_path;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class PacketSniffer : public Everest::ModuleBase {

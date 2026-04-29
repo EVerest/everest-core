@@ -27,6 +27,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     bool websocket_enabled;
     int websocket_port;
@@ -34,6 +36,9 @@ struct Conf {
     bool websocket_tls_enabled;
     bool authentication_required;
     int max_decimal_places_other;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class RpcApi : public Everest::ModuleBase {

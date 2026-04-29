@@ -26,9 +26,14 @@ namespace API_generic = API_types::generic;
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     int cfg_communication_check_to_s;
     int cfg_heartbeat_interval_ms;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class generic_error_raiser_API : public Everest::ModuleBase {

@@ -23,6 +23,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string serial_port;
     int baud_rate;
@@ -65,6 +67,9 @@ struct Conf {
     bool conn2_feedback_active_low;
     int conn1_feedback_pull;
     int conn2_feedback_pull;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class PhyVersoBSP : public Everest::ModuleBase {

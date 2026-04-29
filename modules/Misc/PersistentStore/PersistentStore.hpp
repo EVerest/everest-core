@@ -19,8 +19,13 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string sqlite_db_file_path;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class PersistentStore : public Everest::ModuleBase {

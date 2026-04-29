@@ -29,6 +29,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string ethernet_interface;
     std::string psu_ip;
@@ -46,6 +48,9 @@ struct Conf {
     bool verify_secure_goose;
     std::string upstream_voltage_source;
     std::string telemetry_topic_prefix;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class Huawei_V100R023C10 : public Everest::ModuleBase {

@@ -24,6 +24,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string device;
     std::string logging_path;
@@ -38,6 +40,9 @@ struct Conf {
     bool supported_scheduled_mode;
     std::string custom_protocol_namespace;
     bool negative_bidirectional_limits;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class Evse15118D20 : public Everest::ModuleBase {

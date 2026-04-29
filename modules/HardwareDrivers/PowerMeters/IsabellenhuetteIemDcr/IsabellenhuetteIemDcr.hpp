@@ -19,6 +19,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string ip_address;
     int port_http;
@@ -32,6 +34,9 @@ struct Conf {
     std::string CI;
     std::string TT_initial;
     bool US;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class IsabellenhuetteIemDcr : public Everest::ModuleBase {

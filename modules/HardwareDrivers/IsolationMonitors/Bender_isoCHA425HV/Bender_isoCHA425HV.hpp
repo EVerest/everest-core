@@ -22,7 +22,13 @@
 
 namespace module {
 
-struct Conf {};
+struct RwConf {};
+
+struct Conf {
+
+    Conf() = default;
+    Conf(const RwConf&){};
+};
 
 class Bender_isoCHA425HV : public Everest::ModuleBase {
 public:

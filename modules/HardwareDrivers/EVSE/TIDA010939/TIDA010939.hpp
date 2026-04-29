@@ -21,6 +21,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string serial_port;
     int baud_rate;
@@ -35,6 +37,9 @@ struct Conf {
     int min_phase_count_export;
     int max_phase_count_export;
     bool has_socket;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class TIDA010939 : public Everest::ModuleBase {

@@ -27,6 +27,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     int connector_id;
     bool auto_enable;
@@ -53,6 +55,9 @@ struct Conf {
     bool keep_cross_boot_plugin_state;
     std::string plugin_commands;
     bool force_payment_option;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class EvManager : public Everest::ModuleBase {

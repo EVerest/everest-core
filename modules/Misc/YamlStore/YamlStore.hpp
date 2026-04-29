@@ -19,8 +19,13 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string file;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class YamlStore : public Everest::ModuleBase {

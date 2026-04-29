@@ -23,6 +23,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     double DefaultRetries;
     double DefaultRetryInterval;
@@ -30,6 +32,9 @@ struct Conf {
     std::string SessionLogPath;
     std::string RebootCommand;
     std::string VerifyUpdateScriptPath;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class Linux_Systemd_Rauc : public Everest::ModuleBase {

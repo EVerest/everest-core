@@ -19,7 +19,13 @@
 
 namespace module {
 
-struct Conf {};
+struct RwConf {};
+
+struct Conf {
+
+    Conf() = default;
+    Conf(const RwConf&){};
+};
 
 class DZG_GSH01 : public Everest::ModuleBase {
 public:

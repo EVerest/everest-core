@@ -20,7 +20,13 @@
 
 namespace module {
 
-struct Conf {};
+struct RwConf {};
+
+struct Conf {
+
+    Conf() = default;
+    Conf(const RwConf&){};
+};
 
 class SlacSimulator : public Everest::ModuleBase {
 public:

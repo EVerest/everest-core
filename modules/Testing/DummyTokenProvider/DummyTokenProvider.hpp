@@ -22,7 +22,13 @@
 
 namespace module {
 
-struct Conf {};
+struct RwConf {};
+
+struct Conf {
+
+    Conf() = default;
+    Conf(const RwConf&){};
+};
 
 class DummyTokenProvider : public Everest::ModuleBase {
 public:

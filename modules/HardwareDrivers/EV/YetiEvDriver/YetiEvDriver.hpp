@@ -20,10 +20,15 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string serial_port;
     int baud_rate;
     int reset_gpio;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class YetiEvDriver : public Everest::ModuleBase {

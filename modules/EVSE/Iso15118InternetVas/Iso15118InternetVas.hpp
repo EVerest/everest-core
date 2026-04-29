@@ -22,12 +22,17 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string ev_interface;
     std::string modem_interface;
     bool http_support;
     bool https_support;
     std::string vas_setup_script;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class Iso15118InternetVas : public Everest::ModuleBase {

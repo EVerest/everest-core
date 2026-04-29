@@ -19,8 +19,13 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string service_file;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class StaticISO15118VASProvider : public Everest::ModuleBase {

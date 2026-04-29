@@ -19,11 +19,16 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string can_device;
     std::string module_addresses;
     int max_export_current_A;
     int max_export_power_W;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class Huawei_R100040Gx : public Everest::ModuleBase {

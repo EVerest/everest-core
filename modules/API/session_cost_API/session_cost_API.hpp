@@ -24,9 +24,14 @@ namespace ev_API = everest::lib::API;
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     int cfg_communication_check_to_s;
     int cfg_heartbeat_interval_ms;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class session_cost_API : public Everest::ModuleBase {

@@ -70,6 +70,8 @@ using EvseConnectorMap = std::map<int32_t, std::map<int32_t, int32_t>>;
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string ChargePointConfigPath;
     std::string UserConfigPath;
@@ -82,6 +84,9 @@ struct Conf {
     std::string RequestCompositeScheduleUnit;
     int DelayOcppStart;
     int ResetStopDelay;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class OCPP : public Everest::ModuleBase {

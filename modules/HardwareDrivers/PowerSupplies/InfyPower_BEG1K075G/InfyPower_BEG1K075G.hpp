@@ -19,8 +19,13 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string can_device;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class InfyPower_BEG1K075G : public Everest::ModuleBase {

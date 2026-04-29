@@ -22,7 +22,13 @@
 
 namespace module {
 
-struct Conf {};
+struct RwConf {};
+
+struct Conf {
+
+    Conf() = default;
+    Conf(const RwConf&){};
+};
 
 class CarloGavazzi_EM580 : public Everest::ModuleBase {
 public:

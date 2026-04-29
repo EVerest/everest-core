@@ -26,11 +26,16 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     double fuse_limit_A;
     int phase_count;
     bool enhance_external_schedule;
     double nominal_voltage_V;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class EnergyNode : public Everest::ModuleBase {

@@ -23,8 +23,13 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string firmware_version_file;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class ChargerInfo : public Everest::ModuleBase {

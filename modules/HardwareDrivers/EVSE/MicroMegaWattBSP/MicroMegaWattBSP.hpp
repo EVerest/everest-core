@@ -22,6 +22,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string serial_port;
     int baud_rate;
@@ -29,6 +31,9 @@ struct Conf {
     int reset_gpio;
     int dc_max_voltage;
     int connector_id;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class MicroMegaWattBSP : public Everest::ModuleBase {

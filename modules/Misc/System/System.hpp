@@ -22,10 +22,15 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     double DefaultRetries;
     double DefaultRetryInterval;
     int ResetDelay;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class System : public Everest::ModuleBase {

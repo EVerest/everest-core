@@ -22,6 +22,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string serial_port;
     int baud_rate;
@@ -29,6 +31,9 @@ struct Conf {
     int reset_gpio;
     int caps_min_current_A;
     int caps_max_current_A;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class YetiDriver : public Everest::ModuleBase {

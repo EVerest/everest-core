@@ -23,6 +23,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     int device_id;
     int self_test_timeout_s;
@@ -40,6 +42,9 @@ struct Conf {
     std::string indicator_relay_k1_function;
     std::string indicator_relay_k2_function;
     bool automatic_self_test;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class DoldRN5893 : public Everest::ModuleBase {

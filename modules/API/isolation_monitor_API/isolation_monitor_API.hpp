@@ -26,9 +26,14 @@ namespace API_types_ext = API_types::isolation_monitor;
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     int cfg_communication_check_to_s;
     int cfg_heartbeat_interval_ms;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class isolation_monitor_API : public Everest::ModuleBase {

@@ -22,7 +22,13 @@
 
 namespace module {
 
-struct Conf {};
+struct RwConf {};
+
+struct Conf {
+
+    Conf() = default;
+    Conf(const RwConf&){};
+};
 
 class Acrel_DJSF1352_RN : public Everest::ModuleBase {
 public:

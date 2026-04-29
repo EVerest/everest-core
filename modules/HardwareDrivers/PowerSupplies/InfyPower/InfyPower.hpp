@@ -19,6 +19,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string can_device;
     std::string module_addresses;
@@ -26,6 +28,9 @@ struct Conf {
     int device_connection_timeout_s;
     double conversion_efficiency_export;
     int controller_address;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class InfyPower : public Everest::ModuleBase {

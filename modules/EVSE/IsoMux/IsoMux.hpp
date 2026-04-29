@@ -27,6 +27,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string device;
     std::string tls_security;
@@ -35,6 +37,9 @@ struct Conf {
     int proxy_port_iso2;
     int proxy_port_iso20;
     std::string proxy_device;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class IsoMux : public Everest::ModuleBase {

@@ -19,6 +19,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string csms_ca_bundle;
     std::string mf_ca_bundle;
@@ -29,6 +31,9 @@ struct Conf {
     std::string secc_leaf_cert_directory;
     std::string secc_leaf_key_directory;
     std::string private_key_password;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class EvseSecurity : public Everest::ModuleBase {

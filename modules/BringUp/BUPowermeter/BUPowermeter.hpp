@@ -19,11 +19,16 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string evse_id;
     std::string transaction_id;
     std::string identification_data;
     std::string tariff_text;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class BUPowermeter : public Everest::ModuleBase {

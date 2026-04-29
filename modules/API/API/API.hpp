@@ -112,6 +112,8 @@ private:
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string charger_information_file;
     int powermeter_energy_import_decimal_places;
@@ -150,6 +152,9 @@ struct Conf {
     double telemetry_supply_voltage_12V_round_to;
     double telemetry_supply_voltage_minus_12V_round_to;
     double telemetry_plug_temperature_C_round_to;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class API : public Everest::ModuleBase {

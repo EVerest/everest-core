@@ -19,6 +19,8 @@
 
 namespace module {
 
+struct RwConf {};
+
 struct Conf {
     std::string device;
     int device_address;
@@ -30,6 +32,9 @@ struct Conf {
     int discharge_gpio_line;
     bool discharge_gpio_polarity;
     bool debug_print_all_telemetry;
+
+    Conf() = default;
+    Conf(const RwConf&){};
 };
 
 class DPM1000 : public Everest::ModuleBase {
