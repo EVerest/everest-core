@@ -46,7 +46,7 @@ public:
     bool is_valid(int slot_id = DEFAULT_SLOT_ID);
     /// \brief Returns the next available slot ID (MAX(ID) + 1, or 0 if no slots exist).
     int next_slot_id();
-    GenericResponseStatus write_config_slot(int slot_id, std::optional<std::string> description = std::nullopt);
+    GenericResponseStatus write_config_slot(int slot_id);
     std::vector<SlotInfo> list_slots();
     GenericResponseStatus delete_slot(int slot_id);
 

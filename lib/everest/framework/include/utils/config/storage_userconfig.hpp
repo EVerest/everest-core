@@ -28,7 +28,8 @@ public:
                                                        const ConfigurationParameterCharacteristics characteristics,
                                                        const std::string& value) override;
     void mark_valid(bool is_valid, const std::string& config_dump,
-                    const std::optional<std::filesystem::path>& config_file_path) override;
+                    const std::optional<std::filesystem::path>& config_file_path,
+                    const std::optional<std::string>& description) override;
 
     const nlohmann::json& get_user_config() const;
 

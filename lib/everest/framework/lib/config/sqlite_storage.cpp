@@ -394,12 +394,15 @@ SqliteStorage::write_configuration_parameter(const ConfigurationParameterIdentif
 }
 
 void SqliteStorage::mark_valid(const bool is_valid, const std::string& config_dump,
-                               const std::optional<fs::path>& config_file_path) {
-    const std::string sql = "INSERT INTO CONFIG_META (ID, LAST_UPDATED, VALID, CONFIG_DUMP, CONFIG_FILE_PATH) VALUES "
-                            "(@config_id, @last_updated, @is_valid, @config_dump, @config_file_path) "
-                            "ON CONFLICT(ID) DO UPDATE SET "
-                            "LAST_UPDATED=excluded.LAST_UPDATED, VALID=excluded.VALID, "
-                            "CONFIG_DUMP=excluded.CONFIG_DUMP, CONFIG_FILE_PATH=excluded.CONFIG_FILE_PATH;";
+                               const std::optional<fs::path>& config_file_path,
+                               const std::optional<std::string>& description) {
+    const std::string sql =
+        "INSERT INTO CONFIG_META (ID, LAST_UPDATED, VALID, CONFIG_DUMP, CONFIG_FILE_PATH, DESCRIPTION) VALUES "
+        "(@config_id, @last_updated, @is_valid, @config_dump, @config_file_path, @description) "
+        "ON CONFLICT(ID) DO UPDATE SET "
+        "LAST_UPDATED=excluded.LAST_UPDATED, VALID=excluded.VALID, "
+        "CONFIG_DUMP=excluded.CONFIG_DUMP, CONFIG_FILE_PATH=excluded.CONFIG_FILE_PATH, "
+        "DESCRIPTION=excluded.DESCRIPTION;";
     auto stmt = this->db->new_statement(sql);
 
     stmt->bind_int("@config_id", config_id_);
@@ -411,6 +414,11 @@ void SqliteStorage::mark_valid(const bool is_valid, const std::string& config_du
         stmt->bind_text("@config_file_path", config_file_path.value().string(), SQLiteString::Transient);
     } else {
         stmt->bind_null("@config_file_path");
+    }
+    if (description.has_value()) {
+        stmt->bind_text("@description", description.value(), SQLiteString::Transient);
+    } else {
+        stmt->bind_null("@description");
     }
     if (stmt->step() != SQLITE_DONE) {
         EVLOG_error << "Failed to mark config as valid";

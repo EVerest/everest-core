@@ -52,8 +52,8 @@ public:
     GetSetResponseStatus write_configuration_parameter(const ConfigurationParameterIdentifier& identifier,
                                                        const ConfigurationParameterCharacteristics characteristics,
                                                        const std::string& value) override;
-    void mark_valid(bool is_valid, const std::string& config_dump,
-                    const std::optional<fs::path>& config_file_path) override;
+    void mark_valid(bool is_valid, const std::string& config_dump, const std::optional<fs::path>& config_file_path,
+                    const std::optional<std::string>& description) override;
 
 private:
     std::shared_ptr<everest::db::sqlite::ConnectionInterface> db;

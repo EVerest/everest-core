@@ -28,8 +28,8 @@ public:
     /// \param restart_fn     Callback to restart modules (optional stub).
     ConfigServiceCore(everest::config::ModuleConfigurations initial_module_configs,
                       const ConfigParseSettings& parse_settings,
-                      std::shared_ptr<everest::db::sqlite::ConnectionInterface> db_connection, std::optional<int> active_slot_id,
-                      std::function<StopModulesResult()> stop_fn = {},
+                      std::shared_ptr<everest::db::sqlite::ConnectionInterface> db_connection,
+                      std::optional<int> active_slot_id, std::function<StopModulesResult()> stop_fn = {},
                       std::function<RestartModulesResult()> restart_fn = {});
 
     // --- Active-slot in-memory access (zero-copy) ---
@@ -42,7 +42,7 @@ public:
     SetActiveSlotStatus mark_active_slot(int slot_id) override;
     DeleteSlotStatus delete_slot(int slot_id) override;
     DuplicateSlotResult duplicate_slot(int slot_id, std::optional<std::string> description) override;
-    LoadFromYamlResult load_from_yaml(const std::string& raw_yaml) override;
+    LoadFromYamlResult load_from_yaml(const std::string& raw_yaml, std::optional<std::string> description) override;
 
     // --- Slot-scoped configuration ---
     GetConfigurationResult get_configuration(int slot_id) override;

@@ -234,7 +234,7 @@ SCENARIO("Check ManagerConfig Constructor", "[!throws]") {
             // Seed the database so subsequent bootstraps see it as valid.
             const auto& mc = config.get_module_configurations();
             bs.storage->write_module_configs(mc);
-            bs.storage->mark_valid(true, nlohmann::json(mc).dump(), ms.config_file);
+            bs.storage->mark_valid(true, nlohmann::json(mc).dump(), ms.config_file, std::nullopt);
 
             THEN("In the second instantiation the database is initialized and valid") {
                 auto bs2 = Everest::init_database_bootstrap(ms);

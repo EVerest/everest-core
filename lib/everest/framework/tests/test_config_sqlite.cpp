@@ -198,15 +198,15 @@ TEST_CASE("Database operations", "[db_operation]") {
     }
     SECTION("Config is not valid if not marked as valid") {
         REQUIRE(slot_mgr.is_valid() == false);
-        storage.mark_valid(false, "Test", std::nullopt);
+        storage.mark_valid(false, "Test", std::nullopt, std::nullopt);
         REQUIRE(slot_mgr.is_valid() == false);
     }
     SECTION("Config is valid if marked as valid") {
-        storage.mark_valid(true, "Test", "Test");
+        storage.mark_valid(true, "Test", "Test", std::nullopt);
         REQUIRE(slot_mgr.is_valid() == true);
     }
     SECTION("is_valid is specific to the given slot ID") {
-        storage.mark_valid(true, "Test", std::nullopt);
+        storage.mark_valid(true, "Test", std::nullopt, std::nullopt);
         REQUIRE(slot_mgr.is_valid(SqliteConfigSlotManager::DEFAULT_SLOT_ID) == true);
         REQUIRE(slot_mgr.is_valid(99) == false);
     }
@@ -237,11 +237,11 @@ TEST_CASE("write_config_slot manages CONFIG identity row", "[db_operation]") {
 
     SECTION("is_valid is false before mark_valid, true after") {
         REQUIRE(slot_mgr.is_valid(SqliteConfigSlotManager::DEFAULT_SLOT_ID) == false);
-        storage.mark_valid(true, "dump", std::nullopt);
+        storage.mark_valid(true, "dump", std::nullopt, std::nullopt);
         REQUIRE(slot_mgr.is_valid(SqliteConfigSlotManager::DEFAULT_SLOT_ID) == true);
     }
     SECTION("A second storage instance scoped to the same slot is usable after mark_valid") {
-        storage.mark_valid(true, "dump", std::nullopt);
+        storage.mark_valid(true, "dump", std::nullopt, std::nullopt);
         REQUIRE(slot_mgr.is_valid(SqliteConfigSlotManager::DEFAULT_SLOT_ID) == true);
         SqliteStorage storage2("file::memory:?cache=shared", migrations_dir, SqliteStorage::DEFAULT_CONFIG_ID);
         REQUIRE(storage2.get_module_configs().status == GenericResponseStatus::OK);

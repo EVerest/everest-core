@@ -126,7 +126,8 @@ DuplicateSlotResult ConfigServiceCore::duplicate_slot(int slot_id, std::optional
     return slot_manager_.duplicate_slot(slot_id, description);
 }
 
-LoadFromYamlResult ConfigServiceCore::load_from_yaml(const std::string& raw_yaml) {
+LoadFromYamlResult ConfigServiceCore::load_from_yaml(const std::string& raw_yaml,
+                                                     std::optional<std::string> description) {
     try {
         const auto json_config = Everest::load_yaml_from_string(raw_yaml);
         if (!json_config.contains("active_modules")) {
@@ -146,7 +147,7 @@ LoadFromYamlResult ConfigServiceCore::load_from_yaml(const std::string& raw_yaml
             slot_manager_.delete_slot(new_slot_id);
             return {false, std::nullopt, "Failed to write module configs to new slot"};
         }
-        storage->mark_valid(true, nlohmann::json(module_configs).dump(), std::nullopt);
+        storage->mark_valid(true, nlohmann::json(module_configs).dump(), std::nullopt, description);
 
         return {true, new_slot_id, ""};
     } catch (const std::exception& e) {

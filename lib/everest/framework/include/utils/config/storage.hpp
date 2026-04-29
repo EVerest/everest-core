@@ -63,7 +63,8 @@ public:
     /// \param config_dump JSON dump of the config file that was used to create the configuration
     /// \param config_file_path Path to the config file that was used to create the configuration
     virtual void mark_valid(bool is_valid, const std::string& config_dump,
-                            const std::optional<std::filesystem::path>& config_file_path) = 0;
+                            const std::optional<std::filesystem::path>& config_file_path,
+                            const std::optional<std::string>& description) = 0;
 };
 
 } // namespace everest::config

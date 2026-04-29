@@ -65,7 +65,7 @@ static int cmd_add(const std::string& prefix, const std::string& config_file, co
         slot_mgr.delete_slot(slot_id);
         return 1;
     }
-    storage->mark_valid(true, nlohmann::json(module_configs).dump(), ms.config_file);
+    storage->mark_valid(true, nlohmann::json(module_configs).dump(), ms.config_file, std::nullopt);
 
     fmt::print("Done. Config stored as slot {}.\n", slot_id);
     return 0;

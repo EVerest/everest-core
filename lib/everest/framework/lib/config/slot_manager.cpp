@@ -65,7 +65,7 @@ bool SqliteConfigSlotManager::is_valid(int slot_id) {
     return stmt->step() == SQLITE_ROW;
 }
 
-GenericResponseStatus SqliteConfigSlotManager::write_config_slot(int slot_id, std::optional<std::string> description) {
+GenericResponseStatus SqliteConfigSlotManager::write_config_slot(int slot_id) {
     auto transaction = this->db->begin_transaction();
 
     auto config_stmt = this->db->new_statement("INSERT INTO CONFIG (ID) VALUES (?) ON CONFLICT(ID) DO NOTHING;");
