@@ -133,6 +133,8 @@ public:
     virtual DeleteSlotStatus delete_slot(int slot_id) = 0;
     virtual DuplicateSlotResult duplicate_slot(int slot_id, std::optional<std::string> description) = 0;
     virtual LoadFromYamlResult load_from_yaml(const std::string& raw_yaml, std::optional<std::string> description) = 0;
+    virtual LoadFromYamlResult load_from_yaml(int slot_id, const std::string& raw_yaml,
+                                              std::optional<std::string> description) = 0;
 
     // --- Active-slot in-memory access ---
     virtual const everest::config::ModuleConfigurations& get_active_module_configurations() const = 0;
