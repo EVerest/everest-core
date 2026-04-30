@@ -45,22 +45,22 @@ private:
 
     void setup_update_subscriptions();
 
-    everest::lib::io::event::fd_event_handler event_handler_;
-    everest::lib::io::mqtt::mqtt_client client_;
+    everest::lib::io::event::fd_event_handler m_event_handler;
+    everest::lib::io::mqtt::mqtt_client m_client;
 
-    everest::lib::API::Topics topics;
-    std::string reply_topic_base_;
+    everest::lib::API::Topics m_topics;
+    std::string m_reply_topic_base;
 
-    std::atomic<bool> running_{true};
-    everest::lib::io::event::event_fd cancel_event_;
-    std::thread event_loop_thread_;
+    std::atomic<bool> m_running{true};
+    everest::lib::io::event::event_fd m_cancel_event;
+    std::thread m_event_loop_thread;
 
-    std::promise<void> connected_promise_;
-    std::shared_future<void> connected_future_{connected_promise_.get_future().share()};
+    std::promise<void> m_connected_promise;
+    std::shared_future<void> m_connected_future{m_connected_promise.get_future().share()};
 
-    bool suppress_parameter_updates_{false};
-    ActiveSlotCallback active_cb_;
-    ConfigUpdateCallback config_cb_;
+    bool m_suppress_parameter_updates{false};
+    ActiveSlotCallback m_active_cb;
+    ConfigUpdateCallback m_config_cb;
 };
 
 } // namespace everest::config_cli

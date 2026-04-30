@@ -13,15 +13,123 @@ inline bool operator==(const ConfigurationParameterIdentifier& a, const Configur
 }
 } // namespace everest::lib::API::V1_0::types::configuration
 
+namespace {
+
+using namespace everest::lib::API::V1_0::types::configuration;
+
+struct ParamInfo {
+    std::string value;
+    ConfigurationParameterDatatype datatype{ConfigurationParameterDatatype::Unknown};
+};
+
+ParamInfo lookup_param_in_config(const GetConfigurationResult& cfg,
+                                 const ConfigurationParameterIdentifier& id) {
+    if (!cfg.module_configurations.has_value()) {
+        return {};
+    }
+    const auto& mods = *cfg.module_configurations;
+    auto mod_it =
+        std::find_if(mods.begin(), mods.end(), [&id](const auto& m) { return m.module_id == id.module_id; });
+    if (mod_it == mods.end()) {
+        return {};
+    }
+    auto find_param = [&id](const auto& params) -> ParamInfo {
+        auto it =
+            std::find_if(params.begin(), params.end(), [&id](const auto& p) { return p.name == id.parameter_name; });
+        return it != params.end() ? ParamInfo{it->value, it->characteristics.datatype} : ParamInfo{};
+    };
+    if (!id.implementation_id.has_value()) {
+        return find_param(mod_it->module_configuration_parameters);
+    }
+    const auto& impls = mod_it->implementation_configuration_parameters;
+    auto impl_it = std::find_if(impls.begin(), impls.end(),
+                                [&id](const auto& impl) { return impl.implementation_id == *id.implementation_id; });
+    return impl_it != impls.end() ? find_param(impl_it->configuration_parameters) : ParamInfo{};
+}
+
+bool param_value_changed(const ParamInfo& before, const std::string& new_value) {
+    if (before.datatype == ConfigurationParameterDatatype::Decimal) {
+        try {
+            return std::stod(before.value) != std::stod(new_value);
+        } catch (const std::exception&) {
+        }
+    }
+    return before.value != new_value;
+}
+
+struct FilteredUpdates {
+    ConfigurationParameterUpdateRequest changed_req;
+    std::vector<ParamInfo> before_params;
+};
+
+FilteredUpdates filter_changed_updates(const ConfigurationParameterUpdateRequest& req,
+                                       const GetConfigurationResult& current_cfg) {
+    FilteredUpdates result;
+    result.changed_req.slot_id = req.slot_id;
+    for (const auto& update : req.parameter_updates) {
+        ParamInfo before = lookup_param_in_config(current_cfg, update.cfg_param_id);
+        if (param_value_changed(before, update.value)) {
+            result.changed_req.parameter_updates.push_back(update);
+            result.before_params.push_back(before);
+        }
+    }
+    return result;
+}
+
+void print_update_results(const ConfigurationParameterUpdateRequest& changed_req,
+                          const ConfigurationParameterUpdateRequestResult& res,
+                          const std::vector<ParamInfo>& before_params) {
+    const char* GREEN = "\033[32m";
+    const char* YELLOW = "\033[33m";
+    const char* RED = "\033[31m";
+    const char* BOLD = "\033[1m";
+    const char* RESET = "\033[0m";
+
+    int applied_count = 0;
+    int ok_count = 0;
+    for (std::size_t i = 0; i < res.results.size(); ++i) {
+        const auto& update = changed_req.parameter_updates.at(i);
+        const auto& result = res.results.at(i);
+        const auto& id = update.cfg_param_id;
+
+        std::string param_id = id.module_id + "|";
+        if (id.implementation_id.has_value()) {
+            param_id += *id.implementation_id + "|";
+        }
+        param_id += id.parameter_name;
+
+        const char* color = GREEN;
+        if (result == ConfigurationParameterUpdateResultEnum::WillApplyOnRestart) {
+            color = YELLOW;
+            ++ok_count;
+        } else if (result == ConfigurationParameterUpdateResultEnum::DoesNotExist ||
+                   result == ConfigurationParameterUpdateResultEnum::Rejected) {
+            color = RED;
+        } else {
+            ++ok_count;
+            ++applied_count;
+        }
+
+        const auto& before = before_params.at(i);
+        std::cout << BOLD << std::left << std::setw(50) << param_id << RESET << " [" << serialize(before.datatype)
+                  << "] : " << before.value << " -> " << update.value << "  " << color << serialize(result) << RESET
+                  << "\n";
+    }
+    std::cout << "\nChanged " << ok_count << " of " << res.results.size() << " parameter(s), " << applied_count
+              << " applied (immediately).\n";
+}
+
+} // namespace
+
 namespace everest::config_cli {
 
 CommandHandlers::CommandHandlers(std::shared_ptr<IConfigServiceClient> client,
                                  std::shared_ptr<IYamlProvider> yaml_provider) :
-    client_(std::move(client)), yaml_provider_(std::move(yaml_provider)) {
+    m_client(std::move(client)), m_yaml_provider(std::move(yaml_provider)) {
 }
 
 void CommandHandlers::list_slots() {
-    auto res = client_->list_all_slots();
+    auto res = m_client->list_all_slots();
     if (!res) {
         std::cerr << "Failed to list slots; API did not respond.\n";
         return;
@@ -33,7 +141,7 @@ void CommandHandlers::list_slots() {
 }
 
 void CommandHandlers::show_slot_metadata(int slot_id) {
-    auto res = client_->list_all_slots();
+    auto res = m_client->list_all_slots();
     if (!res) {
         std::cerr << "Failed to get slots metadata; API did not respond.\n";
         return;
@@ -57,7 +165,7 @@ void CommandHandlers::show_slot_metadata(int slot_id) {
 }
 
 void CommandHandlers::active_slot() {
-    auto res = client_->get_active_slot();
+    auto res = m_client->get_active_slot();
     if (!res) {
         std::cerr << "Failed to get active slot; API did not respond.\n";
         return;
@@ -70,7 +178,7 @@ void CommandHandlers::active_slot() {
 }
 
 void CommandHandlers::mark_active_slot(int slot_id) {
-    auto res = client_->mark_active_slot(slot_id);
+    auto res = m_client->mark_active_slot(slot_id);
     if (!res) {
         std::cerr << "Failed to mark active slot; API did not respond.\n";
         return;
@@ -83,7 +191,7 @@ void CommandHandlers::mark_active_slot(int slot_id) {
 }
 
 void CommandHandlers::delete_slot(int slot_id) {
-    auto res = client_->delete_slot(slot_id);
+    auto res = m_client->delete_slot(slot_id);
     if (!res) {
         std::cerr << "Failed to delete slot; API did not respond.\n";
         return;
@@ -97,7 +205,7 @@ void CommandHandlers::delete_slot(int slot_id) {
 
 void CommandHandlers::duplicate_slot(int slot_id, const std::string& description) {
     std::string desc = description.empty() ? ("duplicate of slot " + std::to_string(slot_id)) : description;
-    auto res = client_->duplicate_slot(slot_id, desc);
+    auto res = m_client->duplicate_slot(slot_id, desc);
     if (!res) {
         std::cerr << "Failed to duplicate slot; API did not respond.\n";
         return;
@@ -112,10 +220,10 @@ void CommandHandlers::duplicate_slot(int slot_id, const std::string& description
 
 void CommandHandlers::load_yaml(const std::string& filename, const std::string& description, std::optional<int> slot_id) {
     try {
-        std::string raw_yaml = yaml_provider_->extract_active_modules_string(filename);
+        std::string raw_yaml = m_yaml_provider->extract_active_modules_string(filename);
         std::string desc = description.empty() ? ("loaded from " + filename) : description;
 
-        auto res = client_->load_from_yaml(raw_yaml, desc, slot_id);
+        auto res = m_client->load_from_yaml(raw_yaml, desc, slot_id);
         if (!res) {
             std::cerr << "Failed to load YAML; API did not respond.\n";
             return;
@@ -132,7 +240,7 @@ void CommandHandlers::load_yaml(const std::string& filename, const std::string& 
 }
 
 void CommandHandlers::get_configuration(int slot_id) {
-    auto res = client_->get_configuration(slot_id);
+    auto res = m_client->get_configuration(slot_id);
     if (!res) {
         std::cerr << "Failed to get configuration for slot " << slot_id << "; API did not respond.\n";
         return;
@@ -143,7 +251,7 @@ void CommandHandlers::get_configuration(int slot_id) {
     }
 
     try {
-        std::string yaml_str = yaml_provider_->format_configuration(*res);
+        std::string yaml_str = m_yaml_provider->format_configuration(*res);
         std::cout << yaml_str << "\n";
     } catch (const std::exception& e) {
         std::cerr << "Error formatting configuration: " << e.what() << "\n";
@@ -153,13 +261,13 @@ void CommandHandlers::get_configuration(int slot_id) {
 void CommandHandlers::set_config_parameter(int slot_id, const std::string& filename) {
     everest::lib::API::V1_0::types::configuration::ConfigurationParameterUpdateRequest req;
     try {
-        req = yaml_provider_->parse_parameter_updates(slot_id, filename);
+        req = m_yaml_provider->parse_parameter_updates(slot_id, filename);
     } catch (const std::exception& e) {
         std::cerr << "Error parsing update file: " << e.what() << "\n";
         return;
     }
 
-    auto current_cfg = client_->get_configuration(slot_id);
+    auto current_cfg = m_client->get_configuration(slot_id);
     if (!current_cfg) {
         std::cerr << "Failed to get configuration for slot " << slot_id << "; API did not respond.\n";
         return;
@@ -170,109 +278,19 @@ void CommandHandlers::set_config_parameter(int slot_id, const std::string& filen
         return;
     }
 
-    // Build lookup: (module_id, impl_id, param_name) -> current value and datatype
-    using CfgParamId = everest::lib::API::V1_0::types::configuration::ConfigurationParameterIdentifier;
-    using Datatype = everest::lib::API::V1_0::types::configuration::ConfigurationParameterDatatype;
-    struct ParamInfo {
-        std::string value;
-        Datatype datatype{Datatype::Unknown};
-    };
-    auto lookup_current_param = [&](const CfgParamId& id) -> ParamInfo {
-        if (!current_cfg->module_configurations.has_value()) {
-            return {};
-        }
-        const auto& mods = *current_cfg->module_configurations;
-        auto mod_it =
-            std::find_if(mods.begin(), mods.end(), [&id](const auto& m) { return m.module_id == id.module_id; });
-        if (mod_it == mods.end()) {
-            return {};
-        }
-        auto find_param = [&id](const auto& params) -> ParamInfo {
-            auto it = std::find_if(params.begin(), params.end(),
-                                   [&id](const auto& p) { return p.name == id.parameter_name; });
-            return it != params.end() ? ParamInfo{it->value, it->characteristics.datatype} : ParamInfo{};
-        };
-        if (!id.implementation_id.has_value()) {
-            return find_param(mod_it->module_configuration_parameters);
-        }
-        const auto& impls = mod_it->implementation_configuration_parameters;
-        auto impl_it = std::find_if(impls.begin(), impls.end(), [&id](const auto& impl) {
-            return impl.implementation_id == *id.implementation_id;
-        });
-        return impl_it != impls.end() ? find_param(impl_it->configuration_parameters) : ParamInfo{};
-    };
-
-    // Filter to only parameters that actually changed
-    everest::lib::API::V1_0::types::configuration::ConfigurationParameterUpdateRequest changed_req;
-    changed_req.slot_id = slot_id;
-    std::vector<ParamInfo> before_params;
-    for (const auto& update : req.parameter_updates) {
-        ParamInfo before = lookup_current_param(update.cfg_param_id);
-        bool changed = [&] {
-            if (before.datatype == Datatype::Decimal) {
-                try {
-                    return std::stod(before.value) != std::stod(update.value);
-                } catch (const std::exception&) {
-                }
-            }
-            return before.value != update.value;
-        }();
-        if (changed) {
-            changed_req.parameter_updates.push_back(update);
-            before_params.push_back(before);
-        }
-    }
-
+    auto [changed_req, before_params] = filter_changed_updates(req, *current_cfg);
     if (changed_req.parameter_updates.empty()) {
         std::cout << "No parameters changed — nothing to update.\n";
         return;
     }
 
-    auto res = client_->set_config_parameters(changed_req);
+    auto res = m_client->set_config_parameters(changed_req);
     if (!res) {
         std::cerr << "Failed to set config parameters; API did not respond.\n";
         return;
     }
 
-    const char* GREEN = "\033[32m";
-    const char* YELLOW = "\033[33m";
-    const char* RED = "\033[31m";
-    const char* BOLD = "\033[1m";
-    const char* RESET = "\033[0m";
-
-    int applied_count = 0;
-    int ok_count = 0;
-    for (std::size_t i = 0; i < res->results.size(); ++i) {
-        const auto& update = changed_req.parameter_updates.at(i);
-        const auto& result = res->results.at(i);
-        const auto& id = update.cfg_param_id;
-
-        std::string param_id = id.module_id + "|";
-        if (id.implementation_id.has_value()) {
-            param_id += *id.implementation_id + "|";
-        }
-        param_id += id.parameter_name;
-
-        const char* color = GREEN;
-        using R = everest::lib::API::V1_0::types::configuration::ConfigurationParameterUpdateResultEnum;
-        if (result == R::WillApplyOnRestart) {
-            color = YELLOW;
-            ++ok_count;
-        } else if (result == R::DoesNotExist || result == R::Rejected) {
-            color = RED;
-        } else {
-            ++ok_count;
-            ++applied_count;
-        }
-
-        const auto& before = before_params.at(i);
-        std::cout << BOLD << std::left << std::setw(50) << param_id << RESET << " ["
-                  << everest::lib::API::V1_0::types::configuration::serialize(before.datatype) << "]"
-                  << " : " << before.value << " -> " << update.value << "  " << color
-                  << everest::lib::API::V1_0::types::configuration::serialize(result) << RESET << "\n";
-    }
-    std::cout << "\nChanged " << ok_count << " of " << res->results.size() << " parameter(s), " << applied_count
-              << " applied (immediately).\n";
+    print_update_results(changed_req, *res, before_params);
 }
 
 void CommandHandlers::monitor(bool suppress_parameter_updates) {
@@ -295,7 +313,7 @@ void CommandHandlers::monitor(bool suppress_parameter_updates) {
             }
         };
 
-    client_->subscribe_to_updates(suppress_parameter_updates, active_cb, config_cb);
+    m_client->subscribe_to_updates(suppress_parameter_updates, active_cb, config_cb);
 
     // Keep thread alive
     while (true) {

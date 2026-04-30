@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
                   << "  duplicate_slot <no> [<description>]\n"
                   << "  load_yaml <filename>[--description <desc>] [--slot-id <slot_id>]\n"
                   << "  get_configuration <slot_id>\n"
-                  << "  set_config_parameter <slot_id> <filename>\n"
+                  << "  set_config_parameters <slot_id> <filename>\n"
                   << "  monitor [--suppress-parameter-updates]\n";
         return 0;
     }
@@ -135,9 +135,9 @@ int main(int argc, char** argv) {
                 return 1;
             }
             handlers.get_configuration(std::stoi(cmd_args[0]));
-        } else if (command == "set_config_parameter") {
+        } else if (command == "set_config_parameters") {
             if (cmd_args.size() < 2) {
-                std::cerr << "Usage: set_config_parameter <slot_id> <filename>\n";
+                std::cerr << "Usage: set_config_parameters <slot_id> <filename>\n";
                 return 1;
             }
             handlers.set_config_parameter(std::stoi(cmd_args[0]), cmd_args[1]);

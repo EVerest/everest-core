@@ -23,8 +23,8 @@ public:
     void monitor(bool suppress_parameter_updates);
 
 private:
-    std::shared_ptr<IConfigServiceClient> client_;
-    std::shared_ptr<IYamlProvider> yaml_provider_;
+    std::shared_ptr<IConfigServiceClient> m_client;
+    std::shared_ptr<IYamlProvider> m_yaml_provider;
 };
 
 } // namespace everest::config_cli
