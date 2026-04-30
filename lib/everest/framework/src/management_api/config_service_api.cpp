@@ -142,7 +142,8 @@ void ConfigServiceAPI::generate_api_cmd_load_from_yaml() {
         if (deserialize(data, msg)) {
             API_types_ext::LoadFromYamlRequest payload;
             if (deserialize(msg.payload, payload)) {
-                auto res = config_service.load_from_yaml(payload.raw_yaml, payload.description);
+                std::optional<int> slot_id_opt = payload.slot_id.has_value() ? std::optional<int>{payload.slot_id.value()} : std::nullopt;
+                auto res = config_service.load_from_yaml(payload.raw_yaml, payload.description, slot_id_opt);
                 auto ext_res = API_wrapper::to_external_api(res);
 
                 mqtt_abstraction.publish(msg.replyTo, serialize(ext_res));

@@ -724,6 +724,9 @@ void from_json(const json& j, DuplicateSlotRequest& k) {
 
 void to_json(json& j, LoadFromYamlRequest const& k) noexcept {
     j = json{{"raw_yaml", k.raw_yaml}};
+    if (k.slot_id) {
+        j["slot_id"] = *k.slot_id;
+    }
     if (k.description) {
         j["description"] = *k.description;
     }
@@ -731,6 +734,9 @@ void to_json(json& j, LoadFromYamlRequest const& k) noexcept {
 
 void from_json(const json& j, LoadFromYamlRequest& k) {
     k.raw_yaml = j.at("raw_yaml");
+    if (j.contains("slot_id")) {
+        k.slot_id = j.at("slot_id");
+    }
     if (j.contains("description")) {
         k.description = j.at("description");
     }

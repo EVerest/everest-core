@@ -220,7 +220,7 @@ operations:
     action: send
     channel:
       $ref: '#/channels/send_request_load_from_yaml'
-    description: 'Request creation of a new slot from a YAML configuration string.'
+    description: 'Request loading from a YAML configuration string.'
     reply:
       address:
         location: "$message.header#/replyTo"
@@ -473,7 +473,7 @@ components:
     send_request_load_from_yaml:
       name: send_request_load_from_yaml
       title: 'Load from YAML request'
-      summary: 'Request creation of a new slot from YAML configuration.'
+      summary: 'Request loading from YAML configuration string.'
       contentType: application/json
       payload:
         type: object
@@ -829,12 +829,14 @@ components:
       required:
         - success
     LoadFromYamlRequest:
-      description: A request to create a new configuration slot from a YAML configuration, consisting of the raw YAML string of the configuration and optionally a description for the new slot.
+      description: A request to load a raw YAML configuration, into a new or a given slot; consists of the raw configuration YAML string and optionally a the slot_id and a description for the slot.
       type: object
       additionalProperties: true
       properties:
         raw_yaml:
           type: string
+        slot_id:
+          type: integer
         description:
           type: string
       required:

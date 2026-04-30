@@ -234,6 +234,7 @@ struct DuplicateSlotRequest {
 
 struct LoadFromYamlRequest {
     std::string raw_yaml;
+    std::optional<int32_t> slot_id;
     std::optional<std::string> description;
 };
 
