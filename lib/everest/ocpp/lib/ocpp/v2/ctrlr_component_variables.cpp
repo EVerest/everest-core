@@ -1952,15 +1952,13 @@ void migrate_from_blob_if_needed(DeviceModelInterface& dm) {
 
         // Read the global BasicAuthPassword from SecurityCtrlr so we can populate per-slot passwords
         // during migration when the blob does not contain one (the legacy format stored it separately).
-        // The historical factory sentinel (a repeat of "DEADBEEF") must never be propagated into
-        // per-slot DM overrides, because once a per-slot value is set it shadows the global fallback.
+        // Whatever the operator has put in SecurityCtrlr is treated as the source of truth — propagate
+        // it as-is, skipping only when the value would not fit the per-slot CiString<64> length cap.
         static constexpr std::size_t basic_auth_password_max_length = 64;
-        static const std::string factory_sentinel_password = "DEADBEEFDEADBEEF";
         const auto security_ctrlr_password =
             get_optional_value<std::string>(dm, ControllerComponentVariables::BasicAuthPassword);
         const bool security_ctrlr_password_is_usable =
             security_ctrlr_password.has_value() && !security_ctrlr_password->empty() &&
-            security_ctrlr_password.value() != factory_sentinel_password &&
             security_ctrlr_password->size() <= basic_auth_password_max_length;
         if (security_ctrlr_password.has_value() && security_ctrlr_password->size() > basic_auth_password_max_length) {
             EVLOG_warning << "SecurityCtrlr.BasicAuthPassword exceeds the per-slot BasicAuthPassword length limit ("
