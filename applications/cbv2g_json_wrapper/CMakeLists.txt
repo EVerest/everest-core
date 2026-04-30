@@ -81,16 +81,25 @@ if(BUILD_CBV2G_JSON_WRAPPER_TESTS)
     )
     add_test(NAME cbv2g_test_apphand COMMAND cbv2g_test_apphand)
 
-    add_executable(cbv2g_test_din
-        tests/test_din.c
-    )
-    target_link_libraries(cbv2g_test_din
-        cbv2g_json_wrapper
-        cjson
+    if(NOT TARGET GTest::gtest_main)
+        find_package(GTest REQUIRED)
+    endif()
+
+    add_executable(cbv2g_test_din)
+    target_sources(cbv2g_test_din
+        PRIVATE
+            tests/test_din.cpp
     )
     target_include_directories(cbv2g_test_din PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/cJSON
+    )
+    target_compile_features(cbv2g_test_din PRIVATE cxx_std_17)
+    target_link_libraries(cbv2g_test_din
+        PRIVATE
+            cbv2g_json_wrapper
+            cjson
+            GTest::gtest_main
     )
     add_test(NAME cbv2g_test_din COMMAND cbv2g_test_din)
 endif()

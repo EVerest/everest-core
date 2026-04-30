@@ -5,17 +5,17 @@
  * din_converter.c - DIN 70121 JSON/EXI converter
  */
 
+#include "cJSON.h"
 #include "converters.h"
 #include "json_utils.h"
-#include "cJSON.h"
 
 #include <cbv2g/common/exi_bitstream.h>
 #include <cbv2g/din/din_msgDefDatatypes.h>
-#include <cbv2g/din/din_msgDefEncoder.h>
 #include <cbv2g/din/din_msgDefDecoder.h>
+#include <cbv2g/din/din_msgDefEncoder.h>
 
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 
 /* Forward declarations for message converters */
 static int json_to_din_header(cJSON* json, struct din_MessageHeaderType* header);
@@ -82,20 +82,141 @@ static const char* din_response_code_to_string(din_responseCodeType code);
 static din_responseCodeType din_string_to_response_code(const char* str);
 
 /*
+ * Dispatch a parsed Body JSON object to the correct per-message converter.
+ *
+ * Returns CBV2G_SUCCESS once a recognised message has been parsed (the
+ * matching field on `body_out` is initialised and `_isUsed` is set), the
+ * converter's error code if a recognised message fails to parse, or
+ * CBV2G_ERROR_UNKNOWN_MESSAGE if no recognised message tag is present.
+ */
+static int json_to_din_body(cJSON* body_json, struct din_BodyType* body_out) {
+    cJSON* msg;
+
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "SessionSetupReq")) != NULL) {
+        init_din_SessionSetupReqType(&body_out->SessionSetupReq);
+        body_out->SessionSetupReq_isUsed = 1;
+        return json_to_din_session_setup_req(msg, &body_out->SessionSetupReq);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "SessionSetupRes")) != NULL) {
+        init_din_SessionSetupResType(&body_out->SessionSetupRes);
+        body_out->SessionSetupRes_isUsed = 1;
+        return json_to_din_session_setup_res(msg, &body_out->SessionSetupRes);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "ServiceDiscoveryReq")) != NULL) {
+        init_din_ServiceDiscoveryReqType(&body_out->ServiceDiscoveryReq);
+        body_out->ServiceDiscoveryReq_isUsed = 1;
+        return json_to_din_service_discovery_req(msg, &body_out->ServiceDiscoveryReq);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "ServiceDiscoveryRes")) != NULL) {
+        init_din_ServiceDiscoveryResType(&body_out->ServiceDiscoveryRes);
+        body_out->ServiceDiscoveryRes_isUsed = 1;
+        return json_to_din_service_discovery_res(msg, &body_out->ServiceDiscoveryRes);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "ServicePaymentSelectionReq")) != NULL) {
+        init_din_ServicePaymentSelectionReqType(&body_out->ServicePaymentSelectionReq);
+        body_out->ServicePaymentSelectionReq_isUsed = 1;
+        return json_to_din_service_payment_selection_req(msg, &body_out->ServicePaymentSelectionReq);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "ServicePaymentSelectionRes")) != NULL) {
+        init_din_ServicePaymentSelectionResType(&body_out->ServicePaymentSelectionRes);
+        body_out->ServicePaymentSelectionRes_isUsed = 1;
+        return json_to_din_service_payment_selection_res(msg, &body_out->ServicePaymentSelectionRes);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "ContractAuthenticationReq")) != NULL) {
+        init_din_ContractAuthenticationReqType(&body_out->ContractAuthenticationReq);
+        body_out->ContractAuthenticationReq_isUsed = 1;
+        return json_to_din_contract_authentication_req(msg, &body_out->ContractAuthenticationReq);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "ContractAuthenticationRes")) != NULL) {
+        init_din_ContractAuthenticationResType(&body_out->ContractAuthenticationRes);
+        body_out->ContractAuthenticationRes_isUsed = 1;
+        return json_to_din_contract_authentication_res(msg, &body_out->ContractAuthenticationRes);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "ChargeParameterDiscoveryReq")) != NULL) {
+        init_din_ChargeParameterDiscoveryReqType(&body_out->ChargeParameterDiscoveryReq);
+        body_out->ChargeParameterDiscoveryReq_isUsed = 1;
+        return json_to_din_charge_parameter_discovery_req(msg, &body_out->ChargeParameterDiscoveryReq);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "ChargeParameterDiscoveryRes")) != NULL) {
+        init_din_ChargeParameterDiscoveryResType(&body_out->ChargeParameterDiscoveryRes);
+        body_out->ChargeParameterDiscoveryRes_isUsed = 1;
+        return json_to_din_charge_parameter_discovery_res(msg, &body_out->ChargeParameterDiscoveryRes);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "CableCheckReq")) != NULL) {
+        init_din_CableCheckReqType(&body_out->CableCheckReq);
+        body_out->CableCheckReq_isUsed = 1;
+        return json_to_din_cable_check_req(msg, &body_out->CableCheckReq);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "CableCheckRes")) != NULL) {
+        init_din_CableCheckResType(&body_out->CableCheckRes);
+        body_out->CableCheckRes_isUsed = 1;
+        return json_to_din_cable_check_res(msg, &body_out->CableCheckRes);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "PreChargeReq")) != NULL) {
+        init_din_PreChargeReqType(&body_out->PreChargeReq);
+        body_out->PreChargeReq_isUsed = 1;
+        return json_to_din_pre_charge_req(msg, &body_out->PreChargeReq);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "PreChargeRes")) != NULL) {
+        init_din_PreChargeResType(&body_out->PreChargeRes);
+        body_out->PreChargeRes_isUsed = 1;
+        return json_to_din_pre_charge_res(msg, &body_out->PreChargeRes);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "PowerDeliveryReq")) != NULL) {
+        init_din_PowerDeliveryReqType(&body_out->PowerDeliveryReq);
+        body_out->PowerDeliveryReq_isUsed = 1;
+        return json_to_din_power_delivery_req(msg, &body_out->PowerDeliveryReq);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "PowerDeliveryRes")) != NULL) {
+        init_din_PowerDeliveryResType(&body_out->PowerDeliveryRes);
+        body_out->PowerDeliveryRes_isUsed = 1;
+        return json_to_din_power_delivery_res(msg, &body_out->PowerDeliveryRes);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "CurrentDemandReq")) != NULL) {
+        init_din_CurrentDemandReqType(&body_out->CurrentDemandReq);
+        body_out->CurrentDemandReq_isUsed = 1;
+        return json_to_din_current_demand_req(msg, &body_out->CurrentDemandReq);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "CurrentDemandRes")) != NULL) {
+        init_din_CurrentDemandResType(&body_out->CurrentDemandRes);
+        body_out->CurrentDemandRes_isUsed = 1;
+        return json_to_din_current_demand_res(msg, &body_out->CurrentDemandRes);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "WeldingDetectionReq")) != NULL) {
+        init_din_WeldingDetectionReqType(&body_out->WeldingDetectionReq);
+        body_out->WeldingDetectionReq_isUsed = 1;
+        return json_to_din_welding_detection_req(msg, &body_out->WeldingDetectionReq);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "WeldingDetectionRes")) != NULL) {
+        init_din_WeldingDetectionResType(&body_out->WeldingDetectionRes);
+        body_out->WeldingDetectionRes_isUsed = 1;
+        return json_to_din_welding_detection_res(msg, &body_out->WeldingDetectionRes);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "SessionStopReq")) != NULL) {
+        init_din_SessionStopType(&body_out->SessionStopReq);
+        body_out->SessionStopReq_isUsed = 1;
+        return json_to_din_session_stop_req(msg, &body_out->SessionStopReq);
+    }
+    if ((msg = cJSON_GetObjectItemCaseSensitive(body_json, "SessionStopRes")) != NULL) {
+        init_din_SessionStopResType(&body_out->SessionStopRes);
+        body_out->SessionStopRes_isUsed = 1;
+        return json_to_din_session_stop_res(msg, &body_out->SessionStopRes);
+    }
+
+    set_error("Unknown DIN message type in Body");
+    return CBV2G_ERROR_UNKNOWN_MESSAGE;
+}
+
+/*
  * Encode DIN message from JSON to EXI
  */
 int din_encode(const char* json_str, uint8_t* out, size_t out_size, size_t* out_len) {
-    int result = CBV2G_ERROR_INTERNAL;
-    cJSON* root = NULL;
-
-    /* Parse JSON */
-    root = cJSON_Parse(json_str);
+    cJSON* root = cJSON_Parse(json_str);
     if (root == NULL) {
         set_error("Failed to parse JSON: %s", cJSON_GetErrorPtr());
         return CBV2G_ERROR_JSON_PARSE;
     }
 
-    /* Get V2G_Message object */
     cJSON* v2g_msg = cJSON_GetObjectItemCaseSensitive(root, "V2G_Message");
     if (v2g_msg == NULL) {
         set_error("V2G_Message not found in JSON");
@@ -103,21 +224,18 @@ int din_encode(const char* json_str, uint8_t* out, size_t out_size, size_t* out_
         return CBV2G_ERROR_JSON_PARSE;
     }
 
-    /* Initialize EXI document */
     struct din_exiDocument doc;
     init_din_exiDocument(&doc);
 
-    /* Parse Header */
     cJSON* header = cJSON_GetObjectItemCaseSensitive(v2g_msg, "Header");
     if (header != NULL) {
-        result = json_to_din_header(header, &doc.V2G_Message.Header);
-        if (result != CBV2G_SUCCESS) {
+        int rc = json_to_din_header(header, &doc.V2G_Message.Header);
+        if (rc != CBV2G_SUCCESS) {
             cJSON_Delete(root);
-            return result;
+            return rc;
         }
     }
 
-    /* Parse Body */
     cJSON* body = cJSON_GetObjectItemCaseSensitive(v2g_msg, "Body");
     if (body == NULL) {
         set_error("Body not found in V2G_Message");
@@ -125,57 +243,15 @@ int din_encode(const char* json_str, uint8_t* out, size_t out_size, size_t* out_
         return CBV2G_ERROR_JSON_PARSE;
     }
 
-    /* Initialize Body structure - CRITICAL: must be done before setting any message */
+    /* Init Body before any per-message init runs against it. */
     init_din_BodyType(&doc.V2G_Message.Body);
 
-    /* Determine message type and convert */
-    cJSON* msg = NULL;
-
-    #define HANDLE_MSG_ENCODE(name, field, init_func, conv_func) \
-        msg = cJSON_GetObjectItemCaseSensitive(body, #name); \
-        if (msg != NULL) { \
-            init_func(&doc.V2G_Message.Body.field); \
-            doc.V2G_Message.Body.field##_isUsed = 1; \
-            result = conv_func(msg, &doc.V2G_Message.Body.field); \
-            goto encode; \
-        }
-
-    HANDLE_MSG_ENCODE(SessionSetupReq, SessionSetupReq, init_din_SessionSetupReqType, json_to_din_session_setup_req)
-    HANDLE_MSG_ENCODE(SessionSetupRes, SessionSetupRes, init_din_SessionSetupResType, json_to_din_session_setup_res)
-    HANDLE_MSG_ENCODE(ServiceDiscoveryReq, ServiceDiscoveryReq, init_din_ServiceDiscoveryReqType, json_to_din_service_discovery_req)
-    HANDLE_MSG_ENCODE(ServiceDiscoveryRes, ServiceDiscoveryRes, init_din_ServiceDiscoveryResType, json_to_din_service_discovery_res)
-    HANDLE_MSG_ENCODE(ServicePaymentSelectionReq, ServicePaymentSelectionReq, init_din_ServicePaymentSelectionReqType, json_to_din_service_payment_selection_req)
-    HANDLE_MSG_ENCODE(ServicePaymentSelectionRes, ServicePaymentSelectionRes, init_din_ServicePaymentSelectionResType, json_to_din_service_payment_selection_res)
-    HANDLE_MSG_ENCODE(ContractAuthenticationReq, ContractAuthenticationReq, init_din_ContractAuthenticationReqType, json_to_din_contract_authentication_req)
-    HANDLE_MSG_ENCODE(ContractAuthenticationRes, ContractAuthenticationRes, init_din_ContractAuthenticationResType, json_to_din_contract_authentication_res)
-    HANDLE_MSG_ENCODE(ChargeParameterDiscoveryReq, ChargeParameterDiscoveryReq, init_din_ChargeParameterDiscoveryReqType, json_to_din_charge_parameter_discovery_req)
-    HANDLE_MSG_ENCODE(ChargeParameterDiscoveryRes, ChargeParameterDiscoveryRes, init_din_ChargeParameterDiscoveryResType, json_to_din_charge_parameter_discovery_res)
-    HANDLE_MSG_ENCODE(CableCheckReq, CableCheckReq, init_din_CableCheckReqType, json_to_din_cable_check_req)
-    HANDLE_MSG_ENCODE(CableCheckRes, CableCheckRes, init_din_CableCheckResType, json_to_din_cable_check_res)
-    HANDLE_MSG_ENCODE(PreChargeReq, PreChargeReq, init_din_PreChargeReqType, json_to_din_pre_charge_req)
-    HANDLE_MSG_ENCODE(PreChargeRes, PreChargeRes, init_din_PreChargeResType, json_to_din_pre_charge_res)
-    HANDLE_MSG_ENCODE(PowerDeliveryReq, PowerDeliveryReq, init_din_PowerDeliveryReqType, json_to_din_power_delivery_req)
-    HANDLE_MSG_ENCODE(PowerDeliveryRes, PowerDeliveryRes, init_din_PowerDeliveryResType, json_to_din_power_delivery_res)
-    HANDLE_MSG_ENCODE(CurrentDemandReq, CurrentDemandReq, init_din_CurrentDemandReqType, json_to_din_current_demand_req)
-    HANDLE_MSG_ENCODE(CurrentDemandRes, CurrentDemandRes, init_din_CurrentDemandResType, json_to_din_current_demand_res)
-    HANDLE_MSG_ENCODE(WeldingDetectionReq, WeldingDetectionReq, init_din_WeldingDetectionReqType, json_to_din_welding_detection_req)
-    HANDLE_MSG_ENCODE(WeldingDetectionRes, WeldingDetectionRes, init_din_WeldingDetectionResType, json_to_din_welding_detection_res)
-    HANDLE_MSG_ENCODE(SessionStopReq, SessionStopReq, init_din_SessionStopType, json_to_din_session_stop_req)
-    HANDLE_MSG_ENCODE(SessionStopRes, SessionStopRes, init_din_SessionStopResType, json_to_din_session_stop_res)
-
-    #undef HANDLE_MSG_ENCODE
-
-    set_error("Unknown DIN message type in Body");
-    cJSON_Delete(root);
-    return CBV2G_ERROR_UNKNOWN_MESSAGE;
-
-encode:
-    if (result != CBV2G_SUCCESS) {
+    int rc = json_to_din_body(body, &doc.V2G_Message.Body);
+    if (rc != CBV2G_SUCCESS) {
         cJSON_Delete(root);
-        return result;
+        return rc;
     }
 
-    /* Initialize EXI bitstream and encode */
     exi_bitstream_t stream;
     exi_bitstream_init(&stream, out, out_size, 0, NULL);
 
@@ -192,14 +268,184 @@ encode:
 }
 
 /*
+ * Small per-message helper used by din_body_to_json: if the message is
+ * present in the decoded document, run the converter and attach the
+ * resulting cJSON to `body_json_out` under `name`.
+ */
+static int append_decoded_msg(cJSON* body_json_out, const char* name, cJSON* msg_json) {
+    if (msg_json == NULL) {
+        set_error("Failed to convert %s to JSON", name);
+        return CBV2G_ERROR_JSON_GENERATE;
+    }
+    cJSON_AddItemToObject(body_json_out, name, msg_json);
+    return CBV2G_SUCCESS;
+}
+
+/*
+ * Add the single populated Body message in `body_in` to `body_json_out`.
+ *
+ * At most one of the `_isUsed` flags is set on a valid decoded document,
+ * but we walk all variants for robustness.
+ */
+static int din_body_to_json(const struct din_BodyType* body_in, cJSON* body_json_out) {
+    int rc;
+    if (body_in->SessionSetupReq_isUsed) {
+        rc = append_decoded_msg(body_json_out, "SessionSetupReq",
+                                din_session_setup_req_to_json(&body_in->SessionSetupReq));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->SessionSetupRes_isUsed) {
+        rc = append_decoded_msg(body_json_out, "SessionSetupRes",
+                                din_session_setup_res_to_json(&body_in->SessionSetupRes));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->ServiceDiscoveryReq_isUsed) {
+        rc = append_decoded_msg(body_json_out, "ServiceDiscoveryReq",
+                                din_service_discovery_req_to_json(&body_in->ServiceDiscoveryReq));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->ServiceDiscoveryRes_isUsed) {
+        rc = append_decoded_msg(body_json_out, "ServiceDiscoveryRes",
+                                din_service_discovery_res_to_json(&body_in->ServiceDiscoveryRes));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->ServicePaymentSelectionReq_isUsed) {
+        rc = append_decoded_msg(body_json_out, "ServicePaymentSelectionReq",
+                                din_service_payment_selection_req_to_json(&body_in->ServicePaymentSelectionReq));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->ServicePaymentSelectionRes_isUsed) {
+        rc = append_decoded_msg(body_json_out, "ServicePaymentSelectionRes",
+                                din_service_payment_selection_res_to_json(&body_in->ServicePaymentSelectionRes));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->ContractAuthenticationReq_isUsed) {
+        rc = append_decoded_msg(body_json_out, "ContractAuthenticationReq",
+                                din_contract_authentication_req_to_json(&body_in->ContractAuthenticationReq));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->ContractAuthenticationRes_isUsed) {
+        rc = append_decoded_msg(body_json_out, "ContractAuthenticationRes",
+                                din_contract_authentication_res_to_json(&body_in->ContractAuthenticationRes));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->ChargeParameterDiscoveryReq_isUsed) {
+        rc = append_decoded_msg(body_json_out, "ChargeParameterDiscoveryReq",
+                                din_charge_parameter_discovery_req_to_json(&body_in->ChargeParameterDiscoveryReq));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->ChargeParameterDiscoveryRes_isUsed) {
+        rc = append_decoded_msg(body_json_out, "ChargeParameterDiscoveryRes",
+                                din_charge_parameter_discovery_res_to_json(&body_in->ChargeParameterDiscoveryRes));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->CableCheckReq_isUsed) {
+        rc = append_decoded_msg(body_json_out, "CableCheckReq", din_cable_check_req_to_json(&body_in->CableCheckReq));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->CableCheckRes_isUsed) {
+        rc = append_decoded_msg(body_json_out, "CableCheckRes", din_cable_check_res_to_json(&body_in->CableCheckRes));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->PreChargeReq_isUsed) {
+        rc = append_decoded_msg(body_json_out, "PreChargeReq", din_pre_charge_req_to_json(&body_in->PreChargeReq));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->PreChargeRes_isUsed) {
+        rc = append_decoded_msg(body_json_out, "PreChargeRes", din_pre_charge_res_to_json(&body_in->PreChargeRes));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->PowerDeliveryReq_isUsed) {
+        rc = append_decoded_msg(body_json_out, "PowerDeliveryReq",
+                                din_power_delivery_req_to_json(&body_in->PowerDeliveryReq));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->PowerDeliveryRes_isUsed) {
+        rc = append_decoded_msg(body_json_out, "PowerDeliveryRes",
+                                din_power_delivery_res_to_json(&body_in->PowerDeliveryRes));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->CurrentDemandReq_isUsed) {
+        rc = append_decoded_msg(body_json_out, "CurrentDemandReq",
+                                din_current_demand_req_to_json(&body_in->CurrentDemandReq));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->CurrentDemandRes_isUsed) {
+        rc = append_decoded_msg(body_json_out, "CurrentDemandRes",
+                                din_current_demand_res_to_json(&body_in->CurrentDemandRes));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->WeldingDetectionReq_isUsed) {
+        rc = append_decoded_msg(body_json_out, "WeldingDetectionReq",
+                                din_welding_detection_req_to_json(&body_in->WeldingDetectionReq));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->WeldingDetectionRes_isUsed) {
+        rc = append_decoded_msg(body_json_out, "WeldingDetectionRes",
+                                din_welding_detection_res_to_json(&body_in->WeldingDetectionRes));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->SessionStopReq_isUsed) {
+        rc =
+            append_decoded_msg(body_json_out, "SessionStopReq", din_session_stop_req_to_json(&body_in->SessionStopReq));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    if (body_in->SessionStopRes_isUsed) {
+        rc =
+            append_decoded_msg(body_json_out, "SessionStopRes", din_session_stop_res_to_json(&body_in->SessionStopRes));
+        if (rc != CBV2G_SUCCESS) {
+            return rc;
+        }
+    }
+    return CBV2G_SUCCESS;
+}
+
+/*
  * Decode DIN message from EXI to JSON
  */
 int din_decode(const uint8_t* exi, size_t exi_len, char* out, size_t out_size) {
-    int result = CBV2G_ERROR_INTERNAL;
-    cJSON* root = NULL;
-    char* json_str = NULL;
-
-    /* Initialize and decode EXI document */
     exi_bitstream_t stream;
     exi_bitstream_init(&stream, (uint8_t*)exi, exi_len, 0, NULL);
 
@@ -212,77 +458,43 @@ int din_decode(const uint8_t* exi, size_t exi_len, char* out, size_t out_size) {
         return CBV2G_ERROR_DECODING_FAILED;
     }
 
-    /* Create JSON structure */
-    root = cJSON_CreateObject();
+    cJSON* root = cJSON_CreateObject();
+    if (root == NULL) {
+        set_error("Failed to create JSON object");
+        return CBV2G_ERROR_JSON_GENERATE;
+    }
     cJSON* v2g_msg = cJSON_CreateObject();
     cJSON_AddItemToObject(root, "V2G_Message", v2g_msg);
 
-    /* Convert Header */
     cJSON* header_json = din_header_to_json(&doc.V2G_Message.Header);
     cJSON_AddItemToObject(v2g_msg, "Header", header_json);
 
-    /* Convert Body */
     cJSON* body_json = cJSON_CreateObject();
     cJSON_AddItemToObject(v2g_msg, "Body", body_json);
 
-    #define HANDLE_MSG_DECODE(name, field, conv_func) \
-        if (doc.V2G_Message.Body.field##_isUsed) { \
-            cJSON* msg_json = conv_func(&doc.V2G_Message.Body.field); \
-            if (msg_json == NULL) { \
-                set_error("Failed to convert " #name " to JSON"); \
-                result = CBV2G_ERROR_JSON_GENERATE; \
-                goto cleanup; \
-            } \
-            cJSON_AddItemToObject(body_json, #name, msg_json); \
-        }
+    int body_rc = din_body_to_json(&doc.V2G_Message.Body, body_json);
+    if (body_rc != CBV2G_SUCCESS) {
+        cJSON_Delete(root);
+        return body_rc;
+    }
 
-    HANDLE_MSG_DECODE(SessionSetupReq, SessionSetupReq, din_session_setup_req_to_json)
-    HANDLE_MSG_DECODE(SessionSetupRes, SessionSetupRes, din_session_setup_res_to_json)
-    HANDLE_MSG_DECODE(ServiceDiscoveryReq, ServiceDiscoveryReq, din_service_discovery_req_to_json)
-    HANDLE_MSG_DECODE(ServiceDiscoveryRes, ServiceDiscoveryRes, din_service_discovery_res_to_json)
-    HANDLE_MSG_DECODE(ServicePaymentSelectionReq, ServicePaymentSelectionReq, din_service_payment_selection_req_to_json)
-    HANDLE_MSG_DECODE(ServicePaymentSelectionRes, ServicePaymentSelectionRes, din_service_payment_selection_res_to_json)
-    HANDLE_MSG_DECODE(ContractAuthenticationReq, ContractAuthenticationReq, din_contract_authentication_req_to_json)
-    HANDLE_MSG_DECODE(ContractAuthenticationRes, ContractAuthenticationRes, din_contract_authentication_res_to_json)
-    HANDLE_MSG_DECODE(ChargeParameterDiscoveryReq, ChargeParameterDiscoveryReq, din_charge_parameter_discovery_req_to_json)
-    HANDLE_MSG_DECODE(ChargeParameterDiscoveryRes, ChargeParameterDiscoveryRes, din_charge_parameter_discovery_res_to_json)
-    HANDLE_MSG_DECODE(CableCheckReq, CableCheckReq, din_cable_check_req_to_json)
-    HANDLE_MSG_DECODE(CableCheckRes, CableCheckRes, din_cable_check_res_to_json)
-    HANDLE_MSG_DECODE(PreChargeReq, PreChargeReq, din_pre_charge_req_to_json)
-    HANDLE_MSG_DECODE(PreChargeRes, PreChargeRes, din_pre_charge_res_to_json)
-    HANDLE_MSG_DECODE(PowerDeliveryReq, PowerDeliveryReq, din_power_delivery_req_to_json)
-    HANDLE_MSG_DECODE(PowerDeliveryRes, PowerDeliveryRes, din_power_delivery_res_to_json)
-    HANDLE_MSG_DECODE(CurrentDemandReq, CurrentDemandReq, din_current_demand_req_to_json)
-    HANDLE_MSG_DECODE(CurrentDemandRes, CurrentDemandRes, din_current_demand_res_to_json)
-    HANDLE_MSG_DECODE(WeldingDetectionReq, WeldingDetectionReq, din_welding_detection_req_to_json)
-    HANDLE_MSG_DECODE(WeldingDetectionRes, WeldingDetectionRes, din_welding_detection_res_to_json)
-    HANDLE_MSG_DECODE(SessionStopReq, SessionStopReq, din_session_stop_req_to_json)
-    HANDLE_MSG_DECODE(SessionStopRes, SessionStopRes, din_session_stop_res_to_json)
-
-    #undef HANDLE_MSG_DECODE
-
-    /* Serialize JSON to string */
-    json_str = cJSON_PrintUnformatted(root);
+    char* json_str = cJSON_PrintUnformatted(root);
     if (json_str == NULL) {
         set_error("Failed to serialize JSON");
-        result = CBV2G_ERROR_JSON_GENERATE;
-        goto cleanup;
+        cJSON_Delete(root);
+        return CBV2G_ERROR_JSON_GENERATE;
     }
 
-    /* Bounded write to the output buffer via snprintf (CWE-120 / CWE-126:
-     * avoids strcpy and an unbounded strlen on cJSON-emitted text). */
+    /* Bounded write to caller's buffer (CWE-120 / CWE-126). */
     int written = snprintf(out, out_size, "%s", json_str);
+    cJSON_free(json_str);
+    cJSON_Delete(root);
+
     if (written < 0 || (size_t)written >= out_size) {
         set_error("Output buffer too small: need %d, have %zu", written + 1, out_size);
-        result = CBV2G_ERROR_BUFFER_TOO_SMALL;
-        goto cleanup;
+        return CBV2G_ERROR_BUFFER_TOO_SMALL;
     }
-    result = CBV2G_SUCCESS;
-
-cleanup:
-    if (root != NULL) cJSON_Delete(root);
-    if (json_str != NULL) cJSON_free(json_str);
-    return result;
+    return CBV2G_SUCCESS;
 }
 
 /* ============== Helper Functions ============== */
@@ -301,8 +513,7 @@ static int json_to_din_header(cJSON* json, struct din_MessageHeaderType* header)
          * avoid an unbounded strlen on non-null-terminated input
          * (CWE-126). */
         size_t vs_len = strnlen(session_id->valuestring, din_sessionIDType_BYTES_SIZE * 2);
-        size_t len = hex_decode(session_id->valuestring, vs_len,
-                                header->SessionID.bytes, din_sessionIDType_BYTES_SIZE);
+        size_t len = hex_decode(session_id->valuestring, vs_len, header->SessionID.bytes, din_sessionIDType_BYTES_SIZE);
         if (len > 0) {
             header->SessionID.bytesLen = len;
         }
@@ -315,7 +526,7 @@ static cJSON* din_header_to_json(const struct din_MessageHeaderType* header) {
     cJSON* json = cJSON_CreateObject();
 
     /* SessionID is hexBinary in XSD - use hex encoding */
-    char hex[17];  /* 8 bytes * 2 + null terminator */
+    char hex[17]; /* 8 bytes * 2 + null terminator */
     hex_encode(header->SessionID.bytes, header->SessionID.bytesLen, hex, sizeof(hex));
     cJSON_AddStringToObject(json, "SessionID", hex);
 
@@ -327,14 +538,23 @@ static int json_to_din_physical_value(cJSON* json, struct din_PhysicalValueType*
     pv->Value = json_get_int(json, "Value");
 
     const char* unit = json_get_string(json, "Unit");
-    if (strcmp(unit, "h") == 0) pv->Unit = din_unitSymbolType_h;
-    else if (strcmp(unit, "m") == 0) pv->Unit = din_unitSymbolType_m;
-    else if (strcmp(unit, "s") == 0) pv->Unit = din_unitSymbolType_s;
-    else if (strcmp(unit, "A") == 0) pv->Unit = din_unitSymbolType_A;
-    else if (strcmp(unit, "V") == 0) pv->Unit = din_unitSymbolType_V;
-    else if (strcmp(unit, "W") == 0) pv->Unit = din_unitSymbolType_W;
-    else if (strcmp(unit, "Wh") == 0) pv->Unit = din_unitSymbolType_Wh;
-    else pv->Unit = din_unitSymbolType_W; /* Default */
+    if (strcmp(unit, "h") == 0) {
+        pv->Unit = din_unitSymbolType_h;
+    } else if (strcmp(unit, "m") == 0) {
+        pv->Unit = din_unitSymbolType_m;
+    } else if (strcmp(unit, "s") == 0) {
+        pv->Unit = din_unitSymbolType_s;
+    } else if (strcmp(unit, "A") == 0) {
+        pv->Unit = din_unitSymbolType_A;
+    } else if (strcmp(unit, "V") == 0) {
+        pv->Unit = din_unitSymbolType_V;
+    } else if (strcmp(unit, "W") == 0) {
+        pv->Unit = din_unitSymbolType_W;
+    } else if (strcmp(unit, "Wh") == 0) {
+        pv->Unit = din_unitSymbolType_Wh;
+    } else {
+        pv->Unit = din_unitSymbolType_W; /* Default */
+    }
 
     return CBV2G_SUCCESS;
 }
@@ -347,14 +567,30 @@ static cJSON* din_physical_value_to_json(const struct din_PhysicalValueType* pv)
 
     const char* unit;
     switch (pv->Unit) {
-        case din_unitSymbolType_h: unit = "h"; break;
-        case din_unitSymbolType_m: unit = "m"; break;
-        case din_unitSymbolType_s: unit = "s"; break;
-        case din_unitSymbolType_A: unit = "A"; break;
-        case din_unitSymbolType_V: unit = "V"; break;
-        case din_unitSymbolType_W: unit = "W"; break;
-        case din_unitSymbolType_Wh: unit = "Wh"; break;
-        default: unit = "W"; break;
+    case din_unitSymbolType_h:
+        unit = "h";
+        break;
+    case din_unitSymbolType_m:
+        unit = "m";
+        break;
+    case din_unitSymbolType_s:
+        unit = "s";
+        break;
+    case din_unitSymbolType_A:
+        unit = "A";
+        break;
+    case din_unitSymbolType_V:
+        unit = "V";
+        break;
+    case din_unitSymbolType_W:
+        unit = "W";
+        break;
+    case din_unitSymbolType_Wh:
+        unit = "Wh";
+        break;
+    default:
+        unit = "W";
+        break;
     }
     cJSON_AddStringToObject(json, "Unit", unit);
 
@@ -403,45 +639,68 @@ static int json_to_din_dc_evse_status(cJSON* json, struct din_DC_EVSEStatusType*
 
 static const char* din_isolation_level_to_string(din_isolationLevelType level) {
     switch (level) {
-        case din_isolationLevelType_Invalid: return "Invalid";
-        case din_isolationLevelType_Valid: return "Valid";
-        case din_isolationLevelType_Warning: return "Warning";
-        case din_isolationLevelType_Fault: return "Fault";
-        default: return "Invalid";
+    case din_isolationLevelType_Invalid:
+        return "Invalid";
+    case din_isolationLevelType_Valid:
+        return "Valid";
+    case din_isolationLevelType_Warning:
+        return "Warning";
+    case din_isolationLevelType_Fault:
+        return "Fault";
+    default:
+        return "Invalid";
     }
 }
 
 static const char* din_dc_evse_status_code_to_string(din_DC_EVSEStatusCodeType code) {
     switch (code) {
-        case din_DC_EVSEStatusCodeType_EVSE_NotReady: return "EVSE_NotReady";
-        case din_DC_EVSEStatusCodeType_EVSE_Ready: return "EVSE_Ready";
-        case din_DC_EVSEStatusCodeType_EVSE_Shutdown: return "EVSE_Shutdown";
-        case din_DC_EVSEStatusCodeType_EVSE_UtilityInterruptEvent: return "EVSE_UtilityInterruptEvent";
-        case din_DC_EVSEStatusCodeType_EVSE_IsolationMonitoringActive: return "EVSE_IsolationMonitoringActive";
-        case din_DC_EVSEStatusCodeType_EVSE_EmergencyShutdown: return "EVSE_EmergencyShutdown";
-        case din_DC_EVSEStatusCodeType_EVSE_Malfunction: return "EVSE_Malfunction";
-        case din_DC_EVSEStatusCodeType_Reserved_8: return "Reserved_8";
-        case din_DC_EVSEStatusCodeType_Reserved_9: return "Reserved_9";
-        case din_DC_EVSEStatusCodeType_Reserved_A: return "Reserved_A";
-        case din_DC_EVSEStatusCodeType_Reserved_B: return "Reserved_B";
-        case din_DC_EVSEStatusCodeType_Reserved_C: return "Reserved_C";
-        default: return "EVSE_NotReady";
+    case din_DC_EVSEStatusCodeType_EVSE_NotReady:
+        return "EVSE_NotReady";
+    case din_DC_EVSEStatusCodeType_EVSE_Ready:
+        return "EVSE_Ready";
+    case din_DC_EVSEStatusCodeType_EVSE_Shutdown:
+        return "EVSE_Shutdown";
+    case din_DC_EVSEStatusCodeType_EVSE_UtilityInterruptEvent:
+        return "EVSE_UtilityInterruptEvent";
+    case din_DC_EVSEStatusCodeType_EVSE_IsolationMonitoringActive:
+        return "EVSE_IsolationMonitoringActive";
+    case din_DC_EVSEStatusCodeType_EVSE_EmergencyShutdown:
+        return "EVSE_EmergencyShutdown";
+    case din_DC_EVSEStatusCodeType_EVSE_Malfunction:
+        return "EVSE_Malfunction";
+    case din_DC_EVSEStatusCodeType_Reserved_8:
+        return "Reserved_8";
+    case din_DC_EVSEStatusCodeType_Reserved_9:
+        return "Reserved_9";
+    case din_DC_EVSEStatusCodeType_Reserved_A:
+        return "Reserved_A";
+    case din_DC_EVSEStatusCodeType_Reserved_B:
+        return "Reserved_B";
+    case din_DC_EVSEStatusCodeType_Reserved_C:
+        return "Reserved_C";
+    default:
+        return "EVSE_NotReady";
     }
 }
 
 static const char* din_evse_notification_to_string(din_EVSENotificationType notification) {
     switch (notification) {
-        case din_EVSENotificationType_None: return "None";
-        case din_EVSENotificationType_StopCharging: return "StopCharging";
-        case din_EVSENotificationType_ReNegotiation: return "ReNegotiation";
-        default: return "None";
+    case din_EVSENotificationType_None:
+        return "None";
+    case din_EVSENotificationType_StopCharging:
+        return "StopCharging";
+    case din_EVSENotificationType_ReNegotiation:
+        return "ReNegotiation";
+    default:
+        return "None";
     }
 }
 
 static cJSON* din_dc_evse_status_to_json(const struct din_DC_EVSEStatusType* status) {
     cJSON* json = cJSON_CreateObject();
     if (status->EVSEIsolationStatus_isUsed) {
-        cJSON_AddStringToObject(json, "EVSEIsolationStatus", din_isolation_level_to_string(status->EVSEIsolationStatus));
+        cJSON_AddStringToObject(json, "EVSEIsolationStatus",
+                                din_isolation_level_to_string(status->EVSEIsolationStatus));
     }
     cJSON_AddStringToObject(json, "EVSEStatusCode", din_dc_evse_status_code_to_string(status->EVSEStatusCode));
     cJSON_AddNumberToObject(json, "NotificationMaxDelay", status->NotificationMaxDelay);
@@ -492,72 +751,206 @@ static cJSON* din_sa_schedule_list_to_json(const struct din_SAScheduleListType* 
     return json;
 }
 
+/*
+ * Translate a din_responseCodeType enum value into its canonical string.
+ * Returns NULL with set_error() on an unrecognised code so that callers
+ * can surface the failure instead of emitting a placeholder.
+ */
 static const char* din_response_code_to_string(din_responseCodeType code) {
     switch (code) {
-        case din_responseCodeType_OK: return "OK";
-        case din_responseCodeType_OK_NewSessionEstablished: return "OK_NewSessionEstablished";
-        case din_responseCodeType_OK_OldSessionJoined: return "OK_OldSessionJoined";
-        case din_responseCodeType_OK_CertificateExpiresSoon: return "OK_CertificateExpiresSoon";
-        case din_responseCodeType_FAILED: return "FAILED";
-        case din_responseCodeType_FAILED_SequenceError: return "FAILED_SequenceError";
-        case din_responseCodeType_FAILED_ServiceIDInvalid: return "FAILED_ServiceIDInvalid";
-        case din_responseCodeType_FAILED_UnknownSession: return "FAILED_UnknownSession";
-        case din_responseCodeType_FAILED_ServiceSelectionInvalid: return "FAILED_ServiceSelectionInvalid";
-        case din_responseCodeType_FAILED_PaymentSelectionInvalid: return "FAILED_PaymentSelectionInvalid";
-        case din_responseCodeType_FAILED_CertificateExpired: return "FAILED_CertificateExpired";
-        case din_responseCodeType_FAILED_SignatureError: return "FAILED_SignatureError";
-        case din_responseCodeType_FAILED_NoCertificateAvailable: return "FAILED_NoCertificateAvailable";
-        case din_responseCodeType_FAILED_CertChainError: return "FAILED_CertChainError";
-        case din_responseCodeType_FAILED_ChallengeInvalid: return "FAILED_ChallengeInvalid";
-        case din_responseCodeType_FAILED_ContractCanceled: return "FAILED_ContractCanceled";
-        case din_responseCodeType_FAILED_WrongChargeParameter: return "FAILED_WrongChargeParameter";
-        case din_responseCodeType_FAILED_PowerDeliveryNotApplied: return "FAILED_PowerDeliveryNotApplied";
-        case din_responseCodeType_FAILED_TariffSelectionInvalid: return "FAILED_TariffSelectionInvalid";
-        case din_responseCodeType_FAILED_ChargingProfileInvalid: return "FAILED_ChargingProfileInvalid";
-        case din_responseCodeType_FAILED_EVSEPresentVoltageToLow: return "FAILED_EVSEPresentVoltageToLow";
-        case din_responseCodeType_FAILED_MeteringSignatureNotValid: return "FAILED_MeteringSignatureNotValid";
-        case din_responseCodeType_FAILED_WrongEnergyTransferType: return "FAILED_WrongEnergyTransferType";
-        default: return "FAILED";
+    case din_responseCodeType_OK:
+        return "OK";
+    case din_responseCodeType_OK_NewSessionEstablished:
+        return "OK_NewSessionEstablished";
+    case din_responseCodeType_OK_OldSessionJoined:
+        return "OK_OldSessionJoined";
+    case din_responseCodeType_OK_CertificateExpiresSoon:
+        return "OK_CertificateExpiresSoon";
+    case din_responseCodeType_FAILED:
+        return "FAILED";
+    case din_responseCodeType_FAILED_SequenceError:
+        return "FAILED_SequenceError";
+    case din_responseCodeType_FAILED_ServiceIDInvalid:
+        return "FAILED_ServiceIDInvalid";
+    case din_responseCodeType_FAILED_UnknownSession:
+        return "FAILED_UnknownSession";
+    case din_responseCodeType_FAILED_ServiceSelectionInvalid:
+        return "FAILED_ServiceSelectionInvalid";
+    case din_responseCodeType_FAILED_PaymentSelectionInvalid:
+        return "FAILED_PaymentSelectionInvalid";
+    case din_responseCodeType_FAILED_CertificateExpired:
+        return "FAILED_CertificateExpired";
+    case din_responseCodeType_FAILED_SignatureError:
+        return "FAILED_SignatureError";
+    case din_responseCodeType_FAILED_NoCertificateAvailable:
+        return "FAILED_NoCertificateAvailable";
+    case din_responseCodeType_FAILED_CertChainError:
+        return "FAILED_CertChainError";
+    case din_responseCodeType_FAILED_ChallengeInvalid:
+        return "FAILED_ChallengeInvalid";
+    case din_responseCodeType_FAILED_ContractCanceled:
+        return "FAILED_ContractCanceled";
+    case din_responseCodeType_FAILED_WrongChargeParameter:
+        return "FAILED_WrongChargeParameter";
+    case din_responseCodeType_FAILED_PowerDeliveryNotApplied:
+        return "FAILED_PowerDeliveryNotApplied";
+    case din_responseCodeType_FAILED_TariffSelectionInvalid:
+        return "FAILED_TariffSelectionInvalid";
+    case din_responseCodeType_FAILED_ChargingProfileInvalid:
+        return "FAILED_ChargingProfileInvalid";
+    case din_responseCodeType_FAILED_EVSEPresentVoltageToLow:
+        return "FAILED_EVSEPresentVoltageToLow";
+    case din_responseCodeType_FAILED_MeteringSignatureNotValid:
+        return "FAILED_MeteringSignatureNotValid";
+    case din_responseCodeType_FAILED_WrongEnergyTransferType:
+        return "FAILED_WrongEnergyTransferType";
+    default:
+        set_error("Unknown DIN ResponseCode value: %d", (int)code);
+        return NULL;
     }
 }
 
+/*
+ * Add ResponseCode as a string to `json`. Wrapper over the enum→string
+ * helper that propagates "unknown code" as an error instead of leaving
+ * the field unset or filled with a placeholder. Returns 0 on success,
+ * -1 on unknown code (set_error has already been called).
+ */
+static int add_response_code_string(cJSON* json, din_responseCodeType code) {
+    const char* s = din_response_code_to_string(code);
+    if (s == NULL) {
+        return -1;
+    }
+    cJSON_AddStringToObject(json, "ResponseCode", s);
+    return 0;
+}
+
+/*
+ * Translate a ResponseCode string into its enum value. Covers every name
+ * emitted by din_response_code_to_string; an unrecognised string falls
+ * through to FAILED, which mirrors the wire-level "something is wrong"
+ * default that DIN itself uses.
+ */
 static din_responseCodeType din_string_to_response_code(const char* str) {
-    if (strcmp(str, "OK") == 0) return din_responseCodeType_OK;
-    if (strcmp(str, "OK_NewSessionEstablished") == 0) return din_responseCodeType_OK_NewSessionEstablished;
-    if (strcmp(str, "OK_OldSessionJoined") == 0) return din_responseCodeType_OK_OldSessionJoined;
-    if (strcmp(str, "OK_CertificateExpiresSoon") == 0) return din_responseCodeType_OK_CertificateExpiresSoon;
-    if (strcmp(str, "FAILED") == 0) return din_responseCodeType_FAILED;
-    if (strcmp(str, "FAILED_SequenceError") == 0) return din_responseCodeType_FAILED_SequenceError;
-    if (strcmp(str, "FAILED_ServiceIDInvalid") == 0) return din_responseCodeType_FAILED_ServiceIDInvalid;
-    if (strcmp(str, "FAILED_UnknownSession") == 0) return din_responseCodeType_FAILED_UnknownSession;
-    /* ... add more as needed */
+    if (strcmp(str, "OK") == 0) {
+        return din_responseCodeType_OK;
+    }
+    if (strcmp(str, "OK_NewSessionEstablished") == 0) {
+        return din_responseCodeType_OK_NewSessionEstablished;
+    }
+    if (strcmp(str, "OK_OldSessionJoined") == 0) {
+        return din_responseCodeType_OK_OldSessionJoined;
+    }
+    if (strcmp(str, "OK_CertificateExpiresSoon") == 0) {
+        return din_responseCodeType_OK_CertificateExpiresSoon;
+    }
+    if (strcmp(str, "FAILED") == 0) {
+        return din_responseCodeType_FAILED;
+    }
+    if (strcmp(str, "FAILED_SequenceError") == 0) {
+        return din_responseCodeType_FAILED_SequenceError;
+    }
+    if (strcmp(str, "FAILED_ServiceIDInvalid") == 0) {
+        return din_responseCodeType_FAILED_ServiceIDInvalid;
+    }
+    if (strcmp(str, "FAILED_UnknownSession") == 0) {
+        return din_responseCodeType_FAILED_UnknownSession;
+    }
+    if (strcmp(str, "FAILED_ServiceSelectionInvalid") == 0) {
+        return din_responseCodeType_FAILED_ServiceSelectionInvalid;
+    }
+    if (strcmp(str, "FAILED_PaymentSelectionInvalid") == 0) {
+        return din_responseCodeType_FAILED_PaymentSelectionInvalid;
+    }
+    if (strcmp(str, "FAILED_CertificateExpired") == 0) {
+        return din_responseCodeType_FAILED_CertificateExpired;
+    }
+    if (strcmp(str, "FAILED_SignatureError") == 0) {
+        return din_responseCodeType_FAILED_SignatureError;
+    }
+    if (strcmp(str, "FAILED_NoCertificateAvailable") == 0) {
+        return din_responseCodeType_FAILED_NoCertificateAvailable;
+    }
+    if (strcmp(str, "FAILED_CertChainError") == 0) {
+        return din_responseCodeType_FAILED_CertChainError;
+    }
+    if (strcmp(str, "FAILED_ChallengeInvalid") == 0) {
+        return din_responseCodeType_FAILED_ChallengeInvalid;
+    }
+    if (strcmp(str, "FAILED_ContractCanceled") == 0) {
+        return din_responseCodeType_FAILED_ContractCanceled;
+    }
+    if (strcmp(str, "FAILED_WrongChargeParameter") == 0) {
+        return din_responseCodeType_FAILED_WrongChargeParameter;
+    }
+    if (strcmp(str, "FAILED_PowerDeliveryNotApplied") == 0) {
+        return din_responseCodeType_FAILED_PowerDeliveryNotApplied;
+    }
+    if (strcmp(str, "FAILED_TariffSelectionInvalid") == 0) {
+        return din_responseCodeType_FAILED_TariffSelectionInvalid;
+    }
+    if (strcmp(str, "FAILED_ChargingProfileInvalid") == 0) {
+        return din_responseCodeType_FAILED_ChargingProfileInvalid;
+    }
+    if (strcmp(str, "FAILED_EVSEPresentVoltageToLow") == 0) {
+        return din_responseCodeType_FAILED_EVSEPresentVoltageToLow;
+    }
+    if (strcmp(str, "FAILED_MeteringSignatureNotValid") == 0) {
+        return din_responseCodeType_FAILED_MeteringSignatureNotValid;
+    }
+    if (strcmp(str, "FAILED_WrongEnergyTransferType") == 0) {
+        return din_responseCodeType_FAILED_WrongEnergyTransferType;
+    }
     return din_responseCodeType_FAILED;
 }
 
 /* Energy transfer type enum to/from string */
 static const char* din_energy_transfer_type_to_string(din_EVSESupportedEnergyTransferType type) {
     switch (type) {
-        case din_EVSESupportedEnergyTransferType_AC_single_phase_core: return "AC_single_phase_core";
-        case din_EVSESupportedEnergyTransferType_AC_three_phase_core: return "AC_three_phase_core";
-        case din_EVSESupportedEnergyTransferType_DC_core: return "DC_core";
-        case din_EVSESupportedEnergyTransferType_DC_extended: return "DC_extended";
-        case din_EVSESupportedEnergyTransferType_DC_combo_core: return "DC_combo_core";
-        case din_EVSESupportedEnergyTransferType_DC_dual: return "DC_unique";
-        case din_EVSESupportedEnergyTransferType_AC_core1p_DC_extended: return "AC_core1p_DC_extended";
-        case din_EVSESupportedEnergyTransferType_AC_single_DC_core: return "AC_single_DC_core";
-        case din_EVSESupportedEnergyTransferType_AC_single_phase_three_phase_core_DC_extended: return "AC_single_phase_three_phase_core_DC_extended";
-        case din_EVSESupportedEnergyTransferType_AC_core3p_DC_extended: return "AC_core3p_DC_extended";
-        default: return "DC_extended";
+    case din_EVSESupportedEnergyTransferType_AC_single_phase_core:
+        return "AC_single_phase_core";
+    case din_EVSESupportedEnergyTransferType_AC_three_phase_core:
+        return "AC_three_phase_core";
+    case din_EVSESupportedEnergyTransferType_DC_core:
+        return "DC_core";
+    case din_EVSESupportedEnergyTransferType_DC_extended:
+        return "DC_extended";
+    case din_EVSESupportedEnergyTransferType_DC_combo_core:
+        return "DC_combo_core";
+    case din_EVSESupportedEnergyTransferType_DC_dual:
+        return "DC_unique";
+    case din_EVSESupportedEnergyTransferType_AC_core1p_DC_extended:
+        return "AC_core1p_DC_extended";
+    case din_EVSESupportedEnergyTransferType_AC_single_DC_core:
+        return "AC_single_DC_core";
+    case din_EVSESupportedEnergyTransferType_AC_single_phase_three_phase_core_DC_extended:
+        return "AC_single_phase_three_phase_core_DC_extended";
+    case din_EVSESupportedEnergyTransferType_AC_core3p_DC_extended:
+        return "AC_core3p_DC_extended";
+    default:
+        return "DC_extended";
     }
 }
 
 static din_EVSESupportedEnergyTransferType din_string_to_energy_transfer_type(const char* str) {
-    if (strcmp(str, "AC_single_phase_core") == 0) return din_EVSESupportedEnergyTransferType_AC_single_phase_core;
-    if (strcmp(str, "AC_three_phase_core") == 0) return din_EVSESupportedEnergyTransferType_AC_three_phase_core;
-    if (strcmp(str, "DC_core") == 0) return din_EVSESupportedEnergyTransferType_DC_core;
-    if (strcmp(str, "DC_extended") == 0) return din_EVSESupportedEnergyTransferType_DC_extended;
-    if (strcmp(str, "DC_combo_core") == 0) return din_EVSESupportedEnergyTransferType_DC_combo_core;
-    if (strcmp(str, "DC_unique") == 0) return din_EVSESupportedEnergyTransferType_DC_dual;
+    if (strcmp(str, "AC_single_phase_core") == 0) {
+        return din_EVSESupportedEnergyTransferType_AC_single_phase_core;
+    }
+    if (strcmp(str, "AC_three_phase_core") == 0) {
+        return din_EVSESupportedEnergyTransferType_AC_three_phase_core;
+    }
+    if (strcmp(str, "DC_core") == 0) {
+        return din_EVSESupportedEnergyTransferType_DC_core;
+    }
+    if (strcmp(str, "DC_extended") == 0) {
+        return din_EVSESupportedEnergyTransferType_DC_extended;
+    }
+    if (strcmp(str, "DC_combo_core") == 0) {
+        return din_EVSESupportedEnergyTransferType_DC_combo_core;
+    }
+    if (strcmp(str, "DC_unique") == 0) {
+        return din_EVSESupportedEnergyTransferType_DC_dual;
+    }
     return din_EVSESupportedEnergyTransferType_DC_extended;
 }
 
@@ -570,8 +963,7 @@ static int json_to_din_session_setup_req(cJSON* json, struct din_SessionSetupReq
         /* EVCCID is hexBinary in XSD - use hex decoding (CWE-126: bounded
          * strnlen). */
         size_t vs_len = strnlen(evcc_id->valuestring, din_evccIDType_BYTES_SIZE * 2);
-        size_t len = hex_decode(evcc_id->valuestring, vs_len,
-                                msg->EVCCID.bytes, din_evccIDType_BYTES_SIZE);
+        size_t len = hex_decode(evcc_id->valuestring, vs_len, msg->EVCCID.bytes, din_evccIDType_BYTES_SIZE);
         msg->EVCCID.bytesLen = len;
     }
     return CBV2G_SUCCESS;
@@ -580,7 +972,7 @@ static int json_to_din_session_setup_req(cJSON* json, struct din_SessionSetupReq
 static cJSON* din_session_setup_req_to_json(const struct din_SessionSetupReqType* msg) {
     cJSON* json = cJSON_CreateObject();
     /* EVCCID is hexBinary in XSD - use hex encoding */
-    char hex[13];  /* 6 bytes * 2 + null terminator */
+    char hex[13]; /* 6 bytes * 2 + null terminator */
     hex_encode(msg->EVCCID.bytes, msg->EVCCID.bytesLen, hex, sizeof(hex));
     cJSON_AddStringToObject(json, "EVCCID", hex);
     return json;
@@ -594,8 +986,7 @@ static int json_to_din_session_setup_res(cJSON* json, struct din_SessionSetupRes
     if (evse_id && cJSON_IsString(evse_id)) {
         /* EVSEID is hexBinary in XSD - use hex decoding (CWE-126). */
         size_t vs_len = strnlen(evse_id->valuestring, din_evseIDType_BYTES_SIZE * 2);
-        size_t len = hex_decode(evse_id->valuestring, vs_len,
-                                msg->EVSEID.bytes, din_evseIDType_BYTES_SIZE);
+        size_t len = hex_decode(evse_id->valuestring, vs_len, msg->EVSEID.bytes, din_evseIDType_BYTES_SIZE);
         msg->EVSEID.bytesLen = len;
     }
 
@@ -608,10 +999,13 @@ static int json_to_din_session_setup_res(cJSON* json, struct din_SessionSetupRes
 
 static cJSON* din_session_setup_res_to_json(const struct din_SessionSetupResType* msg) {
     cJSON* json = cJSON_CreateObject();
-    cJSON_AddStringToObject(json, "ResponseCode", din_response_code_to_string(msg->ResponseCode));
+    if (add_response_code_string(json, msg->ResponseCode) != 0) {
+        cJSON_Delete(json);
+        return NULL;
+    }
 
     /* EVSEID is hexBinary in XSD - use hex encoding */
-    char hex[65];  /* 32 bytes * 2 + null terminator */
+    char hex[65]; /* 32 bytes * 2 + null terminator */
     hex_encode(msg->EVSEID.bytes, msg->EVSEID.bytesLen, hex, sizeof(hex));
     cJSON_AddStringToObject(json, "EVSEID", hex);
 
@@ -628,12 +1022,14 @@ static int json_to_din_service_discovery_req(cJSON* json, struct din_ServiceDisc
         /* Bounded copy with snprintf (CWE-120 / CWE-126). */
         const char* scope = json_get_string(json, "ServiceScope");
         size_t scope_len = strnlen(scope, din_ServiceScope_CHARACTER_SIZE);
-        int written = snprintf(msg->ServiceScope.characters,
-                               din_ServiceScope_CHARACTER_SIZE,
-                               "%.*s", (int)scope_len, scope);
-        if (written < 0) written = 0;
-        if ((size_t)written >= din_ServiceScope_CHARACTER_SIZE)
+        int written =
+            snprintf(msg->ServiceScope.characters, din_ServiceScope_CHARACTER_SIZE, "%.*s", (int)scope_len, scope);
+        if (written < 0) {
+            written = 0;
+        }
+        if ((size_t)written >= din_ServiceScope_CHARACTER_SIZE) {
             written = din_ServiceScope_CHARACTER_SIZE - 1;
+        }
         msg->ServiceScope.charactersLen = (size_t)written;
     }
     msg->ServiceCategory_isUsed = json_has_key(json, "ServiceCategory");
@@ -648,9 +1044,7 @@ static cJSON* din_service_discovery_req_to_json(const struct din_ServiceDiscover
     if (msg->ServiceScope_isUsed) {
         /* Bounded copy with snprintf (CWE-120). */
         char scope[din_ServiceScope_CHARACTER_SIZE + 1] = {0};
-        snprintf(scope, sizeof(scope), "%.*s",
-                 (int)msg->ServiceScope.charactersLen,
-                 msg->ServiceScope.characters);
+        snprintf(scope, sizeof(scope), "%.*s", (int)msg->ServiceScope.charactersLen, msg->ServiceScope.characters);
         cJSON_AddStringToObject(json, "ServiceScope", scope);
     }
     if (msg->ServiceCategory_isUsed) {
@@ -669,7 +1063,9 @@ static int json_to_din_service_discovery_res(cJSON* json, struct din_ServiceDisc
         cJSON* po_array = cJSON_GetObjectItemCaseSensitive(payment_options, "PaymentOption");
         if (po_array && cJSON_IsArray(po_array)) {
             int count = cJSON_GetArraySize(po_array);
-            if (count > din_paymentOptionType_2_ARRAY_SIZE) count = din_paymentOptionType_2_ARRAY_SIZE;
+            if (count > din_paymentOptionType_2_ARRAY_SIZE) {
+                count = din_paymentOptionType_2_ARRAY_SIZE;
+            }
             msg->PaymentOptions.PaymentOption.arrayLen = count;
             for (int i = 0; i < count; i++) {
                 cJSON* item = cJSON_GetArrayItem(po_array, i);
@@ -687,11 +1083,11 @@ static int json_to_din_service_discovery_res(cJSON* json, struct din_ServiceDisc
     /* ChargeService */
     cJSON* charge_service = cJSON_GetObjectItemCaseSensitive(json, "ChargeService");
     if (charge_service) {
-        msg->ChargeService.ServiceTag.ServiceID = json_get_int(
-            cJSON_GetObjectItemCaseSensitive(charge_service, "ServiceTag"), "ServiceID");
+        msg->ChargeService.ServiceTag.ServiceID =
+            json_get_int(cJSON_GetObjectItemCaseSensitive(charge_service, "ServiceTag"), "ServiceID");
         msg->ChargeService.FreeService = json_get_bool(charge_service, "FreeService");
-        msg->ChargeService.EnergyTransferType = din_string_to_energy_transfer_type(
-            json_get_string(charge_service, "EnergyTransferType"));
+        msg->ChargeService.EnergyTransferType =
+            din_string_to_energy_transfer_type(json_get_string(charge_service, "EnergyTransferType"));
     }
 
     return CBV2G_SUCCESS;
@@ -699,14 +1095,18 @@ static int json_to_din_service_discovery_res(cJSON* json, struct din_ServiceDisc
 
 static cJSON* din_service_discovery_res_to_json(const struct din_ServiceDiscoveryResType* msg) {
     cJSON* json = cJSON_CreateObject();
-    cJSON_AddStringToObject(json, "ResponseCode", din_response_code_to_string(msg->ResponseCode));
+    if (add_response_code_string(json, msg->ResponseCode) != 0) {
+        cJSON_Delete(json);
+        return NULL;
+    }
 
     /* PaymentOptions */
     cJSON* payment_options = cJSON_CreateObject();
     cJSON* po_array = cJSON_CreateArray();
     for (int i = 0; i < msg->PaymentOptions.PaymentOption.arrayLen; i++) {
-        const char* po_str = msg->PaymentOptions.PaymentOption.array[i] == din_paymentOptionType_Contract ?
-                             "Contract" : "ExternalPayment";
+        const char* po_str = msg->PaymentOptions.PaymentOption.array[i] == din_paymentOptionType_Contract
+                                 ? "Contract"
+                                 : "ExternalPayment";
         cJSON_AddItemToArray(po_array, cJSON_CreateString(po_str));
     }
     cJSON_AddItemToObject(payment_options, "PaymentOption", po_array);
@@ -719,11 +1119,21 @@ static cJSON* din_service_discovery_res_to_json(const struct din_ServiceDiscover
     /* ServiceCategory: 0=EVCharging, 1=Internet, 2=ContractCertificate, 3=OtherCustom */
     const char* service_category;
     switch (msg->ChargeService.ServiceTag.ServiceCategory) {
-        case din_serviceCategoryType_EVCharging: service_category = "EVCharging"; break;
-        case din_serviceCategoryType_Internet: service_category = "Internet"; break;
-        case din_serviceCategoryType_ContractCertificate: service_category = "ContractCertificate"; break;
-        case din_serviceCategoryType_OtherCustom: service_category = "OtherCustom"; break;
-        default: service_category = "EVCharging"; break;
+    case din_serviceCategoryType_EVCharging:
+        service_category = "EVCharging";
+        break;
+    case din_serviceCategoryType_Internet:
+        service_category = "Internet";
+        break;
+    case din_serviceCategoryType_ContractCertificate:
+        service_category = "ContractCertificate";
+        break;
+    case din_serviceCategoryType_OtherCustom:
+        service_category = "OtherCustom";
+        break;
+    default:
+        service_category = "EVCharging";
+        break;
     }
     cJSON_AddStringToObject(service_tag, "ServiceCategory", service_category);
     cJSON_AddItemToObject(charge_service, "ServiceTag", service_tag);
@@ -738,15 +1148,17 @@ static cJSON* din_service_discovery_res_to_json(const struct din_ServiceDiscover
 /* ServicePaymentSelectionReq */
 static int json_to_din_service_payment_selection_req(cJSON* json, struct din_ServicePaymentSelectionReqType* msg) {
     const char* po = json_get_string(json, "SelectedPaymentOption");
-    msg->SelectedPaymentOption = strcmp(po, "Contract") == 0 ?
-                                 din_paymentOptionType_Contract : din_paymentOptionType_ExternalPayment;
+    msg->SelectedPaymentOption =
+        strcmp(po, "Contract") == 0 ? din_paymentOptionType_Contract : din_paymentOptionType_ExternalPayment;
 
     cJSON* selected_list = cJSON_GetObjectItemCaseSensitive(json, "SelectedServiceList");
     if (selected_list) {
         cJSON* services = cJSON_GetObjectItemCaseSensitive(selected_list, "SelectedService");
         if (services && cJSON_IsArray(services)) {
             int count = cJSON_GetArraySize(services);
-            if (count > din_SelectedServiceType_16_ARRAY_SIZE) count = din_SelectedServiceType_16_ARRAY_SIZE;
+            if (count > din_SelectedServiceType_16_ARRAY_SIZE) {
+                count = din_SelectedServiceType_16_ARRAY_SIZE;
+            }
             msg->SelectedServiceList.SelectedService.arrayLen = count;
             for (int i = 0; i < count; i++) {
                 cJSON* item = cJSON_GetArrayItem(services, i);
@@ -760,7 +1172,8 @@ static int json_to_din_service_payment_selection_req(cJSON* json, struct din_Ser
 static cJSON* din_service_payment_selection_req_to_json(const struct din_ServicePaymentSelectionReqType* msg) {
     cJSON* json = cJSON_CreateObject();
     cJSON_AddStringToObject(json, "SelectedPaymentOption",
-                            msg->SelectedPaymentOption == din_paymentOptionType_Contract ? "Contract" : "ExternalPayment");
+                            msg->SelectedPaymentOption == din_paymentOptionType_Contract ? "Contract"
+                                                                                         : "ExternalPayment");
 
     cJSON* selected_list = cJSON_CreateObject();
     cJSON* services = cJSON_CreateArray();
@@ -782,7 +1195,10 @@ static int json_to_din_service_payment_selection_res(cJSON* json, struct din_Ser
 
 static cJSON* din_service_payment_selection_res_to_json(const struct din_ServicePaymentSelectionResType* msg) {
     cJSON* json = cJSON_CreateObject();
-    cJSON_AddStringToObject(json, "ResponseCode", din_response_code_to_string(msg->ResponseCode));
+    if (add_response_code_string(json, msg->ResponseCode) != 0) {
+        cJSON_Delete(json);
+        return NULL;
+    }
     return json;
 }
 
@@ -815,28 +1231,37 @@ static int json_to_din_contract_authentication_res(cJSON* json, struct din_Contr
 
 static cJSON* din_contract_authentication_res_to_json(const struct din_ContractAuthenticationResType* msg) {
     cJSON* json = cJSON_CreateObject();
-    cJSON_AddStringToObject(json, "ResponseCode", din_response_code_to_string(msg->ResponseCode));
+    if (add_response_code_string(json, msg->ResponseCode) != 0) {
+        cJSON_Delete(json);
+        return NULL;
+    }
     cJSON_AddStringToObject(json, "EVSEProcessing",
-        msg->EVSEProcessing == din_EVSEProcessingType_Finished ? "Finished" : "Ongoing");
+                            msg->EVSEProcessing == din_EVSEProcessingType_Finished ? "Finished" : "Ongoing");
     return json;
 }
 
 /* ChargeParameterDiscoveryReq */
 static int json_to_din_charge_parameter_discovery_req(cJSON* json, struct din_ChargeParameterDiscoveryReqType* msg) {
-    msg->EVRequestedEnergyTransferType = din_string_to_energy_transfer_type(
-        json_get_string(json, "EVRequestedEnergyTransferType"));
+    msg->EVRequestedEnergyTransferType =
+        din_string_to_energy_transfer_type(json_get_string(json, "EVRequestedEnergyTransferType"));
 
     cJSON* dc_params = cJSON_GetObjectItemCaseSensitive(json, "DC_EVChargeParameter");
     if (dc_params) {
         msg->DC_EVChargeParameter_isUsed = 1;
         cJSON* status = cJSON_GetObjectItemCaseSensitive(dc_params, "DC_EVStatus");
-        if (status) json_to_din_dc_ev_status(status, &msg->DC_EVChargeParameter.DC_EVStatus);
+        if (status) {
+            json_to_din_dc_ev_status(status, &msg->DC_EVChargeParameter.DC_EVStatus);
+        }
 
         cJSON* max_current = cJSON_GetObjectItemCaseSensitive(dc_params, "EVMaximumCurrentLimit");
-        if (max_current) json_to_din_physical_value(max_current, &msg->DC_EVChargeParameter.EVMaximumCurrentLimit);
+        if (max_current) {
+            json_to_din_physical_value(max_current, &msg->DC_EVChargeParameter.EVMaximumCurrentLimit);
+        }
 
         cJSON* max_voltage = cJSON_GetObjectItemCaseSensitive(dc_params, "EVMaximumVoltageLimit");
-        if (max_voltage) json_to_din_physical_value(max_voltage, &msg->DC_EVChargeParameter.EVMaximumVoltageLimit);
+        if (max_voltage) {
+            json_to_din_physical_value(max_voltage, &msg->DC_EVChargeParameter.EVMaximumVoltageLimit);
+        }
 
         msg->DC_EVChargeParameter.EVMaximumPowerLimit_isUsed = json_has_key(dc_params, "EVMaximumPowerLimit");
         if (msg->DC_EVChargeParameter.EVMaximumPowerLimit_isUsed) {
@@ -876,18 +1301,24 @@ static cJSON* din_charge_parameter_discovery_req_to_json(const struct din_Charge
 
     if (msg->DC_EVChargeParameter_isUsed) {
         cJSON* dc_params = cJSON_CreateObject();
-        cJSON_AddItemToObject(dc_params, "DC_EVStatus", din_dc_ev_status_to_json(&msg->DC_EVChargeParameter.DC_EVStatus));
-        cJSON_AddItemToObject(dc_params, "EVMaximumCurrentLimit", din_physical_value_to_json(&msg->DC_EVChargeParameter.EVMaximumCurrentLimit));
-        cJSON_AddItemToObject(dc_params, "EVMaximumVoltageLimit", din_physical_value_to_json(&msg->DC_EVChargeParameter.EVMaximumVoltageLimit));
+        cJSON_AddItemToObject(dc_params, "DC_EVStatus",
+                              din_dc_ev_status_to_json(&msg->DC_EVChargeParameter.DC_EVStatus));
+        cJSON_AddItemToObject(dc_params, "EVMaximumCurrentLimit",
+                              din_physical_value_to_json(&msg->DC_EVChargeParameter.EVMaximumCurrentLimit));
+        cJSON_AddItemToObject(dc_params, "EVMaximumVoltageLimit",
+                              din_physical_value_to_json(&msg->DC_EVChargeParameter.EVMaximumVoltageLimit));
 
         if (msg->DC_EVChargeParameter.EVMaximumPowerLimit_isUsed) {
-            cJSON_AddItemToObject(dc_params, "EVMaximumPowerLimit", din_physical_value_to_json(&msg->DC_EVChargeParameter.EVMaximumPowerLimit));
+            cJSON_AddItemToObject(dc_params, "EVMaximumPowerLimit",
+                                  din_physical_value_to_json(&msg->DC_EVChargeParameter.EVMaximumPowerLimit));
         }
         if (msg->DC_EVChargeParameter.EVEnergyCapacity_isUsed) {
-            cJSON_AddItemToObject(dc_params, "EVEnergyCapacity", din_physical_value_to_json(&msg->DC_EVChargeParameter.EVEnergyCapacity));
+            cJSON_AddItemToObject(dc_params, "EVEnergyCapacity",
+                                  din_physical_value_to_json(&msg->DC_EVChargeParameter.EVEnergyCapacity));
         }
         if (msg->DC_EVChargeParameter.EVEnergyRequest_isUsed) {
-            cJSON_AddItemToObject(dc_params, "EVEnergyRequest", din_physical_value_to_json(&msg->DC_EVChargeParameter.EVEnergyRequest));
+            cJSON_AddItemToObject(dc_params, "EVEnergyRequest",
+                                  din_physical_value_to_json(&msg->DC_EVChargeParameter.EVEnergyRequest));
         }
         if (msg->DC_EVChargeParameter.FullSOC_isUsed) {
             cJSON_AddNumberToObject(dc_params, "FullSOC", msg->DC_EVChargeParameter.FullSOC);
@@ -904,20 +1335,26 @@ static cJSON* din_charge_parameter_discovery_req_to_json(const struct din_Charge
 static int json_to_din_charge_parameter_discovery_res(cJSON* json, struct din_ChargeParameterDiscoveryResType* msg) {
     msg->ResponseCode = din_string_to_response_code(json_get_string(json, "ResponseCode"));
     const char* processing = json_get_string(json, "EVSEProcessing");
-    msg->EVSEProcessing = (strcmp(processing, "Finished") == 0) ?
-        din_EVSEProcessingType_Finished : din_EVSEProcessingType_Ongoing;
+    msg->EVSEProcessing =
+        (strcmp(processing, "Finished") == 0) ? din_EVSEProcessingType_Finished : din_EVSEProcessingType_Ongoing;
 
     cJSON* dc_params = cJSON_GetObjectItemCaseSensitive(json, "DC_EVSEChargeParameter");
     if (dc_params) {
         msg->DC_EVSEChargeParameter_isUsed = 1;
         cJSON* status = cJSON_GetObjectItemCaseSensitive(dc_params, "DC_EVSEStatus");
-        if (status) json_to_din_dc_evse_status(status, &msg->DC_EVSEChargeParameter.DC_EVSEStatus);
+        if (status) {
+            json_to_din_dc_evse_status(status, &msg->DC_EVSEChargeParameter.DC_EVSEStatus);
+        }
 
         cJSON* max_current = cJSON_GetObjectItemCaseSensitive(dc_params, "EVSEMaximumCurrentLimit");
-        if (max_current) json_to_din_physical_value(max_current, &msg->DC_EVSEChargeParameter.EVSEMaximumCurrentLimit);
+        if (max_current) {
+            json_to_din_physical_value(max_current, &msg->DC_EVSEChargeParameter.EVSEMaximumCurrentLimit);
+        }
 
         cJSON* max_voltage = cJSON_GetObjectItemCaseSensitive(dc_params, "EVSEMaximumVoltageLimit");
-        if (max_voltage) json_to_din_physical_value(max_voltage, &msg->DC_EVSEChargeParameter.EVSEMaximumVoltageLimit);
+        if (max_voltage) {
+            json_to_din_physical_value(max_voltage, &msg->DC_EVSEChargeParameter.EVSEMaximumVoltageLimit);
+        }
 
         cJSON* max_power = cJSON_GetObjectItemCaseSensitive(dc_params, "EVSEMaximumPowerLimit");
         if (max_power) {
@@ -926,22 +1363,31 @@ static int json_to_din_charge_parameter_discovery_res(cJSON* json, struct din_Ch
         }
 
         cJSON* min_current = cJSON_GetObjectItemCaseSensitive(dc_params, "EVSEMinimumCurrentLimit");
-        if (min_current) json_to_din_physical_value(min_current, &msg->DC_EVSEChargeParameter.EVSEMinimumCurrentLimit);
+        if (min_current) {
+            json_to_din_physical_value(min_current, &msg->DC_EVSEChargeParameter.EVSEMinimumCurrentLimit);
+        }
 
         cJSON* min_voltage = cJSON_GetObjectItemCaseSensitive(dc_params, "EVSEMinimumVoltageLimit");
-        if (min_voltage) json_to_din_physical_value(min_voltage, &msg->DC_EVSEChargeParameter.EVSEMinimumVoltageLimit);
+        if (min_voltage) {
+            json_to_din_physical_value(min_voltage, &msg->DC_EVSEChargeParameter.EVSEMinimumVoltageLimit);
+        }
 
         cJSON* peak_current = cJSON_GetObjectItemCaseSensitive(dc_params, "EVSEPeakCurrentRipple");
-        if (peak_current) json_to_din_physical_value(peak_current, &msg->DC_EVSEChargeParameter.EVSEPeakCurrentRipple);
+        if (peak_current) {
+            json_to_din_physical_value(peak_current, &msg->DC_EVSEChargeParameter.EVSEPeakCurrentRipple);
+        }
     }
     return CBV2G_SUCCESS;
 }
 
 static cJSON* din_charge_parameter_discovery_res_to_json(const struct din_ChargeParameterDiscoveryResType* msg) {
     cJSON* json = cJSON_CreateObject();
-    cJSON_AddStringToObject(json, "ResponseCode", din_response_code_to_string(msg->ResponseCode));
+    if (add_response_code_string(json, msg->ResponseCode) != 0) {
+        cJSON_Delete(json);
+        return NULL;
+    }
     cJSON_AddStringToObject(json, "EVSEProcessing",
-        msg->EVSEProcessing == din_EVSEProcessingType_Finished ? "Finished" : "Ongoing");
+                            msg->EVSEProcessing == din_EVSEProcessingType_Finished ? "Finished" : "Ongoing");
 
     /* SAScheduleList - required for EV to select schedule */
     if (msg->SAScheduleList_isUsed) {
@@ -950,15 +1396,22 @@ static cJSON* din_charge_parameter_discovery_res_to_json(const struct din_Charge
 
     if (msg->DC_EVSEChargeParameter_isUsed) {
         cJSON* dc_params = cJSON_CreateObject();
-        cJSON_AddItemToObject(dc_params, "DC_EVSEStatus", din_dc_evse_status_to_json(&msg->DC_EVSEChargeParameter.DC_EVSEStatus));
-        cJSON_AddItemToObject(dc_params, "EVSEMaximumCurrentLimit", din_physical_value_to_json(&msg->DC_EVSEChargeParameter.EVSEMaximumCurrentLimit));
-        cJSON_AddItemToObject(dc_params, "EVSEMaximumVoltageLimit", din_physical_value_to_json(&msg->DC_EVSEChargeParameter.EVSEMaximumVoltageLimit));
+        cJSON_AddItemToObject(dc_params, "DC_EVSEStatus",
+                              din_dc_evse_status_to_json(&msg->DC_EVSEChargeParameter.DC_EVSEStatus));
+        cJSON_AddItemToObject(dc_params, "EVSEMaximumCurrentLimit",
+                              din_physical_value_to_json(&msg->DC_EVSEChargeParameter.EVSEMaximumCurrentLimit));
+        cJSON_AddItemToObject(dc_params, "EVSEMaximumVoltageLimit",
+                              din_physical_value_to_json(&msg->DC_EVSEChargeParameter.EVSEMaximumVoltageLimit));
         if (msg->DC_EVSEChargeParameter.EVSEMaximumPowerLimit_isUsed) {
-            cJSON_AddItemToObject(dc_params, "EVSEMaximumPowerLimit", din_physical_value_to_json(&msg->DC_EVSEChargeParameter.EVSEMaximumPowerLimit));
+            cJSON_AddItemToObject(dc_params, "EVSEMaximumPowerLimit",
+                                  din_physical_value_to_json(&msg->DC_EVSEChargeParameter.EVSEMaximumPowerLimit));
         }
-        cJSON_AddItemToObject(dc_params, "EVSEMinimumCurrentLimit", din_physical_value_to_json(&msg->DC_EVSEChargeParameter.EVSEMinimumCurrentLimit));
-        cJSON_AddItemToObject(dc_params, "EVSEMinimumVoltageLimit", din_physical_value_to_json(&msg->DC_EVSEChargeParameter.EVSEMinimumVoltageLimit));
-        cJSON_AddItemToObject(dc_params, "EVSEPeakCurrentRipple", din_physical_value_to_json(&msg->DC_EVSEChargeParameter.EVSEPeakCurrentRipple));
+        cJSON_AddItemToObject(dc_params, "EVSEMinimumCurrentLimit",
+                              din_physical_value_to_json(&msg->DC_EVSEChargeParameter.EVSEMinimumCurrentLimit));
+        cJSON_AddItemToObject(dc_params, "EVSEMinimumVoltageLimit",
+                              din_physical_value_to_json(&msg->DC_EVSEChargeParameter.EVSEMinimumVoltageLimit));
+        cJSON_AddItemToObject(dc_params, "EVSEPeakCurrentRipple",
+                              din_physical_value_to_json(&msg->DC_EVSEChargeParameter.EVSEPeakCurrentRipple));
         cJSON_AddItemToObject(json, "DC_EVSEChargeParameter", dc_params);
     }
     return json;
@@ -967,7 +1420,9 @@ static cJSON* din_charge_parameter_discovery_res_to_json(const struct din_Charge
 /* CableCheckReq */
 static int json_to_din_cable_check_req(cJSON* json, struct din_CableCheckReqType* msg) {
     cJSON* status = cJSON_GetObjectItemCaseSensitive(json, "DC_EVStatus");
-    if (status) json_to_din_dc_ev_status(status, &msg->DC_EVStatus);
+    if (status) {
+        json_to_din_dc_ev_status(status, &msg->DC_EVStatus);
+    }
     return CBV2G_SUCCESS;
 }
 
@@ -981,32 +1436,43 @@ static cJSON* din_cable_check_req_to_json(const struct din_CableCheckReqType* ms
 static int json_to_din_cable_check_res(cJSON* json, struct din_CableCheckResType* msg) {
     msg->ResponseCode = din_string_to_response_code(json_get_string(json, "ResponseCode"));
     cJSON* status = cJSON_GetObjectItemCaseSensitive(json, "DC_EVSEStatus");
-    if (status) json_to_din_dc_evse_status(status, &msg->DC_EVSEStatus);
+    if (status) {
+        json_to_din_dc_evse_status(status, &msg->DC_EVSEStatus);
+    }
     const char* processing = json_get_string(json, "EVSEProcessing");
-    msg->EVSEProcessing = (strcmp(processing, "Finished") == 0) ?
-        din_EVSEProcessingType_Finished : din_EVSEProcessingType_Ongoing;
+    msg->EVSEProcessing =
+        (strcmp(processing, "Finished") == 0) ? din_EVSEProcessingType_Finished : din_EVSEProcessingType_Ongoing;
     return CBV2G_SUCCESS;
 }
 
 static cJSON* din_cable_check_res_to_json(const struct din_CableCheckResType* msg) {
     cJSON* json = cJSON_CreateObject();
-    cJSON_AddStringToObject(json, "ResponseCode", din_response_code_to_string(msg->ResponseCode));
+    if (add_response_code_string(json, msg->ResponseCode) != 0) {
+        cJSON_Delete(json);
+        return NULL;
+    }
     cJSON_AddItemToObject(json, "DC_EVSEStatus", din_dc_evse_status_to_json(&msg->DC_EVSEStatus));
     cJSON_AddStringToObject(json, "EVSEProcessing",
-        msg->EVSEProcessing == din_EVSEProcessingType_Finished ? "Finished" : "Ongoing");
+                            msg->EVSEProcessing == din_EVSEProcessingType_Finished ? "Finished" : "Ongoing");
     return json;
 }
 
 /* PreChargeReq */
 static int json_to_din_pre_charge_req(cJSON* json, struct din_PreChargeReqType* msg) {
     cJSON* status = cJSON_GetObjectItemCaseSensitive(json, "DC_EVStatus");
-    if (status) json_to_din_dc_ev_status(status, &msg->DC_EVStatus);
+    if (status) {
+        json_to_din_dc_ev_status(status, &msg->DC_EVStatus);
+    }
 
     cJSON* target_voltage = cJSON_GetObjectItemCaseSensitive(json, "EVTargetVoltage");
-    if (target_voltage) json_to_din_physical_value(target_voltage, &msg->EVTargetVoltage);
+    if (target_voltage) {
+        json_to_din_physical_value(target_voltage, &msg->EVTargetVoltage);
+    }
 
     cJSON* target_current = cJSON_GetObjectItemCaseSensitive(json, "EVTargetCurrent");
-    if (target_current) json_to_din_physical_value(target_current, &msg->EVTargetCurrent);
+    if (target_current) {
+        json_to_din_physical_value(target_current, &msg->EVTargetCurrent);
+    }
     return CBV2G_SUCCESS;
 }
 
@@ -1022,16 +1488,23 @@ static cJSON* din_pre_charge_req_to_json(const struct din_PreChargeReqType* msg)
 static int json_to_din_pre_charge_res(cJSON* json, struct din_PreChargeResType* msg) {
     msg->ResponseCode = din_string_to_response_code(json_get_string(json, "ResponseCode"));
     cJSON* status = cJSON_GetObjectItemCaseSensitive(json, "DC_EVSEStatus");
-    if (status) json_to_din_dc_evse_status(status, &msg->DC_EVSEStatus);
+    if (status) {
+        json_to_din_dc_evse_status(status, &msg->DC_EVSEStatus);
+    }
 
     cJSON* present_voltage = cJSON_GetObjectItemCaseSensitive(json, "EVSEPresentVoltage");
-    if (present_voltage) json_to_din_physical_value(present_voltage, &msg->EVSEPresentVoltage);
+    if (present_voltage) {
+        json_to_din_physical_value(present_voltage, &msg->EVSEPresentVoltage);
+    }
     return CBV2G_SUCCESS;
 }
 
 static cJSON* din_pre_charge_res_to_json(const struct din_PreChargeResType* msg) {
     cJSON* json = cJSON_CreateObject();
-    cJSON_AddStringToObject(json, "ResponseCode", din_response_code_to_string(msg->ResponseCode));
+    if (add_response_code_string(json, msg->ResponseCode) != 0) {
+        cJSON_Delete(json);
+        return NULL;
+    }
     cJSON_AddItemToObject(json, "DC_EVSEStatus", din_dc_evse_status_to_json(&msg->DC_EVSEStatus));
     cJSON_AddItemToObject(json, "EVSEPresentVoltage", din_physical_value_to_json(&msg->EVSEPresentVoltage));
     return json;
@@ -1048,7 +1521,9 @@ static int json_to_din_power_delivery_req(cJSON* json, struct din_PowerDeliveryR
     if (dc_params) {
         msg->DC_EVPowerDeliveryParameter_isUsed = 1;
         cJSON* status = cJSON_GetObjectItemCaseSensitive(dc_params, "DC_EVStatus");
-        if (status) json_to_din_dc_ev_status(status, &msg->DC_EVPowerDeliveryParameter.DC_EVStatus);
+        if (status) {
+            json_to_din_dc_ev_status(status, &msg->DC_EVPowerDeliveryParameter.DC_EVStatus);
+        }
         msg->DC_EVPowerDeliveryParameter.BulkChargingComplete_isUsed = json_has_key(dc_params, "BulkChargingComplete");
         if (msg->DC_EVPowerDeliveryParameter.BulkChargingComplete_isUsed) {
             msg->DC_EVPowerDeliveryParameter.BulkChargingComplete = json_get_bool(dc_params, "BulkChargingComplete");
@@ -1064,9 +1539,11 @@ static cJSON* din_power_delivery_req_to_json(const struct din_PowerDeliveryReqTy
 
     if (msg->DC_EVPowerDeliveryParameter_isUsed) {
         cJSON* dc_params = cJSON_CreateObject();
-        cJSON_AddItemToObject(dc_params, "DC_EVStatus", din_dc_ev_status_to_json(&msg->DC_EVPowerDeliveryParameter.DC_EVStatus));
+        cJSON_AddItemToObject(dc_params, "DC_EVStatus",
+                              din_dc_ev_status_to_json(&msg->DC_EVPowerDeliveryParameter.DC_EVStatus));
         if (msg->DC_EVPowerDeliveryParameter.BulkChargingComplete_isUsed) {
-            cJSON_AddBoolToObject(dc_params, "BulkChargingComplete", msg->DC_EVPowerDeliveryParameter.BulkChargingComplete);
+            cJSON_AddBoolToObject(dc_params, "BulkChargingComplete",
+                                  msg->DC_EVPowerDeliveryParameter.BulkChargingComplete);
         }
         cJSON_AddBoolToObject(dc_params, "ChargingComplete", msg->DC_EVPowerDeliveryParameter.ChargingComplete);
         cJSON_AddItemToObject(json, "DC_EVPowerDeliveryParameter", dc_params);
@@ -1087,7 +1564,10 @@ static int json_to_din_power_delivery_res(cJSON* json, struct din_PowerDeliveryR
 
 static cJSON* din_power_delivery_res_to_json(const struct din_PowerDeliveryResType* msg) {
     cJSON* json = cJSON_CreateObject();
-    cJSON_AddStringToObject(json, "ResponseCode", din_response_code_to_string(msg->ResponseCode));
+    if (add_response_code_string(json, msg->ResponseCode) != 0) {
+        cJSON_Delete(json);
+        return NULL;
+    }
     if (msg->DC_EVSEStatus_isUsed) {
         cJSON_AddItemToObject(json, "DC_EVSEStatus", din_dc_evse_status_to_json(&msg->DC_EVSEStatus));
     }
@@ -1097,10 +1577,14 @@ static cJSON* din_power_delivery_res_to_json(const struct din_PowerDeliveryResTy
 /* CurrentDemandReq */
 static int json_to_din_current_demand_req(cJSON* json, struct din_CurrentDemandReqType* msg) {
     cJSON* status = cJSON_GetObjectItemCaseSensitive(json, "DC_EVStatus");
-    if (status) json_to_din_dc_ev_status(status, &msg->DC_EVStatus);
+    if (status) {
+        json_to_din_dc_ev_status(status, &msg->DC_EVStatus);
+    }
 
     cJSON* target_current = cJSON_GetObjectItemCaseSensitive(json, "EVTargetCurrent");
-    if (target_current) json_to_din_physical_value(target_current, &msg->EVTargetCurrent);
+    if (target_current) {
+        json_to_din_physical_value(target_current, &msg->EVTargetCurrent);
+    }
 
     msg->EVMaximumVoltageLimit_isUsed = json_has_key(json, "EVMaximumVoltageLimit");
     if (msg->EVMaximumVoltageLimit_isUsed) {
@@ -1140,7 +1624,9 @@ static int json_to_din_current_demand_req(cJSON* json, struct din_CurrentDemandR
     }
 
     cJSON* target_voltage = cJSON_GetObjectItemCaseSensitive(json, "EVTargetVoltage");
-    if (target_voltage) json_to_din_physical_value(target_voltage, &msg->EVTargetVoltage);
+    if (target_voltage) {
+        json_to_din_physical_value(target_voltage, &msg->EVTargetVoltage);
+    }
 
     return CBV2G_SUCCESS;
 }
@@ -1178,13 +1664,19 @@ static int json_to_din_current_demand_res(cJSON* json, struct din_CurrentDemandR
     msg->ResponseCode = din_string_to_response_code(json_get_string(json, "ResponseCode"));
 
     cJSON* status = cJSON_GetObjectItemCaseSensitive(json, "DC_EVSEStatus");
-    if (status) json_to_din_dc_evse_status(status, &msg->DC_EVSEStatus);
+    if (status) {
+        json_to_din_dc_evse_status(status, &msg->DC_EVSEStatus);
+    }
 
     cJSON* present_voltage = cJSON_GetObjectItemCaseSensitive(json, "EVSEPresentVoltage");
-    if (present_voltage) json_to_din_physical_value(present_voltage, &msg->EVSEPresentVoltage);
+    if (present_voltage) {
+        json_to_din_physical_value(present_voltage, &msg->EVSEPresentVoltage);
+    }
 
     cJSON* present_current = cJSON_GetObjectItemCaseSensitive(json, "EVSEPresentCurrent");
-    if (present_current) json_to_din_physical_value(present_current, &msg->EVSEPresentCurrent);
+    if (present_current) {
+        json_to_din_physical_value(present_current, &msg->EVSEPresentCurrent);
+    }
 
     msg->EVSECurrentLimitAchieved = json_get_bool(json, "EVSECurrentLimitAchieved");
     msg->EVSEVoltageLimitAchieved = json_get_bool(json, "EVSEVoltageLimitAchieved");
@@ -1213,7 +1705,10 @@ static int json_to_din_current_demand_res(cJSON* json, struct din_CurrentDemandR
 
 static cJSON* din_current_demand_res_to_json(const struct din_CurrentDemandResType* msg) {
     cJSON* json = cJSON_CreateObject();
-    cJSON_AddStringToObject(json, "ResponseCode", din_response_code_to_string(msg->ResponseCode));
+    if (add_response_code_string(json, msg->ResponseCode) != 0) {
+        cJSON_Delete(json);
+        return NULL;
+    }
     cJSON_AddItemToObject(json, "DC_EVSEStatus", din_dc_evse_status_to_json(&msg->DC_EVSEStatus));
     cJSON_AddItemToObject(json, "EVSEPresentVoltage", din_physical_value_to_json(&msg->EVSEPresentVoltage));
     cJSON_AddItemToObject(json, "EVSEPresentCurrent", din_physical_value_to_json(&msg->EVSEPresentCurrent));
@@ -1222,10 +1717,12 @@ static cJSON* din_current_demand_res_to_json(const struct din_CurrentDemandResTy
     cJSON_AddBoolToObject(json, "EVSEPowerLimitAchieved", msg->EVSEPowerLimitAchieved);
 
     if (msg->EVSEMaximumVoltageLimit_isUsed) {
-        cJSON_AddItemToObject(json, "EVSEMaximumVoltageLimit", din_physical_value_to_json(&msg->EVSEMaximumVoltageLimit));
+        cJSON_AddItemToObject(json, "EVSEMaximumVoltageLimit",
+                              din_physical_value_to_json(&msg->EVSEMaximumVoltageLimit));
     }
     if (msg->EVSEMaximumCurrentLimit_isUsed) {
-        cJSON_AddItemToObject(json, "EVSEMaximumCurrentLimit", din_physical_value_to_json(&msg->EVSEMaximumCurrentLimit));
+        cJSON_AddItemToObject(json, "EVSEMaximumCurrentLimit",
+                              din_physical_value_to_json(&msg->EVSEMaximumCurrentLimit));
     }
     if (msg->EVSEMaximumPowerLimit_isUsed) {
         cJSON_AddItemToObject(json, "EVSEMaximumPowerLimit", din_physical_value_to_json(&msg->EVSEMaximumPowerLimit));
@@ -1236,7 +1733,9 @@ static cJSON* din_current_demand_res_to_json(const struct din_CurrentDemandResTy
 /* WeldingDetectionReq */
 static int json_to_din_welding_detection_req(cJSON* json, struct din_WeldingDetectionReqType* msg) {
     cJSON* status = cJSON_GetObjectItemCaseSensitive(json, "DC_EVStatus");
-    if (status) json_to_din_dc_ev_status(status, &msg->DC_EVStatus);
+    if (status) {
+        json_to_din_dc_ev_status(status, &msg->DC_EVStatus);
+    }
     return CBV2G_SUCCESS;
 }
 
@@ -1250,16 +1749,23 @@ static cJSON* din_welding_detection_req_to_json(const struct din_WeldingDetectio
 static int json_to_din_welding_detection_res(cJSON* json, struct din_WeldingDetectionResType* msg) {
     msg->ResponseCode = din_string_to_response_code(json_get_string(json, "ResponseCode"));
     cJSON* status = cJSON_GetObjectItemCaseSensitive(json, "DC_EVSEStatus");
-    if (status) json_to_din_dc_evse_status(status, &msg->DC_EVSEStatus);
+    if (status) {
+        json_to_din_dc_evse_status(status, &msg->DC_EVSEStatus);
+    }
 
     cJSON* present_voltage = cJSON_GetObjectItemCaseSensitive(json, "EVSEPresentVoltage");
-    if (present_voltage) json_to_din_physical_value(present_voltage, &msg->EVSEPresentVoltage);
+    if (present_voltage) {
+        json_to_din_physical_value(present_voltage, &msg->EVSEPresentVoltage);
+    }
     return CBV2G_SUCCESS;
 }
 
 static cJSON* din_welding_detection_res_to_json(const struct din_WeldingDetectionResType* msg) {
     cJSON* json = cJSON_CreateObject();
-    cJSON_AddStringToObject(json, "ResponseCode", din_response_code_to_string(msg->ResponseCode));
+    if (add_response_code_string(json, msg->ResponseCode) != 0) {
+        cJSON_Delete(json);
+        return NULL;
+    }
     cJSON_AddItemToObject(json, "DC_EVSEStatus", din_dc_evse_status_to_json(&msg->DC_EVSEStatus));
     cJSON_AddItemToObject(json, "EVSEPresentVoltage", din_physical_value_to_json(&msg->EVSEPresentVoltage));
     return json;
@@ -1286,6 +1792,9 @@ static int json_to_din_session_stop_res(cJSON* json, struct din_SessionStopResTy
 
 static cJSON* din_session_stop_res_to_json(const struct din_SessionStopResType* msg) {
     cJSON* json = cJSON_CreateObject();
-    cJSON_AddStringToObject(json, "ResponseCode", din_response_code_to_string(msg->ResponseCode));
+    if (add_response_code_string(json, msg->ResponseCode) != 0) {
+        cJSON_Delete(json);
+        return NULL;
+    }
     return json;
 }
