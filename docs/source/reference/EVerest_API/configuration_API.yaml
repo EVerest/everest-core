@@ -1,6 +1,6 @@
 ---
 asyncapi: 3.0.0
-id: 'pionix:de:everest:config_service_API'
+id: 'pionix:de:everest:configuration_API'
 info:
   title: 'EVerest API definition for the Config Service'
   version: 1.0.0
@@ -16,7 +16,7 @@ info:
     - name: ConfigService
 servers:
   default:
-    pathname: 'everest_api/1/config_service/'
+    pathname: 'everest_api/1/configuration/'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt

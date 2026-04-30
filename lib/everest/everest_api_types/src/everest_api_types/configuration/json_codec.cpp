@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
-#include "config_service/json_codec.hpp"
-#include "config_service/API.hpp"
-#include "config_service/codec.hpp"
+#include "configuration/json_codec.hpp"
+#include "configuration/API.hpp"
+#include "configuration/codec.hpp"
 
 #include "nlohmann/json.hpp"
 #include <stdexcept>
 #include <unordered_set>
 
-namespace everest::lib::API::V1_0::types::config_service {
+namespace everest::lib::API::V1_0::types::configuration {
 
 void to_json(json& j, MarkActiveSlotResultEnum const& k) noexcept {
     switch (k) {
@@ -27,7 +27,7 @@ void to_json(json& j, MarkActiveSlotResultEnum const& k) noexcept {
         return;
     }
 
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::MarkActiveSlotResultEnum";
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::configuration::MarkActiveSlotResultEnum";
 }
 
 void from_json(const json& j, MarkActiveSlotResultEnum& k) {
@@ -51,7 +51,7 @@ void from_json(const json& j, MarkActiveSlotResultEnum& k) {
 
     throw std::out_of_range("Provided string " + s +
                             " could not be converted to enum of type "
-                            "everest::lib::API::V1_0::types::config_service::MarkActiveSlotResultEnum");
+                            "everest::lib::API::V1_0::types::configuration::MarkActiveSlotResultEnum");
 }
 
 void to_json(json& j, DeleteSlotResultEnum const& k) noexcept {
@@ -70,7 +70,7 @@ void to_json(json& j, DeleteSlotResultEnum const& k) noexcept {
         return;
     }
 
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::DeleteSlotResultEnum";
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::configuration::DeleteSlotResultEnum";
 }
 
 void from_json(const json& j, DeleteSlotResultEnum& k) {
@@ -94,7 +94,7 @@ void from_json(const json& j, DeleteSlotResultEnum& k) {
 
     throw std::out_of_range(
         "Provided string " + s +
-        " could not be converted to enum of type everest::lib::API::V1_0::types::config_service::DeleteSlotResultEnum");
+        " could not be converted to enum of type everest::lib::API::V1_0::types::configuration::DeleteSlotResultEnum");
 }
 
 void to_json(json& j, ConfigurationParameterUpdateResultEnum const& k) noexcept {
@@ -113,7 +113,7 @@ void to_json(json& j, ConfigurationParameterUpdateResultEnum const& k) noexcept 
         return;
     }
 
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::ConfigurationParameterUpdateResultEnum";
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::configuration::ConfigurationParameterUpdateResultEnum";
 }
 
 void from_json(const json& j, ConfigurationParameterUpdateResultEnum& k) {
@@ -137,7 +137,7 @@ void from_json(const json& j, ConfigurationParameterUpdateResultEnum& k) {
 
     throw std::out_of_range("Provided string " + s +
                             " could not be converted to enum of type "
-                            "everest::lib::API::V1_0::types::config_service::ConfigurationParameterUpdateResultEnum");
+                            "everest::lib::API::V1_0::types::configuration::ConfigurationParameterUpdateResultEnum");
 }
 
 void to_json(json& j, ActiveSlotStatusEnum const& k) noexcept {
@@ -153,7 +153,7 @@ void to_json(json& j, ActiveSlotStatusEnum const& k) noexcept {
         return;
     }
 
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::ActiveSlotStatusEnum";
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::configuration::ActiveSlotStatusEnum";
 }
 
 void from_json(const json& j, ActiveSlotStatusEnum& k) {
@@ -173,7 +173,7 @@ void from_json(const json& j, ActiveSlotStatusEnum& k) {
 
     throw std::out_of_range(
         "Provided string " + s +
-        " could not be converted to enum of type everest::lib::API::V1_0::types::config_service::ActiveSlotStatusEnum");
+        " could not be converted to enum of type everest::lib::API::V1_0::types::configuration::ActiveSlotStatusEnum");
 }
 
 void to_json(json& j, ConfigurationParameterDatatype const& k) noexcept {
@@ -195,7 +195,7 @@ void to_json(json& j, ConfigurationParameterDatatype const& k) noexcept {
         return;
     }
 
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::ConfigurationParameterDatatype";
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::configuration::ConfigurationParameterDatatype";
 }
 
 void from_json(const json& j, ConfigurationParameterDatatype& k) {
@@ -223,7 +223,7 @@ void from_json(const json& j, ConfigurationParameterDatatype& k) {
 
     throw std::out_of_range("Provided string " + s +
                             " could not be converted to enum of type "
-                            "everest::lib::API::V1_0::types::config_service::ConfigurationParameterDatatype");
+                            "everest::lib::API::V1_0::types::configuration::ConfigurationParameterDatatype");
 }
 
 void to_json(json& j, ConfigurationParameterMutability const& k) noexcept {
@@ -239,7 +239,7 @@ void to_json(json& j, ConfigurationParameterMutability const& k) noexcept {
         return;
     }
 
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::ConfigurationParameterMutability";
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::configuration::ConfigurationParameterMutability";
 }
 
 void from_json(const json& j, ConfigurationParameterMutability& k) {
@@ -259,7 +259,7 @@ void from_json(const json& j, ConfigurationParameterMutability& k) {
 
     throw std::out_of_range("Provided string " + s +
                             " could not be converted to enum of type "
-                            "everest::lib::API::V1_0::types::config_service::ConfigurationParameterMutability");
+                            "everest::lib::API::V1_0::types::configuration::ConfigurationParameterMutability");
 }
 
 void to_json(json& j, GetConfigurationStatusEnum const& k) noexcept {
@@ -272,7 +272,7 @@ void to_json(json& j, GetConfigurationStatusEnum const& k) noexcept {
         return;
     }
 
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::GetConfigurationStatusEnum";
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::configuration::GetConfigurationStatusEnum";
 }
 
 void from_json(const json& j, GetConfigurationStatusEnum& k) {
@@ -288,7 +288,7 @@ void from_json(const json& j, GetConfigurationStatusEnum& k) {
 
     throw std::out_of_range("Provided string " + s +
                             " could not be converted to enum of type "
-                            "everest::lib::API::V1_0::types::config_service::GetConfigurationStatusEnum");
+                            "everest::lib::API::V1_0::types::configuration::GetConfigurationStatusEnum");
 }
 
 void to_json(json& j, ConfigMetadata const& k) noexcept {
@@ -750,4 +750,4 @@ void from_json(const json& j, GetConfigurationRequest& k) {
     k.slot_id = j.at("slot_id");
 }
 
-} // namespace everest::lib::API::V1_0::types::config_service
+} // namespace everest::lib::API::V1_0::types::configuration

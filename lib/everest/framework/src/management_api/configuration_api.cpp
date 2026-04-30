@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
-#include <config_service_api.hpp>
+#include <configuration_api.hpp>
 #include <everest/logging.hpp>
 #include <utils/date.hpp>
 
 #include <algorithm>
 #include <iterator>
 
-#include <config_service_type_wrapper.hpp>
-#include <everest_api_types/config_service/codec.hpp>
+#include <configuration_type_wrapper.hpp>
+#include <everest_api_types/configuration/codec.hpp>
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/utilities/codec.hpp>
 
@@ -26,18 +26,18 @@ template <class SrcT, class ConvT> auto srcToTarVec(std::vector<SrcT> const& src
 }
 } // namespace
 
-namespace Everest::api::config_service {
+namespace Everest::api::configuration {
 
 namespace API_types = ev_API::V1_0::types;
-namespace API_types_ext = API_types::config_service;
+namespace API_types_ext = API_types::configuration;
 namespace API_generic = API_types::generic;
-namespace API_wrapper = ::Everest::api::types::config_service;
+namespace API_wrapper = ::Everest::api::types::configuration;
 using ev_API::deserialize;
 
-ConfigServiceAPI::ConfigServiceAPI(MQTTAbstraction& mqtt_abstraction,
+ConfigurationAPI::ConfigurationAPI(MQTTAbstraction& mqtt_abstraction,
                                    Everest::config::ConfigServiceInterface& config_service) :
     mqtt_abstraction(mqtt_abstraction), config_service(config_service) {
-    topics.setup("_unused_", "config_service", 0);
+    topics.setup("_unused_", "configuration", 0);
 
     generate_api_cmd_list_all_slots();
     generate_api_cmd_get_active_slot();
@@ -53,7 +53,7 @@ ConfigServiceAPI::ConfigServiceAPI(MQTTAbstraction& mqtt_abstraction,
     generate_api_var_config_updates();
 }
 
-void ConfigServiceAPI::generate_api_cmd_list_all_slots() {
+void ConfigurationAPI::generate_api_cmd_list_all_slots() {
     subscribe_api_topic("list_all_slots", [this](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
@@ -66,7 +66,7 @@ void ConfigServiceAPI::generate_api_cmd_list_all_slots() {
     });
 }
 
-void ConfigServiceAPI::generate_api_cmd_get_active_slot() {
+void ConfigurationAPI::generate_api_cmd_get_active_slot() {
     subscribe_api_topic("get_active_slot", [this](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
@@ -80,7 +80,7 @@ void ConfigServiceAPI::generate_api_cmd_get_active_slot() {
     });
 }
 
-void ConfigServiceAPI::generate_api_cmd_mark_active_slot() {
+void ConfigurationAPI::generate_api_cmd_mark_active_slot() {
     subscribe_api_topic("mark_active_slot", [this](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
@@ -99,7 +99,7 @@ void ConfigServiceAPI::generate_api_cmd_mark_active_slot() {
     });
 }
 
-void ConfigServiceAPI::generate_api_cmd_delete_slot() {
+void ConfigurationAPI::generate_api_cmd_delete_slot() {
     subscribe_api_topic("delete_slot", [this](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
@@ -118,7 +118,7 @@ void ConfigServiceAPI::generate_api_cmd_delete_slot() {
     });
 }
 
-void ConfigServiceAPI::generate_api_cmd_duplicate_slot() {
+void ConfigurationAPI::generate_api_cmd_duplicate_slot() {
     subscribe_api_topic("duplicate_slot", [this](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
@@ -136,7 +136,7 @@ void ConfigServiceAPI::generate_api_cmd_duplicate_slot() {
     });
 }
 
-void ConfigServiceAPI::generate_api_cmd_load_from_yaml() {
+void ConfigurationAPI::generate_api_cmd_load_from_yaml() {
     subscribe_api_topic("load_from_yaml", [this](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
@@ -155,7 +155,7 @@ void ConfigServiceAPI::generate_api_cmd_load_from_yaml() {
     });
 }
 
-void ConfigServiceAPI::generate_api_cmd_set_config_parameters() {
+void ConfigurationAPI::generate_api_cmd_set_config_parameters() {
     subscribe_api_topic("set_config_parameters", [this](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
@@ -180,7 +180,7 @@ void ConfigServiceAPI::generate_api_cmd_set_config_parameters() {
     });
 }
 
-void ConfigServiceAPI::generate_api_cmd_get_configuration() {
+void ConfigurationAPI::generate_api_cmd_get_configuration() {
     subscribe_api_topic("get_configuration", [this](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
@@ -198,8 +198,8 @@ void ConfigServiceAPI::generate_api_cmd_get_configuration() {
     });
 }
 
-void ConfigServiceAPI::generate_api_var_active_slot() {
-    // TODO(CB): The config_service does not offer to query the status of the active slot,
+void ConfigurationAPI::generate_api_var_active_slot() {
+    // TODO(CB): The configuration does not offer to query the status of the active slot,
     // so for now we just set it to "Running" here, but we might want to add a query function to the config_service
     API_types_ext::ActiveSlotUpdateNotice initial_update{};
     initial_update.tstamp = Everest::Date::to_rfc3339(date::utc_clock::now());
@@ -213,14 +213,14 @@ void ConfigServiceAPI::generate_api_var_active_slot() {
     });
 }
 
-void ConfigServiceAPI::generate_api_var_config_updates() {
+void ConfigurationAPI::generate_api_var_config_updates() {
     config_service.register_config_update_handler([this](const Everest::config::ConfigurationUpdate& update) {
         auto ext_update = API_wrapper::to_external_api(update);
         mqtt_abstraction.publish(topics.nonmodule_to_extern("config_updates"), serialize(ext_update));
     });
 }
 
-void ConfigServiceAPI::subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish) {
+void ConfigurationAPI::subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish) {
     auto topic = topics.extern_to_nonmodule(var);
     auto handler = std::make_shared<TypedHandler>(
         HandlerType::ExternalMQTT, std::make_shared<Handler>([=](std::string const& topic, nlohmann::json data) {

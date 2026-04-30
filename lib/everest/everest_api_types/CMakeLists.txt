@@ -38,8 +38,8 @@ target_sources(everest_api_types
   src/everest_api_types/auth/json_codec.cpp
   src/everest_api_types/auth/wrapper.cpp
 
-  src/everest_api_types/config_service/codec.cpp
-  src/everest_api_types/config_service/json_codec.cpp
+  src/everest_api_types/configuration/codec.cpp
+  src/everest_api_types/configuration/json_codec.cpp
 
   src/everest_api_types/dc_external_derate/codec.cpp
   src/everest_api_types/dc_external_derate/json_codec.cpp
@@ -73,8 +73,8 @@ target_sources(everest_api_types
   src/everest_api_types/evse_security/json_codec.cpp
   src/everest_api_types/evse_security/wrapper.cpp
 
-  src/everest_api_types/execution/codec.cpp
-  src/everest_api_types/execution/json_codec.cpp
+  src/everest_api_types/lifecycle/codec.cpp
+  src/everest_api_types/lifecycle/json_codec.cpp
 
   src/everest_api_types/money/codec.cpp
   src/everest_api_types/money/json_codec.cpp

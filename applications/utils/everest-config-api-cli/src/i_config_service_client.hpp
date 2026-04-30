@@ -7,11 +7,11 @@
 #include <optional>
 #include <string>
 
-#include <everest_api_types/config_service/codec.hpp>
+#include <everest_api_types/configuration/codec.hpp>
 
 namespace everest::config_cli {
 
-using namespace everest::lib::API::V1_0::types::config_service;
+using namespace everest::lib::API::V1_0::types::configuration;
 
 class IConfigServiceClient {
 public:

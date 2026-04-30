@@ -7,7 +7,7 @@
 #include <optional>
 #include <string>
 
-namespace everest::lib::API::V1_0::types::config_service {
+namespace everest::lib::API::V1_0::types::configuration {
 
 std::string serialize(MarkActiveSlotResultEnum val) noexcept;
 std::string serialize(DeleteSlotResultEnum val) noexcept;
@@ -112,4 +112,4 @@ template <class T> bool adl_deserialize(std::string const& json_data, T& obj) {
     return false;
 }
 
-} // namespace everest::lib::API::V1_0::types::config_service
+} // namespace everest::lib::API::V1_0::types::configuration

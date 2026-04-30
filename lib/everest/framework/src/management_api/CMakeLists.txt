@@ -10,10 +10,10 @@ target_include_directories(management_api
 
 target_sources(management_api
   PRIVATE
-    config_service_api.cpp
-    config_service_type_wrapper.cpp
-    execution_api.cpp
-    execution_type_wrapper.cpp
+    configuration_api.cpp
+    configuration_type_wrapper.cpp
+    lifecycle_api.cpp
+    lifecycle_type_wrapper.cpp
 )
 
 target_link_libraries(management_api

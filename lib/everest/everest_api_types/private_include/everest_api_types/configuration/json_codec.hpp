@@ -4,9 +4,9 @@
 #pragma once
 
 #include "nlohmann/json_fwd.hpp"
-#include <everest_api_types/config_service/API.hpp>
+#include <everest_api_types/configuration/API.hpp>
 
-namespace everest::lib::API::V1_0::types::config_service {
+namespace everest::lib::API::V1_0::types::configuration {
 
 using json = nlohmann::json;
 
@@ -133,4 +133,4 @@ void from_json(const json& j, LoadFromYamlRequest& k);
 void to_json(json& j, GetConfigurationRequest const& k) noexcept;
 void from_json(const json& j, GetConfigurationRequest& k);
 
-} // namespace everest::lib::API::V1_0::types::config_service
+} // namespace everest::lib::API::V1_0::types::configuration

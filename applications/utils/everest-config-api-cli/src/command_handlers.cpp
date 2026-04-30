@@ -6,12 +6,12 @@
 #include <utility>
 #include <vector>
 
-namespace everest::lib::API::V1_0::types::config_service {
+namespace everest::lib::API::V1_0::types::configuration {
 inline bool operator==(const ConfigurationParameterIdentifier& a, const ConfigurationParameterIdentifier& b) {
     return a.module_id == b.module_id && a.parameter_name == b.parameter_name &&
            a.implementation_id == b.implementation_id;
 }
-} // namespace everest::lib::API::V1_0::types::config_service
+} // namespace everest::lib::API::V1_0::types::configuration
 
 namespace everest::config_cli {
 
@@ -75,7 +75,7 @@ void CommandHandlers::mark_active_slot(int slot_id) {
         std::cerr << "Failed to mark active slot; API did not respond.\n";
         return;
     }
-    if (res->result == everest::lib::API::V1_0::types::config_service::MarkActiveSlotResultEnum::Success) {
+    if (res->result == everest::lib::API::V1_0::types::configuration::MarkActiveSlotResultEnum::Success) {
         std::cout << "Successfully marked slot " << slot_id << " as active.\n";
     } else {
         std::cout << "Failed to mark slot " << slot_id << " as active.\n";
@@ -88,7 +88,7 @@ void CommandHandlers::delete_slot(int slot_id) {
         std::cerr << "Failed to delete slot; API did not respond.\n";
         return;
     }
-    if (res->result == everest::lib::API::V1_0::types::config_service::DeleteSlotResultEnum::Success) {
+    if (res->result == everest::lib::API::V1_0::types::configuration::DeleteSlotResultEnum::Success) {
         std::cout << "Successfully deleted slot " << slot_id << ".\n";
     } else {
         std::cout << "Failed to delete slot " << slot_id << "\n";
@@ -137,7 +137,7 @@ void CommandHandlers::get_configuration(int slot_id) {
         std::cerr << "Failed to get configuration for slot " << slot_id << "; API did not respond.\n";
         return;
     }
-    if (res->status == everest::lib::API::V1_0::types::config_service::GetConfigurationStatusEnum::SlotDoesNotExist) {
+    if (res->status == everest::lib::API::V1_0::types::configuration::GetConfigurationStatusEnum::SlotDoesNotExist) {
         std::cout << "Slot " << slot_id << " not found.\n";
         return;
     }
@@ -151,7 +151,7 @@ void CommandHandlers::get_configuration(int slot_id) {
 }
 
 void CommandHandlers::set_config_parameter(int slot_id, const std::string& filename) {
-    everest::lib::API::V1_0::types::config_service::ConfigurationParameterUpdateRequest req;
+    everest::lib::API::V1_0::types::configuration::ConfigurationParameterUpdateRequest req;
     try {
         req = yaml_provider_->parse_parameter_updates(slot_id, filename);
     } catch (const std::exception& e) {
@@ -165,14 +165,14 @@ void CommandHandlers::set_config_parameter(int slot_id, const std::string& filen
         return;
     }
     if (current_cfg->status ==
-        everest::lib::API::V1_0::types::config_service::GetConfigurationStatusEnum::SlotDoesNotExist) {
+        everest::lib::API::V1_0::types::configuration::GetConfigurationStatusEnum::SlotDoesNotExist) {
         std::cerr << "Slot [" << slot_id << "] does not exist.\n";
         return;
     }
 
     // Build lookup: (module_id, impl_id, param_name) -> current value and datatype
-    using CfgParamId = everest::lib::API::V1_0::types::config_service::ConfigurationParameterIdentifier;
-    using Datatype = everest::lib::API::V1_0::types::config_service::ConfigurationParameterDatatype;
+    using CfgParamId = everest::lib::API::V1_0::types::configuration::ConfigurationParameterIdentifier;
+    using Datatype = everest::lib::API::V1_0::types::configuration::ConfigurationParameterDatatype;
     struct ParamInfo {
         std::string value;
         Datatype datatype{Datatype::Unknown};
@@ -203,7 +203,7 @@ void CommandHandlers::set_config_parameter(int slot_id, const std::string& filen
     };
 
     // Filter to only parameters that actually changed
-    everest::lib::API::V1_0::types::config_service::ConfigurationParameterUpdateRequest changed_req;
+    everest::lib::API::V1_0::types::configuration::ConfigurationParameterUpdateRequest changed_req;
     changed_req.slot_id = slot_id;
     std::vector<ParamInfo> before_params;
     for (const auto& update : req.parameter_updates) {
@@ -254,7 +254,7 @@ void CommandHandlers::set_config_parameter(int slot_id, const std::string& filen
         param_id += id.parameter_name;
 
         const char* color = GREEN;
-        using R = everest::lib::API::V1_0::types::config_service::ConfigurationParameterUpdateResultEnum;
+        using R = everest::lib::API::V1_0::types::configuration::ConfigurationParameterUpdateResultEnum;
         if (result == R::WillApplyOnRestart) {
             color = YELLOW;
             ++ok_count;
@@ -267,9 +267,9 @@ void CommandHandlers::set_config_parameter(int slot_id, const std::string& filen
 
         const auto& before = before_params.at(i);
         std::cout << BOLD << std::left << std::setw(50) << param_id << RESET << " ["
-                  << everest::lib::API::V1_0::types::config_service::serialize(before.datatype) << "]"
+                  << everest::lib::API::V1_0::types::configuration::serialize(before.datatype) << "]"
                   << " : " << before.value << " -> " << update.value << "  " << color
-                  << everest::lib::API::V1_0::types::config_service::serialize(result) << RESET << "\n";
+                  << everest::lib::API::V1_0::types::configuration::serialize(result) << RESET << "\n";
     }
     std::cout << "\nChanged " << ok_count << " of " << res->results.size() << " parameter(s), " << applied_count
               << " applied (immediately).\n";
@@ -278,14 +278,14 @@ void CommandHandlers::set_config_parameter(int slot_id, const std::string& filen
 void CommandHandlers::monitor(bool suppress_parameter_updates) {
     std::cout << "Starting monitor... (Press Ctrl+C to stop)\n";
 
-    auto active_cb = [](const everest::lib::API::V1_0::types::config_service::ActiveSlotUpdateNotice& notice) {
+    auto active_cb = [](const everest::lib::API::V1_0::types::configuration::ActiveSlotUpdateNotice& notice) {
         const char* GREEN = "\033[32m";
         const char* RESET = "\033[0m";
         std::cout << GREEN << "[Active Slot Update]" << RESET << " Active slot is now: " << notice.slot_id << "\n";
     };
 
     auto config_cb =
-        [](const everest::lib::API::V1_0::types::config_service::ConfigurationParameterUpdateNotice& notice) {
+        [](const everest::lib::API::V1_0::types::configuration::ConfigurationParameterUpdateNotice& notice) {
             const char* YELLOW = "\033[33m";
             const char* RESET = "\033[0m";
             for (const auto& record : notice.update_results) {

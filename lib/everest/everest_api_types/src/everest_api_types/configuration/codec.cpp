@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
-#include "config_service/codec.hpp"
-#include "config_service/API.hpp"
-#include "config_service/json_codec.hpp"
+#include "configuration/codec.hpp"
+#include "configuration/API.hpp"
+#include "configuration/json_codec.hpp"
 #include "nlohmann/json.hpp"
 #include "utilities/constants.hpp"
 #include <string>
 
-namespace everest::lib::API::V1_0::types::config_service {
+namespace everest::lib::API::V1_0::types::configuration {
 
 std::string serialize(MarkActiveSlotResultEnum val) noexcept {
     json result = val;
@@ -666,4 +666,4 @@ template <> GetConfigurationRequest deserialize<>(std::string const& val) {
     return obj;
 }
 
-} // namespace everest::lib::API::V1_0::types::config_service
+} // namespace everest::lib::API::V1_0::types::configuration

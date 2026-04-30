@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
-/// \file Class to implement the ConfigServiceAPI, which provides an API to manage the configuration of EVerest modules.
+/// \file Class to implement the ConfigurationAPI, which provides an API to manage the configuration of EVerest modules.
 
 #pragma once
 
-#include <everest_api_types/config_service/API.hpp>
+#include <everest_api_types/configuration/API.hpp>
 #include <everest_api_types/utilities/Topics.hpp>
 #include <utils/config_service_interface.hpp>
 #include <utils/mqtt_abstraction.hpp>
 
 namespace ev_API = everest::lib::API;
 
-namespace Everest::api::config_service {
+namespace Everest::api::configuration {
 
-class ConfigServiceAPI {
+class ConfigurationAPI {
 public:
-    ConfigServiceAPI(MQTTAbstraction& mqtt_abstraction, Everest::config::ConfigServiceInterface& config_service);
+    ConfigurationAPI(MQTTAbstraction& mqtt_abstraction, Everest::config::ConfigServiceInterface& config_service);
 
 private:
     MQTTAbstraction& mqtt_abstraction;
@@ -40,4 +40,4 @@ private:
     ev_API::Topics topics;
 };
 
-} // namespace Everest::api::config_service
+} // namespace Everest::api::configuration

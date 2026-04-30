@@ -5,7 +5,7 @@
 
 #include <string>
 
-namespace everest::lib::API::V1_0::types::execution {
+namespace everest::lib::API::V1_0::types::lifecycle {
 
 enum class StopModulesResultEnum {
     Stopping,
@@ -39,4 +39,4 @@ struct ExecutionStatusUpdateNotice {
     bool configuration_api_available;
 };
 
-} // namespace everest::lib::API::V1_0::types::execution
+} // namespace everest::lib::API::V1_0::types::lifecycle

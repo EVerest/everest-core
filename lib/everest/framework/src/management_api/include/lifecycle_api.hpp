@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
-/// \file Class to implement the ExecutionAPI, which provides an API to manage the lifecycle of EVerest modules
+/// \file Class to implement the LifecycleAPI, which provides an API to manage the lifecycle of EVerest modules
 
 #pragma once
 
-#include <everest_api_types/execution/API.hpp>
+#include <everest_api_types/lifecycle/API.hpp>
 #include <everest_api_types/utilities/Topics.hpp>
 #include <utils/config_service_interface.hpp>
 #include <utils/mqtt_abstraction.hpp>
 
 namespace ev_API = everest::lib::API;
 
-namespace Everest::api::execution {
+namespace Everest::api::lifecycle {
 
-class ExecutionAPI {
+class LifecycleAPI {
 public:
-    ExecutionAPI(MQTTAbstraction& mqtt_abstraction, ::Everest::config::ConfigServiceInterface& config_service,
+    LifecycleAPI(MQTTAbstraction& mqtt_abstraction, ::Everest::config::ConfigServiceInterface& config_service,
                  bool config_api_enabled);
 
 private:
@@ -34,4 +34,4 @@ private:
     bool m_config_api_enabled;
 };
 
-} // namespace Everest::api::execution
+} // namespace Everest::api::lifecycle

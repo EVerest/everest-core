@@ -8,16 +8,16 @@
 #include <catch2/catch_all.hpp>
 #include <nlohmann/json.hpp>
 
-#include <config_service_api.hpp>
-#include <config_service_type_wrapper.hpp>
-#include <everest_api_types/config_service/codec.hpp>
+#include <configuration_api.hpp>
+#include <configuration_type_wrapper.hpp>
+#include <everest_api_types/configuration/codec.hpp>
 #include <utils/config_service_interface.hpp>
 
 using json = nlohmann::json;
 using namespace everest::config;
 
 
-TEST_CASE("ConfigServiceAPI::get_config_value", "[config_service]") {
+TEST_CASE("ConfigiruationAPI::get_config_value", "[configuration]") {
     ModuleConfig config;
 
     config.module_id = "module_id";
@@ -104,11 +104,11 @@ TEST_CASE("ConfigServiceAPI::get_config_value", "[config_service]") {
     config.access = {ca};
 
     SECTION("ModuleConfig round-trip conversion") {
-        auto external_config = Everest::api::types::config_service::to_external_api(config);
+        auto external_config = Everest::api::types::configuration::to_external_api(config);
         auto serialized_config = serialize(external_config);
-        auto deserialized_external_config = everest::lib::API::V1_0::types::config_service::deserialize<
-            everest::lib::API::V1_0::types::config_service::ModuleConfiguration>(serialized_config);
-        auto internal_config = Everest::api::types::config_service::to_internal_api(deserialized_external_config);
+        auto deserialized_external_config = everest::lib::API::V1_0::types::configuration::deserialize<
+            everest::lib::API::V1_0::types::configuration::ModuleConfiguration>(serialized_config);
+        auto internal_config = Everest::api::types::configuration::to_internal_api(deserialized_external_config);
 
         CHECK(internal_config == config);
     }

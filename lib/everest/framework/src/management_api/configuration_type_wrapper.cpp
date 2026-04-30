@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
-#include "include/config_service_type_wrapper.hpp"
+#include "include/configuration_type_wrapper.hpp"
 
-namespace Everest::api::types::config_service {
+namespace Everest::api::types::configuration {
 
 namespace {
 
@@ -59,7 +59,7 @@ MarkActiveSlotResultEnum_Internal to_internal_api(MarkActiveSlotResultEnum_Exter
         return TarT::Rejected;
     }
     throw std::out_of_range(
-        "Unexpected value for everest::lib::API::V1_0::types::config_service::MarkActiveSlotResultEnum_External");
+        "Unexpected value for everest::lib::API::V1_0::types::configuration::MarkActiveSlotResultEnum_External");
 }
 
 MarkActiveSlotResultEnum_External to_external_api(MarkActiveSlotResultEnum_Internal const& val) {
@@ -92,7 +92,7 @@ DeleteSlotResultEnum_Internal to_internal_api(DeleteSlotResultEnum_External cons
         return TarT::Rejected;
     }
     throw std::out_of_range(
-        "Unexpected value for everest::lib::API::V1_0::types::config_service::DeleteSlotResultEnum_External");
+        "Unexpected value for everest::lib::API::V1_0::types::configuration::DeleteSlotResultEnum_External");
 }
 
 DeleteSlotResultEnum_External to_external_api(DeleteSlotResultEnum_Internal const& val) {
@@ -193,7 +193,7 @@ to_internal_api(ConfigurationParameterUpdateResultEnum_External const& val) {
     }
     throw std::out_of_range(
         "Unexpected value for "
-        "everest::lib::API::V1_0::types::config_service::ConfigurationParameterUpdateResultEnum_External");
+        "everest::lib::API::V1_0::types::configuration::ConfigurationParameterUpdateResultEnum_External");
 }
 
 ConfigurationParameterUpdateResultEnum_External
@@ -225,7 +225,7 @@ ActiveSlotStatusEnum_Internal to_internal_api(ActiveSlotStatusEnum_External cons
         return TarT::RestartTriggered;
     }
     throw std::out_of_range(
-        "Unexpected value for everest::lib::API::V1_0::types::config_service::ActiveSlotStatusEnum_External");
+        "Unexpected value for everest::lib::API::V1_0::types::configuration::ActiveSlotStatusEnum_External");
 }
 
 ActiveSlotStatusEnum_External to_external_api(ActiveSlotStatusEnum_Internal const& val) {
@@ -258,7 +258,7 @@ ConfigurationParameterDatatype_Internal to_internal_api(ConfigurationParameterDa
         return TarT::Unknown;
     }
     throw std::out_of_range(
-        "Unexpected value for everest::lib::API::V1_0::types::config_service::ConfigurationParameterDatatype");
+        "Unexpected value for everest::lib::API::V1_0::types::configuration::ConfigurationParameterDatatype");
 }
 
 ConfigurationParameterDatatype_External to_external_api(ConfigurationParameterDatatype_Internal const& val) {
@@ -291,7 +291,7 @@ ConfigurationParameterMutability_Internal to_internal_api(ConfigurationParameter
         return TarT::WriteOnly;
     }
     throw std::out_of_range(
-        "Unexpected value for everest::lib::API::V1_0::types::config_service::ConfigurationParameterMutability");
+        "Unexpected value for everest::lib::API::V1_0::types::configuration::ConfigurationParameterMutability");
 }
 
 ConfigurationParameterMutability_External to_external_api(ConfigurationParameterMutability_Internal const& val) {
@@ -318,7 +318,7 @@ GetConfigurationStatusEnum_Internal to_internal_api(GetConfigurationStatusEnum_E
         return TarT::SlotDoesNotExist;
     }
     throw std::out_of_range(
-        "Unexpected value for everest::lib::API::V1_0::types::config_service::GetConfigurationStatusEnum_External");
+        "Unexpected value for everest::lib::API::V1_0::types::configuration::GetConfigurationStatusEnum_External");
 }
 
 GetConfigurationStatusEnum_External to_external_api(GetConfigurationStatusEnum_Internal const& val) {
@@ -527,7 +527,7 @@ ConfigurationParameter_Internal to_internal_api(ConfigurationParameter_External 
         break;
     default:
         throw std::out_of_range(
-            "Unexpected value for everest::lib::API::V1_0::types::config_service::ConfigurationParameterDatatype");
+            "Unexpected value for everest::lib::API::V1_0::types::configuration::ConfigurationParameterDatatype");
     }
     result.characteristics = to_internal_api(val.characteristics);
     return result;
@@ -644,7 +644,7 @@ ModuleConfiguration_External to_external_api(ModuleConfiguration_Internal const&
     result.module_id = val.module_id;
     result.module_name = val.module_name;
     for (auto const& [requirement_id, fulfillments] : val.connections) {
-        ::everest::lib::API::V1_0::types::config_service::ModuleConnection connection_external;
+        ::everest::lib::API::V1_0::types::configuration::ModuleConnection connection_external;
         connection_external.requirement_id = requirement_id;
         connection_external.fulfillments = vecToExternal(fulfillments);
         result.connections.push_back(connection_external);
@@ -657,7 +657,7 @@ ModuleConfiguration_External to_external_api(ModuleConfiguration_Internal const&
                 result.module_configuration_parameters.push_back(to_external_api(param));
             }
         } else {
-            ::everest::lib::API::V1_0::types::config_service::ImplementationConfigurationParameter
+            ::everest::lib::API::V1_0::types::configuration::ImplementationConfigurationParameter
                 impl_config_param_external;
             impl_config_param_external.implementation_id = impl_id;
             impl_config_param_external.configuration_parameters = vecToExternal(config_params);
@@ -697,4 +697,4 @@ GetConfigurationResult_External to_external_api(GetConfigurationResult_Internal 
     return result;
 }
 
-} // namespace Everest::api::types::config_service
+} // namespace Everest::api::types::configuration

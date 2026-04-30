@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
-#include "execution/codec.hpp"
-#include "execution/API.hpp"
-#include "execution/json_codec.hpp"
+#include "lifecycle/codec.hpp"
+#include "lifecycle/API.hpp"
+#include "lifecycle/json_codec.hpp"
 #include "nlohmann/json.hpp"
 #include "utilities/constants.hpp"
 #include <string>
 
-namespace everest::lib::API::V1_0::types::execution {
+namespace everest::lib::API::V1_0::types::lifecycle {
 
 std::string serialize(StopModulesResultEnum val) noexcept {
     json result = val;
@@ -106,4 +106,4 @@ template <> ExecutionStatusUpdateNotice deserialize<>(std::string const& val) {
     return obj;
 }
 
-} // namespace everest::lib::API::V1_0::types::execution
+} // namespace everest::lib::API::V1_0::types::lifecycle

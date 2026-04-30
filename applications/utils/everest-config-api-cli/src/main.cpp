@@ -24,8 +24,8 @@ int main(int argc, char** argv) {
     global.add_options()("help,h", "This help message")(
         "host", po::value<std::string>(&host)->default_value("localhost"),
         "MQTT broker host")("port", po::value<int>(&port)->default_value(1883), "MQTT broker port")(
-        "api-name", po::value<std::string>(&api_name)->default_value("config_service"),
-        "API name to form the MQTT topic (e.g., config_service)")(
+        "api-name", po::value<std::string>(&api_name)->default_value("configuration"),
+        "API name to form the MQTT topic (e.g., configuration)")(
         "command", po::value<std::string>(), "Command to execute")("cmd_args", po::value<std::vector<std::string>>(),
                                                                    "Arguments for command");
 
@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
     }
 
     everest::lib::API::Topics topics;
-    topics.setup("_", "config_service", 0);
+    topics.setup("_", "configuration", 0);
 
     try {
         auto client = std::make_shared<MqttConfigServiceClient>(host, port, topics);

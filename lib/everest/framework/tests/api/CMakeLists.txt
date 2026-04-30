@@ -2,7 +2,7 @@ set(API_TEST "${TEST_TARGET_NAME}_api")
 
 add_executable(
     ${API_TEST}
-        test_config_service_api.cpp
+        test_configuration_api.cpp
 )
 
 target_link_libraries(${API_TEST}

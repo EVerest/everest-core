@@ -24,9 +24,9 @@
 #include <fmt/core.h>
 #include <fmt/ranges.h>
 
-#include <config_service_api.hpp>
+#include <configuration_api.hpp>
 #include <everest/logging.hpp>
-#include <execution_api.hpp>
+#include <lifecycle_api.hpp>
 #include <framework/everest.hpp>
 #include <framework/runtime.hpp>
 #include <utils/config.hpp>
@@ -805,17 +805,17 @@ int boot(const po::variables_map& vm) {
 
     auto config_service = std::make_unique<config::MqttConfigServiceHandler>(*mqtt_abstraction, *config_service_core);
 
-    std::unique_ptr<Everest::api::config_service::ConfigServiceAPI> config_service_api;
+    std::unique_ptr<Everest::api::configuration::ConfigurationAPI> configuration_api;
     if (vm.count("configuration-api")) {
         EVLOG_info << "Starting configuration_API";
-        config_service_api =
-            std::make_unique<Everest::api::config_service::ConfigServiceAPI>(*mqtt_abstraction, *config_service_core);
+        configuration_api =
+            std::make_unique<Everest::api::configuration::ConfigurationAPI>(*mqtt_abstraction, *config_service_core);
     }
-    std::unique_ptr<Everest::api::execution::ExecutionAPI> execution_api;
-    if (vm.count("execution-api")) {
-        EVLOG_info << "Starting execution_API";
-        execution_api = std::make_unique<Everest::api::execution::ExecutionAPI>(*mqtt_abstraction, *config_service_core,
-                                                                                config_service_api ? true : false);
+    std::unique_ptr<Everest::api::lifecycle::LifecycleAPI> lifecycle_api;
+    if (vm.count("lifecycle-api")) {
+        EVLOG_info << "Starting lifecycle_API";
+        lifecycle_api = std::make_unique<Everest::api::lifecycle::LifecycleAPI>(*mqtt_abstraction, *config_service_core,
+                                                                                configuration_api ? true : false);
     }
     auto module_handles =
         start_modules(*config, *mqtt_abstraction, ignored_modules, standalone_modules, ms, status_fifo, retain_topics);
@@ -957,8 +957,8 @@ int main(int argc, char* argv[]) {
     desc.add_options()("config", po::value<std::string>(),
                        "Full path to a config file.  If the file does not exist and has no extension, it will be "
                        "looked up in the default config directory");
-    desc.add_options()("configuration-api", "Start the ConfigServiceAPI");
-    desc.add_options()("execution-api", "Start the execution_API");
+    desc.add_options()("configuration-api", "Start the ConfigurationAPI");
+    desc.add_options()("lifecycle-api", "Start the lifecycle_API");
     desc.add_options()(
         "db", po::value<std::string>(),
         "Full path to the configuration database file. Required. "

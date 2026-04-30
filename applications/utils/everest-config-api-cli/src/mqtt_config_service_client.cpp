@@ -14,9 +14,11 @@
 
 namespace everest::config_cli {
 
-using namespace everest::lib::API::V1_0::types;
-using namespace everest::lib::io::mqtt;
-using namespace everest::lib::io::event;
+namespace API_types = everest::lib::API::V1_0::types;
+namespace API_generic = API_types::generic;
+namespace API_types_cfg = API_types::configuration;
+namespace IO_mqtt = everest::lib::io::mqtt;
+namespace IO_event = everest::lib::io::event;
 
 namespace {
 std::string random_id(std::size_t len = 16) {
@@ -48,7 +50,7 @@ MqttConfigServiceClient::MqttConfigServiceClient(const std::string& host, std::u
     // The callback will set the connected_promise_ which allows perform_rpc to wait for a successful
     // connection before trying to send requests.
     client_.set_callback_connect([this](auto&, auto rc, auto, auto const&) {
-        if (rc == mosquitto_cpp::ResponseCode::Success) {
+        if (rc == IO_mqtt::mosquitto_cpp::ResponseCode::Success) {
             connected_promise_.set_value();
         }
     });
@@ -74,23 +76,23 @@ void MqttConfigServiceClient::setup_update_subscriptions() {
     if (active_cb_) {
         client_.subscribe(
             topics.nonmodule_to_extern("active_slot"),
-            [this](mosquitto_cpp&, const mosquitto_cpp::message& msg) {
-                auto notice = config_service::try_deserialize<config_service::ActiveSlotUpdateNotice>(msg.payload);
+            [this](IO_mqtt::mosquitto_cpp&, const IO_mqtt::mosquitto_cpp::message& msg) {
+                auto notice = API_types_cfg::try_deserialize<API_types_cfg::ActiveSlotUpdateNotice>(msg.payload);
                 if (notice)
                     active_cb_(*notice);
             },
-            mosquitto_cpp::QoS::at_least_once);
+            IO_mqtt::mosquitto_cpp::QoS::at_least_once);
     }
     if (!suppress_parameter_updates_ && config_cb_) {
         client_.subscribe(
             topics.nonmodule_to_extern("config_updates"),
-            [this](mosquitto_cpp&, const mosquitto_cpp::message& msg) {
+            [this](IO_mqtt::mosquitto_cpp&, const IO_mqtt::mosquitto_cpp::message& msg) {
                 auto notice =
-                    config_service::try_deserialize<config_service::ConfigurationParameterUpdateNotice>(msg.payload);
+                    API_types_cfg::try_deserialize<API_types_cfg::ConfigurationParameterUpdateNotice>(msg.payload);
                 if (notice)
                     config_cb_(*notice);
             },
-            mosquitto_cpp::QoS::at_least_once);
+            IO_mqtt::mosquitto_cpp::QoS::at_least_once);
     }
 }
 
@@ -104,10 +106,10 @@ std::optional<std::string> MqttConfigServiceClient::perform_rpc_raw(const std::s
     auto promise = std::make_shared<std::promise<std::string>>();
     auto future = promise->get_future();
 
-    generic::RequestReply rr;
+    API_generic::RequestReply rr;
     rr.replyTo = reply_topic_base_;
     rr.payload = payload_json;
-    const std::string wrapped = generic::serialize(rr);
+    const std::string wrapped = API_generic::serialize(rr);
     const std::string req_topic = topics.extern_to_nonmodule(operation);
 
     // Subscribe to the reply topic and publish the request in one action so the
@@ -116,8 +118,8 @@ std::optional<std::string> MqttConfigServiceClient::perform_rpc_raw(const std::s
     event_handler_.add_action([this, promise, req_topic, wrapped]() {
         client_.subscribe(
             reply_topic_base_,
-            [promise](mosquitto_cpp&, const mosquitto_cpp::message& msg) { promise->set_value(msg.payload); },
-            mosquitto_cpp::QoS::at_least_once);
+            [promise](IO_mqtt::mosquitto_cpp&, const IO_mqtt::mosquitto_cpp::message& msg) { promise->set_value(msg.payload); },
+            IO_mqtt::mosquitto_cpp::QoS::at_least_once);
         client_.publish(req_topic, wrapped);
     });
 
@@ -128,79 +130,79 @@ std::optional<std::string> MqttConfigServiceClient::perform_rpc_raw(const std::s
         std::cerr << "Timeout waiting for reply on " << reply_topic_base_ << " (requested on " << req_topic << ")\n";
     }
 
-    event_handler_.add_action([this] { client_.unsubscribe(reply_topic_base_, PropertiesBase{}); });
+    event_handler_.add_action([this] { client_.unsubscribe(reply_topic_base_, IO_mqtt::PropertiesBase{}); });
 
     return result;
 }
 
 template <typename ReqType, typename ResType>
 std::optional<ResType> MqttConfigServiceClient::perform_rpc(const std::string& operation, const ReqType& req) {
-    auto raw = perform_rpc_raw(operation, config_service::serialize(req));
+    auto raw = perform_rpc_raw(operation, API_types_cfg::serialize(req));
     if (!raw)
         return std::nullopt;
-    auto res = config_service::try_deserialize<ResType>(*raw);
+    auto res = API_types_cfg::try_deserialize<ResType>(*raw);
     if (!res)
         std::cerr << "Failed to deserialize reply for " << operation << "\n";
     return res;
 }
 
-std::optional<config_service::ListSlotIdsResult> MqttConfigServiceClient::list_all_slots() {
+std::optional<API_types_cfg::ListSlotIdsResult> MqttConfigServiceClient::list_all_slots() {
     auto raw = perform_rpc_raw("list_all_slots", "{}");
     if (!raw)
         return std::nullopt;
-    return config_service::try_deserialize<config_service::ListSlotIdsResult>(*raw);
+    return API_types_cfg::try_deserialize<API_types_cfg::ListSlotIdsResult>(*raw);
 }
 
-std::optional<config_service::GetActiveSlotIdResult> MqttConfigServiceClient::get_active_slot() {
+std::optional<API_types_cfg::GetActiveSlotIdResult> MqttConfigServiceClient::get_active_slot() {
     auto raw = perform_rpc_raw("get_active_slot", "{}");
     if (!raw)
         return std::nullopt;
-    return config_service::try_deserialize<config_service::GetActiveSlotIdResult>(*raw);
+    return API_types_cfg::try_deserialize<API_types_cfg::GetActiveSlotIdResult>(*raw);
 }
 
-std::optional<config_service::MarkActiveSlotResult> MqttConfigServiceClient::mark_active_slot(int slot_id) {
-    config_service::MarkActiveSlotRequest req;
+std::optional<API_types_cfg::MarkActiveSlotResult> MqttConfigServiceClient::mark_active_slot(int slot_id) {
+    API_types_cfg::MarkActiveSlotRequest req;
     req.slot_id = slot_id;
-    return perform_rpc<config_service::MarkActiveSlotRequest, config_service::MarkActiveSlotResult>("mark_active_slot",
+    return perform_rpc<API_types_cfg::MarkActiveSlotRequest, API_types_cfg::MarkActiveSlotResult>("mark_active_slot",
                                                                                                     req);
 }
 
-std::optional<config_service::DeleteSlotResult> MqttConfigServiceClient::delete_slot(int slot_id) {
-    config_service::DeleteSlotRequest req;
+std::optional<API_types_cfg::DeleteSlotResult> MqttConfigServiceClient::delete_slot(int slot_id) {
+    API_types_cfg::DeleteSlotRequest req;
     req.slot_id = slot_id;
-    return perform_rpc<config_service::DeleteSlotRequest, config_service::DeleteSlotResult>("delete_slot", req);
+    return perform_rpc<API_types_cfg::DeleteSlotRequest, API_types_cfg::DeleteSlotResult>("delete_slot", req);
 }
 
-std::optional<config_service::DuplicateSlotResult>
+std::optional<API_types_cfg::DuplicateSlotResult>
 MqttConfigServiceClient::duplicate_slot(int slot_id, const std::string& description) {
-    config_service::DuplicateSlotRequest req;
+    API_types_cfg::DuplicateSlotRequest req;
     req.slot_id = slot_id;
     req.new_description = description;
-    return perform_rpc<config_service::DuplicateSlotRequest, config_service::DuplicateSlotResult>("duplicate_slot",
+    return perform_rpc<API_types_cfg::DuplicateSlotRequest, API_types_cfg::DuplicateSlotResult>("duplicate_slot",
                                                                                                   req);
 }
 
-std::optional<config_service::LoadFromYamlResult>
+std::optional<API_types_cfg::LoadFromYamlResult>
 MqttConfigServiceClient::load_from_yaml(const std::string& raw_yaml, const std::string& description,
                                         std::optional<int> slot_id) {
-    config_service::LoadFromYamlRequest req;
+    API_types_cfg::LoadFromYamlRequest req;
     req.raw_yaml = raw_yaml;
     req.description = description;
     req.slot_id = slot_id;
-    return perform_rpc<config_service::LoadFromYamlRequest, config_service::LoadFromYamlResult>("load_from_yaml", req);
+    return perform_rpc<API_types_cfg::LoadFromYamlRequest, API_types_cfg::LoadFromYamlResult>("load_from_yaml", req);
 }
 
-std::optional<config_service::GetConfigurationResult> MqttConfigServiceClient::get_configuration(int slot_id) {
-    config_service::GetConfigurationRequest req;
+std::optional<API_types_cfg::GetConfigurationResult> MqttConfigServiceClient::get_configuration(int slot_id) {
+    API_types_cfg::GetConfigurationRequest req;
     req.slot_id = slot_id;
-    return perform_rpc<config_service::GetConfigurationRequest, config_service::GetConfigurationResult>(
+    return perform_rpc<API_types_cfg::GetConfigurationRequest, API_types_cfg::GetConfigurationResult>(
         "get_configuration", req);
 }
 
-std::optional<config_service::ConfigurationParameterUpdateRequestResult>
-MqttConfigServiceClient::set_config_parameters(const config_service::ConfigurationParameterUpdateRequest& request) {
-    return perform_rpc<config_service::ConfigurationParameterUpdateRequest,
-                       config_service::ConfigurationParameterUpdateRequestResult>("set_config_parameters", request);
+std::optional<API_types_cfg::ConfigurationParameterUpdateRequestResult>
+MqttConfigServiceClient::set_config_parameters(const API_types_cfg::ConfigurationParameterUpdateRequest& request) {
+    return perform_rpc<API_types_cfg::ConfigurationParameterUpdateRequest,
+                       API_types_cfg::ConfigurationParameterUpdateRequestResult>("set_config_parameters", request);
 }
 
 void MqttConfigServiceClient::subscribe_to_updates(bool suppress_parameter_updates, ActiveSlotCallback active_cb,

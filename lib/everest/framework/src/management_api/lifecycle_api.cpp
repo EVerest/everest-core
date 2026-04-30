@@ -1,31 +1,31 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
-#include "include/execution_api.hpp"
+#include "include/lifecycle_api.hpp"
 #include <everest/logging.hpp>
 #include <utils/date.hpp>
 
 #include <algorithm>
 #include <iterator>
 
-#include "include/execution_type_wrapper.hpp"
-#include <everest_api_types/execution/codec.hpp>
+#include "include/lifecycle_type_wrapper.hpp"
+#include <everest_api_types/lifecycle/codec.hpp>
 #include <everest_api_types/generic/codec.hpp>
 #include <everest_api_types/utilities/codec.hpp>
 
-namespace Everest::api::execution {
+namespace Everest::api::lifecycle {
 
 namespace API_types = ev_API::V1_0::types;
-namespace API_types_ext = API_types::execution;
+namespace API_types_ext = API_types::lifecycle;
 namespace API_generic = API_types::generic;
-namespace API_wrapper = ::Everest::api::types::execution;
+namespace API_wrapper = ::Everest::api::types::lifecycle;
 using ev_API::deserialize;
 
-ExecutionAPI::ExecutionAPI(MQTTAbstraction& mqtt_abstraction, ::Everest::config::ConfigServiceInterface& config_service,
+LifecycleAPI::LifecycleAPI(MQTTAbstraction& mqtt_abstraction, ::Everest::config::ConfigServiceInterface& config_service,
                            bool config_api_enabled) :
     m_mqtt_abstraction(mqtt_abstraction), m_config_service(config_service), m_config_api_enabled(config_api_enabled) {
 
-    m_topics.setup("_unused_", "execution", 0);
+    m_topics.setup("_unused_", "lifecycle", 0);
 
     generate_api_cmd_stop_modules();
     generate_api_cmd_start_modules();
@@ -33,7 +33,7 @@ ExecutionAPI::ExecutionAPI(MQTTAbstraction& mqtt_abstraction, ::Everest::config:
     generate_api_var_status();
 }
 
-void ExecutionAPI::generate_api_cmd_stop_modules() {
+void LifecycleAPI::generate_api_cmd_stop_modules() {
     subscribe_api_topic("stop_modules", [this](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
@@ -47,7 +47,7 @@ void ExecutionAPI::generate_api_cmd_stop_modules() {
     });
 }
 
-void ExecutionAPI::generate_api_cmd_start_modules() {
+void LifecycleAPI::generate_api_cmd_start_modules() {
     subscribe_api_topic("start_modules", [this](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
@@ -61,7 +61,7 @@ void ExecutionAPI::generate_api_cmd_start_modules() {
     });
 }
 
-void ExecutionAPI::generate_api_var_status() {
+void LifecycleAPI::generate_api_var_status() {
     auto topic = m_topics.extern_to_nonmodule("status");
 
     API_types_ext::ExecutionStatusUpdateNotice initial_update{};
@@ -79,7 +79,7 @@ void ExecutionAPI::generate_api_var_status() {
     // offer this
 }
 
-void ExecutionAPI::subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish) {
+void LifecycleAPI::subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish) {
     auto topic = m_topics.extern_to_nonmodule(var);
     auto handler = std::make_shared<TypedHandler>(
         HandlerType::ExternalMQTT, std::make_shared<Handler>([=](std::string const& topic, nlohmann::json data) {
@@ -95,4 +95,4 @@ void ExecutionAPI::subscribe_api_topic(std::string const& var, ParseAndPublishFt
         }));
     m_mqtt_abstraction.register_handler(topic, handler, QOS::QOS2);
 }
-} // namespace Everest::api::execution
+} // namespace Everest::api::lifecycle

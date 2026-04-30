@@ -1,21 +1,21 @@
 ---
 asyncapi: 3.0.0
-id: 'pionix:de:everest:execution_API'
+id: 'pionix:de:everest:lifecycle_API'
 info:
-  title: 'EVerest API definition for the execution control'
+  title: 'EVerest API definition for lifecycle control'
   version: 1.0.0
   description: >-
-    API for EVerest modules and clients to control the modules execution status.
-    Provides facilities to (re)start and stop modules and monitor their execution status.
+    API for EVerest modules and clients to control the modules lifecycle.
+    Provides facilities to (re)start and stop modules and monitor their status.
   license:
     name: Apache-2.0
     url: https://opensource.org/licenses/Apache-2.0
   tags:
     - name: EVerest
-    - name: Execution
+    - name: Lifecycle
 servers:
   default:
-    pathname: 'everest_api/1/execution/'
+    pathname: 'everest_api/1/lifecycle/'
     host: 'localhost:1883'
     description: default local MQTT
     protocol: mqtt

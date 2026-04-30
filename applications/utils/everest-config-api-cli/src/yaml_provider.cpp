@@ -26,7 +26,7 @@ std::string YamlProvider::extract_active_modules_string(const std::filesystem::p
 std::string YamlProvider::format_configuration(const GetConfigurationResult& config) {
     nlohmann::ordered_json root;
 
-    auto serialized_config = everest::lib::API::V1_0::types::config_service::serialize(config);
+    auto serialized_config = everest::lib::API::V1_0::types::configuration::serialize(config);
 
     if (not nlohmann::json::accept(serialized_config) or
         nlohmann::json::parse(serialized_config).type() != nlohmann::json::value_t::object) {

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
-#include "execution/json_codec.hpp"
-#include "execution/API.hpp"
-#include "execution/codec.hpp"
+#include "lifecycle/json_codec.hpp"
+#include "lifecycle/API.hpp"
+#include "lifecycle/codec.hpp"
 
 #include "nlohmann/json.hpp"
 #include <stdexcept>
 
-namespace everest::lib::API::V1_0::types::execution {
+namespace everest::lib::API::V1_0::types::lifecycle {
 
 void to_json(json& j, StopModulesResultEnum const& k) noexcept {
     switch (k) {
@@ -23,7 +23,7 @@ void to_json(json& j, StopModulesResultEnum const& k) noexcept {
         return;
     }
 
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::StopModulesResultEnum";
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::lifecycle::StopModulesResultEnum";
 }
 
 void from_json(const json& j, StopModulesResultEnum& k) {
@@ -43,7 +43,7 @@ void from_json(const json& j, StopModulesResultEnum& k) {
 
     throw std::out_of_range("Provided string " + s +
                             " could not be converted to enum of type "
-                            "everest::lib::API::V1_0::types::config_service::StopModulesResultEnum");
+                            "everest::lib::API::V1_0::types::lifecycle::StopModulesResultEnum");
 }
 
 void to_json(json& j, StartModulesResultEnum const& k) noexcept {
@@ -62,7 +62,7 @@ void to_json(json& j, StartModulesResultEnum const& k) noexcept {
         return;
     }
 
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::StartModulesResultEnum";
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::lifecycle::StartModulesResultEnum";
 }
 
 void from_json(const json& j, StartModulesResultEnum& k) {
@@ -86,7 +86,7 @@ void from_json(const json& j, StartModulesResultEnum& k) {
 
     throw std::out_of_range("Provided string " + s +
                             " could not be converted to enum of type "
-                            "everest::lib::API::V1_0::types::config_service::StartModulesResultEnum");
+                            "everest::lib::API::V1_0::types::lifecycle::StartModulesResultEnum");
 }
 
 void to_json(json& j, ModuleExecutionStatusEnum const& k) noexcept {
@@ -99,7 +99,7 @@ void to_json(json& j, ModuleExecutionStatusEnum const& k) noexcept {
         return;
     }
 
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::config_service::ExecutionStatusEnum";
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::lifecycle::ExecutionStatusEnum";
 }
 
 void from_json(const json& j, ModuleExecutionStatusEnum& k) {
@@ -115,7 +115,7 @@ void from_json(const json& j, ModuleExecutionStatusEnum& k) {
 
     throw std::out_of_range(
         "Provided string " + s +
-        " could not be converted to enum of type everest::lib::API::V1_0::types::config_service::ExecutionStatusEnum");
+        " could not be converted to enum of type everest::lib::API::V1_0::types::lifecycle::ExecutionStatusEnum");
 }
 
 void to_json(json& j, StopModulesResult const& k) noexcept {
@@ -144,4 +144,4 @@ void from_json(const json& j, ExecutionStatusUpdateNotice& k) {
     k.configuration_api_available = j.at("configuration_api_available");
 }
 
-} // namespace everest::lib::API::V1_0::types::execution
+} // namespace everest::lib::API::V1_0::types::lifecycle

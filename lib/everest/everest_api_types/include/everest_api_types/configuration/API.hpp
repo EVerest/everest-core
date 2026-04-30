@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace everest::lib::API::V1_0::types::config_service {
+namespace everest::lib::API::V1_0::types::configuration {
 
 enum class MarkActiveSlotResultEnum {
     Success,
@@ -242,4 +242,4 @@ struct GetConfigurationRequest {
     int32_t slot_id;
 };
 
-} // namespace everest::lib::API::V1_0::types::config_service
+} // namespace everest::lib::API::V1_0::types::configuration
