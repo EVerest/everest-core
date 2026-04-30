@@ -47,6 +47,14 @@ EVerest, e.g. with the following command in your *build* folder:
 
    ./run-scripts/run-sil.sh --configuration-api
 
+By default, the configuration_API is started in read-only mode, which means that only the
+querying functionality is available. To enable the full functionality, start the API in
+read-write mode by appending ``=rw`` to the flag, e.g. with the following command:
+
+.. code-block:: bash
+
+   ./run-scripts/run-sil.sh --configuration-api=rw
+
 lifecycle_API
 -------------
 
@@ -64,6 +72,14 @@ EVerest, e.g. with the following command in your *build* folder:
 .. code-block:: bash
 
    ./run-scripts/run-sil.sh --lifecycle-api
+
+By default, the lifecycle_API is started in read-only mode, which means that only the
+querying functionality is available. To enable the full functionality, start the API in
+read-write mode by appending ``=rw`` to the flag, e.g. with the following command:
+
+.. code-block:: bash
+
+   ./run-scripts/run-sil.sh --lifecycle-api=rw
 
 AsyncAPI specification
 ======================

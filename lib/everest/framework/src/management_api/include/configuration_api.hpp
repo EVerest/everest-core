@@ -16,12 +16,15 @@ namespace Everest::api::configuration {
 
 class ConfigurationAPI {
 public:
-    ConfigurationAPI(MQTTAbstraction& mqtt_abstraction, Everest::config::ConfigServiceInterface& config_service);
+    ConfigurationAPI(MQTTAbstraction& mqtt_abstraction, Everest::config::ConfigServiceInterface& config_service,
+                     bool readonly = true);
 
 private:
-    MQTTAbstraction& mqtt_abstraction;
-    Everest::config::ConfigServiceInterface& config_service;
-    using ParseAndPublishFtor = std::function<bool(std::string const&)>;
+    MQTTAbstraction& m_mqtt_abstraction;
+    Everest::config::ConfigServiceInterface& m_config_service;
+    ev_API::Topics m_topics;
+    const bool m_readonly;
+
     void generate_api_cmd_list_all_slots();
     void generate_api_cmd_get_active_slot();
     void generate_api_cmd_mark_active_slot();
@@ -35,9 +38,8 @@ private:
     void generate_api_var_active_slot();
     void generate_api_var_config_updates();
 
+    using ParseAndPublishFtor = std::function<bool(std::string const&)>;
     void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
-
-    ev_API::Topics topics;
 };
 
 } // namespace Everest::api::configuration

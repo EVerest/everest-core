@@ -9,8 +9,8 @@
 #include <iterator>
 
 #include "include/lifecycle_type_wrapper.hpp"
-#include <everest_api_types/lifecycle/codec.hpp>
 #include <everest_api_types/generic/codec.hpp>
+#include <everest_api_types/lifecycle/codec.hpp>
 #include <everest_api_types/utilities/codec.hpp>
 
 namespace Everest::api::lifecycle {
@@ -22,8 +22,11 @@ namespace API_wrapper = ::Everest::api::types::lifecycle;
 using ev_API::deserialize;
 
 LifecycleAPI::LifecycleAPI(MQTTAbstraction& mqtt_abstraction, ::Everest::config::ConfigServiceInterface& config_service,
-                           bool config_api_enabled) :
-    m_mqtt_abstraction(mqtt_abstraction), m_config_service(config_service), m_config_api_enabled(config_api_enabled) {
+                           bool config_api_enabled, bool readonly) :
+    m_mqtt_abstraction(mqtt_abstraction),
+    m_config_service(config_service),
+    m_config_api_enabled(config_api_enabled),
+    m_readonly(readonly) {
 
     m_topics.setup("_unused_", "lifecycle", 0);
 
@@ -37,9 +40,14 @@ void LifecycleAPI::generate_api_cmd_stop_modules() {
     subscribe_api_topic("stop_modules", [this](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
-            auto res = m_config_service.stop_modules();
-            API_types_ext::StopModulesResult ext_res{API_wrapper::to_external_api(res)};
-            m_mqtt_abstraction.publish(msg.replyTo, serialize(ext_res));
+            if (m_readonly) {
+                API_types_ext::StopModulesResult ext_res{API_types_ext::StopModulesResultEnum::Rejected};
+                m_mqtt_abstraction.publish(msg.replyTo, serialize(ext_res));
+            } else {
+                auto res = m_config_service.stop_modules();
+                API_types_ext::StopModulesResult ext_res{API_wrapper::to_external_api(res)};
+                m_mqtt_abstraction.publish(msg.replyTo, serialize(ext_res));
+            }
             return true;
         }
         EVLOG_warning << "Failed to deserialize stop_modules request.";
@@ -51,9 +59,14 @@ void LifecycleAPI::generate_api_cmd_start_modules() {
     subscribe_api_topic("start_modules", [this](std::string const& data) {
         API_generic::RequestReply msg;
         if (deserialize(data, msg)) {
-            auto res = m_config_service.restart_modules();
-            API_types_ext::StartModulesResult ext_res{API_wrapper::to_external_api(res)};
-            m_mqtt_abstraction.publish(msg.replyTo, serialize(ext_res));
+            if (m_readonly) {
+                API_types_ext::StartModulesResult ext_res{API_types_ext::StartModulesResultEnum::Rejected};
+                m_mqtt_abstraction.publish(msg.replyTo, serialize(ext_res));
+            } else {
+                auto res = m_config_service.restart_modules();
+                API_types_ext::StartModulesResult ext_res{API_wrapper::to_external_api(res)};
+                m_mqtt_abstraction.publish(msg.replyTo, serialize(ext_res));
+            }
             return true;
         }
         EVLOG_warning << "Failed to deserialize start_modules request.";

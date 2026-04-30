@@ -17,21 +17,23 @@ namespace Everest::api::lifecycle {
 class LifecycleAPI {
 public:
     LifecycleAPI(MQTTAbstraction& mqtt_abstraction, ::Everest::config::ConfigServiceInterface& config_service,
-                 bool config_api_enabled);
+                 bool config_api_enabled, bool readonly = true);
 
 private:
     MQTTAbstraction& m_mqtt_abstraction;
     ::Everest::config::ConfigServiceInterface& m_config_service;
-    using ParseAndPublishFtor = std::function<bool(std::string const&)>;
+
+    ev_API::Topics m_topics;
+    bool m_config_api_enabled;
+    const bool m_readonly;
+
     void generate_api_cmd_stop_modules();
     void generate_api_cmd_start_modules();
 
     void generate_api_var_status();
 
+    using ParseAndPublishFtor = std::function<bool(std::string const&)>;
     void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
-
-    ev_API::Topics m_topics;
-    bool m_config_api_enabled;
 };
 
 } // namespace Everest::api::lifecycle
