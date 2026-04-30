@@ -109,79 +109,23 @@ GenericResponseStatus SqliteStorage::write_module_configs(const ModuleConfigurat
     try {
         auto transaction = this->db->begin_transaction();
 
-        for (const auto& [module_id, module] : module_configs) {
-            ModuleData module_data;
-            module_data.module_id = module_id;
-            module_data.module_name = module.module_name;
-            module_data.standalone = module.standalone;
-            module_data.capabilities = module.capabilities;
+        write_module_config_items(module_configs);
 
-            if (this->write_module_data(module_data) != GenericResponseStatus::OK) {
-                EVLOG_error << "Failed to write module info for module: " << module_id;
-                return GenericResponseStatus::Failed;
-            }
+        transaction->commit();
+        return GenericResponseStatus::OK;
+    } catch (const std::exception& e) {
+        EVLOG_error << "Failed writing config to database: " << e.what();
+        return GenericResponseStatus::Failed;
+    }
+}
 
-            for (const auto& [requirement_id, connections] : module.connections) {
-                for (const auto& connection : connections) {
-                    Fulfillment fulfillment;
-                    fulfillment.module_id = connection.module_id;
-                    fulfillment.implementation_id = connection.implementation_id;
-                    fulfillment.requirement = {requirement_id};
+GenericResponseStatus SqliteStorage::replace_module_configs(const ModuleConfigurations& module_configs) {
+    try {
+        auto transaction = this->db->begin_transaction();
 
-                    if (this->write_module_fulfillment(module_id, fulfillment) != GenericResponseStatus::OK) {
-                        EVLOG_error << "Failed to write module fulfillment for module: " << module_id
-                                    << " and requirement: " << requirement_id;
-                        return GenericResponseStatus::Failed;
-                    }
-                }
-            }
+        delete_module_config_items();
 
-            if (module.mapping.module.has_value()) {
-                const auto& map = module.mapping.module.value();
-                if (this->write_module_tier_mapping(module_id, default_module_implementation_id(), map.evse,
-                                                    map.connector) != GenericResponseStatus::OK) {
-                    EVLOG_error << "Failed to write module tier mapping for module: " << module_id;
-                    return GenericResponseStatus::Failed;
-                }
-            }
-
-            for (const auto& [impl_id, mapping] : module.mapping.implementations) {
-                if (mapping.has_value()) {
-                    const auto& map = mapping.value();
-                    if (this->write_module_tier_mapping(module_id, impl_id, map.evse, map.connector) !=
-                        GenericResponseStatus::OK) {
-                        EVLOG_error << "Failed to write module tier mapping for module: " << module_id
-                                    << " and implementation id: " << impl_id;
-                    }
-                }
-            }
-
-            for (const auto& [impl_id, params] : module.configuration_parameters) {
-                for (const auto& param : params) {
-                    ConfigurationParameterIdentifier identifier;
-                    identifier.module_id = module_id;
-                    identifier.module_implementation_id = impl_id;
-                    identifier.configuration_parameter_name = param.name;
-
-                    std::string value;
-                    if (std::holds_alternative<std::string>(param.value)) {
-                        value = std::get<std::string>(param.value);
-                    } else {
-                        const nlohmann::json temp = param.value;
-                        value = temp.dump();
-                    }
-                    if (this->write_configuration_parameter(identifier, param.characteristics, value) !=
-                        GetSetResponseStatus::OK) {
-                        EVLOG_error << "Failed to write configuration parameter for module: " << module_id
-                                    << ", param: " << identifier.configuration_parameter_name;
-                    }
-                }
-            }
-
-            if (this->write_access(module_id, module.access) != GenericResponseStatus::OK) {
-                EVLOG_error << "Failed to write module access for module: " << module_id;
-            }
-        }
+        write_module_config_items(module_configs);
 
         transaction->commit();
         return GenericResponseStatus::OK;
@@ -460,6 +404,83 @@ GetSetResponseStatus SqliteStorage::update_configuration_parameter(const Configu
     }
 }
 
+GenericResponseStatus SqliteStorage::write_module_config_items(const ModuleConfigurations& module_configs) {
+    for (const auto& [module_id, module] : module_configs) {
+        ModuleData module_data;
+        module_data.module_id = module_id;
+        module_data.module_name = module.module_name;
+        module_data.standalone = module.standalone;
+        module_data.capabilities = module.capabilities;
+
+        if (this->write_module_data(module_data) != GenericResponseStatus::OK) {
+            EVLOG_error << "Failed to write module info for module: " << module_id;
+            return GenericResponseStatus::Failed;
+        }
+
+        for (const auto& [requirement_id, connections] : module.connections) {
+            for (const auto& connection : connections) {
+                Fulfillment fulfillment;
+                fulfillment.module_id = connection.module_id;
+                fulfillment.implementation_id = connection.implementation_id;
+                fulfillment.requirement = {requirement_id};
+
+                if (this->write_module_fulfillment(module_id, fulfillment) != GenericResponseStatus::OK) {
+                    EVLOG_error << "Failed to write module fulfillment for module: " << module_id
+                                << " and requirement: " << requirement_id;
+                    return GenericResponseStatus::Failed;
+                }
+            }
+        }
+
+        if (module.mapping.module.has_value()) {
+            const auto& map = module.mapping.module.value();
+            if (this->write_module_tier_mapping(module_id, default_module_implementation_id(), map.evse,
+                                                map.connector) != GenericResponseStatus::OK) {
+                EVLOG_error << "Failed to write module tier mapping for module: " << module_id;
+                return GenericResponseStatus::Failed;
+            }
+        }
+
+        for (const auto& [impl_id, mapping] : module.mapping.implementations) {
+            if (mapping.has_value()) {
+                const auto& map = mapping.value();
+                if (this->write_module_tier_mapping(module_id, impl_id, map.evse, map.connector) !=
+                    GenericResponseStatus::OK) {
+                    EVLOG_error << "Failed to write module tier mapping for module: " << module_id
+                                << " and implementation id: " << impl_id;
+                }
+            }
+        }
+
+        for (const auto& [impl_id, params] : module.configuration_parameters) {
+            for (const auto& param : params) {
+                ConfigurationParameterIdentifier identifier;
+                identifier.module_id = module_id;
+                identifier.module_implementation_id = impl_id;
+                identifier.configuration_parameter_name = param.name;
+
+                std::string value;
+                if (std::holds_alternative<std::string>(param.value)) {
+                    value = std::get<std::string>(param.value);
+                } else {
+                    const nlohmann::json temp = param.value;
+                    value = temp.dump();
+                }
+                if (this->write_configuration_parameter(identifier, param.characteristics, value) !=
+                    GetSetResponseStatus::OK) {
+                    EVLOG_error << "Failed to write configuration parameter for module: " << module_id
+                                << ", param: " << identifier.configuration_parameter_name;
+                }
+            }
+        }
+
+        if (this->write_access(module_id, module.access) != GenericResponseStatus::OK) {
+            EVLOG_error << "Failed to write module access for module: " << module_id;
+        }
+    }
+    return GenericResponseStatus::OK;
+}
+
 GenericResponseStatus SqliteStorage::write_module_data(const ModuleData& module_data) {
 
     const std::string insert_query =
@@ -539,6 +560,7 @@ GenericResponseStatus SqliteStorage::write_access(const std::string& module_id, 
     }
     return GenericResponseStatus::OK;
 }
+
 GenericResponseStatus SqliteStorage::write_config_access(const std::string& module_id,
                                                          const ConfigAccess& config_access) {
     // write global config access to db
@@ -568,6 +590,7 @@ GenericResponseStatus SqliteStorage::write_config_access(const std::string& modu
 
     return GenericResponseStatus::OK;
 }
+
 GenericResponseStatus SqliteStorage::write_module_config_access(const std::string& module_id,
                                                                 const std::string& other_module_id,
                                                                 const ModuleConfigAccess& module_config_access) {
@@ -582,6 +605,118 @@ GenericResponseStatus SqliteStorage::write_module_config_access(const std::strin
     stmt->bind_int(4, module_config_access.allow_read ? 1 : 0);
     stmt->bind_int(5, module_config_access.allow_write ? 1 : 0);
     stmt->bind_int(6, module_config_access.allow_set_read_only ? 1 : 0);
+
+    if (stmt->step() != SQLITE_DONE) {
+        return GenericResponseStatus::Failed;
+    }
+    return GenericResponseStatus::OK;
+}
+
+GenericResponseStatus SqliteStorage::delete_module_config_items() {
+    if (delete_access() != GenericResponseStatus::OK) {
+        EVLOG_error << "Failed to delete module access configuration.";
+        return GenericResponseStatus::Failed;
+    }
+    if (delete_configuration_parameters() != GenericResponseStatus::OK) {
+        EVLOG_error << "Failed to delete module configuration parameters.";
+        return GenericResponseStatus::Failed;
+    }
+    if (delete_module_tier_mappings() != GenericResponseStatus::OK) {
+        EVLOG_error << "Failed to delete module tier mappings.";
+        return GenericResponseStatus::Failed;
+    }
+    if (delete_module_fulfillments() != GenericResponseStatus::OK) {
+        EVLOG_error << "Failed to delete module fulfillments.";
+        return GenericResponseStatus::Failed;
+    }
+    if (delete_module_data() != GenericResponseStatus::OK) {
+        EVLOG_error << "Failed to delete module data.";
+        return GenericResponseStatus::Failed;
+    }
+
+    return GenericResponseStatus::OK;
+}
+
+GenericResponseStatus SqliteStorage::delete_configuration_parameters() {
+    const std::string sql = "DELETE FROM CONFIGURATION WHERE CONFIG_ID = ?;";
+
+    auto stmt = this->db->new_statement(sql);
+
+    stmt->bind_int(1, config_id_);
+
+    if (stmt->step() != SQLITE_DONE) {
+        return GenericResponseStatus::Failed;
+    }
+    return GenericResponseStatus::OK;
+}
+
+GenericResponseStatus SqliteStorage::delete_module_data() {
+    const std::string sql = "DELETE FROM MODULE WHERE CONFIG_ID = ?";
+
+    auto stmt = this->db->new_statement(sql);
+
+    stmt->bind_int(1, config_id_);
+
+    if (stmt->step() != SQLITE_DONE) {
+        return GenericResponseStatus::Failed;
+    }
+    return GenericResponseStatus::OK;
+}
+
+GenericResponseStatus SqliteStorage::delete_module_fulfillments() {
+    const std::string sql = "DELETE FROM MODULE_FULFILLMENT WHERE CONFIG_ID = ?";
+
+    auto stmt = this->db->new_statement(sql);
+
+    stmt->bind_int(1, config_id_);
+
+    if (stmt->step() != SQLITE_DONE) {
+        return GenericResponseStatus::Failed;
+    }
+    return GenericResponseStatus::OK;
+}
+
+GenericResponseStatus SqliteStorage::delete_module_tier_mappings() {
+    const std::string sql = "DELETE FROM MODULE_TIER_MAPPING WHERE CONFIG_ID = ?";
+
+    auto stmt = this->db->new_statement(sql);
+
+    stmt->bind_int(1, config_id_);
+
+    if (stmt->step() != SQLITE_DONE) {
+        return GenericResponseStatus::Failed;
+    }
+    return GenericResponseStatus::OK;
+}
+
+GenericResponseStatus SqliteStorage::delete_access() {
+    auto res_ca = delete_config_access();
+    auto res_mca = delete_module_config_access();
+
+    return (res_ca == GenericResponseStatus::OK and res_mca == GenericResponseStatus::OK)
+               ? GenericResponseStatus::OK
+               : GenericResponseStatus::Failed;
+}
+
+GenericResponseStatus SqliteStorage::delete_config_access() {
+    const std::string sql = "DELETE FROM CONFIG_ACCESS WHERE CONFIG_ID = ?";
+
+    auto stmt = this->db->new_statement(sql);
+
+    stmt->bind_int(1, config_id_);
+
+    if (stmt->step() != SQLITE_DONE) {
+        return GenericResponseStatus::Failed;
+    }
+    return GenericResponseStatus::OK;
+}
+
+GenericResponseStatus SqliteStorage::delete_module_config_access() {
+    const std::string sql = "DELETE FROM MODULE_CONFIG_ACCESS WHERE CONFIG_ID = ?";
+
+    auto stmt = this->db->new_statement(sql);
+
+    stmt->bind_int(1, config_id_);
 
     if (stmt->step() != SQLITE_DONE) {
         return GenericResponseStatus::Failed;

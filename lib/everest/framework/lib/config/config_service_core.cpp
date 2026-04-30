@@ -126,10 +126,17 @@ DuplicateSlotResult ConfigServiceCore::duplicate_slot(int slot_id, std::optional
     return slot_manager_.duplicate_slot(slot_id, description);
 }
 
-LoadFromYamlResult ConfigServiceCore::load_from_yaml(int slot_id, const std::string& raw_yaml,
-                                                     std::optional<std::string> description) {
-    if (slot_id == active_slot_id_) {
+LoadFromYamlResult ConfigServiceCore::load_from_yaml(const std::string& raw_yaml,
+                                                     std::optional<std::string> description,
+                                                     std::optional<int> slot_id) {
+    bool into_new_slot = not slot_id.has_value();
+    int target_slot_id = into_new_slot ? slot_manager_.next_slot_id() : slot_id.value();
+
+    if (target_slot_id == active_slot_id_) {
         return {false, std::nullopt, "Cannot load YAML into the active slot"};
+    }
+    if (!into_new_slot && !slot_manager_.exists(target_slot_id)) {
+        return {false, std::nullopt, "The given slot ID does not exist"};
     }
     try {
         const auto json_config = Everest::load_yaml_from_string(raw_yaml);
@@ -140,37 +147,34 @@ LoadFromYamlResult ConfigServiceCore::load_from_yaml(int slot_id, const std::str
         // Validate against manifests, interfaces and requirements; enriches configs with manifest metadata.
         const auto module_configs = Everest::validate_module_configs(parse_settings_, json_config);
 
-        bool into_new_slot = !slot_manager_.is_valid(slot_id);
-
         // If the slot doesn't exist, create it and write the config
         if (into_new_slot) {
-            if (slot_manager_.write_config_slot(slot_id) != everest::config::GenericResponseStatus::OK) {
+            if (slot_manager_.write_config_slot(target_slot_id) != everest::config::GenericResponseStatus::OK) {
                 return {false, std::nullopt, "Failed to create new config slot"};
             }
-        }
 
-        auto storage = make_storage(slot_id);
-        if (storage->write_module_configs(module_configs) != everest::config::GenericResponseStatus::OK) {
-            if (into_new_slot) {
-                slot_manager_.delete_slot(slot_id);
-            } else {
-                // Do nothing - if writing to an existing slot failed, we don't want to delete it;
+            auto storage = make_storage(target_slot_id);
+
+            if (storage->write_module_configs(module_configs) != everest::config::GenericResponseStatus::OK) {
+                slot_manager_.delete_slot(target_slot_id);
+                return {false, std::nullopt, "Failed to write module configs to new slot"};
             }
-            return {false, std::nullopt, "Failed to write module configs to slot"};
-        }
-        storage->mark_valid(true, nlohmann::json(module_configs).dump(), std::nullopt, description);
+            storage->mark_valid(true, nlohmann::json(module_configs).dump(), std::nullopt, description);
+        } else {
+            // If the slot exists, overwrite its config with the new one
+            auto storage = make_storage(target_slot_id);
 
-        return {true, slot_id, ""};
+            if (storage->replace_module_configs(module_configs) != everest::config::GenericResponseStatus::OK) {
+                // Do nothing - if writing to an existing slot failed, we don't want to delete it;
+                return {false, std::nullopt, "Failed to write module configs to existing slot"};
+            }
+            storage->mark_valid(true, nlohmann::json(module_configs).dump(), std::nullopt, description);
+        }
+
+        return {true, target_slot_id, ""};
     } catch (const std::exception& e) {
         return {false, std::nullopt, std::string("Validation failed: ") + e.what()};
     }
-}
-
-LoadFromYamlResult ConfigServiceCore::load_from_yaml(const std::string& raw_yaml,
-                                                     std::optional<std::string> description) {
-    int new_slot_id = slot_manager_.next_slot_id();
-
-    return load_from_yaml(new_slot_id, raw_yaml, description);
 }
 
 // --- Slot-scoped configuration ---

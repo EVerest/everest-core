@@ -43,6 +43,7 @@ public:
 
     ~SqliteConfigSlotManager();
 
+    bool exists(int slot_id);
     bool is_valid(int slot_id = DEFAULT_SLOT_ID);
     /// \brief Returns the next available slot ID (MAX(ID) + 1, or 0 if no slots exist).
     int next_slot_id();

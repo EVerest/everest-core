@@ -58,6 +58,13 @@ int SqliteConfigSlotManager::next_slot_id() {
     return 0;
 }
 
+bool SqliteConfigSlotManager::exists(int slot_id) {
+    const std::string sql = "SELECT 1 FROM CONFIG_META WHERE ID = @config_id";
+    auto stmt = this->db->new_statement(sql);
+    stmt->bind_int("@config_id", slot_id);
+    return stmt->step() == SQLITE_ROW;
+}
+
 bool SqliteConfigSlotManager::is_valid(int slot_id) {
     const std::string sql = "SELECT 1 FROM CONFIG_META WHERE ID = @config_id AND VALID = 1";
     auto stmt = this->db->new_statement(sql);

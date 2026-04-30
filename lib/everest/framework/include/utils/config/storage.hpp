@@ -24,6 +24,11 @@ public:
     /// \return
     virtual GenericResponseStatus write_module_configs(const std::map<ModuleId, ModuleConfig>& module_configs) = 0;
 
+    /// \brief Replaces given EVerest \p module_configs in persistent storage
+    /// \param config EVerest config
+    /// \return
+    virtual GenericResponseStatus replace_module_configs(const std::map<ModuleId, ModuleConfig>& module_configs) = 0;
+
     /// \brief Gets EVerest config from persistent storage
     /// \return Response with status of operation and config. config is only set if status is OK. Config contains all
     /// module configurations and manager settings
