@@ -3,7 +3,9 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
 require everest-core_git.inc
 
-SRC_URI:append = " file://everest.service"
+SRC_URI:append = " file://everest.service \
+                   file://chargebridge.service \
+                   file://10-chargebridge.conf"
 
 do_compile[network] = "0"
 
@@ -38,8 +40,18 @@ DEPENDS = " \
 RDEPENDS:${PN} += "libevent openssl"
 
 INSANE_SKIP:${PN} = "already-stripped useless-rpaths arch file-rdeps"
+INSANE_SKIP:chargebridge = "already-stripped useless-rpaths arch file-rdeps"
 
-FILES:${PN} += "${libdir}/everest/* ${datadir}/everest/*"
+PACKAGES:prepend = "chargebridge "
+
+FILES:${PN} += "${libdir}/everest/* ${datadir}/everest/* ${systemd_system_unitdir}/everest.service"
+
+FILES:chargebridge = " \
+    ${bindir}/pionix_chargebridge \
+    ${sysconfdir}/chargebridge/ \
+    ${systemd_system_unitdir}/chargebridge.service \
+    ${systemd_system_unitdir}/everest.service.d/ \
+"
 
 EXTRA_OECMAKE += " \
     -DDISABLE_EDM=ON \
@@ -73,7 +85,9 @@ EXTRA_OECMAKE += " \
 # Option 2 provide the location to cmake
 EXTRA_OECMAKE:append = " -DPYBIND11_INTERFACE_INCLUDE_DIRECTORIES=${STAGING_INCDIR}/${PYTHON_DIR}"
 
+SYSTEMD_PACKAGES:append = " chargebridge"
 SYSTEMD_SERVICE:${PN} = "everest.service"
+SYSTEMD_SERVICE:chargebridge = "chargebridge.service"
 
 PACKAGECONFIG ??= "applications python ${@bb.utils.filter('DISTRO_FEATURES', 'tpm2', d)}"
 
@@ -87,6 +101,11 @@ do_install:append() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         install -d ${D}${systemd_system_unitdir}
         install -m 0644 ${WORKDIR}/everest.service ${D}${systemd_system_unitdir}/
+        if ${@bb.utils.contains('PACKAGECONFIG', 'applications', 'true', 'false', d)}; then
+            install -m 0644 ${WORKDIR}/chargebridge.service ${D}${systemd_system_unitdir}/
+            install -d ${D}${systemd_system_unitdir}/everest.service.d
+            install -m 0644 ${WORKDIR}/10-chargebridge.conf ${D}${systemd_system_unitdir}/everest.service.d/
+        fi
     fi
 }
 
