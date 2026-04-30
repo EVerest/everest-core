@@ -202,7 +202,7 @@ void MessageHandler::run_operation_dispatcher() {
         dispatch_operation_message(std::move(message.value()));
     }
 
-    EVLOG_info << "Operation dispatcher thread stopped";
+    EVLOG_debug << "Operation dispatcher thread stopped";
 }
 
 void MessageHandler::dispatch_operation_message(ParsedMessage&& message) {
@@ -276,14 +276,14 @@ void MessageHandler::run_result_message_worker() {
     while (auto message = result_message_queue.wait_and_pop()) {
         handle_result_message(message->topic, message->data);
     }
-    EVLOG_info << "Cmd result worker thread stopped";
+    EVLOG_debug << "Cmd result worker thread stopped";
 }
 
 void MessageHandler::run_external_mqtt_worker() {
     while (auto message = external_mqtt_message_queue.wait_and_pop()) {
         handle_external_mqtt_message(message->topic, message->data);
     }
-    EVLOG_info << "External MQTT worker thread stopped";
+    EVLOG_debug << "External MQTT worker thread stopped";
 }
 
 void MessageHandler::handle_operation_message(const std::string& topic, const json& payload) {
