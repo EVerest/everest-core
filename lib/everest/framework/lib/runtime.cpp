@@ -467,6 +467,16 @@ int ModuleLoader::initialize() {
     }
 
     const auto& rs = this->runtime_settings;
+    const auto shutdown_mqtt = [this]() {
+        if (this->mqtt) {
+            try {
+                this->mqtt->disconnect();
+            } catch (const std::exception& e) {
+                EVLOG_critical << fmt::format("MQTT disconnect in exception path failed: {}", e.what());
+            }
+        }
+    };
+
     try {
         const auto config = Config(this->mqtt_settings, result);
         const auto config_instantiation_time = std::chrono::system_clock::now();
@@ -615,11 +625,15 @@ int ModuleLoader::initialize() {
         EVLOG_info << "Exiting...";
     } catch (boost::exception& e) {
         EVLOG_critical << fmt::format("Caught top level boost::exception:\n{}", boost::diagnostic_information(e, true));
+        shutdown_mqtt();
+        return EXIT_FAILURE;
     } catch (std::exception& e) {
         EVLOG_critical << fmt::format("Caught top level std::exception:\n{}", boost::diagnostic_information(e, true));
+        shutdown_mqtt();
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays): pass-through of argc and argv from main()
