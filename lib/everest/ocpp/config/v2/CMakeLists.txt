@@ -1,6 +1,6 @@
 # find all migration files, store only the filenames by showing relative to the folder
 set(MIGRATION_FILES_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core_migrations")
-set(MIGRATION_FILES_DEVICE_MODEL_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/device_model_migrations")
+set(MIGRATION_FILES_DEVICE_MODEL_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/../common/device_model_migrations")
 
 include(../CollectMigrationFiles.cmake)
 
@@ -32,15 +32,15 @@ install(
      DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201
 )
 
-set(LIBOCPP_STANDARDIZED_COMPONENT_CONFIG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/component_config/standardized" CACHE PATH "Path to standardized OCPP component configs")
-set(LIBOCPP_CUSTOM_COMPONENT_CONFIG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/component_config/custom" CACHE PATH "Path to custom OCPP component configs")
+set(LIBOCPP_STANDARDIZED_COMPONENT_CONFIG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../common/component_config/standardized" CACHE PATH "Path to standardized OCPP component configs")
+set(LIBOCPP_CUSTOM_COMPONENT_CONFIG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../common/component_config/custom" CACHE PATH "Path to custom OCPP component configs")
 
 if (LIBOCPP_INSTALL_STANDARDIZED_COMPONENT_CONFIG)
-     message(STATUS "Using ocpp v2 standardized component config file path: ${LIBOCPP_STANDARDIZED_COMPONENT_CONFIG_PATH}")
+     message(STATUS "Using ocpp standardized component config file path: ${LIBOCPP_STANDARDIZED_COMPONENT_CONFIG_PATH}")
      install(DIRECTORY ${LIBOCPP_STANDARDIZED_COMPONENT_CONFIG_PATH}/ DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201/component_config/standardized)
 endif()
 
 if (LIBOCPP_INSTALL_CUSTOM_COMPONENT_CONFIG)
-     message(STATUS "Using ocpp v2 custom component config file path: ${LIBOCPP_CUSTOM_COMPONENT_CONFIG_PATH}")
+     message(STATUS "Using ocpp custom component config file path: ${LIBOCPP_CUSTOM_COMPONENT_CONFIG_PATH}")
      install(DIRECTORY ${LIBOCPP_CUSTOM_COMPONENT_CONFIG_PATH}/ DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201/component_config/custom)
 endif()
