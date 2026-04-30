@@ -1,5 +1,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_test")
 load("//modules:module.bzl", "cc_everest_module")
+load("//third-party/bazel/toolchains:defs.bzl", "CROSS_TEST_INCOMPATIBLE")
 
 IMPLS = [
     "energy_grid",
@@ -62,6 +63,7 @@ cc_test(
         "generated/modules/EvseManager",
         "tests",
     ],
+    target_compatible_with = CROSS_TEST_INCOMPATIBLE,
     deps = [
         "//interfaces:interfaces_lib",
         "//lib/everest/framework",
@@ -92,6 +94,7 @@ cc_test(
         "generated/modules/EvseManager",
         "tests",
     ],
+    target_compatible_with = CROSS_TEST_INCOMPATIBLE,
     deps = [
         "//interfaces:interfaces_lib",
         "//lib/everest/framework",
