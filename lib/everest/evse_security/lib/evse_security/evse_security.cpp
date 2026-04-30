@@ -376,6 +376,12 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
 
         X509CertificateBundle existing_certs(ca_bundle_path, EncodingFormat::PEM);
 
+        if (existing_certs.get_certificate_count() > max_fs_certificate_store_entries) {
+            EVLOG_error << "Max number of certificates " << max_fs_certificate_store_entries
+                        << " reached, install not possible!";
+            return InstallCertificateResult::CertificateStoreMaxLengthExceeded;
+        }
+
         if (existing_certs.is_using_directory()) {
             const std::string filename = conversions::ca_certificate_type_to_string(certificate_type) + "_ROOT_" +
                                          filesystem_utils::get_random_file_name(PEM_EXTENSION.string());
