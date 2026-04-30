@@ -24,9 +24,11 @@
 #include <fmt/core.h>
 #include <fmt/ranges.h>
 
+#include <configuration_api.hpp>
 #include <everest/logging.hpp>
 #include <framework/everest.hpp>
 #include <framework/runtime.hpp>
+#include <lifecycle_api.hpp>
 #include <utils/config.hpp>
 #include <utils/config/config_service_core.hpp>
 #include <utils/config/slot_manager.hpp>
@@ -803,6 +805,28 @@ int boot(const po::variables_map& vm) {
 
     auto config_service = std::make_unique<config::MqttConfigServiceHandler>(*mqtt_abstraction, *config_service_core);
 
+    std::unique_ptr<Everest::api::configuration::ConfigurationAPI> configuration_api;
+    if (vm.count("configuration-api")) {
+        bool read_only = vm["configuration-api"].as<std::string>() != "rw";
+        if (read_only) {
+            EVLOG_info << "Starting ConfigurationAPI in read-only mode";
+        } else {
+            EVLOG_info << "Starting ConfigurationAPI in read-write mode";
+        }
+        configuration_api = std::make_unique<Everest::api::configuration::ConfigurationAPI>(
+            *mqtt_abstraction, *config_service_core, read_only);
+    }
+    std::unique_ptr<Everest::api::lifecycle::LifecycleAPI> lifecycle_api;
+    if (vm.count("lifecycle-api")) {
+        bool read_only = vm["lifecycle-api"].as<std::string>() != "rw";
+        if (read_only) {
+            EVLOG_info << "Starting LifecycleAPI in read-only mode";
+        } else {
+            EVLOG_info << "Starting LifecycleAPI in read-write mode";
+        }
+        lifecycle_api = std::make_unique<Everest::api::lifecycle::LifecycleAPI>(
+            *mqtt_abstraction, *config_service_core, configuration_api ? true : false, read_only);
+    }
     auto module_handles =
         start_modules(*config, *mqtt_abstraction, ignored_modules, standalone_modules, ms, status_fifo, retain_topics);
     bool modules_started = true;
@@ -943,6 +967,10 @@ int main(int argc, char* argv[]) {
     desc.add_options()("config", po::value<std::string>(),
                        "Full path to a config file.  If the file does not exist and has no extension, it will be "
                        "looked up in the default config directory");
+    desc.add_options()("configuration-api", po::value<std::string>()->implicit_value("ro"),
+                       "Start the ConfigurationAPI (append '=rw' for read-write)");
+    desc.add_options()("lifecycle-api", po::value<std::string>()->implicit_value("ro"),
+                       "Start the lifecycle_API (append '=rw' for read-write)");
     desc.add_options()(
         "db", po::value<std::string>(),
         "Full path to the configuration database file. Required. "

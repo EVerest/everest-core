@@ -5,8 +5,15 @@ ev_register_library_target(everest_api_types)
 
 add_dependencies(everest_api_types generate_cpp_files)
 
+option(EVEREST_API_TYPES_LIB_MINIFIED_JSON
+    "Serialize JSON without indentation (compact output)" OFF)
+
 target_compile_options(everest_api_types
   PUBLIC  -Wall -Wextra -pedantic -Werror=switch)
+
+if(EVEREST_API_TYPES_LIB_MINIFIED_JSON)
+    target_compile_definitions(everest_api_types PUBLIC EVEREST_API_TYPES_LIB_MINIFIED_JSON)
+endif()
 
 set_target_properties(everest_api_types PROPERTIES
   VERSION 0.1.0
@@ -30,6 +37,9 @@ target_sources(everest_api_types
   src/everest_api_types/auth/codec.cpp
   src/everest_api_types/auth/json_codec.cpp
   src/everest_api_types/auth/wrapper.cpp
+
+  src/everest_api_types/configuration/codec.cpp
+  src/everest_api_types/configuration/json_codec.cpp
 
   src/everest_api_types/dc_external_derate/codec.cpp
   src/everest_api_types/dc_external_derate/json_codec.cpp
@@ -62,6 +72,9 @@ target_sources(everest_api_types
   src/everest_api_types/evse_security/codec.cpp
   src/everest_api_types/evse_security/json_codec.cpp
   src/everest_api_types/evse_security/wrapper.cpp
+
+  src/everest_api_types/lifecycle/codec.cpp
+  src/everest_api_types/lifecycle/json_codec.cpp
 
   src/everest_api_types/money/codec.cpp
   src/everest_api_types/money/json_codec.cpp

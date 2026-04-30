@@ -6,7 +6,7 @@
 
 template <>
 everest::lib::API::V1_0::types::generic::RequestReply
-generate<everest::lib::API::V1_0::types::generic::RequestReply>(bool set_optional_fields);
+generate<everest::lib::API::V1_0::types::generic::RequestReply>(bool set_optional_fields, int seed = 0);
 
 template <>
 void verify<everest::lib::API::V1_0::types::generic::RequestReply>(

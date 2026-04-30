@@ -23,3 +23,5 @@ ev_add_pip_package(
 )
 
 add_subdirectory(everest-testing)
+
+add_subdirectory(everest-config-api-cli)

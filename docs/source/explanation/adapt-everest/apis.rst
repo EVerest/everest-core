@@ -1,6 +1,28 @@
+.. everest_apis:
+
 ############
 EVerest APIs
 ############
+
+Preface
+=======
+
+There are different APIs available in EVerest, which can be used for different purposes.
+This page describes the stable EVerest API which consists of a number of API modules.
+
+Other APIs that are available, but not described here:
+
+- :ref:`API module <everest_modules_API>`
+- :ref:`RpcApi module <everest_modules_RpcApi>`
+- :ref:`EvAPI <everest_modules_EvAPI>`
+
+Part of the EVerest APIs described here are the management APIs, which are a special case
+and are described on a separate page:
+
+- :ref:`management APIs <management_apis>`
+
+Introduction
+============
 
 .. tip::
 
@@ -47,6 +69,16 @@ API module implements one or more of EVerest's internal interfaces.
 There are two distinct versions of API modules, either to implement
 an interface (e.g. a driver for a DC power supply) or to consume it 
 (e.g. to check for the validation status of a token).
+
+.. important::
+
+    The :ref:`management APIs <management_apis>` are a special case of 
+    EVerest APIs, since they are not intended for hardware integration or
+    custom extensions, but rather for remote management of EVerest itself.
+    They are implemented as part of the central manager process and not
+    as separate modules. They are disabled by default and need to be enabled
+    explicitly by adding the respective command line argument to the EVerest
+    startup command.
 
 They can be included in the configuration file just like any other
 module. E.g. - in this example -, a EVerest API module was loaded to

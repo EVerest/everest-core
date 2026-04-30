@@ -119,7 +119,7 @@ class ValueGenerator:
         self.manual_generator.is_used = False
 
     def generate_corresponding_value(self, target_variable_name, type_string, name_string, preparations="",
-                                     highest_vector_field_index_used=0, struct_helper=None):
+                                     highest_vector_field_index_used=0, struct_helper=None, use_runtime_seed=False):
         prefix = target_variable_name + "= "
         if highest_vector_field_index_used > 0:
             prefix = type_string + " " + prefix
@@ -135,7 +135,9 @@ class ValueGenerator:
                 field_name = "vector_field_" + i.__str__()
                 preparations += self.generate_corresponding_value(field_name, vector_type, (name_string + i.__str__()),
                                                                   preparations="",
-                                                                  highest_vector_field_index_used=(highest_vector_field_index_used + vector_length), struct_helper=struct_helper)
+                                                                  highest_vector_field_index_used=(highest_vector_field_index_used + vector_length),
+                                                                  struct_helper=struct_helper,
+                                                                  use_runtime_seed=use_runtime_seed)
                 vector_repr += get_vector_variable_name() + ".push_back(" + \
                     field_name + ");\n        "
             if no_prior_preparations:
@@ -168,17 +170,17 @@ class ValueGenerator:
         match type_string_cleaned:
             case "int32_t":
                 s = ((2 ** 32) - 1) / 2
-                value_string = random.randint(
-                    math.floor(-s), math.floor(s)).__str__()
+                base = random.randint(math.floor(-s), math.floor(s))
+                value_string = ("(" + str(base) + " ^ seed)") if use_runtime_seed else str(base)
             case "int64_t":
                 s = ((2 ** 64) - 1) / 2
-                value_string = random.randint(
-                    math.floor(-s), math.floor(s)).__str__()
+                base = random.randint(math.floor(-s), math.floor(s))
+                value_string = ("(static_cast<int64_t>(" + str(base) + ") ^ static_cast<int64_t>(seed))") if use_runtime_seed else str(base)
             case "float":
                 value_string = random.random().__str__()
             case "std::string":
-                value_string = "\"" + \
-                    "".join(random.sample(string.ascii_letters, 30)) + "\""
+                base = "\"" + "".join(random.sample(string.ascii_letters, 30)) + "\""
+                value_string = ("rotate_string(" + base + ", seed)") if use_runtime_seed else base
             case "bool":
                 value_string = bool(random.getrandbits(1)).__str__().lower()
             case _:
