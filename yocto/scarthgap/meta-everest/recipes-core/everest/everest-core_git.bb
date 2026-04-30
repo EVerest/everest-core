@@ -3,8 +3,7 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
 require everest-core_git.inc
 
-SRC_URI:append = " file://everest.service \
-                   file://chargebridge.service"
+SRC_URI:append = " file://everest.service"
 
 do_compile[network] = "0"
 
@@ -40,7 +39,7 @@ RDEPENDS:${PN} += "libevent openssl"
 
 INSANE_SKIP:${PN} = "already-stripped useless-rpaths arch file-rdeps"
 
-FILES:${PN} += "${libdir}/everest/* ${datadir}/everest/* /etc/chargebridge/*"
+FILES:${PN} += "${libdir}/everest/* ${datadir}/everest/*"
 
 EXTRA_OECMAKE += " \
     -DDISABLE_EDM=ON \
@@ -74,7 +73,7 @@ EXTRA_OECMAKE += " \
 # Option 2 provide the location to cmake
 EXTRA_OECMAKE:append = " -DPYBIND11_INTERFACE_INCLUDE_DIRECTORIES=${STAGING_INCDIR}/${PYTHON_DIR}"
 
-SYSTEMD_SERVICE:${PN} = "everest.service chargebridge.service"
+SYSTEMD_SERVICE:${PN} = "everest.service"
 
 PACKAGECONFIG ??= "applications python ${@bb.utils.filter('DISTRO_FEATURES', 'tpm2', d)}"
 
@@ -88,7 +87,6 @@ do_install:append() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         install -d ${D}${systemd_system_unitdir}
         install -m 0644 ${WORKDIR}/everest.service ${D}${systemd_system_unitdir}/
-        install -m 0644 ${WORKDIR}/chargebridge.service ${D}${systemd_system_unitdir}/
     fi
 }
 
