@@ -36,6 +36,7 @@ const std::string SWITCHING_PHASES_REASON = "SwitchingPhases";
 const ocpp::CiString<50> CONNECTION_TIMEOUT_CONFIG_KEY = "ConnectionTimeout";
 const ocpp::CiString<50> ISO15118_PNC_ENABLED_CONFIG_KEY = "ISO15118PnCEnabled";
 const ocpp::CiString<50> CENTRAL_CONTRACT_VALIDATION_ALLOWED_CONFIG_KEY = "CentralContractValidationAllowed";
+const ocpp::CiString<50> MAX_FS_CERTIFICATE_STORE_ENTRIES_CONFIG_KEY = "CertificateStoreMaxLength";
 
 namespace fs = std::filesystem;
 
@@ -421,6 +422,7 @@ void OCPP::init_module_configuration() {
     keys.push_back(CONNECTION_TIMEOUT_CONFIG_KEY);
     keys.push_back(ISO15118_PNC_ENABLED_CONFIG_KEY);
     keys.push_back(CENTRAL_CONTRACT_VALIDATION_ALLOWED_CONFIG_KEY);
+    keys.push_back(MAX_FS_CERTIFICATE_STORE_ENTRIES_CONFIG_KEY);
     req.key = keys;
     const auto res = this->charge_point->get_configuration_key(req);
 
@@ -458,6 +460,13 @@ void OCPP::handle_config_key(const ocpp::v16::KeyValue& kv) {
         types::evse_manager::PlugAndChargeConfiguration pnc_config;
         pnc_config.central_contract_validation_allowed = ocpp::conversions::string_to_bool(kv.value.value());
         set_pnc_config(pnc_config);
+    } else if (kv.key == MAX_FS_CERTIFICATE_STORE_ENTRIES_CONFIG_KEY and kv.value.has_value()) {
+        try {
+            const int value = std::stoi(kv.value.value().get());
+            this->r_security->call_set_max_fs_certificate_store_entries(value);
+        } catch (...) {
+            EVLOG_warning << "Could not set CertificateStoreMaxLength";
+        }
     }
 }
 

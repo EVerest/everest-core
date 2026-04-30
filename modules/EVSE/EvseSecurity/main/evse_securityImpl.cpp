@@ -286,5 +286,16 @@ bool evse_securityImpl::handle_verify_file_signature(std::string& file_path, std
     }
 }
 
+void evse_securityImpl::handle_set_max_fs_certificate_store_entries(int& max_fs_certificate_store_entries) {
+    if (max_fs_certificate_store_entries <= 0) {
+        EVLOG_warning << "Ignoring invalid max_fs_certificate_store_entries value: "
+                      << max_fs_certificate_store_entries;
+        return;
+    }
+
+    this->evse_security->set_max_fs_certificate_store_entries(
+        static_cast<std::uintmax_t>(max_fs_certificate_store_entries));
+}
+
 } // namespace main
 } // namespace module

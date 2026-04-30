@@ -106,6 +106,10 @@ public:
     /// @return result of the operation
     InstallCertificateResult install_ca_certificate(const std::string& certificate, CaCertificateType certificate_type);
 
+    /// @brief Sets the maximum number of certificate store entries at runtime. Values <= 0 are ignored.
+    /// @param value maximum number of certificate store entries
+    void set_max_fs_certificate_store_entries(std::uintmax_t value);
+
     /// @brief Deletes the certificate specified by \p certificate_hash_data . If a CA certificate is specified, the
     /// certificate is removed from the bundle or directory. If a leaf certificate is specified, the file will be
     /// removed from the filesystem. It will also delete all certificates issued by this certificate, so that no invalid

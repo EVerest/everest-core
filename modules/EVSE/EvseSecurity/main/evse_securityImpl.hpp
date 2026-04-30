@@ -68,6 +68,7 @@ protected:
     virtual int handle_get_leaf_expiry_days_count(types::evse_security::LeafCertificateType& certificate_type) override;
     virtual bool handle_verify_file_signature(std::string& file_path, std::string& signing_certificate,
                                               std::string& signature) override;
+    virtual void handle_set_max_fs_certificate_store_entries(int& max_fs_certificate_store_entries) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

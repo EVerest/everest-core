@@ -226,6 +226,13 @@ cmds:
     result:
       description: True if verification succeeded, false if not
       type: boolean
+  set_max_fs_certificate_store_entries:
+    description: Command to set the maximum number of certificate store entries
+    arguments:
+      max_fs_certificate_store_entries:
+        description: Maximum number of certificate store entries. Must be greater than 0.
+        type: integer
+        minimum: 1
 vars:
   certificate_store_update:
     description: >-
