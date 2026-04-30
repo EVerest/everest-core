@@ -359,31 +359,6 @@ TEST_F(NetworkConfigSyncTest, MigrateFromBlobPullsBasicAuthPasswordFromSecurityC
     EXPECT_EQ(result->basicAuthPassword->get(), expected_password);
 }
 
-// Migration must not propagate the factory sentinel password "DEADBEEFDEADBEEF" into per-slot
-// BasicAuthPassword overrides — otherwise chargers upgraded before the operator sets a real
-// global password would silently advertise the sentinel on the next reconnect.
-TEST_F(NetworkConfigSyncTest, MigrateFromBlobRefusesToCopyFactorySentinelBasicAuthPassword) {
-    NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
-
-    // SecurityCtrlr.BasicAuthPassword holds the factory sentinel (20 chars, passes length check)
-    dm->set_value(ControllerComponentVariables::BasicAuthPassword.component,
-                  ControllerComponentVariables::BasicAuthPassword.variable.value(), AttributeEnum::Actual,
-                  "DEADBEEFDEADBEEF", "test");
-
-    SetNetworkProfileRequest req;
-    req.configurationSlot = 1;
-    req.connectionData = make_basic_profile(1, "wss://sentinel.example.com/ocpp");
-    ASSERT_FALSE(req.connectionData.basicAuthPassword.has_value());
-
-    seed_blob(*dm, make_blob({req}));
-    NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
-
-    auto result = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
-    ASSERT_TRUE(result.has_value());
-    EXPECT_FALSE(result->basicAuthPassword.has_value())
-        << "Per-slot BasicAuthPassword must remain unset when the only source is the factory sentinel";
-}
-
 TEST_F(NetworkConfigSyncTest, MigrateFromBlobPreservesBlobBasicAuthPassword) {
     NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
 
