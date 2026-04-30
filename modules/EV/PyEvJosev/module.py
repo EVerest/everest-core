@@ -29,7 +29,7 @@ setup_everest_logging()
 
 EVEREST_CERTS_SUB_DIR = 'certs'
 
-async def evcc_handler_main_loop(module_config: dict):
+async def evcc_handler_main_loop(module_config: dict, exi_codec: ExificientEXICodec):
     """
     Entrypoint function that starts the ISO 15118 code running on
     the EVCC (EV Communication Controller)
@@ -39,16 +39,12 @@ async def evcc_handler_main_loop(module_config: dict):
     evcc_config = EVCCConfig()
     patch_josev_config(evcc_config, module_config)
 
-    exi_codec = ExificientEXICodec()
-
     await EVCCHandler(
         evcc_config=evcc_config,
         iface=iface,
         exi_codec=exi_codec,
         ev_controller=SimEVController(evcc_config),
     ).start()
-
-    exi_codec.shutdown()
 
 class PyEVJosevModule():
     def __init__(self) -> None:
@@ -89,15 +85,20 @@ class PyEVJosevModule():
         self._mod.init_done(self._ready)
 
     def start_evcc_handler(self):
-        while True:
-            self._ready_event.wait()
-            try:
-                asyncio.run(evcc_handler_main_loop(self._setup.configs.module))
-                self._mod.publish_variable('ev', 'v2g_session_finished', None)
-            except KeyboardInterrupt:
-                log.debug("SECC program terminated manually")
-                break
-            self._ready_event.clear()
+        exi_codec = ExificientEXICodec()
+        try:
+            while True:
+                self._ready_event.wait()
+                try:
+                    asyncio.run(evcc_handler_main_loop(self._setup.configs.module, exi_codec))
+                    self._mod.publish_variable('ev', 'v2g_session_finished', None)
+                except KeyboardInterrupt:
+                    log.debug("SECC program terminated manually")
+                    break
+                finally:
+                    self._ready_event.clear()
+        finally:
+            exi_codec.shutdown()
 
     def _ready(self):
         log.debug("ready!")
