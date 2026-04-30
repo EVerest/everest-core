@@ -796,9 +796,10 @@ int boot(const po::variables_map& vm) {
 
     mqtt_abstraction->spawn_main_loop_thread();
 
-    auto config_service_core =
-        std::make_unique<config::ConfigServiceCore>(config->get_module_configurations(), ms, std::move(shared_db),
-                                                    everest::config::SqliteConfigSlotManager::DEFAULT_SLOT_ID);
+    auto config_service_core = std::make_unique<config::ConfigServiceCore>(
+        config->get_module_configurations(), ms, std::move(shared_db),
+        reset_from_yaml ? std::make_optional<int>(everest::config::SqliteConfigSlotManager::DEFAULT_SLOT_ID)
+                        : std::nullopt);
 
     auto config_service = std::make_unique<config::MqttConfigServiceHandler>(*mqtt_abstraction, *config_service_core);
 
