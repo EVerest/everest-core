@@ -465,10 +465,14 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
     std::vector<CiString<36>> superseded_ids;
     bool new_is_superseded = false;
 
-    // R04.FR.07: if the new scheduled control is to overrule an ACTIVE existing
-    // one but has a FUTURE startTime, the flip is deferred until new.startTime.
-    // We remember the target controlId here and link it via PENDING_SUPERSEDE_ID
-    // after the insert.
+    // Supersede branching follows R04.FR.06 vs R04.FR.07. FR.06 covers the case
+    // where the existing control is "not yet active" and mandates an immediate
+    // flip even when the new control's startTime is later than the existing
+    // one's. FR.07 covers the case where the existing control is "already
+    // active" and defers the flip until startTime of the new control. So the
+    // discriminator is the EXISTING control's active state, not the new one's
+    // startTime. The deferred_supersede_target slot below is populated only on
+    // the FR.07 path.
     std::optional<std::string> deferred_supersede_target;
     const auto now = ocpp::DateTime();
     const bool has_future_start =
@@ -495,6 +499,7 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
             auto existing_id = existing.at("controlId").get<std::string>();
             auto existing_priority = existing.at("priority").get<int32_t>();
             auto existing_is_superseded = existing.value("isSuperseded", false);
+            auto existing_is_default = existing.value("isDefault", false);
 
             if (existing_id == request.controlId.get()) {
                 continue; // Same controlId is an update, not a supersede
@@ -503,19 +508,44 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
                 continue; // Already out of play; can neither supersede nor be superseded
             }
 
-            // Lower priority value = higher priority (R04.FR.03, R04.FR.06). Ties do not
-            // supersede, spec requires strictly lower value to overrule.
+            // Determine whether `existing` is currently active. Defaults are not
+            // "scheduled" in the time-windowed sense, so they never qualify for
+            // deferred supersede — a new default with strictly lower priority value
+            // immediately replaces an existing default.
+            bool existing_is_currently_active = false;
+            if (!existing_is_default && existing.contains("startTime")) {
+                ocpp::DateTime existing_start(existing.at("startTime").get<std::string>());
+                if (existing_start.to_time_point() <= now.to_time_point()) {
+                    if (existing.contains("duration")) {
+                        const auto existing_duration = existing.at("duration").get<float>();
+                        if (std::isfinite(existing_duration)) {
+                            const auto expiry = ocpp::DateTime(
+                                existing_start.to_time_point() +
+                                std::chrono::milliseconds(static_cast<int64_t>(existing_duration * 1000.0F)));
+                            existing_is_currently_active = expiry.to_time_point() > now.to_time_point();
+                        }
+                    } else {
+                        // No duration set → indefinite; treat as still active.
+                        existing_is_currently_active = true;
+                    }
+                }
+            }
+
+            // Lower priority value overrules a higher one (R04.FR.03, R04.FR.06).
+            // Ties do not supersede, spec requires strictly lower value to overrule.
             if (priority < existing_priority) {
-                if (has_future_start) {
-                    // R04.FR.07: defer the supersede until the new control's startTime.
-                    // Record just the first target, the spec's response semantics
-                    // (single superseded controlId) align with one deferred target per
-                    // Set call. In practice at most one active same-type exists.
+                if (existing_is_currently_active && has_future_start) {
+                    // R04.FR.07: existing is already active; remain active until
+                    // startTime of the new control, at which point the deferred
+                    // flip fires. The response omits supersededIds (TC_R_105
+                    // step 10); CSMS is told via NotifyDERStartStop later.
                     if (!deferred_supersede_target.has_value()) {
                         deferred_supersede_target = existing_id;
                     }
-                    superseded_ids.emplace_back(existing_id);
                 } else {
+                    // R04.FR.06: existing is not yet active (or, for default vs
+                    // default, R04.FR.03 — existing is a default and never has a
+                    // startTime). Flip immediately.
                     this->context.database_handler.update_der_control_superseded(existing_id, true);
                     superseded_ids.emplace_back(existing_id);
                 }
@@ -667,8 +697,14 @@ void DERControl::handle_clear_der_control(ocpp::Call<ClearDERControlRequest> cal
     int deleted_count =
         this->context.database_handler.delete_der_controls_matching_criteria(request.isDefault, control_type_filter);
 
-    // R04.FR.41: Nothing found to delete
-    response.status = (deleted_count > 0) ? DERControlStatusEnum::Accepted : DERControlStatusEnum::NotFound;
+    // R04.FR.44 (no controlType, no controlId) is unconditionally Accepted, even
+    // when there is nothing to delete. NotFound is reserved for FR.41
+    // (controlType-with-no-match) and FR.42 (controlId-with-no-match).
+    if (control_type_filter.has_value()) {
+        response.status = (deleted_count > 0) ? DERControlStatusEnum::Accepted : DERControlStatusEnum::NotFound;
+    } else {
+        response.status = DERControlStatusEnum::Accepted;
+    }
 
     ocpp::CallResult<ClearDERControlResponse> call_result(response, call.uniqueId);
     this->context.message_dispatcher.dispatch_call_result(call_result);

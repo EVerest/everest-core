@@ -619,6 +619,54 @@ TEST_F(DERControlTest, ClearDERControl_AllByDefault_Accepted) {
     der_control.handle_message(msg);
 }
 
+// R04.FR.44 — bulk clear (no controlType, no controlId) is unconditionally
+// Accepted, even when there is nothing to delete. The "NotFound" status is
+// scoped to FR.41/.42 (controlType-with-no-match and controlId-with-no-match).
+// TC_R_102_CS step 1 hits this on a fresh CS where the DB has no DER
+// controls yet.
+TEST_F(DERControlTest, ClearDERControl_AllByDefault_EmptyDb_Accepted) {
+    DERControl der_control(functional_block_context);
+
+    ClearDERControlRequest req;
+    req.isDefault = true;
+
+    auto msg = make_clear_der_control_msg(req);
+
+    EXPECT_CALL(database_handler_mock,
+                delete_der_controls_matching_criteria(true, std::optional<std::string>(std::nullopt)))
+        .WillOnce(Return(0));
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_)).WillOnce(Invoke([](const json& call_result) {
+        auto response = call_result[ocpp::CALLRESULT_PAYLOAD].get<ClearDERControlResponse>();
+        EXPECT_EQ(response.status, DERControlStatusEnum::Accepted);
+    }));
+
+    der_control.handle_message(msg);
+}
+
+// R04.FR.44 — same as above for the scheduled side. TC_R_102 step 3 sends
+// ClearDERControl(isDefault=false) immediately after step 1 with the DB still
+// empty.
+TEST_F(DERControlTest, ClearDERControl_AllByScheduled_EmptyDb_Accepted) {
+    DERControl der_control(functional_block_context);
+
+    ClearDERControlRequest req;
+    req.isDefault = false;
+
+    auto msg = make_clear_der_control_msg(req);
+
+    EXPECT_CALL(database_handler_mock,
+                delete_der_controls_matching_criteria(false, std::optional<std::string>(std::nullopt)))
+        .WillOnce(Return(0));
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_)).WillOnce(Invoke([](const json& call_result) {
+        auto response = call_result[ocpp::CALLRESULT_PAYLOAD].get<ClearDERControlResponse>();
+        EXPECT_EQ(response.status, DERControlStatusEnum::Accepted);
+    }));
+
+    der_control.handle_message(msg);
+}
+
 // R04.FR.45 - controlType set, no controlId → clear by type and isDefault
 TEST_F(DERControlTest, ClearDERControl_ByType_Accepted) {
     DERControl der_control(functional_block_context);
@@ -1317,40 +1365,49 @@ TEST_F(DERControlTest, SetDERControl_EqualPriorityDoesNotSupersede) {
 }
 
 // =============================================================================
-// R04.FR.07, deferred supersede at new.startTime
+// R04.FR.06 / FR.07 — the discriminator between "immediate supersede" and
+// "deferred supersede" is whether the EXISTING control is already active, not
+// whether the new control's startTime is in the future. FR.06 covers the
+// existing-not-yet-active case (immediate flip, even when new.startTime is
+// later than the existing one's). FR.07 covers the existing-already-active
+// case (defer the flip until new.startTime).
 // =============================================================================
 
 namespace {
 
-// Return an RFC 3339 timestamp one hour from now.
-std::string one_hour_from_now_rfc3339() {
-    // Use DateTime-of-now + add to the underlying time_point, then reconstruct.
-    auto tp = ocpp::DateTime().to_time_point() + std::chrono::hours(1);
+// Return an RFC 3339 timestamp `seconds` from now.
+std::string rfc3339_offset_from_now(int seconds) {
+    auto tp = ocpp::DateTime().to_time_point() + std::chrono::seconds(seconds);
     return ocpp::DateTime(tp).to_rfc3339();
 }
 
 } // namespace
 
-// R04.FR.07: A new scheduled control with strictly lower priority value (higher
-// priority) but a FUTURE startTime must NOT flip the existing active control
-// yet, it is stored with a pending-supersede pointer instead.
-TEST_F(DERControlTest, SetDERControl_FR07_FutureStartTimeDefersSupersede) {
+// R04.FR.07: when the to-be-superseded control is CURRENTLY ACTIVE (past
+// startTime, before expiry) AND the new control's startTime is in the future,
+// the supersede is deferred until the new control's startTime arrives. The
+// response omits supersededIds (TC_R_105 step 10); the existing row stays
+// isSuperseded=false; a pending-supersede link is recorded for the timer.
+TEST_F(DERControlTest, SetDERControl_FR07_ExistingActiveDefersSupersede) {
     DERControl der_control(functional_block_context);
 
     auto req = make_freq_droop_request("ctrl-new-future", /*is_default=*/false, /*priority=*/1);
-    req.freqDroop->startTime = ocpp::DateTime(one_hour_from_now_rfc3339());
+    req.freqDroop->startTime = ocpp::DateTime(rfc3339_offset_from_now(3600));
     req.freqDroop->duration = 3600.0F;
     auto msg = make_set_der_control_msg(req);
 
-    // Existing scheduled control currently active (priority 5 is lower priority, higher value).
+    // Existing scheduled control truly active: started 60 s ago, runs another
+    // 30 minutes. Priority 5 is lower priority (higher numeric value) than new's 1.
     std::string existing =
-        R"({"controlId":"ctrl-existing-active","controlType":"FreqDroop","isDefault":false,"priority":5,"isSuperseded":false})";
+        R"({"controlId":"ctrl-existing-active","controlType":"FreqDroop","isDefault":false,"priority":5,"isSuperseded":false,)"
+        R"("startTime":")" +
+        rfc3339_offset_from_now(-60) + R"(","duration":1800.0})";
     EXPECT_CALL(database_handler_mock, get_der_controls_matching_criteria(_, _, _))
         .WillOnce(Return(std::vector<std::string>{existing}));
 
-    // Existing must NOT be flipped immediately, deferred until new.startTime.
+    // Existing must NOT be flipped immediately — deferred until new.startTime.
     EXPECT_CALL(database_handler_mock, update_der_control_superseded(_, _)).Times(0);
-    // New row is stored without is_superseded, and a pending-supersede link is set.
+    // New row goes in with isSuperseded=false; pending-supersede link recorded.
     EXPECT_CALL(database_handler_mock, insert_or_update_der_control("ctrl-new-future", false, "FreqDroop",
                                                                     /*is_superseded=*/false, 1, _, _, _));
     EXPECT_CALL(database_handler_mock, set_der_control_pending_supersede("ctrl-new-future", "ctrl-existing-active"));
@@ -1358,10 +1415,51 @@ TEST_F(DERControlTest, SetDERControl_FR07_FutureStartTimeDefersSupersede) {
     EXPECT_CALL(mock_dispatcher, dispatch_call_result(_)).WillOnce(Invoke([](const json& call_result) {
         auto response = call_result[ocpp::CALLRESULT_PAYLOAD].get<SetDERControlResponse>();
         EXPECT_EQ(response.status, DERControlStatusEnum::Accepted);
-        // R04.FR.07 response echoes the existing controlId that will eventually be superseded.
+        // TC_R_105 step 10: when the supersede is deferred, supersededIds is OMITTED
+        // from the response; CSMS will be told via NotifyDERStartStop later.
+        EXPECT_FALSE(response.supersededIds.has_value());
+    }));
+
+    der_control.handle_message(msg);
+}
+
+// R04.FR.06: when the to-be-superseded control is NOT YET STARTED (existing
+// startTime is still in the future) AND the new control also has a future
+// startTime, supersede is IMMEDIATE. This is the TC_R_104 case. The existing's
+// isSuperseded flag is flipped right away and the response's supersededIds
+// echoes the existing controlId.
+TEST_F(DERControlTest, SetDERControl_FR06_ExistingNotYetStartedFlipsImmediatelyEvenWithFutureNew) {
+    DERControl der_control(functional_block_context);
+
+    auto req = make_freq_droop_request("ctrl-new-later", /*is_default=*/false, /*priority=*/4);
+    req.freqDroop->startTime = ocpp::DateTime(rfc3339_offset_from_now(4 * 3600));
+    req.freqDroop->duration = 300.0F;
+    auto msg = make_set_der_control_msg(req);
+
+    // Existing scheduled control NOT yet started (startTime 2h from now).
+    // Priority 5 is lower priority than new's 4 → new wins.
+    std::string existing =
+        R"({"controlId":"ctrl-existing-future","controlType":"FreqDroop","isDefault":false,"priority":5,"isSuperseded":false,)"
+        R"("startTime":")" +
+        rfc3339_offset_from_now(2 * 3600) + R"(","duration":300.0})";
+    EXPECT_CALL(database_handler_mock, get_der_controls_matching_criteria(_, _, _))
+        .WillOnce(Return(std::vector<std::string>{existing}));
+
+    // R04.FR.06: existing not yet active → immediate flip.
+    EXPECT_CALL(database_handler_mock, update_der_control_superseded("ctrl-existing-future", true));
+    // No pending-supersede link is recorded.
+    EXPECT_CALL(database_handler_mock, set_der_control_pending_supersede(_, _)).Times(0);
+    // New row goes in with isSuperseded=false.
+    EXPECT_CALL(database_handler_mock, insert_or_update_der_control("ctrl-new-later", false, "FreqDroop",
+                                                                    /*is_superseded=*/false, 4, _, _, _));
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_)).WillOnce(Invoke([](const json& call_result) {
+        auto response = call_result[ocpp::CALLRESULT_PAYLOAD].get<SetDERControlResponse>();
+        EXPECT_EQ(response.status, DERControlStatusEnum::Accepted);
+        // TC_R_104 step 16: response.supersededIds[0] = id of immediately-superseded existing.
         ASSERT_TRUE(response.supersededIds.has_value());
         ASSERT_EQ(response.supersededIds->size(), 1u);
-        EXPECT_EQ(response.supersededIds->at(0).get(), "ctrl-existing-active");
+        EXPECT_EQ(response.supersededIds->at(0).get(), "ctrl-existing-future");
     }));
 
     der_control.handle_message(msg);
@@ -1583,7 +1681,7 @@ TEST_F(DERControlTest, SetDERControl_FutureStart_DoesNotMarkNotified) {
     DERControl der_control(functional_block_context);
 
     auto req = make_freq_droop_request("ctrl-future", /*is_default=*/false, /*priority=*/0);
-    req.freqDroop.value().startTime = ocpp::DateTime(one_hour_from_now_rfc3339());
+    req.freqDroop.value().startTime = ocpp::DateTime(rfc3339_offset_from_now(3600));
     req.freqDroop.value().duration = 3600.0f;
     auto msg = make_set_der_control_msg(req);
 
