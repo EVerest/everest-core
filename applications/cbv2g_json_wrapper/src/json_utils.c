@@ -64,8 +64,12 @@ size_t base64_decode(const char* input, size_t input_len, uint8_t* output, size_
     }
 
     size_t output_len = input_len / 4 * 3;
-    if (input[input_len - 1] == '=') output_len--;
-    if (input[input_len - 2] == '=') output_len--;
+    if (input[input_len - 1] == '=') {
+        output_len--;
+    }
+    if (input[input_len - 2] == '=') {
+        output_len--;
+    }
 
     if (output_size < output_len) {
         return 0;
@@ -78,15 +82,27 @@ size_t base64_decode(const char* input, size_t input_len, uint8_t* output, size_
         int c = base64_decode_table[(unsigned char)input[i + 2]];
         int d = base64_decode_table[(unsigned char)input[i + 3]];
 
-        if (a < 0 || b < 0) return 0;
+        if (a < 0 || b < 0) {
+            return 0;
+        }
 
         uint32_t triple = (a << 18) + (b << 12);
-        if (c >= 0) triple += (c << 6);
-        if (d >= 0) triple += d;
+        if (c >= 0) {
+            triple += (c << 6);
+        }
+        if (d >= 0) {
+            triple += d;
+        }
 
-        if (j < output_len) output[j++] = (triple >> 16) & 0xFF;
-        if (j < output_len) output[j++] = (triple >> 8) & 0xFF;
-        if (j < output_len) output[j++] = triple & 0xFF;
+        if (j < output_len) {
+            output[j++] = (triple >> 16) & 0xFF;
+        }
+        if (j < output_len) {
+            output[j++] = (triple >> 8) & 0xFF;
+        }
+        if (j < output_len) {
+            output[j++] = triple & 0xFF;
+        }
     }
 
     return output_len;
@@ -112,9 +128,15 @@ size_t hex_encode(const uint8_t* input, size_t input_len, char* output, size_t o
 }
 
 static int hex_char_to_int(char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    }
+    if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    }
+    if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    }
     return -1;
 }
 

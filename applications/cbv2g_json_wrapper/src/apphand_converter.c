@@ -27,79 +27,63 @@ static cJSON* apphand_res_to_json(const struct appHand_supportedAppProtocolRes* 
  * Encode App Handshake message from JSON to EXI
  */
 int apphand_encode(const char* json_str, uint8_t* out, size_t out_size, size_t* out_len) {
-    int result = CBV2G_ERROR_INTERNAL;
-    cJSON* root = NULL;
-    cJSON* msg = NULL;
-
-    /* Parse JSON */
-    root = cJSON_Parse(json_str);
+    cJSON* root = cJSON_Parse(json_str);
     if (root == NULL) {
         set_error("Failed to parse JSON: %s", cJSON_GetErrorPtr());
         return CBV2G_ERROR_JSON_PARSE;
     }
 
-    /* Initialize EXI document */
     struct appHand_exiDocument doc;
     init_appHand_exiDocument(&doc);
 
-    /* Determine message type and convert */
-    msg = cJSON_GetObjectItemCaseSensitive(root, "supportedAppProtocolReq");
-    if (msg != NULL) {
+    /* Determine message type and convert. The two variants are mutually
+     * exclusive in valid SAP traffic; we check both keys explicitly so the
+     * "unknown message" branch is reached on neither. */
+    cJSON* req = cJSON_GetObjectItemCaseSensitive(root, "supportedAppProtocolReq");
+    cJSON* res = cJSON_GetObjectItemCaseSensitive(root, "supportedAppProtocolRes");
+
+    if (req != NULL) {
         doc.supportedAppProtocolReq_isUsed = 1;
-        result = json_to_apphand_req(msg, &doc.supportedAppProtocolReq);
-        if (result != CBV2G_SUCCESS) {
-            goto cleanup;
+        int rc = json_to_apphand_req(req, &doc.supportedAppProtocolReq);
+        if (rc != CBV2G_SUCCESS) {
+            cJSON_Delete(root);
+            return rc;
+        }
+    } else if (res != NULL) {
+        doc.supportedAppProtocolRes_isUsed = 1;
+        int rc = json_to_apphand_res(res, &doc.supportedAppProtocolRes);
+        if (rc != CBV2G_SUCCESS) {
+            cJSON_Delete(root);
+            return rc;
         }
     } else {
-        msg = cJSON_GetObjectItemCaseSensitive(root, "supportedAppProtocolRes");
-        if (msg != NULL) {
-            doc.supportedAppProtocolRes_isUsed = 1;
-            result = json_to_apphand_res(msg, &doc.supportedAppProtocolRes);
-            if (result != CBV2G_SUCCESS) {
-                goto cleanup;
-            }
-        } else {
-            set_error("Unknown App Handshake message type");
-            result = CBV2G_ERROR_UNKNOWN_MESSAGE;
-            goto cleanup;
-        }
+        set_error("Unknown App Handshake message type");
+        cJSON_Delete(root);
+        return CBV2G_ERROR_UNKNOWN_MESSAGE;
     }
 
-    /* Initialize EXI bitstream */
     exi_bitstream_t stream;
     exi_bitstream_init(&stream, out, out_size, 0, NULL);
 
-    /* Encode to EXI */
     int exi_result = encode_appHand_exiDocument(&stream, &doc);
     if (exi_result != 0) {
         set_error("EXI encoding failed with error code: %d", exi_result);
-        result = CBV2G_ERROR_ENCODING_FAILED;
-        goto cleanup;
+        cJSON_Delete(root);
+        return CBV2G_ERROR_ENCODING_FAILED;
     }
 
     *out_len = exi_bitstream_get_length(&stream);
-    result = CBV2G_SUCCESS;
-
-cleanup:
-    if (root != NULL) {
-        cJSON_Delete(root);
-    }
-    return result;
+    cJSON_Delete(root);
+    return CBV2G_SUCCESS;
 }
 
 /*
  * Decode App Handshake message from EXI to JSON
  */
 int apphand_decode(const uint8_t* exi, size_t exi_len, char* out, size_t out_size) {
-    int result = CBV2G_ERROR_INTERNAL;
-    cJSON* json = NULL;
-    char* json_str = NULL;
-
-    /* Initialize EXI bitstream */
     exi_bitstream_t stream;
     exi_bitstream_init(&stream, (uint8_t*)exi, exi_len, 0, NULL);
 
-    /* Initialize and decode EXI document */
     struct appHand_exiDocument doc;
     init_appHand_exiDocument(&doc);
 
@@ -109,8 +93,7 @@ int apphand_decode(const uint8_t* exi, size_t exi_len, char* out, size_t out_siz
         return CBV2G_ERROR_DECODING_FAILED;
     }
 
-    /* Convert to JSON based on message type */
-    json = cJSON_CreateObject();
+    cJSON* json = cJSON_CreateObject();
     if (json == NULL) {
         set_error("Failed to create JSON object");
         return CBV2G_ERROR_JSON_GENERATE;
@@ -120,51 +103,41 @@ int apphand_decode(const uint8_t* exi, size_t exi_len, char* out, size_t out_siz
         cJSON* req_json = apphand_req_to_json(&doc.supportedAppProtocolReq);
         if (req_json == NULL) {
             set_error("Failed to convert supportedAppProtocolReq to JSON");
-            result = CBV2G_ERROR_JSON_GENERATE;
-            goto cleanup;
+            cJSON_Delete(json);
+            return CBV2G_ERROR_JSON_GENERATE;
         }
         cJSON_AddItemToObject(json, "supportedAppProtocolReq", req_json);
     } else if (doc.supportedAppProtocolRes_isUsed) {
         cJSON* res_json = apphand_res_to_json(&doc.supportedAppProtocolRes);
         if (res_json == NULL) {
             set_error("Failed to convert supportedAppProtocolRes to JSON");
-            result = CBV2G_ERROR_JSON_GENERATE;
-            goto cleanup;
+            cJSON_Delete(json);
+            return CBV2G_ERROR_JSON_GENERATE;
         }
         cJSON_AddItemToObject(json, "supportedAppProtocolRes", res_json);
     } else {
         set_error("No valid message found in decoded document");
-        result = CBV2G_ERROR_DECODING_FAILED;
-        goto cleanup;
+        cJSON_Delete(json);
+        return CBV2G_ERROR_DECODING_FAILED;
     }
 
-    /* Serialize JSON to string */
-    json_str = cJSON_PrintUnformatted(json);
+    char* json_str = cJSON_PrintUnformatted(json);
     if (json_str == NULL) {
         set_error("Failed to serialize JSON");
-        result = CBV2G_ERROR_JSON_GENERATE;
-        goto cleanup;
+        cJSON_Delete(json);
+        return CBV2G_ERROR_JSON_GENERATE;
     }
 
-    /* Copy to output buffer using snprintf for bounded write
-     * (CWE-120 / CWE-126: avoid strcpy and an unbounded strlen on
-     * cJSON-emitted text). */
+    /* Bounded write to caller's buffer (CWE-120 / CWE-126). */
     int written = snprintf(out, out_size, "%s", json_str);
+    cJSON_free(json_str);
+    cJSON_Delete(json);
+
     if (written < 0 || (size_t)written >= out_size) {
         set_error("Output buffer too small: need %d, have %zu", written + 1, out_size);
-        result = CBV2G_ERROR_BUFFER_TOO_SMALL;
-        goto cleanup;
+        return CBV2G_ERROR_BUFFER_TOO_SMALL;
     }
-    result = CBV2G_SUCCESS;
-
-cleanup:
-    if (json != NULL) {
-        cJSON_Delete(json);
-    }
-    if (json_str != NULL) {
-        cJSON_free(json_str);
-    }
-    return result;
+    return CBV2G_SUCCESS;
 }
 
 /*
@@ -197,9 +170,12 @@ static int json_to_apphand_req(cJSON* json, struct appHand_supportedAppProtocolR
         int ns_written = snprintf(proto->ProtocolNamespace.characters,
                                   appHand_ProtocolNamespace_CHARACTER_SIZE,
                                   "%.*s", (int)ns_len, ns);
-        if (ns_written < 0) ns_written = 0;
-        if ((size_t)ns_written >= appHand_ProtocolNamespace_CHARACTER_SIZE)
+        if (ns_written < 0) {
+            ns_written = 0;
+        }
+        if ((size_t)ns_written >= appHand_ProtocolNamespace_CHARACTER_SIZE) {
             ns_written = appHand_ProtocolNamespace_CHARACTER_SIZE - 1;
+        }
         proto->ProtocolNamespace.charactersLen = (size_t)ns_written;
 
         /* Version numbers */
@@ -220,21 +196,32 @@ static int json_to_apphand_req(cJSON* json, struct appHand_supportedAppProtocolR
 static int json_to_apphand_res(cJSON* json, struct appHand_supportedAppProtocolRes* res) {
     init_appHand_supportedAppProtocolRes(res);
 
-    /* ResponseCode - bounded compare on potentially non-null-terminated
-     * input (CWE-126). */
-    const char* response_code = json_get_string(json, "ResponseCode");
-    if (strncmp(response_code, "OK_SuccessfulNegotiation",
-                sizeof("OK_SuccessfulNegotiation")) == 0) {
-        res->ResponseCode = appHand_responseCodeType_OK_SuccessfulNegotiation;
-    } else if (strncmp(response_code, "OK_SuccessfulNegotiationWithMinorDeviation",
-                       sizeof("OK_SuccessfulNegotiationWithMinorDeviation")) == 0) {
-        res->ResponseCode = appHand_responseCodeType_OK_SuccessfulNegotiationWithMinorDeviation;
-    } else if (strncmp(response_code, "Failed_NoNegotiation",
-                       sizeof("Failed_NoNegotiation")) == 0) {
-        res->ResponseCode = appHand_responseCodeType_Failed_NoNegotiation;
+    /* ResponseCode accepts either the appHand enum's symbolic name (the
+     * canonical form Josev uses) or its numeric value. Anything else is
+     * a hard error — falling through to a default would silently coerce
+     * an unknown / misspelled code to OK_SuccessfulNegotiation (=0). */
+    cJSON* rc_item = cJSON_GetObjectItemCaseSensitive(json, "ResponseCode");
+    if (cJSON_IsString(rc_item) && rc_item->valuestring != NULL) {
+        const char* response_code = rc_item->valuestring;
+        /* Bounded compare on potentially non-null-terminated input (CWE-126). */
+        if (strncmp(response_code, "OK_SuccessfulNegotiation",
+                    sizeof("OK_SuccessfulNegotiation")) == 0) {
+            res->ResponseCode = appHand_responseCodeType_OK_SuccessfulNegotiation;
+        } else if (strncmp(response_code, "OK_SuccessfulNegotiationWithMinorDeviation",
+                           sizeof("OK_SuccessfulNegotiationWithMinorDeviation")) == 0) {
+            res->ResponseCode = appHand_responseCodeType_OK_SuccessfulNegotiationWithMinorDeviation;
+        } else if (strncmp(response_code, "Failed_NoNegotiation",
+                           sizeof("Failed_NoNegotiation")) == 0) {
+            res->ResponseCode = appHand_responseCodeType_Failed_NoNegotiation;
+        } else {
+            set_error("Unknown ResponseCode string: '%s'", response_code);
+            return CBV2G_ERROR_JSON_PARSE;
+        }
+    } else if (cJSON_IsNumber(rc_item)) {
+        res->ResponseCode = rc_item->valueint;
     } else {
-        /* Try as integer */
-        res->ResponseCode = json_get_int(json, "ResponseCode");
+        set_error("ResponseCode missing or has invalid type");
+        return CBV2G_ERROR_JSON_PARSE;
     }
 
     /* SchemaID (optional) */
@@ -251,7 +238,9 @@ static int json_to_apphand_res(cJSON* json, struct appHand_supportedAppProtocolR
  */
 static cJSON* apphand_req_to_json(const struct appHand_supportedAppProtocolReq* req) {
     cJSON* json = cJSON_CreateObject();
-    if (json == NULL) return NULL;
+    if (json == NULL) {
+        return NULL;
+    }
 
     cJSON* app_protocol = cJSON_CreateArray();
     if (app_protocol == NULL) {
@@ -297,9 +286,10 @@ static cJSON* apphand_req_to_json(const struct appHand_supportedAppProtocolReq* 
  */
 static cJSON* apphand_res_to_json(const struct appHand_supportedAppProtocolRes* res) {
     cJSON* json = cJSON_CreateObject();
-    if (json == NULL) return NULL;
+    if (json == NULL) {
+        return NULL;
+    }
 
-    /* ResponseCode as string */
     const char* response_code_str;
     switch (res->ResponseCode) {
         case appHand_responseCodeType_OK_SuccessfulNegotiation:
@@ -312,8 +302,13 @@ static cJSON* apphand_res_to_json(const struct appHand_supportedAppProtocolRes* 
             response_code_str = "Failed_NoNegotiation";
             break;
         default:
-            response_code_str = "Unknown";
-            break;
+            /* An unknown ResponseCode value in a decoded document indicates
+             * either a corrupt EXI stream or a schema we don't recognise;
+             * surface it instead of emitting a placeholder string. */
+            set_error("Unknown ResponseCode value in decoded document: %d",
+                      res->ResponseCode);
+            cJSON_Delete(json);
+            return NULL;
     }
     cJSON_AddStringToObject(json, "ResponseCode", response_code_str);
 
