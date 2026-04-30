@@ -319,6 +319,9 @@ mod logger {
         pub(crate) fn init_logger(module_name: &str, prefix: &str, conf: &str) {
             INIT_LOGGER_ONCE.call_once(|| {
                 let level = match ffi::init_logging(module_name, prefix, conf) {
+                    -1 => {
+                        return;
+                    }
                     0 => log::Level::Trace,
                     1 => log::Level::Debug,
                     2 => log::Level::Info,

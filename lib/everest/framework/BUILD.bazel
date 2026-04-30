@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_import", "cc_library", "cc_shared_library")
 load("@rules_python//python:py_binary.bzl", "py_binary")
 load("//third-party/bazel/toolchains:defs.bzl", "CROSS_PYTHON_INCOMPATIBLE")
 
@@ -37,8 +37,14 @@ genrule(
   """,
 )
 
+config_setting(
+    name = "_dynamic_mode_fully",
+    values = {"dynamic_mode": "fully"},
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
-    name = "framework",
+    name = "framework_lib",
     srcs = glob(["lib/**/*.cpp"]),
     hdrs = glob(["include/**/*.hpp"]) + [
         ":compile_time_settings",
@@ -68,6 +74,29 @@ cc_library(
         "@com_github_pboettch_json-schema-validator//:json-schema-validator",
         "@rapidyaml",
     ],
+)
+
+cc_shared_library(
+    name = "framework_so",
+    shared_lib_name = "libframework.so",
+    deps = [":framework_lib"],
+    exports_filter = [":framework_lib"],
+)
+
+cc_import(
+    name = "framework_dynamic",
+    shared_library = ":framework_so",
+    deps = [":framework_lib"],
+    linkopts = ["-lframework"],
+)
+
+alias(
+    name = "framework",
+    actual = select({
+        ":_dynamic_mode_fully": ":framework_dynamic",
+        "//conditions:default": ":framework_lib",
+    }),
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
