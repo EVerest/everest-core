@@ -376,7 +376,18 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
 
         X509CertificateBundle existing_certs(ca_bundle_path, EncodingFormat::PEM);
 
-        if (existing_certs.get_certificate_count() > max_fs_certificate_store_entries) {
+        std::uintmax_t total_v2g_mo_ca_count = 0;
+        for (const auto ca_type : {CaCertificateType::V2G, CaCertificateType::MO}) {
+            const auto ca_path = this->ca_bundle_path_map.at(ca_type);
+            if (!fs::is_directory(ca_path)) {
+                filesystem_utils::create_file_if_nonexistent(ca_path);
+            }
+
+            X509CertificateBundle ca_certs(ca_path, EncodingFormat::PEM);
+            total_v2g_mo_ca_count += ca_certs.get_certificate_count();
+        }
+
+        if (total_v2g_mo_ca_count > max_fs_certificate_store_entries) {
             EVLOG_error << "Max number of certificates " << max_fs_certificate_store_entries
                         << " reached, install not possible!";
             return InstallCertificateResult::CertificateStoreMaxLengthExceeded;
