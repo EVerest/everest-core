@@ -66,6 +66,7 @@ private:
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
     std::mutex chargepoint_state_mutex; // mutex used for start/stop operations
+    std::mutex monitor_list_mutex;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

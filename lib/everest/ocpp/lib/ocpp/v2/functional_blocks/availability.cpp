@@ -105,6 +105,7 @@ ChangeAvailabilityResponse Availability::change_availability_req(bool& transacti
     if (request.evse.has_value() and !context.evse_manager.is_valid_evse(request.evse.value())) {
         EVLOG_warning << "CSMS requested ChangeAvailability for invalid evse id or connector id";
         response.status = ChangeAvailabilityStatusEnum::Rejected;
+        transaction_active = false; // set a default value
     } else {
         // Check if we have any transaction running on the EVSE (or any EVSE if we're addressing the whole CS)
         transaction_active = context.evse_manager.any_transaction_active(request.evse);

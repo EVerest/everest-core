@@ -123,22 +123,8 @@ ocppImpl::handle_change_availability(types::ocpp::ChangeAvailabilityRequest& req
     if (mod->charge_point == nullptr) {
         EVLOG_warning << "ChargePoint not initialized, cannot handle change availability command";
     } else {
-        bool process{true};
         const auto ocpp_request = conversions::to_ocpp_change_availability_request(request);
-        if (request.evse.has_value()) {
-            const auto& evse = request.evse.value();
-            if (!evse.connector_id.has_value()) {
-                result.statusInfo = {"InvalidInput",
-                                     "No connector id specified; if the whole charging station is supposed to "
-                                     "be addressed, parameter evse "
-                                     "must have no value."};
-                process = false;
-            }
-        }
-
-        if (process) {
-            result = mod->charge_point->on_change_availability(ocpp_request);
-        }
+        result = mod->charge_point->on_change_availability(ocpp_request);
     }
 
     return conversions::to_everest_change_availability_response(result);
@@ -150,6 +136,8 @@ void ocppImpl::handle_monitor_variables(std::vector<types::ocpp::ComponentVariab
     if (mod->charge_point == nullptr) {
         EVLOG_warning << "ChargePoint not initialized, cannot handle monitor variables command";
     } else {
+        std::lock_guard lock(monitor_list_mutex);
+
         if (monitor_list.empty()) {
             // register a handler
             mod->charge_point->register_variable_listener(
@@ -171,7 +159,13 @@ void ocppImpl::variable_changed(const ocpp::v2::Component& component, const ocpp
     using namespace conversions;
 
     MonitorListEntry entry{component, variable};
-    if (const auto it = monitor_list.find(entry); it != monitor_list.end()) {
+    bool publish;
+    {
+        std::lock_guard lock(monitor_list_mutex);
+        const auto it = monitor_list.find(entry);
+        publish = it != monitor_list.end();
+    }
+    if (publish) {
         // monitor entry exists - publish
         types::ocpp::EventData event_data;
         event_data.component_variable.component = to_everest_component(component);
