@@ -201,6 +201,11 @@ if(LIBOCPP_USE_BOOST_FILESYSTEM)
     )
 endif()
 
+target_link_libraries(ocpp
+    PUBLIC
+        ${ATOMIC_LIBS}
+)
+
 # FIXME (aw): right now nlohmann_json and boost::optional don't compile
 #             with gcc 10.x and C++11/14, so we need to publish the
 #             C++17 standard
