@@ -307,3 +307,137 @@ async def test_clear_der_control_no_match_not_found(
         control_type=DERControlEnumType.freq_droop,
     )
     assert r.status == DERControlStatusEnumType.not_found
+
+
+# -----------------------------------------------------------------------------
+# TC_R_102 end-to-end - Clearing controlTypes
+# (R04.FR.02, FR.30, FR.33, FR.41, FR.44, FR.45)
+#
+# Exercises the cross-message state evolution that the unit tests can't:
+# Set defaults of two distinct types, Clear-by-type one of them, verify the
+# other survives, then Clear-all and verify the table is empty. Multi-row
+# Report payload ordering itself is unit-tested in
+# DERControlTest.GetDERControl_ReportOrdersMultiRowByIsSuperseded; this test
+# locks in that the persisted state evolves correctly across messages.
+# -----------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+@pytest.mark.ocpp_version("ocpp2.1")
+@pytest.mark.everest_core_config(
+    get_everest_config_path_str("everest-config-ocpp201.yaml")
+)
+@pytest.mark.ocpp_config_adaptions(
+    GenericOCPP2XConfigAdjustment(
+        [
+            (
+                OCPP2XConfigVariableIdentifier(
+                    "InternalCtrlr", "SupportedOcppVersions", "Actual"
+                ),
+                "ocpp2.1",
+            ),
+            (
+                OCPP2XConfigVariableIdentifier(
+                    "DCDERCtrlr_1", "DCDERCtrlrAvailable", "Actual"
+                ),
+                "true",
+            ),
+            # ModesSupported is ReadOnly; relies on the default list in
+            # DCDERCtrlr_1.json which includes both FreqDroop and VoltWatt.
+        ]
+    )
+)
+async def test_tc_r_102_clear_by_type_then_clear_all(
+    central_system_v21: CentralSystem,
+    test_controller: TestController,
+    test_utility: TestUtility,
+):
+    """TC_R_102: Set two defaults of distinct types, clear one by type, verify
+    the other survives, then clear all and verify the table is empty.
+    """
+    test_controller.start()
+    charge_point_v21 = await central_system_v21.wait_for_chargepoint()
+
+    # Step 1: SetDERControl default FreqDroop (R04.FR.02)
+    freq_droop = FreqDroopType(
+        priority=0,
+        over_freq=61.0,
+        under_freq=59.0,
+        over_droop=5.0,
+        under_droop=5.0,
+        response_time=3.0,
+    )
+    r: call_result21.SetDERControl = await charge_point_v21.set_der_control_req(
+        is_default=True,
+        control_id="ctrl-default-fd",
+        control_type=DERControlEnumType.freq_droop,
+        freq_droop=freq_droop,
+    )
+    assert r.status == DERControlStatusEnumType.accepted
+
+    # Step 2: SetDERControl default VoltWatt
+    volt_watt_curve = DERCurveType(
+        curve_data=[DERCurvePointsType(x=240.0, y=100.0)],
+        priority=1,
+        y_unit=DERUnitEnumType.pct_max_w,
+    )
+    r = await charge_point_v21.set_der_control_req(
+        is_default=True,
+        control_id="ctrl-default-vw",
+        control_type=DERControlEnumType.volt_watt,
+        curve=volt_watt_curve,
+    )
+    assert r.status == DERControlStatusEnumType.accepted
+
+    # Step 3: GetDERControl FreqDroop -> Accepted (the row exists)
+    r_get: call_result21.GetDERControl = await charge_point_v21.get_der_control_req(
+        request_id=1,
+        is_default=True,
+        control_type=DERControlEnumType.freq_droop,
+    )
+    assert r_get.status == DERControlStatusEnumType.accepted
+
+    # Step 4: GetDERControl VoltWatt -> Accepted (the row exists)
+    r_get = await charge_point_v21.get_der_control_req(
+        request_id=2,
+        is_default=True,
+        control_type=DERControlEnumType.volt_watt,
+    )
+    assert r_get.status == DERControlStatusEnumType.accepted
+
+    # Step 5: ClearDERControl by type=FreqDroop (R04.FR.45)
+    r_clear: call_result21.ClearDERControl = (
+        await charge_point_v21.clear_der_control_req(
+            is_default=True,
+            control_type=DERControlEnumType.freq_droop,
+        )
+    )
+    assert r_clear.status == DERControlStatusEnumType.accepted
+
+    # Step 6: GetDERControl FreqDroop -> NotFound (the row was cleared, R04.FR.30)
+    r_get = await charge_point_v21.get_der_control_req(
+        request_id=3,
+        is_default=True,
+        control_type=DERControlEnumType.freq_droop,
+    )
+    assert r_get.status == DERControlStatusEnumType.not_found
+
+    # Step 7: GetDERControl VoltWatt -> Accepted (untouched by the targeted clear)
+    r_get = await charge_point_v21.get_der_control_req(
+        request_id=4,
+        is_default=True,
+        control_type=DERControlEnumType.volt_watt,
+    )
+    assert r_get.status == DERControlStatusEnumType.accepted
+
+    # Step 8: ClearDERControl with no controlType / controlId,
+    # isDefault=true -> clear ALL matching defaults (R04.FR.44)
+    r_clear = await charge_point_v21.clear_der_control_req(is_default=True)
+    assert r_clear.status == DERControlStatusEnumType.accepted
+
+    # Step 9: GetDERControl any default -> NotFound (table is empty)
+    r_get = await charge_point_v21.get_der_control_req(
+        request_id=5,
+        is_default=True,
+        control_type=DERControlEnumType.volt_watt,
+    )
+    assert r_get.status == DERControlStatusEnumType.not_found

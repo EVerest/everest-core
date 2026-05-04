@@ -1506,8 +1506,29 @@ TEST_F(DERControlTest, CheckScheduledControls_FR07_ActivatesDeferredSupersede) {
 
     EXPECT_CALL(database_handler_mock, update_der_control_superseded("ctrl-existing-superseded", true));
     EXPECT_CALL(database_handler_mock, clear_der_control_pending_supersede("ctrl-new-now"));
-    // Two NotifyDERStartStop dispatches: one for the stopped existing, one for the started new.
-    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).Times(2);
+
+    // Two NotifyDERStartStop dispatches in fixed order: first the stop for the
+    // existing control, then the start for the new control with supersededIds
+    // pointing at the existing one (TC_R_105 step 11).
+    InSequence sequence;
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool /*t*/) {
+        auto action = call[ocpp::CALL_ACTION].get<std::string>();
+        EXPECT_EQ(action, "NotifyDERStartStop");
+        auto payload = call[ocpp::CALL_PAYLOAD];
+        EXPECT_EQ(payload["controlId"], "ctrl-existing-superseded");
+        EXPECT_FALSE(payload["started"].get<bool>());
+        EXPECT_FALSE(payload.contains("supersededIds"));
+    }));
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool /*t*/) {
+        auto action = call[ocpp::CALL_ACTION].get<std::string>();
+        EXPECT_EQ(action, "NotifyDERStartStop");
+        auto payload = call[ocpp::CALL_PAYLOAD];
+        EXPECT_EQ(payload["controlId"], "ctrl-new-now");
+        EXPECT_TRUE(payload["started"].get<bool>());
+        ASSERT_TRUE(payload.contains("supersededIds"));
+        EXPECT_EQ(payload["supersededIds"].size(), 1);
+        EXPECT_EQ(payload["supersededIds"][0], "ctrl-existing-superseded");
+    }));
 
     der_control.check_scheduled_controls();
 }
@@ -1861,6 +1882,142 @@ TEST_F(DERControlTest, SetDERControl_Rejects_StartTime_Beyond_Horizon) {
     EXPECT_CALL(mock_dispatcher, dispatch_call_result(_)).WillOnce(Invoke([](const json& call_result) {
         auto response = call_result[ocpp::CALLRESULT_PAYLOAD].get<SetDERControlResponse>();
         EXPECT_EQ(response.status, DERControlStatusEnum::Rejected);
+    }));
+
+    der_control.handle_message(msg);
+}
+
+// =============================================================================
+// ReportDERControl multi-row ordering and chunking (R04.FR.31, R04.FR.32)
+// =============================================================================
+
+// TC_R_106 step 13: a Report that returns two rows of the same controlType,
+// one active (isSuperseded=false) and one self-superseded by R04.FR.08
+// (isSuperseded=true). Both rows must appear in the same message with the
+// expected isSuperseded bit pattern in row order.
+TEST_F(DERControlTest, GetDERControl_ReportOrdersMultiRowByIsSuperseded) {
+    DERControl der_control(functional_block_context);
+
+    GetDERControlRequest req;
+    req.requestId = 99;
+    req.controlType = DERControlEnum::FreqDroop;
+    auto msg = make_get_der_control_msg(req);
+
+    auto make_stored = [](const std::string& id, int32_t priority, bool is_superseded) {
+        json stored;
+        stored["controlId"] = id;
+        stored["controlType"] = "FreqDroop";
+        stored["isDefault"] = false;
+        stored["priority"] = priority;
+        stored["isSuperseded"] = is_superseded;
+        json request;
+        request["isDefault"] = false;
+        request["controlId"] = id;
+        request["controlType"] = "FreqDroop";
+        json fd;
+        fd["priority"] = priority;
+        fd["overFreq"] = 61.0;
+        fd["underFreq"] = 59.0;
+        fd["overDroop"] = 5.0;
+        fd["underDroop"] = 5.0;
+        fd["responseTime"] = 3.0;
+        request["freqDroop"] = fd;
+        stored["request"] = request;
+        return stored.dump();
+    };
+
+    // Active row first, self-superseded row second — the order der_control
+    // would receive them after the FR.08 path persists both.
+    EXPECT_CALL(database_handler_mock, get_der_controls_matching_criteria(_, _, _))
+        .WillOnce(Return(std::vector<std::string>{
+            make_stored("ctrl-active", /*priority=*/2, /*is_superseded=*/false),
+            make_stored("ctrl-self-superseded", /*priority=*/5, /*is_superseded=*/true),
+        }));
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_)).WillOnce(Invoke([](const json& call_result) {
+        auto response = call_result[ocpp::CALLRESULT_PAYLOAD].get<GetDERControlResponse>();
+        EXPECT_EQ(response.status, DERControlStatusEnum::Accepted);
+    }));
+
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool /*t*/) {
+        auto action = call[ocpp::CALL_ACTION].get<std::string>();
+        EXPECT_EQ(action, "ReportDERControl");
+        auto payload = call[ocpp::CALL_PAYLOAD];
+        ASSERT_TRUE(payload.contains("freqDroop"));
+        ASSERT_EQ(payload["freqDroop"].size(), 2);
+        EXPECT_EQ(payload["freqDroop"][0]["id"], "ctrl-active");
+        EXPECT_EQ(payload["freqDroop"][0]["isSuperseded"], false);
+        EXPECT_EQ(payload["freqDroop"][1]["id"], "ctrl-self-superseded");
+        EXPECT_EQ(payload["freqDroop"][1]["isSuperseded"], true);
+        if (payload.contains("tbc")) {
+            EXPECT_FALSE(payload["tbc"].get<bool>());
+        }
+    }));
+
+    der_control.handle_message(msg);
+}
+
+// R04.FR.32: when more than MAX_CONTROLS_PER_REPORT_MESSAGE controls match,
+// the report is split. tbc must be true on every message except the last.
+// The chunking constant is internal (10), so we feed 11 rows: expect two
+// dispatches with tbc=true then tbc=false.
+TEST_F(DERControlTest, GetDERControl_ReportChunksAndSetsTbc) {
+    DERControl der_control(functional_block_context);
+
+    GetDERControlRequest req;
+    req.requestId = 11;
+    req.controlType = DERControlEnum::FreqDroop;
+    auto msg = make_get_der_control_msg(req);
+
+    auto make_stored = [](const std::string& id) {
+        json stored;
+        stored["controlId"] = id;
+        stored["controlType"] = "FreqDroop";
+        stored["isDefault"] = false;
+        stored["priority"] = 0;
+        stored["isSuperseded"] = false;
+        json request;
+        request["isDefault"] = false;
+        request["controlId"] = id;
+        request["controlType"] = "FreqDroop";
+        json fd;
+        fd["priority"] = 0;
+        fd["overFreq"] = 61.0;
+        fd["underFreq"] = 59.0;
+        fd["overDroop"] = 5.0;
+        fd["underDroop"] = 5.0;
+        fd["responseTime"] = 3.0;
+        request["freqDroop"] = fd;
+        stored["request"] = request;
+        return stored.dump();
+    };
+
+    std::vector<std::string> stored;
+    stored.reserve(11);
+    for (int i = 0; i < 11; ++i) {
+        stored.emplace_back(make_stored("ctrl-" + std::to_string(i)));
+    }
+    EXPECT_CALL(database_handler_mock, get_der_controls_matching_criteria(_, _, _)).WillOnce(Return(std::move(stored)));
+    EXPECT_CALL(mock_dispatcher, dispatch_call_result(_)).WillOnce(Invoke([](const json& /*c*/) {}));
+
+    InSequence sequence;
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool /*t*/) {
+        auto payload = call[ocpp::CALL_PAYLOAD];
+        EXPECT_EQ(payload["requestId"], 11);
+        ASSERT_TRUE(payload.contains("freqDroop"));
+        EXPECT_EQ(payload["freqDroop"].size(), 10);
+        ASSERT_TRUE(payload.contains("tbc"));
+        EXPECT_TRUE(payload["tbc"].get<bool>());
+    }));
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool /*t*/) {
+        auto payload = call[ocpp::CALL_PAYLOAD];
+        EXPECT_EQ(payload["requestId"], 11);
+        ASSERT_TRUE(payload.contains("freqDroop"));
+        EXPECT_EQ(payload["freqDroop"].size(), 1);
+        // tbc on the final message must be false (or absent — payload-equivalent).
+        if (payload.contains("tbc")) {
+            EXPECT_FALSE(payload["tbc"].get<bool>());
+        }
     }));
 
     der_control.handle_message(msg);
