@@ -188,12 +188,23 @@ std::optional<X509Wrapper> X509CertificateHierarchy::find_certificate(const Cert
     return std::nullopt;
 }
 
-std::vector<X509Wrapper> X509CertificateHierarchy::find_certificates_multi(const CertificateHashData& hash) {
+std::vector<X509Wrapper> X509CertificateHierarchy::find_certificates_multi(const CertificateHashData& hash,
+                                                                           bool case_insensitive_comparison) {
     std::vector<X509Wrapper> certificates;
 
     for_each([&](X509Node& node) {
-        if (node.hash == hash) {
-            certificates.push_back(node.certificate);
+        if (node.hash.has_value()) {
+            bool matches = false;
+
+            if (case_insensitive_comparison) {
+                matches = node.hash.value().case_insensitive_comparison(hash);
+            } else {
+                matches = (node.hash.value() == hash);
+            }
+
+            if (matches) {
+                certificates.push_back(node.certificate);
+            }
         }
 
         return true;

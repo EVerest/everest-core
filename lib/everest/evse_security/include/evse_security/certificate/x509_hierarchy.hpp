@@ -78,7 +78,8 @@ public:
 
     /// @brief Searches for all the certificates with the provided hash, throwing a NoCertificateFound
     // if none were found. Can be useful when we have SUB-CAs in multiple bundles
-    std::vector<X509Wrapper> find_certificates_multi(const CertificateHashData& hash);
+    std::vector<X509Wrapper> find_certificates_multi(const CertificateHashData& hash,
+                                                     bool case_insensitive_comparison = false);
 
     std::string to_debug_string();
 

@@ -679,6 +679,30 @@ TEST_F(EvseSecurityTestsCSMS, delete_csms_provided_certs) {
     ASSERT_EQ(cached_secc_chain, read_file_to_string("csms_certs_temp/client/CPO_CERT_SECC_LEAF_CHAIN_A.pem"));
 }
 
+TEST_F(EvseSecurityTestsCSMS, delete_leaf_case_insensitive_hash) {
+    // Verify that delete_certificate matches leaf certificate hashes case-insensitively.
+    // The stored hashes are lowercase hex; using uppercase hex should still find and
+    // delete the leaf certificate. Relates to issue #2027.
+
+    ASSERT_TRUE(fs::exists("csms_certs_temp/client/SECC_LEAF_B.pem"));
+    ASSERT_TRUE(fs::exists("csms_certs_temp/client/SECC_LEAF_B.key"));
+
+    // Same hash data as delete_csms_provided_certs but with uppercase hex values
+    CertificateHashData certificate_hash_data;
+    certificate_hash_data.hash_algorithm = HashAlgorithm::SHA256;
+    certificate_hash_data.issuer_name_hash = "82ADDB4B47026C702B9ED9D482C6E3570BBAE9C49B963EC18B0A3523DFB47FE3";
+    certificate_hash_data.issuer_key_hash = "E9D2A6D245233EDBF5A8319B99087313E16307CA29B388373D951B50E93090AA";
+    certificate_hash_data.serial_number = "4ED698D63C724C6A61A0CCC4FF80B383192DFD7A";
+
+    DeleteResult result = this->evse_security->delete_certificate(certificate_hash_data);
+    ASSERT_EQ(result.result, DeleteCertificateResult::Accepted);
+    ASSERT_TRUE(result.leaf_certificate_type.has_value());
+    ASSERT_EQ(result.leaf_certificate_type.value(), LeafCertificateType::V2G);
+
+    ASSERT_FALSE(fs::exists("csms_certs_temp/client/SECC_LEAF_B.pem"));
+    ASSERT_FALSE(fs::exists("csms_certs_temp/client/SECC_LEAF_B.key"));
+}
+
 TEST_F(EvseSecurityTests, delete_root_ca_01) {
     std::vector<CertificateType> certificate_types;
     certificate_types.push_back(CertificateType::V2GRootCertificate);
