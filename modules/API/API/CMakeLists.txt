@@ -13,6 +13,7 @@ target_link_libraries(${MODULE_NAME}
     PRIVATE
         ryml::ryml
         everest::external_energy_limits
+        everest::yaml
 )
 target_sources(${MODULE_NAME}
     PRIVATE

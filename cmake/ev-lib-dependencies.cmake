@@ -43,6 +43,7 @@ set(EVEREST_LIB_SUBDIRS
     timer
     tls
     util
+    yaml
 )
 
 # --- Internal dependency map ---
@@ -52,6 +53,7 @@ set(EVEREST_LIB_SUBDIRS
 # Libraries with no internal deps do not need an entry.
 
 # Tier 1
+set(EVEREST_LIB_DEPS_yaml "log")
 set(EVEREST_LIB_DEPS_io "util")
 set(EVEREST_LIB_DEPS_run_application "log")
 set(EVEREST_LIB_DEPS_evse_security "cbv2g")
