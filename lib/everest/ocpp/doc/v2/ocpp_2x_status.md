@@ -2584,11 +2584,11 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | V2X.03 |        |        |
 | V2X.04 |        |        |
 | V2X.05 |        |        |
-| V2X.06 |        |        |
-| V2X.07 |        |        |
-| V2X.08 |        |        |
-| V2X.09 |        |        |
-| V2X.10 |        |        |
+| V2X.06 |        | Not implemented — L2/L3 phase-variant rules                                                          |
+| V2X.07 |        | Not implemented — L2/L3 phase-variant rules                                                          |
+| V2X.08 |        | Not implemented — L2/L3 phase-variant rules                                                          |
+| V2X.09 |        | Not implemented — L2/L3 phase-variant rules                                                          |
+| V2X.10 |        | Not implemented — L2/L3 phase-variant rules                                                          |
 
 ## Bidirectional Power Transfer - V2X Authorization (New in OCPP 2.1)
 

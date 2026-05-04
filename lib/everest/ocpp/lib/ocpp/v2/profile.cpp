@@ -46,6 +46,10 @@ ocpp::DateTime floor_seconds(const ocpp::DateTime& dt) {
     return ocpp::DateTime(std::chrono::floor<seconds>(dt.to_time_point()));
 }
 
+OperationModeEnum effective_mode(const std::optional<OperationModeEnum>& mode) {
+    return mode.value_or(OperationModeEnum::ChargingOnly);
+}
+
 namespace {
 IntermediatePeriod default_intermediate_period() {
     IntermediatePeriod empty;
@@ -533,7 +537,8 @@ IntermediateProfile combine_list_of_profiles(const std::vector<IntermediateProfi
             (period.power_discharge_limit != combined.back().power_discharge_limit) ||
             (period.current_setpoint != combined.back().current_setpoint) ||
             (period.power_setpoint != combined.back().power_setpoint) ||
-            (period.numberPhases != combined.back().numberPhases)) {
+            (period.numberPhases != combined.back().numberPhases) ||
+            (effective_mode(period.operationMode) != effective_mode(combined.back().operationMode))) {
             combined.push_back(period);
         }
 
@@ -586,11 +591,16 @@ IntermediateProfile merge_tx_profile_with_tx_default_profile(const IntermediateP
         period.power_setpoint = {NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED};
 
         for (const auto& [it, end] : periods) {
+            // A non-default operationMode is itself enough to "pick" this period:
+            // setpoint-less V2X modes (LocalLoadBalancing, Idle, LocalFrequency,
+            // ExternalLimits) carry their meaning solely through operationMode and
+            // would otherwise be silently overruled by the lower-priority profile.
             if (it->current_limit != default_period.current_limit || it->power_limit != default_period.power_limit ||
                 it->current_discharge_limit != default_period.current_discharge_limit ||
                 it->power_discharge_limit != default_period.power_discharge_limit ||
                 it->current_setpoint != default_period.current_setpoint ||
-                it->power_setpoint != default_period.power_setpoint) {
+                it->power_setpoint != default_period.power_setpoint ||
+                effective_mode(it->operationMode) != OperationModeEnum::ChargingOnly) {
                 period.current_limit = it->current_limit;
                 period.power_limit = it->power_limit;
                 period.current_discharge_limit = it->current_discharge_limit;
@@ -659,26 +669,26 @@ IntermediateProfile merge_profiles_by_lowest_limit(const std::vector<Intermediat
             period.power_discharge_limit =
                 get_max_limit(period.power_discharge_limit, new_period.power_discharge_limit);
 
-            // Save setpoints before merge to detect which period's setpoint won
-            const auto prev_current_setpoint = period.current_setpoint;
-            const auto prev_power_setpoint = period.power_setpoint;
-
             // Only check value of first phase, as this one should be set as first.
             get_set_setpoint_limit(period.current_setpoint, new_period.current_setpoint, period.current_limit,
                                    period.current_discharge_limit);
             get_set_setpoint_limit(period.power_setpoint, new_period.power_setpoint, period.power_limit,
                                    period.power_discharge_limit);
 
-            // operationMode follows the period that contributed the winning setpoint.
-            // If the new period has a setpoint and an operationMode, and the setpoint changed from
-            // the previous value, the new period's operationMode takes precedence.
-            const bool new_period_has_setpoint = !is_equal(new_period.current_setpoint.limit, NO_SETPOINT_SPECIFIED) ||
-                                                 !is_equal(new_period.power_setpoint.limit, NO_SETPOINT_SPECIFIED);
-            if (new_period_has_setpoint && new_period.operationMode.has_value()) {
-                const bool setpoint_changed = (period.current_setpoint != prev_current_setpoint) ||
-                                              (period.power_setpoint != prev_power_setpoint);
-                if (setpoint_changed || !period.operationMode.has_value()) {
+            // Any non-default operationMode beats nullopt/ChargingOnly. On cross-purpose
+            // conflict (both contributors carry distinct non-default modes) the first
+            // contributor wins and a warning is logged; deterministic resolution requires
+            // SmartChargingCtrlr.SetpointPriority (OCPP 2.1 Edition 2 Q06.FR.20–22) which
+            // is not yet implemented.
+            if (effective_mode(new_period.operationMode) != OperationModeEnum::ChargingOnly) {
+                if (effective_mode(period.operationMode) == OperationModeEnum::ChargingOnly) {
                     period.operationMode = new_period.operationMode;
+                } else if (effective_mode(period.operationMode) != effective_mode(new_period.operationMode)) {
+                    EVLOG_warning << "Cross-purpose operationMode conflict: keeping "
+                                  << conversions::operation_mode_enum_to_string(period.operationMode.value())
+                                  << ", saw "
+                                  << conversions::operation_mode_enum_to_string(new_period.operationMode.value())
+                                  << " (SetpointPriority not yet implemented).";
                 }
             }
         }

@@ -1530,8 +1530,10 @@ TEST_F(CompositeScheduleTestFixtureV2, Q03_MultiplePeriodsWithDifferentOperation
                                                                      ChargingRateUnitEnum::W, false, false);
 
     ASSERT_GE(result.chargingSchedulePeriod.size(), 2);
-    // ChargingOnly with no setpoint results in nullopt operationMode (nullopt defaults to ChargingOnly)
-    EXPECT_FALSE(result.chargingSchedulePeriod[0].operationMode.has_value());
+    // nullopt operationMode is equivalent to ChargingOnly; effective_mode()
+    // normalizes the comparison so an explicit ChargingOnly round-trips
+    // through the pipeline.
+    EXPECT_EQ(effective_mode(result.chargingSchedulePeriod[0].operationMode), OperationModeEnum::ChargingOnly);
     EXPECT_EQ(result.chargingSchedulePeriod[1].operationMode, OperationModeEnum::CentralSetpoint);
     EXPECT_EQ(result.chargingSchedulePeriod[1].setpoint, 5000.0F);
 }

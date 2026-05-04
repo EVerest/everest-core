@@ -54,14 +54,6 @@ struct period_entry_t {
     std::int32_t stack_level;
     ChargingRateUnitEnum charging_rate_unit;
     std::optional<float> min_charging_rate;
-
-    bool equals(const period_entry_t& other) const {
-        return (start == other.start) && (end == other.end) && (limit == other.limit) &&
-               (discharge_limit == other.discharge_limit) && (setpoint == other.setpoint) &&
-               (number_phases == other.number_phases) && (stack_level == other.stack_level) &&
-               (charging_rate_unit == other.charging_rate_unit) && (min_charging_rate == other.min_charging_rate) &&
-               (operationMode == other.operationMode);
-    }
 };
 
 /// \brief Calculate the number of seconds elapsed between \param to and \param from
@@ -69,6 +61,13 @@ std::int32_t elapsed_seconds(const ocpp::DateTime& to, const ocpp::DateTime& fro
 
 /// \brief Rounds down the \param dt to the nearest second
 ocpp::DateTime floor_seconds(const ocpp::DateTime& dt);
+
+/// \brief Map an optional OperationMode to its effective value.
+///
+/// An absent operationMode behaves as ChargingOnly. Use this helper in every
+/// comparator and dedup site so that nullopt and an explicit ChargingOnly are
+/// not treated as different.
+OperationModeEnum effective_mode(const std::optional<OperationModeEnum>& mode);
 
 /// \brief calculate the start times for the profile
 /// \param now the current date and time
