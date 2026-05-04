@@ -274,12 +274,13 @@ bool validate_yunit(DERControlEnum control_type, const DERCurve& curve) {
 
 DERControl::DERControl(const v2::FunctionalBlockContext& context) : context(context) {
     // Start periodic check for expired scheduled controls (every 30 seconds).
-    // The lambda holds sweep_mutex for the duration of the callback so the
-    // destructor can drain any in-flight run before member destruction begins.
+    // The lambda takes a sweep_stopping handle (which holds the monitor's
+    // lock) for the duration of the callback so the destructor can drain
+    // any in-flight run before member destruction begins.
     this->scheduled_control_timer.interval(
         [this]() {
-            std::lock_guard<std::mutex> lock(this->sweep_mutex);
-            if (this->stopping.load(std::memory_order_acquire)) {
+            auto handle = this->sweep_stopping.handle();
+            if (*handle) {
                 return;
             }
             this->check_scheduled_controls();
@@ -289,22 +290,22 @@ DERControl::DERControl(const v2::FunctionalBlockContext& context) : context(cont
 
 DERControl::~DERControl() {
     // Set the stopping flag under the lock so any callback that subsequently
-    // acquires the lock observes it and short-circuits.
+    // acquires a handle observes it and short-circuits.
     {
-        std::lock_guard<std::mutex> lock(this->sweep_mutex);
-        this->stopping.store(true, std::memory_order_release);
+        auto handle = this->sweep_stopping.handle();
+        *handle = true;
     }
     // Cancel pending waits on the boost asio timer. After this, the timer's
     // wrapper guarantees at most one more callback may complete before the
     // io thread becomes idle.
     this->scheduled_control_timer.stop();
-    // Drain: re-acquire sweep_mutex to wait for any callback that started
+    // Drain: re-acquire a handle to wait for any callback that started
     // before stop() was observed by the io thread. After this returns, no
     // callback is running and none can start, so member destruction (which
     // tears down the io thread via ~Timer) is safe even if the
     // FunctionalBlockContext's referenced DatabaseHandler has already been
     // freed by the owning ChargePoint.
-    std::lock_guard<std::mutex> drain_lock(this->sweep_mutex);
+    auto drain_handle = this->sweep_stopping.handle();
 }
 
 void DERControl::handle_message(const ocpp::EnhancedMessage<v2::MessageType>& message) {

@@ -3,14 +3,12 @@
 
 #pragma once
 
-#include <atomic>
-#include <mutex>
-
 #include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/message_handler.hpp>
 #include <ocpp/v2/ocpp_enums.hpp>
 
 #include <everest/timer.hpp>
+#include <everest/util/async/monitor.hpp>
 
 #include <ocpp/v21/messages/ClearDERControl.hpp>
 #include <ocpp/v21/messages/GetDERControl.hpp>
@@ -42,16 +40,18 @@ public:
 
 private:
     const v2::FunctionalBlockContext& context;
-    // Synchronization for the periodic timer callback. The lambda passed to
-    // scheduled_control_timer holds sweep_mutex while it runs and short-circuits
-    // when stopping is set. The destructor sets stopping under the lock, stops
-    // the timer (cancels future fires), and re-acquires the lock to drain any
-    // in-flight callback before member destruction. This is required because
-    // the FunctionalBlockContext holds a raw reference to the DatabaseHandler
-    // owned by ChargePoint, and ChargePoint may free the DatabaseHandler before
-    // the SteadyTimer's io thread is joined during member destruction.
-    std::mutex sweep_mutex;
-    std::atomic<bool> stopping{false};
+    // Synchronization for the periodic timer callback. We need to BLOCK in
+    // the destructor until any in-flight callback finishes (a non-blocking
+    // atomic flag is not enough), so the bool lives inside a monitor and
+    // the lambda holds a handle for the duration of the callback. The
+    // destructor sets the flag under the lock, stops the timer (cancels
+    // future fires), and re-acquires a handle to drain any in-flight
+    // callback before member destruction. This is required because
+    // FunctionalBlockContext holds a raw reference to the DatabaseHandler
+    // owned by ChargePoint, and ChargePoint frees the DatabaseHandler
+    // before DERControl on shutdown, so an in-flight sweep callback could
+    // UAF the handler during the io-thread join inside ~SteadyTimer.
+    everest::lib::util::monitor<bool> sweep_stopping{false};
     Everest::SteadyTimer scheduled_control_timer;
 
     void handle_set_der_control(ocpp::Call<SetDERControlRequest> call);

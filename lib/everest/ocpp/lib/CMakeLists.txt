@@ -177,6 +177,7 @@ endif()
 target_link_libraries(ocpp
     PUBLIC
         everest::timer
+        everest::util
         nlohmann_json_schema_validator
         everest::evse_security
         websockets_shared
