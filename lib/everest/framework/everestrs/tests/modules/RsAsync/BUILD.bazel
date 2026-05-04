@@ -1,0 +1,96 @@
+load("@rules_python//python:defs.bzl", "py_test")
+load("@rules_rust//cargo:defs.bzl", "cargo_build_script")
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//applications/utils:requirements.bzl", "requirement")
+load("//lib/everest/framework/bazel:everest_env.bzl", "everest_env", "everest_test")
+load("//lib/everest/framework/bazel:modules_def.bzl", "rs_everest_module")
+load("//third-party/bazel/toolchains:defs.bzl", "CROSS_PYTHON_INCOMPATIBLE")
+
+cargo_build_script(
+    name = "build_script",
+    srcs = ["build.rs"],
+    build_script_env = {
+        "EVEREST_CORE_ROOT": "../..",
+    },
+    data = [
+        "manifest.yaml",
+        "//lib/everest/framework/everestrs/tests/errors",
+        "//lib/everest/framework/everestrs/tests/interfaces",
+        "//lib/everest/framework/everestrs/tests/types",
+    ],
+    edition = "2021",
+    deps = [
+        "//lib/everest/framework/everestrs/everestrs-build",
+    ],
+)
+
+rust_binary(
+    name = "RsAsyncBinary",
+    srcs = glob(["src/**/*.rs"]),
+    edition = "2021",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":build_script",
+        "//lib/everest/framework/everestrs/everestrs",
+        "//lib/everest/framework/everestrs/everestrs:everestrs_bridge",
+        "//lib/everest/framework/everestrs/everestrs:everestrs_sys",
+        "@everest_framework_crate_index//:log",
+        "@everest_framework_crate_index//:tokio",
+    ],
+)
+
+rs_everest_module(
+    name = "RsAsync",
+    binary = ":RsAsyncBinary",
+    manifest = "manifest.yaml",
+)
+
+everest_env(
+    name = "config_env",
+    config_file = "config.yaml",
+    modules = [
+        ":RsAsync",
+    ],
+)
+
+sh_test(
+    name = "integration_test",
+    srcs = ["//lib/everest/framework/everestrs/tests/modules:smoke_test.sh"],
+    data = [":config_env"],
+    tags = ["exclusive"],
+)
+
+# Integration tests for RsAsync. Will launch EVerest with a ProbeModule and
+# validate calls to our trait mocks.
+rust_test(
+    name = "RsAsyncMockedTestBinary",
+    srcs = ["rs_tests/tests.rs"],
+    compile_data = [
+        "config.yaml",
+        "manifest.yaml",
+        "//lib/everest/framework/everestrs/tests/errors",
+        "//lib/everest/framework/everestrs/tests/interfaces",
+        "//lib/everest/framework/everestrs/tests/types",
+    ],
+    crate_features = [
+        "mockall",
+        "trait",
+    ],
+    data = ["config_env"],
+    edition = "2021",
+    proc_macro_deps = [
+        "//lib/everest/framework/everestrs/everestrs-derive",
+        "@everest_framework_crate_index//:mockall_double",
+    ],
+    rustc_env = {
+        "CARGO_MANIFEST_DIR": "lib/everest/framework/everestrs/tests/modules/RsAsync",
+        "EVEREST_CORE_ROOT": "lib/everest/framework/everestrs/tests",
+    },
+    tags = ["exclusive"],
+    deps = [
+        "//lib/everest/framework/everestrs/everestrs",
+        "@everest_framework_crate_index//:mockall",
+        "@everest_framework_crate_index//:tokio",
+    ],
+)
