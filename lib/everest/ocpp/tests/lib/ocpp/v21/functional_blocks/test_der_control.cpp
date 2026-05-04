@@ -2018,3 +2018,21 @@ TEST_F(DERControlTest, GetDERControl_ReportChunksAndSetsTbc) {
 
     der_control.handle_message(msg);
 }
+
+// =============================================================================
+// RFC3339 timezone offset handling
+// =============================================================================
+
+// All time comparisons in der_control.cpp run on UTC time_points obtained from
+// ocpp::DateTime. A non-Z RFC3339 input must produce the same instant as the
+// equivalent Z-suffixed string; otherwise the supersede analysis (and the
+// schedule-horizon / immediate-start branches) would silently misclassify
+// startTimes whose CSMS sent them in a local offset.
+TEST_F(DERControlTest, DateTime_NonUtcOffset_ParsesToSameInstantAsUtc) {
+    const ocpp::DateTime utc_z("2026-06-01T10:00:00Z");
+    const ocpp::DateTime offset_plus_2("2026-06-01T12:00:00+02:00");
+    const ocpp::DateTime offset_minus_5("2026-06-01T05:00:00-05:00");
+
+    EXPECT_EQ(utc_z.to_time_point(), offset_plus_2.to_time_point());
+    EXPECT_EQ(utc_z.to_time_point(), offset_minus_5.to_time_point());
+}

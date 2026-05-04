@@ -28,6 +28,11 @@
 #include "component_state_manager.hpp"
 
 namespace ocpp {
+
+namespace v21 {
+class DERControlInterface;
+} // namespace v21
+
 namespace v2 {
 
 class AuthorizationInterface;
@@ -45,14 +50,6 @@ class SmartChargingInterface;
 class TariffAndCostInterface;
 class TransactionInterface;
 class BidirectionalInterface;
-
-} // namespace v2
-
-namespace v21 {
-class DERControlInterface;
-} // namespace v21
-
-namespace v2 {
 
 class DatabaseHandler;
 class DeviceModelAbstract;

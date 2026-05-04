@@ -40,7 +40,7 @@ bool duration_is_sane(std::optional<float> d) {
 }
 
 bool is_finite_curve(const DERCurve& curve) {
-    if (!is_finite_opt(curve.responseTime) || !is_finite_opt(curve.duration)) {
+    if (!ocpp::is_finite_opt(curve.responseTime) || !ocpp::is_finite_opt(curve.duration)) {
         return false;
     }
     for (const auto& point : curve.curveData) {
@@ -50,20 +50,20 @@ bool is_finite_curve(const DERCurve& curve) {
     }
     if (curve.hysteresis.has_value()) {
         const auto& h = curve.hysteresis.value();
-        if (!is_finite_opt(h.hysteresisHigh) || !is_finite_opt(h.hysteresisLow) || !is_finite_opt(h.hysteresisDelay) ||
-            !is_finite_opt(h.hysteresisGradient)) {
+        if (!ocpp::is_finite_opt(h.hysteresisHigh) || !ocpp::is_finite_opt(h.hysteresisLow) ||
+            !ocpp::is_finite_opt(h.hysteresisDelay) || !ocpp::is_finite_opt(h.hysteresisGradient)) {
             return false;
         }
     }
     if (curve.reactivePowerParams.has_value()) {
         const auto& r = curve.reactivePowerParams.value();
-        if (!is_finite_opt(r.vRef) || !is_finite_opt(r.autonomousVRefTimeConstant)) {
+        if (!ocpp::is_finite_opt(r.vRef) || !ocpp::is_finite_opt(r.autonomousVRefTimeConstant)) {
             return false;
         }
     }
     if (curve.voltageParams.has_value()) {
         const auto& v = curve.voltageParams.value();
-        if (!is_finite_opt(v.hv10MinMeanValue) || !is_finite_opt(v.hv10MinMeanTripDelay)) {
+        if (!ocpp::is_finite_opt(v.hv10MinMeanValue) || !ocpp::is_finite_opt(v.hv10MinMeanTripDelay)) {
             return false;
         }
     }
@@ -80,31 +80,31 @@ bool are_control_floats_finite(const SetDERControlRequest& req) {
     if (req.freqDroop.has_value()) {
         const auto& fd = req.freqDroop.value();
         if (!std::isfinite(fd.overFreq) || !std::isfinite(fd.underFreq) || !std::isfinite(fd.overDroop) ||
-            !std::isfinite(fd.underDroop) || !std::isfinite(fd.responseTime) || !is_finite_opt(fd.duration)) {
+            !std::isfinite(fd.underDroop) || !std::isfinite(fd.responseTime) || !ocpp::is_finite_opt(fd.duration)) {
             return false;
         }
     }
     if (req.fixedVar.has_value()) {
         const auto& fv = req.fixedVar.value();
-        if (!std::isfinite(fv.setpoint) || !is_finite_opt(fv.duration)) {
+        if (!std::isfinite(fv.setpoint) || !ocpp::is_finite_opt(fv.duration)) {
             return false;
         }
     }
     if (req.fixedPFAbsorb.has_value()) {
         const auto& pf = req.fixedPFAbsorb.value();
-        if (!std::isfinite(pf.displacement) || !is_finite_opt(pf.duration)) {
+        if (!std::isfinite(pf.displacement) || !ocpp::is_finite_opt(pf.duration)) {
             return false;
         }
     }
     if (req.fixedPFInject.has_value()) {
         const auto& pf = req.fixedPFInject.value();
-        if (!std::isfinite(pf.displacement) || !is_finite_opt(pf.duration)) {
+        if (!std::isfinite(pf.displacement) || !ocpp::is_finite_opt(pf.duration)) {
             return false;
         }
     }
     if (req.limitMaxDischarge.has_value()) {
         const auto& lmd = req.limitMaxDischarge.value();
-        if (!is_finite_opt(lmd.pctMaxDischargePower) || !is_finite_opt(lmd.duration)) {
+        if (!ocpp::is_finite_opt(lmd.pctMaxDischargePower) || !ocpp::is_finite_opt(lmd.duration)) {
             return false;
         }
         if (lmd.powerMonitoringMustTrip.has_value() && !is_finite_curve(lmd.powerMonitoringMustTrip.value())) {
@@ -114,8 +114,8 @@ bool are_control_floats_finite(const SetDERControlRequest& req) {
     if (req.enterService.has_value()) {
         const auto& es = req.enterService.value();
         if (!std::isfinite(es.highVoltage) || !std::isfinite(es.lowVoltage) || !std::isfinite(es.highFreq) ||
-            !std::isfinite(es.lowFreq) || !is_finite_opt(es.delay) || !is_finite_opt(es.randomDelay) ||
-            !is_finite_opt(es.rampRate)) {
+            !std::isfinite(es.lowFreq) || !ocpp::is_finite_opt(es.delay) || !ocpp::is_finite_opt(es.randomDelay) ||
+            !ocpp::is_finite_opt(es.rampRate)) {
             return false;
         }
     }
@@ -673,6 +673,15 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
 
     transaction->commit();
 
+    // OCPP 2.1 §1.75.2 / §1.48.2: SetDERControlResponse.supersededIds and
+    // NotifyDERStartStopRequest.supersededIds are both capped at 0..24. DB
+    // state is already correct (every superseded row was flipped above);
+    // only the wire payload needs trimming.
+    constexpr size_t MAX_SUPERSEDED_IDS = 24;
+    if (superseded_ids.size() > MAX_SUPERSEDED_IDS) {
+        superseded_ids.resize(MAX_SUPERSEDED_IDS);
+    }
+
     response.status = DERControlStatusEnum::Accepted;
     if (new_is_superseded) {
         // R04.FR.08: the new control is itself superseded, echo its own id.
@@ -940,6 +949,13 @@ void DERControl::check_scheduled_controls() {
     // observed by CSMS without risk of DB rollback. A dispatcher throw per
     // notification is swallowed so the timer thread isn't torn down; remaining
     // notifications are still attempted.
+    //
+    // TODO: a transient dispatch failure here is dropped — STARTED_NOTIFIED is
+    // already persisted, so the next sweep won't retry, and FR.22 expiry rows
+    // are deleted before this loop runs. CSMS will observe the resulting state
+    // mismatch only on its next GetDERControl. If reliability becomes a
+    // concern, persist a "notify_outbox" row alongside the state change and
+    // drain it from the next sweep.
     for (const auto& notification : pending_notifications) {
         try {
             ocpp::Call<NotifyDERStartStopRequest> call(notification);
@@ -954,7 +970,18 @@ namespace {
 
 /// Maximum number of controls per ReportDERControl message. If more controls are
 /// present, the report is split into multiple messages using the tbc flag.
+///
+/// Picked to be well below the per-typed-field 0..24 cardinality cap that the
+/// OCPP 2.1 schema imposes on every ReportDERControl field (curve, freqDroop,
+/// fixedPF, etc.; spec §1.64). Build_report does not enforce per-field caps
+/// itself, so the static_assert below is what keeps a future bump safe — a
+/// chunk size > 24 could let a single field exceed the schema cap if every
+/// control in the chunk happened to be the same type.
 constexpr size_t MAX_CONTROLS_PER_REPORT_MESSAGE = 10;
+static_assert(MAX_CONTROLS_PER_REPORT_MESSAGE <= 24,
+              "OCPP 2.1 caps each typed ReportDERControl field at 0..24 entries. "
+              "Raising MAX_CONTROLS_PER_REPORT_MESSAGE above 24 requires a "
+              "per-field-cap implementation in build_report.");
 
 /// Build a ReportDERControlRequest populated with the given controls.
 /// Each control JSON is parsed and sorted into the appropriate *Get vector.
