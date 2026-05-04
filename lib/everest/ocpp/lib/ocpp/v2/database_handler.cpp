@@ -1037,11 +1037,25 @@ void DatabaseHandler::insert_or_update_der_control(const std::string& control_id
                                                    int32_t priority, const std::optional<std::string>& start_time,
                                                    const std::optional<float>& duration,
                                                    const std::string& control_json) {
-    const std::string sql = "INSERT OR REPLACE INTO DER_CONTROLS "
+    // SQLite UPSERT (instead of INSERT OR REPLACE) so STARTED_NOTIFIED and
+    // PENDING_SUPERSEDE_ID are preserved when the same controlId is re-set.
+    // INSERT OR REPLACE physically deletes and re-inserts the row, resetting
+    // those columns to their defaults; that caused duplicate
+    // NotifyDERStartStop(started=true) on the next 30 s sweep for an
+    // already-running control.
+    const std::string sql = "INSERT INTO DER_CONTROLS "
                             "(CONTROL_ID, IS_DEFAULT, CONTROL_TYPE, IS_SUPERSEDED, PRIORITY, START_TIME, DURATION, "
                             "CONTROL_JSON) VALUES "
                             "(@control_id, @is_default, @control_type, @is_superseded, @priority, @start_time, "
-                            "@duration, @control_json)";
+                            "@duration, @control_json) "
+                            "ON CONFLICT(CONTROL_ID) DO UPDATE SET "
+                            "IS_DEFAULT = excluded.IS_DEFAULT, "
+                            "CONTROL_TYPE = excluded.CONTROL_TYPE, "
+                            "IS_SUPERSEDED = excluded.IS_SUPERSEDED, "
+                            "PRIORITY = excluded.PRIORITY, "
+                            "START_TIME = excluded.START_TIME, "
+                            "DURATION = excluded.DURATION, "
+                            "CONTROL_JSON = excluded.CONTROL_JSON";
     auto stmt = this->database->new_statement(sql);
 
     stmt->bind_text("@control_id", control_id, SQLiteString::Transient);
@@ -1251,8 +1265,12 @@ void DatabaseHandler::mark_der_control_started_notified(const std::string& contr
 
 std::vector<DatabaseHandlerInterface::PendingSupersedeActivation>
 DatabaseHandler::get_der_control_pending_supersede_activations(const DateTime& now) {
+    // IS_SUPERSEDED = 0 is a defensive filter: a row that is itself superseded
+    // by another control must never have its own deferred-supersede target
+    // activated, even if such a state were ever to appear in the database.
     const std::string sql = "SELECT CONTROL_ID, PENDING_SUPERSEDE_ID FROM DER_CONTROLS WHERE "
-                            "PENDING_SUPERSEDE_ID IS NOT NULL AND START_TIME IS NOT NULL AND START_TIME <= @now";
+                            "PENDING_SUPERSEDE_ID IS NOT NULL AND IS_SUPERSEDED = 0 AND "
+                            "START_TIME IS NOT NULL AND START_TIME <= @now";
     auto stmt = this->database->new_statement(sql);
     stmt->bind_text("@now", now.to_rfc3339(), SQLiteString::Transient);
 

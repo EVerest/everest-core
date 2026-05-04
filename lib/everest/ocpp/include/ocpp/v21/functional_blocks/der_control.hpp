@@ -3,6 +3,9 @@
 
 #pragma once
 
+#include <atomic>
+#include <mutex>
+
 #include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/message_handler.hpp>
 #include <ocpp/v2/ocpp_enums.hpp>
@@ -39,6 +42,16 @@ public:
 
 private:
     const v2::FunctionalBlockContext& context;
+    // Synchronization for the periodic timer callback. The lambda passed to
+    // scheduled_control_timer holds sweep_mutex while it runs and short-circuits
+    // when stopping is set. The destructor sets stopping under the lock, stops
+    // the timer (cancels future fires), and re-acquires the lock to drain any
+    // in-flight callback before member destruction. This is required because
+    // the FunctionalBlockContext holds a raw reference to the DatabaseHandler
+    // owned by ChargePoint, and ChargePoint may free the DatabaseHandler before
+    // the SteadyTimer's io thread is joined during member destruction.
+    std::mutex sweep_mutex;
+    std::atomic<bool> stopping{false};
     Everest::SteadyTimer scheduled_control_timer;
 
     void handle_set_der_control(ocpp::Call<SetDERControlRequest> call);

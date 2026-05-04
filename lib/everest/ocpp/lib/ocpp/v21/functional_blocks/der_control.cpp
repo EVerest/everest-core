@@ -273,12 +273,38 @@ bool validate_yunit(DERControlEnum control_type, const DERCurve& curve) {
 } // anonymous namespace
 
 DERControl::DERControl(const v2::FunctionalBlockContext& context) : context(context) {
-    // Start periodic check for expired scheduled controls (every 30 seconds)
-    this->scheduled_control_timer.interval([this]() { this->check_scheduled_controls(); }, std::chrono::seconds(30));
+    // Start periodic check for expired scheduled controls (every 30 seconds).
+    // The lambda holds sweep_mutex for the duration of the callback so the
+    // destructor can drain any in-flight run before member destruction begins.
+    this->scheduled_control_timer.interval(
+        [this]() {
+            std::lock_guard<std::mutex> lock(this->sweep_mutex);
+            if (this->stopping.load(std::memory_order_acquire)) {
+                return;
+            }
+            this->check_scheduled_controls();
+        },
+        std::chrono::seconds(30));
 }
 
 DERControl::~DERControl() {
+    // Set the stopping flag under the lock so any callback that subsequently
+    // acquires the lock observes it and short-circuits.
+    {
+        std::lock_guard<std::mutex> lock(this->sweep_mutex);
+        this->stopping.store(true, std::memory_order_release);
+    }
+    // Cancel pending waits on the boost asio timer. After this, the timer's
+    // wrapper guarantees at most one more callback may complete before the
+    // io thread becomes idle.
     this->scheduled_control_timer.stop();
+    // Drain: re-acquire sweep_mutex to wait for any callback that started
+    // before stop() was observed by the io thread. After this returns, no
+    // callback is running and none can start, so member destruction (which
+    // tears down the io thread via ~Timer) is safe even if the
+    // FunctionalBlockContext's referenced DatabaseHandler has already been
+    // freed by the owning ChargePoint.
+    std::lock_guard<std::mutex> drain_lock(this->sweep_mutex);
 }
 
 void DERControl::handle_message(const ocpp::EnhancedMessage<v2::MessageType>& message) {
@@ -306,11 +332,6 @@ bool DERControl::is_control_type_supported(v2::DERControlEnum control_type) cons
             return true;
         }
 
-        // For an AC EVSE the supported DER control modes are typically defined by the
-        // EV rather than the charging station, so ACDERCtrlr.ModesSupported here is a
-        // simulated / device-model stand-in. TODO: decide whether we want to verify
-        // the mode against the connected EV's advertised capabilities, or always
-        // accept AC-side DER modes at this layer.
         auto ac_modes_cv =
             DERComponentVariables::get_ac_component_variable(evse_id, DERComponentVariables::ModesSupported);
         auto ac_modes = this->context.device_model.get_optional_value<std::string>(ac_modes_cv);
@@ -474,6 +495,12 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
     // startTime. The deferred_supersede_target slot below is populated only on
     // the FR.07 path.
     std::optional<std::string> deferred_supersede_target;
+    // Pending immediate-supersede side effects. We collect into a local list
+    // first and only apply them after the loop, because a later iteration may
+    // discover that the new control is itself superseded by a higher-priority
+    // existing row (R04.FR.08). In that case the new control will never run,
+    // so it must not flag any other rows as superseded by it.
+    std::vector<std::string> pending_immediate_supersedes;
     const auto now = ocpp::DateTime();
     const bool has_future_start =
         !request.isDefault && start_time.has_value() && ocpp::DateTime(start_time.value()) > now;
@@ -545,9 +572,10 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
                 } else {
                     // R04.FR.06: existing is not yet active (or, for default vs
                     // default, R04.FR.03 — existing is a default and never has a
-                    // startTime). Flip immediately.
-                    this->context.database_handler.update_der_control_superseded(existing_id, true);
-                    superseded_ids.emplace_back(existing_id);
+                    // startTime). Flip is deferred until after the loop so it
+                    // can be cancelled if a higher-priority existing row
+                    // supersedes the new control (R04.FR.08).
+                    pending_immediate_supersedes.emplace_back(existing_id);
                 }
             } else if (priority > existing_priority) {
                 // R04.FR.08: existing has strictly higher priority than new, the new
@@ -557,6 +585,22 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
             }
         } catch (const json::exception& e) {
             EVLOG_warning << "Failed to parse existing DER control JSON: " << e.what();
+        }
+    }
+
+    // R04.FR.08: if the new control is itself superseded by a higher-priority
+    // existing row, it cannot supersede anything else. Drop both immediate and
+    // deferred supersede side effects so we don't persist a zombie row whose
+    // IS_SUPERSEDED=1 yet whose PENDING_SUPERSEDE_ID still points at another
+    // row, and so we don't flag rows as superseded by a control that will
+    // never actually take effect.
+    if (new_is_superseded) {
+        pending_immediate_supersedes.clear();
+        deferred_supersede_target.reset();
+    } else {
+        for (const auto& existing_id : pending_immediate_supersedes) {
+            this->context.database_handler.update_der_control_superseded(existing_id, true);
+            superseded_ids.emplace_back(existing_id);
         }
     }
 
@@ -581,9 +625,14 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
                                                                 control_type_str, new_is_superseded, priority,
                                                                 start_time, duration, control_json.dump());
 
+    // PENDING_SUPERSEDE_ID is preserved by the UPSERT, so we have to be
+    // explicit on every Set: either point it at the freshly computed deferred
+    // target, or clear any stale value left by a previous version of this row.
     if (deferred_supersede_target.has_value()) {
         this->context.database_handler.set_der_control_pending_supersede(request.controlId.get(),
                                                                          deferred_supersede_target.value());
+    } else {
+        this->context.database_handler.clear_der_control_pending_supersede(request.controlId.get());
     }
 
     // R04.FR.20: if the immediate-start branch below will fire, flag the row
