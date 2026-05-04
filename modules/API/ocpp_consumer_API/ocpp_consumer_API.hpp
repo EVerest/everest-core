@@ -88,6 +88,7 @@ private:
     void generate_api_var_ocpp_transaction_event();
     void generate_api_var_event_data();
     void generate_api_var_charging_schedules();
+    void generate_api_var_ocpp_message();
 
     void generate_api_var_communication_check();
 
