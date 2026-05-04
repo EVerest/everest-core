@@ -19,6 +19,7 @@
 #include <ocpp/v2/messages/GetDisplayMessages.hpp>
 #include <ocpp/v2/messages/GetLog.hpp>
 #include <ocpp/v2/messages/NotifyEVChargingNeeds.hpp>
+#include <ocpp/v2/messages/Reset.hpp>
 #include <ocpp/v2/messages/SetDisplayMessage.hpp>
 #include <ocpp/v2/messages/TransactionEvent.hpp>
 #include <ocpp/v2/messages/UpdateFirmware.hpp>
@@ -281,6 +282,9 @@ to_everest_allowed_energy_transfer_mode(const ocpp::v2::EnergyTransferModeEnum& 
 /// std::vector<types::iso15118::EnergyTransferMode>
 std::vector<types::iso15118::EnergyTransferMode> to_everest_allowed_energy_transfer_modes(
     const std::vector<ocpp::v2::EnergyTransferModeEnum>& allowed_energy_transfer_modes);
+
+/// \brief Converts the ocpp ResetEnum to the everest counterpart.
+types::system::ResetType to_everest_system_reset_type_enum(const ocpp::v2::ResetEnum& from);
 } // namespace conversions
 } // namespace module
 

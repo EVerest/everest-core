@@ -510,12 +510,12 @@ void OCPP201::ready() {
 
     ocpp::v2::Callbacks callbacks;
     callbacks.is_reset_allowed_callback = [this](const std::optional<const int32_t> evse_id,
-                                                 const ocpp::v2::ResetEnum&) {
+                                                 const ocpp::v2::ResetEnum& type) {
         if (evse_id.has_value()) {
             return false; // Reset of EVSE is currently not supported
         }
         try {
-            return this->r_system->call_is_reset_allowed(types::system::ResetType::NotSpecified);
+            return this->r_system->call_is_reset_allowed(conversions::to_everest_system_reset_type_enum(type));
         } catch (std::out_of_range& e) {
             EVLOG_warning << "Could not convert OCPP ResetEnum to EVerest ResetType while executing "
                              "is_reset_allowed_callback.";
@@ -533,7 +533,7 @@ void OCPP201::ready() {
         // small delay before stopping the charge point to make sure all responses are received
         std::this_thread::sleep_for(std::chrono::seconds(this->config.ResetStopDelay));
         try {
-            this->r_system->call_reset(types::system::ResetType::NotSpecified, scheduled);
+            this->r_system->call_reset(conversions::to_everest_system_reset_type_enum(type), scheduled);
         } catch (std::out_of_range& e) {
             EVLOG_warning << "Could not convert OCPP ResetEnum to EVerest ResetType while executing reset_callack. No "
                              "reset will be executed.";

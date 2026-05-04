@@ -1820,5 +1820,17 @@ std::vector<types::iso15118::EnergyTransferMode> to_everest_allowed_energy_trans
     return value;
 }
 
+types::system::ResetType to_everest_system_reset_type_enum(const ocpp::v2::ResetEnum& from) {
+    switch (from) {
+    case ocpp::v2::ResetEnum::OnIdle:
+        return types::system::ResetType::Soft;
+    case ocpp::v2::ResetEnum::Immediate:
+        [[fallthrough]];
+    case ocpp::v2::ResetEnum::ImmediateAndResume:
+        return types::system::ResetType::Hard;
+    }
+    return types::system::ResetType::NotSpecified;
+}
+
 } // namespace conversions
 } // namespace module
