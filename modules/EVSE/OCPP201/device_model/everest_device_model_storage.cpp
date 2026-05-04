@@ -329,8 +329,7 @@ EverestDeviceModelStorage::EverestDeviceModelStorage(
     const std::map<int32_t, types::evse_board_support::HardwareCapabilities>& evse_hardware_capabilities_map,
     const std::map<int32_t, std::vector<types::iso15118::EnergyTransferMode>>& evse_supported_energy_transfers,
     const std::map<int32_t, bool>& evse_service_renegotiation_supported, const std::filesystem::path& db_path,
-    const std::filesystem::path& migration_files_path,
-    std::unique_ptr<VariableMapping> variable_mapping,
+    const std::filesystem::path& migration_files_path, std::unique_ptr<VariableMapping> variable_mapping,
     std::shared_ptr<Everest::config::ConfigServiceClient> config_service_client) :
     r_evse_manager(r_evse_manager),
     r_extensions_15118(r_extensions_15118),

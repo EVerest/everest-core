@@ -25,8 +25,7 @@ public:
         const std::map<int32_t, types::evse_board_support::HardwareCapabilities>& evse_hardware_capabilities_map,
         const std::map<int32_t, std::vector<types::iso15118::EnergyTransferMode>>& evse_supported_energy_transfers,
         const std::map<int32_t, bool>& evse_service_renegotiation_supported, const std::filesystem::path& db_path,
-        const std::filesystem::path& migration_files_path,
-        std::unique_ptr<VariableMapping> variable_mapping,
+        const std::filesystem::path& migration_files_path, std::unique_ptr<VariableMapping> variable_mapping,
         std::shared_ptr<Everest::config::ConfigServiceClient> config_service_client);
     virtual ~EverestDeviceModelStorage() override = default;
     virtual ocpp::v2::DeviceModelMap get_device_model() override;
