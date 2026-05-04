@@ -83,7 +83,7 @@ MQTTAbstractionImpl::MQTTAbstractionImpl(const std::string& mqtt_server_socket_p
 }
 
 MQTTAbstractionImpl::~MQTTAbstractionImpl() {
-    if (this->running.load()) {
+    if (this->mqtt_is_connected) {
         this->disconnect();
     }
     // this->mqtt_mainloop_thread.join();
