@@ -444,6 +444,9 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
     // R04.FR.16-17: Validate control fields match controlType
     if (!this->validate_control_fields(request)) {
         response.status = DERControlStatusEnum::Rejected;
+        response.statusInfo = StatusInfo();
+        response.statusInfo->reasonCode = "InvalidValue";
+        response.statusInfo->additionalInfo = "ControlFieldMismatch";
         ocpp::CallResult<SetDERControlResponse> call_result(response, call.uniqueId);
         this->context.message_dispatcher.dispatch_call_result(call_result);
         return;
@@ -452,6 +455,9 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
     // R04.FR.13: Default controls cannot have startTime or duration
     if (request.isDefault && has_start_time_or_duration(request)) {
         response.status = DERControlStatusEnum::Rejected;
+        response.statusInfo = StatusInfo();
+        response.statusInfo->reasonCode = "InvalidValue";
+        response.statusInfo->additionalInfo = "DefaultWithStartTimeOrDuration";
         ocpp::CallResult<SetDERControlResponse> call_result(response, call.uniqueId);
         this->context.message_dispatcher.dispatch_call_result(call_result);
         return;
@@ -461,6 +467,9 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
     if (!request.isDefault &&
         (request.controlType == DERControlEnum::EnterService || request.controlType == DERControlEnum::Gradients)) {
         response.status = DERControlStatusEnum::Rejected;
+        response.statusInfo = StatusInfo();
+        response.statusInfo->reasonCode = "InvalidValue";
+        response.statusInfo->additionalInfo = "EnterServiceOrGradientsMustBeDefault";
         ocpp::CallResult<SetDERControlResponse> call_result(response, call.uniqueId);
         this->context.message_dispatcher.dispatch_call_result(call_result);
         return;
@@ -471,6 +480,8 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
     // existing row does not increase row count, so it is always allowed.
     if (this->context.database_handler.count_der_controls() >= MAX_DER_CONTROLS &&
         !this->context.database_handler.get_der_control(request.controlId.get()).has_value()) {
+        EVLOG_warning << "DER control table at cap (" << MAX_DER_CONTROLS
+                      << "), rejecting new controlId=" << request.controlId.get();
         response.status = DERControlStatusEnum::Rejected;
         response.statusInfo = StatusInfo();
         response.statusInfo->reasonCode = "InvalidValue";
@@ -526,8 +537,13 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
             auto existing = json::parse(existing_json);
             auto existing_id = existing.at("controlId").get<std::string>();
             auto existing_priority = existing.at("priority").get<int32_t>();
-            auto existing_is_superseded = existing.value("isSuperseded", false);
-            auto existing_is_default = existing.value("isDefault", false);
+            // Strict at(...).get<bool>(): we control the writer so both flags are
+            // always present and bool-typed. A missing or wrong-typed value is
+            // a sign of data corruption — let it throw and be logged by the
+            // outer per-row catch instead of silently defaulting to false and
+            // misclassifying the row.
+            auto existing_is_superseded = existing.at("isSuperseded").get<bool>();
+            auto existing_is_default = existing.at("isDefault").get<bool>();
 
             if (existing_id == request.controlId.get()) {
                 continue; // Same controlId is an update, not a supersede
@@ -544,17 +560,25 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
             if (!existing_is_default && existing.contains("startTime")) {
                 ocpp::DateTime existing_start(existing.at("startTime").get<std::string>());
                 if (existing_start.to_time_point() <= now.to_time_point()) {
-                    if (existing.contains("duration")) {
-                        const auto existing_duration = existing.at("duration").get<float>();
+                    // Strict type check before .get<float>(): a malformed persisted
+                    // duration would otherwise throw and be swallowed by the outer
+                    // per-row catch, silently skipping supersede analysis for this
+                    // row. Missing or non-numeric duration is treated as indefinite
+                    // (the row is still active until explicitly cleared).
+                    const auto duration_it = existing.find("duration");
+                    if (duration_it == existing.end() || !duration_it->is_number()) {
+                        existing_is_currently_active = true;
+                    } else {
+                        const auto existing_duration = duration_it->get<float>();
                         if (std::isfinite(existing_duration)) {
                             const auto expiry = ocpp::DateTime(
                                 existing_start.to_time_point() +
                                 std::chrono::milliseconds(static_cast<int64_t>(existing_duration * 1000.0F)));
                             existing_is_currently_active = expiry.to_time_point() > now.to_time_point();
+                        } else {
+                            // Non-finite duration → indefinite.
+                            existing_is_currently_active = true;
                         }
-                    } else {
-                        // No duration set → indefinite; treat as still active.
-                        existing_is_currently_active = true;
                     }
                 }
             }
@@ -693,8 +717,18 @@ void DERControl::handle_get_der_control(ocpp::Call<GetDERControlRequest> call) {
         control_id_filter = request.controlId->get();
     }
 
-    auto matching = this->context.database_handler.get_der_controls_matching_criteria(
-        request.isDefault, control_type_filter, control_id_filter);
+    // Wrap the DB read in a transaction so the GET handler observes a
+    // consistent snapshot even if the scheduled-check timer is running on
+    // another thread. SQLite's default isolation already prevents readers
+    // from seeing uncommitted writes, but an explicit transaction also
+    // pins the snapshot for any future read added to this handler.
+    std::vector<std::string> matching;
+    {
+        auto transaction = this->context.database_handler.begin_transaction();
+        matching = this->context.database_handler.get_der_controls_matching_criteria(
+            request.isDefault, control_type_filter, control_id_filter);
+        transaction->commit();
+    }
 
     // R04.FR.30: No matching controls → NotFound
     if (matching.empty()) {
@@ -803,7 +837,11 @@ void DERControl::check_scheduled_controls() {
 
         // R04.FR.07: activate any deferred supersedes whose new-control startTime
         // has arrived. Flip the target to isSuperseded, clear the pending pointer,
-        // and queue the paired stop+start notifications for post-commit dispatch.
+        // and queue the start notification for post-commit dispatch. Spec FR.21
+        // mandates only the started=true with supersededIds for the new control;
+        // it does NOT require a paired started=false on the existing control,
+        // which is a pure supersede event. The existing control's NotifyDERStartStop
+        // (started=false) is reserved for FR.22 genuine startTime+duration expiry.
         auto activations = this->context.database_handler.get_der_control_pending_supersede_activations(now);
         for (const auto& activation : activations) {
             this->context.database_handler.update_der_control_superseded(activation.existing_id, true);
@@ -811,12 +849,6 @@ void DERControl::check_scheduled_controls() {
             // The activation emits start-notification for the new control; flag it so
             // the R04.FR.20/21 pass below doesn't double-fire.
             this->context.database_handler.mark_der_control_started_notified(activation.new_id);
-
-            NotifyDERStartStopRequest stop_req;
-            stop_req.controlId = CiString<36>(activation.existing_id);
-            stop_req.started = false;
-            stop_req.timestamp = now;
-            pending_notifications.push_back(std::move(stop_req));
 
             NotifyDERStartStopRequest start_req;
             start_req.controlId = CiString<36>(activation.new_id);
@@ -848,7 +880,7 @@ void DERControl::check_scheduled_controls() {
             try {
                 auto control = json::parse(control_json_str);
                 auto control_id = control.at("controlId").get<std::string>();
-                bool is_superseded = control.value("isSuperseded", false);
+                bool is_superseded = control.at("isSuperseded").get<bool>();
 
                 if (is_superseded) {
                     continue; // Skip superseded controls
@@ -944,8 +976,8 @@ ReportDERControlRequest build_report(int32_t request_id, const std::vector<std::
             auto stored = json::parse(control_json_str);
             auto control_id = stored.at("controlId").get<std::string>();
             auto control_type_str = stored.at("controlType").get<std::string>();
-            bool is_default = stored.value("isDefault", false);
-            bool is_superseded = stored.value("isSuperseded", false);
+            bool is_default = stored.at("isDefault").get<bool>();
+            bool is_superseded = stored.at("isSuperseded").get<bool>();
             auto control_type = v2::conversions::string_to_dercontrol_enum(control_type_str);
             const auto& request_json = stored.at("request");
 

@@ -366,7 +366,8 @@ TEST_F(DERControlTest, SetDERControl_SupersedeAndInsertRunInsideTransaction) {
     req.freqDroop.value().duration = 3600.0f;
     auto msg = make_set_der_control_msg(req);
 
-    std::string existing = R"({"controlId":"ctrl-existing","controlType":"FreqDroop","isDefault":false,"priority":5})";
+    std::string existing =
+        R"({"controlId":"ctrl-existing","controlType":"FreqDroop","isDefault":false,"isSuperseded":false,"priority":5})";
 
     auto transaction = std::make_unique<TransactionMock>();
     auto* transaction_raw = transaction.get();
@@ -468,7 +469,7 @@ TEST_F(DERControlTest, GetDERControl_NoFilters_ReturnsAll) {
     auto msg = make_get_der_control_msg(req);
 
     std::string control_json =
-        R"({"controlId":"ctrl-1","controlType":"FreqDroop","isDefault":true,"priority":0,"request":{}})";
+        R"({"controlId":"ctrl-1","controlType":"FreqDroop","isDefault":true,"isSuperseded":false,"priority":0,"request":{}})";
     EXPECT_CALL(database_handler_mock, get_der_controls_matching_criteria(_, _, _))
         .WillOnce(Return(std::vector<std::string>{control_json}));
 
@@ -494,7 +495,7 @@ TEST_F(DERControlTest, GetDERControl_ByType_ReportsMatching) {
     auto msg = make_get_der_control_msg(req);
 
     std::string control_json =
-        R"({"controlId":"ctrl-fd","controlType":"FreqDroop","isDefault":true,"priority":0,"request":{}})";
+        R"({"controlId":"ctrl-fd","controlType":"FreqDroop","isDefault":true,"isSuperseded":false,"priority":0,"request":{}})";
     EXPECT_CALL(database_handler_mock,
                 get_der_controls_matching_criteria(_, std::optional<std::string>("FreqDroop"), _))
         .WillOnce(Return(std::vector<std::string>{control_json}));
@@ -764,7 +765,7 @@ TEST_F(DERControlTest, NotifyStartStop_SupersedingControl_SendsSupersededIds) {
 
     // Return an existing active control with lower priority (higher value)
     std::string existing =
-        R"({"controlId":"ctrl-lower-prio","controlType":"FreqDroop","isDefault":false,"priority":5})";
+        R"({"controlId":"ctrl-lower-prio","controlType":"FreqDroop","isDefault":false,"isSuperseded":false,"priority":5})";
     EXPECT_CALL(database_handler_mock,
                 get_der_controls_matching_criteria(std::optional<bool>(false), std::optional<std::string>("FreqDroop"),
                                                    std::optional<std::string>(std::nullopt)))
@@ -1070,6 +1071,7 @@ TEST_F(DERControlTest, GetDERControl_ReportPopulatesCurveField) {
     stored["controlId"] = "ctrl-vw-1";
     stored["controlType"] = "VoltWatt";
     stored["isDefault"] = true;
+    stored["isSuperseded"] = false;
     stored["priority"] = 0;
     json request;
     request["isDefault"] = true;
@@ -1126,6 +1128,7 @@ TEST_F(DERControlTest, GetDERControl_ReportPopulatesFreqDroopField) {
     stored["controlId"] = "ctrl-fd-1";
     stored["controlType"] = "FreqDroop";
     stored["isDefault"] = true;
+    stored["isSuperseded"] = false;
     stored["priority"] = 0;
     json request;
     request["isDefault"] = true;
@@ -1349,7 +1352,7 @@ TEST_F(DERControlTest, SetDERControl_EqualPriorityDoesNotSupersede) {
     auto msg = make_set_der_control_msg(req);
 
     std::string existing =
-        R"({"controlId":"ctrl-existing-equal","controlType":"FreqDroop","isDefault":true,"priority":5})";
+        R"({"controlId":"ctrl-existing-equal","controlType":"FreqDroop","isDefault":true,"isSuperseded":false,"priority":5})";
     EXPECT_CALL(database_handler_mock, get_der_controls_matching_criteria(_, _, _))
         .WillOnce(Return(std::vector<std::string>{existing}));
 
@@ -1507,18 +1510,10 @@ TEST_F(DERControlTest, CheckScheduledControls_FR07_ActivatesDeferredSupersede) {
     EXPECT_CALL(database_handler_mock, update_der_control_superseded("ctrl-existing-superseded", true));
     EXPECT_CALL(database_handler_mock, clear_der_control_pending_supersede("ctrl-new-now"));
 
-    // Two NotifyDERStartStop dispatches in fixed order: first the stop for the
-    // existing control, then the start for the new control with supersededIds
-    // pointing at the existing one (TC_R_105 step 11).
-    InSequence sequence;
-    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool /*t*/) {
-        auto action = call[ocpp::CALL_ACTION].get<std::string>();
-        EXPECT_EQ(action, "NotifyDERStartStop");
-        auto payload = call[ocpp::CALL_PAYLOAD];
-        EXPECT_EQ(payload["controlId"], "ctrl-existing-superseded");
-        EXPECT_FALSE(payload["started"].get<bool>());
-        EXPECT_FALSE(payload.contains("supersededIds"));
-    }));
+    // R04.FR.21 + TC_R_105 step 11: exactly one NotifyDERStartStop is dispatched
+    // — started=true on the new control with supersededIds pointing at the
+    // existing one. The spec does not mandate a started=false on the existing
+    // control here; that's reserved for FR.22 genuine expiry.
     EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool /*t*/) {
         auto action = call[ocpp::CALL_ACTION].get<std::string>();
         EXPECT_EQ(action, "NotifyDERStartStop");
@@ -1593,8 +1588,9 @@ TEST_F(DERControlTest, CheckScheduledControls_CommitsBeforeDispatchingStartNotif
 }
 
 // Pending-supersede activation: DB flip + pending-clear + mark-notified + commit
-// all happen before EITHER of the two notifications (stop-existing, start-new)
-// is dispatched.
+// all happen before the start-notification on the new control is dispatched.
+// Per R04.FR.21 the spec only mandates a started=true on the new control with
+// supersededIds; no started=false is sent on the existing control here.
 TEST_F(DERControlTest, CheckScheduledControls_CommitsBeforeDispatchingSupersedeActivation) {
     DERControl der_control(functional_block_context);
 
@@ -1617,8 +1613,8 @@ TEST_F(DERControlTest, CheckScheduledControls_CommitsBeforeDispatchingSupersedeA
     EXPECT_CALL(database_handler_mock, get_der_controls_matching_criteria(_, _, _))
         .WillOnce(Return(std::vector<std::string>{}));
     EXPECT_CALL(*transaction_raw, commit());
-    // Both notifications (stop-existing, start-new) fire only after commit.
-    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).Times(2);
+    // Single notification (start-new) fires only after commit.
+    EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).Times(1);
 
     der_control.check_scheduled_controls();
 }
