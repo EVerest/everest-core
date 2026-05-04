@@ -78,28 +78,36 @@ use super::errors;
 #[derive(Clone)]
 pub(crate) struct {{trait.name | title }}ServicePublisher {
    pub(super) implementation_id: &'static str,
-   pub(super) runtime: ::std::pin::Pin<::std::sync::Arc<::everestrs::Runtime>>,
+   pub(super) runtime: ::std::sync::Weak<::everestrs::Runtime>,
 }
 
 impl {{trait.name | title }}ServicePublisher {
 {% for var in trait.vars %}
    pub(crate) fn {{ var.name | identifier }}(&self, value: {{ var.data_type.name }}) -> ::everestrs::Result<()> {
-      self.runtime.publish_variable(self.implementation_id, "{{ var.name }}", &value);
-      Ok(())
+        if let Some(runtime) = self.runtime.upgrade() {
+            runtime.publish_variable(self.implementation_id, "{{ var.name }}", &value)
+        }
+        Ok(())
    }
 {% endfor %}
 
 {%- if trait.errors %}
     pub(crate) fn raise_error(&self, error: ::everestrs::ErrorType<errors::{{ trait.name | snake }}::Error>) {
-        self.runtime.raise_error(self.implementation_id, error);
+        if let Some(runtime) = self.runtime.upgrade() {
+            runtime.raise_error(self.implementation_id, error);
+        }
     }
 
     pub(crate) fn clear_error(&self, error: errors::{{ trait.name | snake }}::Error) {
-        self.runtime.clear_error(self.implementation_id, error, true);
+        if let Some(runtime) = self.runtime.upgrade() {
+            runtime.clear_error(self.implementation_id, error, true);
+        }
     }
 
     pub(crate) fn clear_all_errors(&self) {
-        self.runtime.clear_error(self.implementation_id, "", true);
+        if let Some(runtime) = self.runtime.upgrade() {
+            runtime.clear_error(self.implementation_id, "", true);
+        }
     }
 {%- endif %}
 }
