@@ -56,36 +56,17 @@ genrule(
         "share/everest/modules/OCPP201/logging.ini",
     ],
     cmd = """
-        echo $(location //lib/everest/ocpp:config)
+        set -euo pipefail
         LIBOCPP_CONFIG_PATH="$(location //lib/everest/ocpp:config)"
-        # Create output directories
         mkdir -p $(RULEDIR)/share/everest/modules/OCPP201/component_config/standardized
         mkdir -p $(RULEDIR)/share/everest/modules/OCPP201/component_config/custom
         mkdir -p $(RULEDIR)/share/everest/modules/OCPP201/core_migrations
         mkdir -p $(RULEDIR)/share/everest/modules/OCPP201/device_model_migrations
-        # Copy files from libocpp
-        cp $$LIBOCPP_CONFIG_PATH/v2/component_config/standardized/*.json $(RULEDIR)/share/everest/modules/OCPP201/component_config/standardized/ 2>/dev/null || true
-        cp $$LIBOCPP_CONFIG_PATH/v2/core_migrations/*.sql $(RULEDIR)/share/everest/modules/OCPP201/core_migrations/ 2>/dev/null || true
-        cp $$LIBOCPP_CONFIG_PATH/v2/device_model_migrations/*.sql $(RULEDIR)/share/everest/modules/OCPP201/device_model_migrations/ 2>/dev/null || true
-        cp $$LIBOCPP_CONFIG_PATH/v2/logging.ini $(RULEDIR)/share/everest/modules/OCPP201/logging.ini 2>/dev/null || true
-        # Create placeholder for custom directory
+        cp $$LIBOCPP_CONFIG_PATH/common/component_config/standardized/*.json $(RULEDIR)/share/everest/modules/OCPP201/component_config/standardized/
+        cp $$LIBOCPP_CONFIG_PATH/v2/core_migrations/*.sql $(RULEDIR)/share/everest/modules/OCPP201/core_migrations/
+        cp $$LIBOCPP_CONFIG_PATH/common/device_model_migrations/*.sql $(RULEDIR)/share/everest/modules/OCPP201/device_model_migrations/
+        cp $$LIBOCPP_CONFIG_PATH/logging.ini $(RULEDIR)/share/everest/modules/OCPP201/logging.ini
         touch $(RULEDIR)/share/everest/modules/OCPP201/component_config/custom/.gitkeep
-        # Create placeholder files for missing outputs
-        for out in $(OUTS); do
-            if [ ! -f "$$out" ]; then
-                mkdir -p "$$(dirname $$out)"
-                if [[ "$$out" == *".gitkeep" ]]; then
-                    touch "$$out"
-                elif [[ "$$out" == *".sql" ]]; then
-                    echo "-- Placeholder SQL file" > "$$out"
-                elif [[ "$$out" == *".ini" ]]; then
-                    echo "# Placeholder INI file" > "$$out"
-                else
-                    echo "{}" > "$$out"
-                fi
-            fi
-        done
-        echo "OCPP201 config files prepared"
     """,
     srcs = [
         "//lib/everest/ocpp:config",
