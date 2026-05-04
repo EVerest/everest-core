@@ -45,6 +45,7 @@ class TestPlugAndCharge:
     async def test_contract_installation_and_authorization_01(
         self,
         request,
+        exi_generator,
         central_system_v16: CentralSystem,
         charge_point_v16: ChargePoint16,
         test_controller: TestController,
@@ -56,7 +57,7 @@ class TestPlugAndCharge:
         """
 
         setattr(charge_point_v16, "on_data_transfer",
-                on_data_transfer_accept_authorize)
+                make_on_data_transfer_accept_authorize(exi_generator))
         central_system_v16.chargepoint.route_map = create_route_map(
             central_system_v16.chargepoint
         )
@@ -132,6 +133,7 @@ class TestPlugAndCharge:
     async def test_contract_installation_and_authorization_02(
         self,
         request,
+        exi_generator,
         central_system_v16: CentralSystem,
         charge_point_v16: ChargePoint16,
         test_controller: TestController,
@@ -142,7 +144,7 @@ class TestPlugAndCharge:
         """
 
         setattr(charge_point_v16, "on_data_transfer",
-                on_data_transfer_reject_authorize)
+                make_on_data_transfer_reject_authorize(exi_generator))
         central_system_v16.chargepoint.route_map = create_route_map(
             central_system_v16.chargepoint
         )
@@ -194,6 +196,7 @@ class TestPlugAndCharge:
     async def test_contract_installation_and_authorization_03(
         self,
         request,
+        exi_generator,
         central_system_v16: CentralSystem,
         charge_point_v16: ChargePoint16,
         test_controller: TestController,
@@ -229,7 +232,7 @@ class TestPlugAndCharge:
             "status": "Accepted"}
 
         setattr(charge_point_v16, "on_data_transfer",
-                on_data_transfer_accept_authorize)
+                make_on_data_transfer_accept_authorize(exi_generator))
         central_system_v16.chargepoint.route_map = create_route_map(
             central_system_v16.chargepoint
         )
@@ -292,6 +295,7 @@ class TestPlugAndCharge:
     async def test_contract_installation_and_authorization_04(
         self,
         request,
+        exi_generator,
         central_system_v16: CentralSystem,
         charge_point_v16: ChargePoint16,
         test_controller: TestController,
@@ -327,7 +331,7 @@ class TestPlugAndCharge:
             "status": "Accepted"}
 
         setattr(charge_point_v16, "on_data_transfer",
-                on_data_transfer_accept_authorize)
+                make_on_data_transfer_accept_authorize(exi_generator))
         central_system_v16.chargepoint.route_map = create_route_map(
             central_system_v16.chargepoint
         )
@@ -355,6 +359,7 @@ class TestPlugAndCharge:
     async def test_contract_installation_and_authorization_04(
         self,
         request,
+        exi_generator,
         central_system_v16: CentralSystem,
         charge_point_v16: ChargePoint16,
         test_controller: TestController,
@@ -390,7 +395,7 @@ class TestPlugAndCharge:
             "status": "Accepted"}
 
         setattr(charge_point_v16, "on_data_transfer",
-                on_data_transfer_accept_authorize)
+                make_on_data_transfer_accept_authorize(exi_generator))
         central_system_v16.chargepoint.route_map = create_route_map(
             central_system_v16.chargepoint
         )
@@ -530,6 +535,7 @@ class TestPlugAndCharge:
     @pytest.mark.asyncio
     async def test_pnc_reject(
         self,
+        exi_generator,
         test_config,
         central_system_v16: CentralSystem,
         charge_point_v16: ChargePoint16,
@@ -542,7 +548,7 @@ class TestPlugAndCharge:
         """
 
         setattr(charge_point_v16, "on_data_transfer",
-                on_data_transfer_reject_authorize)
+                make_on_data_transfer_reject_authorize(exi_generator))
         central_system_v16.chargepoint.route_map = create_route_map(
             central_system_v16.chargepoint
         )

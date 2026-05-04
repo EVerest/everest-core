@@ -87,39 +87,17 @@ class EXIGenerator:
         self.certs_path = certs_path
         EXI().set_exi_codec(ExificientEXICodec())
 
-    def generate_certificate_installation_res(
-        self, base64_encoded_cert_installation_req: str, namespace: str
-    ) -> str:
-
-        cert_install_req_exi = base64.b64decode(
-            base64_encoded_cert_installation_req)
-        cert_install_req = EXI().from_exi(cert_install_req_exi, namespace)
-        try:
-            dh_pub_key, encrypted_priv_key_bytes = encrypt_priv_key(
-                oem_prov_cert=load_cert(
-                    os.path.join(self.certs_path, CertPath.OEM_LEAF_DER)
-                ),
-                priv_key_to_encrypt=load_priv_key(
-                    os.path.join(self.certs_path, KeyPath.CONTRACT_LEAF_PEM),
-                    KeyEncoding.PEM,
-                    os.path.join(
-                        self.certs_path, KeyPasswordPath.CONTRACT_LEAF_KEY_PASSWORD
-                    ),
-                ),
-            )
-        except EncryptionError:
-            raise EncryptionError(
-                "EncryptionError while trying to encrypt the private key for the "
-                "contract certificate"
-            )
-        except PrivateKeyReadError as exc:
-            raise PrivateKeyReadError(
-                f"Can't read private key to encrypt for CertificateInstallationRes:"
-                f" {exc}"
-            )
-
-        # The elements that need to be part of the signature
-        contract_cert_chain = CertificateChain(
+        self.oem_leaf_der = load_cert(
+            os.path.join(self.certs_path, CertPath.OEM_LEAF_DER)
+        )
+        self.contract_leaf_key = load_priv_key(
+            os.path.join(self.certs_path, KeyPath.CONTRACT_LEAF_PEM),
+            KeyEncoding.PEM,
+            os.path.join(
+                self.certs_path, KeyPasswordPath.CONTRACT_LEAF_KEY_PASSWORD
+            ),
+        )
+        self.contract_cert_chain = CertificateChain(
             id="id1",
             certificate=load_cert(
                 os.path.join(self.certs_path, CertPath.CONTRACT_LEAF_DER)
@@ -133,18 +111,14 @@ class EXIGenerator:
                 ]
             ),
         )
-        encrypted_priv_key = EncryptedPrivateKey(
-            id="id2", value=encrypted_priv_key_bytes
-        )
-        dh_public_key = DHPublicKey(id="id3", value=dh_pub_key)
-        emaid = EMAID(
+        self.emaid = EMAID(
             id="id4",
             value=get_cert_cn(
                 load_cert(os.path.join(self.certs_path,
                           CertPath.CONTRACT_LEAF_DER))
             ),
         )
-        cps_certificate_chain = CertificateChain(
+        self.cps_certificate_chain = CertificateChain(
             certificate=load_cert(os.path.join(
                 self.certs_path, CertPath.CPS_LEAF_DER)),
             sub_certificates=SubCertificates(
@@ -156,54 +130,67 @@ class EXIGenerator:
                 ]
             ),
         )
+        self.signature_key = load_priv_key(
+            os.path.join(self.certs_path, KeyPath.CPS_LEAF_PEM),
+            KeyEncoding.PEM,
+            os.path.join(self.certs_path,
+                         KeyPasswordPath.CPS_LEAF_KEY_PASSWORD),
+        )
+        self.contract_cert_chain_exi = EXI().to_exi(
+            self.contract_cert_chain, Namespace.ISO_V2_MSG_DEF
+        )
+        self.emaid_exi = EXI().to_exi(
+            self.emaid, Namespace.ISO_V2_MSG_DEF
+        )
+
+    def generate_certificate_installation_res(
+        self, base64_encoded_cert_installation_req: str, namespace: str
+    ) -> str:
+
+        cert_install_req_exi = base64.b64decode(base64_encoded_cert_installation_req)
+        cert_install_req = EXI().from_exi(cert_install_req_exi, namespace)
+        try:
+            dh_pub_key, encrypted_priv_key_bytes = encrypt_priv_key(
+                oem_prov_cert=self.oem_leaf_der,
+                priv_key_to_encrypt=self.contract_leaf_key,
+            )
+        except EncryptionError:
+            raise EncryptionError(
+                "EncryptionError while trying to encrypt the private key for the "
+                "contract certificate"
+            )
+        except PrivateKeyReadError as exc:
+            raise PrivateKeyReadError(
+                f"Can't read private key to encrypt for CertificateInstallationRes:"
+                f" {exc}"
+            )
+
+        encrypted_priv_key = EncryptedPrivateKey(id="id2", value=encrypted_priv_key_bytes)
+        dh_public_key = DHPublicKey(id="id3", value=dh_pub_key)
 
         cert_install_res = CertificateInstallationRes(
             response_code=ResponseCode.OK,
-            cps_cert_chain=cps_certificate_chain,
-            contract_cert_chain=contract_cert_chain,
+            cps_cert_chain=self.cps_certificate_chain,
+            contract_cert_chain=self.contract_cert_chain,
             encrypted_private_key=encrypted_priv_key,
             dh_public_key=dh_public_key,
-            emaid=emaid,
+            emaid=self.emaid,
         )
 
         try:
-            # Elements to sign, containing its id and the exi encoded stream
-            contract_cert_tuple = (
-                cert_install_res.contract_cert_chain.id,
-                EXI().to_exi(
-                    cert_install_res.contract_cert_chain, Namespace.ISO_V2_MSG_DEF
-                ),
-            )
-            encrypted_priv_key_tuple = (
-                cert_install_res.encrypted_private_key.id,
-                EXI().to_exi(
-                    cert_install_res.encrypted_private_key, Namespace.ISO_V2_MSG_DEF
-                ),
-            )
-            dh_public_key_tuple = (
-                cert_install_res.dh_public_key.id,
-                EXI().to_exi(cert_install_res.dh_public_key, Namespace.ISO_V2_MSG_DEF),
-            )
-            emaid_tuple = (
-                cert_install_res.emaid.id,
-                EXI().to_exi(cert_install_res.emaid, Namespace.ISO_V2_MSG_DEF),
-            )
-
             elements_to_sign = [
-                contract_cert_tuple,
-                encrypted_priv_key_tuple,
-                dh_public_key_tuple,
-                emaid_tuple,
+                (cert_install_res.contract_cert_chain.id, self.contract_cert_chain_exi),
+                (
+                    cert_install_res.encrypted_private_key.id,
+                    EXI().to_exi(cert_install_res.encrypted_private_key, Namespace.ISO_V2_MSG_DEF),
+                ),
+                (
+                    cert_install_res.dh_public_key.id,
+                    EXI().to_exi(cert_install_res.dh_public_key, Namespace.ISO_V2_MSG_DEF),
+                ),
+                (cert_install_res.emaid.id, self.emaid_exi),
             ]
-            # The private key to be used for the signature
-            signature_key = load_priv_key(
-                os.path.join(self.certs_path, KeyPath.CPS_LEAF_PEM),
-                KeyEncoding.PEM,
-                os.path.join(self.certs_path,
-                             KeyPasswordPath.CPS_LEAF_KEY_PASSWORD),
-            )
-
-            signature = create_signature(elements_to_sign, signature_key)
+            signature = create_signature(elements_to_sign, self.signature_key)
 
         except PrivateKeyReadError as exc:
             raise Exception(
@@ -217,18 +204,14 @@ class EXIGenerator:
             session_id=cert_install_req.header.session_id,
             signature=signature,
         )
-        body = Body.parse_obj(
-            {"CertificateInstallationRes": cert_install_res.dict()})
+        body = Body.parse_obj({"CertificateInstallationRes": cert_install_res.dict()})
         to_be_exi_encoded = V2GMessageV2(header=header, body=body)
         exi_encoded_cert_installation_res = EXI().to_exi(
             to_be_exi_encoded, Namespace.ISO_V2_MSG_DEF
         )
 
-        base64_encode_cert_install_res = base64.b64encode(
-            exi_encoded_cert_installation_res
-        ).decode("utf-8")
+        return base64.b64encode(exi_encoded_cert_installation_res).decode("utf-8")
 
-        return base64_encode_cert_install_res
 
 
 def certificate_signed_response(csr: crypto.X509Req):
@@ -268,7 +251,7 @@ def certificate_signed_response(csr: crypto.X509Req):
     return crypto.dump_certificate(crypto.FILETYPE_PEM, signed_cert).decode("utf-8")
 
 
-def on_data_transfer(accept_pnc_authorize, **kwargs):
+def on_data_transfer(accept_pnc_authorize, exi_generator: EXIGenerator, **kwargs):
     req = call.DataTransfer(**kwargs)
     if req.vendor_id == "org.openchargealliance.iso15118pnc":
         if req.message_id == "Authorize":
@@ -295,11 +278,9 @@ def on_data_transfer(accept_pnc_authorize, **kwargs):
                 status=DataTransferStatus.unknown_message_id, data="Please implement me"
             )
         elif req.message_id == "Get15118EVCertificate":
-            certs_path: str = Path(
-                __file__).parent.resolve() / "everest-aux/certs/"
-            generator: EXIGenerator = EXIGenerator(certs_path)
-            exi_request = json.loads(kwargs["data"])["exiRequest"]
-            namespace = json.loads(kwargs["data"])["iso15118SchemaVersion"]
+            data_payload = json.loads(kwargs["data"])
+            exi_request = data_payload["exiRequest"]
+            namespace = data_payload["iso15118SchemaVersion"]
             return call_result.DataTransfer(
                 status=DataTransferStatus.accepted,
                 data=json.dumps(
@@ -308,7 +289,7 @@ def on_data_transfer(accept_pnc_authorize, **kwargs):
                             asdict(
                                 call_result201.Get15118EVCertificate(
                                     status=Iso15118EVCertificateStatusEnumType.accepted,
-                                    exi_response=generator.generate_certificate_installation_res(
+                                    exi_response=exi_generator.generate_certificate_installation_res(
                                         exi_request, namespace
                                     ),
                                 )
@@ -364,28 +345,31 @@ def on_data_transfer(accept_pnc_authorize, **kwargs):
         )
 
 
-@on(Action.data_transfer)
-def on_data_transfer_accept_authorize(**kwargs):
-    return on_data_transfer(accept_pnc_authorize=True, **kwargs)
+def make_on_data_transfer_accept_authorize(exi_generator: EXIGenerator):
+    @on(Action.data_transfer)
+    def handler(**kwargs):
+        return on_data_transfer(accept_pnc_authorize=True, exi_generator=exi_generator, **kwargs)
+    return handler
 
 
-@on(Action.data_transfer)
-def on_data_transfer_reject_authorize(**kwargs):
-    return on_data_transfer(accept_pnc_authorize=False, **kwargs)
+def make_on_data_transfer_reject_authorize(exi_generator: EXIGenerator):
+    @on(Action.data_transfer)
+    def handler(**kwargs):
+        return on_data_transfer(accept_pnc_authorize=False, exi_generator=exi_generator, **kwargs)
+    return handler
 
 
-@on(Action201.get_15118_ev_certificate)
-def on_get_15118_ev_certificate(**kwargs):
-    certs_path: str = Path(__file__).parent.resolve() / "everest-aux/certs/"
-    generator: EXIGenerator = EXIGenerator(certs_path)
-    payload = call201.Get15118EVCertificate(**kwargs)
-
-    return call_result201.Get15118EVCertificate(
-        status=GenericStatusEnumType.accepted,
-        exi_response=generator.generate_certificate_installation_res(
-            payload.exi_request, payload.iso15118_schema_version
-        ),
-    )
+def make_on_get_15118_ev_certificate(exi_generator: EXIGenerator):
+    @on(Action201.get_15118_ev_certificate)
+    def handler(**kwargs):
+        payload = call201.Get15118EVCertificate(**kwargs)
+        return call_result201.Get15118EVCertificate(
+            status=GenericStatusEnumType.accepted,
+            exi_response=exi_generator.generate_certificate_installation_res(
+                payload.exi_request, payload.iso15118_schema_version
+            ),
+        )
+    return handler
 
 
 def get_everest_config_path_str(config_name):
