@@ -207,12 +207,12 @@ DeviceModelInitializationContext resolve_device_model_initialization_context(con
     }
     context.component_config_path = component_config_path.value();
 
-    if (!config.DeviceModelConfigMappingsPath.empty()) {
+    if (!config.DeviceModelConfigMappings.empty()) {
         const auto custom_mappings_path =
-            resolve_device_model_resource_path(ocpp_share_path, fs::path(config.DeviceModelConfigMappingsPath));
+            resolve_device_model_resource_path(ocpp_share_path, fs::path(config.DeviceModelConfigMappings));
         if (!custom_mappings_path.has_value()) {
             EVLOG_AND_THROW(std::runtime_error(fmt::format(
-                "Could not locate OCPP1.6 custom config mapping file at '{}'.", config.DeviceModelConfigMappingsPath)));
+                "Could not locate OCPP1.6 custom config mapping file at '{}'.", config.DeviceModelConfigMappings)));
         }
         context.custom_mappings_path = custom_mappings_path.value();
     }
@@ -221,9 +221,8 @@ DeviceModelInitializationContext resolve_device_model_initialization_context(con
 }
 
 bool should_run_ocpp16_to_device_model_migration(const fs::path& database_path) {
-    const auto device_model_database_exists = fs::exists(database_path);
 
-    if (!device_model_database_exists) {
+    if (!fs::exists(database_path)) {
         EVLOG_info << "Device model database not found at " << database_path
                    << ". OCPP1.6 configuration migration is required.";
         return true;

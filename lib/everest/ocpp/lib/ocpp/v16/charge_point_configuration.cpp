@@ -2445,21 +2445,15 @@ std::optional<std::string> ChargePointConfiguration::getDefaultPriceText(const s
 }
 
 std::optional<json> ChargePointConfiguration::getDefaultPriceText() {
-    if (!this->config.contains("CostAndPrice")) {
-        return std::nullopt;
+    std::optional<json> result;
+    try {
+        auto default_price_texts = config["CostAndPrice"]["DefaultPriceText"];
+        if (default_price_texts.is_object()) {
+            result = default_price_texts;
+        }
+    } catch (...) {
     }
-
-    if (!this->config["CostAndPrice"].contains("DefaultPriceText")) {
-        return std::nullopt;
-    }
-
-    const auto default_price_texts = this->config["CostAndPrice"].at("DefaultPriceText");
-
-    if (!default_price_texts.is_object()) {
-        return std::nullopt;
-    }
-
-    return default_price_texts;
+    return result;
 }
 
 TariffMessage ChargePointConfiguration::getDefaultTariffMessage(bool offline) {
@@ -2948,36 +2942,31 @@ std::optional<std::vector<KeyValue>> ChargePointConfiguration::getAllMeterPublic
 }
 
 std::optional<std::string> ChargePointConfiguration::getMeterPublicKeysCsl() {
-    if (!this->config["Internal"].contains("MeterPublicKeys")) {
-        return std::nullopt;
+    std::optional<std::string> result;
+    try {
+        auto meter_public_keys = config["Internal"]["MeterPublicKeys"];
+        if (meter_public_keys.is_array()) {
+            std::vector<std::string> keys;
+            for (const auto& key : meter_public_keys) {
+                keys.push_back(key.get<std::string>());
+            }
+            result = utils::to_csl(keys);
+        }
+    } catch (...) {
     }
-
-    const auto& meter_public_keys = this->config["Internal"].at("MeterPublicKeys");
-
-    if (!meter_public_keys.is_array()) {
-        return std::nullopt;
-    }
-
-    std::vector<std::string> keys;
-    for (const auto& key : meter_public_keys) {
-        keys.push_back(key.get<std::string>());
-    }
-
-    return utils::to_csl(keys);
+    return result;
 }
 
 std::optional<json> ChargePointConfiguration::getMeterPublicKeys() {
-    if (!this->config["Internal"].contains("MeterPublicKeys")) {
-        return std::nullopt;
+    std::optional<json> result;
+    try {
+        auto meter_public_keys = config["Internal"]["MeterPublicKeys"];
+        if (meter_public_keys.is_array()) {
+            result = meter_public_keys;
+        }
+    } catch (...) {
     }
-
-    const auto& meter_public_keys = this->config["Internal"].at("MeterPublicKeys");
-
-    if (!meter_public_keys.is_array()) {
-        return std::nullopt;
-    }
-
-    return meter_public_keys;
+    return result;
 }
 
 bool ChargePointConfiguration::setMeterPublicKey(const std::int32_t connector_id, const std::string& public_key_pem) {

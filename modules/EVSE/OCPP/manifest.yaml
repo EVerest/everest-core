@@ -38,7 +38,7 @@ config:
       Relative paths are resolved against this module's share path.
     type: string
     default: component_config
-  DeviceModelConfigMappingsPath:
+  DeviceModelConfigMappings:
     description: >-
       Optional path to a YAML file with custom OCPP1.6 to device model component-config mappings.
       Relative paths are resolved against this module's share path.

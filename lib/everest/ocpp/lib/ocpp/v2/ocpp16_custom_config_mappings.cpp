@@ -185,6 +185,7 @@ load_ocpp16_custom_config_mappings_from_yaml(const std::filesystem::path& mappin
                                               "': " + e.what());
     }
 
+    // The schema validation ensures that the following usage of .at(...) is safe
     Ocpp16CustomConfigMappings mappings;
     for (const auto& entry : yaml_json.at("mappings")) {
         const auto ocpp16_key = entry.at("ocpp16_key").get<std::string>();

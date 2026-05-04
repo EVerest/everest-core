@@ -78,7 +78,7 @@ struct Conf {
     std::string DeviceModelDatabasePath;
     std::string DeviceModelDatabaseMigrationPath;
     std::string DeviceModelConfigPath;
-    std::string DeviceModelConfigMappingsPath;
+    std::string DeviceModelConfigMappings;
     bool EnableOCPP16ConfigMigration;
     bool ForceDeviceModelDatabaseOverride;
     bool EnableExternalWebsocketControl;

@@ -13,12 +13,19 @@ namespace ocpp::v2 {
 
 namespace {
 
+using ComponentConfigs = std::map<ComponentKey, std::vector<DeviceModelVariable>>;
+
+struct VariableToPatchIterator {
+    ComponentConfigs::iterator component_it;
+    std::vector<DeviceModelVariable>::iterator variable_it;
+};
+
 bool is_same_variable(const DeviceModelVariable& v1, const DeviceModelVariable& v2) {
     return ((v1.name == v2.name) && (v1.instance == v2.instance));
 }
 
-DeviceModelVariable* get_variable_to_patch(std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_configs,
-                                           const Component& component, const Variable& variable) {
+VariableToPatchIterator get_variable_to_patch(ComponentConfigs& component_configs, const Component& component,
+                                              const Variable& variable) {
 
     DeviceModelVariable variable_to_patch;
     variable_to_patch.name = variable.name.get();
@@ -36,7 +43,7 @@ DeviceModelVariable* get_variable_to_patch(std::map<ComponentKey, std::vector<De
     if (component_it == component_configs.end()) {
         EVLOG_warning << "Component " << component_key.name << " not found in component configs, cannot patch variable "
                       << variable.name.get();
-        return nullptr;
+        return {component_configs.end(), {}};
     }
 
     auto& variables = component_it->second;
@@ -48,16 +55,16 @@ DeviceModelVariable* get_variable_to_patch(std::map<ComponentKey, std::vector<De
     if (variable_it == variables.end()) {
         EVLOG_warning << "Variable " << variable.name.get() << " not found in component " << component_key.name
                       << ", cannot patch variable.";
-        return nullptr;
+        return {component_configs.end(), {}};
     }
 
-    return &(*variable_it);
+    return {component_it, variable_it};
 }
 
-DeviceModelVariable* get_variable_to_patch(std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_configs,
-                                           const ocpp::v16::keys::DeviceModel_CV& device_model_cv) {
+VariableToPatchIterator get_variable_to_patch(ComponentConfigs& component_configs,
+                                              const ocpp::v16::keys::DeviceModel_CV& device_model_cv) {
     if (!device_model_cv.has_value()) {
-        return nullptr;
+        return {component_configs.end(), {}};
     }
     return get_variable_to_patch(component_configs, device_model_cv->first, device_model_cv->second);
 }
@@ -66,19 +73,20 @@ void patch_variable_value(std::map<ComponentKey, std::vector<DeviceModelVariable
                           const ocpp::v16::keys::DeviceModel_CV device_model_cv, const std::string& value,
                           const std::optional<bool>& readonly_override = std::nullopt) {
 
-    DeviceModelVariable* dm_variable = get_variable_to_patch(component_configs, device_model_cv);
-    if (dm_variable == nullptr) {
+    auto variable_to_patch = get_variable_to_patch(component_configs, device_model_cv);
+    if (variable_to_patch.component_it == component_configs.end()) {
         return;
     }
 
-    auto attribute_it = std::find_if(dm_variable->attributes.begin(), dm_variable->attributes.end(),
-                                     [](const DbVariableAttribute& attr) {
-                                         return attr.variable_attribute.type.has_value() and
-                                                attr.variable_attribute.type.value() == AttributeEnum::Actual;
-                                     });
+    auto& dm_variable = *variable_to_patch.variable_it;
+    auto attribute_it =
+        std::find_if(dm_variable.attributes.begin(), dm_variable.attributes.end(), [](const DbVariableAttribute& attr) {
+            return attr.variable_attribute.type.has_value() and
+                   attr.variable_attribute.type.value() == AttributeEnum::Actual;
+        });
 
-    if (attribute_it == dm_variable->attributes.end()) {
-        EVLOG_warning << "Attribute Actual not found in variable " << dm_variable->name << ", cannot patch variable.";
+    if (attribute_it == dm_variable.attributes.end()) {
+        EVLOG_warning << "Attribute Actual not found in variable " << dm_variable.name << ", cannot patch variable.";
         return;
     }
 
@@ -93,25 +101,22 @@ void patch_variable_value(std::map<ComponentKey, std::vector<DeviceModelVariable
 
 void patch_variable_max_limit(std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_configs,
                               const ocpp::v16::keys::DeviceModel_CV& device_model_cv, const int32_t max_limit) {
-
-    DeviceModelVariable* variable_to_patch = get_variable_to_patch(component_configs, device_model_cv);
-    if (variable_to_patch == nullptr) {
-        return;
+    if (auto variable_to_patch = get_variable_to_patch(component_configs, device_model_cv);
+        variable_to_patch.component_it != component_configs.end()) {
+        variable_to_patch.variable_it->characteristics.maxLimit = static_cast<float>(max_limit);
     }
-
-    variable_to_patch->characteristics.maxLimit = static_cast<float>(max_limit);
 }
 
 void patch_variable_values_list(std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_configs,
                                 const ocpp::v16::keys::DeviceModel_CV& device_model_cv,
                                 const std::string& values_list) {
 
-    DeviceModelVariable* variable_to_patch = get_variable_to_patch(component_configs, device_model_cv);
-    if (variable_to_patch == nullptr) {
+    auto variable_to_patch = get_variable_to_patch(component_configs, device_model_cv);
+    if (variable_to_patch.component_it == component_configs.end()) {
         return;
     }
 
-    variable_to_patch->characteristics.valuesList = values_list;
+    variable_to_patch.variable_it->characteristics.valuesList = values_list;
 }
 
 void patch_optional_max_limit(std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_configs,
