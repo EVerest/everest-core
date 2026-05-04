@@ -30,11 +30,21 @@ static auto get_capabilities_from_config(const Conf& config) {
     cap.max_export_current_A = static_cast<float>(config.max_current);
     cap.min_export_current_A = static_cast<float>(config.min_current);
     cap.max_export_power_W = static_cast<float>(config.max_power);
+    cap.nominal_max_export_voltage_V = static_cast<float>(config.nominal_max_voltage);
+    cap.nominal_min_export_voltage_V = static_cast<float>(config.nominal_min_voltage);
+    cap.nominal_max_export_current_A = static_cast<float>(config.nominal_max_current);
+    cap.nominal_min_export_current_A = static_cast<float>(config.nominal_min_current);
+    cap.nominal_max_export_power_W = static_cast<float>(config.nominal_max_export_power);
     cap.max_import_voltage_V = static_cast<float>(config.max_voltage);
     cap.min_import_voltage_V = static_cast<float>(config.min_voltage);
     cap.max_import_current_A = static_cast<float>(config.max_current);
     cap.min_import_current_A = static_cast<float>(config.min_current);
     cap.max_import_power_W = static_cast<float>(config.max_power);
+    cap.nominal_max_import_voltage_V = static_cast<float>(config.nominal_max_voltage);
+    cap.nominal_min_import_voltage_V = static_cast<float>(config.nominal_min_voltage);
+    cap.nominal_max_import_current_A = static_cast<float>(config.nominal_max_current);
+    cap.nominal_min_import_current_A = static_cast<float>(config.nominal_min_current);
+    cap.nominal_max_import_power_W = static_cast<float>(config.nominal_max_import_power);
     cap.conversion_efficiency_import = 0.85f;
     cap.conversion_efficiency_export = 0.9f;
 

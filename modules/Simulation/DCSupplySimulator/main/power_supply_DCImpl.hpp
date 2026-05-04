@@ -25,10 +25,16 @@ namespace main {
 struct Conf {
     bool bidirectional;
     double max_power;
+    double nominal_max_export_power;
+    double nominal_max_import_power;
     double min_voltage;
     double max_voltage;
+    double nominal_min_voltage;
+    double nominal_max_voltage;
     double min_current;
     double max_current;
+    double nominal_min_current;
+    double nominal_max_current;
 };
 
 class power_supply_DCImpl : public power_supply_DCImplBase {

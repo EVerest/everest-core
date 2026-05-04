@@ -13,16 +13,26 @@ Capabilities_External to_external_api(Capabilities_Internal const& val) {
     r.current_regulation_tolerance_A = val.current_regulation_tolerance_A;
     r.peak_current_ripple_A = val.peak_current_ripple_A;
     r.max_export_voltage_V = val.max_export_voltage_V;
+    r.nominal_max_export_voltage_V = val.nominal_max_export_voltage_V;
     r.min_export_voltage_V = val.min_export_voltage_V;
+    r.nominal_min_export_voltage_V = val.nominal_min_export_voltage_V;
     r.max_export_current_A = val.max_export_current_A;
+    r.nominal_max_export_current_A = val.nominal_max_export_current_A;
     r.min_export_current_A = val.min_export_current_A;
+    r.nominal_min_export_current_A = val.nominal_min_export_current_A;
     r.max_export_power_W = val.max_export_power_W;
+    r.nominal_max_export_power_W = val.nominal_max_export_power_W;
 
     r.max_import_voltage_V = val.max_import_voltage_V;
+    r.nominal_max_import_voltage_V = val.nominal_max_import_voltage_V;
     r.min_import_voltage_V = val.min_import_voltage_V;
+    r.nominal_min_import_voltage_V = val.nominal_min_import_voltage_V;
     r.max_import_current_A = val.max_import_current_A;
+    r.nominal_max_import_current_A = val.nominal_max_import_current_A;
     r.min_import_current_A = val.min_import_current_A;
+    r.nominal_min_import_current_A = val.nominal_min_import_current_A;
     r.max_import_power_W = val.max_import_power_W;
+    r.nominal_max_import_power_W = val.nominal_max_import_power_W;
     r.conversion_efficiency_import = val.conversion_efficiency_import;
     r.conversion_efficiency_export = val.conversion_efficiency_export;
 
@@ -35,16 +45,26 @@ Capabilities_Internal to_internal_api(Capabilities_External const& val) {
     internal.current_regulation_tolerance_A = val.current_regulation_tolerance_A;
     internal.peak_current_ripple_A = val.peak_current_ripple_A;
     internal.max_export_voltage_V = val.max_export_voltage_V;
+    internal.nominal_max_export_voltage_V = val.nominal_max_export_voltage_V;
     internal.min_export_voltage_V = val.min_export_voltage_V;
+    internal.nominal_min_export_voltage_V = val.nominal_min_export_voltage_V;
     internal.max_export_current_A = val.max_export_current_A;
+    internal.nominal_max_export_current_A = val.nominal_max_export_current_A;
     internal.min_export_current_A = val.min_export_current_A;
+    internal.nominal_min_export_current_A = val.nominal_min_export_current_A;
     internal.max_export_power_W = val.max_export_power_W;
+    internal.nominal_max_export_power_W = val.nominal_max_export_power_W;
 
     internal.max_import_voltage_V = val.max_import_voltage_V;
+    internal.nominal_max_import_voltage_V = val.nominal_max_import_voltage_V;
     internal.min_import_voltage_V = val.min_import_voltage_V;
+    internal.nominal_min_import_voltage_V = val.nominal_min_import_voltage_V;
     internal.max_import_current_A = val.max_import_current_A;
+    internal.nominal_max_import_current_A = val.nominal_max_import_current_A;
     internal.min_import_current_A = val.min_import_current_A;
+    internal.nominal_min_import_current_A = val.nominal_min_import_current_A;
     internal.max_import_power_W = val.max_import_power_W;
+    internal.nominal_max_import_power_W = val.nominal_max_import_power_W;
     internal.conversion_efficiency_import = val.conversion_efficiency_import;
     internal.conversion_efficiency_export = val.conversion_efficiency_export;
     return internal;

@@ -391,6 +391,10 @@ void ConnectorBase::init_capabilities() {
     caps.min_import_voltage_V = 0;
     caps.max_import_voltage_V = 0;
 
+    // Nominal values are derived from configured limits
+    caps.nominal_max_export_current_A = static_cast<float>(config.max_export_current_A);
+    caps.nominal_max_export_power_W = static_cast<float>(config.max_export_power_W);
+
     caps.conversion_efficiency_import = 0.85f;
     caps.conversion_efficiency_export = 0.9f;
 

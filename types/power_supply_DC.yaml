@@ -61,18 +61,35 @@ types:
       max_export_voltage_V:
         description: Maximum voltage that the power supply can output in Volt
         type: number
+      nominal_max_export_voltage_V:
+        description: Nominal maximum voltage that the power supply outputs in Volt
+        type: number
       min_export_voltage_V:
         description: Minimum voltage that the power supply can output in Volt
+        type: number
+      nominal_min_export_voltage_V:
+        description: Nominal minimum voltage that the power supply outputs in Volt
         type: number
       max_export_current_A:
         description: Maximum current that the power supply can output in Ampere
         type: number
+      nominal_max_export_current_A:
+        description: Nominal maximum current that the power supply can output in Ampere
+        type: number
       min_export_current_A:
         description: Minimum current limit that the power supply can set in Ampere
+        type: number
+      nominal_min_export_current_A:
+        description: Nominal minimum current limit that the power supply can set in Ampere
         type: number
       max_import_voltage_V:
         description:
           Maximum voltage that the power supply supports to import energy
+          in Volt
+        type: number
+      nominal_max_import_voltage_V:
+        description:
+          Nominal maximum voltage that the power supply supports to import energy
           in Volt
         type: number
       min_import_voltage_V:
@@ -80,17 +97,34 @@ types:
           Minimum voltage that the power supply requires to import energy
           in Volt
         type: number
+      nominal_min_import_voltage_V:
+        description:
+          Nominal minimum voltage that the power supply requires to import energy
+          in Volt
+        type: number
       max_import_current_A:
         description: Maximum current that the power supply can output in Ampere
+        type: number
+      nominal_max_import_current_A:
+        description: Nominal maximum current that the power supply can output in Ampere
         type: number
       min_import_current_A:
         description: Minimum current limit that the power supply can set in Ampere
         type: number
+      nominal_min_import_current_A:
+        description: Nominal minimum current limit that the power supply can set in Ampere
+        type: number
       max_export_power_W:
         description: Maximum export power that the power supply can output in Watt
         type: number
+      nominal_max_export_power_W:
+        description: Nominal maximum export power that the power supply can output in Watt
+        type: number
       max_import_power_W:
         description: Maximum import power that the power supply can sink in Watt
+        type: number
+      nominal_max_import_power_W:
+        description: Nominal maximum import power that the power supply can sink in Watt
         type: number
       conversion_efficiency_import:
         description: Typical import efficiency used for energy management

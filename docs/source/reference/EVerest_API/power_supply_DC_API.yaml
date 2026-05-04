@@ -199,7 +199,7 @@ components:
     send_capabilities:
       name: send_capabilities
       title: 'Send current capabilities'
-      summary: 'Current capabilities of the DC power supply.'
+      summary: 'Current capabilities of the DC power supply. Non-nominal values can be used to update the limits during runtime, e.g. for derating.'
       contentType: application/json
       payload:
         $ref: '#/components/schemas/Capabilities'
@@ -210,15 +210,25 @@ components:
             current_regulation_tolerance_A: 0
             peak_current_ripple_A: 0
             max_export_voltage_V: 0
+            nominal_max_export_voltage_V: 0
             min_export_voltage_V: 0
+            nominal_min_export_voltage_V: 0
             max_export_current_A: 0
+            nominal_max_export_current_A: 0
             min_export_current_A: 0
+            nominal_min_export_current_A: 0
             max_import_voltage_V: 0
+            nominal_max_import_voltage_V: 0
             min_import_voltage_V: 0
+            nominal_min_import_voltage_V: 0
             max_import_current_A: 0
+            nominal_max_import_current_A: 0
             min_import_current_A: 0
+            nominal_min_import_current_A: 0
             max_export_power_W: 0
+            nominal_max_export_power_W: 0
             max_import_power_W: 0
+            nominal_max_import_power_W: 0
             conversion_efficiency_import: 1
             conversion_efficiency_export: 1
 
@@ -304,18 +314,35 @@ components:
         max_export_voltage_V:
           description: Maximum voltage that the power supply can output on the DC side. Measured in Volt.
           type: number
+        nominal_max_export_voltage_V:
+          description: Nominal maximum voltage that the power supply outputs in Volt.
+          type: number
         min_export_voltage_V:
           description: Minimum voltage that the power supply can output on the DC side. Measured in Volt.
+          type: number
+        nominal_min_export_voltage_V:
+          description: Nominal minimum voltage that the power supply outputs in Volt.
           type: number
         max_export_current_A:
           description: Maximum current that the power supply can output on the DC side. Measured in Ampere.
           type: number
+        nominal_max_export_current_A:
+          description: Nominal maximum current that the power supply can output in Ampere.
+          type: number
         min_export_current_A:
           description: Minimum current limit on the DC side that the power supply can set. Measured in Ampere.
+          type: number
+        nominal_min_export_current_A:
+          description: Nominal minimum current limit that the power supply can set in Ampere.
           type: number
         max_import_voltage_V:
           description: >-
             Maximum voltage on the DC side that the power supply supports to import energy.
+            Measured in Volt.
+          type: number
+        nominal_max_import_voltage_V:
+          description: >-
+            Nominal maximum voltage on the DC side that the power supply supports to import energy.
             Measured in Volt.
           type: number
         min_import_voltage_V:
@@ -323,19 +350,36 @@ components:
             Minimum voltage on the DC side that the power supply requires to import energy.
             Measured in Volt.
           type: number
+        nominal_min_import_voltage_V:
+          description: >
+            Nominal minimum voltage on the DC side that the power supply requires to import energy.
+            Measured in Volt.
+          type: number
         max_import_current_A:
           description: Maximum current that the power supply can sink on the DC side. Measuered in Ampere.
+          type: number
+        nominal_max_import_current_A:
+          description: Nominal maximum current that the power supply can output in Ampere.
           type: number
         min_import_current_A:
           description: >
             Minimum limit for sinking current on the DC side that the power supply can set.
             Measured in Ampere.
           type: number
+        nominal_min_import_current_A:
+          description: Nominal minimum current limit that the power supply can set in Ampere.
+          type: number
         max_export_power_W:
           description: Maximum export power on the DC side that the power supply can source. Measured in Watt.
           type: number
+        nominal_max_export_power_W:
+          description: Nominal maximum export power that the power supply can output in Watt.
+          type: number
         max_import_power_W:
           description: Maximum import power on the DC side that the power supply can sink. Measured in Watt.
+          type: number
+        nominal_max_import_power_W:
+          description: Nominal maximum import power that the power supply can sink in Watt.
           type: number
         conversion_efficiency_import:
           description: Typical import efficiency used for energy management

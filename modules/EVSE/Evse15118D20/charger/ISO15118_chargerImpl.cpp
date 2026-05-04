@@ -744,34 +744,57 @@ void ISO15118_chargerImpl::handle_bpt_setup(types::iso15118::BptSetup& bpt_confi
 void ISO15118_chargerImpl::handle_set_powersupply_capabilities(types::power_supply_DC::Capabilities& capabilities) {
     std::scoped_lock lock(GEL);
 
-    setup_config.powersupply_limits.charge_limits.current.max = dt::from_float(capabilities.max_export_current_A);
-    setup_config.powersupply_limits.charge_limits.current.min = dt::from_float(capabilities.min_export_current_A);
-    setup_config.powersupply_limits.charge_limits.power.max = dt::from_float(capabilities.max_export_power_W);
-    setup_config.powersupply_limits.charge_limits.power.min =
-        dt::from_float(capabilities.min_export_current_A * capabilities.min_export_voltage_V);
-    setup_config.powersupply_limits.voltage.max = dt::from_float(capabilities.max_export_voltage_V);
-    setup_config.powersupply_limits.voltage.min = dt::from_float(capabilities.min_export_voltage_V);
+    // Export Limits - prefer nominal values over regular values
+    const auto max_export_current_A =
+        capabilities.nominal_max_export_current_A.value_or(capabilities.max_export_current_A);
+    const auto min_export_current_A =
+        capabilities.nominal_min_export_current_A.value_or(capabilities.min_export_current_A);
+    const auto max_export_power_W = capabilities.nominal_max_export_power_W.value_or(capabilities.max_export_power_W);
+    const auto max_export_voltage_V =
+        capabilities.nominal_max_export_voltage_V.value_or(capabilities.max_export_voltage_V);
+    const auto min_export_voltage_V =
+        capabilities.nominal_min_export_voltage_V.value_or(capabilities.min_export_voltage_V);
 
-    // Discharge Limits
-    if (capabilities.max_import_power_W.has_value() or
-        (capabilities.min_import_current_A.has_value() and capabilities.min_import_voltage_V.has_value()) or
-        capabilities.max_import_current_A.has_value() or capabilities.min_import_current_A.has_value()) {
+    setup_config.powersupply_limits.charge_limits.current.max = dt::from_float(max_export_current_A);
+    setup_config.powersupply_limits.charge_limits.current.min = dt::from_float(min_export_current_A);
+    setup_config.powersupply_limits.charge_limits.power.max = dt::from_float(max_export_power_W);
+    setup_config.powersupply_limits.charge_limits.power.min =
+        dt::from_float(min_export_current_A * min_export_voltage_V);
+    setup_config.powersupply_limits.voltage.max = dt::from_float(max_export_voltage_V);
+    setup_config.powersupply_limits.voltage.min = dt::from_float(min_export_voltage_V);
+
+    // Discharge Limits - prefer nominal values over regular values
+    const auto max_import_power_W = capabilities.nominal_max_import_power_W.has_value()
+                                        ? capabilities.nominal_max_import_power_W
+                                        : capabilities.max_import_power_W;
+    const auto min_import_current_A = capabilities.nominal_min_import_current_A.has_value()
+                                          ? capabilities.nominal_min_import_current_A
+                                          : capabilities.min_import_current_A;
+    const auto min_import_voltage_V = capabilities.nominal_min_import_voltage_V.has_value()
+                                          ? capabilities.nominal_min_import_voltage_V
+                                          : capabilities.min_import_voltage_V;
+    const auto max_import_current_A = capabilities.nominal_max_import_current_A.has_value()
+                                          ? capabilities.nominal_max_import_current_A
+                                          : capabilities.max_import_current_A;
+
+    if (max_import_power_W.has_value() or (min_import_current_A.has_value() and min_import_voltage_V.has_value()) or
+        max_import_current_A.has_value() or min_import_current_A.has_value()) {
         auto& discharge_power = (setup_config.powersupply_limits.discharge_limits.has_value())
                                     ? setup_config.powersupply_limits.discharge_limits.value()
                                     : setup_config.powersupply_limits.discharge_limits.emplace();
 
         if (mod->config.negative_bidirectional_limits) {
-            discharge_power.power.max = dt::from_float(-std::fabs(capabilities.max_import_power_W.value_or(0.0)));
-            discharge_power.power.min = dt::from_float(-std::fabs(capabilities.min_import_current_A.value_or(0.0)) *
-                                                       capabilities.min_import_voltage_V.value_or(0.0));
-            discharge_power.current.max = dt::from_float(-std::fabs(capabilities.max_import_current_A.value_or(0.0)));
-            discharge_power.current.min = dt::from_float(-std::fabs(capabilities.min_import_current_A.value_or(0.0)));
+            discharge_power.power.max = dt::from_float(-std::fabs(max_import_power_W.value_or(0.0)));
+            discharge_power.power.min =
+                dt::from_float(-std::fabs(min_import_current_A.value_or(0.0)) * min_import_voltage_V.value_or(0.0));
+            discharge_power.current.max = dt::from_float(-std::fabs(max_import_current_A.value_or(0.0)));
+            discharge_power.current.min = dt::from_float(-std::fabs(min_import_current_A.value_or(0.0)));
         } else {
-            discharge_power.power.max = dt::from_float(capabilities.max_import_power_W.value_or(0.0));
-            discharge_power.power.min = dt::from_float(capabilities.min_import_current_A.value_or(0.0) *
-                                                       capabilities.min_import_voltage_V.value_or(0.0));
-            discharge_power.current.max = dt::from_float(capabilities.max_import_current_A.value_or(0.0));
-            discharge_power.current.min = dt::from_float(capabilities.min_import_current_A.value_or(0.0));
+            discharge_power.power.max = dt::from_float(max_import_power_W.value_or(0.0));
+            discharge_power.power.min =
+                dt::from_float(min_import_current_A.value_or(0.0) * min_import_voltage_V.value_or(0.0));
+            discharge_power.current.max = dt::from_float(max_import_current_A.value_or(0.0));
+            discharge_power.current.min = dt::from_float(min_import_current_A.value_or(0.0));
         }
     }
 

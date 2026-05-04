@@ -12,6 +12,14 @@ provides:
         description: Max supported power in watt
         type: number
         default: 150000
+      nominal_max_export_power:
+        description: Nominal max export power in watt
+        type: number
+        default: 150000
+      nominal_max_import_power:
+        description: Nominal max import power in watt
+        type: number
+        default: 150000
       min_voltage:
         description: Min supported voltage
         type: number
@@ -20,12 +28,28 @@ provides:
         description: Max supported voltage
         type: number
         default: 900.0
+      nominal_min_voltage:
+        description: Nominal min supported voltage
+        type: number
+        default: 200.0
+      nominal_max_voltage:
+        description: Nominal max supported voltage
+        type: number
+        default: 900.0
       min_current:
         description: Min supported current
         type: number
         default: 1.0
       max_current:
         description: Max supported current
+        type: number
+        default: 200.0
+      nominal_min_current:
+        description: Nominal min supported current
+        type: number
+        default: 1.0
+      nominal_max_current:
+        description: Nominal max supported current
         type: number
         default: 200.0
   powermeter:
