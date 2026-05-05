@@ -534,19 +534,20 @@ void ConnectivityManager::on_websocket_connected(OcppProtocolVersion protocol) {
     this->time_disconnected = std::chrono::time_point<std::chrono::steady_clock>();
 }
 
+void ConnectivityManager::mark_disconnected_at_now() {
+    auto expected = std::chrono::time_point<std::chrono::steady_clock>{};
+    this->time_disconnected.compare_exchange_strong(expected, std::chrono::steady_clock::now());
+}
+
 void ConnectivityManager::on_websocket_disconnected() {
     const auto actual_configuration_slot = get_active_network_configuration_slot();
     if (!actual_configuration_slot.has_value()) {
-        if (this->time_disconnected.load().time_since_epoch() == 0s) {
-            this->time_disconnected = std::chrono::steady_clock::now();
-        }
+        this->mark_disconnected_at_now();
         return;
     }
     std::optional<NetworkConnectionProfile> network_connection_profile =
         this->get_network_connection_profile(actual_configuration_slot.value());
-    if (this->time_disconnected.load().time_since_epoch() == 0s) {
-        this->time_disconnected = std::chrono::steady_clock::now();
-    }
+    this->mark_disconnected_at_now();
 
     if (this->websocket_disconnected_callback.has_value() and network_connection_profile.has_value()) {
         this->websocket_disconnected_callback.value()(actual_configuration_slot.value(),

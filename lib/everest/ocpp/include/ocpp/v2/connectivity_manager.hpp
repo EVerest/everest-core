@@ -213,6 +213,11 @@ public:
 private:
     std::atomic<std::chrono::time_point<std::chrono::steady_clock>> time_disconnected{};
 
+    /// \brief Stamp \c time_disconnected with steady_clock::now() iff currently unset (zero).
+    ///        Atomic compare-exchange so concurrent disconnect callbacks cannot overwrite the
+    ///        first observed disconnect time.
+    void mark_disconnected_at_now();
+
     /// \brief Initializes the websocket and tries to connect
     ///
     void try_connect_websocket();
