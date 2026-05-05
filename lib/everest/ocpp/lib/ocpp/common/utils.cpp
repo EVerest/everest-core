@@ -16,7 +16,7 @@ bool iequals(const std::string& lhs, const std::string rhs) {
     return boost::algorithm::iequals(lhs, rhs);
 }
 
-bool is_finite_opt(const std::optional<float>& v) {
+bool is_finite_or_unset(const std::optional<float>& v) {
     return !v.has_value() || std::isfinite(v.value());
 }
 

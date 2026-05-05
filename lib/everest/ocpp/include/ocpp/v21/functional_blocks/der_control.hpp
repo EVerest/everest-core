@@ -45,13 +45,13 @@ private:
     // atomic flag is not enough), so the bool lives inside a monitor and
     // the lambda holds a handle for the duration of the callback. The
     // destructor sets the flag under the lock, stops the timer (cancels
-    // future fires), and re-acquires a handle to drain any in-flight
+    // future fires), and re-acquires a handle to wait for any in-flight
     // callback before member destruction. This is required because
     // FunctionalBlockContext holds a raw reference to the DatabaseHandler
     // owned by ChargePoint, and ChargePoint frees the DatabaseHandler
-    // before DERControl on shutdown, so an in-flight sweep callback could
+    // before DERControl on shutdown, so an in-flight callback could
     // UAF the handler during the io-thread join inside ~SteadyTimer.
-    everest::lib::util::monitor<bool> sweep_stopping{false};
+    everest::lib::util::monitor<bool> stopping{false};
     Everest::SteadyTimer scheduled_control_timer;
 
     void handle_set_der_control(ocpp::Call<SetDERControlRequest> call);

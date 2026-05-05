@@ -367,7 +367,7 @@ TEST_F(DERControlTest, SetDERControl_SupersedeAndInsertRunInsideTransaction) {
     auto msg = make_set_der_control_msg(req);
 
     std::string existing =
-        R"({"controlId":"ctrl-existing","controlType":"FreqDroop","isDefault":false,"isSuperseded":false,"priority":5})";
+        R"({"isSuperseded":false,"priority":5,"request":{"controlId":"ctrl-existing","controlType":"FreqDroop","isDefault":false}})";
 
     auto transaction = std::make_unique<TransactionMock>();
     auto* transaction_raw = transaction.get();
@@ -469,7 +469,7 @@ TEST_F(DERControlTest, GetDERControl_NoFilters_ReturnsAll) {
     auto msg = make_get_der_control_msg(req);
 
     std::string control_json =
-        R"({"controlId":"ctrl-1","controlType":"FreqDroop","isDefault":true,"isSuperseded":false,"priority":0,"request":{}})";
+        R"({"isSuperseded":false,"priority":0,"request":{"controlId":"ctrl-1","controlType":"FreqDroop","isDefault":true}})";
     EXPECT_CALL(database_handler_mock, get_der_controls_matching_criteria(_, _, _))
         .WillOnce(Return(std::vector<std::string>{control_json}));
 
@@ -495,7 +495,7 @@ TEST_F(DERControlTest, GetDERControl_ByType_ReportsMatching) {
     auto msg = make_get_der_control_msg(req);
 
     std::string control_json =
-        R"({"controlId":"ctrl-fd","controlType":"FreqDroop","isDefault":true,"isSuperseded":false,"priority":0,"request":{}})";
+        R"({"isSuperseded":false,"priority":0,"request":{"controlId":"ctrl-fd","controlType":"FreqDroop","isDefault":true}})";
     EXPECT_CALL(database_handler_mock,
                 get_der_controls_matching_criteria(_, std::optional<std::string>("FreqDroop"), _))
         .WillOnce(Return(std::vector<std::string>{control_json}));
@@ -765,7 +765,7 @@ TEST_F(DERControlTest, NotifyStartStop_SupersedingControl_SendsSupersededIds) {
 
     // Return an existing active control with lower priority (higher value)
     std::string existing =
-        R"({"controlId":"ctrl-lower-prio","controlType":"FreqDroop","isDefault":false,"isSuperseded":false,"priority":5})";
+        R"({"isSuperseded":false,"priority":5,"request":{"controlId":"ctrl-lower-prio","controlType":"FreqDroop","isDefault":false}})";
     EXPECT_CALL(database_handler_mock,
                 get_der_controls_matching_criteria(std::optional<bool>(false), std::optional<std::string>("FreqDroop"),
                                                    std::optional<std::string>(std::nullopt)))
@@ -1068,9 +1068,6 @@ TEST_F(DERControlTest, GetDERControl_ReportPopulatesCurveField) {
 
     // Build stored JSON for a VoltWatt curve control
     json stored;
-    stored["controlId"] = "ctrl-vw-1";
-    stored["controlType"] = "VoltWatt";
-    stored["isDefault"] = true;
     stored["isSuperseded"] = false;
     stored["priority"] = 0;
     json request;
@@ -1125,9 +1122,6 @@ TEST_F(DERControlTest, GetDERControl_ReportPopulatesFreqDroopField) {
     auto msg = make_get_der_control_msg(req);
 
     json stored;
-    stored["controlId"] = "ctrl-fd-1";
-    stored["controlType"] = "FreqDroop";
-    stored["isDefault"] = true;
     stored["isSuperseded"] = false;
     stored["priority"] = 0;
     json request;
@@ -1168,20 +1162,21 @@ namespace {
 std::string make_expired_scheduled_control_json(const std::string& control_id) {
     // A fixed past timestamp + 60 s duration is safely in the past for any test run.
     json j;
-    j["controlId"] = control_id;
-    j["controlType"] = "FreqDroop";
-    j["isDefault"] = false;
     j["isSuperseded"] = false;
     j["priority"] = 5;
     j["startTime"] = "2020-01-01T00:00:00Z";
     j["duration"] = 60.0f;
-    j["request"] = json::object();
+    json request;
+    request["controlId"] = control_id;
+    request["controlType"] = "FreqDroop";
+    request["isDefault"] = false;
+    j["request"] = request;
     return j.dump();
 }
 
 } // namespace
 
-// Expiry sweep wraps scan + delete inside a single DB transaction; the
+// Expiry pass wraps scan + delete inside a single DB transaction; the
 // notification is dispatched only after commit so a dispatcher throw can't
 // roll back a row whose stop has already been observed by CSMS.
 TEST_F(DERControlTest, CheckScheduledControls_ScanAndDeleteRunInsideTransaction) {
@@ -1203,20 +1198,21 @@ TEST_F(DERControlTest, CheckScheduledControls_ScanAndDeleteRunInsideTransaction)
     der_control.check_scheduled_controls();
 }
 
-// A row with a malformed startTime does not abort the sweep, a subsequent
+// A row with a malformed startTime does not abort the pass, a subsequent
 // good row is still processed.
 TEST_F(DERControlTest, CheckScheduledControls_SkipsRowWithUnparseableStartTime) {
     DERControl der_control(functional_block_context);
 
     json bad;
-    bad["controlId"] = "ctrl-bad";
-    bad["controlType"] = "FreqDroop";
-    bad["isDefault"] = false;
     bad["isSuperseded"] = false;
     bad["priority"] = 5;
     bad["startTime"] = "not-a-real-timestamp";
     bad["duration"] = 60.0f;
-    bad["request"] = json::object();
+    json bad_request;
+    bad_request["controlId"] = "ctrl-bad";
+    bad_request["controlType"] = "FreqDroop";
+    bad_request["isDefault"] = false;
+    bad["request"] = bad_request;
 
     auto good = make_expired_scheduled_control_json("ctrl-good");
 
@@ -1323,7 +1319,7 @@ TEST_F(DERControlTest, SetDERControl_FR08_NewLowerPriorityScheduledIsSelfSuperse
 
     // Existing scheduled active (priority 3 is higher priority than new's 7).
     std::string existing =
-        R"({"controlId":"ctrl-existing-high","controlType":"FreqDroop","isDefault":false,"priority":3,"isSuperseded":false})";
+        R"({"priority":3,"isSuperseded":false,"request":{"controlId":"ctrl-existing-high","controlType":"FreqDroop","isDefault":false}})";
     EXPECT_CALL(database_handler_mock, get_der_controls_matching_criteria(_, _, _))
         .WillOnce(Return(std::vector<std::string>{existing}));
 
@@ -1352,7 +1348,7 @@ TEST_F(DERControlTest, SetDERControl_EqualPriorityDoesNotSupersede) {
     auto msg = make_set_der_control_msg(req);
 
     std::string existing =
-        R"({"controlId":"ctrl-existing-equal","controlType":"FreqDroop","isDefault":true,"isSuperseded":false,"priority":5})";
+        R"({"isSuperseded":false,"priority":5,"request":{"controlId":"ctrl-existing-equal","controlType":"FreqDroop","isDefault":true}})";
     EXPECT_CALL(database_handler_mock, get_der_controls_matching_criteria(_, _, _))
         .WillOnce(Return(std::vector<std::string>{existing}));
 
@@ -1402,7 +1398,7 @@ TEST_F(DERControlTest, SetDERControl_FR07_ExistingActiveDefersSupersede) {
     // Existing scheduled control truly active: started 60 s ago, runs another
     // 30 minutes. Priority 5 is lower priority (higher numeric value) than new's 1.
     std::string existing =
-        R"({"controlId":"ctrl-existing-active","controlType":"FreqDroop","isDefault":false,"priority":5,"isSuperseded":false,)"
+        R"({"priority":5,"isSuperseded":false,"request":{"controlId":"ctrl-existing-active","controlType":"FreqDroop","isDefault":false},)"
         R"("startTime":")" +
         rfc3339_offset_from_now(-60) + R"(","duration":1800.0})";
     EXPECT_CALL(database_handler_mock, get_der_controls_matching_criteria(_, _, _))
@@ -1442,7 +1438,7 @@ TEST_F(DERControlTest, SetDERControl_FR06_ExistingNotYetStartedFlipsImmediatelyE
     // Existing scheduled control NOT yet started (startTime 2h from now).
     // Priority 5 is lower priority than new's 4 → new wins.
     std::string existing =
-        R"({"controlId":"ctrl-existing-future","controlType":"FreqDroop","isDefault":false,"priority":5,"isSuperseded":false,)"
+        R"({"priority":5,"isSuperseded":false,"request":{"controlId":"ctrl-existing-future","controlType":"FreqDroop","isDefault":false},)"
         R"("startTime":")" +
         rfc3339_offset_from_now(2 * 3600) + R"(","duration":300.0})";
     EXPECT_CALL(database_handler_mock, get_der_controls_matching_criteria(_, _, _))
@@ -1471,7 +1467,7 @@ TEST_F(DERControlTest, SetDERControl_FR06_ExistingNotYetStartedFlipsImmediatelyE
 // R04.FR.20/21: The scheduled-check pass emits NotifyDERStartStop(started=true)
 // the first time it sees a scheduled control whose startTime has arrived but
 // whose STARTED_NOTIFIED flag is still 0. The row is then marked notified so
-// subsequent sweeps don't re-emit.
+// subsequent runs don't re-emit.
 TEST_F(DERControlTest, CheckScheduledControls_FR20_NotifiesStartWhenStartTimeBecomesCurrent) {
     DERControl der_control(functional_block_context);
 
@@ -1529,13 +1525,13 @@ TEST_F(DERControlTest, CheckScheduledControls_FR07_ActivatesDeferredSupersede) {
 }
 
 // =============================================================================
-// H1: sweep must commit DB state BEFORE dispatching any NotifyDERStartStop.
-// Otherwise a throw mid-sweep (e.g. CiString<36> construction on a malformed
-// persisted id, or a dispatcher exception) can roll back DB rows for which the
-// CSMS has already observed a start/stop notification.
+// H1: check_scheduled_controls must commit DB state BEFORE dispatching any
+// NotifyDERStartStop. Otherwise a mid-pass throw (e.g. CiString<36> construction
+// on a malformed persisted id, or a dispatcher exception) can roll back DB rows
+// for which the CSMS has already observed a start/stop notification.
 // =============================================================================
 
-// Expiry sweep: the DB row is deleted AND the transaction committed before the
+// Expiry pass: the DB row is deleted AND the transaction committed before the
 // corresponding NotifyDERStartStop(started=false) is dispatched.
 TEST_F(DERControlTest, CheckScheduledControls_CommitsBeforeDispatchingExpiryNotification) {
     DERControl der_control(functional_block_context);
@@ -1561,10 +1557,10 @@ TEST_F(DERControlTest, CheckScheduledControls_CommitsBeforeDispatchingExpiryNoti
     der_control.check_scheduled_controls();
 }
 
-// Start-notify sweep: STARTED_NOTIFIED flag is written AND the transaction
+// Start-notify pass: STARTED_NOTIFIED flag is written AND the transaction
 // committed before the NotifyDERStartStop(started=true) is dispatched. If a
 // dispatcher throw were to race here, the DB flag is already durable, so the
-// next sweep won't re-emit the same start.
+// next run won't re-emit the same start.
 TEST_F(DERControlTest, CheckScheduledControls_CommitsBeforeDispatchingStartNotification) {
     DERControl der_control(functional_block_context);
 
@@ -1661,7 +1657,7 @@ TEST_F(DERControlTest, CheckScheduledControls_DispatcherThrowsAfterCommitDoesNot
 // after commit. A crash between commit and dispatch loses a start (recoverable
 // by CSMS retry), which is strictly better than the pre-fix window where a
 // crash between dispatch and mark-notified causes a duplicate start on the
-// next 30 s sweep.
+// next 30 s periodic check.
 // =============================================================================
 
 TEST_F(DERControlTest, SetDERControl_ImmediateStart_MarksNotifiedInsideTransactionBeforeDispatch) {
@@ -1693,7 +1689,7 @@ TEST_F(DERControlTest, SetDERControl_ImmediateStart_MarksNotifiedInsideTransacti
 }
 
 // If immediate-start does not apply (future startTime), no STARTED_NOTIFIED
-// mark-up is written — the periodic sweep owns that flip.
+// mark-up is written: the periodic check owns that flip.
 TEST_F(DERControlTest, SetDERControl_FutureStart_DoesNotMarkNotified) {
     DERControl der_control(functional_block_context);
 
@@ -1725,7 +1721,7 @@ TEST_F(DERControlTest, SetDERControl_SelfSuperseded_DoesNotMarkNotified) {
 
     // Existing higher-priority active control forces new to be self-superseded.
     std::string existing =
-        R"({"controlId":"ctrl-existing-hp","controlType":"FreqDroop","isDefault":false,"priority":3,"isSuperseded":false})";
+        R"({"priority":3,"isSuperseded":false,"request":{"controlId":"ctrl-existing-hp","controlType":"FreqDroop","isDefault":false}})";
     EXPECT_CALL(database_handler_mock, get_der_controls_matching_criteria(_, _, _))
         .WillOnce(Return(std::vector<std::string>{existing}));
     EXPECT_CALL(database_handler_mock, insert_or_update_der_control(_, _, _, /*is_superseded=*/true, _, _, _, _));
@@ -1901,9 +1897,6 @@ TEST_F(DERControlTest, GetDERControl_ReportOrdersMultiRowByIsSuperseded) {
 
     auto make_stored = [](const std::string& id, int32_t priority, bool is_superseded) {
         json stored;
-        stored["controlId"] = id;
-        stored["controlType"] = "FreqDroop";
-        stored["isDefault"] = false;
         stored["priority"] = priority;
         stored["isSuperseded"] = is_superseded;
         json request;
@@ -1967,9 +1960,6 @@ TEST_F(DERControlTest, GetDERControl_ReportChunksAndSetsTbc) {
 
     auto make_stored = [](const std::string& id) {
         json stored;
-        stored["controlId"] = id;
-        stored["controlType"] = "FreqDroop";
-        stored["isDefault"] = false;
         stored["priority"] = 0;
         stored["isSuperseded"] = false;
         json request;

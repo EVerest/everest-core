@@ -785,8 +785,6 @@ void ChargePoint::handle_message(const EnhancedMessage<v2::MessageType>& message
                 send_not_implemented_error(message.uniqueId, message.messageTypeId);
             }
             break;
-        case MessageType::NotifyDERStartStopResponse:
-            break;
         case MessageType::Authorize:
         case MessageType::AuthorizeResponse:
         case MessageType::BootNotification:
@@ -910,6 +908,7 @@ void ChargePoint::handle_message(const EnhancedMessage<v2::MessageType>& message
         case MessageType::ClearDERControlResponse:
         case MessageType::GetDERControlResponse:
         case MessageType::NotifyDERStartStop:
+        case MessageType::NotifyDERStartStopResponse:
         case MessageType::SetDERControlResponse:
         case MessageType::UpdateDynamicSchedule:
         case MessageType::UpdateDynamicScheduleResponse:

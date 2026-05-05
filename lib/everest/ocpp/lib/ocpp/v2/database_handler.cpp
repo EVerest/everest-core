@@ -1037,11 +1037,11 @@ void DatabaseHandler::insert_or_update_der_control(const std::string& control_id
                                                    int32_t priority, const std::optional<std::string>& start_time,
                                                    const std::optional<float>& duration,
                                                    const std::string& control_json) {
-    // SQLite UPSERT (instead of INSERT OR REPLACE) so STARTED_NOTIFIED and
+    // INSERT ... ON CONFLICT DO UPDATE so STARTED_NOTIFIED and
     // PENDING_SUPERSEDE_ID are preserved when the same controlId is re-set.
-    // INSERT OR REPLACE physically deletes and re-inserts the row, resetting
-    // those columns to their defaults; that caused duplicate
-    // NotifyDERStartStop(started=true) on the next 30 s sweep for an
+    // INSERT OR REPLACE would physically delete and re-insert the row,
+    // resetting those columns to their defaults; that caused duplicate
+    // NotifyDERStartStop(started=true) on the next periodic check for an
     // already-running control.
     const std::string sql = "INSERT INTO DER_CONTROLS "
                             "(CONTROL_ID, IS_DEFAULT, CONTROL_TYPE, IS_SUPERSEDED, PRIORITY, START_TIME, DURATION, "

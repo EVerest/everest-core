@@ -28,8 +28,6 @@ constexpr float MAX_DURATION_SECONDS = 86400.0F * 365.0F;          // one year
 constexpr std::int64_t MAX_SCHEDULE_HORIZON_SECONDS = 86400 * 365; // one year
 
 /// \brief Cap on total persisted DER controls to bound DER_CONTROLS table growth.
-/// A malicious or compromised CSMS could otherwise issue SetDERControl with ever-unique
-/// controlId values (each carrying up to MAX_CURVE_POINTS curve points) and fill the DB.
 constexpr std::size_t MAX_DER_CONTROLS = 1000;
 
 bool duration_is_sane(std::optional<float> d) {
@@ -40,7 +38,7 @@ bool duration_is_sane(std::optional<float> d) {
 }
 
 bool is_finite_curve(const DERCurve& curve) {
-    if (!ocpp::is_finite_opt(curve.responseTime) || !ocpp::is_finite_opt(curve.duration)) {
+    if (!ocpp::is_finite_or_unset(curve.responseTime) || !ocpp::is_finite_or_unset(curve.duration)) {
         return false;
     }
     for (const auto& point : curve.curveData) {
@@ -50,20 +48,20 @@ bool is_finite_curve(const DERCurve& curve) {
     }
     if (curve.hysteresis.has_value()) {
         const auto& h = curve.hysteresis.value();
-        if (!ocpp::is_finite_opt(h.hysteresisHigh) || !ocpp::is_finite_opt(h.hysteresisLow) ||
-            !ocpp::is_finite_opt(h.hysteresisDelay) || !ocpp::is_finite_opt(h.hysteresisGradient)) {
+        if (!ocpp::is_finite_or_unset(h.hysteresisHigh) || !ocpp::is_finite_or_unset(h.hysteresisLow) ||
+            !ocpp::is_finite_or_unset(h.hysteresisDelay) || !ocpp::is_finite_or_unset(h.hysteresisGradient)) {
             return false;
         }
     }
     if (curve.reactivePowerParams.has_value()) {
         const auto& r = curve.reactivePowerParams.value();
-        if (!ocpp::is_finite_opt(r.vRef) || !ocpp::is_finite_opt(r.autonomousVRefTimeConstant)) {
+        if (!ocpp::is_finite_or_unset(r.vRef) || !ocpp::is_finite_or_unset(r.autonomousVRefTimeConstant)) {
             return false;
         }
     }
     if (curve.voltageParams.has_value()) {
         const auto& v = curve.voltageParams.value();
-        if (!ocpp::is_finite_opt(v.hv10MinMeanValue) || !ocpp::is_finite_opt(v.hv10MinMeanTripDelay)) {
+        if (!ocpp::is_finite_or_unset(v.hv10MinMeanValue) || !ocpp::is_finite_or_unset(v.hv10MinMeanTripDelay)) {
             return false;
         }
     }
@@ -80,31 +78,32 @@ bool are_control_floats_finite(const SetDERControlRequest& req) {
     if (req.freqDroop.has_value()) {
         const auto& fd = req.freqDroop.value();
         if (!std::isfinite(fd.overFreq) || !std::isfinite(fd.underFreq) || !std::isfinite(fd.overDroop) ||
-            !std::isfinite(fd.underDroop) || !std::isfinite(fd.responseTime) || !ocpp::is_finite_opt(fd.duration)) {
+            !std::isfinite(fd.underDroop) || !std::isfinite(fd.responseTime) ||
+            !ocpp::is_finite_or_unset(fd.duration)) {
             return false;
         }
     }
     if (req.fixedVar.has_value()) {
         const auto& fv = req.fixedVar.value();
-        if (!std::isfinite(fv.setpoint) || !ocpp::is_finite_opt(fv.duration)) {
+        if (!std::isfinite(fv.setpoint) || !ocpp::is_finite_or_unset(fv.duration)) {
             return false;
         }
     }
     if (req.fixedPFAbsorb.has_value()) {
         const auto& pf = req.fixedPFAbsorb.value();
-        if (!std::isfinite(pf.displacement) || !ocpp::is_finite_opt(pf.duration)) {
+        if (!std::isfinite(pf.displacement) || !ocpp::is_finite_or_unset(pf.duration)) {
             return false;
         }
     }
     if (req.fixedPFInject.has_value()) {
         const auto& pf = req.fixedPFInject.value();
-        if (!std::isfinite(pf.displacement) || !ocpp::is_finite_opt(pf.duration)) {
+        if (!std::isfinite(pf.displacement) || !ocpp::is_finite_or_unset(pf.duration)) {
             return false;
         }
     }
     if (req.limitMaxDischarge.has_value()) {
         const auto& lmd = req.limitMaxDischarge.value();
-        if (!ocpp::is_finite_opt(lmd.pctMaxDischargePower) || !ocpp::is_finite_opt(lmd.duration)) {
+        if (!ocpp::is_finite_or_unset(lmd.pctMaxDischargePower) || !ocpp::is_finite_or_unset(lmd.duration)) {
             return false;
         }
         if (lmd.powerMonitoringMustTrip.has_value() && !is_finite_curve(lmd.powerMonitoringMustTrip.value())) {
@@ -114,8 +113,8 @@ bool are_control_floats_finite(const SetDERControlRequest& req) {
     if (req.enterService.has_value()) {
         const auto& es = req.enterService.value();
         if (!std::isfinite(es.highVoltage) || !std::isfinite(es.lowVoltage) || !std::isfinite(es.highFreq) ||
-            !std::isfinite(es.lowFreq) || !ocpp::is_finite_opt(es.delay) || !ocpp::is_finite_opt(es.randomDelay) ||
-            !ocpp::is_finite_opt(es.rampRate)) {
+            !std::isfinite(es.lowFreq) || !ocpp::is_finite_or_unset(es.delay) ||
+            !ocpp::is_finite_or_unset(es.randomDelay) || !ocpp::is_finite_or_unset(es.rampRate)) {
             return false;
         }
     }
@@ -274,12 +273,12 @@ bool validate_yunit(DERControlEnum control_type, const DERCurve& curve) {
 
 DERControl::DERControl(const v2::FunctionalBlockContext& context) : context(context) {
     // Start periodic check for expired scheduled controls (every 30 seconds).
-    // The lambda takes a sweep_stopping handle (which holds the monitor's
-    // lock) for the duration of the callback so the destructor can drain
-    // any in-flight run before member destruction begins.
+    // The lambda takes a stopping handle (which holds the monitor's lock) for
+    // the duration of the callback so the destructor can wait for any
+    // in-flight run before member destruction begins.
     this->scheduled_control_timer.interval(
         [this]() {
-            auto handle = this->sweep_stopping.handle();
+            auto handle = this->stopping.handle();
             if (*handle) {
                 return;
             }
@@ -292,20 +291,20 @@ DERControl::~DERControl() {
     // Set the stopping flag under the lock so any callback that subsequently
     // acquires a handle observes it and short-circuits.
     {
-        auto handle = this->sweep_stopping.handle();
+        auto handle = this->stopping.handle();
         *handle = true;
     }
     // Cancel pending waits on the boost asio timer. After this, the timer's
     // wrapper guarantees at most one more callback may complete before the
     // io thread becomes idle.
     this->scheduled_control_timer.stop();
-    // Drain: re-acquire a handle to wait for any callback that started
-    // before stop() was observed by the io thread. After this returns, no
-    // callback is running and none can start, so member destruction (which
-    // tears down the io thread via ~Timer) is safe even if the
+    // Re-acquire a handle to wait for any callback that started before
+    // stop() was observed by the io thread. After this returns, no callback
+    // is running and none can start, so member destruction (which tears
+    // down the io thread via ~Timer) is safe even if the
     // FunctionalBlockContext's referenced DatabaseHandler has already been
     // freed by the owning ChargePoint.
-    auto drain_handle = this->sweep_stopping.handle();
+    auto wait_handle = this->stopping.handle();
 }
 
 void DERControl::handle_message(const ocpp::EnhancedMessage<v2::MessageType>& message) {
@@ -349,7 +348,7 @@ bool DERControl::validate_control_fields(const SetDERControlRequest& req) const 
         return false;
     }
 
-    // Defense-in-depth: bound priority, duration, and curveData size before we touch the DB.
+    // Bound priority, duration, and curveData size before we touch the DB.
     if (get_priority_from_request(req) < 0) {
         return false;
     }
@@ -431,7 +430,6 @@ bool DERControl::validate_control_fields(const SetDERControlRequest& req) const 
 void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
     const auto& request = call.msg;
     SetDERControlResponse response;
-    const auto control_type_str = v2::conversions::dercontrol_enum_to_string(request.controlType);
 
     // R04.FR.01: Check if controlType is supported
     if (!this->is_control_type_supported(request.controlType)) {
@@ -475,9 +473,8 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
         return;
     }
 
-    // Bound DER_CONTROLS table growth. A compromised CSMS could otherwise issue
-    // SetDERControl with ever-unique controlIds and fill the DB. An UPDATE of an
-    // existing row does not increase row count, so it is always allowed.
+    // Bound DER_CONTROLS table growth. An UPDATE of an existing row does not
+    // increase row count, so it is always allowed.
     if (this->context.database_handler.count_der_controls() >= MAX_DER_CONTROLS &&
         !this->context.database_handler.get_der_control(request.controlId.get()).has_value()) {
         EVLOG_warning << "DER control table at cap (" << MAX_DER_CONTROLS
@@ -522,6 +519,8 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
     const bool start_time_has_arrived =
         !request.isDefault && start_time.has_value() && ocpp::DateTime(start_time.value()) <= now;
 
+    const auto control_type_str = v2::conversions::dercontrol_enum_to_string(request.controlType);
+
     // Everything that touches DER_CONTROLS rows on behalf of this SetDERControl runs
     // inside a single transaction so the CSMS-handler thread and the scheduled-check
     // timer thread can never see a half-mutated snapshot.
@@ -535,15 +534,16 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
     for (const auto& existing_json : existing_jsons) {
         try {
             auto existing = json::parse(existing_json);
-            auto existing_id = existing.at("controlId").get<std::string>();
+            const auto& existing_request = existing.at("request");
+            auto existing_id = existing_request.at("controlId").get<std::string>();
+            auto existing_is_default = existing_request.at("isDefault").get<bool>();
             auto existing_priority = existing.at("priority").get<int32_t>();
-            // Strict at(...).get<bool>(): we control the writer so both flags are
+            // Strict at(...).get<bool>(): we control the writer so the flag is
             // always present and bool-typed. A missing or wrong-typed value is
-            // a sign of data corruption — let it throw and be logged by the
+            // a sign of data corruption: let it throw and be logged by the
             // outer per-row catch instead of silently defaulting to false and
             // misclassifying the row.
             auto existing_is_superseded = existing.at("isSuperseded").get<bool>();
-            auto existing_is_default = existing.at("isDefault").get<bool>();
 
             if (existing_id == request.controlId.get()) {
                 continue; // Same controlId is an update, not a supersede
@@ -554,7 +554,7 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
 
             // Determine whether `existing` is currently active. Defaults are not
             // "scheduled" in the time-windowed sense, so they never qualify for
-            // deferred supersede — a new default with strictly lower priority value
+            // deferred supersede: a new default with strictly lower priority value
             // immediately replaces an existing default.
             bool existing_is_currently_active = false;
             if (!existing_is_default && existing.contains("startTime")) {
@@ -629,11 +629,12 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
         }
     }
 
-    // Serialize the full request as the control JSON for storage
+    // CONTROL_JSON layout: the request itself is the source of truth for
+    // controlId, controlType, isDefault, and the variant payload. Top-level
+    // fields hold values that are computed at SetDERControl time
+    // (isSuperseded) or canonicalized from the variant (priority, startTime,
+    // duration) so reads don't have to know which variant carries them.
     json control_json;
-    control_json["controlId"] = request.controlId.get();
-    control_json["controlType"] = control_type_str;
-    control_json["isDefault"] = request.isDefault;
     control_json["priority"] = priority;
     control_json["isSuperseded"] = new_is_superseded;
     if (start_time.has_value()) {
@@ -642,7 +643,6 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
     if (duration.has_value()) {
         control_json["duration"] = duration.value();
     }
-    // Store the original request payload
     control_json["request"] = json(request);
 
     // Persist to database
@@ -664,8 +664,8 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
     // STARTED_NOTIFIED inside this same transaction. That way a crash between
     // commit and dispatch loses a start notification (recoverable via CSMS
     // retry) instead of leaving the row with STARTED_NOTIFIED=0 after CSMS has
-    // already observed the notify, which would cause the 30 s sweep to
-    // duplicate it.
+    // already observed the notify, which would cause the 30 s periodic check
+    // to duplicate it.
     const bool will_notify_immediate_start = start_time_has_arrived && !new_is_superseded;
     if (will_notify_immediate_start) {
         this->context.database_handler.mark_der_control_started_notified(request.controlId.get());
@@ -673,10 +673,6 @@ void DERControl::handle_set_der_control(ocpp::Call<SetDERControlRequest> call) {
 
     transaction->commit();
 
-    // OCPP 2.1 §1.75.2 / §1.48.2: SetDERControlResponse.supersededIds and
-    // NotifyDERStartStopRequest.supersededIds are both capped at 0..24. DB
-    // state is already correct (every superseded row was flipped above);
-    // only the wire payload needs trimming.
     constexpr size_t MAX_SUPERSEDED_IDS = 24;
     if (superseded_ids.size() > MAX_SUPERSEDED_IDS) {
         superseded_ids.resize(MAX_SUPERSEDED_IDS);
@@ -816,24 +812,15 @@ void DERControl::send_notify_start_stop(const CiString<36>& control_id, bool sta
 }
 
 void DERControl::check_scheduled_controls() {
-    // Notifications are queued inside the transaction and flushed only after
-    // commit. If the transaction throws or rolls back we discard the queue, so
-    // CSMS never observes a notification whose DB change was rolled back. A
-    // per-notification dispatcher throw after commit is swallowed; the DB state
-    // is already durable so no subsequent sweep will re-emit (STARTED_NOTIFIED
-    // flags and expiry-deletes are already persisted).
+    // Notifications are queued during the transaction and flushed after commit.
+    // A rollback discards the queue (CSMS never observes a notification for
+    // rolled-back state). A post-commit dispatcher throw is swallowed: DB
+    // state is already durable so no later run will re-emit.
     //
-    // Reboot replay: FR.20 / FR.22 specify `timestamp = current time`, i.e. the
-    // moment the notification is dispatched, not the moment the underlying
-    // startTime / expiry event occurred. A row whose startTime elapsed during
-    // downtime fires `started=true` on the first post-boot sweep with
-    // `timestamp = now`; a row whose startTime AND expiry both elapsed during
-    // downtime fires `started=true` followed by `started=false` back-to-back
-    // with identical timestamps (pair semantics preserved because this loop
-    // runs before the expiry loop below and both queue into the same
-    // post-commit dispatch vector). No grace window is applied, all overdue
-    // transitions are replayed. Spec-literal; product decision recorded in
-    // docs/reviews/ocpp-der-open-questions.md §3.
+    // Reboot replay: FR.20 / FR.22 specify timestamp = dispatch-time. Rows
+    // whose startTime / expiry elapsed during downtime fire on the first
+    // post-boot run with timestamp = now; both pending-supersede and expiry
+    // queues feed the same post-commit dispatch vector below.
     std::vector<NotifyDERStartStopRequest> pending_notifications;
 
     // Outer try ensures DB-level failures never escape into the asio timer thread.
@@ -871,7 +858,7 @@ void DERControl::check_scheduled_controls() {
         // R04.FR.20/21: queue NotifyDERStartStop(started=true) the first time the
         // timer observes a scheduled control whose startTime has arrived but for
         // which no start-notification has been sent yet. Flag the row so later
-        // sweeps don't re-emit.
+        // runs don't re-emit.
         auto to_start = this->context.database_handler.get_der_controls_needing_start_notify(now);
         for (const auto& control_id : to_start) {
             this->context.database_handler.mark_der_control_started_notified(control_id);
@@ -888,7 +875,7 @@ void DERControl::check_scheduled_controls() {
         for (const auto& control_json_str : controls) {
             try {
                 auto control = json::parse(control_json_str);
-                auto control_id = control.at("controlId").get<std::string>();
+                auto control_id = control.at("request").at("controlId").get<std::string>();
                 bool is_superseded = control.at("isSuperseded").get<bool>();
 
                 if (is_superseded) {
@@ -931,7 +918,7 @@ void DERControl::check_scheduled_controls() {
             } catch (const std::exception& e) {
                 // Broadened from json::exception: an unparseable startTime throws
                 // TimePointParseException, which is not a json::exception. A single bad
-                // row must not abort the rest of the sweep.
+                // row must not abort the rest of the pass.
                 EVLOG_warning << "Skipping malformed DER control row during scheduled check: " << e.what();
             }
         }
@@ -950,12 +937,12 @@ void DERControl::check_scheduled_controls() {
     // notification is swallowed so the timer thread isn't torn down; remaining
     // notifications are still attempted.
     //
-    // TODO: a transient dispatch failure here is dropped — STARTED_NOTIFIED is
-    // already persisted, so the next sweep won't retry, and FR.22 expiry rows
-    // are deleted before this loop runs. CSMS will observe the resulting state
-    // mismatch only on its next GetDERControl. If reliability becomes a
-    // concern, persist a "notify_outbox" row alongside the state change and
-    // drain it from the next sweep.
+    // TODO: a transient dispatch failure here is dropped: STARTED_NOTIFIED is
+    // already persisted, so the next periodic check won't retry, and FR.22
+    // expiry rows are deleted before this loop runs. CSMS will observe the
+    // resulting state mismatch only on its next GetDERControl. If reliability
+    // becomes a concern, persist a "notify_outbox" row alongside the state
+    // change and flush it on the next periodic check.
     for (const auto& notification : pending_notifications) {
         try {
             ocpp::Call<NotifyDERStartStopRequest> call(notification);
@@ -1001,12 +988,12 @@ ReportDERControlRequest build_report(int32_t request_id, const std::vector<std::
     for (const auto& control_json_str : control_jsons) {
         try {
             auto stored = json::parse(control_json_str);
-            auto control_id = stored.at("controlId").get<std::string>();
-            auto control_type_str = stored.at("controlType").get<std::string>();
-            bool is_default = stored.at("isDefault").get<bool>();
+            const auto& request_json = stored.at("request");
+            auto control_id = request_json.at("controlId").get<std::string>();
+            auto control_type_str = request_json.at("controlType").get<std::string>();
+            bool is_default = request_json.at("isDefault").get<bool>();
             bool is_superseded = stored.at("isSuperseded").get<bool>();
             auto control_type = v2::conversions::string_to_dercontrol_enum(control_type_str);
-            const auto& request_json = stored.at("request");
 
             // Route each control into the appropriate *Get vector based on type
             switch (control_type) {
