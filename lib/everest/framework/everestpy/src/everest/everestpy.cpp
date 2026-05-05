@@ -131,6 +131,7 @@ PYBIND11_MODULE(everestpy, m) {
         .def("say_hello", &Module::say_hello)
         .def("init_done", py::overload_cast<>(&Module::init_done))
         .def("init_done", py::overload_cast<const std::function<void()>&>(&Module::init_done))
+        .def("shutdown_handler", py::overload_cast<const std::function<void()>&>(&Module::shutdown_handler))
         .def("call_command", &Module::call_command)
         .def("publish_variable", &Module::publish_variable)
         .def("implement_command", &Module::implement_command)

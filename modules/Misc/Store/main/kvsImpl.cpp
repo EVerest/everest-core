@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #include "kvsImpl.hpp"
 
 namespace module {
@@ -9,6 +9,9 @@ void kvsImpl::init() {
 }
 
 void kvsImpl::ready() {
+}
+
+void kvsImpl::shutdown() {
 }
 
 void kvsImpl::handle_store(std::string& key,

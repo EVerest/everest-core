@@ -16,6 +16,7 @@ namespace module {
 struct LdEverest {
     static void init(ModuleConfigs module_configs, const ModuleInfo& info);
     static void ready();
+    static void shutdown();
 };
 
 void register_module_adapter(Everest::ModuleAdapter module_adapter);

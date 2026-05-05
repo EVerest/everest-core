@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #include "example_userImpl.hpp"
 
 namespace module {
@@ -10,6 +10,9 @@ void example_userImpl::init() {
 
 void example_userImpl::ready() {
     mod->r_example->call_uses_something("hello_there");
+}
+
+void example_userImpl::shutdown() {
 }
 
 } // namespace example_user

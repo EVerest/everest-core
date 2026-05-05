@@ -42,6 +42,7 @@ using namespace Everest;
 
 const auto PARENT_DIED_SIGNAL = SIGTERM;
 const int CONTROLLER_IPC_READ_TIMEOUT_MS = 50;
+const auto SHUTDOWN_TIMEOUT_MS = 5000;
 const auto complete_start_time = std::chrono::system_clock::now();
 
 #ifdef ENABLE_ADMIN_PANEL
@@ -93,6 +94,14 @@ struct ModuleStartInfo {
 
     // required capabilities of this module
     std::vector<std::string> capabilities;
+};
+
+struct ModuleShutdownInfo {
+    std::string id;
+    int wstatus;
+
+    ModuleShutdownInfo(const std::string& id_, int wstatus_) : id(id_), wstatus(wstatus_) {
+    }
 };
 
 namespace {
@@ -604,8 +613,61 @@ ConfigBootMode parse_config_boot_mode(const std::string& config_opt, const std::
     throw std::logic_error("Could not parse config boot source, this should never happen.");
 }
 
+void cleanup(Everest::MQTTAbstraction& mqtt_abstraction) {
+    mqtt_abstraction.disconnect();
+}
+
+void print_start_message(const std::string& version_information) {
+    EVLOG_info << "  \033[0;1;35;95m_\033[0;1;31;91m__\033[0;1;33;93m__\033[0;1;32;92m__\033[0;1;36;96m_\033[0m      "
+                  "\033[0;1;31;91m_\033[0;1;33;93m_\033[0m                \033[0;1;36;96m_\033[0m   ";
+    EVLOG_info << " \033[0;1;31;91m|\033[0m  \033[0;1;33;93m_\033[0;1;32;92m__\033[0;1;36;96m_\\\033[0m "
+                  "\033[0;1;34;94m\\\033[0m    \033[0;1;33;93m/\033[0m \033[0;1;32;92m/\033[0m               "
+                  "\033[0;1;34;94m|\033[0m \033[0;1;35;95m|\033[0m";
+    EVLOG_info
+        << " \033[0;1;33;93m|\033[0m \033[0;1;32;92m|_\033[0;1;36;96m_\033[0m   \033[0;1;35;95m\\\033[0m "
+           "\033[0;1;31;91m\\\033[0m  \033[0;1;33;93m/\033[0m \033[0;1;32;92m/\033[0;1;36;96m__\033[0m "
+           "\033[0;1;34;94m_\033[0m \033[0;1;35;95m_\033[0;1;31;91m_\033[0m \033[0;1;33;93m__\033[0;1;32;92m_\033[0m  "
+           "\033[0;1;36;96m_\033[0;1;34;94m__\033[0;1;35;95m|\033[0m \033[0;1;31;91m|_\033[0m";
+    EVLOG_info << " \033[0;1;32;92m|\033[0m  \033[0;1;36;96m_\033[0;1;34;94m_|\033[0m   \033[0;1;31;91m\\\033[0m "
+                  "\033[0;1;33;93m\\\033[0;1;32;92m/\033[0m \033[0;1;36;96m/\033[0m \033[0;1;34;94m_\033[0m "
+                  "\033[0;1;35;95m\\\033[0m \033[0;1;31;91m'_\033[0;1;33;93m_/\033[0m \033[0;1;32;92m_\033[0m "
+                  "\033[0;1;36;96m\\\033[0;1;34;94m/\033[0m \033[0;1;35;95m__\033[0;1;31;91m|\033[0m "
+                  "\033[0;1;33;93m__\033[0;1;32;92m|\033[0m";
+    EVLOG_info << " \033[0;1;36;96m|\033[0m \033[0;1;34;94m|_\033[0;1;35;95m__\033[0;1;31;91m_\033[0m   "
+                  "\033[0;1;32;92m\\\033[0m  \033[0;1;36;96m/\033[0m  \033[0;1;35;95m__\033[0;1;31;91m/\033[0m "
+                  "\033[0;1;33;93m|\033[0m \033[0;1;32;92m|\033[0m  "
+                  "\033[0;1;36;96m_\033[0;1;34;94m_/\033[0;1;35;95m\\_\033[0;1;31;91m_\033[0m \033[0;1;33;93m\\\033[0m "
+                  "\033[0;1;32;92m|_\033[0m";
+    EVLOG_info << " \033[0;1;34;94m|_\033[0;1;35;95m__\033[0;1;31;91m__\033[0;1;33;93m_|\033[0m   "
+                  "\033[0;1;36;96m\\\033[0;1;34;94m/\033[0m "
+                  "\033[0;1;35;95m\\_\033[0;1;31;91m__\033[0;1;33;93m|_\033[0;1;32;92m|\033[0m  "
+                  "\033[0;1;36;96m\\\033[0;1;34;94m__\033[0;1;35;95m_|\033[0;1;31;91m|_\033[0;1;33;93m__\033[0;1;32;"
+                  "92m/\\\033[0;1;36;96m__\033[0;1;34;94m|\033[0m";
+    EVLOG_info << "";
+    EVLOG_info << PROJECT_NAME << " " << PROJECT_VERSION << " " << GIT_VERSION;
+    EVLOG_info << version_information;
+    EVLOG_info << "";
+}
+
+void print_shutdown_message(const std::optional<std::chrono::system_clock::time_point> shutdown_start_time,
+                            const std::string& message_prefix = "") {
+    auto shutdown_duration = 0;
+    if (shutdown_start_time.has_value()) {
+        shutdown_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() -
+                                                                                  shutdown_start_time.value())
+                                .count();
+    } else {
+        EVLOG_info << "shutdown start time is not set?";
+    }
+    EVLOG_info << fmt::format(
+        TERMINAL_STYLE_ERROR, "👋👋👋 {}{}", message_prefix,
+        fmt::format(TERMINAL_STYLE_ERROR, "EVerest manager is exiting [{}ms] 👋👋👋", shutdown_duration));
+}
+
 int boot(const po::variables_map& vm) {
     const bool check = (vm.count("check") != 0);
+    bool sigint_received = false;
+    auto signal_polling = Everest::system::SignalPolling();
 
     const auto prefix_opt = parse_string_option(vm, "prefix");
     const auto config_opt = parse_string_option(vm, "config");
@@ -640,35 +702,7 @@ int boot(const po::variables_map& vm) {
 
     Logging::init(ms.runtime_settings.logging_config_file.string());
 
-    EVLOG_info << "  \033[0;1;35;95m_\033[0;1;31;91m__\033[0;1;33;93m__\033[0;1;32;92m__\033[0;1;36;96m_\033[0m      "
-                  "\033[0;1;31;91m_\033[0;1;33;93m_\033[0m                \033[0;1;36;96m_\033[0m   ";
-    EVLOG_info << " \033[0;1;31;91m|\033[0m  \033[0;1;33;93m_\033[0;1;32;92m__\033[0;1;36;96m_\\\033[0m "
-                  "\033[0;1;34;94m\\\033[0m    \033[0;1;33;93m/\033[0m \033[0;1;32;92m/\033[0m               "
-                  "\033[0;1;34;94m|\033[0m \033[0;1;35;95m|\033[0m";
-    EVLOG_info
-        << " \033[0;1;33;93m|\033[0m \033[0;1;32;92m|_\033[0;1;36;96m_\033[0m   \033[0;1;35;95m\\\033[0m "
-           "\033[0;1;31;91m\\\033[0m  \033[0;1;33;93m/\033[0m \033[0;1;32;92m/\033[0;1;36;96m__\033[0m "
-           "\033[0;1;34;94m_\033[0m \033[0;1;35;95m_\033[0;1;31;91m_\033[0m \033[0;1;33;93m__\033[0;1;32;92m_\033[0m  "
-           "\033[0;1;36;96m_\033[0;1;34;94m__\033[0;1;35;95m|\033[0m \033[0;1;31;91m|_\033[0m";
-    EVLOG_info << " \033[0;1;32;92m|\033[0m  \033[0;1;36;96m_\033[0;1;34;94m_|\033[0m   \033[0;1;31;91m\\\033[0m "
-                  "\033[0;1;33;93m\\\033[0;1;32;92m/\033[0m \033[0;1;36;96m/\033[0m \033[0;1;34;94m_\033[0m "
-                  "\033[0;1;35;95m\\\033[0m \033[0;1;31;91m'_\033[0;1;33;93m_/\033[0m \033[0;1;32;92m_\033[0m "
-                  "\033[0;1;36;96m\\\033[0;1;34;94m/\033[0m \033[0;1;35;95m__\033[0;1;31;91m|\033[0m "
-                  "\033[0;1;33;93m__\033[0;1;32;92m|\033[0m";
-    EVLOG_info << " \033[0;1;36;96m|\033[0m \033[0;1;34;94m|_\033[0;1;35;95m__\033[0;1;31;91m_\033[0m   "
-                  "\033[0;1;32;92m\\\033[0m  \033[0;1;36;96m/\033[0m  \033[0;1;35;95m__\033[0;1;31;91m/\033[0m "
-                  "\033[0;1;33;93m|\033[0m \033[0;1;32;92m|\033[0m  "
-                  "\033[0;1;36;96m_\033[0;1;34;94m_/\033[0;1;35;95m\\_\033[0;1;31;91m_\033[0m \033[0;1;33;93m\\\033[0m "
-                  "\033[0;1;32;92m|_\033[0m";
-    EVLOG_info << " \033[0;1;34;94m|_\033[0;1;35;95m__\033[0;1;31;91m__\033[0;1;33;93m_|\033[0m   "
-                  "\033[0;1;36;96m\\\033[0;1;34;94m/\033[0m "
-                  "\033[0;1;35;95m\\_\033[0;1;31;91m__\033[0;1;33;93m|_\033[0;1;32;92m|\033[0m  "
-                  "\033[0;1;36;96m\\\033[0;1;34;94m__\033[0;1;35;95m_|\033[0;1;31;91m|_\033[0;1;33;93m__\033[0;1;32;"
-                  "92m/\\\033[0;1;36;96m__\033[0;1;34;94m|\033[0m";
-    EVLOG_info << "";
-    EVLOG_info << PROJECT_NAME << " " << PROJECT_VERSION << " " << GIT_VERSION;
-    EVLOG_info << ms.version_information;
-    EVLOG_info << "";
+    print_start_message(ms.version_information);
 
     if (not ms.mqtt_settings.uses_socket()) {
         EVLOG_info << "Using MQTT broker " << ms.mqtt_settings.broker_host << ":" << ms.mqtt_settings.broker_port;
@@ -822,23 +856,23 @@ int boot(const po::variables_map& vm) {
 #endif
 
     int wstatus; // NOLINT(cppcoreguidelines-init-variables): this is always initialized in the following waitpid call
+    std::vector<ModuleShutdownInfo> shutdown_info;
+    bool shutdown_initiated = false;
+    bool shutdown_complete = false;
+    bool completing_shutdown = false;
+    std::optional<std::chrono::system_clock::time_point> shutdown_start_time;
 
     while (true) {
-// check if anyone died
-#ifdef ENABLE_ADMIN_PANEL
-        // non-blocking if admin panel is enabled, as this main loop also processes controller RPC
+        // check if anyone died
+        // non-blocking as this main loop also processes controller RPC and the signal fd
         auto pid = waitpid(-1, &wstatus, WNOHANG);
-#else
-        // block if admin panel is disabled, no controller RPC is handled by main loop
-        auto pid = waitpid(-1, &wstatus, 0);
-#endif
 
         if (pid == 0) {
             // nothing new from our child process
         } else if (pid == -1) {
             throw std::runtime_error(fmt::format("Syscall to waitpid() failed ({})", strerror(errno)));
         } else {
-
+            auto module_exited_time = std::chrono::system_clock::now();
 #ifdef ENABLE_ADMIN_PANEL
             // one of our children exited (first check controller, then modules)
             if (pid == controller_handle.pid) {
@@ -856,6 +890,58 @@ int boot(const po::variables_map& vm) {
             module_handles.erase(module_iter);
             // one of our modules died -> kill 'em all
             if (modules_started) {
+                if (wstatus == 0) {
+                    if (not shutdown_initiated) {
+                        shutdown_initiated = true;
+                        if (not shutdown_start_time.has_value()) {
+                            shutdown_start_time = module_exited_time;
+                        }
+                    }
+                    EVLOG_info << "Module " << fmt::format(TERMINAL_STYLE_BLUE, "{}", module_name) << " shutdown ["
+                               << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                      module_exited_time - shutdown_start_time.value_or(module_exited_time))
+                                      .count()
+                               << "ms]";
+
+                    EVLOG_debug << fmt::format("Module {} (pid: {}) exited with status: {}.", module_name, pid,
+                                               wstatus);
+                    shutdown_info.push_back({module_name, wstatus});
+                    if (module_handles.size() > 0) {
+                        continue;
+                    } else {
+                        // TODO: check the shutdown_info here for non-zero exit codes
+                        for (const auto& shutdown_info_entry : shutdown_info) {
+                            EVLOG_info << fmt::format("Module {} exited with status: {}.", shutdown_info_entry.id,
+                                                      shutdown_info_entry.wstatus);
+                        }
+                        print_shutdown_message(shutdown_start_time,
+                                               fmt::format(TERMINAL_STYLE_OK, "All modules shut down properly. "));
+                        shutdown_complete = true;
+                        cleanup(*mqtt_abstraction);
+                        return EXIT_SUCCESS;
+                    }
+                } else if (shutdown_info.size() > 0) {
+                    EVLOG_error << fmt::format("Module {} (pid: {}) exited with status: {} during a shutdown. This is "
+                                               "probably a bug in your shutdown handler implementation.",
+                                               module_name, pid, wstatus);
+                    shutdown_info.push_back({module_name, wstatus});
+                    if (module_handles.size() > 0) {
+                        continue;
+                    } else {
+                        std::string remaining_modules;
+                        for (auto& info : shutdown_info) {
+                            if (info.wstatus != 0) {
+                                remaining_modules += fmt::format(" {} (status: {})", info.id, info.wstatus);
+                            }
+                        }
+
+                        EVLOG_info << "Modules that did not shut down correctly:" << remaining_modules;
+                        print_shutdown_message(shutdown_start_time);
+
+                        cleanup(*mqtt_abstraction);
+                        return EXIT_SUCCESS;
+                    }
+                }
                 EVLOG_critical << fmt::format("Module {} (pid: {}) exited with status: {}. Terminating all modules.",
                                               module_name, pid, wstatus);
                 shutdown_modules(module_handles, *config, *mqtt_abstraction);
@@ -864,7 +950,10 @@ int boot(const po::variables_map& vm) {
                 mqtt_abstraction->disconnect();
 
                 // Exit if a module died, this gives systemd a change to restart manager
-                EVLOG_critical << "Exiting manager.";
+                print_shutdown_message(shutdown_start_time,
+                                       fmt::format(fmt::format(TERMINAL_STYLE_ERROR, "Abnormal shutdown caused by {}{}",
+                                                               fmt::format(TERMINAL_STYLE_BLUE, module_name),
+                                                               fmt::format(TERMINAL_STYLE_ERROR, " module. "))));
                 return EXIT_FAILURE;
             } else {
                 EVLOG_info << fmt::format("Module {} (pid: {}) exited with status: {}.", module_name, pid, wstatus);
@@ -911,6 +1000,34 @@ int boot(const po::variables_map& vm) {
             // TIMEOUT fall-through
         }
 #endif
+        // check signals
+        auto signal_received = signal_polling.poll_signal();
+        if (signal_received.has_value()) {
+            if (signal_received.value() == SIGINT) {
+                if (not sigint_received) {
+                    sigint_received = true;
+                    shutdown_start_time = std::chrono::system_clock::now();
+                    EVLOG_info << "Shutting down modules...";
+                    mqtt_abstraction->publish(fmt::format("{}shutdown", ms.mqtt_settings.everest_prefix),
+                                              std::string("true"), QOS::QOS2, false);
+                } else {
+                    EVLOG_info << "Terminating manager";
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+
+        if (shutdown_initiated and not completing_shutdown and shutdown_start_time.has_value()) {
+            if (std::chrono::system_clock::now() >=
+                shutdown_start_time.value() + std::chrono::milliseconds(SHUTDOWN_TIMEOUT_MS)) {
+                completing_shutdown = true;
+                if (not shutdown_complete) {
+                    EVLOG_error << "Could not shut down in time. Terminating all remaining modules.";
+                    shutdown_complete = true;
+                    shutdown_modules(module_handles, *config, *mqtt_abstraction);
+                }
+            }
+        }
     }
 
     return EXIT_SUCCESS;

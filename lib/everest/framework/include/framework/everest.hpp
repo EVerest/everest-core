@@ -195,9 +195,19 @@ public:
     void signal_ready();
 
     ///
+    /// \brief Signal that the module wants to shutdown
+    ///
+    void signal_shutdown();
+
+    ///
     /// \brief registers a callback \p handler that is called when the global ready signal is received via mqtt
     ///
     void register_on_ready_handler(const std::function<void()>& handler);
+
+    ///
+    /// \brief registers a callback \p handler that is called when the global shutdown signal is received via mqtt
+    ///
+    void register_on_shutdown_handler(const std::function<void()>& handler);
 
     ///
     /// \brief  Blocks until ready is processed;
@@ -220,9 +230,11 @@ private:
     std::map<std::string, std::set<std::string>> registered_cmds;
     std::atomic<bool> ready_received;
     std::atomic<bool> ready_processed;
+    std::atomic<bool> shutdown_received;
     std::chrono::seconds remote_cmd_res_timeout;
     bool validate_data_with_schema;
     std::unique_ptr<std::function<void()>> on_ready;
+    std::unique_ptr<std::function<void()>> on_shutdown;
     std::thread heartbeat_thread;
     std::string module_name;
     std::shared_future<void> main_loop_end{};
@@ -237,6 +249,8 @@ private:
     bool forward_exceptions;
 
     void handle_ready(const nlohmann::json& data);
+
+    void handle_shutdown(const nlohmann::json& data);
 
     void heartbeat();
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2021 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 #include "Store.hpp"
 
 namespace module {
@@ -10,6 +10,10 @@ void Store::init() {
 
 void Store::ready() {
     invoke_ready(*p_main);
+}
+
+void Store::shutdown() {
+    invoke_shutdown(*p_main);
 }
 
 } // namespace module

@@ -4,6 +4,7 @@
 #define EVERESTPY_MODULE_HPP
 
 #include <chrono>
+#include <cstdlib>
 #include <deque>
 #include <functional>
 #include <map>
@@ -39,6 +40,18 @@ public:
 
     void init_done() {
         init_done(nullptr);
+    }
+
+    void shutdown_handler(const std::function<void()>& on_shutdown_handler) {
+        // if (on_shutdown_handler) {
+        //     handle->register_on_shutdown_handler([on_shutdown_handler, module_id = this->module_id]() {
+        //         on_shutdown_handler();
+        //         if (module_id != "probe") {
+        //             _exit(EXIT_SUCCESS); // this does otherwise not play well with pytest, where the probe module is
+        //                                  // mostly used
+        //         }
+        //     });
+        // }
     }
 
     Everest::Config& get_config() {

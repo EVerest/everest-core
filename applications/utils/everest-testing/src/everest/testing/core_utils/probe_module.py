@@ -28,6 +28,13 @@ class ProbeModule:
         self._mod = m
         self._ready_event = threading.Event()
         self._started = False
+        self._mod.shutdown_handler(self._shutdown)
+
+    def _shutdown(self):
+        """
+        The probe module should not need a shutdown method
+        """
+        pass
 
     def start(self):
         """
