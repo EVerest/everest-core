@@ -242,3 +242,30 @@ void strncpy_to_v2g(char* characters, size_t size_of_characters, uint16_t* chara
 
     *characters_len = len;
 }
+
+PhysicalValueValidationResult ValidatePhysicalValue(iso2_PhysicalValueElement element, const struct iso2_PhysicalValueType* physical_value) {
+
+    const struct iso2_PhysicalValueRange* range = GetPhysicalValueRange(element);
+    if (!range) {
+        dlog(DLOG_LEVEL_ERROR, "Null pointer for element: %s", iso2_PhysicalValueElementToString(element));
+        return InvalidElement;
+    }
+
+    double actual_physical_value = calc_physical_value(physical_value->Value, physical_value->Multiplier);
+
+    if (actual_physical_value < range->min) {
+        dlog(DLOG_LEVEL_ERROR, "%s actual physical value less than minimum: %f, min: %d", iso2_PhysicalValueElementToString(element), actual_physical_value, range->min);
+        return BelowMinimum;
+    }
+
+    if (actual_physical_value > range->max) {
+        dlog(DLOG_LEVEL_ERROR, "%s actual physical value more than max: %f, max: %d", iso2_PhysicalValueElementToString(element), actual_physical_value, range->max);
+        return AboveMaximum;
+    }
+
+    return Valid;
+}
+
+bool IsPhysicalValueValid( iso2_PhysicalValueElement element, const struct iso2_PhysicalValueType* physical_value) {
+    return ValidatePhysicalValue(element, physical_value) == Valid;
+}

@@ -15,6 +15,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <vector>
+#include <cbv2g/iso_2/iso2_msgDefDatatypes.h>
 
 #define MAX_FILE_NAME_LENGTH 100
 #define MAX_PKI_CA_LENGTH    4 /* leaf up to root certificate */
@@ -89,5 +90,28 @@ std::string to_mac_address_str(const uint8_t* ptr, size_t len);
  * \param src The source string to use.
  */
 void strncpy_to_v2g(char* characters, size_t size_of_characters, uint16_t* characters_len, const std::string& src);
+
+ // An enum used for checking if the physical value is within spec
+typedef enum {
+    Valid,
+    BelowMinimum,
+    AboveMaximum,
+    InvalidElement
+} PhysicalValueValidationResult;
+
+/** 
+ * \brief  Helper function to validate PhysicalValueType against Table 68 iso-2 ranges
+ * \param element physical value element from Table 68 iso-2
+ * \param physical_value value struct 
+ * \return PhysicalValueValidationResult
+ */
+PhysicalValueValidationResult ValidatePhysicalValue(iso2_PhysicalValueElement element, const struct iso2_PhysicalValueType* physical_value);
+/**
+ * \brief Convenience function that returns true if valid, false if violates
+ * \param element physical value element from Table 68 iso-2
+ * \param physical_value physical value according to table 67 in iso15118-2
+ * \return bool true - valid, false - not valid
+*/
+bool IsPhysicalValueValid( iso2_PhysicalValueElement element, const struct iso2_PhysicalValueType* physical_value);
 
 #endif /* TOOLS_H */
