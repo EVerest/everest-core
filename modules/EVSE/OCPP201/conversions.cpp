@@ -1820,5 +1820,67 @@ std::vector<types::iso15118::EnergyTransferMode> to_everest_allowed_energy_trans
     return value;
 }
 
+ocpp::v2::OperationalStatusEnum to_ocpp_operational_status(types::ocpp::OperationalStatusEnumType value) {
+    using FROM = types::ocpp::OperationalStatusEnumType;
+    using TO = ocpp::v2::OperationalStatusEnum;
+    TO result;
+    switch (value) {
+    case FROM::Inoperative:
+        result = TO::Inoperative;
+        break;
+    case FROM::Operative:
+        result = TO::Operative;
+        break;
+    default:
+        throw std::out_of_range("Could not convert OperationalStatusEnumType");
+    }
+    return result;
+}
+
+types::ocpp::ChangeAvailabilityStatusEnumType
+to_everest_change_availability_status(ocpp::v2::ChangeAvailabilityStatusEnum value) {
+    using FROM = ocpp::v2::ChangeAvailabilityStatusEnum;
+    using TO = types::ocpp::ChangeAvailabilityStatusEnumType;
+    TO result;
+    switch (value) {
+    case FROM::Accepted:
+        result = TO::Accepted;
+        break;
+    case FROM::Rejected:
+        result = TO::Rejected;
+        break;
+    case FROM::Scheduled:
+        result = TO::Scheduled;
+        break;
+    default:
+        throw std::out_of_range("Could not convert ChangeAvailabilityStatusEnum");
+    }
+    return result;
+}
+
+types::ocpp::StatusInfoType to_everest_status_info(const ocpp::v2::StatusInfo& value) {
+    return {value.reasonCode, value.additionalInfo};
+}
+
+ocpp::v2::ChangeAvailabilityRequest
+to_ocpp_change_availability_request(const types::ocpp::ChangeAvailabilityRequest& request) {
+    ocpp::v2::ChangeAvailabilityRequest result;
+    result.operationalStatus = to_ocpp_operational_status(request.operational_status);
+    if (request.evse) {
+        result.evse = to_ocpp_evse(request.evse.value());
+    }
+    return result;
+}
+
+types::ocpp::ChangeAvailabilityResponse
+to_everest_change_availability_response(const ocpp::v2::ChangeAvailabilityResponse& response) {
+    types::ocpp::ChangeAvailabilityResponse result;
+    result.status = to_everest_change_availability_status(response.status);
+    if (response.statusInfo) {
+        result.status_info = to_everest_status_info(response.statusInfo.value());
+    }
+    return result;
+}
+
 } // namespace conversions
 } // namespace module

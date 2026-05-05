@@ -67,6 +67,21 @@ public:
     /// \brief Stop the heartbeat timer.
     ///
     virtual void stop_heartbeat_timer() = 0;
+
+    /// \brief support change availability from the ocpp interface
+    /// \param transaction_active set to true when there is an active transaction
+    /// \param request the change availability request
+    /// \returns the response
+    virtual ChangeAvailabilityResponse change_availability_req(bool& transaction_active,
+                                                               const ChangeAvailabilityRequest& request) = 0;
+
+    /// \brief support change availability from the ocpp interface
+    /// \param transaction_active true when there is an active transaction from change_availability_req()
+    /// \param request the change availability request
+    /// \param response the change availability response from change_availability_req()
+    /// \note actions the request
+    virtual void action_change_availability_req(bool transaction_active, const ChangeAvailabilityRequest& request,
+                                                const ChangeAvailabilityResponse& response) = 0;
 };
 
 using TimeSyncCallback = std::function<void(const ocpp::DateTime& currentTime)>;
@@ -103,6 +118,12 @@ public:
 
     void set_heartbeat_timer_interval(const std::chrono::seconds& interval) override;
     void stop_heartbeat_timer() override;
+
+    // support change availability from the EVerest ocpp interface
+    ChangeAvailabilityResponse change_availability_req(bool& transaction_active,
+                                                       const ChangeAvailabilityRequest& request) override;
+    void action_change_availability_req(bool transaction_active, const ChangeAvailabilityRequest& request,
+                                        const ChangeAvailabilityResponse& response) override;
 
 private: // Functions
     // Functional Block G: Availability

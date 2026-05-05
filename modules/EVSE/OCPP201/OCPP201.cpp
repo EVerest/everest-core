@@ -897,16 +897,9 @@ void OCPP201::ready() {
         this->p_ocpp_generic->publish_security_event(event);
     };
 
-    const auto composite_schedule_unit = get_unit_or_default(this->config.RequestCompositeScheduleUnit);
-
     // this callback publishes the schedules within EVerest and applies the schedules for the individual
     // r_evse_energy_sink
-    const auto charging_schedules_callback = [this, composite_schedule_unit]() {
-        const auto composite_schedules = this->charge_point->get_all_composite_schedules(
-            this->config.RequestCompositeScheduleDurationS, composite_schedule_unit);
-        this->publish_charging_schedules(composite_schedules);
-        this->set_external_limits(composite_schedules);
-    };
+    const auto charging_schedules_callback = [this]() { charging_schedules_timer_callback(); };
 
     callbacks.set_charging_profiles_callback = charging_schedules_callback;
 
@@ -1030,11 +1023,7 @@ void OCPP201::ready() {
 
     // publish charging schedules at least once on startup
     charging_schedules_callback();
-
-    if (this->config.CompositeScheduleIntervalS > 0) {
-        this->charging_schedules_timer.interval(charging_schedules_callback,
-                                                std::chrono::seconds(this->config.CompositeScheduleIntervalS));
-    }
+    charging_schedules_timer_start();
 
     this->init_module_configuration();
 
@@ -1144,6 +1133,28 @@ void OCPP201::ready() {
             evse_event_queue.pop();
         }
     }
+}
+
+void OCPP201::charging_schedules_timer_callback() {
+    // this callback publishes the schedules within EVerest and applies the schedules for the individual
+    // r_evse_energy_sink
+    const auto composite_schedule_unit = get_unit_or_default(config.RequestCompositeScheduleUnit);
+    const auto composite_schedules =
+        charge_point->get_all_composite_schedules(config.RequestCompositeScheduleDurationS, composite_schedule_unit);
+    publish_charging_schedules(composite_schedules);
+    set_external_limits(composite_schedules);
+}
+
+void OCPP201::charging_schedules_timer_start() {
+    if (config.CompositeScheduleIntervalS > 0) {
+        const auto charging_schedules_callback = [this]() { charging_schedules_timer_callback(); };
+        charging_schedules_timer.interval(charging_schedules_callback,
+                                          std::chrono::seconds(config.CompositeScheduleIntervalS));
+    }
+}
+
+void OCPP201::charging_schedules_timer_stop() {
+    charging_schedules_timer.stop();
 }
 
 void OCPP201::init_evse_subscriptions() {

@@ -20,6 +20,7 @@
 #include <ocpp/v2/utils.hpp>
 
 #include <ocpp/v2/messages/Authorize.hpp>
+#include <ocpp/v2/messages/ChangeAvailability.hpp>
 #include <ocpp/v2/messages/DataTransfer.hpp>
 #include <ocpp/v2/messages/Get15118EVCertificate.hpp>
 #include <ocpp/v2/messages/GetCompositeSchedule.hpp>
@@ -202,6 +203,11 @@ public:
     on_charging_state_changed(const std::uint32_t evse_id, const ChargingStateEnum charging_state,
                               const TriggerReasonEnum trigger_reason = TriggerReasonEnum::ChargingStateChanged) = 0;
 
+    /// \brief Event handler that will update the charging station availability
+    /// \param request          The request
+    /// \return returns a ChangeAvailabilityResponse
+    virtual ChangeAvailabilityResponse on_change_availability(const ChangeAvailabilityRequest& request) = 0;
+
     /// \brief Gets the transaction id for a certain \p evse_id if there is an active transaction
     /// \param evse_id The evse to get the transaction for
     /// \return The transaction id if a transaction is active, otherwise nullopt
@@ -293,6 +299,14 @@ public:
     /// change
     virtual std::map<SetVariableData, SetVariableResult>
     set_variables(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source) = 0;
+
+    /// \brief Registers a listener for variable changes
+    /// \param listener The listener function to register
+    virtual void register_variable_listener(
+        std::function<void(const std::unordered_map<std::int64_t, VariableMonitoringMeta>& monitors,
+                           const Component& component, const Variable& variable,
+                           const VariableCharacteristics& characteristics, const VariableAttribute& attribute,
+                           const std::string& value_previous, const std::string& value_current)>&& listener) = 0;
 
     /// \brief Gets a composite schedule based on the given \p request
     /// \param request specifies different options for the request
@@ -572,6 +586,8 @@ public:
         const std::uint32_t evse_id, const ChargingStateEnum charging_state,
         const TriggerReasonEnum trigger_reason = TriggerReasonEnum::ChargingStateChanged) override;
 
+    ChangeAvailabilityResponse on_change_availability(const ChangeAvailabilityRequest& request) override;
+
     std::optional<std::string> get_evse_transaction_id(std::int32_t evse_id) override;
 
     AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<10000>>& certificate,
@@ -605,6 +621,11 @@ public:
 
     std::map<SetVariableData, SetVariableResult>
     set_variables(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source) override;
+    void register_variable_listener(
+        std::function<void(const std::unordered_map<std::int64_t, VariableMonitoringMeta>& monitors,
+                           const Component& component, const Variable& variable,
+                           const VariableCharacteristics& characteristics, const VariableAttribute& attribute,
+                           const std::string& value_previous, const std::string& value_current)>&& listener) override;
     GetCompositeScheduleResponse get_composite_schedule(const GetCompositeScheduleRequest& request) override;
     std::optional<CompositeSchedule> get_composite_schedule(std::int32_t evse_id, std::chrono::seconds duration,
                                                             ChargingRateUnitEnum unit) override;

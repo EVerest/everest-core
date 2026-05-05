@@ -33,7 +33,7 @@ private:
     std::unique_ptr<DeviceModelStorageInterface> device_model;
 
     /// \brief Listener for the internal change of a variable
-    on_variable_changed variable_listener;
+    std::vector<on_variable_changed> variable_listener;
     /// \brief Listener for the internal update of a monitor
     on_monitor_updated monitor_update_listener;
 
@@ -136,7 +136,7 @@ public:
     std::int32_t clear_custom_monitors() override;
 
     void register_variable_listener(on_variable_changed&& listener) override {
-        variable_listener = std::move(listener);
+        variable_listener.push_back(std::move(listener));
     }
 
     void register_monitor_listener(on_monitor_updated&& listener) override {

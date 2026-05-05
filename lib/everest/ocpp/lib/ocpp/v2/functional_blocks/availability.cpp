@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
+#include "ocpp/v2/messages/ChangeAvailability.hpp"
+#include "ocpp/v2/ocpp_enums.hpp"
 #include <ocpp/v2/functional_blocks/availability.hpp>
 
 #include <ocpp/v2/ctrlr_component_variables.hpp>
@@ -94,77 +96,94 @@ void Availability::stop_heartbeat_timer() {
     this->heartbeat_timer.stop();
 }
 
-void Availability::handle_change_availability_req(Call<ChangeAvailabilityRequest> call) {
-    const auto msg = call.msg;
+ChangeAvailabilityResponse Availability::change_availability_req(bool& transaction_active,
+                                                                 const ChangeAvailabilityRequest& request) {
     ChangeAvailabilityResponse response;
     response.status = ChangeAvailabilityStatusEnum::Scheduled;
 
     // Sanity check: if we're addressing an EVSE or a connector, it must actually exist
-    if (msg.evse.has_value() and !this->context.evse_manager.is_valid_evse(msg.evse.value())) {
+    if (request.evse.has_value() and !context.evse_manager.is_valid_evse(request.evse.value())) {
         EVLOG_warning << "CSMS requested ChangeAvailability for invalid evse id or connector id";
         response.status = ChangeAvailabilityStatusEnum::Rejected;
-        const ocpp::CallResult<ChangeAvailabilityResponse> call_result(response, call.uniqueId);
-        this->context.message_dispatcher.dispatch_call_result(call_result);
-        return;
-    }
-
-    // Check if we have any transaction running on the EVSE (or any EVSE if we're addressing the whole CS)
-    const auto transaction_active = this->context.evse_manager.any_transaction_active(msg.evse);
-    // Check if we're already in the requested state
-    const auto is_already_in_state = this->is_already_in_state(msg);
-
-    // evse_id will be 0 if we're addressing the whole CS, and >=1 otherwise
-    auto evse_id = 0;
-    if (msg.evse.has_value()) {
-        evse_id = msg.evse.value().id;
-    }
-
-    if (!transaction_active or is_already_in_state or
-        (evse_id == 0 and msg.operationalStatus == OperationalStatusEnum::Operative)) {
-        // If the chosen EVSE (or CS) has no transactions, we're already in the desired state,
-        // or we're telling the whole CS to power on, we can accept the request - there's nothing stopping us.
-        response.status = ChangeAvailabilityStatusEnum::Accepted;
-        // Remove any scheduled availability requests for the evse_id.
-        // This is relevant in case some of those requests become activated later - the current one overrides them.
-        this->scheduled_change_availability_requests.erase(evse_id);
+        transaction_active = false; // set a default value
     } else {
-        // We can't immediately perform the change, because we have a transaction running.
-        // Schedule the request to run when the transaction finishes.
-        this->scheduled_change_availability_requests[evse_id] = {msg, true};
-    }
+        // Check if we have any transaction running on the EVSE (or any EVSE if we're addressing the whole CS)
+        transaction_active = context.evse_manager.any_transaction_active(request.evse);
 
-    // Respond to the CSMS before performing any changes to avoid StatusNotification.req being sent before
-    // the ChangeAvailabilityResponse.
-    const ocpp::CallResult<ChangeAvailabilityResponse> call_result(response, call.uniqueId);
-    this->context.message_dispatcher.dispatch_call_result(call_result);
+        // evse_id will be 0 if we're addressing the whole CS, and >=1 otherwise
+        auto evse_id = 0;
+        if (request.evse.has_value()) {
+            evse_id = request.evse.value().id;
+        }
 
-    if (!transaction_active) {
-        // No transactions - execute the change now
-        this->execute_change_availability_request(msg, true);
-    } else if (response.status == ChangeAvailabilityStatusEnum::Scheduled) {
-        // We can't execute the change now, but it's scheduled to run after transactions are finished.
-        if (evse_id == 0) {
-            // The whole CS is being addressed - we need to prevent further transactions from starting.
-            // To do that, make all EVSEs without an active transaction Inoperative
-            for (const auto& evse : this->context.evse_manager) {
-                if (!evse.has_active_transaction()) {
-                    // FIXME: This will linger after the update too! We probably need another mechanism...
-                    this->set_evse_operative_status(evse.get_id(), OperationalStatusEnum::Inoperative, false);
-                }
-            }
+        // Check if we're already in the requested state
+        if (!transaction_active or is_already_in_state(request) or
+            (evse_id == 0 and request.operationalStatus == OperationalStatusEnum::Operative)) {
+            // If the chosen EVSE (or CS) has no transactions, we're already in the desired state,
+            // or we're telling the whole CS to power on, we can accept the request - there's nothing stopping us.
+            response.status = ChangeAvailabilityStatusEnum::Accepted;
+            // Remove any scheduled availability requests for the evse_id.
+            // This is relevant in case some of those requests become activated later - the current one overrides them.
+            scheduled_change_availability_requests.erase(evse_id);
         } else {
-            // A single EVSE is being addressed. We need to prevent further transactions from starting on it.
-            // To do that, make all connectors of the EVSE without an active transaction Inoperative.
-            const auto number_of_connectors = this->context.evse_manager.get_evse(evse_id).get_number_of_connectors();
-            for (auto connector_id = 1; connector_id <= number_of_connectors; connector_id++) {
-                if (!this->context.evse_manager.get_evse(evse_id).has_active_transaction(connector_id)) {
-                    // FIXME: This will linger after the update too! We probably need another mechanism...
-                    this->set_connector_operative_status(evse_id, connector_id, OperationalStatusEnum::Inoperative,
-                                                         false);
+            // We can't immediately perform the change, because we have a transaction running.
+            // Schedule the request to run when the transaction finishes.
+            scheduled_change_availability_requests[evse_id] = {request, true};
+        }
+    }
+    return response;
+}
+
+void Availability::action_change_availability_req(bool transaction_active, const ChangeAvailabilityRequest& request,
+                                                  const ChangeAvailabilityResponse& response) {
+    if (response.status != ChangeAvailabilityStatusEnum::Rejected) {
+        // evse_id will be 0 if we're addressing the whole CS, and >=1 otherwise
+        auto evse_id = 0;
+        if (request.evse.has_value()) {
+            evse_id = request.evse.value().id;
+        }
+
+        if (!transaction_active) {
+            // No transactions - execute the change now
+            execute_change_availability_request(request, true);
+        } else if (response.status == ChangeAvailabilityStatusEnum::Scheduled) {
+            // We can't execute the change now, but it's scheduled to run after transactions are finished.
+            if (evse_id == 0) {
+                // The whole CS is being addressed - we need to prevent further transactions from starting.
+                // To do that, make all EVSEs without an active transaction Inoperative
+                for (const auto& evse : context.evse_manager) {
+                    if (!evse.has_active_transaction()) {
+                        // FIXME: This will linger after the update too! We probably need another mechanism...
+                        set_evse_operative_status(evse.get_id(), OperationalStatusEnum::Inoperative, false);
+                    }
+                }
+            } else {
+                // A single EVSE is being addressed. We need to prevent further transactions from starting on it.
+                // To do that, make all connectors of the EVSE without an active transaction Inoperative.
+                const auto number_of_connectors = context.evse_manager.get_evse(evse_id).get_number_of_connectors();
+                for (auto connector_id = 1; connector_id <= number_of_connectors; connector_id++) {
+                    if (!context.evse_manager.get_evse(evse_id).has_active_transaction(connector_id)) {
+                        // FIXME: This will linger after the update too! We probably need another mechanism...
+                        set_connector_operative_status(evse_id, connector_id, OperationalStatusEnum::Inoperative,
+                                                       false);
+                    }
                 }
             }
         }
     }
+}
+
+void Availability::handle_change_availability_req(Call<ChangeAvailabilityRequest> call) {
+    const auto request = call.msg;
+    bool transaction_active;
+    const auto response = change_availability_req(transaction_active, request);
+
+    // Respond to the CSMS before performing any changes to avoid StatusNotification.req being sent before
+    // the ChangeAvailabilityResponse.
+    const ocpp::CallResult<ChangeAvailabilityResponse> call_result(response, call.uniqueId);
+    context.message_dispatcher.dispatch_call_result(call_result);
+
+    action_change_availability_req(transaction_active, request, response);
 }
 
 void Availability::handle_heartbeat_response(CallResult<HeartbeatResponse> call) {
