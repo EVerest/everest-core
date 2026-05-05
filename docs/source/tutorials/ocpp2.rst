@@ -325,7 +325,9 @@ Connect to a different CSMS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Each connection profile is defined in its own JSON file under the device model
-configuration directory. The default profiles are:
+configuration directory. At least two slots must be configured; you may add as
+many additional slots as you need (see :ref:`tutorial-ocpp2-adding-slots`).
+The default profiles are:
 
 - ``component_config/standardized/NetworkConfiguration_1.json`` (slot 1)
 - ``component_config/standardized/NetworkConfiguration_2.json`` (slot 2)
@@ -333,7 +335,10 @@ configuration directory. The default profiles are:
 To connect to a different CSMS, modify the following variables in the
 appropriate slot's JSON file:
 
-- ``OcppCsmsUrl``: The WebSocket endpoint of the CSMS (e.g. ``ws://csms.example.com:9000`` or ``wss://csms.example.com:443``)
+- ``OcppCsmsUrl``: The WebSocket endpoint of the CSMS, **without** the
+  charging-station identifier path segment (e.g. ``ws://csms.example.com:9000``
+  or ``wss://csms.example.com:443``). The identifier from ``Identity`` is
+  appended at connect time.
 - ``SecurityProfile``: Defines the transport layer security level:
 
   - ``0``: No security (OCPP 1.6 compatibility, disabled by default)
@@ -426,7 +431,9 @@ The migration works as follows:
 
 If you are setting up a new deployment, you do not need the legacy blob format.
 Configure your connection profiles directly using the per-slot
-``NetworkConfiguration_N.json`` files as described above.
+``NetworkConfiguration_N.json`` files as described above. Make sure the
+``InternalCtrlr.NetworkConnectionProfiles`` blob remains empty (its default)
+so the migration step is skipped on first boot.
 
 .. _tutorial-ocpp2-enable-pnc:
 

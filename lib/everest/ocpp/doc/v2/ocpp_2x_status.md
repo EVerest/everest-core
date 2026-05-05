@@ -436,14 +436,14 @@ This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered funct
 | B09.FR.16 <br> (2.1)  | ✅     | Falls back to SecurityCtrlr credentials when per-slot not set |
 | B09.FR.18 <br> (2.1)  | ✅     | Uses per-slot Identity/BasicAuthPassword when set |
 | B09.FR.20 <br> (2.1)  | ✅     |        |
-| B09.FR.21 <br> (2.1)  |        | CSMS requirement |
+| B09.FR.21 <br> (2.1)  | 🌐     |        |
 | B09.FR.22 <br> (2.1)  | ✅     | Rejects active slot with reasonCode "ActiveNetworkConf" |
 | B09.FR.23 <br> (2.1)  | ✅     |        |
 | B09.FR.26 <br> (2.1)  | ✅     | Clears per-slot Identity when SecurityCtrlr.Identity changes |
 | B09.FR.27 <br> (2.1)  | ✅     | Clears per-slot BasicAuthPassword when SecurityCtrlr changes |
 | B09.FR.28 <br> (2.1)  | ✅     | Returns per-slot Identity for GetVariables SecurityCtrlr.Identity |
-| B09.FR.29 <br> (2.1)  |        | CSMS requirement |
-| B09.FR.30 <br> (2.1)  |        | CSMS requirement |
+| B09.FR.29 <br> (2.1)  | 🌐     |        |
+| B09.FR.30 <br> (2.1)  | 🌐     |        |
 | B09.FR.31 <br> (2.1)  |        | AllowSecurityProfileDowngrade not implemented |
 | B09.FR.32 <br> (2.1)  |        | AllowSecurityProfileDowngrade not implemented |
 | B09.FR.33 <br> (2.1)  | ✅     | Validates added slots in NetworkConfigurationPriority |
