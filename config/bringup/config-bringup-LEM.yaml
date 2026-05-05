@@ -14,6 +14,8 @@ active_modules:
       SC: 1
       UV: "user sw version"
       UD: "some text"
+      temperature_warning_level_C: 40
+      temperature_error_level_C: 50
     module: LemDCBM400600
   cli:
     config_module:
