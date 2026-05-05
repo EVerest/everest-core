@@ -393,7 +393,10 @@ void MQTTAbstractionImpl::on_mqtt_connect() {
 
     EVLOG_debug << "Connected to MQTT broker";
 
-    // this will allow new handlers to subscribe directly, if needed
+    // Drain the messages_before_connected queue under the lock, then publish outside it.
+    // publish() itself acquires messages_before_connected_mutex, so calling it
+    // while holding the mutex would deadlock
+    std::vector<std::shared_ptr<MessageWithQOS>> to_publish;
     {
         auto handle = messages_before_connected.handle();
         this->mqtt_is_connected = true;
