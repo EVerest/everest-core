@@ -964,6 +964,29 @@ void Charger::run_state_machine() {
                 break;
             }
 
+            // Cable still attached and the stop was user/CSMS-initiated: end
+            // the transaction, refresh the session, and route back to
+            // WaitingForAuthentication so a new RFID swipe can start a new
+            // transaction without requiring a replug. Fatal stops (errors,
+            // emergency, plug-out, etc.) fall through to Finished below and
+            // continue to require a replug, as documented there.
+            if (shared_context.flag_ev_plugged_in and not stop_charging_on_fatal_error_internal() and
+                shared_context.last_stop_transaction_reason.has_value()) {
+                using StopReason = types::evse_manager::StopTransactionReason;
+                const auto reason = shared_context.last_stop_transaction_reason.value();
+                const bool soft_restartable = reason == StopReason::Local or reason == StopReason::Remote or
+                                              reason == StopReason::MasterPass or reason == StopReason::DeAuthorized;
+                if (soft_restartable) {
+                    if (shared_context.flag_transaction_active) {
+                        stop_transaction();
+                    }
+                    bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
+                    stop_session();
+                    set_state(EvseState::WaitingForAuthentication);
+                    break;
+                }
+            }
+
             // Those are fatal, so we can not recover without replugging.
             if (not shared_context.flag_transaction_active or not shared_context.flag_ev_plugged_in or
                 not shared_context.flag_authorized) {
@@ -1317,6 +1340,14 @@ void Charger::stop_session() {
     shared_context.flag_paused_by_evse = false;
     signal_simple_event(types::evse_manager::SessionEventEnum::SessionFinished);
     shared_context.session_uuid.clear();
+
+    // If the EV is still physically connected, immediately open a new session
+    // so downstream consumers (e.g. Auth's plug_in_queue) treat this as a
+    // fresh plug-in event and don't require the customer to replug to start
+    // a new transaction.
+    if (shared_context.flag_ev_plugged_in) {
+        start_session(false);
+    }
 }
 
 bool Charger::start_transaction() {

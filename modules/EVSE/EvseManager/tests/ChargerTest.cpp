@@ -675,6 +675,65 @@ TEST_F(ChargerTest, DelayedAuthorizeAfterCancelTransactionIsIgnored) {
     EXPECT_TRUE(ctx.flag_externally_cancelled);
 }
 
+// tests for stop_session() refreshing the session when the EV is still plugged in.
+// Driven via the public authorize(false, ...) entry point because stop_session is private.
+struct StopSessionRefreshTest : public ChargerTest {
+    int session_started_count{0};
+    int session_finished_count{0};
+    types::evse_manager::StartSessionReason last_start_reason{};
+
+    void SetUp() override {
+        ChargerTest::SetUp();
+        charger->signal_session_started_event.connect([this](types::evse_manager::StartSessionReason reason,
+                                                             std::optional<types::authorization::ProvidedIdToken>) {
+            session_started_count++;
+            last_start_reason = reason;
+        });
+        charger->signal_simple_event.connect([this](SessionEventEnum event) {
+            if (event == SessionEventEnum::SessionFinished) {
+                session_finished_count++;
+            }
+        });
+    }
+
+    static types::authorization::ProvidedIdToken make_token() {
+        types::authorization::ProvidedIdToken token;
+        token.id_token.value = "TOKEN";
+        token.id_token.type = types::authorization::IdTokenType::Central;
+        token.authorization_type = types::authorization::AuthorizationType::OCPP;
+        return token;
+    }
+};
+
+TEST_F(StopSessionRefreshTest, DeauthWhilePluggedInReopensSession) {
+    auto& ctx = charger->get_shared_context();
+    ctx.session_active = true;
+    ctx.flag_ev_plugged_in = true;
+
+    types::authorization::ValidationResult result;
+    result.authorization_status = types::authorization::AuthorizationStatus::Accepted;
+    charger->authorize(false, make_token(), result);
+
+    EXPECT_EQ(session_finished_count, 1) << "SessionFinished should fire once";
+    EXPECT_EQ(session_started_count, 1) << "Still-plugged EV should get a fresh SessionStarted";
+    EXPECT_EQ(last_start_reason, types::evse_manager::StartSessionReason::EVConnected);
+    EXPECT_TRUE(ctx.session_active) << "start_session should re-arm session_active";
+}
+
+TEST_F(StopSessionRefreshTest, DeauthAfterUnplugDoesNotReopenSession) {
+    auto& ctx = charger->get_shared_context();
+    ctx.session_active = true;
+    ctx.flag_ev_plugged_in = false;
+
+    types::authorization::ValidationResult result;
+    result.authorization_status = types::authorization::AuthorizationStatus::Accepted;
+    charger->authorize(false, make_token(), result);
+
+    EXPECT_EQ(session_finished_count, 1);
+    EXPECT_EQ(session_started_count, 0) << "No fresh session when EV is gone";
+    EXPECT_FALSE(ctx.session_active);
+}
+
 } // namespace
 
 // ----------------------------------------------------------------------------
