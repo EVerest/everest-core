@@ -452,13 +452,13 @@ TEST_F(NetworkConfigSyncTest, ClearSlotDoesNotAffectOtherSlot) {
 }
 
 // ---------------------------------------------------------------------------
-// US-004: Legacy blob cleared after migration — full lifecycle test
+// Legacy blob cleared after migration — full lifecycle test.
 // Verifies that a populated NetworkConnectionProfiles blob is fully migrated
 // into NetworkConfiguration DM components and the blob is cleared afterward.
 // ---------------------------------------------------------------------------
 
 TEST_F(NetworkConfigSyncTest, LegacyBlobClearedAfterMigration) {
-    // AC1: Set up a database with a populated NetworkConnectionProfiles blob.
+    // Set up a database with a populated NetworkConnectionProfiles blob.
     // Clear default DM data so migration actually imports from the blob.
     NetworkConfigurationComponentVariables::clear_slot_in_device_model(*dm, 1);
 
@@ -479,11 +479,11 @@ TEST_F(NetworkConfigSyncTest, LegacyBlobClearedAfterMigration) {
     // Run migration
     NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
 
-    // AC2: After migration, the blob variable must be empty/cleared.
+    // After migration, the blob variable must be empty/cleared.
     const auto blob_after = read_blob(*dm);
     EXPECT_EQ(blob_after.size(), 0u) << "Blob must be cleared after migration";
 
-    // AC3: After migration, NetworkConfiguration DM slots contain the equivalent profile data.
+    // After migration, NetworkConfiguration DM slots contain the equivalent profile data.
     auto r1 = NetworkConfigurationComponentVariables::read_profile_from_device_model(*dm, 1);
     ASSERT_TRUE(r1.has_value()) << "Slot 1 must be populated after migration";
     EXPECT_EQ(r1->ocppCsmsUrl.get(), "wss://legacy-primary.example.com/ocpp");
@@ -498,14 +498,14 @@ TEST_F(NetworkConfigSyncTest, LegacyBlobClearedAfterMigration) {
     EXPECT_EQ(r2->securityProfile, 2);
 }
 
-// AC4: No runtime code path reads the deprecated NetworkConnectionProfiles blob.
+// No runtime code path reads the deprecated NetworkConnectionProfiles blob.
 // Verified by grep: the only get_value/get_optional_value call for NetworkConnectionProfiles
 // outside test code is in migrate_from_blob_if_needed() itself (ctrlr_component_variables.cpp).
 // No other runtime code (charge_point.cpp, connectivity_manager, etc.) reads the blob.
 // The charge_point.cpp call at line 430 only invokes migrate_from_blob_if_needed().
 
 // ---------------------------------------------------------------------------
-// US-005: Reboot persistence — only new DM component used after reinit
+// Reboot persistence — only new DM component used after reinit
 // Simulates a reboot by destroying the DeviceModel and creating a new one
 // against the same database.  Verifies that:
 //   - NetworkConfiguration DM slots are still populated
@@ -530,7 +530,7 @@ TEST_F(NetworkConfigSyncTest, RebootPersistence_DmPopulatedAndBlobEmptyAfterRein
 
     seed_blob(*dm, make_blob({req1, req2}));
 
-    // AC1: Trigger migration (first boot)
+    // Trigger migration (first boot)
     NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(*dm);
 
     // Verify migration happened before simulating reboot
@@ -542,7 +542,7 @@ TEST_F(NetworkConfigSyncTest, RebootPersistence_DmPopulatedAndBlobEmptyAfterRein
     auto rebooted_storage = std::make_unique<DeviceModelStorageSqlite>(DEVICE_MODEL_DB_IN_MEMORY_PATH);
     DeviceModel rebooted_dm(std::move(rebooted_storage));
 
-    // AC3: After reinit, NetworkConfiguration DM slots are populated with correct profile data.
+    // After reinit, NetworkConfiguration DM slots are populated with correct profile data.
     auto r1 = NetworkConfigurationComponentVariables::read_profile_from_device_model(rebooted_dm, 1);
     ASSERT_TRUE(r1.has_value()) << "Slot 1 must be populated after reboot";
     EXPECT_EQ(r1->ocppCsmsUrl.get(), "wss://reboot-primary.example.com/ocpp");
@@ -556,11 +556,11 @@ TEST_F(NetworkConfigSyncTest, RebootPersistence_DmPopulatedAndBlobEmptyAfterRein
     EXPECT_EQ(r2->ocppCsmsUrl.get(), "wss://reboot-backup.example.com/ocpp");
     EXPECT_EQ(r2->securityProfile, 2);
 
-    // AC4: After reinit, the legacy NetworkConnectionProfiles blob remains empty.
+    // After reinit, the legacy NetworkConnectionProfiles blob remains empty.
     const auto blob_after_reboot = read_blob(rebooted_dm);
     EXPECT_EQ(blob_after_reboot.size(), 0u) << "Blob must remain empty after reboot";
 
-    // AC5: No re-migration occurs — calling migrate again is idempotent / skipped.
+    // No re-migration occurs — calling migrate again is idempotent / skipped.
     NetworkConfigurationComponentVariables::migrate_from_blob_if_needed(rebooted_dm);
 
     auto r1_after = NetworkConfigurationComponentVariables::read_profile_from_device_model(rebooted_dm, 1);
@@ -627,7 +627,7 @@ TEST_F(NetworkConnectionProfileTest, ComponentVariablesAreValid) {
 }
 
 // ---------------------------------------------------------------------------
-// Edge cases: invalid inputs and slot overflow (US-001)
+// Edge cases: invalid inputs and slot overflow
 // ---------------------------------------------------------------------------
 
 TEST_F(NetworkConfigSyncTest, WriteInvalidSecurityProfileAboveRangeIsRejected) {
@@ -715,7 +715,7 @@ TEST_F(NetworkConfigSyncTest, ClearNonExistentSlotDoesNotCrash) {
 }
 
 // ---------------------------------------------------------------------------
-// US-002: ConnectivityManager cache rebuild callback tests
+// ConnectivityManager cache rebuild callback tests
 // Verifies that reload_network_profiles() / set_network_profile() keep the
 // ConnectivityManager's in-memory cache in sync with the device model.
 // ---------------------------------------------------------------------------
@@ -740,7 +740,7 @@ protected:
     }
 };
 
-// AC1: Verify initial cache reflects the DM's default state (slot 1 populated from config)
+// Verify initial cache reflects the DM's default state (slot 1 populated from config)
 TEST_F(ConnectivityManagerCacheTest, InitialCacheReflectsDeviceModel) {
     // The test DM config has NetworkConfigurationPriority="1" and slot 1 has a default URL
     auto slots = cm->get_network_connection_slots();
@@ -752,7 +752,7 @@ TEST_F(ConnectivityManagerCacheTest, InitialCacheReflectsDeviceModel) {
     EXPECT_EQ(profile->ocppCsmsUrl.get(), "wss://ocpp.example.com");
 }
 
-// AC1: Modifying a profile in the DM + reload_network_profiles() updates the cache
+// Modifying a profile in the DM + reload_network_profiles() updates the cache
 TEST_F(ConnectivityManagerCacheTest, ReloadAfterDmUpdateRefreshesCache) {
     // Directly write a new profile to the DM (bypassing ConnectivityManager)
     auto updated = make_basic_profile(2, "wss://updated.example.com/ocpp");
@@ -766,14 +766,14 @@ TEST_F(ConnectivityManagerCacheTest, ReloadAfterDmUpdateRefreshesCache) {
     // Reload the cache (simulates what Provisioning FB does after SetVariables)
     cm->reload_network_profiles();
 
-    // AC2: After reload, cache reflects the updated value
+    // After reload, cache reflects the updated value
     auto after = cm->get_network_connection_profile(1);
     ASSERT_TRUE(after.has_value()) << "Slot 1 must still be in cache after reload";
     EXPECT_EQ(after->ocppCsmsUrl.get(), "wss://updated.example.com/ocpp");
     EXPECT_EQ(after->securityProfile, 2);
 }
 
-// AC1+AC2: set_network_profile() writes to DM and automatically refreshes cache
+// set_network_profile() writes to DM and automatically refreshes cache
 TEST_F(ConnectivityManagerCacheTest, SetNetworkProfileUpdatesCache) {
     auto new_profile = make_basic_profile(3, "wss://new-csms.example.com/ocpp");
     ASSERT_TRUE(cm->set_network_profile(1, new_profile, "test"));
@@ -784,7 +784,7 @@ TEST_F(ConnectivityManagerCacheTest, SetNetworkProfileUpdatesCache) {
     EXPECT_EQ(cached->securityProfile, 3);
 }
 
-// AC3: Clear/delete scenario — clearing a slot in the DM + reload removes it from cache
+// Clear/delete scenario — clearing a slot in the DM + reload removes it from cache
 TEST_F(ConnectivityManagerCacheTest, ReloadAfterClearSlotRemovesFromCache) {
     // Precondition: slot 1 is in the cache
     ASSERT_TRUE(cm->get_network_connection_profile(1).has_value());
@@ -800,7 +800,7 @@ TEST_F(ConnectivityManagerCacheTest, ReloadAfterClearSlotRemovesFromCache) {
     EXPECT_FALSE(profile.has_value()) << "Cleared slot must not have a cached profile after reload";
 }
 
-// AC3: Add a profile to a previously-empty slot via set_network_profile
+// Add a profile to a previously-empty slot via set_network_profile
 TEST_F(ConnectivityManagerCacheTest, SetNetworkProfileAddsNewSlotToCache) {
     // Slot 2 has no default URL in the test config, so it should not be in the cache initially
     auto initial = cm->get_network_connection_profile(2);
@@ -821,7 +821,7 @@ TEST_F(ConnectivityManagerCacheTest, SetNetworkProfileAddsNewSlotToCache) {
         << "Slot 2 must be in the priority list after set_network_profile";
 }
 
-// AC2+AC3: Full lifecycle — add, update, then clear a profile
+// Full lifecycle — add, update, then clear a profile
 TEST_F(ConnectivityManagerCacheTest, AddUpdateClearLifecycle) {
     // Step 1: Add profile to slot 2
     auto added = make_basic_profile(1, "wss://added.example.com/ocpp");
@@ -844,7 +844,7 @@ TEST_F(ConnectivityManagerCacheTest, AddUpdateClearLifecycle) {
 }
 
 // ---------------------------------------------------------------------------
-// US-003: Provisioning block — reject active slot modification (B09.FR.21/22)
+// Provisioning block — reject active slot modification (B09.FR.21/22)
 // Verifies that validate_set_variable() rejects SetVariables targeting the
 // currently-active connection profile slot and allows non-active slots.
 // ---------------------------------------------------------------------------
@@ -1015,42 +1015,42 @@ protected:
     }
 };
 
-// AC1: SetVariables targeting OcppCsmsUrl on the active slot is rejected
+// SetVariables targeting OcppCsmsUrl on the active slot is rejected
 TEST_F(ProvisioningActiveSlotTest, RejectOcppCsmsUrlOnActiveSlot) {
     set_active_slot(1);
     auto result = set_single_variable(make_set_variable_data(1, "OcppCsmsUrl", "wss://new.example.com/ocpp"));
     EXPECT_TRUE(is_rejected_by_active_slot(result)) << "OcppCsmsUrl on active slot must be rejected";
 }
 
-// AC1: SetVariables targeting SecurityProfile on the active slot is rejected
+// SetVariables targeting SecurityProfile on the active slot is rejected
 TEST_F(ProvisioningActiveSlotTest, RejectSecurityProfileOnActiveSlot) {
     set_active_slot(1);
     auto result = set_single_variable(make_set_variable_data(1, "SecurityProfile", "2"));
     EXPECT_TRUE(is_rejected_by_active_slot(result)) << "SecurityProfile on active slot must be rejected";
 }
 
-// AC1: SetVariables targeting OcppTransport on the active slot is rejected
+// SetVariables targeting OcppTransport on the active slot is rejected
 TEST_F(ProvisioningActiveSlotTest, RejectOcppTransportOnActiveSlot) {
     set_active_slot(1);
     auto result = set_single_variable(make_set_variable_data(1, "OcppTransport", "SOAP"));
     EXPECT_TRUE(is_rejected_by_active_slot(result)) << "OcppTransport on active slot must be rejected";
 }
 
-// AC2: SetVariables targeting OcppCsmsUrl on a non-active slot passes validation (not rejected by active-slot check)
+// SetVariables targeting OcppCsmsUrl on a non-active slot passes validation (not rejected by active-slot check)
 TEST_F(ProvisioningActiveSlotTest, AllowOcppCsmsUrlOnNonActiveSlot) {
     set_active_slot(1);
     auto result = set_single_variable(make_set_variable_data(2, "OcppCsmsUrl", "wss://backup.example.com/ocpp"));
     EXPECT_FALSE(is_rejected_by_active_slot(result)) << "OcppCsmsUrl on non-active slot must not be blocked";
 }
 
-// AC2: SetVariables targeting SecurityProfile on a non-active slot passes validation
+// SetVariables targeting SecurityProfile on a non-active slot passes validation
 TEST_F(ProvisioningActiveSlotTest, AllowSecurityProfileOnNonActiveSlot) {
     set_active_slot(1);
     auto result = set_single_variable(make_set_variable_data(2, "SecurityProfile", "2"));
     EXPECT_FALSE(is_rejected_by_active_slot(result)) << "SecurityProfile on non-active slot must not be blocked";
 }
 
-// AC2: SetVariables targeting OcppTransport on a non-active slot passes validation
+// SetVariables targeting OcppTransport on a non-active slot passes validation
 TEST_F(ProvisioningActiveSlotTest, AllowOcppTransportOnNonActiveSlot) {
     set_active_slot(1);
     auto result = set_single_variable(make_set_variable_data(2, "OcppTransport", "SOAP"));
