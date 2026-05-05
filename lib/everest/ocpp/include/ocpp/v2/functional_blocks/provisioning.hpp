@@ -141,9 +141,11 @@ private:
     std::optional<std::string> validate_network_connection_profile(int32_t configuration_slot,
                                                                    const NetworkConnectionProfile& profile);
 
-    /// \brief B09.FR.26/27: Clear the given NetworkConfiguration variable on the currently active slot only.
-    /// Does nothing if no slot is currently active. \p reason_tag is a short spec reference used in log output.
-    void clear_active_slot_variable(const Variable& variable, const std::string& reason_tag);
+    /// \brief B09.FR.26/27: Overwrite the given NetworkConfiguration variable on the currently active slot
+    /// with \p new_value so the per-slot override stays coherent with the new global value. Does nothing if
+    /// no slot is currently active. \p reason_tag is a short spec reference used in log output.
+    void overwrite_active_slot_variable(const Variable& variable, const std::string& new_value,
+                                        const std::string& reason_tag);
 
     /// \brief B09.FR.05: return true if \p slot is listed in NetworkConfigurationPriority.valuesList
     /// (the set of slot values the station is configured to support). Falls back to the currently

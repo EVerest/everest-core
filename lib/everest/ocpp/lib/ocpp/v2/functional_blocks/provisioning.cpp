@@ -154,7 +154,7 @@ Provisioning::get_variables(const std::vector<GetVariableData>& get_variable_dat
         get_variable_result.attributeStatus = request_value_response.status;
 
         // B09.FR.28: Return the per-slot Identity for the currently active profile. Gate on that
-        // slot still being listed in NetworkConfigurationPriority — after a security escalation
+        // slot still being listed in NetworkConfigurationPriority; after a security escalation
         // prunes a slot from the priority list, its per-slot Identity may still be readable from
         // the device model but no longer represents the active identity and must not leak out.
         const ComponentVariable cv = {get_variable_data.component, get_variable_data.variable, std::nullopt};
@@ -613,13 +613,16 @@ void Provisioning::handle_variable_changed(const SetVariableData& set_variable_d
         this->security.security_event_notification_req(CiString<50>(security_event),
                                                        CiString<255>("BasicAuthPassword changed"), true,
                                                        utils::is_critical(security_event));
-        // B09.FR.27: Clear the per-slot BasicAuthPassword override on the currently active
-        // NetworkConfiguration slot so the new global value is used.
-        this->clear_active_slot_variable(NetworkConfigurationComponentVariables::BasicAuthPassword, "B09.FR.27");
+        // B09.FR.27: Mirror the new global BasicAuthPassword onto the per-slot override of the currently
+        // active NetworkConfiguration slot so per-slot reads stay coherent with the global value.
+        this->overwrite_active_slot_variable(NetworkConfigurationComponentVariables::BasicAuthPassword,
+                                             set_variable_data.attributeValue.get(), "B09.FR.27");
     }
     if (component_variable == ControllerComponentVariables::SecurityCtrlrIdentity) {
-        // B09.FR.26: Clear the per-slot Identity override on the currently active NetworkConfiguration slot.
-        this->clear_active_slot_variable(NetworkConfigurationComponentVariables::Identity, "B09.FR.26");
+        // B09.FR.26: Mirror the new global Identity onto the per-slot override of the currently active
+        // NetworkConfiguration slot.
+        this->overwrite_active_slot_variable(NetworkConfigurationComponentVariables::Identity,
+                                             set_variable_data.attributeValue.get(), "B09.FR.26");
     }
     if (component_variable == ControllerComponentVariables::HeartbeatInterval and
         this->registration_status == RegistrationStatusEnum::Accepted) {
@@ -905,7 +908,8 @@ Provisioning::set_variables_internal(const std::vector<SetVariableData>& set_var
     return response;
 }
 
-void Provisioning::clear_active_slot_variable(const Variable& variable, const std::string& reason_tag) {
+void Provisioning::overwrite_active_slot_variable(const Variable& variable, const std::string& new_value,
+                                                  const std::string& reason_tag) {
     const auto active_slot_opt =
         this->context.device_model.get_optional_value<int>(ControllerComponentVariables::ActiveNetworkProfile);
     if (!active_slot_opt.has_value()) {
@@ -915,9 +919,9 @@ void Provisioning::clear_active_slot_variable(const Variable& variable, const st
     if (!cv.variable.has_value()) {
         return;
     }
-    this->context.device_model.set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "",
+    this->context.device_model.set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, new_value,
                                          VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
-    EVLOG_info << "Cleared " << variable.name.get() << " on active NetworkConfiguration slot "
+    EVLOG_info << "Overwrote " << variable.name.get() << " on active NetworkConfiguration slot "
                << active_slot_opt.value() << " (" << reason_tag << ")";
 }
 
@@ -942,7 +946,7 @@ bool Provisioning::is_slot_allowed_by_priority_values_list(int32_t slot) {
         }
         return false;
     }
-    // If no valuesList is configured, fall back to allowing any slot — the spec only requires
+    // If no valuesList is configured, fall back to allowing any slot; the spec only requires
     // the check when valuesList is defined on the NetworkConfigurationPriority variable.
     return true;
 }
