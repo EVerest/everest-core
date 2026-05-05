@@ -83,9 +83,8 @@ MQTTAbstractionImpl::MQTTAbstractionImpl(const std::string& mqtt_server_socket_p
 }
 
 MQTTAbstractionImpl::~MQTTAbstractionImpl() {
-    // FIXME (aw): verify that disconnecting is thread-safe!
     if (this->mqtt_is_connected) {
-        disconnect();
+        this->disconnect();
     }
     // this->mqtt_mainloop_thread.join();
 }
