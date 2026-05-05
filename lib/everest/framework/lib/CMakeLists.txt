@@ -86,6 +86,7 @@ target_link_libraries(framework
         Boost::program_options
         everest::io
         ryml::ryml
+        ${ATOMIC_LIBS}
 )
 
 collect_migration_files(
