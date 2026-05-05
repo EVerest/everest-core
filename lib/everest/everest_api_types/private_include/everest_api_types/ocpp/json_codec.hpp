@@ -50,6 +50,8 @@ create_json_interface(ChargingSchedulePeriod);
 create_json_interface(OperationMode);
 create_json_interface(V2XSignalWattPointCurve);
 create_json_interface(V2XFreqWattPointType);
+create_json_interface(MessageDirection);
+create_json_interface(Message);
 
 #undef create_json_interface
 

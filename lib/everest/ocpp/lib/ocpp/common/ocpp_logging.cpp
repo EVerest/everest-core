@@ -77,26 +77,26 @@ MessageLogging::MessageLogging(
 void MessageLogging::initialize() {
     if (this->log_messages) {
         if (this->rotate_logs) {
-            EVLOG_info << "Log rotation enabled";
+            EVLOG_debug << "Log rotation enabled";
         }
         if (this->log_to_console) {
-            EVLOG_info << "Logging OCPP messages to console";
+            EVLOG_debug << "Logging OCPP messages to console";
         }
         if (this->message_callback != nullptr) {
-            EVLOG_info << "Logging OCPP messages to callback";
+            EVLOG_debug << "Logging OCPP messages to callback";
         }
         if (this->log_to_file) {
             auto output_file_path = message_log_path + "/";
             output_file_path += output_file_name;
             if (this->log_raw) {
                 auto raw_output_file_path = output_file_path + "_raw.log";
-                EVLOG_info << "Logging raw OCPP messages to log file: " << raw_output_file_path;
+                EVLOG_debug << "Logging raw OCPP messages to log file: " << raw_output_file_path;
                 this->log_raw_file = std::filesystem::path(raw_output_file_path);
                 this->log_raw_os.open(raw_output_file_path, std::ofstream::app);
                 this->rotate_log_if_needed(this->log_raw_file, this->log_raw_os);
             }
             output_file_path += +".log";
-            EVLOG_info << "Logging OCPP messages to log file: " << output_file_path;
+            EVLOG_debug << "Logging OCPP messages to log file: " << output_file_path;
             this->log_file = std::filesystem::path(output_file_path);
             this->log_os.open(output_file_path, std::ofstream::app);
             this->rotate_log_if_needed(this->log_file, this->log_os);
@@ -107,7 +107,7 @@ void MessageLogging::initialize() {
             html_file_path += output_file_name;
             if (this->log_raw) {
                 auto raw_html_file_path = html_file_path + "_raw.html";
-                EVLOG_info << "Logging raw OCPP messages to html file: " << raw_html_file_path;
+                EVLOG_debug << "Logging raw OCPP messages to html file: " << raw_html_file_path;
                 this->html_raw_log_file = std::filesystem::path(raw_html_file_path);
                 this->html_raw_log_os.open(html_raw_log_file, std::ofstream::app);
                 this->rotate_log_if_needed(
@@ -121,7 +121,7 @@ void MessageLogging::initialize() {
                 }
             }
             html_file_path += ".html";
-            EVLOG_info << "Logging OCPP messages to html file: " << html_file_path;
+            EVLOG_debug << "Logging OCPP messages to html file: " << html_file_path;
             this->html_log_file = std::filesystem::path(html_file_path);
             this->html_log_os.open(html_log_file, std::ofstream::app);
             this->rotate_log_if_needed(
@@ -138,7 +138,7 @@ void MessageLogging::initialize() {
             auto security_file_path = message_log_path + "/";
             security_file_path += output_file_name;
             security_file_path += ".security.log";
-            EVLOG_info << "Logging SecurityEvents to file: " << security_file_path;
+            EVLOG_debug << "Logging SecurityEvents to file: " << security_file_path;
             this->security_log_file = std::filesystem::path(security_file_path);
             this->security_log_os.open(security_log_file, std::ofstream::app);
             this->rotate_log_if_needed(this->security_log_file, this->security_log_os);

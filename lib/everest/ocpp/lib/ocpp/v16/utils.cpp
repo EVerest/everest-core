@@ -13,7 +13,12 @@ size_t get_message_size(const ocpp::Call<StopTransactionRequest>& call) {
 void drop_transaction_data(size_t max_message_size, ocpp::Call<StopTransactionRequest>& call) {
     auto& transaction_data = call.msg.transactionData.value();
     while (get_message_size(call) > max_message_size && transaction_data.size() > 2) {
-        for (size_t i = 1; i < transaction_data.size() - 1; i = i + 2) {
+        // Drop every second message, keeping the first and last.
+        // Iterate backwards so that erase() does not shift the indices
+        // of elements we still need to remove.
+        int last = static_cast<int>(transaction_data.size()) - 2;
+        int start = (last % 2 == 0) ? last - 1 : last;
+        for (int i = start; i >= 1; i -= 2) {
             transaction_data.erase(transaction_data.begin() + i);
         }
     }

@@ -51,6 +51,8 @@ create_interface(SecurityEvent);
 create_interface(StatusInfoType);
 create_interface(BootNotificationResponse);
 create_interface(OcppTransactionEvent);
+create_interface(MessageDirection);
+create_interface(Message);
 
 // MonitorVariableRequest is a ComponentVariable
 using MonitorVariableRequest_Internal = ::types::ocpp::ComponentVariable;

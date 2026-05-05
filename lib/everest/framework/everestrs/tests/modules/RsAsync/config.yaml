@@ -1,0 +1,14 @@
+# Test config for regression tests for the framework.
+active_modules:
+  example_0:
+    module: RsAsync
+    connections:
+      receiver:
+        - module_id: example_1
+          implementation_id: sender
+  example_1:
+    module: RsAsync
+    connections:
+      receiver:
+        - module_id: example_0
+          implementation_id: sender

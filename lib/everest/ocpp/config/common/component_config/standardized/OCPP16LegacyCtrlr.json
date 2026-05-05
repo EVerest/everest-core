@@ -73,7 +73,8 @@
             "variable_name": "LightIntensity",
             "characteristics": {
                 "supportsMonitoring": true,
-                "dataType": "integer"
+                "dataType": "integer",
+                "unit": "Percent"
             },
             "attributes": [
                 {
@@ -90,7 +91,8 @@
             "variable_name": "MinimumStatusDuration",
             "characteristics": {
                 "supportsMonitoring": true,
-                "dataType": "integer"
+                "dataType": "integer",
+                "unit": "s"
             },
             "attributes": [
                 {

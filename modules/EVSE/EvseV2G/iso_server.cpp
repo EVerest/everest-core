@@ -92,8 +92,11 @@ static v2g_event iso_validate_response_code(iso2_responseCodeType* const v2g_res
 
     *v2g_response_code = (response_code_tmp >= iso2_responseCodeType_FAILED) ? response_code_tmp : *v2g_response_code;
 
-    if ((conn->ctx->terminate_connection_on_failed_response == true) &&
-        (*v2g_response_code >= iso2_responseCodeType_FAILED)) {
+    /* [V2G2-539] SequenceError always terminates the connection regardless of configuration.
+     * For other FAILED codes, termination depends on the terminate_connection_on_failed_response setting. */
+    if (*v2g_response_code == iso2_responseCodeType_FAILED_SequenceError ||
+        ((conn->ctx->terminate_connection_on_failed_response == true) &&
+         (*v2g_response_code >= iso2_responseCodeType_FAILED))) {
         next_event = V2G_EVENT_SEND_AND_TERMINATE; // [V2G2-539], [V2G2-034] Send response and terminate tcp-connection
     }
 

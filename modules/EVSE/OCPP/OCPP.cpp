@@ -44,6 +44,7 @@ const std::string SWITCHING_PHASES_REASON = "SwitchingPhases";
 const ocpp::CiString<50> CONNECTION_TIMEOUT_CONFIG_KEY = "ConnectionTimeOut";
 const ocpp::CiString<50> ISO15118_PNC_ENABLED_CONFIG_KEY = "ISO15118PnCEnabled";
 const ocpp::CiString<50> CENTRAL_CONTRACT_VALIDATION_ALLOWED_CONFIG_KEY = "CentralContractValidationAllowed";
+const std::string OCPP_VERSION = "1.6";
 
 namespace fs = std::filesystem;
 
@@ -794,9 +795,34 @@ void OCPP::init() {
         create_device_model_charge_point_configuration(this->ocpp_share_path, device_model_init_context);
 
     std::shared_ptr<ocpp::EvseSecurity> security = std::make_shared<EvseSecurity>(*r_security);
-    charge_point = std::make_unique<ocpp::v16::ChargePoint>(*charge_point_config, ocpp_share_path, config.DatabasePath,
-                                                            device_model_init_context.sql_init_path,
-                                                            config.MessageLogPath, security);
+    std::function<void(const std::string& message, ocpp::MessageDirection direction)> message_callback =
+        [this](const std::string& message, ocpp::MessageDirection direction) {
+            switch (direction) {
+            case ocpp::MessageDirection::CSMSToChargingStation: {
+                types::ocpp::Message ocpp_message;
+                ocpp_message.message = message;
+                ocpp_message.version = OCPP_VERSION;
+                ocpp_message.direction = types::ocpp::MessageDirection::CSMSToChargingStation;
+                p_ocpp_generic->publish_ocpp_message(ocpp_message);
+                break;
+            }
+            case ocpp::MessageDirection::ChargingStationToCSMS: {
+                types::ocpp::Message ocpp_message;
+                ocpp_message.message = message;
+                ocpp_message.version = OCPP_VERSION;
+                ocpp_message.direction = types::ocpp::MessageDirection::ChargingStationToCSMS;
+                p_ocpp_generic->publish_ocpp_message(ocpp_message);
+                break;
+            }
+            default:
+                // unknown message direction (ignored)
+                break;
+            }
+        };
+
+    charge_point = std::make_unique<ocpp::v16::ChargePoint>(
+        *charge_point_config, ocpp_share_path, config.DatabasePath, device_model_init_context.sql_init_path,
+        config.MessageLogPath, security, std::nullopt, message_callback);
 
     this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(config.MessageQueueResumeDelay));
 

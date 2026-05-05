@@ -10,3 +10,12 @@ build:ci --strip=always
 build:ci --copt=-g0
 build:ci --repository_cache=~/.cache/bazel-repo-cache
 build:ci --disk_cache=~/.cache/bazel-disk-cache
+
+# With our setup Bazel links every binary statically to `libframework.a` If you
+# want to link dynamically to `libframework.so` use `--dynamic_mode=fully`.
+# See https://bazel.build/docs/user-manual#dynamic-mode for more details. If
+# linking dynamically, ensure that `libframework.so` is in the
+# `LD_LIBRARY_PATH`.
+#
+# Not supported on musl targets.
+# --dynamic_mode=default

@@ -717,7 +717,7 @@ void WebsocketLibwebsockets::thread_websocket_client_loop(std::shared_ptr<Connec
         EVLOG_AND_THROW(std::runtime_error("Null 'ConnectionData' in client thread, fatal error!"));
     }
 
-    EVLOG_info << "Init client loop with ID: " << std::hex << std::this_thread::get_id();
+    EVLOG_debug << "Init client loop with ID: " << std::hex << std::this_thread::get_id();
     bool try_reconnect = true;
 
     do {

@@ -1,0 +1,14 @@
+[Unit]
+Description=Pionix ChargeBridge
+Requires=mosquitto.service
+After=mosquitto.service
+ConditionPathExistsGlob=/etc/chargebridge/*.yaml
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/bin/sh -c '/usr/bin/pionix_chargebridge /etc/chargebridge/*.yaml'
+ExecStartPost=/bin/sh -c 'sleep 3'
+
+[Install]
+WantedBy=multi-user.target

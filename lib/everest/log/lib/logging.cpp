@@ -134,16 +134,17 @@ struct escaped_message_formatter_factory : public logging::formatter_factory<cha
     }
 };
 
-void init() {
+int init() {
     logging::core::get()->remove_all_sinks();
     logging::core::get()->set_logging_enabled(false);
+    return -1;
 }
 
-void init(const std::string& logconf) {
-    init(logconf, "");
+int init(const std::string& logconf) {
+    return init(logconf, "");
 }
 
-void init(const std::string& logconf, std::string process_name) {
+int init(const std::string& logconf, std::string process_name) {
     BOOST_LOG_FUNCTION();
 
     if (is_initialized) {
@@ -203,6 +204,17 @@ void init(const std::string& logconf, std::string process_name) {
 
     EVLOG_debug << "Logger " << (is_initialized ? "re" : "") << "initialized (using " << logconf << ")...";
     is_initialized = true;
+
+    // Probe the installed filter to find the minimum accepted severity level.
+    for (int level = static_cast<int>(verbose); level <= static_cast<int>(critical); ++level) {
+        auto rec =
+            global_logger::get().open_record(boost::log::keywords::severity = static_cast<severity_level>(level));
+        if (rec) {
+            return level;
+        }
+    }
+
+    return -1;
 }
 
 void update_process_name(std::string process_name) {
@@ -213,5 +225,17 @@ void update_process_name(std::string process_name) {
         current_process_name.set(padded_process_name);
     }
 }
+
+void ffi_log(int level, int line, const std::string& file, const std::string& message) {
+    // Logging is off.
+    if (level < 0) {
+        return;
+    }
+    const auto logging_level = static_cast<severity_level>(level);
+    BOOST_LOG_SEV(::global_logger::get(), logging_level)
+        << boost::log::BOOST_LOG_VERSION_NAMESPACE::add_value("file", file)
+        << boost::log::BOOST_LOG_VERSION_NAMESPACE::add_value("line", line) << message;
+}
+
 } // namespace Logging
 } // namespace Everest
