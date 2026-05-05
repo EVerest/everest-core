@@ -8,6 +8,7 @@
 #include <generated/interfaces/ISO15118_vas/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
 #include <generated/interfaces/iso15118_extensions/Implementation.hpp>
+#include <generated/types/ocpp.hpp>
 
 #include <atomic>
 #include <cstdint>
@@ -273,7 +274,8 @@ struct v2g_context {
     std::atomic<bool> hlc_schedule_wait{false};
     long long int hlc_schedule_deadline_ms{0}; // monotonic ms; 0 == disarmed
 
-    std::function<void(int32_t sa_schedule_tuple_id, const std::optional<int32_t>& selected_schedule_id)>
+    std::function<void(int32_t sa_schedule_tuple_id, const std::optional<int32_t>& selected_schedule_id,
+                       const std::optional<types::ocpp::ChargingSchedule>& ev_charging_schedule)>
         publish_ev_selected_schedule_cb;
 
     struct {

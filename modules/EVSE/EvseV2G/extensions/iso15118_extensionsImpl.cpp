@@ -85,6 +85,43 @@ double resolve_nominal_voltage(const struct v2g_context* ctx) {
                : AC_DEFAULT_V;
 }
 
+// Translate an iso2 PowerDeliveryReq.ChargingProfile (the EV's own counter-schedule) into
+// an OCPP types::ocpp::ChargingSchedule so libocpp can populate
+// NotifyEVChargingScheduleRequest.chargingSchedule from real EV data instead of the
+// K15.FR.19 empty placeholder. Mapping per ISO 15118-2 [V2G2-293] (cumulative offsets,
+// PMax in watts):
+//   - charging_rate_unit = "W" (iso2 PMax is wattage; ChargingProfile carries no unit field)
+//   - evse = 0 placeholder; OCPP201 supplies the real evse_id alongside the schedule when
+//     forwarding to libocpp, and OCPP ChargingScheduleType has no `evse` field so the
+//     downstream JSON round-trip drops this anyway.
+//   - period.start_period passes through ChargingProfileEntryStart (spec-literal cumulative).
+//   - period.limit = ChargingProfileEntryMaxPower.Value * 10^Multiplier.
+//   - period.number_phases set when ChargingProfileEntryMaxNumberOfPhasesInUse_isUsed.
+// duration / start_schedule / min_charging_rate are nullopt; iso2 ChargingProfile carries
+// none of them. Schedule id is intentionally not carried — libocpp overwrites
+// chargingSchedule.id with the EV-selected SAScheduleTupleID at notify_ev_charging_schedule_req.
+types::ocpp::ChargingSchedule iso2_charging_profile_to_ocpp_schedule(const iso2_ChargingProfileType& profile) {
+    types::ocpp::ChargingSchedule schedule{};
+    schedule.evse = 0;
+    schedule.charging_rate_unit = "W";
+
+    const std::size_t entry_count =
+        std::min<std::size_t>(profile.ProfileEntry.arrayLen, iso2_ProfileEntryType_24_ARRAY_SIZE);
+    schedule.charging_schedule_period.reserve(entry_count);
+    for (std::size_t i = 0; i < entry_count; ++i) {
+        const auto& entry = profile.ProfileEntry.array[i];
+        types::ocpp::ChargingSchedulePeriod period{};
+        period.start_period = static_cast<std::int32_t>(entry.ChargingProfileEntryStart);
+        period.limit = static_cast<double>(entry.ChargingProfileEntryMaxPower.Value) *
+                       std::pow(10.0, entry.ChargingProfileEntryMaxPower.Multiplier);
+        if (entry.ChargingProfileEntryMaxNumberOfPhasesInUse_isUsed != 0U) {
+            period.number_phases = entry.ChargingProfileEntryMaxNumberOfPhasesInUse;
+        }
+        schedule.charging_schedule_period.push_back(std::move(period));
+    }
+    return schedule;
+}
+
 // K16 renegotiation latch: set evse_notification to ReNegotiation when currently None,
 // so the next DC/AC response builder emits EVSENotification=ReNegotiation and the EV
 // renegotiates (K16.FR.02/11). StopCharging has precedence and is never clobbered.
@@ -126,15 +163,18 @@ void iso15118_extensionsImpl::init() {
         return;
     }
     // Give the ISO state machine a way to publish the EV's selected schedule back to OCPP.
-    v2g_ctx->publish_ev_selected_schedule_cb = [this](int32_t sa_schedule_tuple_id,
-                                                      const std::optional<int32_t>& selected_schedule_id) {
-        types::iso15118::SelectedEvChargingSchedule selected;
-        selected.sa_schedule_tuple_id = sa_schedule_tuple_id;
-        selected.selected_charging_schedule_id = selected_schedule_id;
-        // ev_charging_schedule (15118-2 ChargingProfile → OCPP ChargingSchedule) is not yet
-        // translated here; libocpp falls back to an empty schedule when absent.
-        publish_ev_selected_schedule(selected);
-    };
+    // ev_charging_schedule carries the EV's PowerDeliveryReq.ChargingProfile (when present)
+    // so libocpp can populate NotifyEVChargingScheduleRequest.chargingSchedule for K15.FR.10
+    // / K16.FR.05 instead of the K15.FR.19 empty placeholder.
+    v2g_ctx->publish_ev_selected_schedule_cb =
+        [this](int32_t sa_schedule_tuple_id, const std::optional<int32_t>& selected_schedule_id,
+               const std::optional<types::ocpp::ChargingSchedule>& ev_charging_schedule) {
+            types::iso15118::SelectedEvChargingSchedule selected;
+            selected.sa_schedule_tuple_id = sa_schedule_tuple_id;
+            selected.selected_charging_schedule_id = selected_schedule_id;
+            selected.ev_charging_schedule = ev_charging_schedule;
+            publish_ev_selected_schedule(selected);
+        };
 }
 
 void iso15118_extensionsImpl::ready() {

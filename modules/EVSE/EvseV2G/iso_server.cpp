@@ -26,6 +26,16 @@ using namespace crypto::openssl;
 #include "v2g_ctx.hpp"
 #include "v2g_server.hpp"
 
+// Forward-declared helper from extensions/iso15118_extensionsImpl.cpp; pulling the full
+// extensions header here would drag in the framework module classes.
+namespace module {
+namespace extensions {
+namespace testing_internal {
+types::ocpp::ChargingSchedule iso2_charging_profile_to_ocpp_schedule(const iso2_ChargingProfileType& profile);
+} // namespace testing_internal
+} // namespace extensions
+} // namespace module
+
 #define MQTT_MAX_PAYLOAD_SIZE         268435455
 #define V2G_SECC_MSG_CERTINSTALL_TIME 4500
 
@@ -485,11 +495,18 @@ static void publish_iso_power_delivery_req(struct v2g_context* ctx,
 
     // EVerest#1199: forward the EV-selected SAScheduleTupleID upstream so libocpp can emit
     // NotifyEVChargingScheduleRequest (K15.FR.10 / FR.21). Only fires on the Start progress
-    // path where the EV commits to a schedule.
+    // path where the EV commits to a schedule. When the EV also returns its own ChargingProfile
+    // we translate it to an OCPP ChargingSchedule so libocpp's K15.FR.09 boundary check runs
+    // against real EV data (otherwise libocpp synthesizes the K15.FR.19 placeholder).
     if (v2g_power_delivery_req->ChargeProgress == iso2_chargeProgressType_Start and
         ctx->publish_ev_selected_schedule_cb) {
         const auto tuple_id = static_cast<int32_t>(v2g_power_delivery_req->SAScheduleTupleID);
-        ctx->publish_ev_selected_schedule_cb(tuple_id, std::nullopt);
+        std::optional<types::ocpp::ChargingSchedule> ev_schedule;
+        if (v2g_power_delivery_req->ChargingProfile_isUsed == (unsigned int)1) {
+            ev_schedule = module::extensions::testing_internal::iso2_charging_profile_to_ocpp_schedule(
+                v2g_power_delivery_req->ChargingProfile);
+        }
+        ctx->publish_ev_selected_schedule_cb(tuple_id, std::nullopt, ev_schedule);
     }
 }
 

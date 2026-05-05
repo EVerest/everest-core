@@ -295,3 +295,46 @@ target_link_libraries(${ISO_SERVER_HANDOFF_NAME}
 
 add_test(${ISO_SERVER_HANDOFF_NAME} ${ISO_SERVER_HANDOFF_NAME})
 ev_register_test_target(${ISO_SERVER_HANDOFF_NAME})
+
+set(CHARGING_PROFILE_TRANSLATION_NAME charging_profile_translation_test)
+add_executable(${CHARGING_PROFILE_TRANSLATION_NAME})
+
+target_include_directories(${CHARGING_PROFILE_TRANSLATION_NAME} PRIVATE
+    .. ../connection ${TESTS_INCLUDE_DIR}
+    ${GENERATED_INCLUDE_DIR}
+    ${CMAKE_BINARY_DIR}/generated/modules/${MODULE_NAME}
+    ${CMAKE_BINARY_DIR}/generated/include
+)
+add_dependencies(${CHARGING_PROFILE_TRANSLATION_NAME} generate_cpp_files)
+
+target_compile_definitions(${CHARGING_PROFILE_TRANSLATION_NAME} PRIVATE
+    -DUNIT_TEST
+    -DLIBEVSE_CRYPTO_SUPPLIER_OPENSSL
+)
+
+target_sources(${CHARGING_PROFILE_TRANSLATION_NAME} PRIVATE
+    charging_profile_translation_test.cpp
+    log.cpp
+    ../extensions/iso15118_extensionsImpl.cpp
+    ../iso_server_handoff.cpp
+    ../v2g_ctx.cpp
+    ../tools.cpp
+)
+
+target_link_libraries(${CHARGING_PROFILE_TRANSLATION_NAME}
+    PRIVATE
+        GTest::gtest_main
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        cbv2g::din
+        cbv2g::iso2
+        cbv2g::tp
+        everest::framework
+        everest::log
+        everest::evse_security
+        everest::tls
+        -levent -lpthread -levent_pthreads
+)
+
+add_test(${CHARGING_PROFILE_TRANSLATION_NAME} ${CHARGING_PROFILE_TRANSLATION_NAME})
+ev_register_test_target(${CHARGING_PROFILE_TRANSLATION_NAME})
