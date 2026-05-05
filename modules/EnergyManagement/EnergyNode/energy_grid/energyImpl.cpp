@@ -3,9 +3,11 @@
 
 #include "energyImpl.hpp"
 #include "energy_schedule_utils.hpp"
+#include <algorithm>
 #include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
+#include <string_view>
 #include <utils/date.hpp>
 
 namespace module {
@@ -24,20 +26,18 @@ void energyImpl::init() {
     energy_state_handle->energy_flow_request.schedule_export = get_local_schedule();
 
     for (auto& entry : mod->r_energy_consumer) {
-        entry->subscribe_energy_flow_request([this](types::energy::EnergyFlowRequest e) {
+        entry->subscribe_energy_flow_request([this](types::energy::EnergyFlowRequest const& e) {
             // Received new energy_flow_request object from a child. Update in the cached object and republish.
             auto energy_state_handle = energy_state.handle();
 
-            bool child_found = false;
-            for (auto& child : energy_state_handle->energy_flow_request.children) {
-                if (child.uuid == e.uuid) {
-                    child = e;
-                    child_found = true;
-                }
-            }
-
-            if (!child_found) {
-                energy_state_handle->energy_flow_request.children.push_back(e);
+            auto& children = energy_state_handle->energy_flow_request.children;
+            auto children_it = std::find_if(children.begin(), children.end(), [&e](const auto& child) {
+                return std::string_view{child.uuid} == std::string_view{e.uuid};
+            });
+            if (children_it != children.end()) {
+                *children_it = e;
+            } else {
+                children.push_back(std::move(e));
             }
 
             publish_complete_energy_object(*energy_state_handle);
@@ -45,7 +45,7 @@ void energyImpl::init() {
     }
 
     if (!mod->r_powermeter.empty()) {
-        mod->r_powermeter[0]->subscribe_powermeter([this](types::powermeter::Powermeter p) {
+        mod->r_powermeter[0]->subscribe_powermeter([this](types::powermeter::Powermeter const& p) {
             EVLOG_debug << "Incoming powermeter readings: " << p;
             auto energy_state_handle = energy_state.handle();
             energy_state_handle->energy_flow_request.energy_usage_root = p;
@@ -113,13 +113,16 @@ void energyImpl::set_external_limits(types::energy::ExternalLimits& l) {
 
 void energyImpl::publish_complete_energy_object(const EnergyState& state) {
     // This method is always called from contexts that already hold the energy_state lock
-    types::energy::EnergyFlowRequest energy_complete = state.energy_flow_request;
+    const auto& energy_flow_request = state.energy_flow_request;
+    const auto& energy_pricing_schedule_export = state.energy_pricing.schedule_export;
 
-    if (not state.energy_flow_request.schedule_export.empty() and not state.energy_pricing.schedule_export.empty()) {
-        merge_price_into_schedule(energy_complete.schedule_export, state.energy_pricing.schedule_export);
+    if (not energy_flow_request.schedule_export.empty() and not energy_pricing_schedule_export.empty()) {
+        types::energy::EnergyFlowRequest energy_complete = energy_flow_request;
+        merge_price_into_schedule(energy_complete.schedule_export, energy_pricing_schedule_export);
+        publish_energy_flow_request(energy_complete);
+    } else {
+        publish_energy_flow_request(energy_flow_request);
     }
-
-    publish_energy_flow_request(energy_complete);
 }
 
 void energyImpl::merge_price_into_schedule(std::vector<types::energy::ScheduleReqEntry>& schedule,

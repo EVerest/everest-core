@@ -57,4 +57,12 @@ if (BUILD_BACKTRACE_SUPPORT)
     target_compile_definitions(everest_log PRIVATE WITH_LIBBACKTRACE)
 endif()
 
+if (EVEREST_DISABLE_VERBOSE_LOGGING)
+    target_compile_definitions(everest_log PUBLIC EVEREST_DISABLE_VERBOSE_LOGGING)
+endif ()
+
+if (EVEREST_DISABLE_DEBUG_LOGGING)
+    target_compile_definitions(everest_log PUBLIC EVEREST_DISABLE_DEBUG_LOGGING)
+endif ()
+
 target_compile_features(everest_log PUBLIC cxx_std_17)

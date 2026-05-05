@@ -1,10 +1,11 @@
-{% macro cpp_type(type, interface=none) -%}
+{% macro cpp_type(type, interface=none, call=false) -%}
 {% if type.is_variant -%}
 std::variant<{{ type.cpp_type|join(', ') }}>
 {%- else -%}
     {% if interface is not none and 'object_type' in type %}
         {{ interface + '::' + type.object_type }}
     {% else %}
+        {% if call -%}{{'const '}}{%- endif %}
         {% if 'object_type' in type -%}
             {{ type.object_type }}
         {%- elif 'enum_type' in type -%}
@@ -14,6 +15,7 @@ std::variant<{{ type.cpp_type|join(', ') }}>
         {%- else -%}
             {{ type.cpp_type }}
         {%- endif %}
+        {% if call -%}&{%- endif %}
     {%- endif %}
 {%- endif %}
 {%- endmacro %}
@@ -45,7 +47,7 @@ static_cast<{{ arg.cpp_type }}>
 {% macro call_cmd_signature(cmd, interface=none) -%}
 {{ result_type(cmd.result, interface) }} call_{{ cmd.name }}(
 {%- for arg in cmd.args -%}
-{{ cpp_type(arg) }} {{ arg.name }}{{ ', ' if not loop.last }}
+{{ cpp_type(arg, none, true) }} {{ arg.name }}{{ ', ' if not loop.last }}
 {%- endfor -%}
 )
 {%- endmacro %}
@@ -113,5 +115,13 @@ string_to_{{ enum_type | snake_case -}}
 {{ enum_type | snake_case }}_to_string
 {%- else %}
 {{ enum_type[:enum_type.rfind('::')] }}::{{ enum_type[(enum_type.rfind('::')+2):] | snake_case }}_to_string
+{%- endif %}
+{%- endmacro %}
+
+{% macro enum_to_string_view(enum_type) %}
+{% if '::' not in enum_type %}
+{{ enum_type | snake_case }}_to_string_view
+{%- else %}
+{{ enum_type[:enum_type.rfind('::')] }}::{{ enum_type[(enum_type.rfind('::')+2):] | snake_case }}_to_string_view
 {%- endif %}
 {%- endmacro %}

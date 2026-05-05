@@ -36,7 +36,6 @@ target_sources(framework
         everest.cpp
         formatter.cpp
         filesystem.cpp
-        message_queue.cpp
         module_adapter.cpp
         module_config.cpp
         mqtt_abstraction_impl.cpp
@@ -76,6 +75,8 @@ target_link_libraries(framework
 
         everest::log
         everest::sqlite
+        $<BUILD_INTERFACE:everest_helpers>
+        $<INSTALL_INTERFACE:everest::helpers>
         $<BUILD_INTERFACE:everest_util>
         $<INSTALL_INTERFACE:everest::util>
         ${STD_FILESYSTEM_COMPAT_LIB}

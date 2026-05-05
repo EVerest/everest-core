@@ -1,5 +1,5 @@
 
-add_library(everest_io)
+add_library(everest_io SHARED)
 add_library(everest::io ALIAS everest_io)
 
 target_sources(everest_io
@@ -86,18 +86,18 @@ else()
   )
   install(TARGETS libmosquitto
       EXPORT everest-core-targets
-      ARCHIVE DESTINATION lib
-      LIBRARY DESTINATION lib
-      RUNTIME DESTINATION bin
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
       INCLUDES DESTINATION include
   )
 endif()
 
 install(TARGETS everest_io
     EXPORT everest-core-targets
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     INCLUDES DESTINATION include
 )
 

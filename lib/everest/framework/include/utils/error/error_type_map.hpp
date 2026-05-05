@@ -60,10 +60,10 @@ public:
     /// \brief Returns the contained ErrorType map
     /// \return The error types map
     ///
-    std::map<ErrorType, std::string> get_error_types();
+    const ErrorTypes& get_error_types() const;
 
 private:
-    std::map<ErrorType, std::string> error_types;
+    ErrorTypes error_types;
 };
 
 } // namespace error

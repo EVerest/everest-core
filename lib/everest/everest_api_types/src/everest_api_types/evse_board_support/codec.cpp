@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "evse_board_support/codec.hpp"
 #include "evse_board_support/API.hpp"
@@ -11,53 +11,43 @@
 namespace everest::lib::API::V1_0::types::evse_board_support {
 
 std::string serialize(Event val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(BspEvent const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(ErrorEnum val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(Error const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(Connector_type val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(HardwareCapabilities const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(Reason val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(PowerOnOff const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(Ampacity val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(ProximityPilot const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::ostream& operator<<(std::ostream& os, Event const& val) {
@@ -110,64 +100,44 @@ std::ostream& operator<<(std::ostream& os, const ProximityPilot& val) {
     return os;
 }
 
-template <> Event deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    Event result = data;
-    return result;
+template <> Event deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> BspEvent deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    BspEvent result = data;
-    return result;
+template <> BspEvent deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> ErrorEnum deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    ErrorEnum result = data;
-    return result;
+template <> ErrorEnum deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> Error deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    Error result = data;
-    return result;
+template <> Error deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> Connector_type deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    Connector_type result = data;
-    return result;
+template <> Connector_type deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> HardwareCapabilities deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    HardwareCapabilities result = data;
-    return result;
+template <> HardwareCapabilities deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> Reason deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    Reason result = data;
-    return result;
+template <> Reason deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> PowerOnOff deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    PowerOnOff result = data;
-    return result;
+template <> PowerOnOff deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> Ampacity deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    Ampacity result = data;
-    return result;
+template <> Ampacity deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> ProximityPilot deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    ProximityPilot result = data;
-    return result;
+template <> ProximityPilot deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
 } // namespace everest::lib::API::V1_0::types::evse_board_support

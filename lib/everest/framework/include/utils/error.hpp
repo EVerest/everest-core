@@ -84,6 +84,7 @@ struct Error {
 using ErrorHandle = UUID;
 using ErrorPtr = std::shared_ptr<Error>;
 using ErrorCallback = std::function<void(Error)>;
+using ErrorTypes = std::map<ErrorType, std::string>;
 
 } // namespace error
 } // namespace Everest

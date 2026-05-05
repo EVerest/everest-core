@@ -35,6 +35,6 @@ jobs:
             ${{ runner.os }}-bazel-disk-${{ inputs.platform }}-
       - name: Build all
         run: >
-          bazelisk build --config=ci //...
+          bazelisk build --config=ci --config=${{ inputs.platform }} //...
           --platforms=//third-party/bazel/toolchains:${{ inputs.platform }}
           --@bazel_tools//tools/test:incompatible_use_default_test_toolchain=false

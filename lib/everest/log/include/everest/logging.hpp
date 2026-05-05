@@ -47,16 +47,27 @@ void update_process_name(std::string process_name);
 std::string trace();
 } // namespace Logging
 
+#ifdef EVEREST_DISABLE_VERBOSE_LOGGING
+#define EVLOG_verbose                                                                                                  \
+    if (true) {                                                                                                        \
+    } else                                                                                                             \
+        BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::verbose)
+#else
 // clang-format off
 #define EVLOG_verbose                                                                                                  \
     BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::verbose)                                                 \
         << boost::log::BOOST_LOG_VERSION_NAMESPACE::add_value("file", __FILE__)                                        \
         << boost::log::BOOST_LOG_VERSION_NAMESPACE::add_value("line", __LINE__)                                        \
         << boost::log::BOOST_LOG_VERSION_NAMESPACE::add_value("function", BOOST_CURRENT_FUNCTION)
+#endif
 
+#ifdef EVEREST_DISABLE_DEBUG_LOGGING
+#define EVLOG_debug if (true) {} else BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::debug)
+#else
 #define EVLOG_debug                                                                                                    \
     BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::debug)                                                   \
         << boost::log::BOOST_LOG_VERSION_NAMESPACE::add_value("function", BOOST_CURRENT_FUNCTION)
+#endif
 
 #define EVLOG_info                                                                                                     \
     BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::info)

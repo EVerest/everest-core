@@ -80,12 +80,12 @@ public:
     /// \brief Provides functionality for calling commands of other modules. The module is identified by the given \p
     /// req, the command by the given command name \p cmd_name and the needed arguments by \p args
     ///
-    nlohmann::json call_cmd(const Requirement& req, const std::string& cmd_name, json args);
+    nlohmann::json call_cmd(const Requirement& req, const std::string& cmd_name, const nlohmann::json& args);
 
     ///
     /// \brief Publishes a variable of the given \p impl_id, names \p var_name with the given \p value
     ///
-    void publish_var(const std::string& impl_id, const std::string& var_name, nlohmann::json value);
+    void publish_var(const std::string& impl_id, const std::string& var_name, const nlohmann::json& value);
 
     ///
     /// \brief Subscribes to a variable of another module identified by the given \p req and variable name \p

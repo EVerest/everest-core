@@ -216,7 +216,7 @@ Response handle_set_request(const SetRequest& set_request, const std::string& or
 
 ConfigServiceClient::ConfigServiceClient(std::shared_ptr<MQTTAbstraction> mqtt_abstraction,
                                          const std::string& module_id,
-                                         const std::unordered_map<std::string, std::string>& module_names) :
+                                         const std::map<std::string, std::string, std::less<>>& module_names) :
     mqtt_abstraction(mqtt_abstraction), origin(module_id), module_names(module_names) {
 }
 

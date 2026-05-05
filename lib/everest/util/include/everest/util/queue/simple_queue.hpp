@@ -102,6 +102,10 @@ public:
         return m_queue.size();
     }
 
+    template <class... Args> decltype(auto) emplace(Args&&... args) {
+        m_queue.emplace(std::forward<Args>(args)...);
+    }
+
 private:
     std::queue<T> m_queue;
 };

@@ -36,7 +36,7 @@ void SessionLog::setPath(const std::string& path) {
     logpath_root = std::filesystem::weakly_canonical(std::filesystem::path(path));
 }
 
-void SessionLog::setMqtt(const std::function<void(nlohmann::json data)>& mqtt_provider) {
+void SessionLog::setMqtt(mqtt_publish_ftor const& mqtt_provider) {
     mqtt = mqtt_provider;
 }
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "error_history/codec.hpp"
 #include "error_history/API.hpp"
@@ -12,43 +12,35 @@
 namespace everest::lib::API::V1_0::types::error_history {
 
 std::string serialize(State val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(SeverityFilter val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(Severity val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(ImplementationIdentifier const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(TimeperiodFilter const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(FilterArguments const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(ErrorObject const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(ErrorList const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::ostream& operator<<(std::ostream& os, State const& val) {
@@ -92,51 +84,35 @@ std::ostream& operator<<(std::ostream& os, ErrorList const& val) {
 }
 
 template <> State deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    State obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> SeverityFilter deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    SeverityFilter obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> Severity deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    Severity obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> ImplementationIdentifier deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    ImplementationIdentifier obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> TimeperiodFilter deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    TimeperiodFilter obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> FilterArguments deserialize<>(std::string const& val) {
-    auto data = json::parse(val);
-    FilterArguments obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> ErrorObject deserialize<>(const std::string& val) {
-    auto data = json::parse(val);
-    ErrorObject obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> ErrorList deserialize<>(const std::string& val) {
-    auto data = json::parse(val);
-    ErrorList obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 } // namespace everest::lib::API::V1_0::types::error_history

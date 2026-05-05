@@ -86,7 +86,7 @@ bool ErrorTypeMap::has(const ErrorType& error_type) const {
     return error_types.find(error_type) != error_types.end();
 }
 
-std::map<ErrorType, std::string> ErrorTypeMap::get_error_types() {
+const ErrorTypes& ErrorTypeMap::get_error_types() const {
     return error_types;
 }
 

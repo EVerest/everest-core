@@ -2,6 +2,7 @@
 
 include(CMakeFindDependencyMacro)
 
+find_dependency(everest-helpers)
 find_dependency(everest-util)
 find_dependency(nlohmann_json)
 find_dependency(nlohmann_json_schema_validator)

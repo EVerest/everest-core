@@ -1,9 +1,9 @@
-{% from "helper_macros.j2" import handle_cmd_signature, publish_var_signature, list_json_types, var_to_cpp, var_to_any, print_template_info, print_spdx_line, string_to_enum, enum_to_string %}
+{% from "helper_macros.j2" import handle_cmd_signature, publish_var_signature, list_json_types, var_to_cpp, var_to_any, print_template_info, print_spdx_line, string_to_enum, enum_to_string, enum_to_string_view %}
 {{ print_spdx_line('Apache-2.0') }}
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('5') }}
+{{ print_template_info('6') }}
 
 #include <framework/ModuleAdapter.hpp>
 #include <utils/types.hpp>
@@ -49,23 +49,20 @@ public:
     // publish functions for variables
     {% for var in vars %}
     void publish_{{ var.name }}(
-    {% if 'array_type' in var %}
+    {%- if 'array_type' in var %}
         const std::vector<{{ var.array_type }}>&
     {%- elif 'object_type' in var %}
-        {{-  var.object_type }}
+        {{- 'const '}} {{-  var.object_type }}&
     {%- elif 'enum_type' in var %}
-        {{-  var.enum_type }}
+        {{- 'const '}} {{-  var.enum_type }}&
     {%- else %}
-        {{-  var.cpp_type }}
+        {{- 'const '}} {{-  var.cpp_type }}&
     {%- endif -%}
     {{ ' value) {' }}
     {% if 'object_type' in var %}
-        json json_value = value;
-        Object object_value = json_value;
-        _ev->publish(_name, "{{ var.name }}", object_value);
+        _ev->publish(_name, "{{ var.name }}", value);
     {% elif 'enum_type' in var %}
-        auto value_string = {{ enum_to_string(var.enum_type) }}(value);
-        _ev->publish(_name, "{{ var.name }}", value_string);
+        _ev->publish(_name, "{{ var.name }}", {{ enum_to_string_view(var.enum_type) }}(value));
     {% elif 'array_type' in var %}
         {% if 'array_type_contains_enum' in var %}
         std::vector<std::string> string_array;
@@ -146,12 +143,12 @@ private:
             {% endfor %}
         };
         {% endif %}
-        {{ cmd.name }}_cmd.cmd = [this](Parameters args) -> Result {
+        {{ cmd.name }}_cmd.cmd = [this](const Parameters& args) -> Result {
         {% for arg in cmd.args %}
             {% if 'object_type' in arg %}
-            {{ arg.object_type }} {{ arg.name }} = args["{{ arg.name }}"];
+            auto {{ arg.name }} = args.at("{{ arg.name }}").get<{{ arg.object_type }}>();
             {% elif 'enum_type' in arg %}
-            auto {{ arg.name }} = {{ string_to_enum(arg.enum_type) }}(args["{{ arg.name }}"]);
+            auto {{ arg.name }} = {{ string_to_enum(arg.enum_type) }}(args.at("{{ arg.name }}").get<std::string>());
             {% elif 'array_type' in arg %}
             json {{ arg.name }}_json_array = args["{{ arg.name }}"];
                 {% if 'array_type_contains_enum' in arg %}
@@ -160,10 +157,10 @@ private:
                     {{ arg.name }}.push_back({{ string_to_enum(arg.array_type) }}(entry));
                 }
                 {% else %}
-                std::vector<{{ arg.array_type }}> {{ arg.name }} = args["{{ arg.name }}"];
+                auto {{ arg.name }} = args.at("{{ arg.name }}").get<std::vector<{{ arg.array_type }}>>();
                 {% endif %}
             {% else %}
-            auto {{ arg.name }} = {{ var_to_cpp(arg) }}(args["{{ arg.name }}"]);
+            auto {{ arg.name }} = {{ var_to_cpp(arg) }}(args.at("{{ arg.name }}"));
             {% endif %}
         {% else %}
             (void) args; // no arguments used for this callback

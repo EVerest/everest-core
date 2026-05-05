@@ -355,7 +355,7 @@ private:
 
     types::authorization::ProvidedIdToken autocharge_token;
 
-    void log_v2g_message(types::iso15118::V2gMessages v2g_messages);
+    void log_v2g_message(types::iso15118::V2gMessages const& v2g_messages);
 
     // Reservations
     bool reserved;

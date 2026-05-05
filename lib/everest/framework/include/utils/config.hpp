@@ -8,6 +8,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 
@@ -94,7 +95,7 @@ SchemaValidation load_schemas(const fs::path& schemas_dir);
 /// \param module_id ID of the module to serialize.
 /// \param module_configurations Map of all module configurations.
 /// \return JSON object with the serialized module configuration.
-json get_serialized_module_config(const std::string& module_id, const ModuleConfigurations& module_configurations);
+json get_serialized_module_config(std::string_view module_id, const ModuleConfigurations& module_configurations);
 
 ///
 /// \brief Base class for configs
@@ -110,7 +111,7 @@ protected:
     nlohmann::json types;
     Schemas schemas;
     // experimental caches
-    std::unordered_map<std::string, std::string> module_names;
+    std::map<std::string, std::string, std::less<>> module_names;
 
     error::ErrorTypeMap error_map;
 
@@ -125,27 +126,27 @@ public:
     /// \brief turns then given \p module_id into a printable identifier
     ///
     /// \returns a string with the printable identifier
-    std::string printable_identifier(const std::string& module_id) const;
+    std::string printable_identifier(std::string_view module_id) const;
 
     ///
     /// \brief turns then given \p module_id and \p impl_id into a printable identifier
     ///
     /// \returns a string with the printable identifier
-    std::string printable_identifier(const std::string& module_id, const std::string& impl_id) const;
+    std::string printable_identifier(std::string_view module_id, std::string_view impl_id) const;
 
     ///
     /// \returns the module name matching the provided \p module_id
-    std::string get_module_name(const std::string& module_id) const;
+    std::string get_module_name(std::string_view module_id) const;
 
     ///
     /// \brief turns the given \p module_id and \p impl_id into a mqtt prefix
     ///
-    std::string mqtt_prefix(const std::string& module_id, const std::string& impl_id);
+    std::string mqtt_prefix(std::string_view module_id, std::string_view impl_id);
 
     ///
     /// \brief turns the given \p module_id into a mqtt prefix
     ///
-    std::string mqtt_module_prefix(const std::string& module_id) const;
+    std::string mqtt_module_prefix(std::string_view module_id) const;
 
     ///
     /// \returns a json object that contains the main config
@@ -153,7 +154,7 @@ public:
 
     ///
     /// \brief checks if the config contains the given \p module_id
-    bool contains(const std::string& module_id) const;
+    bool contains(std::string_view module_id) const;
 
     ///
     /// \returns a json object that contains the manifests
@@ -172,12 +173,12 @@ public:
     const nlohmann::json& get_settings() const;
 
     ///
-    /// \returns a json object that contains the schemas
-    const nlohmann::json get_schemas() const;
+    /// \returns an object that contains the schemas
+    const Schemas& get_schemas() const;
 
     ///
-    /// \returns a json object that contains the schemas
-    nlohmann::json get_error_types();
+    /// \returns an object that contains the error types
+    const error::ErrorTypes& get_error_types() const;
 
     ///
     /// \returns a json object that contains the types
@@ -185,29 +186,29 @@ public:
 
     ///
     /// \return the cached mapping of module ids to module names
-    std::unordered_map<std::string, std::string> get_module_names() const;
+    const std::map<std::string, std::string, std::less<>>& get_module_names() const;
 
     ///
     /// \brief checks if the given \p module_id provides the requirement given in \p requirement_id
     ///
     /// \returns a json object that contains the requirement
-    std::vector<Fulfillment> resolve_requirement(const std::string& module_id, const std::string& requirement_id) const;
+    std::vector<Fulfillment> resolve_requirement(std::string_view module_id, std::string_view requirement_id) const;
 
     ///
     /// \brief resolves all Requirements of the given \p module_id to their Fulfillments
     ///
     /// \returns a map indexed by Requirements
-    std::map<Requirement, Fulfillment> resolve_requirements(const std::string& module_id) const;
+    std::map<Requirement, Fulfillment> resolve_requirements(std::string_view module_id) const;
 
     ///
     /// \returns a list of Requirements for \p module_id
-    std::list<Requirement> get_requirements(const std::string& module_id) const;
+    std::list<Requirement> get_requirements(std::string_view module_id) const;
 
     ///
     /// \brief A Fulfillment is a combination of a Requirement and the module and implementation ids where this is
     /// implemented
     /// \returns a map of Fulfillments for \p module_id
-    std::map<std::string, std::vector<Fulfillment>> get_fulfillments(const std::string& module_id) const;
+    std::map<std::string, std::vector<Fulfillment>> get_fulfillments(std::string_view module_id) const;
 };
 
 ///
@@ -241,20 +242,20 @@ private:
     /// commands would be overwritten
     ///
     /// \returns the resulting interface definition
-    nlohmann::json resolve_interface(const std::string& intf_name);
+    nlohmann::json resolve_interface(std::string_view intf_name);
 
     ///
     /// \brief loads the contents of the interface file referenced by the give \p intf_name from disk and validates
     /// its contents
     ///
     /// \returns a json object containing the interface definition
-    nlohmann::json load_interface_file(const std::string& intf_name);
+    nlohmann::json load_interface_file(std::string_view intf_name);
 
     ///
     /// \brief loads the contents of an error or an error list referenced by the given \p reference.
     ///
     /// \returns a list of json objects containing the error definitions
-    std::list<nlohmann::json> resolve_error_ref(const std::string& reference);
+    std::list<nlohmann::json> resolve_error_ref(std::string_view reference);
 
     ///
     /// \brief replaces all error references in the given \p interface_json with the actual error definitions
@@ -313,9 +314,9 @@ public:
 class Config : public ConfigBase {
 private:
     ModuleConfig module_config;
-    std::unordered_map<std::string, ModuleTierMappings> tier_mappings;
+    std::map<std::string, ModuleTierMappings, std::less<>> tier_mappings;
     std::optional<TelemetryConfig> telemetry_config;
-    std::unordered_map<std::string, ConfigCache> module_config_cache;
+    std::map<std::string, ConfigCache, std::less<>> module_config_cache;
 
     void populate_module_config_cache();
 
@@ -336,36 +337,36 @@ public:
 
     ///
     /// \returns true if the module \p module_name provides the implementation \p impl_id
-    bool module_provides(const std::string& module_name, const std::string& impl_id);
+    bool module_provides(std::string_view module_name, std::string_view impl_id);
 
     ///
     /// \returns the commands that the modules \p module_name implements from the given implementation \p impl_id
-    const nlohmann::json& get_module_cmds(const std::string& module_name, const std::string& impl_id);
+    const nlohmann::json& get_module_cmds(std::string_view module_name, std::string_view impl_id);
 
     ///
     /// \brief A RequirementInitialization contains everything needed to initialize a requirement in user code. This
     /// includes the Requirement, its Fulfillment and an optional Mapping
     /// \returns a RequirementInitialization
-    RequirementInitialization get_requirement_initialization(const std::string& module_id) const;
+    RequirementInitialization get_requirement_initialization(std::string_view module_id) const;
 
     ///
     /// \returns a map of module config options
-    ModuleConfigs get_module_configs(const std::string& module_id) const;
+    ModuleConfigs get_module_configs(std::string_view module_id) const;
 
     //
     /// \returns the 3 tier model mappings for the given \p module_id
-    std::optional<ModuleTierMappings> get_module_3_tier_model_mappings(const std::string& module_id) const;
+    std::optional<ModuleTierMappings> get_module_3_tier_model_mappings(std::string_view module_id) const;
 
     //
     /// \returns the 3 tier model mapping for the given \p module_id and \p impl_id
-    std::optional<Mapping> get_3_tier_model_mapping(const std::string& module_id, const std::string& impl_id) const;
+    std::optional<Mapping> get_3_tier_model_mapping(std::string_view module_id, std::string_view impl_id) const;
 
     ///
     /// \brief assemble basic information about the module (id, name,
     /// authors, license)
     ///
     /// \returns a ModuleInfo object
-    ModuleInfo get_module_info(const std::string& module_id) const;
+    ModuleInfo get_module_info(std::string_view module_id) const;
 
     ///
     /// \returns a TelemetryConfig if this has been configured
@@ -373,7 +374,7 @@ public:
 
     ///
     /// \returns a json object that contains the interface definition
-    nlohmann::json get_interface_definition(const std::string& interface_name) const;
+    nlohmann::json get_interface_definition(std::string_view interface_name) const;
 
     ///
     /// \brief A json schema loader that can handle type refs and otherwise uses the builtin draft7 schema of
@@ -385,13 +386,13 @@ public:
     /// \brief loads all module manifests relative to the \p main_dir
     ///
     /// \returns all module manifests as a json object
-    static nlohmann::json load_all_manifests(const std::string& modules_dir, const std::string& schemas_dir);
+    static nlohmann::json load_all_manifests(std::string_view modules_dir, std::string_view schemas_dir);
 
     ///
     /// \brief Extracts the keys of the provided json \p object
     ///
     /// \returns a set of object keys
-    static std::set<std::string> keys(const nlohmann::json& object);
+    static everest::config::Keys keys(const nlohmann::json& object);
 };
 } // namespace Everest
 
