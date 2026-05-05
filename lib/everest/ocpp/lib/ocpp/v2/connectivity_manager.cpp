@@ -284,6 +284,8 @@ void ConnectivityManager::try_connect_websocket() {
         EVLOG_warning << "Using insecure security profile 0 without authentication";
     }
 
+    // priority_to_set is the 0-indexed position into NetworkConfigurationPriority; log it as 1-indexed
+    // for human-readable parity with how the priority list is described in the OCPP spec and configs.
     EVLOG_info << "Open websocket with NetworkConfigurationPriority: " << priority_to_set.value() + 1
                << " which is configurationSlot " << configuration_slot_to_set;
 
@@ -655,7 +657,7 @@ void ConnectivityManager::cache_network_connection_profiles() {
     this->warn_if_all_security_level_zero_locked(*state);
 }
 
-void ConnectivityManager::warn_if_all_security_level_zero_locked(const NetCfgState& state) const {
+void ConnectivityManager::warn_if_all_security_level_zero_locked(const NetworkProfileCacheState& state) const {
     if (state.cached_profiles.empty()) {
         return;
     }
@@ -802,7 +804,7 @@ void ConnectivityManager::remove_network_connection_profiles_below_actual_securi
 
         state->slots.erase(std::remove_if(state->slots.begin(), state->slots.end(), is_pruned), state->slots.end());
 
-        // Clamp active_priority after shrink
+        // Cap active_priority after shrink
         if (state->slots.empty()) {
             state->active_priority = 0;
         } else if (static_cast<std::size_t>(state->active_priority) >= state->slots.size()) {
@@ -810,7 +812,7 @@ void ConnectivityManager::remove_network_connection_profiles_below_actual_securi
         }
     }
 
-    // Clear per-slot DM variables to prevent re-injection via SetVariables — done outside the state
+    // Clear per-slot DM variables to prevent re-injection via SetVariables; done outside the state
     // lock because DeviceModel has its own synchronization.
     for (const int32_t slot : pruned_slots) {
         NetworkConfigurationComponentVariables::clear_slot_in_device_model(this->device_model, slot);

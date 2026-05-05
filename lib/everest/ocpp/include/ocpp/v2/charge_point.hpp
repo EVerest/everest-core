@@ -331,9 +331,10 @@ public:
     ///
     virtual std::optional<int> get_priority_from_configuration_slot(const int configuration_slot) const = 0;
 
-    /// @brief Get the network connection slots sorted by priority.
+    /// @brief Get a snapshot of the network connection slots sorted by priority.
     /// Each item in the vector contains the configured configuration slots, where the slot with index 0 has the highest
-    /// priority.
+    /// priority. A copy is returned (rather than a const reference) so callers do not observe mid-mutation state once
+    /// the underlying ConnectivityManager monitor handle has been released.
     /// @return The network connection slots
     ///
     virtual std::vector<int> get_network_connection_slots() const = 0;

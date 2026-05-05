@@ -168,7 +168,7 @@ private:
     /// @brief Mutable shared state, accessed concurrently from the OCPP message-handling thread,
     /// the websocket callback thread, and the websocket_timer thread. All access goes through the
     /// monitor handle, which acquires a recursive mutex for the handle's lifetime.
-    struct NetCfgState {
+    struct NetworkProfileCacheState {
         /// Cached NetworkConnectionProfile entries reflecting the per-slot NetworkConfiguration DM variables.
         std::vector<SetNetworkProfileRequest> cached_profiles;
         /// Ordered list of configuration slots (highest priority first) derived from NetworkConfigurationPriority.
@@ -180,7 +180,7 @@ private:
         /// Last SecurityProfile value observed when pruning invalid profiles from the cache.
         int last_known_security_level{0};
     };
-    mutable everest::lib::util::monitor<NetCfgState, std::recursive_mutex> m_state;
+    mutable everest::lib::util::monitor<NetworkProfileCacheState, std::recursive_mutex> m_state;
 
 public:
     ConnectivityManager(DeviceModelAbstract& device_model, std::shared_ptr<EvseSecurity> evse_security,
@@ -213,7 +213,7 @@ public:
 private:
     std::atomic<std::chrono::time_point<std::chrono::steady_clock>> time_disconnected{};
 
-    /// \brief Stamp \c time_disconnected with steady_clock::now() iff currently unset (zero).
+    /// \brief Mark \c time_disconnected with steady_clock::now() iff currently unset (zero).
     ///        Atomic compare-exchange so concurrent disconnect callbacks cannot overwrite the
     ///        first observed disconnect time.
     void mark_disconnected_at_now();
@@ -290,7 +290,7 @@ private:
     void cache_network_connection_profiles();
 
     /// \brief Log an error if all cached profiles have security_profile 0. Caller must hold the state lock.
-    void warn_if_all_security_level_zero_locked(const NetCfgState& state) const;
+    void warn_if_all_security_level_zero_locked(const NetworkProfileCacheState& state) const;
 
     /// \brief Removes all connection profiles from the cache that have a security profile lower than the currently
     /// connected security profile
