@@ -36,7 +36,7 @@ public:
         flags.set(flags_t::status_request_v2);
     }
     void trusted_ca_keys_received() {
-        flags.set(flags_t::status_request_v2);
+        flags.set(flags_t::trusted_ca_keys);
     }
     [[nodiscard]] bool has_status_request() const {
         return flags.is_set(flags_t::status_request);
@@ -45,7 +45,7 @@ public:
         return flags.is_set(flags_t::status_request_v2);
     }
     [[nodiscard]] bool has_trusted_ca_keys() const {
-        return flags.is_set(flags_t::status_request_v2);
+        return flags.is_set(flags_t::trusted_ca_keys);
     }
 };
 
