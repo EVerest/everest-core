@@ -21,6 +21,7 @@ body:
         - Build System
         - Charge Control
         - CHAdeMO
+        - DIN70121
         - Documentation
         - Energy Management
         - Framework

@@ -26,6 +26,7 @@ body:
         - Build System
         - Charge Control
         - CHAdeMO
+        - DIN70121
         - Documentation
         - Energy Management
         - Framework
@@ -58,8 +59,8 @@ body:
     id: version
     attributes:
       label: EVerest Version
-      description: Git tag, release version, or commit hash (e.g. `2026-02.0`, `abc1234`).
-      placeholder: e.g. 2026-02.0
+      description: Git tag, release version, or commit hash (e.g. `2026.02.0`, `abc1234`).
+      placeholder: e.g. 2026.02.0
 
   - type: textarea
     id: reproduction
