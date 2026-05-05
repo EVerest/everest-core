@@ -111,8 +111,20 @@ jobs:
           --everest-prefix /ext/dist \
           --junitxml /ext/${{ inputs.result_xml_path }} \
           --html /ext/${{ inputs.report_html_path }}
-      - name: Upload result and report as artifact
+      - name: Run EEBUS tests
+        id: run_eebus_tests
         if: ${{ always() && (steps.run_integration_tests.outcome == 'success' || steps.run_integration_tests.outcome == 'failure') }}
+        run: |
+          docker compose \
+          -f source/${{ inputs.docker_compose_file_path }} \
+          run \
+          ${{ inputs.test_service_name }} \
+          tests/run-tests.sh eebus \
+          --everest-prefix /ext/dist \
+          --junitxml /ext/eebus-result.xml \
+          --html /ext/eebus-report.html
+      - name: Upload result and report as artifact
+        if: ${{ always() && (steps.run_integration_tests.outcome == 'success' || steps.run_integration_tests.outcome == 'failure' || steps.run_eebus_tests.outcome == 'success' || steps.run_eebus_tests.outcome == 'failure') }}
         uses: actions/upload-artifact@v4.6.2
         with:
           if-no-files-found: error
@@ -120,8 +132,10 @@ jobs:
           path: |
             ${{ inputs.result_xml_path }}
             ${{ inputs.report_html_path }}
+            eebus-result.xml
+            eebus-report.html
       - name: Render result
-        if: ${{ always() && (steps.run_integration_tests.outcome == 'success' || steps.run_integration_tests.outcome == 'failure') }}
+        if: ${{ always() && (steps.run_integration_tests.outcome == 'success' || steps.run_integration_tests.outcome == 'failure' || steps.run_eebus_tests.outcome == 'success' || steps.run_eebus_tests.outcome == 'failure') }}
         uses: pmeier/pytest-results-action@v0.7.2
         with:
           path: ${{ inputs.result_xml_path }}
@@ -129,3 +143,6 @@ jobs:
           display-options: fEX
           fail-on-empty: True
           title: Test results
+      - name: Check if EEBUS tests failed
+        if: ${{ steps.run_eebus_tests.outcome == 'failure' }}
+        run: exit 1
