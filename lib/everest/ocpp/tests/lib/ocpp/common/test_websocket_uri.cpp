@@ -12,16 +12,6 @@ TEST(WebsocketUriTest, EmptyStrings) {
     EXPECT_THROW(Uri::parse_and_validate("ws://test.uri.com", "", 1), std::invalid_argument);
 }
 
-// chargepoint_id is interpolated into the HTTP request path and the Basic-Auth header at
-// connect time. A CR/LF/NUL/control character would enable header injection — reject up-front.
-TEST(WebsocketUriTest, ChargePointIdWithControlCharRejected) {
-    EXPECT_THROW(Uri::parse_and_validate("ws://test.uri.com", "cp\r\nevil:header", 1), std::invalid_argument);
-    EXPECT_THROW(Uri::parse_and_validate("ws://test.uri.com", "cp0001\n", 1), std::invalid_argument);
-    EXPECT_THROW(Uri::parse_and_validate("ws://test.uri.com", std::string("cp\0001", 6), 1), std::invalid_argument);
-    EXPECT_THROW(Uri::parse_and_validate("ws://test.uri.com", "cp0001\t", 1), std::invalid_argument);
-    EXPECT_THROW(Uri::parse_and_validate("ws://test.uri.com", "cp0001\x7F", 1), std::invalid_argument);
-}
-
 TEST(WebsocketUriTest, UriInvalid) {
     EXPECT_THROW(Uri::parse_and_validate("://invalid", "cp0001", 1), std::invalid_argument);
     EXPECT_THROW(Uri::parse_and_validate("ws:test.uri.com", "cp0001", 1), std::invalid_argument);

@@ -43,15 +43,6 @@ Uri Uri::parse_and_validate(std::string uri, std::string chargepoint_id, int sec
     if (chargepoint_id.empty()) {
         throw std::invalid_argument("`chargepoint_id`-parameter must not be empty");
     }
-    // Reject control characters (CR, LF, NUL, tab, etc.) in chargepoint_id. It is interpolated into
-    // the HTTP request path and the HTTP Basic-Auth header at connection time; a CR/LF in the
-    // value would let a caller (e.g. a CSMS that writes SecurityCtrlr.Identity or a per-slot
-    // NetworkConfiguration.Identity) inject arbitrary headers into the upgrade request.
-    for (const char c : chargepoint_id) {
-        if (static_cast<unsigned char>(c) < 0x20 || c == 0x7F) {
-            throw std::invalid_argument("`chargepoint_id` contains a control character");
-        }
-    }
 
     // workaround for required schema in `websocketpp::uri()`
     bool scheme_added_workaround = false;
