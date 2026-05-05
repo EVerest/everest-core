@@ -25,6 +25,7 @@
 #include <evse_mock.hpp>
 #include <evse_security_mock.hpp>
 #include <gmock/gmock.h>
+#include <ocpp/v2/event_id_generator.hpp>
 #include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 
 #include <boost/uuid/uuid_generators.hpp>
@@ -167,6 +168,7 @@ public:
     std::unique_ptr<TestSmartCharging> handler;
     boost::uuids::random_generator uuid_generator;
     std::atomic<OcppProtocolVersion> ocpp_version = OcppProtocolVersion::v201;
+    EventIdGenerator event_id_generator;
 };
 
 class CompositeScheduleTestFixtureV21 : public CompositeScheduleTestFixtureV2 {

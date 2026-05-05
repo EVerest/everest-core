@@ -13,6 +13,7 @@
 
 #include <ocpp/v2/average_meter_values.hpp>
 #include <ocpp/v2/charge_point_callbacks.hpp>
+#include <ocpp/v2/event_id_generator.hpp>
 #include <ocpp/v2/ocpp_enums.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 #include <ocpp/v2/ocsp_updater.hpp>
@@ -376,6 +377,7 @@ private:
     std::atomic<RegistrationStatusEnum> registration_status;
     std::atomic<OcppProtocolVersion> ocpp_version =
         OcppProtocolVersion::Unknown; // version that is currently in use, selected by CSMS in websocket handshake
+    EventIdGenerator event_id_generator;
     std::atomic<UploadLogStatusEnum> upload_log_status;
     std::atomic<std::int32_t> upload_log_status_id;
     BootReasonEnum bootreason;

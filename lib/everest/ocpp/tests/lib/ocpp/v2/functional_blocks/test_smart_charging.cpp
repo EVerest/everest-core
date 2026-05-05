@@ -9,6 +9,7 @@
 #include "ocpp/common/types.hpp"
 #include "ocpp/v2/ctrlr_component_variables.hpp"
 #include "ocpp/v2/device_model.hpp"
+#include "ocpp/v2/event_id_generator.hpp"
 #include "ocpp/v2/functional_blocks/functional_block_context.hpp"
 #include "ocpp/v2/functional_blocks/smart_charging.hpp"
 #include "ocpp/v2/ocpp_types.hpp"
@@ -90,7 +91,8 @@ protected:
         device_model = device_model_test_helper.get_device_model();
         this->functional_block_context = std::make_unique<FunctionalBlockContext>(
             this->mock_dispatcher, *this->device_model, this->connectivity_manager, *this->evse_manager,
-            *this->database_handler, this->evse_security, this->component_state_manager, this->ocpp_version);
+            *this->database_handler, this->evse_security, this->component_state_manager, this->ocpp_version,
+            this->event_id_generator);
         // Defaults
         const auto& charging_rate_unit_cv = ControllerComponentVariables::ChargingScheduleChargingRateUnit;
         device_model->set_value(charging_rate_unit_cv.component, charging_rate_unit_cv.variable.value(),
@@ -150,6 +152,7 @@ protected:
     TestSmartCharging smart_charging = create_smart_charging();
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
     std::atomic<OcppProtocolVersion> ocpp_version = OcppProtocolVersion::v201;
+    EventIdGenerator event_id_generator;
 };
 
 TEST_F(SmartChargingTest, K01FR03_IfTxProfileIsMissingTransactionId_ThenProfileIsInvalid) {

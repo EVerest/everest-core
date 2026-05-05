@@ -19,6 +19,7 @@
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/database_handler.hpp>
 #include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/event_id_generator.hpp>
 #include <ocpp/v2/evse.hpp>
 #include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/ocpp_enums.hpp>
@@ -68,7 +69,8 @@ protected:
         device_model = device_model_test_helper.get_device_model();
         this->functional_block_context = std::make_unique<FunctionalBlockContext>(
             this->mock_dispatcher, *this->device_model, this->connectivity_manager, *this->evse_manager,
-            *this->database_handler, this->evse_security, this->component_state_manager, this->ocpp_version);
+            *this->database_handler, this->evse_security, this->component_state_manager, this->ocpp_version,
+            this->event_id_generator);
         return TestSmartCharging(*functional_block_context, set_charging_profiles_callback_mock.AsStdFunction(),
                                  stop_transaction_callback_mock.AsStdFunction());
     }
@@ -88,6 +90,7 @@ protected:
     std::unique_ptr<FunctionalBlockContext> functional_block_context;
     TestSmartCharging smart_charging = create_smart_charging();
     std::atomic<OcppProtocolVersion> ocpp_version = OcppProtocolVersion::v21;
+    EventIdGenerator event_id_generator;
 };
 
 TEST_F(SmartChargingTestV21,

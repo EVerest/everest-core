@@ -8,6 +8,7 @@
 
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/event_id_generator.hpp>
 #include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 
 #include "component_state_manager_mock.hpp"
@@ -44,6 +45,7 @@ protected: // Members
     EvseManagerFake evse_manager;
     ComponentStateManagerMock component_state_manager;
     std::atomic<ocpp::OcppProtocolVersion> ocpp_version;
+    EventIdGenerator event_id_generator;
     FunctionalBlockContext functional_block_context;
 
     std::unique_ptr<Authorization> authorization;
@@ -67,7 +69,8 @@ protected: // Functions
         ocpp_version(ocpp::OcppProtocolVersion::v201),
         functional_block_context{
             this->mock_dispatcher,       *this->device_model, this->connectivity_manager,    this->evse_manager,
-            this->database_handler_mock, this->evse_security, this->component_state_manager, this->ocpp_version},
+            this->database_handler_mock, this->evse_security, this->component_state_manager, this->ocpp_version,
+            this->event_id_generator},
         authorization(std::make_unique<Authorization>(functional_block_context)) {
     }
 
@@ -343,7 +346,8 @@ TEST_F(AuthorizationTest, is_auth_cache_ctrlr_enabled) {
     this->device_model = this->device_model_test_helper.get_device_model();
     FunctionalBlockContext context = {
         this->mock_dispatcher,       *this->device_model, this->connectivity_manager,    this->evse_manager,
-        this->database_handler_mock, this->evse_security, this->component_state_manager, this->ocpp_version};
+        this->database_handler_mock, this->evse_security, this->component_state_manager, this->ocpp_version,
+        this->event_id_generator};
     this->authorization = std::make_unique<Authorization>(context);
     EXPECT_FALSE(authorization->is_auth_cache_ctrlr_enabled());
 }
@@ -1780,7 +1784,8 @@ TEST_F(AuthorizationTest, cache_cleanup_handler_exceeds_max_storage) {
     this->authorization = nullptr;
     FunctionalBlockContext context = {
         this->mock_dispatcher,       *this->device_model, this->connectivity_manager,    this->evse_manager,
-        this->database_handler_mock, this->evse_security, this->component_state_manager, this->ocpp_version};
+        this->database_handler_mock, this->evse_security, this->component_state_manager, this->ocpp_version,
+        this->event_id_generator};
     this->authorization = std::make_unique<Authorization>(context);
     auto meta_data =
         this->device_model->get_variable_meta_data(component_variable.component, component_variable.variable.value());
@@ -1843,7 +1848,8 @@ TEST_F(AuthorizationTest, cache_cleanup_handler_exceeds_max_storage_database_exc
 
     FunctionalBlockContext context = {
         this->mock_dispatcher,       *this->device_model, this->connectivity_manager,    this->evse_manager,
-        this->database_handler_mock, this->evse_security, this->component_state_manager, this->ocpp_version};
+        this->database_handler_mock, this->evse_security, this->component_state_manager, this->ocpp_version,
+        this->event_id_generator};
     this->authorization = std::make_unique<Authorization>(context);
 
     auto meta_data =

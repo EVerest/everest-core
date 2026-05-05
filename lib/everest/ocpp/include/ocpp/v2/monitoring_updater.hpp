@@ -8,6 +8,7 @@
 #include <everest/timer.hpp>
 
 #include <ocpp/v2/enums.hpp>
+#include <ocpp/v2/event_id_generator.hpp>
 #include <ocpp/v2/ocpp_enums.hpp>
 #include <ocpp/v2/ocpp_types.hpp>
 
@@ -101,11 +102,12 @@ public:
 
     /// \brief Constructs a new variable monitor updater
     /// \param device_model Currently used variable device model
+    /// \param event_id_generator Shared source for EventData.eventId values
     /// \param notify_csms_events Function that can be invoked with a number of alert events
     /// \param is_chargepoint_offline Function that can be invoked in order to retrieve the
     /// status of the charging station connection to the CSMS
-    MonitoringUpdater(DeviceModelAbstract& device_model, notify_events notify_csms_events,
-                      is_offline is_chargepoint_offline);
+    MonitoringUpdater(DeviceModelAbstract& device_model, EventIdGenerator& event_id_generator,
+                      notify_events notify_csms_events, is_offline is_chargepoint_offline);
     ~MonitoringUpdater();
 
     /// \brief Starts monitoring the variables, kicking the timer
@@ -169,8 +171,7 @@ private:
     DeviceModelAbstract& device_model;
     Everest::SteadyTimer monitors_timer;
 
-    // Charger to CSMS message unique ID for EventData
-    std::int32_t unique_id;
+    EventIdGenerator& event_id_generator;
 
     notify_events notify_csms_events;
     is_offline is_chargepoint_offline;

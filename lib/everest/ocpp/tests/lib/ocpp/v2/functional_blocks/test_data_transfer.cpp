@@ -14,6 +14,7 @@
 #include "mocks/database_handler_mock.hpp"
 #include <ocpp/common/constants.hpp>
 #include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/event_id_generator.hpp>
 #include <ocpp/v2/functional_blocks/data_transfer.hpp>
 #include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/messages/DataTransfer.hpp>
@@ -42,6 +43,7 @@ protected: // Members
     EvseManagerFake evse_manager;
     ComponentStateManagerMock component_state_manager;
     std::atomic<ocpp::OcppProtocolVersion> ocpp_version;
+    EventIdGenerator event_id_generator;
     FunctionalBlockContext functional_block_context;
 
     DataTransferTest() :
@@ -55,7 +57,8 @@ protected: // Members
         ocpp_version(ocpp::OcppProtocolVersion::v201),
         functional_block_context{
             this->mock_dispatcher,       *this->device_model, this->connectivity_manager,    this->evse_manager,
-            this->database_handler_mock, this->evse_security, this->component_state_manager, this->ocpp_version} {
+            this->database_handler_mock, this->evse_security, this->component_state_manager, this->ocpp_version,
+            this->event_id_generator} {
     }
 };
 

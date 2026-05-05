@@ -18,7 +18,7 @@ from ocpp.routing import on, create_route_map
 from everest.testing.ocpp_utils.fixtures import *
 from everest_test_utils import * # Needs to be before the datatypes below since it overrides the v21 Action enum with the v16 one
 from ocpp.v21.enums import (Action, ConnectorStatusEnumType, AuthorizationStatusEnumType, EnergyTransferModeEnumType, AttributeEnumType, GetVariableStatusEnumType, NotifyEVChargingNeedsStatusEnumType, NotifyAllowedEnergyTransferStatusEnumType)
-from validations import validate_status_notification_201
+from validations import validate_notify_event_connector_availability_21
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP2XConfigAdjustment
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
 # fmt: on
@@ -81,11 +81,11 @@ async def test_q01(
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v21,
-        "StatusNotification",
+        "NotifyEvent",
         call21.StatusNotification(
             1,  ConnectorStatusEnumType.available, 1, datetime.now().isoformat()
         ),
-        validate_status_notification_201,
+        validate_notify_event_connector_availability_21,
     )
 
     iso_enabled = GetVariableDataType(component=ComponentType(name="ISO15118Ctrlr", evse=EVSEType(id=1)),
@@ -124,11 +124,11 @@ async def test_q01(
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v21,
-        "StatusNotification",
+        "NotifyEvent",
         call21.StatusNotification(
             1,  ConnectorStatusEnumType.occupied, 1, datetime.now().isoformat()
         ),
-        validate_status_notification_201,
+        validate_notify_event_connector_availability_21,
     )
 
     @on(Action.authorize)
@@ -258,11 +258,11 @@ async def test_rejected_q01(
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v21,
-        "StatusNotification",
+        "NotifyEvent",
         call21.StatusNotification(
             1,  ConnectorStatusEnumType.available, 1, datetime.now().isoformat()
         ),
-        validate_status_notification_201,
+        validate_notify_event_connector_availability_21,
     )
 
     iso_enabled = GetVariableDataType(component=ComponentType(name="ISO15118Ctrlr", evse=EVSEType(id=1)),
@@ -300,11 +300,11 @@ async def test_rejected_q01(
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v21,
-        "StatusNotification",
+        "NotifyEvent",
         call21.StatusNotification(
             1,  ConnectorStatusEnumType.occupied, 1, datetime.now().isoformat()
         ),
-        validate_status_notification_201,
+        validate_notify_event_connector_availability_21,
     )
 
     @on(Action.authorize)
@@ -436,11 +436,11 @@ async def test_q02_no_service_renegotiation(
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v21,
-        "StatusNotification",
+        "NotifyEvent",
         call21.StatusNotification(
             1,  ConnectorStatusEnumType.available, 1, datetime.now().isoformat()
         ),
-        validate_status_notification_201,
+        validate_notify_event_connector_availability_21,
     )
     test_controller.plug_in_dc_iso()
 

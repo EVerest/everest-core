@@ -72,6 +72,7 @@ set(TEST_AVAILABILITY_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/../device_model_test_h
             ${LIBOCPP_LIB_PATH}/ocpp/v2/ctrlr_component_variables.cpp
             ${LIBOCPP_LIB_PATH}/ocpp/v2/messages/ChangeAvailability.cpp
             ${LIBOCPP_LIB_PATH}/ocpp/v2/messages/Heartbeat.cpp
+            ${LIBOCPP_LIB_PATH}/ocpp/v2/messages/NotifyEvent.cpp
             ${LIBOCPP_LIB_PATH}/ocpp/v2/messages/StatusNotification.cpp
             ${LIBOCPP_TEST_INCLUDE_COMMON_SOURCES}
             ${LIBOCPP_TEST_INCLUDE_V2_SOURCES}

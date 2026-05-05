@@ -17,6 +17,7 @@
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
 #include <ocpp/v2/device_model_storage_sqlite.hpp>
+#include <ocpp/v2/event_id_generator.hpp>
 #include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/init_device_model_db.hpp>
 
@@ -42,7 +43,8 @@ protected: // Functions
         this->device_model = create_device_model();
         this->functional_block_context = std::make_unique<FunctionalBlockContext>(
             this->mock_dispatcher, *this->device_model, this->connectivity_manager, this->evse_manager,
-            this->database_handler, this->evse_security, this->component_state_manager, this->ocpp_version);
+            this->database_handler, this->evse_security, this->component_state_manager, this->ocpp_version,
+            this->event_id_generator);
         this->reservation = std::make_unique<Reservation>(
             *functional_block_context, reserve_now_callback_mock.AsStdFunction(),
             cancel_reservation_callback_mock.AsStdFunction(), is_reservation_for_token_callback_mock.AsStdFunction());
@@ -188,6 +190,7 @@ protected: // Members
                                               const std::optional<ocpp::CiString<255>> groupIdToken)>
         is_reservation_for_token_callback_mock;
     std::atomic<ocpp::OcppProtocolVersion> ocpp_version;
+    EventIdGenerator event_id_generator;
     std::unique_ptr<FunctionalBlockContext> functional_block_context;
     // Make reservation a unique ptr so we can create it after creating the device model.
     std::unique_ptr<Reservation> reservation;
@@ -543,7 +546,7 @@ TEST_F(ReservationTest, handle_reserve_now_no_evses) {
 
     const FunctionalBlockContext b{this->mock_dispatcher,         *this->device_model,    this->connectivity_manager,
                                    evse_manager_no_evses,         this->database_handler, this->evse_security,
-                                   this->component_state_manager, this->ocpp_version};
+                                   this->component_state_manager, this->ocpp_version,     this->event_id_generator};
     this->functional_block_context = std::make_unique<FunctionalBlockContext>(b);
 
     Reservation r{*this->functional_block_context, reserve_now_callback_mock.AsStdFunction(),
