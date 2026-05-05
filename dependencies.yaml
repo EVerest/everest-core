@@ -112,3 +112,8 @@ mosquitto:
   - WITH_APPS OFF
   - WITH_PLUGINS OFF
   - WITH_TESTS OFF
+# everest/yaml library
+ryml:
+  git: https://github.com/biojppm/rapidyaml
+  git_tag: v0.10.0
+  options: ["CMAKE_POSITION_INDEPENDENT_CODE ON"]
