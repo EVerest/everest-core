@@ -76,6 +76,7 @@ enum class ProfileValidationResultEnum {
     ChargingSchedulePeriodNoFreqWattCurve,
     ChargingSchedulePeriodSignDifference,
     ChargingSchedulePeriodSetpointOutOfRange,
+    ChargingSchedulePeriodPhaseConflict,
     ChargingStationMaxProfileCannotBeRelative,
     ChargingStationMaxProfileEvseIdGreaterThanZero,
     DuplicateTxDefaultProfileFound,
@@ -246,6 +247,22 @@ protected:
     ///         otherwise ChargingSchedulePeriodSetpointOutOfRange.
     ///
     ProfileValidationResultEnum validate_setpoint_within_limit_range(const ChargingProfile& profile) const;
+
+    ///
+    /// \brief Reject SetChargingProfile requests that violate the V2X.09 branch of V2X.10:
+    ///        a non-TxProfile carrying any \c dischargeLimit_L2 / \c _L3,
+    ///        \c setpoint_L2 / \c _L3, or \c setpointReactive_L2 / \c _L3 in any
+    ///        chargingSchedulePeriod must be rejected with reasonCode `PhaseConflict`.
+    ///
+    /// The V2X.08 branch (EV omitted \c maxDischargePower_L2 / \c _L3 in
+    /// NotifyEVChargingNeedsRequest) requires per-EVSE caching of EV V2X parameters
+    /// and is intentionally deferred.
+    ///
+    /// \param profile  Charging profile to validate.
+    /// \return Valid when the profile is a TxProfile, or when no per-phase fields are
+    ///         present; otherwise ChargingSchedulePeriodPhaseConflict.
+    ///
+    ProfileValidationResultEnum validate_phase_conflict(const ChargingProfile& profile) const;
 
     ///
     /// \brief Checks a given \p profile does not have an id that conflicts with an existing profile
