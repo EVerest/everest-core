@@ -3,6 +3,7 @@ active_modules:
     module: OCPP
     config_module:
       ChargePointConfigPath: libocpp-config-test.json
+      DeviceModelConfigMappingsPath: ocpp16-custom-config-mappings.yaml
       UserConfigPath: user_config.json
       EnableExternalWebsocketControl: true
     connections:

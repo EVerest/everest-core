@@ -404,7 +404,7 @@ class TestOCPP16GenericInterfaceIntegration:
                             "component": {"name": "IGNORED"},
                             "variable": {"name": "RetryBackoffRandomRange"},
                         },
-                        # not custom - will be Rejected
+                        # internal OCPP1.6 key - will be Accepted
                         "value": "99",
                     },
                     {
@@ -440,7 +440,7 @@ class TestOCPP16GenericInterfaceIntegration:
                     "component": {"name": "IGNORED"},
                     "variable": {"name": "RetryBackoffRandomRange"},
                 },
-                "status": "Rejected",
+                "status": "Accepted",
             },
             {
                 "component_variable": {

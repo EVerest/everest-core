@@ -16,6 +16,9 @@ class OCPPModulePaths16(OCPPModuleConfigurationBase):
     ChargePointConfigPath: str
     UserConfigPath: str
     DatabasePath: str
+    DeviceModelDatabasePath: str
+    DeviceModelDatabaseMigrationPath: str
+    DeviceModelConfigPath: str
 
 
 @dataclass

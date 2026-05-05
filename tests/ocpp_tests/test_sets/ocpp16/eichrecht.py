@@ -9,6 +9,7 @@ from everest.testing.ocpp_utils.charge_point_utils import (
 )
 from everest.testing.ocpp_utils.central_system import ChargePoint16
 from everest.testing.ocpp_utils.fixtures import test_utility, charge_point_v16
+from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP16ConfigAdjustment
 from everest_test_utils import get_everest_config_path_str
 
 from ocpp.v16 import call_result
@@ -17,6 +18,11 @@ from ocpp.v16 import call_result
 @pytest.mark.asyncio
 @pytest.mark.everest_core_config(
     get_everest_config_path_str("everest-config-two-connectors.yaml")
+)
+@pytest.mark.ocpp_config_adaptions(
+    GenericOCPP16ConfigAdjustment(
+        [("Internal", "MeterPublicKeys", ["TESTPUBLICKEY1", "TESTPUBLICKEY2"])]
+    )
 )
 async def test_meter_public_key(
     charge_point_v16: ChargePoint16, test_utility: TestUtility

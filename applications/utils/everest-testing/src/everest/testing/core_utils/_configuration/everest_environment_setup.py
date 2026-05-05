@@ -94,6 +94,9 @@ class EverestTestEnvironmentSetup:
         ocpp_config_file: Path
         ocpp_user_config_file: Path
         ocpp_database_dir: Path
+        ocpp_device_model_database_file: Path
+        ocpp_device_model_migration_path: Path
+        ocpp_device_model_config_path: Path
         ocpp_message_log_directory: Path
         persistent_store_db_path: Path
 
@@ -133,6 +136,8 @@ class EverestTestEnvironmentSetup:
                                          tmp_path=tmp_path)
 
         if self._ocpp_config:
+            if self._ocpp_config.ocpp_version == OCPPVersion.ocpp16:
+                self._setup_ocpp16_device_model_resources(temporary_paths)
             self._ocpp_configuration = self._setup_libocpp_configuration(
                 temporary_paths=temporary_paths
             )
@@ -174,6 +179,9 @@ class EverestTestEnvironmentSetup:
             ocpp_config_file=ocpp_config_dir / "config.json",
             ocpp_user_config_file=ocpp_config_dir / "user_config.json",
             ocpp_database_dir=ocpp_config_dir,
+            ocpp_device_model_database_file=ocpp_config_dir / "device_model_storage.db",
+            ocpp_device_model_migration_path=ocpp_config_dir / "device_model_migrations",
+            ocpp_device_model_config_path=ocpp_config_dir / "component_config",
             certs_dir=certs_dir,
             ocpp_message_log_directory=ocpp_logs_dir,
             persistent_store_db_path=persistent_store_dir / "persistent_store.db"
@@ -187,7 +195,10 @@ class EverestTestEnvironmentSetup:
                 ChargePointConfigPath=str(temporary_paths.ocpp_config_file),
                 MessageLogPath=str(temporary_paths.ocpp_message_log_directory),
                 UserConfigPath=str(temporary_paths.ocpp_user_config_file),
-                DatabasePath=str(temporary_paths.ocpp_database_dir)
+                DatabasePath=str(temporary_paths.ocpp_database_dir),
+                DeviceModelDatabasePath=str(temporary_paths.ocpp_device_model_database_file),
+                DeviceModelDatabaseMigrationPath=str(temporary_paths.ocpp_device_model_migration_path),
+                DeviceModelConfigPath=str(temporary_paths.ocpp_device_model_config_path)
             )
         elif self._ocpp_config.ocpp_version == OCPPVersion.ocpp201 or self._ocpp_config.ocpp_version == OCPPVersion.ocpp21:
             ocpp_paths = OCPPModulePaths2X(
@@ -284,3 +295,21 @@ class EverestTestEnvironmentSetup:
                 f"Will use certificates from local installation {source_certs_directory}', which might lead to flaky tests.")
         shutil.copytree(source_certs_directory,
                         temporary_paths.certs_dir, dirs_exist_ok=True)
+
+    def _setup_ocpp16_device_model_resources(self, temporary_paths: _EverestEnvironmentTemporaryPaths):
+        """Copies default OCPP1.6 migration resources into temporary test paths."""
+        ocpp_module_share_path = self._everest_core.prefix_path / "share/everest/modules/OCPP"
+        source_component_config_dir = ocpp_module_share_path / "component_config"
+        source_migration_dir = ocpp_module_share_path / "device_model_migrations"
+
+        if not source_component_config_dir.exists():
+            raise ValueError(f"Missing OCPP component config directory: {source_component_config_dir}")
+        if not source_migration_dir.exists():
+            raise ValueError(f"Missing OCPP device model migration directory: {source_migration_dir}")
+
+        shutil.copytree(source_component_config_dir,
+                        temporary_paths.ocpp_device_model_config_path,
+                        dirs_exist_ok=True)
+        shutil.copytree(source_migration_dir,
+                        temporary_paths.ocpp_device_model_migration_path,
+                        dirs_exist_ok=True)
