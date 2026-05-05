@@ -387,48 +387,63 @@ void ConnectivityManager::on_charging_station_certificate_changed() {
     }
 }
 
+std::string ConnectivityManager::resolve_identity(const std::int32_t configuration_slot) const {
+    std::string identity_to_use =
+        this->device_model.get_value<std::string>(ControllerComponentVariables::SecurityCtrlrIdentity);
+    const auto slot_identity_cv = NetworkConfigurationComponentVariables::get_component_variable(
+        configuration_slot, NetworkConfigurationComponentVariables::Identity);
+    if (const auto slot_identity = this->device_model.get_optional_value<std::string>(slot_identity_cv);
+        slot_identity.has_value() && !slot_identity->empty()) {
+        identity_to_use = *slot_identity;
+        EVLOG_debug << "Using per-slot Identity for slot " << configuration_slot;
+    }
+    return identity_to_use;
+}
+
+std::optional<std::string>
+ConnectivityManager::resolve_basic_auth_password(const std::int32_t configuration_slot) const {
+    const auto slot_pwd_cv = NetworkConfigurationComponentVariables::get_component_variable(
+        configuration_slot, NetworkConfigurationComponentVariables::BasicAuthPassword);
+    if (const auto slot_pwd = this->device_model.get_optional_value<std::string>(slot_pwd_cv);
+        slot_pwd.has_value() && !slot_pwd->empty()) {
+        EVLOG_debug << "Using per-slot BasicAuthPassword for slot " << configuration_slot;
+        return slot_pwd.value();
+    }
+    return this->device_model.get_optional_value<std::string>(ControllerComponentVariables::BasicAuthPassword);
+}
+
+std::optional<std::string> ConnectivityManager::read_everest_version() const {
+    const fs::path version_file_path = this->share_path.parent_path().parent_path() / "version_information.txt";
+    if (!fs::exists(version_file_path)) {
+        return std::nullopt;
+    }
+    std::ifstream ifs(version_file_path);
+    std::string version;
+    std::getline(ifs, version);
+    std::string trimmed_version = ocpp::trim_string(version);
+    trimmed_version.erase(std::remove(trimmed_version.begin(), trimmed_version.end(), '\n'), trimmed_version.end());
+    if (trimmed_version.empty()) {
+        return std::nullopt;
+    }
+    return trimmed_version;
+}
+
 std::optional<WebsocketConnectionOptions>
 ConnectivityManager::get_ws_connection_options(const std::int32_t configuration_slot) {
     const auto network_connection_profile_opt = this->get_network_connection_profile(configuration_slot);
-
     if (!network_connection_profile_opt.has_value()) {
         EVLOG_critical << "Could not retrieve NetworkProfile of configurationSlot: " << configuration_slot;
         throw std::runtime_error("Could not retrieve NetworkProfile");
     }
-
     const auto& network_connection_profile = network_connection_profile_opt.value();
 
     try {
-        // B09.FR.16-18: Check per-slot Identity override first, fall back to SecurityCtrlr.Identity
-        std::string identity_to_use =
-            this->device_model.get_value<std::string>(ControllerComponentVariables::SecurityCtrlrIdentity);
-
-        const auto slot_identity_cv = NetworkConfigurationComponentVariables::get_component_variable(
-            configuration_slot, NetworkConfigurationComponentVariables::Identity);
-        if (const auto slot_identity = this->device_model.get_optional_value<std::string>(slot_identity_cv);
-            slot_identity.has_value() && !slot_identity->empty()) {
-            identity_to_use = *slot_identity;
-            EVLOG_debug << "Using per-slot Identity for slot " << configuration_slot;
-        }
-
+        const auto identity_to_use = this->resolve_identity(configuration_slot);
         auto uri = Uri::parse_and_validate(network_connection_profile.ocppCsmsUrl.get(), identity_to_use,
                                            network_connection_profile.securityProfile);
-
         const auto ocpp_versions = utils::get_ocpp_protocol_versions(
             this->device_model.get_value<std::string>(ControllerComponentVariables::SupportedOcppVersions));
-
-        // B09.FR.26-28: Check per-slot BasicAuthPassword override first
-        std::optional<std::string> basic_auth_password;
-        const auto slot_pwd_cv = NetworkConfigurationComponentVariables::get_component_variable(
-            configuration_slot, NetworkConfigurationComponentVariables::BasicAuthPassword);
-        if (const auto slot_pwd = this->device_model.get_optional_value<std::string>(slot_pwd_cv);
-            slot_pwd.has_value() && !slot_pwd->empty()) {
-            basic_auth_password = slot_pwd.value();
-            EVLOG_debug << "Using per-slot BasicAuthPassword for slot " << configuration_slot;
-        } else {
-            basic_auth_password =
-                this->device_model.get_optional_value<std::string>(ControllerComponentVariables::BasicAuthPassword);
-        }
+        const auto basic_auth_password = this->resolve_basic_auth_password(configuration_slot);
 
         WebsocketConnectionOptions connection_options{
             ocpp_versions, uri, network_connection_profile.securityProfile, basic_auth_password,
@@ -458,18 +473,8 @@ ConnectivityManager::get_ws_connection_options(const std::int32_t configuration_
             this->device_model.get_optional_value<bool>(ControllerComponentVariables::EnableTLSKeylog).value_or(false),
             this->device_model.get_optional_value<std::string>(ControllerComponentVariables::TLSKeylogFile)};
 
-        // Read version file and add to connection_options
-        fs::path version_file_path = this->share_path.parent_path().parent_path() / "version_information.txt";
-        if (fs::exists(version_file_path)) {
-            std::ifstream ifs(version_file_path);
-            std::string version;
-            std::getline(ifs, version);                               // only get one line to avoid issues
-            std::string trimmed_version = ocpp::trim_string(version); // remove leading/trailing whitespace
-            trimmed_version.erase(std::remove(trimmed_version.begin(), trimmed_version.end(), '\n'),
-                                  trimmed_version.end()); // remove unnecessary newline characters
-            if (!trimmed_version.empty()) {
-                connection_options.everest_version = trimmed_version;
-            }
+        if (auto version = this->read_everest_version(); version.has_value()) {
+            connection_options.everest_version = std::move(*version);
         }
 
         return connection_options;

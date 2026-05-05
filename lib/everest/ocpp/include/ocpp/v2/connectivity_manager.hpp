@@ -227,6 +227,19 @@ private:
     ///
     std::optional<WebsocketConnectionOptions> get_ws_connection_options(const std::int32_t configuration_slot);
 
+    /// \brief Resolve the Identity to use for the given slot. Per-slot Identity overrides
+    ///        SecurityCtrlr.Identity (B09.FR.16-18) when present and non-empty.
+    std::string resolve_identity(std::int32_t configuration_slot) const;
+
+    /// \brief Resolve the BasicAuthPassword to use for the given slot. Per-slot BasicAuthPassword
+    ///        overrides the global SecurityCtrlr.BasicAuthPassword (B09.FR.26-28) when present
+    ///        and non-empty.
+    std::optional<std::string> resolve_basic_auth_password(std::int32_t configuration_slot) const;
+
+    /// \brief Read the everest version string from the deployed version_information.txt,
+    ///        next to the binary. Returns nullopt if the file is missing or contains no usable line.
+    std::optional<std::string> read_everest_version() const;
+
     /// \brief Calls the configuration callback to get the interface to use, if there is a callback
     /// \param slot The configuration slot to get the interface for
     /// \param profile The network connection profile to get the interface for
