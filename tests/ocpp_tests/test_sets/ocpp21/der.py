@@ -378,7 +378,7 @@ async def test_tc_r_102_clear_by_type_then_clear_all(
     volt_watt_curve = DERCurveType(
         curve_data=[DERCurvePointsType(x=240.0, y=100.0)],
         priority=1,
-        y_unit=DERUnitEnumType.pct_max_w,
+        y_unit=DERUnitEnumType.pct_maxw,
     )
     r = await charge_point_v21.set_der_control_req(
         is_default=True,
