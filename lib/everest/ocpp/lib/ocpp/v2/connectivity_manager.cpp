@@ -712,49 +712,50 @@ bool ConnectivityManager::set_network_profile(const int32_t slot, const NetworkC
 void ConnectivityManager::check_cache_for_invalid_security_profiles() {
     const auto security_level = this->device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
 
+    // Single critical section over read-modify-write of state->slots and state->pending_configuration_slot.
+    // Splitting the lock between the prune step and the pending-slot reassignment can let another writer
+    // mutate state->slots in between, which would invalidate the locally captured before_slot.
+    auto state = this->m_state.handle();
+    if (state->last_known_security_level == security_level) {
+        return;
+    }
+    state->last_known_security_level = security_level;
+
     std::optional<int> before_slot;
-    {
-        auto state = this->m_state.handle();
-        if (state->last_known_security_level == security_level) {
-            return;
+    if (state->pending_configuration_slot.has_value()) {
+        before_slot = state->pending_configuration_slot;
+    } else if (!state->slots.empty()) {
+        const auto idx = static_cast<std::size_t>(std::max<std::int32_t>(state->active_priority, 0));
+        if (idx < state->slots.size()) {
+            before_slot = state->slots[idx];
         }
-        state->last_known_security_level = security_level;
+    }
 
-        if (state->pending_configuration_slot.has_value()) {
-            before_slot = state->pending_configuration_slot;
-        } else if (!state->slots.empty()) {
-            const auto idx = static_cast<std::size_t>(std::max<std::int32_t>(state->active_priority, 0));
-            if (idx < state->slots.size()) {
-                before_slot = state->slots[idx];
-            }
-        }
+    auto is_lower_security_level = [this, security_level](const int slot) {
+        const auto opt_profile = this->get_network_connection_profile(slot);
+        return !opt_profile.has_value() || opt_profile->securityProfile < security_level;
+    };
 
-        auto is_lower_security_level = [this, security_level](const int slot) {
-            const auto opt_profile = this->get_network_connection_profile(slot);
-            return !opt_profile.has_value() || opt_profile->securityProfile < security_level;
-        };
+    state->slots.erase(std::remove_if(state->slots.begin(), state->slots.end(), is_lower_security_level),
+                       state->slots.end());
 
-        state->slots.erase(std::remove_if(state->slots.begin(), state->slots.end(), is_lower_security_level),
-                           state->slots.end());
-
-        // Clamp active_priority after shrink so later reads don't index past the end
-        if (state->slots.empty()) {
-            state->active_priority = 0;
-            state->pending_configuration_slot.reset();
-            EVLOG_warning << "All network connection slots were removed due to insufficient security profile";
-            return;
-        }
-        if (static_cast<std::size_t>(state->active_priority) >= state->slots.size()) {
-            state->active_priority = static_cast<std::int32_t>(state->slots.size() - 1);
-        }
+    // Cap active_priority after shrink so later reads don't index past the end
+    if (state->slots.empty()) {
+        state->active_priority = 0;
+        state->pending_configuration_slot.reset();
+        EVLOG_warning << "All network connection slots were removed due to insufficient security profile";
+        return;
+    }
+    if (static_cast<std::size_t>(state->active_priority) >= state->slots.size()) {
+        state->active_priority = static_cast<std::int32_t>(state->slots.size() - 1);
     }
 
     if (!before_slot.has_value()) {
         return;
     }
-    // Use the active slot and if not valid any longer use the next available one
+    // Use the active slot and if not valid any longer use the next available one. The recursive
+    // mutex allows the helper calls below to re-acquire the same handle.
     const auto opt_priority = this->get_priority_from_configuration_slot(before_slot.value());
-    auto state = this->m_state.handle();
     if (opt_priority.has_value()) {
         state->pending_configuration_slot = before_slot.value();
     } else {
