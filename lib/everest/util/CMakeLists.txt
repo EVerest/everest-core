@@ -1,6 +1,5 @@
 add_library(everest_util INTERFACE)
 add_library(everest::util ALIAS everest_util)
-ev_register_library_target(everest_helpers)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
@@ -26,7 +25,7 @@ install(TARGETS everest_util
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    INCLUDES DESTINATION include
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/everest
