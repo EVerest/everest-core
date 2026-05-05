@@ -5,6 +5,7 @@
 .. *******************
 
 Module implementing the Carlo Gavazzi EM580 power meter driver adapter via Modbus RTU (through SerialCommHub).
+This module also supports models without OCMF/Eichrecht suppoert (e.g. EM300 series).
 
 Description
 ===========
@@ -16,9 +17,11 @@ Features
 ========
 
 - Live meter reads and ``powermeter`` publishing (interval configurable)
+- Resilient Modbus transport with retries and protocol-compliant write chunking
+
+If supported by meter:
 - OCMF/Eichrecht transaction start/stop logic
 - Public key reading and publishing (hex)
-- Resilient Modbus transport with retries and protocol-compliant write chunking
 
 Module Configuration
 ====================

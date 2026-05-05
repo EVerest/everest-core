@@ -130,12 +130,15 @@ private:
     std::thread live_measure_thread_;
     std::thread time_sync_thread_;
 
-    void configure_device();
+    // flag whether transactions are supported
+    bool m_transaction_support{true};
 
+    void configure_device();
     void read_signature_config();
     types::units_signed::SignedMeterValue read_signed_meter_value();
     void read_powermeter_values();
     void dump_device_state(void);
+    void read_identification();
     void read_firmware_versions();
     void read_serial_number();
     void read_transaction_state_and_id();

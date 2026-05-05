@@ -35,6 +35,11 @@ If you are unsure which EM580 variant you have, check the device documentation/o
 - Modbus RTU via RS-485 is supported and enabled
 - The meter is configured for a known Modbus **unit id** (device address)
 
+- **Carlo Gavazzi EM300** with **Modbus RTU** enabled/available.
+  These models do not support OCMF/Eichrecht and can only be used as usual power meter.
+  All transaction related configuration etc. does not apply for such devices.
+
+
 ### Bus / physical layer
 
 - **RS-485 (2-wire, half duplex)**: correct A/B wiring is essential.

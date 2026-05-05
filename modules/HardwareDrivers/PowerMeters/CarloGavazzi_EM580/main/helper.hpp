@@ -26,6 +26,9 @@ namespace registers {
 
 constexpr std::int32_t MODBUS_BASE_ADDRESS = 300001;
 
+// the following identification register is only accessible/visible when a direct single access is used
+constexpr std::int32_t MODBUS_IDENTIFICATION_CODE_ADDRESS = 300012; // 000Bh: Carlo Gavazzi Controls identification code
+
 constexpr std::int32_t MODBUS_SIGNATURE_TYPE_ADDRESS = 309472; // 24FFh: Signature type (UINT16)
 constexpr std::int32_t MODBUS_PUBLIC_KEY_ADDRESS = 309473;     // 2500h: Public key (UINT16[130])
 // DER formatted public key (Table 4.20/4.21), mandatory to read whole block
@@ -43,6 +46,9 @@ constexpr std::int32_t MODBUS_REAL_TIME_VALUES_ADDRESS = 300001;
 // Energy totals are read from 301281+ (INT64, Wh) and signed values from 302049+.
 constexpr std::uint16_t MODBUS_REAL_TIME_VALUES_COUNT = 52; // Registers 300001-300052 (52 words)
 
+constexpr std::int32_t MODBUS_REAL_TIME_ENERGY_ADDRESS_EM300_SERIES = 301025;
+constexpr std::uint16_t MODBUS_REAL_TIME_ENERGY_COUNT_EM300_SERIES = 12; // Registers 301025-301035 (12 words)
+
 constexpr std::int32_t MODBUS_REAL_TIME_ENERGY_ADDRESS = 301281;
 constexpr std::uint16_t MODBUS_REAL_TIME_ENERGY_COUNT = 32; // Registers 301281-301312 (32 words)
 
@@ -54,6 +60,10 @@ constexpr std::int32_t MODBUS_FIRMWARE_COMMUNICATION_MODULE_ADDRESS =
 constexpr std::int32_t MODBUS_SERIAL_NUMBER_START_ADDRESS = 320481; // Serial number (7 registers: 320481-320487)
 constexpr std::uint16_t MODBUS_SERIAL_NUMBER_REGISTER_COUNT = 7;    // 7 UINT16 registers = 14 bytes
 constexpr std::int32_t MODBUS_PRODUCTION_YEAR_ADDRESS = 320488;     // Production year (1 UINT16 register)
+// same register for older series, but with following note in datasheet:
+// This register is available only in EM330 and EM340 manufactured from
+// October 1st 2018 (from serial number YR2018 274xxxS and following)
+constexpr std::int32_t MODBUS_PRODUCTION_YEAR_ADDRESS_EM300_SERIES = 320497;
 
 // Device state register (Table 4.30, Section 4.3.6)
 constexpr std::int32_t MODBUS_DEVICE_STATE_ADDRESS = 320499; // 5012h: Device state (UINT16 bitfield)
