@@ -1207,4 +1207,187 @@ TEST_F(ProvisioningActiveSlotTest, AcceptPriorityWithConsistentSlots) {
         << "Priority list with consistent slots should not be rejected";
 }
 
+// ---------------------------------------------------------------------------
+// handle_set_network_profile_req validation branches.
+// Drives Provisioning::handle_message with SetNetworkProfile to cover the
+// reasonCode taxonomy: InternalError (no callback / DM write fails),
+// InvalidConfSlot, NoSecurityDowngrade, InvalidNetworkConf (callback /
+// validation reject), Failed (DM write fails), Accepted (happy path).
+// ---------------------------------------------------------------------------
+
+class ProvisioningSetNetworkProfileTest : public ::testing::Test {
+protected:
+    DeviceModelTestHelper dm_helper;
+    DeviceModel* dm{nullptr};
+
+    ::testing::NiceMock<MockMessageDispatcher> mock_dispatcher;
+    ::testing::NiceMock<ConnectivityManagerMock> connectivity_manager;
+    std::unique_ptr<EvseManagerFake> evse_manager;
+    ::testing::NiceMock<DatabaseHandlerMock> db_handler;
+    ocpp::EvseSecurityMock evse_security;
+    ::testing::NiceMock<ComponentStateManagerMock> component_state_manager;
+    std::atomic<OcppProtocolVersion> ocpp_version{OcppProtocolVersion::v201};
+
+    ::testing::NiceMock<OcspUpdaterMock> ocsp_updater;
+    ::testing::NiceMock<AvailabilityMock> availability;
+    ::testing::NiceMock<MeterValuesMock> meter_values;
+    ::testing::NiceMock<SecurityMock> security;
+    ::testing::NiceMock<DiagnosticsMock> diagnostics;
+    ::testing::NiceMock<TransactionMock> transaction;
+    std::atomic<RegistrationStatusEnum> registration_status{RegistrationStatusEnum::Accepted};
+
+    boost::asio::io_context io_context;
+    std::optional<TariffMessageCallback> tariff_message_cb;
+    std::optional<SetRunningCostCallback> set_running_cost_cb;
+    std::optional<DefaultPriceCallback> default_price_cb;
+
+    std::unique_ptr<FunctionalBlockContext> fb_context;
+    std::unique_ptr<MessageQueue<MessageType>> message_queue;
+    std::unique_ptr<TariffAndCost> tariff_and_cost;
+    std::unique_ptr<Provisioning> provisioning;
+
+    ProvisioningSetNetworkProfileTest() {
+        dm = dm_helper.get_device_model();
+        evse_manager = std::make_unique<EvseManagerFake>(1);
+        fb_context =
+            std::make_unique<FunctionalBlockContext>(mock_dispatcher, *dm, connectivity_manager, *evse_manager,
+                                                     db_handler, evse_security, component_state_manager, ocpp_version);
+        MessageQueueConfig<MessageType> mq_config;
+        message_queue = std::make_unique<MessageQueue<MessageType>>([](json) { return false; }, mq_config, nullptr);
+        tariff_and_cost = std::make_unique<TariffAndCost>(*fb_context, meter_values, tariff_message_cb,
+                                                          set_running_cost_cb, default_price_cb, io_context);
+    }
+
+    // Build the Provisioning block with the given validate_network_profile_callback. Pass std::nullopt
+    // to exercise the no-callback rejection path.
+    void make_provisioning(std::optional<ValidateNetworkProfileCallback> validate_cb) {
+        provisioning = std::make_unique<Provisioning>(
+            *fb_context, *message_queue, ocsp_updater, availability, meter_values, security, diagnostics, transaction,
+            std::nullopt, std::nullopt, validate_cb, [](auto, auto) { return true; }, [](auto, auto) {},
+            [](auto, auto) { return RequestStartStopStatusEnum::Accepted; }, std::nullopt, *tariff_and_cost,
+            registration_status);
+    }
+
+    static SetNetworkProfileRequest make_request(int32_t slot, const std::string& url, int security_profile) {
+        SetNetworkProfileRequest req;
+        req.configurationSlot = slot;
+        req.connectionData.ocppCsmsUrl = CiString<2000>(url);
+        req.connectionData.securityProfile = security_profile;
+        req.connectionData.ocppInterface = OCPPInterfaceEnum::Wired0;
+        req.connectionData.ocppTransport = OCPPTransportEnum::JSON;
+        req.connectionData.messageTimeout = 30;
+        return req;
+    }
+
+    static EnhancedMessage<MessageType> make_enhanced(const SetNetworkProfileRequest& req) {
+        EnhancedMessage<MessageType> em;
+        em.messageType = MessageType::SetNetworkProfile;
+        em.message = ocpp::Call<SetNetworkProfileRequest>(req);
+        return em;
+    }
+
+    // Capture the dispatched response payload from the mock dispatcher into the provided slot.
+    void expect_response(SetNetworkProfileResponse& out) {
+        EXPECT_CALL(mock_dispatcher, dispatch_call_result(::testing::_))
+            .WillOnce(::testing::Invoke([&out](const json& call_result) {
+                out = call_result[ocpp::CALLRESULT_PAYLOAD].get<SetNetworkProfileResponse>();
+            }));
+    }
+};
+
+TEST_F(ProvisioningSetNetworkProfileTest, NoCallbackRejectsAsInternalError) {
+    make_provisioning(std::nullopt);
+
+    SetNetworkProfileResponse response;
+    expect_response(response);
+
+    auto em = make_enhanced(make_request(1, "ws://csms.example.com/ocpp", 1));
+    provisioning->handle_message(em);
+
+    EXPECT_EQ(response.status, SetNetworkProfileStatusEnum::Rejected);
+    ASSERT_TRUE(response.statusInfo.has_value());
+    EXPECT_EQ(response.statusInfo->reasonCode.get(), "InternalError");
+}
+
+TEST_F(ProvisioningSetNetworkProfileTest, SlotNotInPriorityValuesListRejectsInvalidConfSlot) {
+    make_provisioning([](auto, auto) { return SetNetworkProfileStatusEnum::Accepted; });
+
+    SetNetworkProfileResponse response;
+    expect_response(response);
+
+    // The default DM has NetworkConfigurationPriority valuesList limited to slots 1..2;
+    // slot 99 falls outside it and must be rejected before any further validation runs.
+    auto em = make_enhanced(make_request(99, "ws://csms.example.com/ocpp", 1));
+    provisioning->handle_message(em);
+
+    EXPECT_EQ(response.status, SetNetworkProfileStatusEnum::Rejected);
+    ASSERT_TRUE(response.statusInfo.has_value());
+    EXPECT_EQ(response.statusInfo->reasonCode.get(), "InvalidConfSlot");
+}
+
+TEST_F(ProvisioningSetNetworkProfileTest, LowerSecurityProfileRejectsNoSecurityDowngrade) {
+    // Raise the active SecurityProfile so an incoming profile=1 is a downgrade.
+    ASSERT_EQ(dm->set_read_only_value(ControllerComponentVariables::SecurityProfile.component,
+                                      ControllerComponentVariables::SecurityProfile.variable.value(),
+                                      AttributeEnum::Actual, "2", "internal"),
+              SetVariableStatusEnum::Accepted);
+    make_provisioning([](auto, auto) { return SetNetworkProfileStatusEnum::Accepted; });
+
+    SetNetworkProfileResponse response;
+    expect_response(response);
+
+    auto em = make_enhanced(make_request(1, "wss://csms.example.com/ocpp", 1));
+    provisioning->handle_message(em);
+
+    EXPECT_EQ(response.status, SetNetworkProfileStatusEnum::Rejected);
+    ASSERT_TRUE(response.statusInfo.has_value());
+    EXPECT_EQ(response.statusInfo->reasonCode.get(), "NoSecurityDowngrade");
+}
+
+TEST_F(ProvisioningSetNetworkProfileTest, CallbackRejectsAsInvalidNetworkConf) {
+    make_provisioning([](auto, auto) { return SetNetworkProfileStatusEnum::Rejected; });
+
+    SetNetworkProfileResponse response;
+    expect_response(response);
+
+    auto em = make_enhanced(make_request(1, "ws://csms.example.com/ocpp", 1));
+    provisioning->handle_message(em);
+
+    EXPECT_EQ(response.status, SetNetworkProfileStatusEnum::Rejected);
+    ASSERT_TRUE(response.statusInfo.has_value());
+    EXPECT_EQ(response.statusInfo->reasonCode.get(), "InvalidNetworkConf");
+}
+
+TEST_F(ProvisioningSetNetworkProfileTest, ConnectivityManagerWriteFailureMapsToFailed) {
+    make_provisioning([](auto, auto) { return SetNetworkProfileStatusEnum::Accepted; });
+
+    EXPECT_CALL(connectivity_manager, set_network_profile(::testing::_, ::testing::_, ::testing::_))
+        .WillOnce(::testing::Return(false));
+
+    SetNetworkProfileResponse response;
+    expect_response(response);
+
+    auto em = make_enhanced(make_request(1, "ws://csms.example.com/ocpp", 1));
+    provisioning->handle_message(em);
+
+    EXPECT_EQ(response.status, SetNetworkProfileStatusEnum::Failed);
+    ASSERT_TRUE(response.statusInfo.has_value());
+    EXPECT_EQ(response.statusInfo->reasonCode.get(), "InternalError");
+}
+
+TEST_F(ProvisioningSetNetworkProfileTest, HappyPathReturnsAccepted) {
+    make_provisioning([](auto, auto) { return SetNetworkProfileStatusEnum::Accepted; });
+
+    EXPECT_CALL(connectivity_manager, set_network_profile(::testing::_, ::testing::_, ::testing::_))
+        .WillOnce(::testing::Return(true));
+
+    SetNetworkProfileResponse response;
+    expect_response(response);
+
+    auto em = make_enhanced(make_request(1, "ws://csms.example.com/ocpp", 1));
+    provisioning->handle_message(em);
+
+    EXPECT_EQ(response.status, SetNetworkProfileStatusEnum::Accepted);
+}
+
 } // namespace ocpp::v2
