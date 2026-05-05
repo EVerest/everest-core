@@ -2,6 +2,8 @@
 // Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "everest/io/mdns/mdns.hpp"
+#include <arpa/inet.h>
+#include <cstring>
 #include <iostream>
 namespace everest::lib::io::mdns {
 
@@ -77,6 +79,45 @@ void parse_mdns_TXT(const std::uint8_t* buffer, mDNS_discovery& mdns, int rdlen)
 void parse_mdns_PTR(const std::uint8_t* base, int record_data_offset, mDNS_discovery& mdns, int size) {
     std::string service_instance = parse_name(base, size, &record_data_offset);
     mdns.service_instance = service_instance;
+}
+
+void encode_dns_name(std::vector<std::uint8_t>& packet, std::string const& name) {
+    std::size_t start = 0;
+    std::size_t end;
+    while ((end = name.find('.', start)) != std::string::npos) {
+        auto label_len = end - start;
+        if (label_len > 63) {
+            label_len = 63;
+        }
+        packet.push_back(static_cast<std::uint8_t>(label_len));
+        for (std::size_t i = start; i < start + label_len; ++i) {
+            packet.push_back(static_cast<std::uint8_t>(name[i]));
+        }
+        start = end + 1;
+    }
+    if (start < name.length()) {
+        auto label_len = name.length() - start;
+        if (label_len > 63) {
+            label_len = 63;
+        }
+        packet.push_back(static_cast<std::uint8_t>(label_len));
+        for (std::size_t i = start; i < start + label_len; ++i) {
+            packet.push_back(static_cast<std::uint8_t>(name[i]));
+        }
+    }
+    packet.push_back(0);
+}
+
+void append_uint16(std::vector<std::uint8_t>& packet, std::uint16_t value) {
+    packet.push_back(static_cast<std::uint8_t>((value >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(value & 0xFF));
+}
+
+void append_uint32(std::vector<std::uint8_t>& packet, std::uint32_t value) {
+    packet.push_back(static_cast<std::uint8_t>((value >> 24) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((value >> 16) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>((value >> 8) & 0xFF));
+    packet.push_back(static_cast<std::uint8_t>(value & 0xFF));
 }
 
 } // namespace
@@ -202,12 +243,135 @@ bool mDNS_registry::update(const mDNS_discovery& update) {
     return something_new;
 }
 
+void mDNS_registry::remove(const std::string& instance) {
+    data.erase(instance);
+}
+
 void mDNS_registry::clear() {
     data.clear();
 }
 
 mDNS_registry::registry const& mDNS_registry::get() {
     return data;
+}
+
+[[maybe_unused]] std::vector<std::uint8_t> create_mdns_response(mDNS_discovery const& service,
+                                                                std::string const& service_type) {
+    std::string service_fqdn = service_type + ".local";
+    std::string instance_fqdn = service.service_instance;
+    if (instance_fqdn.empty()) {
+        instance_fqdn = service.hostname + "." + service_fqdn;
+    }
+    std::string host_fqdn = service.hostname + ".local";
+
+    std::vector<std::uint8_t> packet;
+    append_uint16(packet, 0x0000); // Transaction ID
+    append_uint16(packet, 0x8400); // Flags: response, authoritative
+    append_uint16(packet, 0x0000); // Questions
+    append_uint16(packet, 0x0004); // Answer RRs (PTR + SRV + TXT + A)
+    append_uint16(packet, 0x0000); // Authority RRs
+    append_uint16(packet, 0x0000); // Additional RRs
+
+    auto const default_ttl = static_cast<std::uint32_t>(120);
+
+    // PTR record: service_type.local -> instance_fqdn
+    encode_dns_name(packet, service_fqdn);
+    append_uint16(packet, 0x000C);
+    append_uint16(packet, 0x0001);
+    append_uint32(packet, default_ttl);
+    std::vector<std::uint8_t> ptr_rdata;
+    encode_dns_name(ptr_rdata, instance_fqdn);
+    append_uint16(packet, static_cast<std::uint16_t>(ptr_rdata.size()));
+    packet.insert(packet.end(), ptr_rdata.begin(), ptr_rdata.end());
+
+    // SRV record: instance_fqdn -> host:port
+    encode_dns_name(packet, instance_fqdn);
+    append_uint16(packet, 0x0021);
+    append_uint16(packet, 0x8001);
+    append_uint32(packet, default_ttl);
+    std::vector<std::uint8_t> srv_rdata;
+    append_uint16(srv_rdata, 0x0000); // Priority
+    append_uint16(srv_rdata, 0x0000); // Weight
+    append_uint16(srv_rdata, service.port);
+    encode_dns_name(srv_rdata, host_fqdn);
+    append_uint16(packet, static_cast<std::uint16_t>(srv_rdata.size()));
+    packet.insert(packet.end(), srv_rdata.begin(), srv_rdata.end());
+
+    // TXT record: instance_fqdn -> key=value pairs
+    encode_dns_name(packet, instance_fqdn);
+    append_uint16(packet, 0x0010);
+    append_uint16(packet, 0x8001);
+    append_uint32(packet, default_ttl);
+    std::vector<std::uint8_t> txt_rdata;
+    for (auto const& [key, val] : service.txt) {
+        std::string entry = key + "=" + val;
+        txt_rdata.push_back(static_cast<std::uint8_t>(entry.size()));
+        for (char ch : entry) {
+            txt_rdata.push_back(static_cast<std::uint8_t>(ch));
+        }
+    }
+    if (txt_rdata.empty()) {
+        txt_rdata.push_back(0);
+    }
+    append_uint16(packet, static_cast<std::uint16_t>(txt_rdata.size()));
+    packet.insert(packet.end(), txt_rdata.begin(), txt_rdata.end());
+
+    // A record: host_fqdn -> IP
+    encode_dns_name(packet, host_fqdn);
+    append_uint16(packet, 0x0001);
+    append_uint16(packet, 0x8001);
+    append_uint32(packet, default_ttl);
+    append_uint16(packet, 0x0004);
+    struct in_addr addr;
+    if (inet_pton(AF_INET, service.ip.c_str(), &addr) == 1) {
+        auto* bytes = reinterpret_cast<std::uint8_t*>(&addr.s_addr);
+        packet.push_back(bytes[0]);
+        packet.push_back(bytes[1]);
+        packet.push_back(bytes[2]);
+        packet.push_back(bytes[3]);
+    } else {
+        packet.push_back(0);
+        packet.push_back(0);
+        packet.push_back(0);
+        packet.push_back(0);
+    }
+
+    return packet;
+}
+
+[[maybe_unused]] bool is_query_for(std::vector<std::uint8_t> const& packet, std::string const& service_type) {
+    int size = static_cast<int>(packet.size());
+    auto const* buf = packet.data();
+    auto const mdns_packet_min_size = 12;
+    if (size < mdns_packet_min_size) {
+        return false;
+    }
+
+    if ((buf[2] & 0x80) != 0) {
+        return false;
+    }
+
+    std::size_t questions = (buf[4] << 8) | buf[5];
+    if (questions == 0) {
+        return false;
+    }
+
+    int curr = mdns_packet_min_size;
+    std::string service_fqdn = service_type + ".local";
+
+    for (std::size_t i = 0; i < questions && curr < size; ++i) {
+        std::string qname = parse_name(buf, size, &curr);
+        if (curr + 4 > size) {
+            break;
+        }
+        std::uint16_t qtype = (buf[curr] << 8) | buf[curr + 1];
+        curr += 4;
+
+        if ((qtype == 0x0C || qtype == 0xFF) && qname == service_fqdn) {
+            return true;
+        }
+    }
+    return false;
 }
 
 } // namespace everest::lib::io::mdns
