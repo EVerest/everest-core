@@ -56,6 +56,7 @@ class TestPlugAndCharge:
     async def test_contract_installation_and_authorization_01(
         self,
         request,
+        exi_generator,
         central_system: CentralSystem,
         charge_point: ChargePoint201,
         test_controller: TestController,
@@ -67,7 +68,7 @@ class TestPlugAndCharge:
         """
 
         setattr(
-            charge_point, "on_get_15118_ev_certificate", on_get_15118_ev_certificate
+            charge_point, "on_get_15118_ev_certificate", make_on_get_15118_ev_certificate(exi_generator)
         )
         central_system.chargepoint.route_map = create_route_map(
             central_system.chargepoint
@@ -116,6 +117,7 @@ class TestPlugAndCharge:
     async def test_contract_installation_and_authorization_02(
         self,
         request,
+        exi_generator,
         central_system: CentralSystem,
         charge_point: ChargePoint201,
         test_controller: TestController,
@@ -134,7 +136,7 @@ class TestPlugAndCharge:
             )
 
         setattr(
-            charge_point, "on_get_15118_ev_certificate", on_get_15118_ev_certificate
+            charge_point, "on_get_15118_ev_certificate", make_on_get_15118_ev_certificate(exi_generator)
         )
         setattr(charge_point, "on_authorize", on_authorize)
 
@@ -198,6 +200,7 @@ class TestPlugAndCharge:
     async def test_contract_installation_and_authorization_03(
         self,
         request,
+        exi_generator,
         central_system: CentralSystem,
         charge_point: ChargePoint201,
         test_controller: TestController,
@@ -209,7 +212,7 @@ class TestPlugAndCharge:
         """
 
         setattr(
-            charge_point, "on_get_15118_ev_certificate", on_get_15118_ev_certificate
+            charge_point, "on_get_15118_ev_certificate", make_on_get_15118_ev_certificate(exi_generator)
         )
         central_system.chargepoint.route_map = create_route_map(
             central_system.chargepoint
@@ -304,6 +307,7 @@ class TestPlugAndCharge:
     async def test_contract_installation_and_authorization_04(
         self,
         request,
+        exi_generator,
         central_system: CentralSystem,
         charge_point: ChargePoint201,
         test_controller: TestController,
@@ -315,7 +319,7 @@ class TestPlugAndCharge:
         """
 
         setattr(
-            charge_point, "on_get_15118_ev_certificate", on_get_15118_ev_certificate
+            charge_point, "on_get_15118_ev_certificate", make_on_get_15118_ev_certificate(exi_generator)
         )
         central_system.chargepoint.route_map = create_route_map(
             central_system.chargepoint
@@ -400,6 +404,7 @@ class TestPlugAndCharge:
     async def test_contract_revoked(
         self,
         request,
+        exi_generator,
         central_system: CentralSystem,
         charge_point: ChargePoint201,
         test_controller: TestController,
@@ -418,7 +423,7 @@ class TestPlugAndCharge:
             )
 
         setattr(
-            charge_point, "on_get_15118_ev_certificate", on_get_15118_ev_certificate
+            charge_point, "on_get_15118_ev_certificate", make_on_get_15118_ev_certificate(exi_generator)
         )
         setattr(charge_point, "on_authorize", on_authorize)
 
@@ -532,6 +537,7 @@ class TestPlugAndCharge:
     )
     async def test_no_tls_after_secc_leaf_deleted(
         self,
+        exi_generator,
         central_system: CentralSystem,
         charge_point: ChargePoint201,
         test_controller: TestController,
@@ -543,7 +549,7 @@ class TestPlugAndCharge:
         """
 
         setattr(
-            charge_point, "on_get_15118_ev_certificate", on_get_15118_ev_certificate
+            charge_point, "on_get_15118_ev_certificate", make_on_get_15118_ev_certificate(exi_generator)
         )
         central_system.chargepoint.route_map = create_route_map(
             central_system.chargepoint
