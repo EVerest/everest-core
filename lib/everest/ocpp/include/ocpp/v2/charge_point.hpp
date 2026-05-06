@@ -29,6 +29,11 @@
 #include "component_state_manager.hpp"
 
 namespace ocpp {
+
+namespace v21 {
+class DERControlInterface;
+} // namespace v21
+
 namespace v2 {
 
 class AuthorizationInterface;
@@ -380,6 +385,7 @@ private:
     std::unique_ptr<ProvisioningInterface> provisioning;
     std::unique_ptr<RemoteTransactionControlInterface> remote_transaction_control;
     std::unique_ptr<BidirectionalInterface> bidirectional;
+    std::unique_ptr<v21::DERControlInterface> der_control;
 
     // utility
     std::shared_ptr<MessageQueue<v2::MessageType>> message_queue;

@@ -1,0 +1,276 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for DCDERCtrlr",
+  "name": "DCDERCtrlr",
+  "type": "object",
+  "properties": {
+    "DCDERCtrlrAvailable": {
+      "variable_name": "Available",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly",
+          "value": false
+        }
+      ],
+      "description": "Whether DC DER control is supported by this EVSE. When true, the Charging Station supports configuring DER control settings for the DC inverter of this EVSE.",
+      "default": false,
+      "type": "boolean"
+    },
+    "DCDERCtrlrInverterHwVersion": {
+      "variable_name": "InverterHwVersion",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Hardware version of inverter.",
+      "type": "string"
+    },
+    "DCDERCtrlrInverterManufacturer": {
+      "variable_name": "InverterManufacturer",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Manufacturer of inverter.",
+      "type": "string"
+    },
+    "DCDERCtrlrInverterModel": {
+      "variable_name": "InverterModel",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Model of inverter.",
+      "type": "string"
+    },
+    "DCDERCtrlrInverterSwVersion": {
+      "variable_name": "InverterSwVersion",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Software version of inverter.",
+      "type": "string"
+    },
+    "DCDERCtrlrMaxChargeRateVA": {
+      "variable_name": "MaxChargeRateVA",
+      "characteristics": {
+        "unit": "VA",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Maximum apparent power charge rating in voltamperes; may differ from the apparent power maximum rating.",
+      "type": "number"
+    },
+    "DCDERCtrlrMaxChargeRateW": {
+      "variable_name": "MaxChargeRateW",
+      "characteristics": {
+        "unit": "W",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Maximum active power charge rating in watts.",
+      "type": "number"
+    },
+    "DCDERCtrlrMaxVA": {
+      "variable_name": "MaxVA",
+      "characteristics": {
+        "unit": "VA",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Maximum apparent power rating in voltamperes.",
+      "type": "number"
+    },
+    "DCDERCtrlrMaxVar": {
+      "variable_name": "MaxVar",
+      "characteristics": {
+        "unit": "Var",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Maximum injected reactive power rating in vars.",
+      "type": "number"
+    },
+    "DCDERCtrlrMaxVarNeg": {
+      "variable_name": "MaxVarNeg",
+      "characteristics": {
+        "unit": "Var",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Maximum absorbed reactive power rating in vars.",
+      "type": "number"
+    },
+    "DCDERCtrlrMaxW": {
+      "variable_name": "MaxW",
+      "characteristics": {
+        "unit": "W",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Active power rating in watts at unity power factor.",
+      "type": "number"
+    },
+    "DCDERCtrlrModesSupported": {
+      "variable_name": "ModesSupported",
+      "characteristics": {
+        "valuesList": "EnterService,FreqDroop,FreqWatt,FixedPFAbsorb,FixedPFInject,FixedVar,Gradients,HFMustTrip,HFMayTrip,HVMustTrip,HVMomCess,HVMayTrip,LimitMaxDischarge,LFMustTrip,LVMustTrip,LVMomCess,LVMayTrip,PowerMonitoringMustTrip,VoltVar,VoltWatt,WattPF,WattVar",
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "List of DER control modes supported by the DC inverter of this EVSE. These represent the DER capabilities (nameplate information) of the EVSE inverter.",
+      "type": "string"
+    },
+    "DCDERCtrlrOverExcitedPF": {
+      "variable_name": "OverExcitedPF",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Over-excited power factor.",
+      "type": "number"
+    },
+    "DCDERCtrlrOverExcitedW": {
+      "variable_name": "OverExcitedW",
+      "characteristics": {
+        "unit": "W",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Active power rating in watts at specified over-excited power factor.",
+      "type": "number"
+    },
+    "DCDERCtrlrReactiveSusceptance": {
+      "variable_name": "ReactiveSusceptance",
+      "characteristics": {
+        "unit": "s",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Reactive susceptance that remains connected to the electrical power system in the cease to energize and trip state.",
+      "type": "number"
+    },
+    "DCDERCtrlrUnderExcitedPF": {
+      "variable_name": "UnderExcitedPF",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Under-excited power factor.",
+      "type": "number"
+    },
+    "DCDERCtrlrUnderExcitedW": {
+      "variable_name": "UnderExcitedW",
+      "characteristics": {
+        "unit": "W",
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Active power rating in watts at specified under-excited power factor.",
+      "type": "number"
+    }
+  },
+  "required": []
+}

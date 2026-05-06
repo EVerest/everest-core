@@ -2746,39 +2746,57 @@ CSMS setpoint and Dynamic charging profiles from K01. There are no specific requ
 
 ## DER Control - Configure DER control settings at Charging Station (New in OCPP 2.1)
 
-| ID        | Status             | Remark |
-| --------- | ------------------ | ------ |
-|           | SetDERControl      |        |
-| R04.FR.01 |                    |        |
-| R04.FR.02 |                    |        |
-| R04.FR.03 |                    |        |
-| R04.FR.04 |                    |        |
-| R04.FR.05 |                    |        |
-| R04.FR.06 |                    |        |
-| R04.FR.07 |                    |        |
-| R04.FR.08 |                    |        |
-| R04.FR.09 |                    |        |
-| R04.FR.10 |                    |        |
-| R04.FR.11 |                    |        |
-|           | NotifyDERStartStop |        |
-| R04.FR.20 |                    |        |
-| R04.FR.21 |                    |        |
-| R04.FR.23 |                    |        |
-|           | GetDERControl      |        |
-| R04.FR.30 |                    |        |
-| R04.FR.31 |                    |        |
-| R04.FR.32 |                    |        |
-| R04.FR.33 |                    |        |
-| R04.FR.34 |                    |        |
-| R04.FR.35 |                    |        |
-| R04.FR.36 |                    |        |
-|           | ClearDERControl    |        |
-| R04.FR.40 |                    |        |
-| R04.FR.41 |                    |        |
-| R04.FR.42 |                    |        |
-| R04.FR.43 |                    |        |
-| R04.FR.44 |                    |        |
-| R04.FR.45 |                    |        |
+| ID        | Status | Remark |
+| --------- | ------ | ------ |
+|           | **SetDERControl** | |
+| R04.FR.01 | ✅     | |
+| R04.FR.02 | ✅     | |
+| R04.FR.03 | ✅     | |
+| R04.FR.04 | ⛽️     | apply deferred |
+| R04.FR.05 | ✅     | |
+| R04.FR.06 | ✅     | |
+| R04.FR.07 | ✅     | |
+| R04.FR.08 | ✅     | |
+| R04.FR.09 | ⛽️     | apply deferred |
+| R04.FR.10 | ✅     | |
+| R04.FR.11 | ⛽️     | apply deferred |
+| R04.FR.12 | 🌐     | CSMS-side |
+| R04.FR.13 | ✅     | |
+| R04.FR.14 | 🌐     | CSMS-side |
+| R04.FR.15 | ✅     | |
+| R04.FR.16 | ✅     | |
+| R04.FR.17 | ✅     | |
+| R04.FR.18 | ✅     | |
+| R04.FR.19 | 🌐     | CSMS-side |
+|           | **NotifyDERStartStop** | |
+| R04.FR.20 | ✅     | |
+| R04.FR.21 | ✅     | |
+| R04.FR.22 | ✅     | |
+|           | **GetDERControl** | |
+| R04.FR.30 | ✅     | |
+| R04.FR.31 | ✅     | |
+| R04.FR.32 | ✅     | chunk size 10 |
+| R04.FR.33 | ✅     | |
+| R04.FR.34 | ✅     | |
+| R04.FR.35 | ✅     | |
+| R04.FR.36 | ✅     | |
+| R04.FR.37 | ✅     | |
+|           | **ClearDERControl** | |
+| R04.FR.40 |        | (removed in Edition 2) |
+| R04.FR.41 | ✅     | |
+| R04.FR.42 | ✅     | |
+| R04.FR.43 | ✅     | |
+| R04.FR.44 | ✅     | |
+| R04.FR.45 | ✅     | |
+| R04.FR.46 | ✅     | |
+|           | **yUnits** | |
+| R04.FR.50 | ✅     | |
+| R04.FR.51 | ✅     | |
+| R04.FR.52 | ✅     | |
+| R04.FR.53 | ✅     | |
+| R04.FR.54 | ✅     | |
+| R04.FR.55 | ✅     | |
+| R04.FR.56 | ✅     | |
 
 ## DER Control - Charging station reporting a DER event (New in OCPP 2.1)
 
