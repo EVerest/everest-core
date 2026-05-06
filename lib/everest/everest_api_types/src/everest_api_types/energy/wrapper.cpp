@@ -250,4 +250,22 @@ EnforcedLimits_External to_external_api(EnforcedLimits_Internal const& val) {
     return result;
 }
 
+CapabilityLimits_Internal to_internal_api(CapabilityLimits_External const& val) {
+    CapabilityLimits_Internal result;
+    result.max_current_A = val.max_current_A;
+    result.max_phase_count = val.max_phase_count;
+    result.nominal_voltage_V = val.nominal_voltage_V;
+    result.total_power_W = val.total_power_W;
+    return result;
+}
+
+CapabilityLimits_External to_external_api(CapabilityLimits_Internal const& val) {
+    CapabilityLimits_External result;
+    result.max_current_A = val.max_current_A;
+    result.max_phase_count = val.max_phase_count;
+    result.nominal_voltage_V = val.nominal_voltage_V;
+    result.total_power_W = val.total_power_W;
+    return result;
+}
+
 } // namespace everest::lib::API::V1_0::types::energy

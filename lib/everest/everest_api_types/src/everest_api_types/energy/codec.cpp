@@ -57,6 +57,10 @@ std::string serialize(EnforcedLimits const& val) noexcept {
     return nlohmann::json(val).dump(json_indent);
 }
 
+std::string serialize(CapabilityLimits const& val) noexcept {
+    return nlohmann::json(val).dump(json_indent);
+}
+
 std::ostream& operator<<(std::ostream& os, NumberWithSource const& val) {
     os << serialize(val);
     return os;
@@ -117,6 +121,11 @@ std::ostream& operator<<(std::ostream& os, EnforcedLimits const& val) {
     return os;
 }
 
+std::ostream& operator<<(std::ostream& os, CapabilityLimits const& val) {
+    os << serialize(val);
+    return os;
+}
+
 template <> NumberWithSource deserialize(std::string const& val) {
     return json::parse(val);
 }
@@ -162,6 +171,10 @@ template <> ExternalLimits deserialize(std::string const& val) {
 }
 
 template <> EnforcedLimits deserialize(std::string const& val) {
+    return json::parse(val);
+}
+
+template <> CapabilityLimits deserialize(std::string const& val) {
     return json::parse(val);
 }
 

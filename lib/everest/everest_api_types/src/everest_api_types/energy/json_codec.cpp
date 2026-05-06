@@ -272,4 +272,20 @@ void from_json(const json& j, EnforcedLimits& k) {
     }
 }
 
+void to_json(json& j, CapabilityLimits const& k) noexcept {
+    j = json{
+        {"max_current_A", k.max_current_A},
+        {"max_phase_count", k.max_phase_count},
+        {"nominal_voltage_V", k.nominal_voltage_V},
+        {"total_power_W", k.total_power_W},
+    };
+}
+
+void from_json(const json& j, CapabilityLimits& k) {
+    k.max_current_A = j.at("max_current_A");
+    k.max_phase_count = j.at("max_phase_count");
+    k.nominal_voltage_V = j.at("nominal_voltage_V");
+    k.total_power_W = j.at("total_power_W");
+}
+
 } // namespace everest::lib::API::V1_0::types::energy

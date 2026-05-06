@@ -46,4 +46,7 @@ void from_json(const json& j, ExternalLimits& k);
 void to_json(json& j, EnforcedLimits const& k) noexcept;
 void from_json(const json& j, EnforcedLimits& k);
 
+void to_json(json& j, CapabilityLimits const& k) noexcept;
+void from_json(const json& j, CapabilityLimits& k);
+
 } // namespace everest::lib::API::V1_0::types::energy

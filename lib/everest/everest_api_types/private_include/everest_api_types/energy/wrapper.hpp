@@ -85,4 +85,10 @@ using EnforcedLimits_External = EnforcedLimits;
 EnforcedLimits_Internal to_internal_api(EnforcedLimits_External const& val);
 EnforcedLimits_External to_external_api(EnforcedLimits_Internal const& val);
 
+using CapabilityLimits_Internal = ::types::energy::CapabilityLimits;
+using CapabilityLimits_External = CapabilityLimits;
+
+CapabilityLimits_Internal to_internal_api(CapabilityLimits_External const& val);
+CapabilityLimits_External to_external_api(CapabilityLimits_Internal const& val);
+
 } // namespace everest::lib::API::V1_0::types::energy
