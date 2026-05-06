@@ -38,6 +38,12 @@ active_modules:
         - implementation_id: main
           module_id: token_validator
     module: Auth
+  auth_api:
+    connections:
+      auth:
+        - implementation_id: main
+          module_id: auth
+    module: auth_consumer_API
   ev_manager:
     config_module:
       auto_enable: true

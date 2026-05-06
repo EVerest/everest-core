@@ -34,6 +34,7 @@ namespace module {
 struct Conf {
     int cfg_communication_check_to_s;
     int cfg_heartbeat_interval_ms;
+    bool latch_variable_values;
 };
 
 class session_cost_consumer_API : public Everest::ModuleBase {
@@ -74,7 +75,7 @@ private:
     using ParseAndPublishFtor = std::function<bool(std::string const&)>;
     void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
 
-    auto forward_api_var(std::string const& var);
+    auto forward_and_cache_api_var(std::string const& var);
 
     void generate_api_var_tariff_message();
     void generate_api_var_session_cost();
