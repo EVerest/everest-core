@@ -141,6 +141,49 @@ void DatabaseHandler::update_transaction_csms_ack(const std::int32_t transaction
     }
 }
 
+std::optional<TransactionEntry> DatabaseHandler::get_transaction(const std::int32_t transaction_id) {
+    const std::string sql = "SELECT * FROM TRANSACTIONS WHERE TRANSACTION_ID==@transaction_id";
+    auto stmt = this->database->new_statement(sql);
+    stmt->bind_int("@transaction_id", transaction_id);
+    if (stmt->step() != SQLITE_ROW) {
+        return std::nullopt;
+    }
+    TransactionEntry entry;
+    entry.session_id = stmt->column_text(0);
+    entry.transaction_id = stmt->column_int(1);
+    entry.connector = stmt->column_int(2);
+    entry.id_tag_start = stmt->column_text(3);
+    entry.time_start = stmt->column_text(4);
+    entry.meter_start = stmt->column_int(5);
+    entry.csms_ack = bool(stmt->column_int(6));
+    entry.meter_last = stmt->column_int(7);
+    entry.meter_last_time = stmt->column_text(8);
+    entry.last_update = stmt->column_text(9);
+    if (stmt->column_type(10) != SQLITE_NULL) {
+        entry.reservation_id.emplace(stmt->column_int(10));
+    }
+    if (stmt->column_type(11) != SQLITE_NULL) {
+        entry.parent_id_tag.emplace(stmt->column_text(11));
+    }
+    if (stmt->column_type(12) != SQLITE_NULL) {
+        entry.id_tag_end.emplace(stmt->column_text(12));
+    }
+    if (stmt->column_type(13) != SQLITE_NULL) {
+        entry.time_end.emplace(stmt->column_text(13));
+    }
+    if (stmt->column_type(14) != SQLITE_NULL) {
+        entry.meter_stop.emplace(stmt->column_int(14));
+    }
+    if (stmt->column_type(15) != SQLITE_NULL) {
+        entry.stop_reason.emplace(stmt->column_text(15));
+    }
+    entry.start_transaction_message_id = stmt->column_text(16);
+    if (stmt->column_type(17) != SQLITE_NULL) {
+        entry.stop_transaction_message_id = stmt->column_text(17);
+    }
+    return entry;
+}
+
 void DatabaseHandler::update_start_transaction_message_id(const std::string& /*session_id*/,
                                                           const std::string& start_transaction_message_id) {
     const std::string sql = "UPDATE TRANSACTIONS SET START_TRANSACTION_MESSAGE_ID=@start_transaction_message_id, "

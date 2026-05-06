@@ -310,6 +310,25 @@ TEST_F(DatabaseTest, test_insert_and_get_transaction_without_id_tag) {
     ASSERT_FALSE(transaction.id_tag_end);
 }
 
+TEST_F(DatabaseTest, test_get_transaction_by_id_found) {
+    this->db_handler->insert_transaction("session-abc", 42, 1, "RFID1", "2022-08-18T09:42:41", 0, false, std::nullopt,
+                                         "msg-1");
+
+    const auto entry = this->db_handler->get_transaction(42);
+
+    ASSERT_TRUE(entry.has_value());
+    ASSERT_EQ(entry->session_id, "session-abc");
+    ASSERT_EQ(entry->transaction_id, 42);
+    ASSERT_EQ(entry->connector, 1);
+}
+
+TEST_F(DatabaseTest, test_get_transaction_by_id_not_found) {
+    // No transaction inserted — unknown transaction_id must return nullopt.
+    const auto entry = this->db_handler->get_transaction(99999);
+
+    ASSERT_EQ(entry, std::nullopt);
+}
+
 TEST_F(DatabaseTest, test_insert_and_get_profiles) {
     // TODO enable again on fixing https://github.com/EVerest/libocpp/issues/384
     GTEST_SKIP() << "validFrom/validTo checks are failing. See https://github.com/EVerest/libocpp/issues/384";
