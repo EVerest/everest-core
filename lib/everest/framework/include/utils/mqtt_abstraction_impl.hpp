@@ -143,7 +143,7 @@ public:
 
 private:
     static constexpr int mqtt_poll_timeout_ms{300000};
-    bool mqtt_is_connected;
+    std::atomic_bool mqtt_is_connected;
     MessageHandler message_handler;
     MessageQueue message_queue;
     std::vector<std::shared_ptr<MessageWithQOS>> messages_before_connected;

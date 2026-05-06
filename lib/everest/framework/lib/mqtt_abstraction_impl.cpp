@@ -168,10 +168,12 @@ void MQTTAbstractionImpl::publish(const std::string& topic, const std::string& d
         }
     }
 
-    if (!this->mqtt_is_connected) {
+    {
         const std::lock_guard<std::mutex> lock(messages_before_connected_mutex);
-        this->messages_before_connected.push_back(std::make_shared<MessageWithQOS>(topic, data, qos, retain));
-        return;
+        if (!this->mqtt_is_connected) {
+            this->messages_before_connected.push_back(std::make_shared<MessageWithQOS>(topic, data, qos, retain));
+            return;
+        }
     }
 
     const MQTTErrors error = mqtt_publish(&this->mqtt_client, topic.c_str(), data.c_str(), data.size(), publish_flags);
@@ -446,14 +448,17 @@ void MQTTAbstractionImpl::on_mqtt_connect() {
 
     EVLOG_debug << "Connected to MQTT broker";
 
-    // this will allow new handlers to subscribe directly, if needed
+    // Drain the messages_before_connected under the lock, then publish outside it.
+    // publish() itself acquires the same lock, so calling it
+    // while holding the mutex would deadlock
+    std::vector<std::shared_ptr<MessageWithQOS>> to_publish;
     {
         const std::lock_guard<std::mutex> lock(messages_before_connected_mutex);
         this->mqtt_is_connected = true;
-        for (auto& message : this->messages_before_connected) {
-            this->publish(message->topic, message->payload, message->qos, message->retain);
-        }
-        this->messages_before_connected.clear();
+        to_publish = std::move(messages_before_connected);
+    }
+    for (auto& message : to_publish) {
+        this->publish(message->topic, message->payload, message->qos, message->retain);
     }
 }
 
