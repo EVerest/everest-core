@@ -32,22 +32,6 @@ void external_energy_limits_consumer_API::ready() {
     setup_heartbeat_generator();
 }
 
-auto external_energy_limits_consumer_API::forward_api_var(std::string const& var) {
-    using namespace API_types_ext;
-    auto topic = topics.everest_to_extern(var);
-    return [this, topic](auto const& val) {
-        try {
-            auto&& external = to_external_api(val);
-            auto&& payload = serialize(external);
-            mqtt.publish(topic, payload);
-        } catch (const std::exception& e) {
-            EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what();
-        } catch (...) {
-            EVLOG_warning << "Invalid data: Cannot convert internal to external or serialize it.\n" << topic;
-        }
-    };
-}
-
 void external_energy_limits_consumer_API::generate_api_cmd_set_external_limits() {
     subscribe_api_topic("set_external_limits", [this](std::string const& data) {
         API_types_ext::ExternalLimits val;

@@ -64,11 +64,10 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    auto forward_api_var(std::string const& var);
+    auto forward_and_cache_api_var(std::string const& var);
     using ParseAndPublishFtor = std::function<bool(std::string const&)>;
     void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
 
-    void generate_api_var_enforced_limits();
     void generate_api_var_communication_check();
     void generate_api_cmd_set_external_limits();
 

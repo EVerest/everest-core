@@ -38,6 +38,7 @@ struct Conf {
     int cfg_communication_check_to_s;
     int cfg_heartbeat_interval_ms;
     int cfg_request_reply_to_s;
+    bool latch_variable_values;
 };
 
 class evse_manager_consumer_API : public Everest::ModuleBase {
@@ -92,7 +93,7 @@ private:
     using ParseAndPublishFtor = std::function<bool(std::string const&)>;
     void subscribe_api_topic(std::string const& var, ParseAndPublishFtor const& parse_and_publish);
 
-    auto forward_api_var(std::string const& var);
+    auto forward_and_cache_api_var(std::string const& var);
 
     void generate_api_cmd_get_evse();
     void generate_api_cmd_enable_disable();

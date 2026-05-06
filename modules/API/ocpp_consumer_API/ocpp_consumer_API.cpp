@@ -52,14 +52,31 @@ void ocpp_consumer_API::ready() {
     setup_heartbeat_generator();
 }
 
-auto ocpp_consumer_API::forward_api_var(std::string const& var) {
+auto auth_consumer_API::forward_and_cache_api_var(std::string const& var) {
     using namespace API_types_ext;
     using namespace API_generic;
     auto topic = topics.everest_to_extern(var);
+
+    if (latch_variable_values) {
+        subscribe_api_topic(var + "/get", [this, topic](std::string const& data) {
+            API_generic::RequestReply msg;
+            if (deserialize(data, msg)) {
+                if (serialized_variables_cache.count(topic) > 0) {
+                    mqtt.publish(msg.replyTo, serialized_variables_cache[topic]);
+                } else {
+                    EVLOG_info << "No latched value for '" << topic << "' to return";
+                }
+                return true;
+            }
+            return false;
+        });
+    }
+
     return [this, topic](auto const& val) {
         try {
             auto&& external = to_external_api(val);
             auto&& payload = serialize(external);
+            serialized_variables_cache[topic] = payload;
             mqtt.publish(topic, payload);
         } catch (const std::exception& e) {
             EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what();
@@ -133,27 +150,27 @@ void ocpp_consumer_API::generate_api_cmd_monitor_variables() {
 }
 
 void ocpp_consumer_API::generate_api_var_security_event() {
-    r_ocpp->subscribe_security_event(forward_api_var("security_event"));
+    r_ocpp->subscribe_security_event(forward_and_cache_api_var("security_event"));
 }
 
 void ocpp_consumer_API::generate_api_var_is_connected() {
-    r_ocpp->subscribe_is_connected(forward_api_var("is_connected"));
+    r_ocpp->subscribe_is_connected(forward_and_cache_api_var("is_connected"));
 }
 
 void ocpp_consumer_API::generate_api_var_boot_notification_response() {
-    r_ocpp->subscribe_boot_notification_response(forward_api_var("boot_notification_response"));
+    r_ocpp->subscribe_boot_notification_response(forward_and_cache_api_var("boot_notification_response"));
 }
 
 void ocpp_consumer_API::generate_api_var_ocpp_transaction_event() {
-    r_ocpp->subscribe_ocpp_transaction_event(forward_api_var("ocpp_transaction_event"));
+    r_ocpp->subscribe_ocpp_transaction_event(forward_and_cache_api_var("ocpp_transaction_event"));
 }
 
 void ocpp_consumer_API::generate_api_var_event_data() {
-    r_ocpp->subscribe_event_data(forward_api_var("event_data"));
+    r_ocpp->subscribe_event_data(forward_and_cache_api_var("event_data"));
 }
 
 void ocpp_consumer_API::generate_api_var_charging_schedules() {
-    r_ocpp->subscribe_charging_schedules(forward_api_var("charging_schedules"));
+    r_ocpp->subscribe_charging_schedules(forward_and_cache_api_var("charging_schedules"));
 }
 
 void ocpp_consumer_API::generate_api_var_ocpp_message() {

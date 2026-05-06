@@ -43,6 +43,16 @@ channels:
     messages:
       receive_token_validation_status:
         $ref: '#/components/messages/receive_token_validation_status'
+  send_request_get_token_validation_status:
+    address: 'm2e/token_validation_status/get'
+    messages:
+      send_request_get_token_validation_status:
+        $ref: '#/components/messages/send_request_get_token_validation_status'
+  receive_reply_get_token_validation_status:
+    address: null
+    messages:
+      receive_reply_get_token_validation_status:
+        $ref: '#/components/messages/receive_reply_get_token_validation_status'
 
 
   receive_heartbeat:
@@ -90,6 +100,26 @@ operations:
       Published whenever the validation status of a token changes.
       The message contains the token, its validation status, and an
       optional array of tariff messages received at authorization time.
+
+  send_request_get_token_validation_status:
+    title: 'Request current token validation status'
+    action: send
+    channel:
+      $ref: '#/channels/send_request_get_token_validation_status'
+    description: >-
+      Request the most recently published (latched) token validation status.
+      The reply will be sent to the replyTo address specified in the message headers.
+      If no latched value is available yet, no reply will be sent.
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_get_token_validation_status'
+  receive_reply_get_token_validation_status:
+    title: 'Reply to get token validation status request'
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_get_token_validation_status'
 
 
   receive_heartbeat:
@@ -152,6 +182,37 @@ components:
       name: receive_token_validation_status
       title: 'Receive token validation status message'
       summary: 'Token validation status, optionally with tariff messages'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TokenValidationStatusMessage'
+
+    send_request_get_token_validation_status:
+      name: send_request_get_token_validation_status
+      title: 'Request current token validation status'
+      summary: 'Request the most recently published (latched) token validation status.'
+      contentType: application/json
+      payload:
+        type: object
+        required:
+          - headers
+        properties:
+          headers:
+            type: object
+            required:
+              - replyTo
+            properties:
+              replyTo:
+                type: string
+                description: Address to send the response to.
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: everest_api/1/{interface_type}/{module_id}/e2m/{operation_name}/{uuid}
+    receive_reply_get_token_validation_status:
+      name: receive_reply_get_token_validation_status
+      title: 'Reply to get token validation status request'
+      summary: 'The most recently published token validation status.'
       contentType: application/json
       payload:
         $ref: '#/components/schemas/TokenValidationStatusMessage'

@@ -14,6 +14,10 @@ config:
     default: 550
     minimum: 1
     maximum: 550
+  latch_variable_values:
+    description: "Interval between two heartbeat messages send by the API. Values <= 0 disable heartbeat."
+    type: boolean
+    default: true
 
 provides:
   main:

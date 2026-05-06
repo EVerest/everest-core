@@ -36,13 +36,30 @@ void auth_consumer_API::ready() {
     setup_heartbeat_generator();
 }
 
-auto auth_consumer_API::forward_api_var(std::string const& var) {
+auto auth_consumer_API::forward_and_cache_api_var(std::string const& var) {
     using namespace API_types_ext;
     auto topic = topics.everest_to_extern(var);
+
+    if (latch_variable_values) {
+        subscribe_api_topic(var + "/get", [this, topic](std::string const& data) {
+            API_generic::RequestReply msg;
+            if (deserialize(data, msg)) {
+                if (serialized_variables_cache.count(topic) > 0) {
+                    mqtt.publish(msg.replyTo, serialized_variables_cache[topic]);
+                } else {
+                    EVLOG_info << "No latched value for '" << topic << "' to return";
+                }
+                return true;
+            }
+            return false;
+        });
+    }
+
     return [this, topic](auto const& val) {
         try {
             auto&& external = to_external_api(val);
             auto&& payload = serialize(external);
+            serialized_variables_cache[topic] = payload;
             mqtt.publish(topic, payload);
         } catch (const std::exception& e) {
             EVLOG_warning << "Variable: '" << topic << "' failed with -> " << e.what();
@@ -69,7 +86,7 @@ void auth_consumer_API::generate_api_cmd_withdraw_authorization() {
 }
 
 void auth_consumer_API::generate_api_var_token_validation_status() {
-    r_auth->subscribe_token_validation_status(forward_api_var("token_validation_status"));
+    r_auth->subscribe_token_validation_status(forward_and_cache_api_var("token_validation_status"));
 }
 
 void auth_consumer_API::generate_api_var_communication_check() {
