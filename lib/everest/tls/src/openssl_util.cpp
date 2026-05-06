@@ -319,14 +319,25 @@ std::vector<std::uint8_t> base64_decode(const char* text, std::size_t len) {
     assert(text != nullptr);
     assert(len > 0);
 
-    // remove \n
+    // Strip whitespace + NUL; pass everything else to BIO_f_base64.
+    // Byte set matches EVP_Decode*'s B64_WS table so this stays drop-in
+    // equivalent to the evse_security path (consolidation target).
     auto input = std::make_unique<std::uint8_t[]>(len);
     std::size_t input_len{0};
 
     for (std::size_t i = 0; i < len; i++) {
         const auto item = text[i];
-        if (item != '\n') {
-            input.get()[input_len++] = item;
+        switch (item) {
+        case '\0':
+        case '\t':
+        case '\n':
+        case '\v':
+        case '\f':
+        case '\r':
+        case ' ':
+            continue;
+        default:
+            input.get()[input_len++] = static_cast<std::uint8_t>(item);
         }
     }
 
