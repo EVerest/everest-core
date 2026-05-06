@@ -55,7 +55,7 @@ if(DISABLE_EDM)
         NAMESPACE everest
         ADDITIONAL_CONTENT
             "find_dependency(everest-util)"
-            "find_dependency(everest-evse-security)"
+            "find_dependency(everest-evse_security)"
             "find_dependency(OpenSSL)"
     )
 endif()

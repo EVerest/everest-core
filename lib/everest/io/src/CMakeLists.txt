@@ -2,6 +2,11 @@
 add_library(everest_io SHARED)
 add_library(everest::io ALIAS everest_io)
 
+set_target_properties(everest_io PROPERTIES
+  VERSION 0.1.0
+  SOVERSION 0
+)
+
 target_sources(everest_io
     PRIVATE
         event/fd_event_handler.cpp
@@ -89,7 +94,7 @@ else()
       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      INCLUDES DESTINATION include
+      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   )
 endif()
 
@@ -98,7 +103,7 @@ install(TARGETS everest_io
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    INCLUDES DESTINATION include
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/everest
