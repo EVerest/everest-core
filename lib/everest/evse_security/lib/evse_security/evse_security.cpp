@@ -356,8 +356,8 @@ void EvseSecurity::set_max_fs_certificate_store_entries(std::uintmax_t value) {
         return;
     }
 
-    EVLOG_info << "Updating max_fs_certificate_store_entries from " << this->max_fs_certificate_store_entries
-               << " to " << value;
+    EVLOG_info << "Updating max_fs_certificate_store_entries from " << this->max_fs_certificate_store_entries << " to "
+               << value;
     this->max_fs_certificate_store_entries = value;
 }
 
