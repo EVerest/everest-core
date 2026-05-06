@@ -29,7 +29,7 @@ struct PN532Response {
 
 struct FirmwareVersion : public PN532Message {
     uint8_t ic;
-    uint8_t ver;     // TODO: also pre-parsed version string of this
+    uint8_t ver; // TODO: also pre-parsed version string of this
     uint8_t rev;
     uint8_t support; // TODO: bool flags
     FirmwareVersion(uint8_t ic, uint8_t ver, uint8_t rev, uint8_t support) :
@@ -65,38 +65,34 @@ struct InListPassiveTargetResponse : public PN532Message {
 class PN532Serial : public Everest::Serial {
 
 public:
-    PN532Serial();
-    ~PN532Serial();
+    PN532Serial() = default;
+    virtual ~PN532Serial() = default;
 
     void readThread();
     void run() override;
     bool reset();
-    bool serialWrite(std::vector<uint8_t> data);
-    bool serialWriteCommand(std::vector<uint8_t> data);
+    bool serialWrite(const std::vector<uint8_t>& data);
+    bool serialWriteCommand(const std::vector<uint8_t>& data);
     std::future<bool> configureSAM();
     std::future<PN532Response> getFirmwareVersion();
     std::future<PN532Response> inListPassiveTarget();
     void enableDebug();
 
 private:
-    std::vector<uint8_t> preamble = {0x00, 0x00, 0xff};
-    uint8_t postamble = 0x00;
-    uint8_t host_to_pn532 = 0xd4;
+    static constexpr uint8_t PREAMBLE = 0x00;
+    static constexpr uint8_t POSTAMBLE = 0x00;
+    static constexpr uint8_t HOST_TO_PN532 = 0xd4;
+    static constexpr uint8_t PN532_TO_HOST = 0xd5;
+    const std::vector<uint8_t> START_CODE{0x00, 0xff};
+    const std::vector<uint8_t> ACK_FRAME{0x00, 0x00, 0xff, 0x00, 0xff, 0x00};
+    const std::vector<uint8_t> NACK_FRAME{0x00, 0x00, 0xff, 0xff, 0x00, 0x00};
     std::unique_ptr<std::promise<bool>> configure_sam_promise;
     std::unique_ptr<std::promise<PN532Response>> get_firmware_version_promise;
     std::unique_ptr<std::promise<PN532Response>> in_list_passive_target_promise;
-    ssize_t start_of_packet = 0;
-    size_t packet_length = 0;
-    bool preamble_start_seen = false;
-    bool preamble_seen = false;
-    bool first_data = true;
-    bool data_length_checksum_valid = false;
-    uint8_t tfi = 0;
     uint8_t command_code = 0;
     std::vector<uint8_t> data;
     bool debug = false;
 
-    void resetDataRead();
     void parseData();
     void parseInListPassiveTargetResponse();
 

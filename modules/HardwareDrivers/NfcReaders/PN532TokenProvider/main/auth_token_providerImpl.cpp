@@ -40,7 +40,7 @@ void auth_token_providerImpl::ready() {
     }
     auto configure_sam = configure_sam_future.get();
     if (configure_sam) {
-        EVLOG_debug << "Configured SAM" << std::endl;
+        EVLOG_debug << "Configured SAM";
     }
 
     auto firmware_version_future = serial.getFirmwareVersion();
@@ -51,9 +51,7 @@ void auth_token_providerImpl::ready() {
     auto firmware_version = firmware_version_future.get();
     if (firmware_version.valid) {
         std::shared_ptr<FirmwareVersion> fv = std::dynamic_pointer_cast<FirmwareVersion>(firmware_version.message);
-        if (config.debug) {
-            EVLOG_info << "PN532 firmware version: " << std::to_string(fv->ver) << "." << std::to_string(fv->rev);
-        }
+        EVLOG_info << "PN532 firmware version: " << std::to_string(fv->ver) << "." << std::to_string(fv->rev);
     }
 
     while (true) {

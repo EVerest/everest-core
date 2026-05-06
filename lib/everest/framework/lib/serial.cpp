@@ -11,13 +11,11 @@
 
 namespace Everest {
 Serial::Serial() {
-    fd = 0;
-    baud = 0;
     cobsDecodeReset();
 }
 
 Serial::~Serial() {
-    if (fd) {
+    if (fd != -1) {
         close(fd);
     }
 }
@@ -161,6 +159,21 @@ void Serial::cobsDecodeByte(uint8_t byte) {
         }
     }
     block--;
+}
+
+std::string Serial::hexdump(const std::uint8_t* const msg, int msg_len) const {
+    std::stringstream ss;
+    for (int i = 0; i < msg_len; i++) {
+        if (i > 0) {
+            ss << " ";
+        }
+        ss << "0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(msg[i]);
+    }
+    return ss.str();
+}
+
+std::string Serial::hexdump(const std::vector<std::uint8_t>& msg) const {
+    return hexdump(msg.data(), msg.size());
 }
 
 } // namespace Everest
