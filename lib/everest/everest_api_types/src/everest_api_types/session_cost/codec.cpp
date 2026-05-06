@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "session_cost/codec.hpp"
 #include "nlohmann/json.hpp"
@@ -16,36 +16,28 @@ std::string serialize(DefaultPrice val) noexcept {
     return result.dump(json_indent);
 }
 std::string serialize(TariffMessage val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 std::string serialize(IdlePrice val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 std::string serialize(CostCategory val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 std::string serialize(ChargingPriceComponent val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 std::string serialize(NextPeriodPrice val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 std::string serialize(SessionCostChunk val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 std::string serialize(SessionStatus val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 std::string serialize(SessionCost val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::ostream& operator<<(std::ostream& os, DefaultPrice const& val) {
@@ -92,47 +84,31 @@ template <> DefaultPrice deserialize(std::string const& val) {
 }
 
 template <> TariffMessage deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    TariffMessage obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> IdlePrice deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    IdlePrice obj = data;
-    return obj;
+    return json::parse(val);
 }
 template <> CostCategory deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    CostCategory obj = data;
-    return obj;
+    return json::parse(val);
 }
 template <> ChargingPriceComponent deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    ChargingPriceComponent obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> NextPeriodPrice deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    NextPeriodPrice obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> SessionCostChunk deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    SessionCostChunk obj = data;
-    return obj;
+    return json::parse(val);
 }
 template <> SessionStatus deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    SessionStatus obj = data;
-    return obj;
+    return json::parse(val);
 }
 template <> SessionCost deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    SessionCost obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 } // namespace everest::lib::API::V1_0::types::session_cost

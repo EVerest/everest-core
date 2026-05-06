@@ -109,7 +109,6 @@ if(NOT DISABLE_EDM)
     endif()
 else()
     find_package(date REQUIRED)
-    find_package(ryml REQUIRED)
     find_package(nlohmann_json REQUIRED)
     find_package(nlohmann_json_schema_validator REQUIRED)
     find_package(fmt REQUIRED)
@@ -181,6 +180,7 @@ if (FRAMEWORK_INSTALL)
         EXPORT framework-targets
         NAMESPACE everest
         ADDITIONAL_CONTENT
+            "find_dependency(everest-helpers)"
             "find_dependency(everest-util)"
             "find_dependency(nlohmann_json)"
             "find_dependency(nlohmann_json_schema_validator)"

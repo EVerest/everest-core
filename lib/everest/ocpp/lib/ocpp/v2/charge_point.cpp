@@ -277,7 +277,7 @@ void ChargePoint::configure_message_logging_format(const std::string& message_lo
         this->device_model->get_optional_value<bool>(ControllerComponentVariables::LogMessagesRaw).value_or(false);
     const bool log_security = log_formats.find("security") != std::string::npos;
     const bool session_logging = log_formats.find("session_logging") != std::string::npos;
-    const bool message_callback = log_formats.find("callback") != std::string::npos;
+    const bool log_callback = log_formats.find("callback") != std::string::npos;
     std::function<void(const std::string& message, MessageDirection direction)> logging_callback = nullptr;
     const bool log_rotation =
         this->device_model->get_optional_value<bool>(ControllerComponentVariables::LogRotation).value_or(false);
@@ -291,7 +291,7 @@ void ChargePoint::configure_message_logging_format(const std::string& message_lo
         this->device_model->get_optional_value<std::uint64_t>(ControllerComponentVariables::LogRotationMaximumFileCount)
             .value_or(0);
 
-    if (message_callback) {
+    if (log_callback) {
         logging_callback = this->callbacks.ocpp_messages_callback.value_or(nullptr);
     }
 
@@ -369,6 +369,13 @@ bool ChargePoint::on_charging_state_changed(const std::uint32_t evse_id, const C
                                                  std::nullopt, std::nullopt, this->is_offline(), std::nullopt);
     }
     return true;
+}
+
+ChangeAvailabilityResponse ChargePoint::on_change_availability(const ChangeAvailabilityRequest& request) {
+    bool transaction_active;
+    const auto response = availability->change_availability_req(transaction_active, request);
+    availability->action_change_availability_req(transaction_active, request, response);
+    return response;
 }
 
 std::optional<std::string> ChargePoint::get_evse_transaction_id(std::int32_t evse_id) {
@@ -1231,6 +1238,14 @@ std::map<SetVariableData, SetVariableResult>
 ChargePoint::set_variables(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source) {
     // set variables and allow setting of ReadOnly variables
     return this->provisioning->set_variables(set_variable_data_vector, source);
+}
+
+void ChargePoint::register_variable_listener(
+    std::function<void(const std::unordered_map<std::int64_t, VariableMonitoringMeta>& monitors,
+                       const Component& component, const Variable& variable,
+                       const VariableCharacteristics& characteristics, const VariableAttribute& attribute,
+                       const std::string& value_previous, const std::string& value_current)>&& listener) {
+    device_model->register_variable_listener(std::move(listener));
 }
 
 GetCompositeScheduleResponse ChargePoint::get_composite_schedule(const GetCompositeScheduleRequest& request) {

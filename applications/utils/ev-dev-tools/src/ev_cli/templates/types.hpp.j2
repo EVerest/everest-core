@@ -1,4 +1,4 @@
-{% from "helper_macros.j2" import print_template_info, print_spdx_line, string_to_enum, enum_to_string %}
+{% from "helper_macros.j2" import print_template_info, print_spdx_line, string_to_enum, enum_to_string, enum_to_string_view %}
 {{ print_spdx_line('Apache-2.0') }}
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
@@ -9,6 +9,7 @@
 #include <ostream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <vector>
 
@@ -41,7 +42,19 @@ enum class {{ enum.enum_type}}
 
 /// \brief Converts the given {{ enum.enum_type }} \p e to human readable string
 /// \returns a string representation of the {{ enum.enum_type }}
-inline std::string {{ enum.enum_type | snake_case }}_to_string({{ enum.enum_type }} e) {
+inline std::string {{ enum.enum_type | snake_case }}_to_string(const {{ enum.enum_type }}& e) {
+    switch (e) {
+        {% for e in enum.enum %}
+        case {{ enum.enum_type }}::{{ e }}: return "{{e}}";
+        {% endfor %}
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type {{ enum.enum_type }}");
+}
+
+/// \brief Converts the given {{ enum.enum_type }} \p e to human readable string
+/// \returns a string_view representation of the {{ enum.enum_type }}
+inline constexpr std::string_view {{ enum.enum_type | snake_case }}_to_string_view(const {{ enum.enum_type }}& e) {
     switch (e) {
         {% for e in enum.enum %}
         case {{ enum.enum_type }}::{{ e }}: return "{{e}}";
@@ -105,7 +118,7 @@ struct {{ parsed_type.name }} {
         {%- for property in parsed_type.properties %}
         {%- if property.required +%}
             {"{{property.name}}",
-            {%- if property.enum %} {{ enum_to_string(property.type) }}(k.{{ property.name }})
+            {%- if property.enum %} {{ enum_to_string_view(property.type) }}(k.{{ property.name }})
             {%- else %}
                 {%- if property.type == 'DateTime' %} k.{{property.name}}.to_rfc3339()
                 {%- else %} k.{{property.name}}
@@ -125,27 +138,25 @@ struct {{ parsed_type.name }} {
         if (k.{{property.name}}) {
                     {% if property.type.startswith('std::vector<') %}
                     {%- if parsed_type.properties|selectattr('required')|list|length %}
-            j["{{property.name}}"] = json::array();
+            j.emplace("{{property.name}}", *k.{{property.name}});
                     {%- else %}
         {#only optional keys in json#}
         {#TODO: add key to json when there are no required keys but multiple optional keys#}
+        {# FIXME: this is never generated?#}
             if (j.size() == 0) {
                 j = json{{'{{"'+property.name+'", json::array()}};'}}
             } else {
-                j["{{property.name}}"] = json::array();
+                j.emplace("{{property.name}}", *k.{{property.name}});
             }
         {% endif %}
-                    for (auto val : k.{{property.name}}.value()) {
-                        j["{{property.name}}"].push_back(val);
-                    }
         {% else %}
         {%- if property.enum %}
-        j["{{property.name}}"] = {{ enum_to_string(property.type) }}(k.{{ property.name }}.value());
+        j.emplace("{{property.name}}", {{ enum_to_string_view(property.type) }}(*k.{{ property.name }}));
             {%- else %}
                 {%- if property.type == 'DateTime' %}
-            j["{{property.name}}"] = k.{{property.name}}.value().to_rfc3339();
+            j.emplace("{{property.name}}", k.{{property.name}}->to_rfc3339());
                 {%- else %}
-            j["{{property.name}}"] = k.{{property.name}}.value();
+            j.emplace("{{property.name}}", *k.{{property.name}});
                 {%- endif %}
             {%- endif %}
         {% endif %}
@@ -161,9 +172,7 @@ struct {{ parsed_type.name }} {
         {% for property in parsed_type.properties %}
         {% if property.required %}
         {% if property.type.startswith('std::vector<') %}
-        for (auto val : j.at("{{property.name}}")) {
-            k.{{property.name}}.push_back(val);
-        }
+        k.{{property.name}} = std::move(j.at("{{property.name}}").get<{{property.type}}>());
         {% else %}
         k.{{property.name}} =
             {%- if property.enum %} {{ string_to_enum(property.type) }}(j.at("{{property.name}}"))
@@ -177,21 +186,18 @@ struct {{ parsed_type.name }} {
         {%- endfor %}
 
         // the optional parts of the type
+        auto it = j.end();
         {% for property in parsed_type.properties %}
             {% if not property.required %}
-        if (j.contains("{{property.name}}")) {
+        it = it = j.find("{{property.name}}");
+        if (it != j.end()) {
                 {% if property.type.startswith('std::vector<') %}
-            json arr = j.at("{{property.name}}");
-            {{property.type}} vec;
-            for (auto val : arr) {
-                vec.push_back(val);
-            }
-            k.{{property.name}}.emplace(vec);
+            k.{{property.name}} = j.at("{{property.name}}").get<{{property.type}}>();
                 {% else %}
                     {%- if property.enum %}
-            k.{{property.name}}.emplace({{ string_to_enum(property.type) }}(j.at("{{property.name}}")));
+            k.{{property.name}} = {{ string_to_enum(property.type) }}(it->get<std::string>());
                     {%- else %}
-            k.{{property.name}}.emplace(j.at("{{property.name}}"));
+            k.{{property.name}} = it->get<{{property.type}}>();
                     {% endif %}
                 {% endif %}
         }

@@ -206,8 +206,21 @@ std::string set_user_and_capabilities(const std::string& run_as_user, const std:
 SubProcess SubProcess::create(const std::string& run_as_user, const std::vector<std::string>& capabilities) {
     std::array<int, 2> pipefd{};
 
-    if (pipe2(pipefd.data(), O_CLOEXEC | O_DIRECT)) {
-        throw std::runtime_error(fmt::format("Syscall pipe2() failed ({}), exiting", strerror(errno)));
+    const auto flags = O_CLOEXEC;
+    // First, try to create a pipe with O_DIRECT
+    if (pipe2(pipefd.data(), flags | O_DIRECT)) {
+        auto errored = true;
+
+        // pipe2 returns EINVAL if the kernel does not support O_DIRECT. We retry without it and see if it still fails
+        if (errno == EINVAL) {
+            if (pipe2(pipefd.data(), flags) == 0) {
+                errored = false;
+            }
+        }
+
+        if (errored) {
+            throw std::runtime_error(fmt::format("Syscall pipe2() failed ({}), exiting", strerror(errno)));
+        }
     }
 
     const auto reading_end_fd = pipefd[0];

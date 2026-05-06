@@ -76,12 +76,19 @@ bool is_equal_case_insensitive(const types::authorization::ProvidedIdToken& toke
            token1.id_token.type == token2.id_token.type;
 }
 
+namespace {
+boost::uuids::random_generator& get_rng() {
+    static thread_local boost::uuids::random_generator rng;
+    return rng;
+}
+} // namespace
+
 std::string get_uuid() {
-    return boost::uuids::to_string(boost::uuids::random_generator()()); // 36 characters
+    return boost::uuids::to_string(get_rng()()); // 36 characters
 }
 
 std::string get_base64_uuid() {
-    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    boost::uuids::uuid uuid = get_rng()();
     std::string encoded = openssl::base64_encode(uuid.data, uuid.size(), false);
     encoded.erase(std::remove(encoded.begin(), encoded.end(), '='), encoded.end()); // remove padding
     return encoded;                                                                 // 22 characters
@@ -89,7 +96,7 @@ std::string get_base64_uuid() {
 
 std::string get_base64_id() {
     std::array<std::uint8_t, 12> random_bytes;
-    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    boost::uuids::uuid uuid = get_rng()();
     std::memcpy(random_bytes.data(), uuid.data, random_bytes.size());
     std::string encoded = openssl::base64_encode(random_bytes.data(), random_bytes.size(), false);
     return encoded; // 16 characters

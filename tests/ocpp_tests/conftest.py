@@ -49,6 +49,12 @@ def pytest_sessionfinish(session, exitstatus):
     pass
 
 
+@pytest.fixture(scope="session")
+def exi_generator():
+    certs_path = str(Path(__file__).parent / "test_sets" / "everest-aux" / "certs")
+    return everest_test_utils.EXIGenerator(certs_path)
+
+
 @pytest.fixture
 def test_config() -> OcppTestConfiguration:
     return everest_test_utils.load_test_config()

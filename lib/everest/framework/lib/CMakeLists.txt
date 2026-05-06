@@ -36,7 +36,6 @@ target_sources(framework
         everest.cpp
         formatter.cpp
         filesystem.cpp
-        message_queue.cpp
         module_adapter.cpp
         module_config.cpp
         mqtt_abstraction_impl.cpp
@@ -46,7 +45,6 @@ target_sources(framework
         status_fifo.cpp
         date.cpp
         runtime.cpp
-        yaml_loader.cpp
         message_handler.cpp
 )
 
@@ -76,6 +74,9 @@ target_link_libraries(framework
 
         everest::log
         everest::sqlite
+        everest::yaml
+        $<BUILD_INTERFACE:everest_helpers>
+        $<INSTALL_INTERFACE:everest::helpers>
         $<BUILD_INTERFACE:everest_util>
         $<INSTALL_INTERFACE:everest::util>
         ${STD_FILESYSTEM_COMPAT_LIB}
@@ -84,7 +85,7 @@ target_link_libraries(framework
         Boost::thread
         Boost::program_options
         everest::io
-        ryml::ryml
+        ${ATOMIC_LIBS}
 )
 
 collect_migration_files(

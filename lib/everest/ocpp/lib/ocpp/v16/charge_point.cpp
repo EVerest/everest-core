@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include <everest/logging.hpp>
 #include <ocpp/v16/charge_point.hpp>
@@ -9,12 +9,14 @@
 namespace ocpp {
 namespace v16 {
 
-ChargePoint::ChargePoint(ChargePointConfigurationInterface& cfg, const fs::path& share_path,
-                         const fs::path& database_path, const fs::path& sql_init_path, const fs::path& message_log_path,
-                         const std::shared_ptr<EvseSecurity> evse_security,
-                         const std::optional<SecurityConfiguration> security_configuration) {
-    this->charge_point = std::make_unique<ChargePointImpl>(cfg, share_path, database_path, sql_init_path,
-                                                           message_log_path, evse_security, security_configuration);
+ChargePoint::ChargePoint(
+    ChargePointConfigurationInterface& cfg, const fs::path& share_path, const fs::path& database_path,
+    const fs::path& sql_init_path, const fs::path& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
+    const std::optional<SecurityConfiguration> security_configuration,
+    const std::function<void(const std::string& message, MessageDirection direction)>& message_callback) {
+    this->charge_point =
+        std::make_unique<ChargePointImpl>(cfg, share_path, database_path, sql_init_path, message_log_path,
+                                          evse_security, security_configuration, message_callback);
 }
 
 ChargePoint::~ChargePoint() = default;

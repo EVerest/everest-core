@@ -11,13 +11,11 @@
 namespace everest::lib::API::V1_0::types::ev_board_support {
 
 std::string serialize(EvCpState val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(BspMeasurement const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::ostream& operator<<(std::ostream& os, EvCpState const& val) {
@@ -30,16 +28,12 @@ std::ostream& operator<<(std::ostream& os, const BspMeasurement& val) {
     return os;
 }
 
-template <> EvCpState deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    EvCpState result = data;
-    return result;
+template <> EvCpState deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> BspMeasurement deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    BspMeasurement result = data;
-    return result;
+template <> BspMeasurement deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
 } // namespace everest::lib::API::V1_0::types::ev_board_support

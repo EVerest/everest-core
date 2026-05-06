@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "display_message/codec.hpp"
 #include "display_message/json_codec.hpp"
@@ -9,63 +9,51 @@
 namespace everest::lib::API::V1_0::types::display_message {
 
 std::string serialize(MessagePriorityEnum val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(MessageStateEnum val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(DisplayMessageStatusEnum val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(ClearMessageResponseEnum val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(Identifier_type val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(DisplayMessage const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(SetDisplayMessageRequest const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(SetDisplayMessageResponse const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(GetDisplayMessageRequest const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(GetDisplayMessageResponse const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(ClearDisplayMessageRequest const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(ClearDisplayMessageResponse const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::ostream& operator<<(std::ostream& os, MessagePriorityEnum const& val) {
@@ -129,75 +117,51 @@ std::ostream& operator<<(std::ostream& os, ClearDisplayMessageResponse const& va
 }
 
 template <> MessagePriorityEnum deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    MessagePriorityEnum obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> MessageStateEnum deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    MessageStateEnum obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> DisplayMessageStatusEnum deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    DisplayMessageStatusEnum obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> ClearMessageResponseEnum deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    ClearMessageResponseEnum obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> Identifier_type deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    Identifier_type obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> DisplayMessage deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    DisplayMessage obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> SetDisplayMessageRequest deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    SetDisplayMessageRequest obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> SetDisplayMessageResponse deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    SetDisplayMessageResponse obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> GetDisplayMessageRequest deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    GetDisplayMessageRequest obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> GetDisplayMessageResponse deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    GetDisplayMessageResponse obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> ClearDisplayMessageRequest deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    ClearDisplayMessageRequest obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 template <> ClearDisplayMessageResponse deserialize(std::string const& val) {
-    auto data = json::parse(val);
-    ClearDisplayMessageResponse obj = data;
-    return obj;
+    return json::parse(val);
 }
 
 } // namespace everest::lib::API::V1_0::types::display_message

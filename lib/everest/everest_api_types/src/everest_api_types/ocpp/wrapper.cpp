@@ -758,4 +758,40 @@ ChargingSchedules_External to_external_api(ChargingSchedules_Internal const& val
     return result;
 }
 
+MessageDirection_Internal to_internal_api(MessageDirection_External const& val) {
+    using SrcT = MessageDirection_External;
+    using TarT = MessageDirection_Internal;
+    switch (val) {
+        enum_case(CSMSToChargingStation);
+        enum_case(ChargingStationToCSMS);
+    }
+    throw std::out_of_range("Unexpected value for everest::lib::API::V1_0::types::ocpp::MessageDirection_External");
+}
+
+MessageDirection_External to_external_api(MessageDirection_Internal const& val) {
+    using SrcT = MessageDirection_Internal;
+    using TarT = MessageDirection_External;
+    switch (val) {
+        enum_case(CSMSToChargingStation);
+        enum_case(ChargingStationToCSMS);
+    }
+    throw std::out_of_range("Unexpected value for everest::lib::API::V1_0::types::ocpp::MessageDirection_Internal");
+}
+
+Message_Internal to_internal_api(Message_External const& val) {
+    Message_Internal result;
+    result.message = val.message;
+    result.direction = to_internal_api(val.direction);
+    result.version = val.version;
+    return result;
+}
+
+Message_External to_external_api(Message_Internal const& val) {
+    Message_External result;
+    result.message = val.message;
+    result.direction = to_external_api(val.direction);
+    result.version = val.version;
+    return result;
+}
+
 } // namespace everest::lib::API::V1_0::types::ocpp

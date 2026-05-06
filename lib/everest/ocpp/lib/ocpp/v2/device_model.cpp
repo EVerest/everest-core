@@ -370,19 +370,19 @@ SetVariableStatusEnum DeviceModel::set_value(const Component& component, const V
     const auto success = (result == SetVariableStatusEnum::Accepted);
 
     // Only trigger for actual values
-    if ((attribute_enum == AttributeEnum::Actual) && success && variable_listener) {
+    if ((attribute_enum == AttributeEnum::Actual) && success && !variable_listener.empty()) {
         const auto& monitors = variable_map[variable].monitors;
 
         // If we had a variable value change, trigger the listener
-        if (!monitors.empty()) {
-            static const std::string EMPTY_VALUE{};
+        static const std::string EMPTY_VALUE{};
 
-            const std::string& value_previous = attribute.value().value.value_or(EMPTY_VALUE);
-            const std::string& value_current = value;
+        const std::string& value_previous = attribute.value().value.value_or(EMPTY_VALUE);
+        const std::string& value_current = value;
 
-            if (value_previous != value_current) {
-                variable_listener(monitors, component, variable, characteristics, attribute.value(), value_previous,
-                                  value_current);
+        if (value_previous != value_current) {
+            for (const auto& listener : variable_listener) {
+                listener(monitors, component, variable, characteristics, attribute.value(), value_previous,
+                         value_current);
             }
         }
     }

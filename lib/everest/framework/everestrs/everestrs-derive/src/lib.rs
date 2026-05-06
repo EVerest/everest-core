@@ -8,7 +8,9 @@ use syn::{parse_macro_input, spanned::Spanned, ItemFn, ItemMod, Type};
 /// it cannot be dropped prematurely. After the user function returns, the
 /// `Module` is dropped deterministically before process exit.
 ///
-/// # Example
+/// # Basics
+///
+/// The basic usage is demonstated below
 ///
 /// ```ignore
 /// #[everestrs::main]
@@ -18,6 +20,18 @@ use syn::{parse_macro_input, spanned::Spanned, ItemFn, ItemMod, Type};
 ///     loop { std::thread::sleep(std::time::Duration::from_secs(1)); }
 /// }
 /// ```
+///
+/// # Async
+///
+/// You can also use async for your code. The pattern is quite similar:
+///
+/// ```ignore
+/// #[everestrs::main]
+/// #[tokio::main]
+/// async fn main(module: &Module) {
+///     let class = Arc::new(MyModule {});
+///     ...
+/// }
 #[proc_macro_attribute]
 pub fn main(attr: TokenStream, item: TokenStream) -> TokenStream {
     if !attr.is_empty() {
@@ -37,6 +51,10 @@ pub fn main(attr: TokenStream, item: TokenStream) -> TokenStream {
     let param = &sig.inputs[0];
     let body = &input.block;
     let ret = &sig.output;
+    let maybe_async = &sig.asyncness;
+    let maybe_await = maybe_async.as_ref().map(|_| quote! {.await});
+    let ident = &sig.ident;
+    let attrs = &input.attrs;
 
     // Extract the parameter name and inner type from `name: &Type`.
     let (param_name, inner_ty) = match param {
@@ -51,12 +69,13 @@ pub fn main(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     let expanded = quote! {
-        fn main() #ret {
+        #(#attrs)*
+        #maybe_async fn #ident() #ret {
             let #param_name = #inner_ty::new();
             let __everest_result = {
-                fn __everest_main(#param_name: &#inner_ty) #ret
+                #maybe_async fn __everest_main(#param_name: &#inner_ty) #ret
                     #body
-                __everest_main(&#param_name)
+                __everest_main(&#param_name) #maybe_await
             };
             __everest_result
         }
@@ -66,20 +85,6 @@ pub fn main(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn main_validate(input: &ItemFn) -> Result<(), syn::Error> {
-    if input.sig.ident != "main" {
-        return Err(syn::Error::new(
-            input.sig.ident.span(),
-            "#[everestrs::main] can only be applied to `fn main`",
-        ));
-    }
-
-    if input.sig.asyncness.is_some() {
-        return Err(syn::Error::new(
-            input.sig.asyncness.span(),
-            "#[everestrs::main] does not support async functions",
-        ));
-    }
-
     if !input.sig.generics.params.is_empty() {
         return Err(syn::Error::new(
             input.sig.generics.span(),
@@ -180,6 +185,8 @@ impl syn::parse::Parse for TestAttr {
 /// body. Each test gets a unique MQTT prefix so tests can run in parallel
 /// without topic collisions.
 ///
+/// # Basics
+///
 /// Both `config` and `module` are required.
 ///
 /// It can either be applied inside a module tagged with `everestrs::harness`.
@@ -203,12 +210,34 @@ impl syn::parse::Parse for TestAttr {
 /// #[everestrs::test(config = "config.yaml", module = "example_1", harness = true)]
 /// fn test_a(module: &Module) { ... }
 /// ```
+///
+/// # Other macros
+///
 /// The macro can be combined with other commonly used macros, for example
+///
 /// ```ignore
 /// #[everestrs::test(config = "config.yaml", module = "example_1", harness = true)]
 /// #[should_panic]
 /// fn test_a(module: &Module) {
 ///     assert!(false);
+/// }
+/// ```
+///
+/// You can also combine it with #[tokio::test]. The ordering does not matter
+///
+/// ```ignore
+/// #[everestrs::test(config = "config.yaml", module = "example_1", harness = true)]
+/// #[tokio::test]
+/// async fn my_test(module: &Module) {
+/// }
+/// ```
+///
+/// works same as
+///
+/// ```ignore
+/// #[tokio::test]
+/// #[everestrs::test(config = "config.yaml", module = "example_1", harness = true)]
+/// async fn my_test(module: &Module) {
 /// }
 /// ```
 #[proc_macro_attribute]
@@ -225,13 +254,6 @@ pub fn test(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn test_validate(input: &ItemFn) -> Result<(), syn::Error> {
-    if input.sig.asyncness.is_some() {
-        return Err(syn::Error::new(
-            input.sig.asyncness.span(),
-            "#[everestrs::test] does not support async functions",
-        ));
-    }
-
     if !input.sig.generics.params.is_empty() {
         return Err(syn::Error::new(
             input.sig.generics.span(),
@@ -281,13 +303,31 @@ fn test_impl(attr: &TestAttr, item_fn: ItemFn) -> Result<proc_macro2::TokenStrea
 
     // Forward all attributes from the user function to the generated #[test] fn
     // (e.g. #[should_panic], #[ignore], #[allow(...)]).
-    let forwarded_attrs = &item_fn.attrs;
+    let attrs = &item_fn.attrs;
 
     let sig = &item_fn.sig;
     let ident = &sig.ident;
     let param = &sig.inputs[0];
     let ret = &sig.output;
     let body = &item_fn.block;
+    // Check if someone else after us might emit #[test]. `rstest` does
+    // something similar to prevent reemit this. We match any attribute whose
+    // last path segment is `test` — covers `#[test]`, `#[tokio::test]`,
+    // `#[async_std::test]`, etc.
+    // See https://github.com/la10736/rstest/blob/master/rstest_macros/src/utils.rs#L38
+    // and https://github.com/la10736/rstest/blob/master/rstest_macros/src/parse/rstest/test_attr.rs#L25
+    let maybe_test = if attrs.iter().any(|a| {
+        a.path()
+            .segments
+            .last()
+            .map_or(false, |s| s.ident == "test")
+    }) {
+        quote! {}
+    } else {
+        quote! { #[test] }
+    };
+    let maybe_async = &sig.asyncness;
+    let maybe_await = maybe_async.as_ref().map(|_| quote! {.await});
     let module = &attr.module_name;
 
     // Extract the parameter name and inner type from `name: &Type`.
@@ -312,9 +352,9 @@ fn test_impl(attr: &TestAttr, item_fn: ItemFn) -> Result<proc_macro2::TokenStrea
 
     // The function we would like to emit
     let test_fn = quote! {
-        #[test]
-        #(#forwarded_attrs)*
-        fn #ident() #ret {
+        #maybe_test
+        #(#attrs)*
+        #maybe_async fn #ident() #ret {
             let prefix = std::env::current_dir().expect("Failed to get current directory");
             let config = prefix.join(format!("etc/everest/{}", #config_basename));
 
@@ -344,9 +384,9 @@ fn test_impl(attr: &TestAttr, item_fn: ItemFn) -> Result<proc_macro2::TokenStrea
 
             let #param_name = #inner_ty::new_with_args(args);
             let __everest_result = {
-                fn __everest_test(#param_name: &#inner_ty) #ret
+                #maybe_async fn __everest_test(#param_name: &#inner_ty) #ret
                     #body
-                __everest_test(&#param_name)
+                __everest_test(&#param_name) #maybe_await
             };
             drop(#param_name);
             __everest_result
@@ -438,8 +478,6 @@ fn generate_harness_tokens(attr: &TestAttr) -> Result<proc_macro2::TokenStream, 
 /// Applied to a `mod` to share generated types across multiple tests and
 /// fixtures. For single test functions, use
 /// `#[everestrs::test(config = "...", module = "...")]` instead.
-///
-/// # Example
 ///
 /// ```ignore
 /// #[everestrs::harness(config = "config.yaml", module = "example_1")]

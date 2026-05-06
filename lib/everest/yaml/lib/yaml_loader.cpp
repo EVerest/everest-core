@@ -13,16 +13,19 @@
 #include <ryml_std.hpp>
 
 #include <everest/logging.hpp>
-#include <utils/helpers.hpp>
 
 namespace {
+template <typename T, typename U> T constexpr clamp_to(U len) {
+    return (len <= std::numeric_limits<T>::max()) ? static_cast<T>(len) : std::numeric_limits<T>::max();
+}
+
 void yaml_error_handler(const char* msg, std::size_t len, ryml::Location loc, void*) {
     std::stringstream error_msg;
     error_msg << "YAML parsing error: ";
 
     if (loc) {
         if (not loc.name.empty()) {
-            error_msg.write(loc.name.str, Everest::helpers::clamp_to<std::streamsize>(loc.name.len));
+            error_msg.write(loc.name.str, clamp_to<std::streamsize>(loc.name.len));
             error_msg << ":";
         }
         error_msg << loc.line << ":";
@@ -33,7 +36,7 @@ void yaml_error_handler(const char* msg, std::size_t len, ryml::Location loc, vo
             error_msg << " (" << loc.offset << "B):";
         }
     }
-    error_msg.write(msg, Everest::helpers::clamp_to<std::streamsize>(len));
+    error_msg.write(msg, clamp_to<std::streamsize>(len));
 
     throw std::runtime_error(error_msg.str());
 }

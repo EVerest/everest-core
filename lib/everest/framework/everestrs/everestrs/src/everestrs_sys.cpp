@@ -102,6 +102,15 @@ Module::Module(const std::string& module_id, const std::string& prefix, const Ev
     handle_->spawn_main_loop_thread();
 }
 
+Module::~Module() {
+    // MQTTAbstractionImpl spawns a main loop thread whose only exit condition
+    // is `disconnect_event` being notified. Without this call the `Thread`
+    // member destructor joins a thread that will never exit.
+    if (handle_) {
+        handle_->disconnect();
+    }
+}
+
 JsonBlob Module::get_interface(rust::Str interface_name) const {
     const auto& interface_def = config_->get_interface_definition(std::string(interface_name));
     return json2blob(interface_def);

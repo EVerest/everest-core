@@ -20,7 +20,7 @@ void power_supply_DCImpl::ready() {
 
 void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& mode,
                                          types::power_supply_DC::ChargingPhase& phase) {
-    auto topic = mod->get_topics().everest_to_extern("mode");
+    static const auto topic = mod->get_topics().everest_to_extern("mode");
     auto mode_ext = API_types_ext::to_external_api(mode);
     auto phase_ext = API_types_ext::to_external_api(phase);
     auto data = API_types_ext::ModeRequest{mode_ext, phase_ext};
@@ -28,13 +28,13 @@ void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& mode,
 }
 
 void power_supply_DCImpl::handle_setExportVoltageCurrent(double& voltage, double& current) {
-    auto topic = mod->get_topics().everest_to_extern("export_voltage_current");
+    static const auto topic = mod->get_topics().everest_to_extern("export_voltage_current");
     auto data = API_types_ext::VoltageCurrent{static_cast<float>(voltage), static_cast<float>(current)};
     mod->mqtt.publish(topic, serialize(data));
 }
 
 void power_supply_DCImpl::handle_setImportVoltageCurrent(double& voltage, double& current) {
-    auto topic = mod->get_topics().everest_to_extern("import_voltage_current");
+    static const auto topic = mod->get_topics().everest_to_extern("import_voltage_current");
     auto data = API_types_ext::VoltageCurrent{static_cast<float>(voltage), static_cast<float>(current)};
     mod->mqtt.publish(topic, serialize(data));
 }

@@ -146,7 +146,7 @@ EnergyManagerImpl::run_optimizer(const types::energy::EnergyFlowRequest& request
 
     while (max_number_of_trading_rounds-- > 0) {
         bool trade_happend_in_this_round = false;
-        for (auto broker : brokers) {
+        for (auto const& broker : brokers) {
             // EVLOG_info << broker->get_local_market().energy_flow_request;
             //     create local offer at evse's marketplace
 

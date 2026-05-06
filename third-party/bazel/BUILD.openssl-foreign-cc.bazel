@@ -8,16 +8,22 @@ filegroup(
 configure_make(
     name = "openssl",
     configure_command = "Configure",
+    configure_in_place = True,
     configure_options = [
         "linux-armv4",
         "no-shared",
         "no-afalgeng",
         "no-dynamic-engine",
         "no-tests",
-    ],
-    configure_in_place = True,
+    ] + select({
+        "@platforms//cpu:armv7": ["no-atexit"],
+        "//conditions:default": [],
+    }),
     lib_source = ":all_srcs",
-    out_static_libs = ["libssl.a", "libcrypto.a"],
+    out_static_libs = [
+        "libssl.a",
+        "libcrypto.a",
+    ],
     targets = ["install_sw"],
     visibility = ["//visibility:public"],
 )

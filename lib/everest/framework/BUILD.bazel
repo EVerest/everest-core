@@ -63,16 +63,17 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//lib/everest/io:io",
+        "//lib/everest/helpers",
         "//lib/everest/log:liblog",
         "//lib/everest/sqlite:everest-sqlite",
         "//lib/everest/util",
+        "//lib/everest/yaml:everest_yaml",
         "@boost.program_options",
         "@boost.uuid",
         "@com_github_HowardHinnant_date//:date",
         "@com_github_fmtlib_fmt//:fmt",
         "@com_github_nlohmann_json//:json",
         "@com_github_pboettch_json-schema-validator//:json-schema-validator",
-        "@rapidyaml",
     ],
 )
 
@@ -130,7 +131,6 @@ cc_binary(
         "@com_github_fmtlib_fmt//:fmt",
         "@com_github_warmcatt_libwebsockets//:libwebsockets",
         "@libcap",
-        "@rapidyaml",
     ],
 )
 

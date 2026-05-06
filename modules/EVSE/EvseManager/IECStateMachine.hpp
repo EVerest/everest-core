@@ -76,11 +76,11 @@ public:
     // We need the r_bsp reference to be able to talk to the bsp driver module
     IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_, bool lock_connector_in_state_b_);
     // Call when new events from BSP requirement come in. Will signal internal events
-    void process_bsp_event(const types::board_support_common::BspEvent bsp_event);
+    void process_bsp_event(types::board_support_common::BspEvent const& bsp_event);
     // Allow power on from Charger state machine
     void allow_power_on(bool value, types::evse_board_support::Reason reason);
 
-    void set_pp_ampacity(types::board_support_common::ProximityPilot pp);
+    void set_pp_ampacity(types::board_support_common::ProximityPilot const& pp);
     double read_pp_ampacity();
     void switch_three_phases_while_charging(bool n);
     void setup(bool has_ventilation);
@@ -136,8 +136,8 @@ private:
     AsyncTimeout timeout_unlock_state_F;
 
     Everest::timed_mutex_traceable state_machine_mutex;
-    void feed_state_machine(std::optional<RawCPState> cp_state_opt);
-    std::queue<CPEvent> state_machine(std::optional<RawCPState> cp_state_opt);
+    void feed_state_machine(std::optional<RawCPState> const& cp_state_opt);
+    std::queue<CPEvent> state_machine(std::optional<RawCPState> const& cp_state_opt);
 
     types::evse_board_support::Reason power_on_reason{types::evse_board_support::Reason::PowerOff};
     void call_allow_power_on_bsp(bool value);

@@ -467,6 +467,16 @@ int ModuleLoader::initialize() {
     }
 
     const auto& rs = this->runtime_settings;
+    const auto shutdown_mqtt = [this]() {
+        if (this->mqtt) {
+            try {
+                this->mqtt->disconnect();
+            } catch (const std::exception& e) {
+                EVLOG_critical << fmt::format("MQTT disconnect in exception path failed: {}", e.what());
+            }
+        }
+    };
+
     try {
         const auto config = Config(this->mqtt_settings, result);
         const auto config_instantiation_time = std::chrono::system_clock::now();
@@ -515,12 +525,12 @@ int ModuleLoader::initialize() {
 
         ModuleAdapter module_adapter;
 
-        module_adapter.call = [&everest](const Requirement& req, const std::string& cmd_name, Parameters args) {
-            return everest.call_cmd(req, cmd_name, std::move(args));
+        module_adapter.call = [&everest](const Requirement& req, const std::string& cmd_name, const Parameters& args) {
+            return everest.call_cmd(req, cmd_name, args);
         };
 
-        module_adapter.publish = [&everest](const std::string& param1, const std::string& param2, Value param3) {
-            return everest.publish_var(param1, param2, std::move(param3));
+        module_adapter.publish = [&everest](const std::string& req, const std::string& var_name, const Value& value) {
+            return everest.publish_var(req, var_name, value);
         };
 
         module_adapter.subscribe = [&everest](const Requirement& req, const std::string& var_name,
@@ -615,11 +625,15 @@ int ModuleLoader::initialize() {
         EVLOG_info << "Exiting...";
     } catch (boost::exception& e) {
         EVLOG_critical << fmt::format("Caught top level boost::exception:\n{}", boost::diagnostic_information(e, true));
+        shutdown_mqtt();
+        return EXIT_FAILURE;
     } catch (std::exception& e) {
         EVLOG_critical << fmt::format("Caught top level std::exception:\n{}", boost::diagnostic_information(e, true));
+        shutdown_mqtt();
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays): pass-through of argc and argv from main()

@@ -2,9 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #include <utils/error.hpp>
 
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
+#include <everest/helpers/helpers.hpp>
 
 #include <everest/logging.hpp>
 
@@ -12,7 +10,7 @@ namespace Everest {
 namespace error {
 
 UUID::UUID() {
-    uuid = boost::uuids::to_string(boost::uuids::random_generator()());
+    uuid = everest::helpers::get_uuid();
 }
 
 UUID::UUID(const std::string& uuid_) : uuid(uuid_) {

@@ -11,6 +11,8 @@ namespace Date {
 
 std::string to_rfc3339(const std::chrono::time_point<date::utc_clock>& t);
 
+std::chrono::time_point<date::utc_clock> from_rfc3339_slow(const std::string& t);
+
 std::chrono::time_point<date::utc_clock> from_rfc3339(const std::string& t);
 
 } // namespace Date

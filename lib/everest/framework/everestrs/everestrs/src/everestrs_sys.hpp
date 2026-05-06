@@ -28,6 +28,11 @@ public:
     /// In order to create the Module use the `create_module` function.
     Module(const std::string& module_id, const std::string& prefix, const Everest::MQTTSettings& mqtt_settings);
 
+    /// Stops the MQTT main loop before member destruction so the
+    /// `mqtt_mainloop_thread` join inside `~MQTTAbstractionImpl` doesn't
+    /// deadlock.
+    ~Module();
+
     JsonBlob get_manifest() const;
     JsonBlob get_interface(rust::Str interface_name) const;
     rust::Vec<RsModuleConfig> get_module_configs(rust::Str module_name) const;

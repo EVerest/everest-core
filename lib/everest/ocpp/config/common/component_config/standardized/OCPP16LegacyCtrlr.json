@@ -1,0 +1,491 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Schema for OCPP16LegacyCtrlr - OCPP 1.6 configuration keys that don't exist or map as variables in OCPP 2.x",
+    "name": "OCPP16LegacyCtrlr",
+    "type": "object",
+    "properties": {
+        "CentralSystemURI": {
+            "variable_name": "CentralSystemURI",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "string"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "URL endpoint of the central system",
+            "type": "string",
+            "minLength": 1
+        },
+        "BlinkRepeat": {
+            "variable_name": "BlinkRepeat",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "integer"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Number of times to blink the connector indicator",
+            "type": "integer",
+            "minimum": 0
+        },
+        "ConnectorPhaseRotationMaxLength": {
+            "variable_name": "ConnectorPhaseRotationMaxLength",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "integer"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadOnly"
+                }
+            ],
+            "description": "Maximum length of the ConnectorPhaseRotation configuration key",
+            "type": "integer",
+            "minimum": 0
+        },
+        "GetConfigurationMaxKeys": {
+            "variable_name": "GetConfigurationMaxKeys",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "integer"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadOnly",
+                    "value": 256
+                }
+            ],
+            "description": "Maximum number of configuration keys that can be requested in a GetConfiguration request",
+            "type": "integer",
+            "minimum": 0
+        },
+        "LightIntensity": {
+            "variable_name": "LightIntensity",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "integer",
+                "unit": "Percent"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Light intensity for connector indicators",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+        },
+        "MinimumStatusDuration": {
+            "variable_name": "MinimumStatusDuration",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "integer",
+                "unit": "s"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Minimum duration in seconds that a status must persist before a StatusNotification is sent",
+            "type": "integer",
+            "minimum": 0
+        },
+        "StopTransactionOnEVSideDisconnect": {
+            "variable_name": "StopTransactionOnEVSideDisconnect",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "boolean"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadOnly"
+                }
+            ],
+            "description": "Whether to stop transaction when cable is unplugged on EV side",
+            "type": "boolean"
+        },
+        "SupportedFeatureProfiles": {
+            "variable_name": "SupportedFeatureProfiles",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "string"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadOnly"
+                }
+            ],
+            "description": "Comma-separated list of supported OCPP feature profiles",
+            "type": "string"
+        },
+        "SupportedFeatureProfilesMaxLength": {
+            "variable_name": "SupportedFeatureProfilesMaxLength",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "integer"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadOnly"
+                }
+            ],
+            "description": "Maximum length of the SupportedFeatureProfiles configuration key",
+            "type": "integer",
+            "minimum": 0
+        },
+        "UnlockConnectorOnEVSideDisconnect": {
+            "variable_name": "UnlockConnectorOnEVSideDisconnect",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "boolean"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Whether to unlock connector when cable is unplugged on EV side",
+            "type": "boolean"
+        },
+        "ReserveConnectorZeroSupported": {
+            "variable_name": "ReserveConnectorZeroSupported",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "boolean"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadOnly"
+                }
+            ],
+            "description": "Whether reserving connector 0 is supported",
+            "type": "boolean"
+        },
+        "HostName": {
+            "variable_name": "HostName",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "string"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadOnly"
+                }
+            ],
+            "description": "Host name of the charge point",
+            "type": "string",
+            "minLength": 1
+        },
+        "AllowChargingProfileWithoutStartSchedule": {
+            "variable_name": "AllowChargingProfileWithoutStartSchedule",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "boolean"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Whether to accept charging profiles without startSchedule field",
+            "type": "boolean"
+        },
+        "WaitForStopTransactionsOnResetTimeout": {
+            "variable_name": "WaitForStopTransactionsOnResetTimeout",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "integer",
+                "unit": "s"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Timeout in seconds to wait for StopTransaction.conf messages before executing reset",
+            "type": "integer",
+            "minimum": 0,
+            "default": 60
+        },
+        "StopTransactionIfUnlockNotSupported": {
+            "variable_name": "StopTransactionIfUnlockNotSupported",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "boolean"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Whether to stop transaction on Unlock request if unlocking is not supported",
+            "type": "boolean",
+            "default": false
+        },
+        "MeterPublicKeys": {
+            "variable_name": "MeterPublicKeys",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "string"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadOnly"
+                }
+            ],
+            "description": "Comma-separated list of public keys for signed meter values, one per connector",
+            "type": "string"
+        },
+        "DisableSecurityEventNotifications": {
+            "variable_name": "DisableSecurityEventNotifications",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "boolean"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "When set to true, no SecurityEventNotification messages will be sent",
+            "type": "boolean",
+            "default": false
+        },
+        "ISO15118CertificateManagementEnabled": {
+            "variable_name": "ISO15118CertificateManagementEnabled",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "boolean"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Whether ISO 15118 certificate management via DataTransfer is supported",
+            "type": "boolean",
+            "default": false
+        },
+        "CustomDisplayCostAndPrice": {
+            "variable_name": "CustomDisplayCostAndPrice",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "boolean"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadOnly"
+                }
+            ],
+            "description": "Whether California Pricing Requirements are supported",
+            "type": "boolean"
+        },
+        "DefaultPrice": {
+            "variable_name": "DefaultPrice",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "string"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Default pricing information as JSON object",
+            "type": "string",
+            "minLength": 1
+        },
+        "DefaultPriceText": {
+            "variable_name": "DefaultPriceText",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "string"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Multi-language pricing information as JSON object",
+            "type": "string",
+            "minLength": 1
+        },
+        "CustomIdleFeeAfterStop": {
+            "variable_name": "CustomIdleFeeAfterStop",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "boolean"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Whether idle fee calculation after transaction stop is supported",
+            "type": "boolean"
+        },
+        "SupportedLanguages": {
+            "variable_name": "SupportedLanguages",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "string"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadOnly"
+                }
+            ],
+            "description": "Comma-separated list of supported language codes per RFC5646",
+            "type": "string",
+            "minLength": 1
+        },
+        "CustomMultiLanguageMessages": {
+            "variable_name": "CustomMultiLanguageMessages",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "boolean"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadOnly"
+                }
+            ],
+            "description": "Whether multi-language support for tariffs is available",
+            "type": "boolean"
+        },
+        "Language": {
+            "variable_name": "Language",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "string"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Default language code for the station UI",
+            "type": "string",
+            "minLength": 1
+        },
+        "WaitForSetUserPriceTimeout": {
+            "variable_name": "WaitForSetUserPriceTimeout",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "integer",
+                "unit": "ms"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Timeout in milliseconds to wait for SetUserPrice after authorization",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 30000
+        },
+        "NumberOfConnectors": {
+            "variable_name": "NumberOfConnectors",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "integer"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadOnly"
+                }
+            ],
+            "description": "Number of connectors of the charging station",
+            "type": "integer",
+            "minimum": 1
+        },
+        "AuthorizationKey": {
+            "variable_name": "AuthorizationKey",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "string"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "WriteOnly"
+                }
+            ],
+            "description": "The OCPP 1.6 authorization key (BasicAuth password) used for the CSMS connection",
+            "type": "string"
+        },
+        "SecurityProfile": {
+            "variable_name": "SecurityProfile",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "integer"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "The OCPP 1.6 security profile used for the CSMS connection",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
+        },
+        "ExampleConfigurationKey": {
+            "variable_name": "ExampleConfigurationKey",
+            "characteristics": {
+                "supportsMonitoring": true,
+                "dataType": "string"
+            },
+            "attributes": [
+                {
+                    "type": "Actual",
+                    "mutability": "ReadWrite"
+                }
+            ],
+            "description": "Test-only OCPP 1.6 custom key mapped",
+            "type": "string"
+        }
+    },
+    "required": [
+        "GetConfigurationMaxKeys",
+        "NumberOfConnectors",
+        "UnlockConnectorOnEVSideDisconnect"
+    ]
+}

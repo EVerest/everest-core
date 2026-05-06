@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "power_supply_DC/codec.hpp"
 #include "nlohmann/json.hpp"
@@ -12,80 +12,59 @@
 namespace everest::lib::API::V1_0::types::power_supply_DC {
 
 std::string serialize(Capabilities const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(Mode val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(ChargingPhase val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(ModeRequest val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(VoltageCurrent const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(ErrorEnum val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(Error const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
-template <> Capabilities deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    Capabilities result = data;
-    return result;
+template <> Capabilities deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> Mode deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    Mode result = data;
-    return result;
+template <> Mode deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> ChargingPhase deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    ChargingPhase result = data;
-    return result;
+template <> ChargingPhase deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> ModeRequest deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    ModeRequest result = data;
-    return result;
+template <> ModeRequest deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> VoltageCurrent deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    VoltageCurrent result = data;
-    return result;
+template <> VoltageCurrent deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> ErrorEnum deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    ErrorEnum result = data;
-    return result;
+template <> ErrorEnum deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> Error deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    Error result = data;
-    return result;
+template <> Error deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
 std::ostream& operator<<(std::ostream& os, const Capabilities& k) {

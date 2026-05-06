@@ -285,7 +285,7 @@
       "LogMessagesFormat": {
           "variable_name": "LogMessagesFormat",
           "characteristics": {
-              "valuesList": "log,html,console,console_detailed,security",
+              "valuesList": "log,html,console,console_detailed,callback,security",
               "supportsMonitoring": true,
               "dataType": "MemberList"
           },

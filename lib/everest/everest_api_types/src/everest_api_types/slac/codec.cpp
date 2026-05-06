@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "slac/codec.hpp"
 #include "nlohmann/json.hpp"
@@ -11,8 +11,7 @@
 namespace everest::lib::API::V1_0::types::slac {
 
 std::string serialize(State val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::ostream& operator<<(std::ostream& os, State const& val) {
@@ -20,9 +19,7 @@ std::ostream& operator<<(std::ostream& os, State const& val) {
     return os;
 }
 
-template <> State deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    State result = data;
-    return result;
+template <> State deserialize(std::string const& val) {
+    return json::parse(val);
 }
 } // namespace everest::lib::API::V1_0::types::slac

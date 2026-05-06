@@ -795,7 +795,6 @@ async def test_pwm_ac_session_no_energy_during_session(
     await set_external_limits(probe_module, "gcp", 0, 0)
     await wait_for_session_events(session_event_mock, ["ChargingPausedEVSE"])
     await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingStarted"], wait_time=5)
-    await assert_energy_below(powermeter_mock, energy_threshold_wh=15, timeout=5)
     await assert_power_below(powermeter_mock, power_threshold_w=10, timeout=5)
     await set_external_limits(probe_module, "gcp", 10000, 10000)
     await wait_for_session_events(session_event_mock, ["PrepareCharging","ChargingStarted"])
@@ -826,9 +825,9 @@ async def test_iso15118_ac_session_no_energy_during_session(
     await assert_energy_exceeds(powermeter_mock, energy_threshold_wh=10, timeout=15)
     await set_external_limits(probe_module, "gcp", 0, 0)
     await assert_no_events(session_event_mock, ["ChargingStarted"], wait_time=5)
-    await assert_energy_below(powermeter_mock, energy_threshold_wh=25, timeout=10)
+    await assert_power_below(powermeter_mock, power_threshold_w=10, timeout=10)
     await set_external_limits(probe_module, "gcp", 10000, 10000)
-    await assert_energy_exceeds(powermeter_mock, energy_threshold_wh=25, timeout=15)
+    await assert_power_exceeds(powermeter_mock, power_threshold_w=3000, timeout=15)
     await end_session(test_controller, session_event_mock)
 
 
@@ -956,7 +955,7 @@ async def test_pwm_ac_session_paused_by_ev(
     await assert_energy_exceeds(powermeter_mock, energy_threshold_wh=10, timeout=15)
     test_controller.pause_session()
     await wait_for_session_events(session_event_mock, ["ChargingPausedEV"])
-    await assert_energy_below(powermeter_mock, energy_threshold_wh=15, timeout=5)
+    await assert_power_below(powermeter_mock, power_threshold_w=10, timeout=5)
     await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingStarted"], wait_time=5)
     test_controller.resume_session()
     await wait_for_session_events(session_event_mock, ["ChargingStarted"])
@@ -989,7 +988,7 @@ async def test_iso15118_ac_session_paused_by_ev(
     await assert_energy_exceeds(powermeter_mock, energy_threshold_wh=10, timeout=15)
     test_controller.pause_iso_session()
     await wait_for_session_events(session_event_mock, ["ChargingPausedEV"])
-    await assert_energy_below(powermeter_mock, energy_threshold_wh=20, timeout=5)
+    await assert_power_below(powermeter_mock, power_threshold_w=10, timeout=5)
     await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingStarted"], wait_time=5)
     test_controller.resume_iso_session_ac()
     await wait_for_session_events(session_event_mock, ["ChargingStarted"])
@@ -1025,8 +1024,8 @@ async def test_iso15118_dc_session_paused_by_ev(
     await assert_energy_below(powermeter_mock, energy_threshold_wh=20, timeout=5)
     await assert_no_events(session_event_mock, ["ChargingStarted", "ChargingStarted"], wait_time=5)
     test_controller.resume_iso_session_dc()
-    await assert_energy_exceeds(powermeter_mock, energy_threshold_wh=20, timeout=45)
     await wait_for_session_events(session_event_mock, ["ChargingStarted"])
+    await assert_energy_exceeds(powermeter_mock, energy_threshold_wh=20, timeout=45)
     await end_session(test_controller, session_event_mock)
 
 @pytest.mark.asyncio
@@ -1059,7 +1058,7 @@ async def test_pwm_ac_session_paused_by_evse(
     await wait_for_session_events(session_event_mock, ["ChargingPausedEVSE"])
     await set_external_limits(probe_module, "gcp", 0, 0)
 
-    await assert_energy_below(powermeter_mock, energy_threshold_wh=15, timeout=5)
+    await assert_power_below(powermeter_mock, power_threshold_w=10, timeout=5)
     await assert_no_events(session_event_mock, ["ChargingStarted"], wait_time=5)
     await probe_module.call_command(
         "evse_manager",
@@ -1067,7 +1066,7 @@ async def test_pwm_ac_session_paused_by_evse(
         {},
     )
 
-    await assert_energy_below(powermeter_mock, energy_threshold_wh=15, timeout=5)
+    await assert_power_below(powermeter_mock, power_threshold_w=10, timeout=5)
     await set_external_limits(probe_module, "gcp", 10000, 10000)
 
     await wait_for_session_events(session_event_mock, ["ChargingStarted"])
@@ -1103,7 +1102,7 @@ async def test_iso15118_ac_session_paused_by_evse(
         {},
     )
     await wait_for_session_events(session_event_mock, ["ChargingPausedEVSE"])
-    await assert_energy_below(powermeter_mock, energy_threshold_wh=50, timeout=5)
+    await assert_power_below(powermeter_mock, power_threshold_w=10, timeout=5)
     await assert_no_events(session_event_mock, ["ChargingStarted"], wait_time=5)
     await probe_module.call_command(
         "evse_manager",
@@ -1144,7 +1143,7 @@ async def test_iso15118_dc_session_paused_by_evse(
         {},
     )
     await wait_for_session_events(session_event_mock, ["ChargingPausedEVSE"])
-    await assert_energy_below(powermeter_mock, energy_threshold_wh=15, timeout=5)
+    await assert_power_below(powermeter_mock, power_threshold_w=10, timeout=5)
     await probe_module.call_command(
         "evse_manager",
         "resume_charging",

@@ -120,7 +120,7 @@ public:
     /// \brief ConfigService client using the provided \p mqtt_abstraction for the module identified by \p module_id
     /// \p module_names is a mapping of all module ids to module names/types for usage in get_module_configs()
     ConfigServiceClient(std::shared_ptr<MQTTAbstraction> mqtt_abstraction, const std::string& module_id,
-                        const std::unordered_map<std::string, std::string>& module_names);
+                        const std::map<std::string, std::string, std::less<>>& module_names);
 
     /// \brief Compiles and \returns all module configs that this module has access to
     std::map<ModuleIdType, everest::config::ModuleConfigurationParameters> get_module_configs();
@@ -140,7 +140,7 @@ public:
 private:
     std::shared_ptr<MQTTAbstraction> mqtt_abstraction;
     std::string origin;
-    std::unordered_map<std::string, std::string> module_names;
+    std::map<std::string, std::string, std::less<>> module_names;
 };
 
 class ConfigService {

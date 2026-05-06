@@ -10,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <string_view>
 #include <thread>
 #include <unordered_set>
 
@@ -23,39 +24,16 @@ struct Message {
     std::string topic;   ///< The MQTT topic where this message originated from
     std::string payload; ///< The message payload
 
-    Message(const std::string& topic_, const std::string& payload_) : topic(topic_), payload(payload_) {
+    Message(std::string_view topic_param, std::string_view payload_param) : topic(topic_param), payload(payload_param) {
     }
 };
 
 struct ParsedMessage {
     std::string topic;
-    json data;
+    nlohmann::json data;
 };
 
 using MessageCallback = std::function<void(const Message&)>;
-
-/// \brief Simple message queue that takes std::string messages, parsed them and dispatches them to handlers
-class MessageQueue {
-
-private:
-    std::thread worker_thread;
-    std::queue<std::unique_ptr<Message>> message_queue;
-    std::mutex queue_ctrl_mutex;
-    MessageCallback message_callback;
-    std::condition_variable cv;
-    bool running = true;
-
-public:
-    /// \brief Creates a message queue with the provided \p message_callback
-    explicit MessageQueue(MessageCallback);
-    ~MessageQueue();
-
-    /// \brief Adds a \p message to the message queue which will then be delivered to the message callback
-    void add(std::unique_ptr<Message>);
-
-    /// \brief Stops the message queue
-    void stop();
-};
 
 } // namespace Everest
 

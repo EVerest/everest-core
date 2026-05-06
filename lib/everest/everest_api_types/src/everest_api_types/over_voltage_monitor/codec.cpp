@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2025 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2026 Pionix GmbH and Contributors to EVerest
 
 #include "over_voltage_monitor/codec.hpp"
 #include "nlohmann/json.hpp"
@@ -12,47 +12,35 @@
 namespace everest::lib::API::V1_0::types::over_voltage_monitor {
 
 std::string serialize(ErrorEnum val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(ErrorSeverityEnum val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(Error const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
 std::string serialize(OverVoltageLimits const& val) noexcept {
-    json result = val;
-    return result.dump(json_indent);
+    return nlohmann::json(val).dump(json_indent);
 }
 
-template <> ErrorEnum deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    ErrorEnum result = data;
-    return result;
+template <> ErrorEnum deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> ErrorSeverityEnum deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    ErrorSeverityEnum result = data;
-    return result;
+template <> ErrorSeverityEnum deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> Error deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    Error result = data;
-    return result;
+template <> Error deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
-template <> OverVoltageLimits deserialize(std::string const& s) {
-    auto data = json::parse(s);
-    OverVoltageLimits result = data;
-    return result;
+template <> OverVoltageLimits deserialize(std::string const& val) {
+    return json::parse(val);
 }
 
 std::ostream& operator<<(std::ostream& os, const ErrorEnum& val) {

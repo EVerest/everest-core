@@ -17,7 +17,8 @@
 #include <everest/io/event/fd_event_handler.hpp>
 #include <everest/io/event/timer_fd.hpp>
 #include <everest/io/mqtt/mqtt_client.hpp>
-
+#include <everest/util/async/monitor.hpp>
+#include <everest/util/queue/simple_queue.hpp>
 #include <utils/config/mqtt_settings.hpp>
 #include <utils/message_handler.hpp>
 #include <utils/message_queue.hpp>
@@ -73,18 +74,21 @@ public:
     static bool check_topic_matches(const std::string& full_topic, const std::string& wildcard_topic);
 
 private:
+    template <class T> using monitor = everest::lib::util::monitor<T>;
+    using shared_messages = std::vector<std::shared_ptr<MessageWithQOS>>;
+    struct Topics {
+        std::vector<std::string> retained_topics;
+        std::unordered_set<std::string> subscribed_topics;
+    };
+
     bool mqtt_is_connected;
     std::atomic_bool running;
     MessageHandler message_handler;
-    MessageQueue message_queue;
-    std::vector<std::shared_ptr<MessageWithQOS>> messages_before_connected;
-    std::mutex messages_before_connected_mutex;
-    std::mutex topics_mutex;
-    std::mutex topic_request_mutex;
-    std::vector<std::string> retained_topics;
-    std::unordered_set<std::string> subscribed_topics;
+    everest::lib::util::simple_queue<Message> message_queue;
 
-    Thread mqtt_mainloop_thread;
+    monitor<shared_messages> messages_before_connected;
+    monitor<Topics> managed_topics;
+
     std::shared_future<void> main_loop_future;
 
     std::string mqtt_server_socket_path;
@@ -95,10 +99,16 @@ private:
 
     std::unique_ptr<everest::lib::io::mqtt::mqtt_client> mqtt_client;
     everest::lib::io::event::event_fd disconnect_event;
+    everest::lib::io::event::event_fd new_message_event;
     everest::lib::io::event::fd_event_handler ev_handler;
 
-    void on_mqtt_message(const Message& message);
+    // This must be destroyed first.
+    Thread mqtt_mainloop_thread;
+
+    void on_mqtt_message();
     void on_mqtt_connect();
+    void handle_mqtt_message(const Message& message);
+
     static void on_mqtt_disconnect();
     nlohmann::json get_internal(const MQTTRequest& request);
 };

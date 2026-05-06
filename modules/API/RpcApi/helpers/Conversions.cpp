@@ -101,6 +101,9 @@ ErrorObj everest_error_to_rpc_error(const Everest::error::Error& error_object) {
     rpc_error.origin.module_id = error_object.origin.module_id;
     rpc_error.origin.implementation_id = error_object.origin.implementation_id;
 
+    rpc_error.origin.evse_index = 0;
+    rpc_error.origin.connector_index = 0;
+
     if (error_object.origin.mapping.has_value()) {
         rpc_error.origin.evse_index = error_object.origin.mapping.value().evse;
 
@@ -108,9 +111,6 @@ ErrorObj everest_error_to_rpc_error(const Everest::error::Error& error_object) {
             rpc_error.origin.connector_index = error_object.origin.mapping.value().connector.value();
         }
     }
-
-    rpc_error.origin.evse_index = 0;
-    rpc_error.origin.connector_index = 0;
 
     rpc_error.timestamp = Everest::Date::to_rfc3339(error_object.timestamp);
     rpc_error.uuid = error_object.uuid.to_string();

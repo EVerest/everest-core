@@ -79,7 +79,7 @@ IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& 
     timeout_unlock_state_F.signal_reached.connect([this]() { feed_state_machine(std::nullopt); });
 
     // Subscribe to bsp driver to receive BspEvents from the hardware
-    r_bsp->subscribe_event([this](const types::board_support_common::BspEvent event) {
+    r_bsp->subscribe_event([this](types::board_support_common::BspEvent const& event) {
         if (enabled) {
             // feed into state machine
             process_bsp_event(event);
@@ -89,7 +89,7 @@ IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& 
     });
 }
 
-void IECStateMachine::process_bsp_event(const types::board_support_common::BspEvent bsp_event) {
+void IECStateMachine::process_bsp_event(types::board_support_common::BspEvent const& bsp_event) {
     auto event = from_bsp_event(bsp_event.event);
     std::visit(overloaded{[this](const RawCPState& raw_state) {
                               // If it is a raw CP state, run it through the state machine
@@ -110,7 +110,7 @@ void IECStateMachine::process_bsp_event(const types::board_support_common::BspEv
                event);
 }
 
-void IECStateMachine::feed_state_machine(std::optional<RawCPState> cp_state_opt) {
+void IECStateMachine::feed_state_machine(std::optional<RawCPState> const& cp_state_opt) {
     auto events = state_machine(cp_state_opt);
 
     // Process all events
@@ -125,7 +125,7 @@ void IECStateMachine::feed_state_machine(std::optional<RawCPState> cp_state_opt)
 // - CP state changes (both events from hardware as well as duty cycle changes)
 // - Allow power on changes
 // - The C1 6s timer expires
-std::queue<CPEvent> IECStateMachine::state_machine(std::optional<RawCPState> cp_state_opt) {
+std::queue<CPEvent> IECStateMachine::state_machine(std::optional<RawCPState> const& cp_state_opt) {
 
     if (cp_state_opt) {
         EVLOG_debug << "RawCPState " << static_cast<int>(cp_state_opt.value());
@@ -421,7 +421,7 @@ void IECStateMachine::call_allow_power_on_bsp(bool value) {
     r_bsp->call_allow_power_on({value, power_on_reason});
 }
 
-void IECStateMachine::set_pp_ampacity(types::board_support_common::ProximityPilot pp) {
+void IECStateMachine::set_pp_ampacity(types::board_support_common::ProximityPilot const& pp) {
     switch (pp.ampacity) {
     case types::board_support_common::Ampacity::A_13:
         pp_ampacity = 13.;

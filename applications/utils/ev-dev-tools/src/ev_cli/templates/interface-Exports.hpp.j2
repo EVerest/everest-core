@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('4') }}
+{{ print_template_info('5') }}
 
 #include <framework/ModuleAdapter.hpp>
 #include <utils/types.hpp>
@@ -44,33 +44,31 @@ public:
     {% else %}
     // variables available for subscription
     {% for var in vars %}
-    void subscribe_{{ var.name }}(const std::function<void({% if var.json_type != 'null' %}{{ cpp_type(var) }}{% endif %})>& listener) {
-        ValueCallback cb = [listener](const Value& value) {
+    void subscribe_{{ var.name }}(const std::function<void({% if var.json_type != 'null' %}const {{ cpp_type(var) }}&{% endif %})>& listener) {
+        _adapter->subscribe(_req, "{{ var.name }}", [func = std::move(listener)](const Value& value) {
         {% if 'object_type' in var %}
-            listener(value);
+            func(value);
         {% elif 'enum_type' in var %}
-            auto native_value = {{ string_to_enum(var.enum_type) }}({{ var_to_cpp(var) }}(value));
-            listener(native_value);
+            func({{ string_to_enum(var.enum_type) }}({{ var_to_cpp(var) }}(value)));
         {% elif 'array_type' in var %}
             {% if 'array_type_contains_enum' in var %}
             std::vector<{{ var.array_type }}> typed_value;
             for (auto& entry : value) {
                 typed_value.push_back({{ string_to_enum(var.array_type) }}(entry));
             }
-            listener(typed_value);
+            func(typed_value);
             {% else %}
-            listener(value);
+            func(value);
             {% endif %}
         {% elif var.json_type != 'null' %}
-            listener({{ var_to_cpp(var) }}(value));
+            func({{ var_to_cpp(var) }}(value));
         {% else %}
             if (not Everest::detail::is_type_compatible<{{ cpp_type(var) }}>(value.type())) {
                 EVLOG_error << "Callback for variable '{{ var.name }}' in interface '{{ info.interface }}' has wrong type!";
             }
-            listener();
+            func();
         {% endif %}
-        };
-        _adapter->subscribe(_req, "{{ var.name }}", cb);
+        });
     }
     {% if not loop.last %}
 
@@ -99,31 +97,36 @@ public:
     // commands available to call
     {% for cmd in cmds %}
     {{ call_cmd_signature(cmd, info.interface_name) }} {
-        Parameters args;
         {% for arg in cmd.args %}
-        {% if 'enum_type' in arg %}
-        auto {{ arg.name }}_string = {{ enum_to_string(arg.enum_type) }}({{ arg.name }});
-        args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name + '_string') }};
-        {% elif 'object_type' in arg %}
-        json {{ arg.name }}_json = {{ arg.name }};
-        Object {{ arg.name }}_object = {{ arg.name }}_json;
-        args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name + '_object') }};
-        {% elif 'array_type' in arg %}
+        {% if 'array_type' in arg %}
         {% if 'array_type_contains_enum' in arg %}
         Array {{ arg.name }}_array;
-        for (auto {{ arg.name }}_entry : {{ arg.name }}) {
+        for (const auto& {{ arg.name }}_entry : {{ arg.name }}) {
             {{ arg.name }}_array.push_back({{ enum_to_string(arg.array_type) }}({{ arg.name }}_entry));
         }
-        {% else %}
-        json {{ arg.name }}_json = {{ arg.name }};
-        Array {{ arg.name }}_array = {{ arg.name }}_json;
         {% endif %}
-        args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name + '_array') }};
-        {% else %}
-        args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name) }};
-        {% endif%}
+        {% endif %}
         {% endfor %}
-        {{ '' }}{% if cmd.result %}Result result = {% endif %}_adapter->call(_req, "{{ cmd.name }}", args);
+        {{ '' }}{% if cmd.result %}Result result = {% endif %}_adapter->call(_req, "{{ cmd.name }}",
+        {{ 'Parameters{' }}
+        {% for arg in cmd.args %}
+        {% if 'enum_type' in arg %}
+        {"{{ arg.name }}", {{ enum_to_string(arg.enum_type) }}({{ arg.name }})}
+        {% elif 'object_type' in arg %}
+        {"{{ arg.name }}", {{ arg.name }}}
+        {% elif 'array_type' in arg %}
+        {% if 'array_type_contains_enum' in arg %}
+        {"{{ arg.name }}", {{ var_to_any(arg, arg.name + '_array') }}}
+        {% else %}
+        {"{{ arg.name }}", {{ var_to_any(arg, arg.name) }}}
+        {% endif %}
+        {% else %}
+        {"{{ arg.name }}", {{ var_to_any(arg, arg.name) }}}
+        {% endif%}
+        {% if not loop.last %},{% endif %}
+        {% endfor %}
+        {{ '}' }}
+        );
         {% if cmd.result %}
         {% if 'enum_type' in cmd.result %}
         auto retval = {{ string_to_enum(cmd.result.enum_type) }}({{ var_to_cpp(cmd.result) }}(result.value()));

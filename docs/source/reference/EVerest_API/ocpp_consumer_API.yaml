@@ -107,6 +107,11 @@ channels:
     messages:
       receive_charging_schedules:
         $ref: '#/components/messages/receive_charging_schedules'
+  receive_ocpp_message:
+    address: e2m/ocpp_message
+    messages:
+      receive_ocpp_message:
+        $ref: '#/components/messages/receive_ocpp_message'
 
 
   receive_heartbeat:
@@ -229,6 +234,12 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/receive_charging_schedules'
+  receive_ocpp_message:
+    title: Receive ocpp message
+    action: receive
+    channel:
+      $ref: '#/channels/receive_ocpp_message'
+    description: A serialized OCPP message
 
 
   receive_heartbeat:
@@ -490,6 +501,13 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/ChargingSchedules'
+    receive_ocpp_message:
+      name: receive_ocpp_message
+      title: Receive ocpp message
+      summary: A serialized OCPP message
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Message'
 
 
     receive_heartbeat:
@@ -1254,6 +1272,30 @@ components:
           type: string
           minLength: 0
           maxLength: 50
+    MessageDirection:
+      description: OCPP message direction
+      type: string
+      enum:
+      - CSMSToChargingStation
+      - ChargingStationToCSMS
+    Message:
+      description: OCPP message with direction
+      type: object
+      required:
+      - message
+      - direction
+      properties:
+        message:
+          description: Serialized OCPP-J message
+          type: string
+        direction:
+          description: OCPP message direction
+          type: string
+          $ref: '#/components/schemas/MessageDirection'
+        version:
+          description: OCPP version of the serialized message
+          type: string
+      additionalProperties: true
 
     CommunicationCheck:
       type: boolean

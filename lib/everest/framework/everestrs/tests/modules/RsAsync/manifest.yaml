@@ -1,0 +1,14 @@
+description: Simple Example
+provides:
+  sender:
+    interface: example
+    description: An example interface.
+requires:
+  receiver:
+    interface: example
+    ignore:
+      errors: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Everest authors

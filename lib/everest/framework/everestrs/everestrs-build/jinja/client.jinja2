@@ -84,7 +84,7 @@ use super::errors;
 #[derive(Clone)]
 pub(crate) struct {{trait.name | title }}ClientPublisher {
    pub(super) implementation_id: &'static str,
-   pub(super) runtime: ::std::pin::Pin<::std::sync::Arc<::everestrs::Runtime>>,
+   pub(super) runtime: ::std::sync::Weak<::everestrs::Runtime>,
    pub(super) index: usize,
 }
 
@@ -114,7 +114,12 @@ impl {{trait.name | title }}ClientPublisher {
             "{{arg.name}}": {{arg.name | identifier}},
 {%- endfor %}
         });
-        self.runtime.call_command(self.implementation_id, self.index, "{{ cmd.name }}", &args)
+        let rt = self.runtime.upgrade().ok_or_else(|| {
+            ::everestrs::Error::HandlerException(
+                "publisher used after Module was dropped".into(),
+            )
+        })?;
+        rt.call_command(self.implementation_id, self.index, "{{ cmd.name }}", &args)
       }
 {% endfor %}
 
