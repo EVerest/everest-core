@@ -16,8 +16,8 @@ void from_json(const json& j, AuthorizationStatus& k);
 void to_json(json& j, CertificateStatus const& k) noexcept;
 void from_json(const json& j, CertificateStatus& k);
 
-void to_json(json& j, TokenValidationStatus const& k) noexcept;
-void from_json(const json& j, TokenValidationStatus& k);
+void to_json(json& j, TokenAction const& k) noexcept;
+void from_json(const json& j, TokenAction& k);
 
 void to_json(json& j, SelectionAlgorithm const& k) noexcept;
 void from_json(const json& j, SelectionAlgorithm& k);
@@ -40,8 +40,11 @@ void from_json(const json& j, IdToken& k);
 void to_json(json& j, ProvidedIdToken const& k) noexcept;
 void from_json(const json& j, ProvidedIdToken& k);
 
-void to_json(json& j, TokenValidationStatusMessage const& k) noexcept;
-void from_json(const json& j, TokenValidationStatusMessage& k);
+void to_json(json& j, TokenActionMessage const& k) noexcept;
+void from_json(const json& j, TokenActionMessage& k);
+
+void to_json(json& j, TokenValidationMessage const& k) noexcept;
+void from_json(const json& j, TokenValidationMessage& k);
 
 void to_json(json& j, ValidationResult const& k) noexcept;
 void from_json(const json& j, ValidationResult& k);

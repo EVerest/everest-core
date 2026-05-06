@@ -173,66 +173,59 @@ void from_json(const json& j, CertificateStatus& k) {
         " could not be converted to enum of type everest::lib::API::V1_0::types::auth::CertificateStatus");
 }
 
-void to_json(json& j, TokenValidationStatus const& k) noexcept {
+void to_json(json& j, TokenAction const& k) noexcept {
     switch (k) {
-    case TokenValidationStatus::Processing:
+    case TokenAction::Processing:
         j = "Processing";
         return;
-    case TokenValidationStatus::Accepted:
-        j = "Accepted";
-        return;
-    case TokenValidationStatus::Rejected:
+    case TokenAction::Rejected:
         j = "Rejected";
         return;
-    case TokenValidationStatus::TimedOut:
+    case TokenAction::TimedOut:
         j = "TimedOut";
         return;
-    case TokenValidationStatus::Withdrawn:
+    case TokenAction::Withdrawn:
         j = "Withdrawn";
         return;
-    case TokenValidationStatus::UsedToStart:
+    case TokenAction::UsedToStart:
         j = "UsedToStart";
         return;
-    case TokenValidationStatus::UsedToStop:
+    case TokenAction::UsedToStop:
         j = "UsedToStop";
         return;
     }
-    j = "INVALID_VALUE__everest::lib::API::V1_0::types::auth::TokenValidationStatus";
+    j = "INVALID_VALUE__everest::lib::API::V1_0::types::auth::TokenAction";
 }
 
-void from_json(const json& j, TokenValidationStatus& k) {
+void from_json(const json& j, TokenAction& k) {
     std::string s = j;
     if (s == "Processing") {
-        k = TokenValidationStatus::Processing;
-        return;
-    }
-    if (s == "Accepted") {
-        k = TokenValidationStatus::Accepted;
+        k = TokenAction::Processing;
         return;
     }
     if (s == "Rejected") {
-        k = TokenValidationStatus::Rejected;
+        k = TokenAction::Rejected;
         return;
     }
     if (s == "TimedOut") {
-        k = TokenValidationStatus::TimedOut;
+        k = TokenAction::TimedOut;
         return;
     }
     if (s == "Withdrawn") {
-        k = TokenValidationStatus::Withdrawn;
+        k = TokenAction::Withdrawn;
         return;
     }
     if (s == "UsedToStart") {
-        k = TokenValidationStatus::UsedToStart;
+        k = TokenAction::UsedToStart;
         return;
     }
     if (s == "UsedToStop") {
-        k = TokenValidationStatus::UsedToStop;
+        k = TokenAction::UsedToStop;
         return;
     }
     throw std::out_of_range(
         "Provided string " + s +
-        " could not be converted to enum of type everest::lib::API::V1_0::types::auth::TokenValidationStatus");
+        " could not be converted to enum of type everest::lib::API::V1_0::types::auth::TokenAction");
 }
 
 void to_json(json& j, SelectionAlgorithm const& k) noexcept {
@@ -542,10 +535,10 @@ void from_json(const json& j, ProvidedIdToken& k) {
     }
 }
 
-void to_json(json& j, TokenValidationStatusMessage const& k) noexcept {
+void to_json(json& j, TokenActionMessage const& k) noexcept {
     j = json{
         {"token", k.token},
-        {"status", k.status},
+        {"action", k.action},
     };
     if (k.messages) {
         j["messages"] = json::array();
@@ -555,9 +548,9 @@ void to_json(json& j, TokenValidationStatusMessage const& k) noexcept {
     }
 }
 
-void from_json(const json& j, TokenValidationStatusMessage& k) {
+void from_json(const json& j, TokenActionMessage& k) {
     k.token = j.at("token");
-    k.status = j.at("status");
+    k.action = j.at("action");
     if (j.contains("messages")) {
         json arr = j.at("messages");
         std::vector<types::text_message::MessageContent> vec;
@@ -566,6 +559,18 @@ void from_json(const json& j, TokenValidationStatusMessage& k) {
         }
         k.messages.emplace(vec);
     }
+}
+
+void to_json(json& j, TokenValidationMessage const& k) noexcept {
+    j = json{
+        {"token", k.token},
+        {"results", k.results},
+    };
+}
+
+void from_json(const json& j, TokenValidationMessage& k) {
+    k.token = j.at("token");
+    k.results = j.at("results").get<std::vector<ValidationResult>>();
 }
 
 void to_json(json& j, ValidationResult const& k) noexcept {

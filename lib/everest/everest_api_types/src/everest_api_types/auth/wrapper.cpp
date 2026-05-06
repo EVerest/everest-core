@@ -159,14 +159,12 @@ CertificateStatus_External to_external_api(CertificateStatus_Internal const& val
     throw std::out_of_range("Unexpected value for everest::lib::API::V1_0::types::auth::CertificateStatus_Internal");
 }
 
-TokenValidationStatus_Internal to_internal_api(TokenValidationStatus_External const& val) {
-    using SrcT = TokenValidationStatus_External;
-    using TarT = TokenValidationStatus_Internal;
+TokenAction_Internal to_internal_api(TokenAction_External const& val) {
+    using SrcT = TokenAction_External;
+    using TarT = TokenAction_Internal;
     switch (val) {
     case SrcT::Processing:
         return TarT::Processing;
-    case SrcT::Accepted:
-        return TarT::Accepted;
     case SrcT::Rejected:
         return TarT::Rejected;
     case SrcT::TimedOut:
@@ -178,17 +176,14 @@ TokenValidationStatus_Internal to_internal_api(TokenValidationStatus_External co
     case SrcT::UsedToStop:
         return TarT::UsedToStop;
     }
-    throw std::out_of_range(
-        "Unexpected value for everest::lib::API::V1_0::types::auth::TokenValidationStatus_External");
+    throw std::out_of_range("Unexpected value for everest::lib::API::V1_0::types::auth::TokenAction_External");
 }
-TokenValidationStatus_External to_external_api(TokenValidationStatus_Internal const& val) {
-    using SrcT = TokenValidationStatus_Internal;
-    using TarT = TokenValidationStatus_External;
+TokenAction_External to_external_api(TokenAction_Internal const& val) {
+    using SrcT = TokenAction_Internal;
+    using TarT = TokenAction_External;
     switch (val) {
     case SrcT::Processing:
         return TarT::Processing;
-    case SrcT::Accepted:
-        return TarT::Accepted;
     case SrcT::Rejected:
         return TarT::Rejected;
     case SrcT::TimedOut:
@@ -200,8 +195,7 @@ TokenValidationStatus_External to_external_api(TokenValidationStatus_Internal co
     case SrcT::UsedToStop:
         return TarT::UsedToStop;
     }
-    throw std::out_of_range(
-        "Unexpected value for everest::lib::API::V1_0::types::auth::TokenValidationStatus_Internal");
+    throw std::out_of_range("Unexpected value for everest::lib::API::V1_0::types::auth::TokenAction_Internal");
 }
 
 SelectionAlgorithm_Internal to_internal_api(SelectionAlgorithm_External const& val) {
@@ -416,23 +410,37 @@ ProvidedIdToken_External to_external_api(ProvidedIdToken_Internal const& val) {
     return result;
 }
 
-TokenValidationStatusMessage_Internal to_internal_api(TokenValidationStatusMessage_External const& val) {
-    TokenValidationStatusMessage_Internal result;
+TokenActionMessage_Internal to_internal_api(TokenActionMessage_External const& val) {
+    TokenActionMessage_Internal result;
     result.token = to_internal_api(val.token);
-    result.status = to_internal_api(val.status);
+    result.status = to_internal_api(val.action);
     if (val.messages) {
         result.messages = vecToInternal(val.messages.value());
     }
     return result;
 }
 
-TokenValidationStatusMessage_External to_external_api(TokenValidationStatusMessage_Internal const& val) {
-    TokenValidationStatusMessage_External result;
+TokenActionMessage_External to_external_api(TokenActionMessage_Internal const& val) {
+    TokenActionMessage_External result;
     result.token = to_external_api(val.token);
-    result.status = to_external_api(val.status);
+    result.action = to_external_api(val.status);
     if (val.messages) {
         result.messages = vecToExternal(val.messages.value());
     }
+    return result;
+}
+
+TokenValidationMessage_Internal to_internal_api(TokenValidationMessage_External const& val) {
+    TokenValidationMessage_Internal result;
+    result.token = to_internal_api(val.token);
+    result.results = vecToInternal(val.results);
+    return result;
+}
+
+TokenValidationMessage_External to_external_api(TokenValidationMessage_Internal const& val) {
+    TokenValidationMessage_External result;
+    result.token = to_external_api(val.token);
+    result.results = vecToExternal(val.results);
     return result;
 }
 

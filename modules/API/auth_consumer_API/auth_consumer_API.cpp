@@ -29,6 +29,7 @@ void auth_consumer_API::ready() {
 
     generate_api_cmd_withdraw_authorization();
     generate_api_var_token_validation_status();
+    generate_api_var_token_action();
 
     generate_api_var_communication_check();
 
@@ -70,6 +71,10 @@ void auth_consumer_API::generate_api_cmd_withdraw_authorization() {
 
 void auth_consumer_API::generate_api_var_token_validation_status() {
     r_auth->subscribe_token_validation_status(forward_api_var("token_validation_status"));
+}
+
+void auth_consumer_API::generate_api_var_token_action() {
+    r_auth->subscribe_token_action(forward_api_var("token_action"));
 }
 
 void auth_consumer_API::generate_api_var_communication_check() {

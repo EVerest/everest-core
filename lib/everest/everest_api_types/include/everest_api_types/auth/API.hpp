@@ -36,9 +36,8 @@ enum class CertificateStatus {
     ContractCancelled,
 };
 
-enum class TokenValidationStatus {
+enum class TokenAction {
     Processing,
-    Accepted,
     Rejected,
     TimedOut,
     UsedToStart,
@@ -100,9 +99,9 @@ struct ProvidedIdToken {
     std::optional<std::vector<iso15118_charger::CertificateHashDataInfo>> iso15118CertificateHashData;
 };
 
-struct TokenValidationStatusMessage {
+struct TokenActionMessage {
     ProvidedIdToken token;
-    TokenValidationStatus status;
+    TokenAction action;
     std::optional<std::vector<text_message::MessageContent>> messages;
 };
 
@@ -120,6 +119,11 @@ struct ValidationResult {
 struct ValidationResultUpdate {
     ValidationResult validation_result;
     int32_t connector_id;
+};
+
+struct TokenValidationMessage {
+    ProvidedIdToken token;
+    std::vector<ValidationResult> results;
 };
 
 struct WithdrawAuthorizationRequest {

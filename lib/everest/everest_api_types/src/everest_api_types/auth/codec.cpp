@@ -21,7 +21,7 @@ std::string serialize(CertificateStatus val) noexcept {
     return result.dump(json_indent);
 }
 
-std::string serialize(TokenValidationStatus val) noexcept {
+std::string serialize(TokenAction val) noexcept {
     json result = val;
     return result.dump(json_indent);
 }
@@ -61,7 +61,12 @@ std::string serialize(ProvidedIdToken const& val) noexcept {
     return result.dump(json_indent);
 }
 
-std::string serialize(TokenValidationStatusMessage const& val) noexcept {
+std::string serialize(TokenActionMessage const& val) noexcept {
+    json result = val;
+    return result.dump(json_indent);
+}
+
+std::string serialize(TokenValidationMessage const& val) noexcept {
     json result = val;
     return result.dump(json_indent);
 }
@@ -91,7 +96,7 @@ std::ostream& operator<<(std::ostream& os, CertificateStatus const& val) {
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, TokenValidationStatus const& val) {
+std::ostream& operator<<(std::ostream& os, TokenAction const& val) {
     os << serialize(val);
     return os;
 }
@@ -131,7 +136,12 @@ std::ostream& operator<<(std::ostream& os, ProvidedIdToken const& val) {
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, TokenValidationStatusMessage const& val) {
+std::ostream& operator<<(std::ostream& os, TokenActionMessage const& val) {
+    os << serialize(val);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, TokenValidationMessage const& val) {
     os << serialize(val);
     return os;
 }
@@ -163,9 +173,9 @@ template <> CertificateStatus deserialize<>(std::string const& val) {
     return obj;
 }
 
-template <> TokenValidationStatus deserialize<>(std::string const& val) {
+template <> TokenAction deserialize<>(std::string const& val) {
     auto data = json::parse(val);
-    TokenValidationStatus obj = data;
+    TokenAction obj = data;
     return obj;
 }
 
@@ -211,9 +221,15 @@ template <> ProvidedIdToken deserialize<>(const std::string& val) {
     return obj;
 }
 
-template <> TokenValidationStatusMessage deserialize<>(const std::string& val) {
+template <> TokenActionMessage deserialize<>(const std::string& val) {
     auto data = json::parse(val);
-    TokenValidationStatusMessage obj = data;
+    TokenActionMessage obj = data;
+    return obj;
+}
+
+template <> TokenValidationMessage deserialize<>(const std::string& val) {
+    auto data = json::parse(val);
+    TokenValidationMessage obj = data;
     return obj;
 }
 

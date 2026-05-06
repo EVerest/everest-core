@@ -24,11 +24,11 @@ using CertificateStatus_External = CertificateStatus;
 CertificateStatus_Internal to_internal_api(CertificateStatus_External const& val);
 CertificateStatus_External to_external_api(CertificateStatus_Internal const& val);
 
-using TokenValidationStatus_Internal = ::types::authorization::TokenValidationStatus;
-using TokenValidationStatus_External = TokenValidationStatus;
+using TokenAction_Internal = ::types::authorization::TokenActionStatus;
+using TokenAction_External = TokenAction;
 
-TokenValidationStatus_Internal to_internal_api(TokenValidationStatus_External const& val);
-TokenValidationStatus_External to_external_api(TokenValidationStatus_Internal const& val);
+TokenAction_Internal to_internal_api(TokenAction_External const& val);
+TokenAction_External to_external_api(TokenAction_Internal const& val);
 
 using SelectionAlgorithm_Internal = ::types::authorization::SelectionAlgorithm;
 using SelectionAlgorithm_External = SelectionAlgorithm;
@@ -72,11 +72,17 @@ using ProvidedIdToken_External = ProvidedIdToken;
 ProvidedIdToken_Internal to_internal_api(ProvidedIdToken_External const& val);
 ProvidedIdToken_External to_external_api(ProvidedIdToken_Internal const& val);
 
-using TokenValidationStatusMessage_Internal = ::types::authorization::TokenValidationStatusMessage;
-using TokenValidationStatusMessage_External = TokenValidationStatusMessage;
+using TokenActionMessage_Internal = ::types::authorization::TokenActionMessage;
+using TokenActionMessage_External = TokenActionMessage;
 
-TokenValidationStatusMessage_Internal to_internal_api(TokenValidationStatusMessage_External const& val);
-TokenValidationStatusMessage_External to_external_api(TokenValidationStatusMessage_Internal const& val);
+TokenActionMessage_Internal to_internal_api(TokenActionMessage_External const& val);
+TokenActionMessage_External to_external_api(TokenActionMessage_Internal const& val);
+
+using TokenValidationMessage_Internal = ::types::authorization::TokenValidationMessage;
+using TokenValidationMessage_External = TokenValidationMessage;
+
+TokenValidationMessage_Internal to_internal_api(TokenValidationMessage_External const& val);
+TokenValidationMessage_External to_external_api(TokenValidationMessage_Internal const& val);
 
 using ValidationResult_Internal = ::types::authorization::ValidationResult;
 using ValidationResult_External = ValidationResult;

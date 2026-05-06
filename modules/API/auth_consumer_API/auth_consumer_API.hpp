@@ -66,6 +66,7 @@ private:
     void generate_api_cmd_withdraw_authorization();
 
     void generate_api_var_token_validation_status();
+    void generate_api_var_token_action();
     void generate_api_var_communication_check();
 
     void setup_heartbeat_generator();
