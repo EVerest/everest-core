@@ -42,8 +42,12 @@ cmds:
       $ref: /authorization#/WithdrawAuthorizationResult
 vars:
   token_validation_status:
-    description: Emits all events related to current token validation
+    description: The validator responses for a token.
     type: object
-    $ref: /authorization#/TokenValidationStatusMessage
+    $ref: /authorization#/TokenValidationMessage
+  token_action:
+    description: What Auth is doing (or did) with a token.
+    type: object
+    $ref: /authorization#/TokenActionMessage
 errors:
   - reference: /errors/generic

@@ -248,13 +248,21 @@ public:
                                  const ReservationEndReason reason, const bool send_reservation_update)>& callback);
 
     /**
-     * @brief Registers the given \p callback to publish the intermediate token validation status.
+     * @brief Registers the given \p callback to publish what Auth is doing with a token.
      *
      * @param callback
      */
-    void register_publish_token_validation_status_callback(
-        const std::function<void(const ProvidedIdToken&, TokenValidationStatus, const std::vector<MessageContent>&)>&
+    void register_publish_token_action_callback(
+        const std::function<void(const ProvidedIdToken&, TokenActionStatus, const std::vector<MessageContent>&)>&
             callback);
+
+    /**
+     * @brief Registers the given \p callback to publish the validator responses for a token.
+     *
+     * @param callback
+     */
+    void register_publish_token_validation_results_callback(
+        const std::function<void(const ProvidedIdToken&, const std::vector<ValidationResult>&)>& callback);
 
     WithdrawAuthorizationResult handle_withdraw_authorization(const WithdrawAuthorizationRequest& request);
 
@@ -300,12 +308,15 @@ private:
     std::function<void(const std::optional<int>& evse_index, const int32_t reservation_id,
                        const types::reservation::ReservationEndReason reason, const bool send_reservation_update)>
         reservation_cancelled_callback;
-    std::function<void(const ProvidedIdToken& token, TokenValidationStatus status,
+    std::function<void(const ProvidedIdToken& token, TokenActionStatus status,
                        const std::vector<MessageContent>& tariff_messages)>
-        publish_token_validation_status_callback;
+        publish_token_action_callback;
+    std::function<void(const ProvidedIdToken& token, const std::vector<ValidationResult>& results)>
+        publish_token_validation_results_callback;
 
-    void publish_token_validation_status(const ProvidedIdToken& token, TokenValidationStatus status,
-                                         const std::vector<MessageContent>& tariff_messages = {});
+    void publish_token_action(const ProvidedIdToken& token, TokenActionStatus status,
+                              const std::vector<MessageContent>& tariff_messages = {});
+    void publish_token_validation_results(const ProvidedIdToken& token, const std::vector<ValidationResult>& results);
 
     std::vector<int> get_referenced_evses(const ProvidedIdToken& provided_token);
     int used_for_transaction(const std::vector<int>& evse_ids, const std::string& id_token);

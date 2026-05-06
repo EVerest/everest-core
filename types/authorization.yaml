@@ -1,7 +1,9 @@
 description: Auth token validator types
 types:
   AuthorizationStatus:
-    description: Authorization Status enum
+    description: >-
+      Outcome of validating a token, as reported by an authorization validator.
+      Mirrors OCPP's `AuthorizationStatusEnumType`.
     type: string
     enum:
       - Accepted
@@ -27,14 +29,15 @@ types:
       - NoCertificateAvailable
       - CertChainError
       - ContractCancelled
-  TokenValidationStatus:
-    description: Ongoing token validation status
+  TokenActionStatus:
+    description: >-
+      What the Auth module is doing (or did) with a token. Lifecycle
+      (`Processing`) plus terminal (all other entries) action.
     type: string
     enum:
       - Processing
-      - Accepted
       - Rejected
-      # Occurs when the token has been authorized but no connector is selected within connection_timeout seconds
+      # Token was authorized but no connector got selected within connection_timeout.
       - TimedOut
       - UsedToStart
       - UsedToStop
@@ -131,8 +134,10 @@ types:
           $ref: /iso15118#/CertificateHashDataInfo
         minItems: 1
         maxItems: 4
-  TokenValidationStatusMessage:
-    description: The token validation status
+  TokenActionMessage:
+    description: >-
+      What the Auth module is doing (or did) with a token. See
+      `TokenActionStatus` for more details.
     type: object
     additionalProperties: false
     required:
@@ -140,12 +145,13 @@ types:
       - status
     properties:
       token:
-        description: The id tag assigned to this transaction
+        description: The token this message is about.
         type: object
         $ref: /authorization#/ProvidedIdToken
       status:
+        description: What Auth is doing (or did) with the token.
         type: string
-        $ref: /authorization#/TokenValidationStatus
+        $ref: /authorization#/TokenActionStatus
       messages:
         type: array
         items:
@@ -204,6 +210,26 @@ types:
           type: string
           $ref: /iso15118#/EnergyTransferMode
         minItems: 1
+  TokenValidationMessage:
+    description: >-
+      The token and all responses from its validators.
+    type: object
+    additionalProperties: false
+    required:
+      - token
+      - results
+    properties:
+      token:
+        description: The token this message is about.
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+      results:
+        description: >-
+          The results from the validators. One entry per configured validator.
+        type: array
+        items:
+          type: object
+          $ref: /authorization#/ValidationResult
   SelectionAlgorithm:
     description: >-
       The selection algorithm defines the logic to select one connector

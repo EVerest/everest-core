@@ -88,7 +88,7 @@ void AuthHandler::initialize() {
 
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
     std::unique_lock<std::mutex> lk(this->event_mutex);
-    if (!this->publish_token_validation_status_callback) {
+    if (!this->publish_token_action_callback || !this->publish_token_validation_results_callback) {
         return TokenHandlingResult::REJECTED;
     }
 
@@ -102,7 +102,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     if (!this->is_token_already_in_process(provided_token, referenced_evses)) {
         // process token if not already in process
         this->tokens_in_process.insert(provided_token);
-        this->publish_token_validation_status(provided_token, TokenValidationStatus::Processing);
+        this->publish_token_action(provided_token, TokenActionStatus::Processing);
         result = this->handle_token(provided_token_copy, lk);
     } else {
         // do nothing if token is currently processed
@@ -115,20 +115,20 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     case TokenHandlingResult::ALREADY_IN_PROCESS:
         break;
     case TokenHandlingResult::TIMEOUT: // Timeout means accepted but failed to pick contactor
-        this->publish_token_validation_status(provided_token_copy, TokenValidationStatus::TimedOut);
+        this->publish_token_action(provided_token_copy, TokenActionStatus::TimedOut);
         break;
     case TokenHandlingResult::NO_CONNECTOR_AVAILABLE:
     case TokenHandlingResult::REJECTED:
-        this->publish_token_validation_status(provided_token_copy, TokenValidationStatus::Rejected);
+        this->publish_token_action(provided_token_copy, TokenActionStatus::Rejected);
         break;
     case TokenHandlingResult::USED_TO_START_TRANSACTION:
-        this->publish_token_validation_status(provided_token_copy, TokenValidationStatus::UsedToStart);
+        this->publish_token_action(provided_token_copy, TokenActionStatus::UsedToStart);
         break;
     case TokenHandlingResult::USED_TO_STOP_TRANSACTION:
-        this->publish_token_validation_status(provided_token_copy, TokenValidationStatus::UsedToStop);
+        this->publish_token_action(provided_token_copy, TokenActionStatus::UsedToStop);
         break;
     case TokenHandlingResult::WITHDRAWN:
-        this->publish_token_validation_status(provided_token_copy, TokenValidationStatus::Withdrawn);
+        this->publish_token_action(provided_token_copy, TokenActionStatus::Withdrawn);
         break;
     }
 
@@ -158,8 +158,7 @@ void AuthHandler::handle_token_validation_result_update(const ValidationResultUp
         provided_token.parent_id_token = validation_result_update.validation_result.parent_id_token;
         std::vector<int32_t> connectors_allowed{connector_id};
         provided_token.connectors = connectors_allowed;
-        this->publish_token_validation_status(provided_token, types::authorization::TokenValidationStatus::Accepted,
-                                              validation_result_update.validation_result.tariff_messages);
+        this->publish_token_validation_results(provided_token, {validation_result_update.validation_result});
     } else {
         EVLOG_error << "Unknown evse#" << connector_id
                     << " or unknown authorization identifier on the evse for validation result update.";
@@ -252,6 +251,7 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
         validation_results = this->validate_token_callback(provided_token);
         lk.lock();
     }
+    this->publish_token_validation_results(provided_token, validation_results);
 
     bool attempt_stop_with_parent_id_token = false;
     if (this->prioritize_authorization_over_stopping_transaction) {
@@ -339,9 +339,6 @@ TokenHandlingResult AuthHandler::handle_token(ProvidedIdToken& provided_token, s
                 if (validation_result.parent_id_token.has_value()) {
                     provided_token.parent_id_token = validation_result.parent_id_token.value();
                 }
-                this->publish_token_validation_status(provided_token,
-                                                      types::authorization::TokenValidationStatus::Accepted,
-                                                      validation_result.tariff_messages);
                 /* although validator accepts the authorization request, the Auth module still needs to
                     - select the evse for the authorization request
                     - process it against placed reservations
@@ -638,7 +635,7 @@ void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token
                 EVLOG_debug << "Authorization timeout for evse#" << evse_index;
                 evse->identifier.reset();
                 this->withdraw_authorization_callback(evse_index);
-                this->publish_token_validation_status(provided_token, TokenValidationStatus::TimedOut);
+                this->publish_token_action(provided_token, TokenActionStatus::TimedOut);
                 evse->timeout_in_progress = false;
                 this->cv.notify_all();
             },
@@ -955,15 +952,25 @@ void AuthHandler::register_reservation_cancelled_callback(
         });
 }
 
-void AuthHandler::register_publish_token_validation_status_callback(
-    const std::function<void(const ProvidedIdToken&, TokenValidationStatus, const std::vector<MessageContent>&)>&
+void AuthHandler::register_publish_token_action_callback(
+    const std::function<void(const ProvidedIdToken&, TokenActionStatus, const std::vector<MessageContent>&)>&
         callback) {
-    this->publish_token_validation_status_callback = callback;
+    this->publish_token_action_callback = callback;
 }
 
-void AuthHandler::publish_token_validation_status(const ProvidedIdToken& token, TokenValidationStatus status,
-                                                  const std::vector<MessageContent>& tariff_messages) {
-    this->publish_token_validation_status_callback(token, status, tariff_messages);
+void AuthHandler::register_publish_token_validation_results_callback(
+    const std::function<void(const ProvidedIdToken&, const std::vector<ValidationResult>&)>& callback) {
+    this->publish_token_validation_results_callback = callback;
+}
+
+void AuthHandler::publish_token_action(const ProvidedIdToken& token, TokenActionStatus status,
+                                       const std::vector<MessageContent>& tariff_messages) {
+    this->publish_token_action_callback(token, status, tariff_messages);
+}
+
+void AuthHandler::publish_token_validation_results(const ProvidedIdToken& token,
+                                                   const std::vector<ValidationResult>& results) {
+    this->publish_token_validation_results_callback(token, results);
 }
 
 WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const WithdrawAuthorizationRequest& request) {
