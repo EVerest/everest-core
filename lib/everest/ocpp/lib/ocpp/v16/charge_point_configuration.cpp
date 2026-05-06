@@ -2973,7 +2973,7 @@ bool ChargePointConfiguration::setMeterPublicKey(const std::int32_t connector_id
 }
 
 ConfigurationStatus ChargePointConfiguration::setCustomDisplayCostAndPrice(const bool& value) {
-    auto status = ConfigurationStatus::NotSupported;
+    auto status = ConfigurationStatus::Rejected;
 
     if (!this->cost_and_price_schema["properties"]["CustomDisplayCostAndPrice"]["readOnly"]) {
         this->config["CostAndPrice"]["CustomDisplayCostAndPrice"] = value;
