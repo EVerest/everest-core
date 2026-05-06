@@ -30,6 +30,20 @@ on:
         description: 'Whether the current repository is a fork'
         required: true
         type: boolean
+      is_release:
+        description: 'Whether the current build is for a release version'
+        required: false
+        default: false
+        type: boolean
+      overwrite_existing_instance:
+        description: 'Whether to overwrite the existing documentation instance if it already exists'
+        required: false
+        default: true
+        type: boolean
+      instance_name:
+        description: 'The name of the instance to build the documentation for'
+        required: true
+        type: string
     secrets:
       SA_GITHUB_SSH_KEY:
         description: 'SSH key for the service account used to deploy the documentation'
@@ -67,6 +81,11 @@ jobs:
             ssh-keyscan github.com >> ~/.ssh/known_hosts
           fi
           ssh-add ~/.ssh/id_ed25519
+      - name: Sanitize instance name
+        id: sanitize
+        run: |
+          sanitized=$(echo "${{ inputs.instance_name }}" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9_' '_')
+          echo "instance_name=${sanitized}" >> $GITHUB_OUTPUT
       - name: Configure Git user
         run: |
           git config --global user.name "Pionix Github Service Account"
@@ -121,9 +140,9 @@ jobs:
           docker run \
           --mount type=bind,source=$SSH_AUTH_SOCK,target=/ssh-agent \
           --env SSH_AUTH_SOCK=/ssh-agent \
-          --env TRAILBOOK_everest_IS_RELEASE=OFF \
-          --env TRAILBOOK_everest_INSTANCE_NAME=nightly \
-          --env TRAILBOOK_everest_OVERWRITE_EXISTING_INSTANCE=ON \
+          --env TRAILBOOK_everest_IS_RELEASE="${{ inputs.is_release }}" \
+          --env TRAILBOOK_everest_INSTANCE_NAME="${{ steps.sanitize.outputs.instance_name }}" \
+          --env TRAILBOOK_everest_OVERWRITE_EXISTING_INSTANCE="${{ inputs.overwrite_existing_instance }}" \
           --env EVEREST_DOCS_REPO_URL=${{ steps.github-pages-input.outputs.url }} \
           --volume "${{ github.workspace }}:/ext" \
           --name build-docs-container \

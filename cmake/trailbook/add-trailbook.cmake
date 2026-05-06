@@ -202,30 +202,34 @@ endmacro()
 # This macro is for internal use only
 #
 # It is used in the function add_trailbook.
-# It adds a custom command to create the metadata YAML file for the trailbook instance.
+# It adds a custom command to create the metadata file(s) for the trailbook instance.
 # The metadata YAML file is used by Sphinx during the build process.
+# The metadata JSON file can be used for dynamic features in the built documentation, such as the version switcher dropdown.
 # It contains a list of all versions available in the multiversion root directory.
-macro(_add_trailbook_create_metadata_yaml_command)
+macro(_add_trailbook_create_metadata_file_command)
     set(METADATA_YAML_FILE "${CMAKE_CURRENT_BINARY_DIR}/metadata_${args_NAME}.yaml")
+    set(METADATA_JSON_FILE "${CMAKE_CURRENT_BINARY_DIR}/metadata_${args_NAME}.json")
 
     add_custom_command(
         OUTPUT
             ${METADATA_YAML_FILE}
+            ${METADATA_JSON_FILE}
         DEPENDS
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/create_metadata_yaml.py
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/create_metadata_file.py
             ${STEM_FILES_BUILD_DIR}
             ${CHECK_DONE_FILE_SETUP_BUILD_DIRECTORY}
             trailbook_${args_NAME}_stage_prepare_sphinx_source_before
             $<TARGET_PROPERTY:trailbook_${args_NAME},ADDITIONAL_DEPS_STAGE_PREPARE_SPHINX_SOURCE_BEFORE>
         COMMENT
-            "Trailbook: ${args_NAME} - Creating metadata YAML file"
+            "Trailbook: ${args_NAME} - Creating metadata file(s)"
         COMMAND
             ${CMAKE_COMMAND} -E rm -f ${METADATA_YAML_FILE}
         COMMAND
             ${Python3_EXECUTABLE}
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/create_metadata_yaml.py
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/create_metadata_file.py
             --multiversion-root-directory "${TRAILBOOK_BUILD_DIRECTORY}"
-            "--output-path" "${METADATA_YAML_FILE}"
+            "--yaml-output-path" "${METADATA_YAML_FILE}"
+            "--json-output-path" "${METADATA_JSON_FILE}"
             --additional-version "${TRAILBOOK_${args_NAME}_INSTANCE_NAME}"
     )
 endmacro()
@@ -457,6 +461,33 @@ endmacro()
 
 # This macro is for internal use only
 #
+# It is used in the function add_trailbook.
+# It copies the metadata JSON file to the multiversion root directory as versions.json,
+# next to the top-level index.html.
+macro(_add_trailbook_copy_versions_json_command)
+    set(CHECK_DONE_FILE_COPY_VERSIONS_JSON "${CMAKE_CURRENT_BINARY_DIR}/copy_versions_json.check_done")
+    set(TRAILBOOK_VERSIONS_JSON_FILE "${TRAILBOOK_BUILD_DIRECTORY}/versions.json")
+    add_custom_command(
+        OUTPUT
+            ${CHECK_DONE_FILE_COPY_VERSIONS_JSON}
+        DEPENDS
+            ${METADATA_JSON_FILE}
+            ${CHECK_DONE_FILE_SETUP_BUILD_DIRECTORY}
+        COMMENT
+            "Trailbook: ${args_NAME} - Copying versions.json to multiversion root directory"
+        COMMAND
+            ${CMAKE_COMMAND} -E rm -f ${TRAILBOOK_VERSIONS_JSON_FILE}
+        COMMAND
+            ${CMAKE_COMMAND} -E copy
+            ${METADATA_JSON_FILE}
+            ${TRAILBOOK_VERSIONS_JSON_FILE}
+        COMMAND
+            ${CMAKE_COMMAND} -E touch ${CHECK_DONE_FILE_COPY_VERSIONS_JSON}
+    )
+endmacro()
+
+# This macro is for internal use only
+#
 # It is used in the function add_tailbook.
 # It adds a custom target to serve the built HTML documentation via a simple HTTP server.
 macro(_add_trailbook_preview_target)
@@ -633,7 +664,7 @@ function(add_trailbook)
 
     _add_trailbook_setup_build_directory()
     _add_trailbook_copy_stem_command()
-    _add_trailbook_create_metadata_yaml_command()
+    _add_trailbook_create_metadata_file_command()
     set(DEPS_STAGE_PREPARE_SPHINX_SOURCE_AFTER
         trailbook_${args_NAME}_stage_prepare_sphinx_source_before
         ${CHECK_DONE_FILE_SETUP_BUILD_DIRECTORY}
@@ -677,12 +708,14 @@ function(add_trailbook)
         _add_trailbook_render_redirect_template_command()
     endif()
     _add_trailbook_copy_versions_index_command()
+    _add_trailbook_copy_versions_json_command()
 
     set(DEPS_STAGE_POSTPROCESS_SPHINX_AFTER
         trailbook_${args_NAME}_stage_postprocess_sphinx_before
         ${CHECK_DONE_FILE_REPLACE_LATEST}
         ${CHECK_DONE_FILE_COPY_404}
         ${CHECK_DONE_FILE_COPY_VERSIONS_INDEX}
+        ${CHECK_DONE_FILE_COPY_VERSIONS_JSON}
         ${CHECK_DONE_FILE_RENDER_REDIRECT_TEMPLATE}
     )
     add_custom_target(
