@@ -7,8 +7,7 @@ body:
     attributes:
       label: Describe the problem
       description: What problem is your feature request targeting and why is it a problem? Please describe.
-      placeholder: |
-        A clear and concise description of what the problem is.
+      placeholder: A clear and concise description of what the problem is.
     validations:
       required: true
 
@@ -16,42 +15,53 @@ body:
     id: affected-domain
     attributes:
       label: EVerest Domain
-      description: Can you specify a specific domain for which the feature is requested? Mark multiple if applicable.
+      description: Which domain is this feature request for? Mark multiple if applicable.
       options:
         - Authorization
+        - Build System
         - Charge Control
         - CHAdeMO
+        - DIN70121
+        - Documentation
         - Energy Management
+        - Framework
         - Hardware Drivers
-        - ISO15118
-        - Power Supplies
-        - OCPP
-        - OCPP1.6
-        - OCPP2.0.1
+        - ISO 15118-2
+        - ISO 15118-20
+        - OCPP 1.6
+        - OCPP 2.0.1
+        - OCPP 2.1
+        - Security
         - Simulation
         - SLAC
-        - Compilation
-        - Utility
         - Testing
+        - Utilities
         - Other
       multiple: true
     validations:
       required: true
 
   - type: textarea
-    id: affected-module
+    id: affected-component
     attributes:
-      label: Affected EVerest Module
+      label: Affected Component
       description: |
-        Can you specify a module in which this feature shall be implemented? If you are not sure, please leave this field empty.
+        Can you specify where the feature should be implemented, if known?
+        Examples: a module (e.g. `modules/EnergyManagement`), a library (e.g. `lib/ocpp`, `lib/iso15118`),
+        or an application (e.g. `applications/everest_dev_tool`). Leave empty if unsure.
 
   - type: textarea
     id: solution
     attributes:
       label: Describe your solution
-      description: Describe the solution you'd like
-      placeholder: |
-        A clear and concise description of what you want to happen.
+      description: Describe the solution you'd like.
+      placeholder: A clear and concise description of what you want to happen.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you considered alternative solutions or workarounds? If so, describe them here.
 
   - type: textarea
     id: other
