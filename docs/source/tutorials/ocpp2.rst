@@ -309,28 +309,131 @@ for your specific charging station.
 The following sections explain important component and variables in order to
 connect to a different CSMS or to enable certain features.
 
+.. _tutorial-ocpp2-network-configuration:
+
+Network Configuration
+---------------------
+
+OCPP 2.x uses **NetworkConfiguration** components in the device model to define
+how the charging station connects to a CSMS. Each connection profile is stored
+as a separate component instance (called a **slot**), and a priority list
+determines the order in which slots are tried during connection and failover.
+
 .. _tutorial-ocpp2-different-csms:
 
 Connect to a different CSMS
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In order to connect to a different CSMS, you have to modify the connection
-details within your device model configuration:
+Each connection profile is defined in its own JSON file under the device model
+configuration directory. At least two slots must be configured; you may add as
+many additional slots as you need (see :ref:`tutorial-ocpp2-adding-slots`).
+The default profiles are:
 
-- ``NetworkConnectionProfiles`` in the ``InternalCtrlr``. Note that this is a JSON array, so you can define multiple connection profiles.
-  - ``ocppCsmsUrl``: Specifies the endpoint of the CSMS
-  - ``securityProfile``: Specifies the SecurityProfile which defines type of transport layer connection between ChargePoint and CSMS
-- ``Identity`` in the ``SecurityCtrlr``: The identity of the charging station
-- ``BasicAuthPassword`` in the ``SecurityCtrlr``: Specifies the password used for HTTP Basic Authentication (SecurityProfile 1 or 2)
+- ``component_config/standardized/NetworkConfiguration_1.json`` (slot 1)
+- ``component_config/standardized/NetworkConfiguration_2.json`` (slot 2)
 
-Modify these parameters according to the connection requirements of the CSMS.
+To connect to a different CSMS, modify the following variables in the
+appropriate slot's JSON file:
+
+- ``OcppCsmsUrl``: The WebSocket endpoint of the CSMS, **without** the
+  charging-station identifier path segment (e.g. ``ws://csms.example.com:9000``
+  or ``wss://csms.example.com:443``). The identifier from ``Identity`` is
+  appended at connect time.
+- ``SecurityProfile``: Defines the transport layer security level:
+
+  - ``0``: No security (OCPP 1.6 compatibility, disabled by default)
+  - ``1``: Basic authentication over ``ws://``
+  - ``2``: TLS with server certificate over ``wss://``
+  - ``3``: TLS with mutual authentication (client + server certificates) over ``wss://``
+
+- ``OcppInterface``: The network interface to use (``Wired0``--``Wired3``, ``Wireless0``--``Wireless3``, or ``Any``)
+- ``OcppTransport``: The transport protocol (``JSON`` or ``SOAP``)
+- ``MessageTimeout``: Message timeout in seconds (minimum 1)
+
+Each slot can optionally override the charging station's identity and
+authentication credentials:
+
+- ``Identity``: Per-slot identity override. If empty, falls back to ``SecurityCtrlr.Identity``.
+- ``BasicAuthPassword``: Per-slot password override. If empty, falls back to ``SecurityCtrlr.BasicAuthPassword``.
+
+The global fallback values are configured in the ``SecurityCtrlr`` component:
+
+- ``Identity`` in ``SecurityCtrlr``: The default identity of the charging station
+- ``BasicAuthPassword`` in ``SecurityCtrlr``: The default password for HTTP Basic Authentication (SecurityProfile 1 or 2)
+
+The **connection priority** is controlled by the ``NetworkConfigurationPriority``
+variable in ``OCPPCommCtrlr``. This is a comma-separated list of slot numbers
+that determines the order in which profiles are tried. For example, ``"1,2"``
+means slot 1 is tried first; if it fails, slot 2 is tried, then back to slot 1
+(round-robin failover).
 
 .. note::
 
-  For TLS, it might be required to prepare the required certificates and private keys.
-  Please see the documentation of the
-  :ref:`EvseSecurity module <everest_modules_EvseSecurity>` for more information 
+  For TLS (SecurityProfile 2 or 3), you must prepare the required certificates
+  and private keys. Please see the documentation of the
+  :ref:`EvseSecurity module <everest_modules_EvseSecurity>` for more information
   on how to set up the TLS connection for OCPP.
+
+.. _tutorial-ocpp2-adding-slots:
+
+Adding more network configuration slots
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, libocpp ships with two NetworkConfiguration slots. To add more:
+
+1. **Create the JSON file.** Copy an existing slot file (e.g. ``NetworkConfiguration_1.json``)
+   to a new file named ``NetworkConfiguration_N.json`` where ``N`` is your slot number.
+
+2. **Update the instance number.** In the new file, change the ``"instance"`` field
+   at the top level to match your slot number:
+
+   .. code-block:: json
+
+     {
+       "name": "NetworkConfiguration",
+       "instance": "3",
+       ...
+     }
+
+3. **Configure the slot's variables.** Set ``OcppCsmsUrl``, ``SecurityProfile``,
+   and other variables as needed for this connection profile.
+
+4. **Add the slot to the priority list.** In ``OCPPCommCtrlr.json``, append the new
+   slot number to the ``NetworkConfigurationPriority`` value. For example, change
+   ``"1,2"`` to ``"1,2,3"``.
+
+5. **Rebuild and restart.** The device model database will be re-initialized with the
+   new slot on next startup.
+
+.. _tutorial-ocpp2-migration:
+
+Migration from legacy NetworkConnectionProfiles
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Older versions of libocpp stored all connection profiles as a single JSON array
+blob in the ``InternalCtrlr.NetworkConnectionProfiles`` variable. The current
+implementation stores each profile as individual device model variables in
+per-slot ``NetworkConfiguration`` components.
+
+**Automatic migration:** On startup, libocpp automatically detects and migrates
+the legacy format. No manual action is required for existing deployments.
+The migration works as follows:
+
+1. If the ``NetworkConnectionProfiles`` blob is empty, no migration is needed.
+2. If any existing ``NetworkConfiguration`` slot already has a configured
+   ``OcppCsmsUrl``, migration is skipped (the new format is already in use).
+3. Otherwise, each profile in the JSON array is written to its corresponding
+   slot using the ``configurationSlot`` field from the blob as the slot number.
+4. If a profile in the blob does not contain a ``basicAuthPassword``, the
+   global ``SecurityCtrlr.BasicAuthPassword`` is used as a fallback.
+5. After successful import, the blob is cleared to prevent re-running the
+   migration on subsequent startups.
+
+If you are setting up a new deployment, you do not need the legacy blob format.
+Configure your connection profiles directly using the per-slot
+``NetworkConfiguration_N.json`` files as described above. Make sure the
+``InternalCtrlr.NetworkConnectionProfiles`` blob remains empty (its default)
+so the migration step is skipped on first boot.
 
 .. _tutorial-ocpp2-enable-pnc:
 

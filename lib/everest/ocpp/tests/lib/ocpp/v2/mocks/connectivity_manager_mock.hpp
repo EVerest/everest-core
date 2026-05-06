@@ -22,7 +22,7 @@ public:
                 (const std::int32_t configuration_slot), (const));
     MOCK_METHOD(std::optional<std::int32_t>, get_priority_from_configuration_slot, (const int configuration_slot),
                 (const));
-    MOCK_METHOD(const std::vector<int>&, get_network_connection_slots, (), (const));
+    MOCK_METHOD(std::vector<int>, get_network_connection_slots, (), (const));
     MOCK_METHOD(bool, is_websocket_connected, ());
     MOCK_METHOD(std::chrono::time_point<std::chrono::steady_clock>, get_time_disconnected, (), (const));
     MOCK_METHOD(void, connect, (std::optional<std::int32_t> network_profile_slot));
@@ -31,5 +31,8 @@ public:
     MOCK_METHOD(void, on_network_disconnected, (OCPPInterfaceEnum ocpp_interface));
     MOCK_METHOD(void, on_charging_station_certificate_changed, ());
     MOCK_METHOD(void, confirm_successful_connection, ());
+    MOCK_METHOD(void, reload_network_profiles, ());
+    MOCK_METHOD(bool, set_network_profile,
+                (int32_t slot, const NetworkConnectionProfile& profile, const std::string& source));
 };
 } // namespace ocpp::v2
