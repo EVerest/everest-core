@@ -372,9 +372,6 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
     if (value.uuid == energy_flow_request.uuid) {
         // EVLOG_info << "Incoming enforce limits" << value;
 
-        // publish for e.g. OCPP module
-        mod->p_evse->publish_enforced_limits(value);
-
         //   set hardware limit
         float limit = 0.;
         int active_phasecount = mod->ac_nr_phases_active;
@@ -420,7 +417,11 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             }
         }
 
-        auto enforced_limit = limit;
+        // update based on the PP cable rating
+        const float pp_rating = mod->bsp->read_pp_ampacity();
+        limit = std::min(limit, pp_rating);
+
+        const auto enforced_limit = limit;
 
         // check if we need to add a random delay for UK smart charging regs
         if (mod->random_delay_enabled) {
@@ -477,6 +478,13 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
         }
 
         last_enforced_limit = enforced_limit;
+
+        // publish for e.g. OCPP module with the updated limit
+        if (value.limits_root_side.ac_max_current_A) {
+            types::energy::NumberWithSource nws_updated{limit, value.limits_root_side.ac_max_current_A.value().source};
+            value.limits_root_side.ac_max_current_A = std::move(nws_updated);
+        }
+        mod->p_evse->publish_enforced_limits(value);
 
         // update limit at the charger
         const auto valid_until = steady_clock::now() + seconds(value.valid_for);
