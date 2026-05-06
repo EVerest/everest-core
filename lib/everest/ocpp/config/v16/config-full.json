@@ -48,7 +48,7 @@
         "UseSslDefaultVerifyPaths": true,
         "VerifyCsmsCommonName": true,
         "VerifyCsmsAllowWildcards": true,
-        "OcspRequestInterval": 604800,
+        "OcspRequestInterval": 43200,
         "SeccLeafSubjectCommonName": "DEPNX100001",
         "SeccLeafSubjectCountry": "DE",
         "SeccLeafSubjectOrganization": "Pionix",

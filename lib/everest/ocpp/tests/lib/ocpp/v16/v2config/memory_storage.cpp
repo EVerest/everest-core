@@ -46,7 +46,7 @@ const std::map<std::string, std::string> required_vars_internal = {
     {"VerifyCsmsAllowWildcards", "false"},
     {"MaxMessageSize", "65000"},
     {"MaxCompositeScheduleDuration", "31536000"},
-    {"OcspRequestInterval", "604800"},
+    {"OcspRequestInterval", "43200"},
     {"RetryBackoffRandomRange", "10"},
     {"RetryBackoffRepeatTimes", "3"},
     {"RetryBackoffWaitMinimum", "3"},

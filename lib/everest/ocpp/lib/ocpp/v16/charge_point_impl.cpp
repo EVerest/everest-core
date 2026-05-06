@@ -29,7 +29,6 @@ const auto ISO15118_PNC_VENDOR_ID = "org.openchargealliance.iso15118pnc";
 const auto CALIFORNIA_PRICING_VENDOR_ID = "org.openchargealliance.costmsg";
 const auto CLIENT_CERTIFICATE_TIMER_INTERVAL = std::chrono::hours(12);
 const auto V2G_CERTIFICATE_TIMER_INTERVAL = std::chrono::hours(12);
-const auto OCSP_REQUEST_TIMER_INTERVAL = std::chrono::hours(12);
 const auto INITIAL_CERTIFICATE_REQUESTS_DELAY = std::chrono::seconds(60);
 const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
 const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 1000;
@@ -205,7 +204,7 @@ ChargePointImpl::ChargePointImpl(
             };
         this->ocsp_request_timer = std::make_unique<Everest::SteadyTimer>(&this->io_context, [this]() {
             this->update_ocsp_cache();
-            this->ocsp_request_timer->interval(OCSP_REQUEST_TIMER_INTERVAL);
+            this->ocsp_request_timer->interval(std::chrono::seconds(this->configuration.getOcspRequestInterval()));
         });
     }
 
