@@ -45,6 +45,7 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     if (connector_type == types::evse_board_support::Connector_type::IEC62196Type2Socket) {
         shared_context.max_current_cable = bsp->read_pp_ampacity();
     }
+    shared_context.flag_authorized.set_signal([&bsp](bool value) { bsp->set_authorized(value); });
     shared_context.flag_authorized = false;
 
     internal_context.update_pwm_last_duty_cycle = 0.;

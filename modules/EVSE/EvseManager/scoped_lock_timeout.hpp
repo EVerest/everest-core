@@ -61,6 +61,7 @@ enum class MutexDescription {
     IEC_set_cp_state_F,
     IEC_allow_power_on,
     IEC_force_unlock,
+    IEC_set_authorized,
     EVSE_charger_ready,
     EVSE_set_ev_info,
     EVSE_publish_ev_info,
@@ -181,6 +182,8 @@ static std::string to_string(MutexDescription d) {
         return "IECStateMachine::allow_power_on";
     case MutexDescription::IEC_force_unlock:
         return "IECStateMachine::force_unlock";
+    case MutexDescription::IEC_set_authorized:
+        return "IECStateMachine::set_authorized";
     case MutexDescription::EVSE_charger_ready:
         return "EvseManager.cpp: charger_ready";
     case MutexDescription::EVSE_set_ev_info:

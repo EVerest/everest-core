@@ -729,6 +729,9 @@ void IECStateMachine::enable(bool en) {
 void IECStateMachine::connector_force_unlock() {
 }
 
+void IECStateMachine::set_authorized(bool a) {
+}
+
 const std::string cpevent_to_string(CPEvent e) {
     switch (e) {
     case CPEvent::CarPluggedIn:

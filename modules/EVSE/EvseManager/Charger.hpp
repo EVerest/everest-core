@@ -281,6 +281,31 @@ private:
     // This mutex locks all variables related to the state machine
     Everest::timed_mutex_traceable state_machine_mutex;
 
+    /// Extension of the std::atomic_bool to allow to connect it to a signal and
+    /// fire on change.
+    struct SignalingBool : private std::atomic_bool {
+        using std::atomic_bool::atomic_bool;
+        using std::atomic_bool::operator bool;
+
+        /// @brief Signaling assign operator.
+        /// std::atomic_bool returns `bool` and not itself. See
+        /// https://en.cppreference.com/cpp/atomic/atomic/operator%3D
+        bool operator=(bool value) {
+            signal(value);
+            return std::atomic_bool::operator=(value);
+        }
+
+        /// @brief Register a new signal.
+        /// We just forward everything to signal's connect and let the compiler
+        /// complain if someone misuses.
+        template <typename... U> void set_signal(U&&... args) {
+            signal.connect(std::forward<U>(args)...);
+        }
+
+    private:
+        sigslot::signal<bool> signal;
+    };
+
     // used by different threads, complete main loop must be locked for write access
     struct SharedContext {
         // As per IEC61851-1 A.5.3
@@ -297,7 +322,7 @@ private:
             stop_transaction_id_token; // only set in case transaction was stopped locally
         types::authorization::ProvidedIdToken id_token;
         types::authorization::ValidationResult validation_result;
-        std::atomic_bool flag_authorized{false};
+        SignalingBool flag_authorized{false};
         std::atomic_bool flag_externally_cancelled{false};
         std::atomic_bool flag_paused_by_evse{false};
         std::atomic_bool flag_ev_plugged_in{false};

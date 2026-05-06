@@ -293,12 +293,13 @@ config:
     type: integer
     minimum: 6000
     default: 7000
-  lock_connector_in_state_b:
+  unlock_when_deauthorized:
     description: >-
-      Indicates if the connector lock should be locked in state B. If set to false, connector will remain unlocked in CP state B
-      and this violates IEC61851-1:2019 D.6.5 Table D.9 line 4 and should not be used in public environments!
+      Indicates if the connector lock should be locked in state B/C regardless of if a user authorized. If set to true,
+      connector will remain unlocked in CP state B/C if the relays are open and no user is authorized. This violates
+      violates IEC61851-1:2019 D.6.5 Table D.9 line 4 and should not be used in public environments!
     type: boolean
-    default: true
+    default: false
   state_F_after_fault_ms:
     description: >-
       Set state F after any fault that stops charging for the specified time in ms while in Charging mode (CX->F(300ms)->C1/B1).
