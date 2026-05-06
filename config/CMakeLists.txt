@@ -24,6 +24,8 @@ generate_config_run_script(CONFIG sil-ocpp201-pnc)
 generate_config_run_script(CONFIG example)
 generate_config_run_script(CONFIG sil-dc-consumer-api)
 generate_config_run_script(CONFIG sil-mcs)
+generate_config_run_script(CONFIG sil-dc-ocpp16)
+generate_config_run_script(CONFIG sil-dc-ocpp2)
 
 
 add_subdirectory(bringup)
