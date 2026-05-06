@@ -402,9 +402,14 @@ public:
         std::vector<certificate_config_t> chains; //!< server certificate chains - must be at least one
         //!< one or more trust anchor PEM certificates for client certificate verification
         ConfigItem verify_locations_file{nullptr};
-        ConfigItem verify_locations_path{nullptr}; //!< for client certificate
-        std::int32_t io_timeout_ms{-1};            //!< socket timeout in milliseconds (recommend > 1 sec)
-        bool verify_client{true};                  //!< client certificate required
+        ConfigItem verify_locations_path{nullptr};        //!< for client certificate
+        std::int32_t io_timeout_ms{-1};                   //!< socket timeout in milliseconds (recommend > 1 sec)
+        bool verify_client{true};                         //!< client certificate required
+        bool ignore_unhandled_critical_extensions{false}; //!< when true, install a verify callback that
+                                                          //!< suppresses X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION
+                                                          //!< for certs whose critical extensions all have
+                                                          //!< well-known RFC 5280 NIDs. Intended for diagnosing
+                                                          //!< non-compliant EV / V2G test certs.
 
         // config not used on update()
         ConfigItem host{nullptr};    //!< see BIO_lookup_ex()
@@ -468,9 +473,14 @@ private:
     /**
      * \brief initialise server certificate chains
      * \param[in] chain_files server certificate chains
+     * \param[in] ignore_unhandled_critical_extensions when true, the init-time
+     *            chain self-check (openssl::verify_chain) accepts certs whose
+     *            critical extensions all carry well-known RFC 5280 NIDs. Mirrors
+     *            the handshake-time bypass installed in init_ssl().
      * \return true on success
      */
-    bool init_certificates(const std::vector<certificate_config_t>& chain_files);
+    bool init_certificates(const std::vector<certificate_config_t>& chain_files,
+                           bool ignore_unhandled_critical_extensions = false);
 
     /**
      * \brief unconfigure SSL certificates
@@ -633,6 +643,7 @@ public:
         bool status_request{false};                  //!< include a status request extension in the client hello
         bool status_request_v2{false};               //!< include a status request v2 extension in the client hello
         bool trusted_ca_keys{false};                 //!< include a trusted ca keys extension in the client hello
+        bool ignore_unhandled_critical_extensions{false}; //!< see Server::config_t
     };
 
     using ConnectionPtr = std::unique_ptr<ClientConnection>;

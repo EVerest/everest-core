@@ -301,6 +301,7 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
     ctx->tcp_socket = -1;
     ctx->tls_socket.fd = -1;
     ctx->tls_key_logging = false;
+    ctx->tls_bypass_unhandled_critical_extensions = false;
     ctx->debugMode = false;
 
     /* according to man page, both functions never return an error */

@@ -159,7 +159,8 @@ std::optional<fs::path> get_private_key_path_of_certificate(const X509Wrapper& c
 /// @return The files where the certificates were found, more than one can be returned in case it is
 /// present in a bundle too
 std::set<fs::path> get_certificate_path_of_key(const fs::path& key, const fs::path& certificate_path_directory,
-                                               const std::optional<std::string> password) {
+                                               const std::optional<std::string> password,
+                                               bool ignore_unhandled_critical_extensions) {
     std::string private_key;
 
     if (false == filesystem_utils::read_from_file(key, private_key)) {
@@ -174,6 +175,7 @@ std::set<fs::path> get_certificate_path_of_key(const fs::path& key, const fs::pa
         try {
             std::set<fs::path> bundles;
             X509CertificateBundle certificate_bundles(cert_filename, EncodingFormat::PEM);
+            certificate_bundles.set_ignore_unhandled_critical_extensions(ignore_unhandled_critical_extensions);
 
             certificate_bundles.for_each_chain(
                 [&](const fs::path& bundle, const std::vector<X509Wrapper>& certificates) {
@@ -199,6 +201,7 @@ std::set<fs::path> get_certificate_path_of_key(const fs::path& key, const fs::pa
     try {
         std::set<fs::path> bundles;
         X509CertificateBundle certificate_bundles(certificate_path_directory, EncodingFormat::PEM);
+        certificate_bundles.set_ignore_unhandled_critical_extensions(ignore_unhandled_critical_extensions);
 
         certificate_bundles.for_each_chain([&](const fs::path& bundle, const std::vector<X509Wrapper>& certificates) {
             for (const auto& certificate : certificates) {
@@ -278,7 +281,8 @@ bool get_oscp_data_of_certificate(const X509Wrapper& certificate, const Certific
 
 OCSPRequestDataList generate_ocsp_request_data_internal(const std::map<CaCertificateType, fs::path>& ca_bundle_path_map,
                                                         const std::set<CaCertificateType>& possible_roots,
-                                                        const std::vector<X509Wrapper>& leaf_chain);
+                                                        const std::vector<X509Wrapper>& leaf_chain,
+                                                        bool ignore_unhandled_critical_extensions);
 } // namespace
 
 std::mutex EvseSecurity::security_mutex;
@@ -287,14 +291,16 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
                            const std::optional<std::uintmax_t>& max_fs_usage_bytes,
                            const std::optional<std::uintmax_t>& max_fs_certificate_store_entries,
                            const std::optional<std::chrono::seconds>& csr_expiry,
-                           const std::optional<std::chrono::seconds>& garbage_collect_time) :
+                           const std::optional<std::chrono::seconds>& garbage_collect_time,
+                           bool ignore_unhandled_critical_extensions) :
     private_key_password(private_key_password),
     directories(file_paths.directories),
     links(file_paths.links),
     max_fs_usage_bytes(max_fs_usage_bytes.value_or(DEFAULT_MAX_FILESYSTEM_SIZE)),
     max_fs_certificate_store_entries(max_fs_certificate_store_entries.value_or(DEFAULT_MAX_CERTIFICATE_ENTRIES)),
     csr_expiry(csr_expiry.value_or(DEFAULT_CSR_EXPIRY)),
-    garbage_collect_time(garbage_collect_time.value_or(DEFAULT_GARBAGE_COLLECT_TIME)) {
+    garbage_collect_time(garbage_collect_time.value_or(DEFAULT_GARBAGE_COLLECT_TIME)),
+    ignore_unhandled_critical_extensions(ignore_unhandled_critical_extensions) {
     static_assert(sizeof(std::uint8_t) == 1, "uint8_t not equal to 1 byte!");
 
     const std::vector<fs::path> dirs = {
@@ -375,6 +381,7 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
         }
 
         X509CertificateBundle existing_certs(ca_bundle_path, EncodingFormat::PEM);
+        existing_certs.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
 
         if (existing_certs.is_using_directory()) {
             const std::string filename = conversions::ca_certificate_type_to_string(certificate_type) + "_ROOT_" +
@@ -427,6 +434,7 @@ DeleteResult EvseSecurity::delete_certificate(const CertificateHashData& certifi
     for (const auto& [certificate_type, ca_bundle_path] : ca_bundle_path_map) {
         try {
             X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
+            ca_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
             auto deleted = ca_bundle.delete_certificate(certificate_hash_data, true, false);
 
             if (false == deleted.empty()) {
@@ -486,6 +494,7 @@ DeleteResult EvseSecurity::delete_certificate(const CertificateHashData& certifi
 
         // The leaf bundle contains many chain/single certificates in separate files
         X509CertificateBundle leaf_bundle(leaf_certificate_path, EncodingFormat::PEM);
+        leaf_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
 
         CaCertificateType root_load; // NOLINT(cppcoreguidelines-init-variables): initialized below
         if (secc) {
@@ -508,8 +517,8 @@ DeleteResult EvseSecurity::delete_certificate(const CertificateHashData& certifi
             EVLOG_warning << "Could not load base roots: " << ca_bundle_path_map[root_load];
         }
 
-        X509CertificateHierarchy hierarchy =
-            std::move(X509CertificateHierarchy::build_hierarchy(base_roots, leaf_bundle.split()));
+        X509CertificateHierarchy hierarchy = std::move(X509CertificateHierarchy::build_hierarchy_with_flag(
+            this->ignore_unhandled_critical_extensions, base_roots, leaf_bundle.split()));
 
         // Collect all the leafs that we have to delete
         auto leafs_to_delete = hierarchy.find_certificates_multi(certificate_hash_data);
@@ -718,6 +727,7 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
         auto ca_bundle_path = this->ca_bundle_path_map.at(ca_certificate_type);
         try {
             X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
+            ca_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
             X509CertificateHierarchy& hierarchy = ca_bundle.get_certificate_hierarchy();
 
             EVLOG_debug << "Hierarchy:(" << conversions::ca_certificate_type_to_string(ca_certificate_type) << ")\n"
@@ -784,11 +794,13 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
                 try {
                     // Leaf V2G chain, containing (SECCLeaf->SubCA2->SubCA1) or (SECCLeaf)
                     X509CertificateBundle leaf_bundle(certificate_path, EncodingFormat::PEM);
+                    leaf_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
 
                     // V2G chain, containing the certs from the V2G bundle/folder,
                     // containing (SubCA2->SubCA1->V2GRoot) or (V2GRoot)
                     const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
                     X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
+                    ca_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
 
                     // Merge the bundles, adding only uniques for full chain
                     // (SubCA2->SubCA1->V2GRoot->SECCLeaf) in any order
@@ -873,7 +885,8 @@ int EvseSecurity::get_count_of_installed_certificates(const std::vector<Certific
 
     for (const auto& unique_dir : directories) {
         try {
-            const X509CertificateBundle ca_bundle(unique_dir, EncodingFormat::PEM);
+            X509CertificateBundle ca_bundle(unique_dir, EncodingFormat::PEM);
+            ca_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
             count += ca_bundle.get_certificate_count();
         } catch (const CertificateLoadException& e) {
             EVLOG_error << "Could not load bundle for certificate count: " << e.what();
@@ -887,7 +900,8 @@ int EvseSecurity::get_count_of_installed_certificates(const std::vector<Certific
 
         // Load all from chain, including expired/unused
         try {
-            const X509CertificateBundle leaf_bundle(leaf_dir, EncodingFormat::PEM);
+            X509CertificateBundle leaf_bundle(leaf_dir, EncodingFormat::PEM);
+            leaf_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
             count += leaf_bundle.get_certificate_count();
         } catch (const CertificateLoadException& e) {
             EVLOG_error << "Could not load bundle for certificate count: " << e.what();
@@ -937,7 +951,8 @@ OCSPRequestDataList EvseSecurity::get_v2g_ocsp_request_data() {
 
         if (!leaf_chain.empty()) {
             OCSPRequestDataList partial_ocsp_request =
-                generate_ocsp_request_data_internal(this->ca_bundle_path_map, {CaCertificateType::V2G}, leaf_chain);
+                generate_ocsp_request_data_internal(this->ca_bundle_path_map, {CaCertificateType::V2G}, leaf_chain,
+                                                    this->ignore_unhandled_critical_extensions);
 
             for (OCSPRequestData& ocsp_data : partial_ocsp_request.ocsp_request_data_list) {
                 // Add the ones that we don't already contain
@@ -966,7 +981,8 @@ OCSPRequestDataList EvseSecurity::get_mo_ocsp_request_data(const std::string& ce
 
         // Test for both MO and V2G roots
         return generate_ocsp_request_data_internal(this->ca_bundle_path_map,
-                                                   {CaCertificateType::V2G, CaCertificateType::MO}, leaf_chain);
+                                                   {CaCertificateType::V2G, CaCertificateType::MO}, leaf_chain,
+                                                   this->ignore_unhandled_critical_extensions);
     } catch (const CertificateLoadException& e) {
         EVLOG_error << "Could not load mo ocsp cache leaf chain!";
     }
@@ -977,7 +993,8 @@ OCSPRequestDataList EvseSecurity::get_mo_ocsp_request_data(const std::string& ce
 namespace {
 OCSPRequestDataList generate_ocsp_request_data_internal(const std::map<CaCertificateType, fs::path>& ca_bundle_path_map,
                                                         const std::set<CaCertificateType>& possible_roots,
-                                                        const std::vector<X509Wrapper>& leaf_chain) {
+                                                        const std::vector<X509Wrapper>& leaf_chain,
+                                                        bool ignore_unhandled_critical_extensions) {
     OCSPRequestDataList response;
 
     if (leaf_chain.empty()) {
@@ -996,7 +1013,8 @@ OCSPRequestDataList generate_ocsp_request_data_internal(const std::map<CaCertifi
     std::vector<OCSPRequestData> ocsp_request_data_list;
     try {
         // Build the full hierarchy
-        auto hierarchy = std::move(X509CertificateHierarchy::build_hierarchy(full_root_hierarchy, leaf_chain));
+        auto hierarchy = std::move(X509CertificateHierarchy::build_hierarchy_with_flag(
+            ignore_unhandled_critical_extensions, full_root_hierarchy, leaf_chain));
 
         // Search for the first valid root, and collect all the chain
         for (auto& root : hierarchy.get_hierarchy()) {
@@ -1084,10 +1102,12 @@ void EvseSecurity::update_ocsp_cache(const CertificateHashData& certificate_hash
 
     try {
         X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
+        ca_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
         X509CertificateBundle leaf_bundle(leaf_cert_dir, EncodingFormat::PEM);
+        leaf_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
 
-        auto certificate_hierarchy =
-            std::move(X509CertificateHierarchy::build_hierarchy(ca_bundle.split(), leaf_bundle.split()));
+        auto certificate_hierarchy = std::move(X509CertificateHierarchy::build_hierarchy_with_flag(
+            this->ignore_unhandled_critical_extensions, ca_bundle.split(), leaf_bundle.split()));
 
         // If we already have the hash, over-write, else create a new one
         try {
@@ -1167,10 +1187,12 @@ std::optional<fs::path> EvseSecurity::retrieve_ocsp_cache_internal(const Certifi
 
     try {
         X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
+        ca_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
         X509CertificateBundle leaf_bundle(leaf_path, EncodingFormat::PEM);
+        leaf_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
 
-        auto certificate_hierarchy =
-            std::move(X509CertificateHierarchy::build_hierarchy(ca_bundle.split(), leaf_bundle.split()));
+        auto certificate_hierarchy = std::move(X509CertificateHierarchy::build_hierarchy_with_flag(
+            this->ignore_unhandled_critical_extensions, ca_bundle.split(), leaf_bundle.split()));
 
         // Find the certificate
         std::optional<X509Wrapper> cert = certificate_hierarchy.find_certificate(certificate_hash_data);
@@ -1203,6 +1225,7 @@ bool EvseSecurity::is_ca_certificate_installed(CaCertificateType certificate_typ
 bool EvseSecurity::is_ca_certificate_installed_internal(CaCertificateType certificate_type) {
     try {
         X509CertificateBundle bundle(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
+        bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
 
         // Search for a valid self-signed root
         auto& hierarchy = bundle.get_certificate_hierarchy();
@@ -1519,6 +1542,7 @@ EvseSecurity::get_full_leaf_certificate_info_internal(const CertificateQueryPara
             std::optional<fs::path> chain_file;
 
             X509CertificateBundle leaf_directory(cert_dir, EncodingFormat::PEM);
+            leaf_directory.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
 
             const std::vector<X509Wrapper>* leaf_fullchain = nullptr;
             const std::vector<X509Wrapper>* leaf_single = nullptr;
@@ -1577,9 +1601,11 @@ EvseSecurity::get_full_leaf_certificate_info_internal(const CertificateQueryPara
             // Both require the hierarchy build
             if (params.include_ocsp || params.include_root) {
                 X509CertificateBundle root_bundle(root_dir, EncodingFormat::PEM); // Required for hierarchy
+                root_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
 
                 // The hierarchy is required for both roots and the OCSP cache
-                auto hierarchy = X509CertificateHierarchy::build_hierarchy(root_bundle.split(), leaf_directory.split());
+                auto hierarchy = X509CertificateHierarchy::build_hierarchy_with_flag(
+                    this->ignore_unhandled_critical_extensions, root_bundle.split(), leaf_directory.split());
                 EVLOG_debug << "Hierarchy for root/OCSP data: \n" << hierarchy.to_debug_string();
 
                 // Include OCSP data if possible
@@ -1749,6 +1775,7 @@ GetCertificateInfoResult EvseSecurity::get_ca_certificate_info_internal(CaCertif
         // Support bundle files, in case the certificates contain
         // multiple entries (should be 3) as per the specification
         X509CertificateBundle verify_file(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
+        verify_file.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
 
         EVLOG_info << "Requesting certificate file: [" << conversions::ca_certificate_type_to_string(certificate_type)
                    << "] file:" << verify_file.get_path();
@@ -1821,7 +1848,8 @@ std::string EvseSecurity::get_verify_location(CaCertificateType certificate_type
     try {
         // Support bundle files, in case the certificates contain
         // multiple entries (should be 3) as per the specification
-        const X509CertificateBundle verify_location(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
+        X509CertificateBundle verify_location(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
+        verify_location.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
 
         const auto location_path = verify_location.get_path();
 
@@ -2076,7 +2104,8 @@ EvseSecurity::verify_certificate_internal(const std::string& certificate_chain,
         }
 
         return CryptoSupplier::x509_verify_certificate_chain(leaf_certificate.get(), trusted_parent_certificates,
-                                                             untrusted_subcas, true, std::nullopt, std::nullopt);
+                                                             untrusted_subcas, true, std::nullopt, std::nullopt,
+                                                             this->ignore_unhandled_critical_extensions);
 
     } catch (const CertificateLoadException& e) {
         EVLOG_warning << "Could not validate certificate chain because of invalid format";
@@ -2113,7 +2142,9 @@ void EvseSecurity::garbage_collect() {
         // Root bundle required for hash of OCSP cache
         try {
             X509CertificateBundle root_bundle(ca_bundle_path_map[ca_type], EncodingFormat::PEM);
+            root_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
             X509CertificateBundle expired_certs(cert_dir, EncodingFormat::PEM);
+            expired_certs.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
 
             // Only handle if we have more than the minimum certificates entry
             if (expired_certs.get_certificate_chains_count() > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
@@ -2144,8 +2175,9 @@ void EvseSecurity::garbage_collect() {
                                 }
 
                                 const auto& leaf_chain = chain;
-                                X509CertificateHierarchy hierarchy = std::move(
-                                    X509CertificateHierarchy::build_hierarchy(root_bundle.split(), leaf_chain));
+                                X509CertificateHierarchy hierarchy =
+                                    std::move(X509CertificateHierarchy::build_hierarchy_with_flag(
+                                        this->ignore_unhandled_critical_extensions, root_bundle.split(), leaf_chain));
 
                                 CertificateHashData ocsp_hash;
                                 fs::path path_ocsp_hash;
@@ -2221,7 +2253,8 @@ void EvseSecurity::garbage_collect() {
 
                 try {
                     // Check if we have found any matching certificate
-                    auto key_path = get_certificate_path_of_key(key_file_path, keys_dir, this->private_key_password);
+                    auto key_path = get_certificate_path_of_key(key_file_path, keys_dir, this->private_key_password,
+                                                                this->ignore_unhandled_critical_extensions);
                 } catch (const NoCertificateValidException& e) {
                     // If we did not found, add to the potential delete list
                     EVLOG_debug << "Could not find matching certificate for key: " << key_file_path
@@ -2282,7 +2315,9 @@ void EvseSecurity::garbage_collect() {
 
             // Also load the roots since we need to build the hierarchy for correct certificate hashes
             X509CertificateBundle root_bundle(ca_bundle_path_map[load], EncodingFormat::PEM);
+            root_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
             X509CertificateBundle leaf_bundle(leaf_certificate_path, EncodingFormat::PEM);
+            leaf_bundle.set_ignore_unhandled_critical_extensions(this->ignore_unhandled_critical_extensions);
 
             fs::path leaf_ocsp;
             fs::path root_ocsp;
@@ -2299,8 +2334,8 @@ void EvseSecurity::garbage_collect() {
                 leaf_ocsp = leaf_bundle.get_path() / "ocsp";
             }
 
-            X509CertificateHierarchy hierarchy =
-                std::move(X509CertificateHierarchy::build_hierarchy(root_bundle.split(), leaf_bundle.split()));
+            X509CertificateHierarchy hierarchy = std::move(X509CertificateHierarchy::build_hierarchy_with_flag(
+                this->ignore_unhandled_critical_extensions, root_bundle.split(), leaf_bundle.split()));
 
             // Iterate all hashes folders and see if any are missing
             for (auto& ocsp_dir : {leaf_ocsp, root_ocsp}) {

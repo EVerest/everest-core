@@ -39,6 +39,16 @@ config:
       Output directory for the TLS key log file
     type: string
     default: /tmp
+  tls_bypass_unhandled_critical_extensions:
+    description: >-
+      When true, the libiso TLS server context installs a verify callback that suppresses
+      X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION for certificates whose critical extensions all
+      have well-known RFC 5280 NIDs. Enables interoperability with EV / V2G certificates
+      that mark extensions critical in ways OpenSSL's path-validation machinery doesn't
+      natively handle. Certificates carrying truly unknown critical OIDs are still rejected
+      and logged with the offending NID/OID. Mirrors the EvseV2G option of the same name.
+    type: boolean
+    default: false
   enable_sdp_server:
     description: >-
       Enable the built-in SDP server

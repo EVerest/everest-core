@@ -39,6 +39,7 @@ struct Conf {
     int auth_timeout_pnc;
     int auth_timeout_eim;
     bool enable_sdp_server;
+    bool tls_bypass_unhandled_critical_extensions;
 };
 
 class EvseV2G : public Everest::ModuleBase {

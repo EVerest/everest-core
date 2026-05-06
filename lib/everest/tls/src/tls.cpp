@@ -6,6 +6,7 @@
 #include <everest/tls/openssl_util.hpp>
 #include <everest/tls/tls.hpp>
 
+#include <evse_security/crypto/openssl/openssl_crypto_supplier.hpp>
 #include <evse_security/crypto/openssl/openssl_provider.hpp>
 
 #include <arpa/inet.h>
@@ -986,7 +987,10 @@ bool Server::init_ssl(const config_t& cfg) {
                     result = false;
                 }
             }
-            SSL_CTX_set_verify(ctx, mode, nullptr);
+            SSL_CTX_set_verify(ctx, mode,
+                               cfg.ignore_unhandled_critical_extensions
+                                   ? &evse_security::critical_extension_bypass_callback
+                                   : nullptr);
 
             result = result && m_status_request_v2.init_ssl(ctx);
             result = result && m_server_trusted_ca_keys.init_ssl(ctx);
@@ -1006,7 +1010,8 @@ void Server::deinit_ssl() {
     m_context = std::make_unique<server_ctx>();
 }
 
-bool Server::init_certificates(const std::vector<certificate_config_t>& chain_files) {
+bool Server::init_certificates(const std::vector<certificate_config_t>& chain_files,
+                               bool ignore_unhandled_critical_extensions) {
     std::vector<OcspCache::ocsp_entry_t> entries;
     openssl::chain_list chains;
 
@@ -1054,7 +1059,7 @@ bool Server::init_certificates(const std::vector<certificate_config_t>& chain_fi
                 chain.chain.trust_anchors = std::move(tas);
                 chain.private_key = std::move(pkey);
 
-                if (openssl::verify_chain(chain)) {
+                if (openssl::verify_chain(chain, ignore_unhandled_critical_extensions)) {
                     chains.emplace_back(std::move(chain));
                 }
             } else {
@@ -1210,7 +1215,7 @@ bool Server::update(const config_t& cfg) {
 
     m_timeout_ms = cfg.io_timeout_ms;
     // always try init_certificates() and init_ssl()
-    bool result = init_certificates(cfg.chains);
+    bool result = init_certificates(cfg.chains, cfg.ignore_unhandled_critical_extensions);
     if (!init_ssl(cfg)) {
         result = false;
     }
@@ -1363,7 +1368,9 @@ bool Client::init(const config_t& cfg, const override_t& override) {
             }
         }
 
-        SSL_CTX_set_verify(ctx, mode, nullptr);
+        SSL_CTX_set_verify(ctx, mode,
+                           cfg.ignore_unhandled_critical_extensions ? &evse_security::critical_extension_bypass_callback
+                                                                    : nullptr);
         if (cfg.status_request) {
             if (SSL_CTX_set_tlsext_status_type(ctx, TLSEXT_STATUSTYPE_ocsp) != 1) {
                 log_error("SSL_CTX_set_tlsext_status_type");

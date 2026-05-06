@@ -228,7 +228,7 @@ std::string X509CertificateHierarchy::to_debug_string() {
     return str.str();
 }
 
-void X509CertificateHierarchy::insert(X509Wrapper&& inserted_certificate) {
+void X509CertificateHierarchy::insert(X509Wrapper&& inserted_certificate, bool ignore_unhandled_critical_extensions) {
     if (false == inserted_certificate.is_selfsigned()) {
         // If this certif has any link to any of the existing certificates
         bool hierarchy_found = false;
@@ -238,7 +238,7 @@ void X509CertificateHierarchy::insert(X509Wrapper&& inserted_certificate) {
 
         // Search through all the list for a link
         for_each([&](X509Node& top) {
-            if (top.certificate.is_child(inserted_certificate)) {
+            if (top.certificate.is_child(inserted_certificate, ignore_unhandled_critical_extensions)) {
                 // Some sanity checks
                 if (top.state.is_selfsigned) {
                     throw InvalidStateException(
@@ -252,7 +252,8 @@ void X509CertificateHierarchy::insert(X509Wrapper&& inserted_certificate) {
 
                 // Set the new state of the top node
                 temp_top.state = {0, 0};
-                temp_top.hash = temp_top.certificate.get_certificate_hash_data(new_node.certificate);
+                temp_top.hash = temp_top.certificate.get_certificate_hash_data(new_node.certificate,
+                                                                               ignore_unhandled_critical_extensions);
                 temp_top.issuer = X509Wrapper(new_node.certificate);
 
                 // Set the top as a child of the new_node
@@ -261,12 +262,13 @@ void X509CertificateHierarchy::insert(X509Wrapper&& inserted_certificate) {
                 // Set the new top
                 top = std::move(new_node);
                 hierarchy_found = true; // Found a link
-            } else if (inserted_certificate.is_child(top.certificate)) {
+            } else if (inserted_certificate.is_child(top.certificate, ignore_unhandled_critical_extensions)) {
                 // If the certificate is the descendant of top certificate
 
                 // Calculate hash and set issuer
                 new_node.state = {0, 0};
-                new_node.hash = inserted_certificate.get_certificate_hash_data(top.certificate);
+                new_node.hash = inserted_certificate.get_certificate_hash_data(top.certificate,
+                                                                               ignore_unhandled_critical_extensions);
                 new_node.issuer = X509Wrapper(top.certificate); // Set the new issuer
 
                 // Add it to the top's descendant list
@@ -304,11 +306,12 @@ void X509CertificateHierarchy::insert(X509Wrapper&& inserted_certificate) {
                 }
 
                 // If it is a child of the new root certificate insert it to it's list and break
-                if (node.certificate.is_child(inserted_certificate)) {
+                if (node.certificate.is_child(inserted_certificate, ignore_unhandled_critical_extensions)) {
                     auto& new_root = hierarchy.back();
 
                     // Hash is properly computed now
-                    node.hash = node.certificate.get_certificate_hash_data(new_root.certificate);
+                    node.hash = node.certificate.get_certificate_hash_data(new_root.certificate,
+                                                                           ignore_unhandled_critical_extensions);
                     node.state.is_orphan = 0;                        // Not an orphan any more
                     node.issuer = X509Wrapper(inserted_certificate); // Set the new valid issuer
 
@@ -325,7 +328,7 @@ void X509CertificateHierarchy::insert(X509Wrapper&& inserted_certificate) {
     }
 } // End insert
 
-void X509CertificateHierarchy::prune() {
+void X509CertificateHierarchy::prune(bool ignore_unhandled_critical_extensions) {
     if (hierarchy.size() <= 1) {
         return;
     }
@@ -343,8 +346,9 @@ void X509CertificateHierarchy::prune() {
         bool found_issuer = false;
 
         for_each([&](X509Node& top) {
-            if (orphan.certificate.is_child(top.certificate)) {
-                orphan.hash = orphan.certificate.get_certificate_hash_data(top.certificate);
+            if (orphan.certificate.is_child(top.certificate, ignore_unhandled_critical_extensions)) {
+                orphan.hash =
+                    orphan.certificate.get_certificate_hash_data(top.certificate, ignore_unhandled_critical_extensions);
                 orphan.state.is_orphan = 0;                   // Not an orphan any more
                 orphan.issuer = X509Wrapper(top.certificate); // Set the new valid issuer
 
@@ -366,16 +370,17 @@ void X509CertificateHierarchy::prune() {
     }
 }
 
-X509CertificateHierarchy X509CertificateHierarchy::build_hierarchy(std::vector<X509Wrapper>& certificates) {
+X509CertificateHierarchy X509CertificateHierarchy::build_hierarchy(std::vector<X509Wrapper>& certificates,
+                                                                   bool ignore_unhandled_critical_extensions) {
     X509CertificateHierarchy ordered;
 
     while (!certificates.empty()) {
-        ordered.insert(std::move(certificates.back()));
+        ordered.insert(std::move(certificates.back()), ignore_unhandled_critical_extensions);
         certificates.pop_back();
     }
 
     // Prune the tree
-    ordered.prune();
+    ordered.prune(ignore_unhandled_critical_extensions);
 
     return ordered;
 }

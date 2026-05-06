@@ -363,21 +363,27 @@ certificate_list load_certificates(const std::vector<const char*>& filenames);
  * \param[in] leaf_file is the server certificate
  * \param[in] chain_file is the file of intermediate certificates
  * \param[in] root_file is the self signed trust anchor
+ * \param[in] ignore_unhandled_critical_extensions when true, suppress
+ *            X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION for certs whose
+ *            critical extensions all carry well-known RFC 5280 NIDs
  * \return the certificate chain. chain_info_t::leaf will be nullptr when a chain
  *         cannot be built
  * \note when leaf_file is null pointer the server certificate is the first certificate in the chain_file
  */
-chain_info_t load_certificates(const char* leaf_file, const char* chain_file, const char* root_file);
+chain_info_t load_certificates(const char* leaf_file, const char* chain_file, const char* root_file,
+                               bool ignore_unhandled_critical_extensions = false);
 
 /**
  * \brief load a PKI chain from leaf to root
  * \param[in] chain is the structure containing the three filenames
+ * \param[in] ignore_unhandled_critical_extensions see the file-based overload
  * \return the certificate chain. chain_info_t::leaf will be nullptr when a chain
  *         cannot be built
  * \note when leaf_file is null pointer the server certificate is the first certificate in the chain_file
  */
-static inline chain_info_t load_certificates(const chain_filenames_t& chain) {
-    return load_certificates(chain.leaf, chain.chain, chain.root);
+static inline chain_info_t load_certificates(const chain_filenames_t& chain,
+                                             bool ignore_unhandled_critical_extensions = false) {
+    return load_certificates(chain.leaf, chain.chain, chain.root, ignore_unhandled_critical_extensions);
 }
 
 /**
@@ -398,17 +404,20 @@ bool verify_certificate_key(const x509_st* cert, const evp_pkey_st* pkey);
 /**
  * \brief verify a certificate chain from leaf to trust anchor(s)
  * \param[in] chain the structure containing the certificates
+ * \param[in] ignore_unhandled_critical_extensions when true, accept certs whose
+ *            critical extensions all carry well-known RFC 5280 NIDs
  * \return true when there is a valid chain
  */
-bool verify_chain(const chain_info_t& chain);
+bool verify_chain(const chain_info_t& chain, bool ignore_unhandled_critical_extensions = false);
 
 /**
  * \brief verify a certificate chain from leaf to trust anchor(s) and that
  *        the private key is associated with the leaf certificate
  * \param[in] chain the structure containing the certificates and private key
+ * \param[in] ignore_unhandled_critical_extensions see the chain_info_t overload
  * \return true when there is a valid chain and the key matches
  */
-bool verify_chain(const chain_t& chain);
+bool verify_chain(const chain_t& chain, bool ignore_unhandled_critical_extensions = false);
 
 /**
  * \brief apply the certificates and private key to the SSL session
@@ -454,9 +463,16 @@ DER certificate_to_der(const x509_st* cert);
  *            intermediate CAs
  * \param[in] untrusted intermediate CAs needed to form a chain from the leaf
  *            certificate to one of the supplied trust anchors
+ * \param[in] ignore_unhandled_critical_extensions when true, install the
+ *            evse_security bypass callback so certs whose critical extensions
+ *            all carry well-known RFC 5280 NIDs (basicConstraints, keyUsage,
+ *            subjectKeyIdentifier, ...) no longer trigger
+ *            X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION. Intended for interop
+ *            with non-compliant trust anchors.
  */
 verify_result_t verify_certificate(const x509_st* cert, const certificate_list& trust_anchors,
-                                   const certificate_list& untrusted);
+                                   const certificate_list& untrusted,
+                                   bool ignore_unhandled_critical_extensions = false);
 
 /**
  * \brief extract the certificate subject as a dictionary of name/value pairs

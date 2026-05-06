@@ -63,7 +63,8 @@ bool AbstractCryptoSupplier::x509_is_selfsigned(X509Handle* /*handle*/) {
     default_crypto_supplier_usage_error() return false;
 }
 
-bool AbstractCryptoSupplier::x509_is_child(X509Handle* /*child*/, X509Handle* /*parent*/) {
+bool AbstractCryptoSupplier::x509_is_child(X509Handle* /*child*/, X509Handle* /*parent*/,
+                                           bool /*ignore_unhandled_critical_extensions*/) {
     default_crypto_supplier_usage_error() return false;
 }
 
@@ -80,7 +81,8 @@ X509Handle_ptr x509_duplicate_unique() {
 CertificateValidationResult AbstractCryptoSupplier::x509_verify_certificate_chain(
     X509Handle* /*target*/, const std::vector<X509Handle*>& /*parents*/,
     const std::vector<X509Handle*>& /*untrusted_subcas*/, bool /*allow_future_certificates*/,
-    const std::optional<fs::path> /*dir_path*/, const std::optional<fs::path> /*file_path*/) {
+    const std::optional<fs::path> /*dir_path*/, const std::optional<fs::path> /*file_path*/,
+    bool /*ignore_unhandled_critical_extensions*/) {
     default_crypto_supplier_usage_error() return CertificateValidationResult::Unknown;
 }
 

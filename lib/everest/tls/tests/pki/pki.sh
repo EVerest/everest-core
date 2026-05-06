@@ -76,5 +76,19 @@ openssl req \
     -key "${base}${server_ca_priv}" -CA "${base}${client_root_cert}" \
     -CAkey "${base}${client_root_priv}" -out cross_ca_cert.pem
 
+# critical-SKI chain: server_root (clean) -> ca_critical_ski -> server_critical_ski.
+# Used by the ignore_unhandled_critical_extensions bypass test. Re-uses the
+# existing EC keys so no extra keypair generation is needed.
+echo "Generate server_ca_critical_ski"
+openssl req \
+    -config "${cfg}" -x509 -section req_server_ca -extensions v3_server_ca_critical_ski \
+    -key "${server_ca_priv}" -CA "${server_root_cert}" \
+    -CAkey "${server_root_priv}" -out server_ca_critical_ski_cert.pem
+echo "Generate server_critical_ski"
+openssl req \
+    -config "${cfg}" -x509 -section req_server -extensions v3_server_critical_ski \
+    -key "${server_priv}" -CA server_ca_critical_ski_cert.pem \
+    -CAkey "${server_ca_priv}" -out server_critical_ski_cert.pem
+
 # convert iso key to PEM
 openssl asn1parse -genconf iso_pkey.asn1 -noout -out -| openssl pkey -inform der -out iso_priv.pem

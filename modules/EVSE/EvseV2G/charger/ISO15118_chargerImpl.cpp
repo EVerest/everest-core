@@ -54,6 +54,12 @@ void ISO15118_chargerImpl::init() {
 
     v2g_ctx->tls_key_logging = mod->config.tls_key_logging;
     v2g_ctx->tls_key_logging_path = mod->config.tls_key_logging_path;
+    v2g_ctx->tls_bypass_unhandled_critical_extensions = mod->config.tls_bypass_unhandled_critical_extensions;
+
+    if (mod->config.tls_bypass_unhandled_critical_extensions) {
+        dlog(DLOG_LEVEL_INFO, "TLS X.509 well-known-NID critical-extension bypass ENABLED. "
+                              "Truly unknown critical OIDs are still rejected and logged.");
+    }
 
     if (mod->config.tls_key_logging == true) {
         dlog(DLOG_LEVEL_DEBUG, "tls-key-logging enabled (path: %s)", mod->config.tls_key_logging_path.c_str());

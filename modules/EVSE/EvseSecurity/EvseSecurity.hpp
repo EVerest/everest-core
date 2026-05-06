@@ -29,6 +29,7 @@ struct Conf {
     std::string secc_leaf_cert_directory;
     std::string secc_leaf_key_directory;
     std::string private_key_password;
+    bool ignore_unhandled_critical_extensions;
 };
 
 class EvseSecurity : public Everest::ModuleBase {

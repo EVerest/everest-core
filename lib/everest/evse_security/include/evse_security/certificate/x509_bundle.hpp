@@ -177,6 +177,11 @@ public:
     /// Invalidated on any add/delete operation
     X509CertificateHierarchy& get_certificate_hierarchy();
 
+    /// @brief If set, hierarchy discovery bypasses X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION when every critical
+    /// extension on a certificate has a well-known RFC 5280 NID. Needed for interoperability with non-compliant CAs
+    /// (e.g. those that mark SKI critical). Calling this invalidates any cached hierarchy.
+    void set_ignore_unhandled_critical_extensions(bool ignore);
+
     X509CertificateBundle& operator=(X509CertificateBundle&& other) = default;
 
     /// @brief Returns the latest valid certif that we might contain
@@ -206,6 +211,9 @@ private:
     // Cached certificate hierarchy, invalidated on any operation
     X509CertificateHierarchy hierarchy;
     bool hierarchy_invalidated;
+
+    // If true, hierarchy discovery tolerates non-compliant critical extensions (see setter for details)
+    bool ignore_unhandled_critical_extensions = false;
 };
 
 } // namespace evse_security
