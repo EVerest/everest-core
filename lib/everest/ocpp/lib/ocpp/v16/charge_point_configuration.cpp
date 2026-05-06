@@ -74,7 +74,6 @@ ChargePointConfiguration::ChargePointConfiguration(const std::string& config, co
         if (fs::exists(cost_schema_path)) {
             std::ifstream ifs(cost_schema_path.c_str());
             std::string cost_schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-            const auto cost_schema = json::parse(cost_schema_file);
             this->cost_and_price_schema = json::parse(cost_schema_file);
         }
     } catch (const json::parse_error& e) {
