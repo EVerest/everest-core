@@ -89,6 +89,18 @@ constexpr std::uint8_t iso_exi_sig[] = {0x4c, 0x8f, 0x20, 0xc1, 0x40, 0x0b, 0xa6
 const char iso_exi_a_hash_b64[] = "0bXgPQBlvuVrMXmERTBR61TKGPwOCRYXT4s8d6mPSqk=";
 const char iso_exi_a_hash_b64_nl[] = "0bXgPQBlvuVrMXmERTBR61TKGPwOCRYXT4s8d6mPSqk=\n";
 
+// Embedded NUL mid-buffer; pre-pass must skip it.
+const char iso_exi_a_hash_b64_embedded_nul[] = {
+    '0', 'b', 'X', 'g', 'P', 'Q', 'B', 'l', 'v', 'u', 'V', 'r', '\0', 'M', 'X', 'm', 'E', 'R', 'T', 'B', 'R', '6', '1',
+    'T', 'K', 'G', 'P', 'w', 'O', 'C', 'R', 'Y', 'X', 'T', '4', 's',  '8', 'd', '6', 'm', 'P', 'S', 'q', 'k', '=',
+};
+constexpr std::size_t iso_exi_a_hash_b64_embedded_nul_len = sizeof(iso_exi_a_hash_b64_embedded_nul);
+
+const char iso_exi_a_hash_b64_crlf[] = "0bXgPQBlvuVrMXmERTBR61TKGPwOCRYXT4s8d6mPSqk=\r\n";
+const char iso_exi_a_hash_b64_cr[] = "0bXgPQBlvuVrMXmERTBR61TKGPwOCRYXT4s8d6mPSqk=\r";
+const char iso_exi_a_hash_b64_spaces[] = "0bXgPQBlvuVr MXmERTBR61TK GPwOCRYXT4s8d6mPSqk=";
+const char iso_exi_a_hash_b64_tabs[] = "0bXgPQBlvuVr\tMXmERTBR61TKGPwOCRYXT4s8d6mPSqk=";
+
 const char iso_exi_sig_b64[] =
     "TI8gwUALpnYGqkgRVyovGtPBUInZVCA2NDC7JrSdsQTwjfqL+AVeY6S3Wo0xaSBvqNVDCLpY8FZrlrr2ks5ZUA==";
 const char iso_exi_sig_b64_nl[] =
@@ -254,26 +266,10 @@ TEST(openssl, base64EncodeNl) {
 }
 
 TEST(openssl, base64Decode) {
-    auto res = openssl::base64_decode(&iso_exi_a_hash_b64[0], sizeof(iso_exi_a_hash_b64));
+    auto res = openssl::base64_decode(&iso_exi_a_hash_b64[0], sizeof(iso_exi_a_hash_b64) - 1);
     ASSERT_EQ(res.size(), sizeof(iso_exi_a_hash));
     EXPECT_EQ(std::memcmp(res.data(), &iso_exi_a_hash[0], res.size()), 0);
-    res = openssl::base64_decode(&iso_exi_sig_b64[0], sizeof(iso_exi_sig_b64));
-    ASSERT_EQ(res.size(), sizeof(iso_exi_sig));
-    EXPECT_EQ(std::memcmp(res.data(), &iso_exi_sig[0], res.size()), 0);
-
-    std::array<std::uint8_t, 512> buffer{};
-    std::size_t buffer_len = buffer.size();
-
-    EXPECT_TRUE(openssl::base64_decode(&iso_exi_a_hash_b64[0], sizeof(iso_exi_a_hash_b64), buffer.data(), buffer_len));
-    ASSERT_EQ(buffer_len, sizeof(iso_exi_a_hash));
-    EXPECT_EQ(std::memcmp(buffer.data(), &iso_exi_a_hash[0], buffer_len), 0);
-}
-
-TEST(openssl, base64DecodeNl) {
-    auto res = openssl::base64_decode(&iso_exi_a_hash_b64_nl[0], sizeof(iso_exi_a_hash_b64_nl));
-    ASSERT_EQ(res.size(), sizeof(iso_exi_a_hash));
-    EXPECT_EQ(std::memcmp(res.data(), &iso_exi_a_hash[0], res.size()), 0);
-    res = openssl::base64_decode(&iso_exi_sig_b64_nl[0], sizeof(iso_exi_sig_b64_nl));
+    res = openssl::base64_decode(&iso_exi_sig_b64[0], sizeof(iso_exi_sig_b64) - 1);
     ASSERT_EQ(res.size(), sizeof(iso_exi_sig));
     EXPECT_EQ(std::memcmp(res.data(), &iso_exi_sig[0], res.size()), 0);
 
@@ -281,9 +277,91 @@ TEST(openssl, base64DecodeNl) {
     std::size_t buffer_len = buffer.size();
 
     EXPECT_TRUE(
-        openssl::base64_decode(&iso_exi_a_hash_b64_nl[0], sizeof(iso_exi_a_hash_b64_nl), buffer.data(), buffer_len));
+        openssl::base64_decode(&iso_exi_a_hash_b64[0], sizeof(iso_exi_a_hash_b64) - 1, buffer.data(), buffer_len));
     ASSERT_EQ(buffer_len, sizeof(iso_exi_a_hash));
     EXPECT_EQ(std::memcmp(buffer.data(), &iso_exi_a_hash[0], buffer_len), 0);
+}
+
+TEST(openssl, base64DecodeNl) {
+    auto res = openssl::base64_decode(&iso_exi_a_hash_b64_nl[0], sizeof(iso_exi_a_hash_b64_nl) - 1);
+    ASSERT_EQ(res.size(), sizeof(iso_exi_a_hash));
+    EXPECT_EQ(std::memcmp(res.data(), &iso_exi_a_hash[0], res.size()), 0);
+    res = openssl::base64_decode(&iso_exi_sig_b64_nl[0], sizeof(iso_exi_sig_b64_nl) - 1);
+    ASSERT_EQ(res.size(), sizeof(iso_exi_sig));
+    EXPECT_EQ(std::memcmp(res.data(), &iso_exi_sig[0], res.size()), 0);
+
+    std::array<std::uint8_t, 512> buffer{};
+    std::size_t buffer_len = buffer.size();
+
+    EXPECT_TRUE(openssl::base64_decode(&iso_exi_a_hash_b64_nl[0], sizeof(iso_exi_a_hash_b64_nl) - 1, buffer.data(),
+                                       buffer_len));
+    ASSERT_EQ(buffer_len, sizeof(iso_exi_a_hash));
+    EXPECT_EQ(std::memcmp(buffer.data(), &iso_exi_a_hash[0], buffer_len), 0);
+}
+
+TEST(openssl, base64DecodeEmbeddedNul) {
+    auto res = openssl::base64_decode(&iso_exi_a_hash_b64_embedded_nul[0], iso_exi_a_hash_b64_embedded_nul_len);
+    ASSERT_EQ(res.size(), sizeof(iso_exi_a_hash));
+    EXPECT_EQ(std::memcmp(res.data(), &iso_exi_a_hash[0], res.size()), 0);
+}
+
+TEST(openssl, base64DecodeCrlf) {
+    auto res = openssl::base64_decode(&iso_exi_a_hash_b64_crlf[0], sizeof(iso_exi_a_hash_b64_crlf) - 1);
+    ASSERT_EQ(res.size(), sizeof(iso_exi_a_hash));
+    EXPECT_EQ(std::memcmp(res.data(), &iso_exi_a_hash[0], res.size()), 0);
+}
+
+TEST(openssl, base64DecodeCrOnly) {
+    auto res = openssl::base64_decode(&iso_exi_a_hash_b64_cr[0], sizeof(iso_exi_a_hash_b64_cr) - 1);
+    ASSERT_EQ(res.size(), sizeof(iso_exi_a_hash));
+    EXPECT_EQ(std::memcmp(res.data(), &iso_exi_a_hash[0], res.size()), 0);
+}
+
+TEST(openssl, base64DecodeInternalSpaces) {
+    auto res = openssl::base64_decode(&iso_exi_a_hash_b64_spaces[0], sizeof(iso_exi_a_hash_b64_spaces) - 1);
+    ASSERT_EQ(res.size(), sizeof(iso_exi_a_hash));
+    EXPECT_EQ(std::memcmp(res.data(), &iso_exi_a_hash[0], res.size()), 0);
+}
+
+TEST(openssl, base64DecodeTabs) {
+    auto res = openssl::base64_decode(&iso_exi_a_hash_b64_tabs[0], sizeof(iso_exi_a_hash_b64_tabs) - 1);
+    ASSERT_EQ(res.size(), sizeof(iso_exi_a_hash));
+    EXPECT_EQ(std::memcmp(res.data(), &iso_exi_a_hash[0], res.size()), 0);
+}
+
+TEST(openssl, base64DecodeTrailingNulIsTolerated) {
+    // sizeof(literal) includes the trailing NUL; impl must skip it.
+    auto res = openssl::base64_decode(&iso_exi_a_hash_b64[0], sizeof(iso_exi_a_hash_b64));
+    ASSERT_EQ(res.size(), sizeof(iso_exi_a_hash));
+    EXPECT_EQ(std::memcmp(res.data(), &iso_exi_a_hash[0], res.size()), 0);
+}
+
+TEST(openssl, base64DecodeVerticalTabAndFormFeed) {
+    const char vt_ff[] = "0bXgPQBlvuVr\vMXmERTBR61TKGPwOC\fRYXT4s8d6mPSqk=";
+    auto res = openssl::base64_decode(&vt_ff[0], sizeof(vt_ff) - 1);
+    ASSERT_EQ(res.size(), sizeof(iso_exi_a_hash));
+    EXPECT_EQ(std::memcmp(res.data(), &iso_exi_a_hash[0], res.size()), 0);
+}
+
+TEST(openssl, base64DecodeInvalidByteRejected) {
+    // Non-whitespace non-alphabet bytes still produce empty output.
+    auto res = openssl::base64_decode("@@@@", 4);
+    EXPECT_TRUE(res.empty());
+}
+
+TEST(openssl, base64DecodeEmptyInputReturnsEmpty) {
+    auto res = openssl::base64_decode("", 0);
+    EXPECT_TRUE(res.empty());
+
+    std::array<std::uint8_t, 16> buffer{};
+    std::size_t buffer_len = buffer.size();
+    EXPECT_FALSE(openssl::base64_decode("", 0, buffer.data(), buffer_len));
+}
+
+TEST(openssl, base64EncodeEmptyInputReturnsEmpty) {
+    const std::uint8_t empty_buf[1] = {0};
+    auto res = openssl::base64_encode(empty_buf, 0);
+    EXPECT_TRUE(res.empty());
 }
 
 TEST(openssl, sha256) {
