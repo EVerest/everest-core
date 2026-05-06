@@ -725,7 +725,7 @@ CertificateSignRequestResult OpenSSLSupplier::x509_generate_csr(const Certificat
 
     STACK_OF(X509_EXTENSION)* extensions = sk_X509_EXTENSION_new_null();
     X509_EXTENSION* ext_key_usage =
-        X509V3_EXT_conf_nid(nullptr, nullptr, NID_key_usage, "digitalSignature, keyAgreement");
+        X509V3_EXT_conf_nid(nullptr, nullptr, NID_key_usage, "critical, digitalSignature, keyAgreement");
     X509_EXTENSION* ext_basic_constraints =
         X509V3_EXT_conf_nid(nullptr, nullptr, NID_basic_constraints, "critical,CA:false");
     sk_X509_EXTENSION_push(extensions, ext_key_usage);
