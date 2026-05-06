@@ -846,6 +846,55 @@ void from_json(const nlohmann::json& j, Response& r) {
     }
 }
 
+void to_json(nlohmann::json& j, const SetConfigResult& r) {
+    j = {
+        {"status", conversions::response_status_to_string(r.status)},
+        {"status_info", r.status_info},
+        {"set_status", conversions::set_response_status_to_string(
+                           conversions::set_config_status_to_set_response_status(r.set_status))},
+    };
+}
+
+void from_json(const nlohmann::json& j, SetConfigResult& r) {
+    r.status = conversions::string_to_response_status(j.at("status"));
+    r.status_info = j.value("status_info", "");
+    r.set_status = conversions::set_response_status_to_set_config_status(
+        conversions::string_to_set_response_status(j.at("set_status")));
+}
+
+void to_json(nlohmann::json& j, const GetConfigResult& r) {
+    j = {
+        {"status", conversions::response_status_to_string(r.status)},
+        {"status_info", r.status_info},
+        {"value", r.configuration_parameter.value},
+    };
+}
+
+void from_json(const nlohmann::json& j, GetConfigResult& r) {
+    r.status = conversions::string_to_response_status(j.at("status"));
+    r.status_info = j.value("status_info", "");
+    r.configuration_parameter.value = j.at("value").get<everest::config::ConfigEntry>();
+}
+
+void to_json(nlohmann::json& j, const ConfigChangeResult& r) {
+    j = {
+        {"status", conversions::set_response_status_to_string(r.status)},
+        {"reason", r.reason},
+    };
+}
+
+void from_json(const nlohmann::json& j, ConfigChangeResult& r) {
+    const std::string status = j.value("status", "Rejected");
+    const std::string reason = j.value("reason", "");
+    if (status == "Accepted") {
+        r = ConfigChangeResult::Accepted();
+    } else if (status == "RebootRequired") {
+        r = ConfigChangeResult::AcceptedRebootRequired();
+    } else {
+        r = ConfigChangeResult::Rejected(reason);
+    }
+}
+
 } // namespace config
 } // namespace Everest
 

@@ -84,7 +84,6 @@ private:
     std::vector<std::string> retained_topics;
     std::unordered_set<std::string> subscribed_topics;
 
-    Thread mqtt_mainloop_thread;
     std::shared_future<void> main_loop_future;
 
     std::string mqtt_server_socket_path;
@@ -96,6 +95,9 @@ private:
     std::unique_ptr<everest::lib::io::mqtt::mqtt_client> mqtt_client;
     everest::lib::io::event::event_fd disconnect_event;
     everest::lib::io::event::fd_event_handler ev_handler;
+
+    // This must be destroyed first.
+    Thread mqtt_mainloop_thread;
 
     void on_mqtt_message(const Message& message);
     void on_mqtt_connect();

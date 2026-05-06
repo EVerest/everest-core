@@ -1,0 +1,29 @@
+description: "Test module for config service integration tests"
+metadata:
+  license: "https://opensource.org/licenses/Apache-2.0"
+  authors: ["Piet Gömpel"]
+config:
+  rw_param:
+    description: "A ReadWrite string parameter for testing runtime config changes"
+    type: string
+    default: "initial_value"
+    mutability: ReadWrite
+  rw_reboot_param:
+    description: "A ReadWrite parameter whose handler signals a reboot is required"
+    type: string
+    default: "reboot_value"
+    mutability: ReadWrite
+  rw_reject_param:
+    description: "A ReadWrite parameter whose handler rejects the change"
+    type: string
+    default: "reject_value"
+    mutability: ReadWrite
+  ro_param:
+    description: "A ReadOnly string parameter for testing reboot-required responses"
+    type: string
+    default: "read_only_value"
+    mutability: ReadOnly
+provides:
+  main:
+    description: "main implementation"
+    interface: "empty"

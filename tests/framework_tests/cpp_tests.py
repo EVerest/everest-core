@@ -11,6 +11,17 @@ from everest.testing.core_utils.fixtures import *
 from everest.testing.core_utils.everest_core import EverestCore
 from everest.testing.core_utils.probe_module import ProbeModule
 
+PROBE_CONFIG_SERVICE_ACCESS = {
+    "config": {
+        "modules": {
+            "test_config_target": {
+                "allow_read": True,
+                "allow_write": True,
+            }
+        }
+    }
+}
+
 from dataclasses import dataclass
 @dataclass
 class ErrorHandlingTesterState:
@@ -737,3 +748,78 @@ class TestErrorHandling:
         raised_error = error_handling_tester.test_error_handling['errors_global_all'][0]
         cleared_error = error_handling_tester.test_error_handling['errors_cleared_global_all'][0]
         assert raised_error['type'] == cleared_error['type'], 'Raised error does not match cleared error'
+
+
+@pytest.mark.probe_module(
+    connections={},
+    access=PROBE_CONFIG_SERVICE_ACCESS,
+)
+@pytest.mark.everest_core_config('config-test-cpp-config-service.yaml')
+class TestConfigService:
+    """
+    Tests for the runtime config service (set/get config values via the framework manager).
+    """
+
+    @pytest.fixture
+    def probe_module(self, started_test_controller, everest_core):
+        return ProbeModule(everest_core.get_runtime_session())
+
+    @pytest.mark.asyncio
+    async def test_config_service_operations(self, probe_module: ProbeModule):
+        # get initial value
+        result = await probe_module.get_config_value(
+            module_id="test_config_target",
+            param_name="rw_param",
+        )
+        assert result["status"] == "Ok", f"Expected Ok status, got: {result}"
+        assert result["value"] == "initial_value", f"Expected initial_value, got: {result}"
+
+        # set ReadWrite param - accepted immediately
+        result = await probe_module.set_config_value(
+            module_id="test_config_target",
+            param_name="rw_param",
+            value="updated_value",
+        )
+        assert result["status"] == "Ok", f"Expected Ok status, got: {result}"
+        assert result["set_status"] == "Accepted", f"Expected Accepted set_status, got: {result}"
+
+        # get after set - value should reflect the change
+        result = await probe_module.get_config_value(
+            module_id="test_config_target",
+            param_name="rw_param",
+        )
+        assert result["status"] == "Ok", f"Expected Ok status, got: {result}"
+        assert result["value"] == "updated_value", f"Expected updated_value, got: {result}"
+
+        # set ReadWrite param whose handler returns RebootRequired
+        result = await probe_module.set_config_value(
+            module_id="test_config_target",
+            param_name="rw_reboot_param",
+            value="new_reboot_value",
+        )
+        assert result["status"] == "Ok", f"Expected Ok status, got: {result}"
+        assert result["set_status"] == "RebootRequired", f"Expected RebootRequired set_status, got: {result}"
+
+        # set ReadWrite param whose handler rejects the change
+        result = await probe_module.set_config_value(
+            module_id="test_config_target",
+            param_name="rw_reject_param",
+            value="some_value",
+        )
+        assert result["set_status"] == "Rejected", f"Expected Rejected set_status, got: {result}"
+
+        # set ReadOnly param - rejected by the manager
+        result = await probe_module.set_config_value(
+            module_id="test_config_target",
+            param_name="ro_param",
+            value="new_ro_value",
+        )
+        assert result["set_status"] == "Rejected", f"Expected Rejected set_status, got: {result}"
+
+        # set non-existent param - error status
+        result = await probe_module.set_config_value(
+            module_id="test_config_target",
+            param_name="nonexistent_param",
+            value="some_value",
+        )
+        assert result["status"] != "Ok", f"Expected error status for unknown param, got: {result}"

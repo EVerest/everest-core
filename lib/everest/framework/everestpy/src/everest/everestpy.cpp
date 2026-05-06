@@ -153,6 +153,12 @@ PYBIND11_MODULE(everestpy, m) {
         .def("subscribe_error", &Module::subscribe_error)
         .def("subscribe_all_errors", &Module::subscribe_all_errors)
         .def("get_error_state_monitor_req", &Module::get_error_state_monitor_req)
+        .def("set_config_value", &Module::set_config_value, py::arg("module_id"), py::arg("param_name"),
+             py::arg("value"), py::arg("impl_id") = py::none())
+        .def("get_config_value", &Module::get_config_value, py::arg("module_id"), py::arg("param_name"),
+             py::arg("impl_id") = py::none())
+        .def("register_config_change_handler", &Module::register_config_change_handler, py::arg("param_name"),
+             py::arg("handler"))
         .def_property_readonly("fulfillments", &Module::get_fulfillments)
         .def_property_readonly("implementations", &Module::get_implementations)
         .def_property_readonly("requirements", &Module::get_requirements)

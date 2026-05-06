@@ -88,6 +88,9 @@ MQTTAbstractionImpl::MQTTAbstractionImpl(const MQTTSettings& mqtt_settings) :
 }
 
 MQTTAbstractionImpl::~MQTTAbstractionImpl() {
+    if (this->running.load()) {
+        this->disconnect();
+    }
     // this->mqtt_mainloop_thread.join();
 }
 

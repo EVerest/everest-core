@@ -70,6 +70,7 @@ class EverestEnvironmentCoreConfiguration:
 class EverestEnvironmentProbeModuleConfiguration:
     connections: Dict[str, List[Requirement]] = field(default_factory=dict)
     module_id: str = "probe"
+    access: Optional[Dict] = None
 
 
 class EverestTestEnvironmentSetup:
@@ -237,7 +238,8 @@ class EverestTestEnvironmentSetup:
         if self._probe_config:
             configuration_strategies.append(
                 ProbeModuleConfigurationStrategy(connections=self._probe_config.connections,
-                                                 module_id=self._probe_config.module_id))
+                                                 module_id=self._probe_config.module_id,
+                                                 access=self._probe_config.access))
 
         if self._evse_security_config:
             configuration_strategies.append(

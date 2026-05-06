@@ -8,6 +8,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -15,10 +16,17 @@
 
 #include "misc.hpp"
 
+namespace Everest {
+namespace config {
+class ConfigServiceClient;
+}
+} // namespace Everest
+
 class Module {
 public:
     Module(const RuntimeSession&);
     Module(const std::string&, const RuntimeSession&);
+    ~Module();
 
     ModuleSetup say_hello();
 
@@ -66,6 +74,12 @@ public:
     std::shared_ptr<Everest::error::ErrorStateMonitor>
     get_error_state_monitor_req(const Fulfillment& fulfillment) const;
 
+    json set_config_value(const std::string& module_id, const std::string& param_name, const std::string& value,
+                          const std::optional<std::string>& impl_id = std::nullopt);
+    json get_config_value(const std::string& module_id, const std::string& param_name,
+                          const std::optional<std::string>& impl_id = std::nullopt);
+    void register_config_change_handler(const std::string& param_name, std::function<json(const std::string&)> handler);
+
     const auto& get_fulfillments() const {
         return fulfillments;
     }
@@ -98,6 +112,7 @@ private:
     std::deque<std::function<void(json)>> subscription_callbacks{};
     std::deque<std::function<void(json)>> err_susbcription_callbacks{};
     std::deque<std::function<void(json)>> err_cleared_susbcription_callbacks{};
+    std::deque<std::function<json(const std::string&)>> config_change_handlers{};
 
     static std::unique_ptr<Everest::Everest>
     create_everest_instance(const std::string& module_id, const Everest::Config& config,

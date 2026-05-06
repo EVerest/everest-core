@@ -1,1 +1,2 @@
 ev_add_module(TestErrorHandling SKIP_DOC_GENERATION)
+ev_add_module(TestConfigTarget SKIP_DOC_GENERATION)
