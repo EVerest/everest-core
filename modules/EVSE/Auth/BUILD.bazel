@@ -1,21 +1,12 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("//modules:module.bzl", "cc_everest_module")
+load("//third-party/bazel/toolchains:defs.bzl", "CROSS_TEST_INCOMPATIBLE")
 
 cc_library(
     name = "auth_handler",
     srcs = glob(["lib/*.cpp"]),
     hdrs = glob(["include/*.hpp"]),
-    strip_include_prefix = "include",
-    deps = [
-        "//lib/everest/timer:libtimer",
-        "@boost.asio",
-        "//lib/everest/framework:framework",
-        "@com_github_HowardHinnant_date//:date",
-        "//types:types_lib",
-        "//interfaces:interfaces_lib",
-        "//lib/everest/helpers",
-        "//lib/everest/util",
-    ],
+    copts = ["-std=c++17"],
     # See https://github.com/HowardHinnant/date/issues/324
     local_defines = [
         "BUILD_TZ_LIB=ON",
@@ -24,7 +15,17 @@ cc_library(
         "USE_AUTOLOAD=0",
         "HAS_REMOTE_API=0",
     ],
-    copts = ["-std=c++17"],
+    strip_include_prefix = "include",
+    deps = [
+        "//interfaces:interfaces_lib",
+        "//lib/everest/framework",
+        "//lib/everest/helpers",
+        "//lib/everest/timer:libtimer",
+        "//lib/everest/util",
+        "//types:types_lib",
+        "@boost.asio",
+        "@com_github_HowardHinnant_date//:date",
+    ],
 )
 
 IMPLS = [
@@ -34,9 +35,47 @@ IMPLS = [
 
 cc_everest_module(
     name = "Auth",
-    deps = [
-        "//lib/everest/timer:libtimer",
-        ":auth_handler",
-    ],
     impls = IMPLS,
+    deps = [
+        ":auth_handler",
+        "//lib/everest/timer:libtimer",
+    ],
+)
+
+cc_test(
+    name = "Auth_test",
+    srcs = [
+        "lib/AuthHandler.cpp",
+        "lib/Connector.cpp",
+        "lib/ConnectorStateMachine.cpp",
+        "lib/ReservationHandler.cpp",
+        "tests/FakeAuthReceiver.hpp",
+        "tests/auth_tests.cpp",
+        "tests/reservation_tests.cpp",
+    ] + glob([
+        "include/*.hpp",
+        "tests/stubs/**/*.hpp",
+    ]),
+    copts = ["-std=c++17"],
+    # `tests/stubs` first so it shadows the real generated `kvsIntf` from the
+    # interfaces lib (whose ctor takes a ModuleAdapter and isn't usable in unit
+    # tests). Mirrors the CMake test setup.
+    includes = [
+        "include",
+        "tests",
+        "tests/stubs",
+    ],
+    # See https://github.com/HowardHinnant/date/issues/324
+    local_defines = [
+        "BUILD_TZ_LIB=ON",
+        "USE_SYSTEM_TZ_DB=ON",
+        "USE_OS_TZDB=1",
+        "USE_AUTOLOAD=0",
+        "HAS_REMOTE_API=0",
+    ],
+    target_compatible_with = CROSS_TEST_INCOMPATIBLE,
+    deps = [
+        ":auth_handler",
+        "@googletest//:gtest_main",
+    ],
 )

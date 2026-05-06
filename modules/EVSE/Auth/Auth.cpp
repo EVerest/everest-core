@@ -115,10 +115,14 @@ void Auth::ready() {
         evse_index++;
     }
 
-    this->auth_handler->register_publish_token_validation_status_callback(
-        [this](const ProvidedIdToken& token, TokenValidationStatus status,
+    this->auth_handler->register_publish_token_action_callback(
+        [this](const ProvidedIdToken& token, TokenActionStatus status,
                const std::vector<MessageContent>& tariff_messages) {
-            this->p_main->publish_token_validation_status({token, status, tariff_messages});
+            this->p_main->publish_token_action({token, status, tariff_messages});
+        });
+    this->auth_handler->register_publish_token_validation_results_callback(
+        [this](const ProvidedIdToken& token, const std::vector<ValidationResult>& results) {
+            this->p_main->publish_token_validation_status({token, results});
         });
 
     this->auth_handler->register_notify_evse_callback(
