@@ -35,7 +35,8 @@ struct StubConfigService : Everest::config::ConfigServiceInterface {
     DuplicateSlotResult duplicate_slot(int, std::optional<std::string>) override {
         return {};
     }
-    LoadFromYamlResult load_from_yaml(const std::string&, std::optional<std::string>, std::optional<int> slot_id) override {
+    LoadFromYamlResult load_from_yaml(const std::string&, std::optional<std::string>,
+                                      std::optional<int> slot_id) override {
         return {};
     }
     GetConfigurationResult get_configuration(int) override {

@@ -141,6 +141,64 @@ class ProbeModule:
         """
         self._mod.subscribe_error(self._setup.connections[connection_id][0], error_type, callback, clear_callback)
 
+    async def set_config_value(self, module_id: str, param_name: str, value: str,
+                               impl_id: Optional[str] = None) -> dict:
+        """
+        Set a configuration parameter of a module at runtime via the config service.
+        - module_id: the id of the target module
+        - param_name: the name of the configuration parameter
+        - value: the new value as a string (regardless of the underlying type)
+        - impl_id: optional implementation id (defaults to module-level scope)
+        returns: dict with keys 'status' (Ok/Error/AccessDenied), 'status_info', and
+                 'set_status' (Accepted/Rejected/RebootRequired)
+        Note: Requires the probe module to have write access to the target module in the EVerest config.
+        """
+        try:
+            async with asyncio.timeout(30):
+                return await asyncio.to_thread(
+                    lambda: self._mod.set_config_value(module_id, param_name, value, impl_id)
+                )
+        except TimeoutError as e:
+            error_message = (f"Timeout in set_config_value for {module_id}.{param_name}: "
+                             f"{type(e)}: {e}")
+            logging.error(error_message)
+            raise RuntimeError(error_message)
+
+    async def get_config_value(self, module_id: str, param_name: str,
+                               impl_id: Optional[str] = None) -> dict:
+        """
+        Get a configuration parameter of a module via the config service.
+        - module_id: the id of the target module
+        - param_name: the name of the configuration parameter
+        - impl_id: optional implementation id (defaults to module-level scope)
+        returns: dict with keys 'status' (Ok/Error/AccessDenied), 'status_info', and
+                 'value' (the current value as a string, present when status is Ok)
+        Note: Requires the probe module to have read access to the target module in the EVerest config.
+        """
+        try:
+            async with asyncio.timeout(30):
+                return await asyncio.to_thread(
+                    lambda: self._mod.get_config_value(module_id, param_name, impl_id)
+                )
+        except TimeoutError as e:
+            error_message = (f"Timeout in get_config_value for {module_id}.{param_name}: "
+                             f"{type(e)}: {e}")
+            logging.error(error_message)
+            raise RuntimeError(error_message)
+
+    def register_config_change_handler(self, param_name: str,
+                                       handler: Callable[[str], dict]):
+        """
+        Register a handler for runtime configuration changes of a parameter owned by this probe module.
+        This subscribes to incoming set_request messages for the given parameter name.
+        - param_name: the name of the configuration parameter to handle
+        - handler: a callable that takes the new value string and returns a dict with key
+                   'status' (Accepted/Rejected/RebootRequired) and optionally 'reason' (for Rejected)
+        Note: Must be called before start().
+        Note: The handler runs in a separate thread!
+        """
+        self._mod.register_config_change_handler(param_name, handler)
+
     def subscribe_all_errors(self, connection_id: str,
                             callback: Callable[[error.Error], None],
                             clear_callback: Callable[[error.Error], None]):

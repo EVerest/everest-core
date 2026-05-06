@@ -244,6 +244,18 @@ void from_json(const nlohmann::json& j, Request& r);
 void to_json(nlohmann::json& j, const Response& r);
 
 void from_json(const nlohmann::json& j, Response& r);
+
+void to_json(nlohmann::json& j, const SetConfigResult& r);
+
+void from_json(const nlohmann::json& j, SetConfigResult& r);
+
+void to_json(nlohmann::json& j, const GetConfigResult& r);
+
+void from_json(const nlohmann::json& j, GetConfigResult& r);
+
+void to_json(nlohmann::json& j, const ConfigChangeResult& r);
+
+void from_json(const nlohmann::json& j, ConfigChangeResult& r);
 } // namespace config
 } // namespace Everest
 

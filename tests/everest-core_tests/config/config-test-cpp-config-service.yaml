@@ -1,0 +1,8 @@
+active_modules:
+  test_config_target:
+    module: TestConfigTarget
+    config_module:
+      rw_param: "initial_value"
+      rw_reboot_param: "reboot_value"
+      rw_reject_param: "reject_value"
+      ro_param: "read_only_value"

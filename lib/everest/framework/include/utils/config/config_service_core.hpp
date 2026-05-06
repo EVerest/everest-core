@@ -42,7 +42,8 @@ public:
     SetActiveSlotStatus mark_active_slot(int slot_id) override;
     DeleteSlotStatus delete_slot(int slot_id) override;
     DuplicateSlotResult duplicate_slot(int slot_id, std::optional<std::string> description) override;
-    LoadFromYamlResult load_from_yaml(const std::string& raw_yaml, std::optional<std::string> description, std::optional<int> slot_id) override;
+    LoadFromYamlResult load_from_yaml(const std::string& raw_yaml, std::optional<std::string> description,
+                                      std::optional<int> slot_id) override;
 
     // --- Slot-scoped configuration ---
     GetConfigurationResult get_configuration(int slot_id) override;
