@@ -263,6 +263,9 @@ bool sha_512(const void* data, std::size_t len, sha_512_digest_t& digest);
  * \param[in] text the base64 string (does not need to be \0 terminated)
  * \param[in] len the length of the string (excluding any terminating \0)
  * \return binary array or empty on error
+ * \note tolerates stray '\0', '\t', '\n', '\v', '\f', '\r', ' ' (matching
+ *       EVP_Decode*'s B64_WS set); other non-alphabet bytes cause the
+ *       underlying BIO_f_base64 to fail and an empty vector is returned.
  */
 std::vector<std::uint8_t> base64_decode(const char* text, std::size_t len);
 

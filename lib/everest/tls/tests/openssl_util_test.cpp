@@ -349,6 +349,21 @@ TEST(openssl, base64DecodeInvalidByteRejected) {
     EXPECT_TRUE(res.empty());
 }
 
+TEST(openssl, base64DecodeEmptyInputReturnsEmpty) {
+    auto res = openssl::base64_decode("", 0);
+    EXPECT_TRUE(res.empty());
+
+    std::array<std::uint8_t, 16> buffer{};
+    std::size_t buffer_len = buffer.size();
+    EXPECT_FALSE(openssl::base64_decode("", 0, buffer.data(), buffer_len));
+}
+
+TEST(openssl, base64EncodeEmptyInputReturnsEmpty) {
+    const std::uint8_t empty_buf[1] = {0};
+    auto res = openssl::base64_encode(empty_buf, 0);
+    EXPECT_TRUE(res.empty());
+}
+
 TEST(openssl, sha256) {
     openssl::sha_256_digest_t digest;
     EXPECT_TRUE(openssl::sha_256(sha_256_test[0].input, 0, digest));

@@ -316,8 +316,9 @@ bool sha_512(const void* data, std::size_t len, sha_512_digest_t& digest) {
 }
 
 std::vector<std::uint8_t> base64_decode(const char* text, std::size_t len) {
-    assert(text != nullptr);
-    assert(len > 0);
+    if (text == nullptr || len == 0) {
+        return {};
+    }
 
     // Strip whitespace + NUL; pass everything else to BIO_f_base64.
     // Byte set matches EVP_Decode*'s B64_WS table so this stays drop-in
@@ -381,8 +382,9 @@ bool base64_decode(const char* text, std::size_t len, std::uint8_t* out_data, st
 }
 
 std::string base64_encode(const std::uint8_t* data, std::size_t len, bool newLine) {
-    assert(data != nullptr);
-    assert(len > 0);
+    if (data == nullptr || len == 0) {
+        return {};
+    }
 
     auto* b64 = BIO_new(BIO_f_base64());
     auto* mem = BIO_new(BIO_s_mem());
