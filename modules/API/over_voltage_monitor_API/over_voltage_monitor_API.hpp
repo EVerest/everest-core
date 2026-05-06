@@ -15,13 +15,6 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wunused-function"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#include <generated/interfaces/over_voltage_monitor/Implementation.hpp>
-#pragma GCC diagnostic pop
-
 #include <everest_api_types/over_voltage_monitor/API.hpp>
 #include <everest_api_types/utilities/CommCheckHandler.hpp>
 #include <everest_api_types/utilities/Topics.hpp>
