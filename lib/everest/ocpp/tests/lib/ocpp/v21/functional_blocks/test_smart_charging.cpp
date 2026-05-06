@@ -763,4 +763,121 @@ TEST_F(SmartChargingTestV21, AllSetpointsSameSign) {
 
     EXPECT_EQ(sut, ProfileValidationResultEnum::Valid);
 }
+// V2X.05: Reject if setpoint exceeds limit
+TEST_F(SmartChargingTestV21, V2X05_SetpointExceedsLimit_Rejected) {
+    auto periods = create_charging_schedule_periods(0, 1, std::nullopt, std::nullopt);
+    periods.at(0).operationMode = OperationModeEnum::CentralSetpoint;
+    periods.at(0).setpoint = 8000.0F;
+    periods.at(0).limit = 5000.0F;
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::W, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
+
+    auto sut = smart_charging.validate_setpoint_within_limit_range(profile);
+
+    EXPECT_EQ(sut, ProfileValidationResultEnum::ChargingSchedulePeriodSetpointOutOfRange);
+}
+
+// V2X.05: Reject if setpoint below dischargeLimit
+TEST_F(SmartChargingTestV21, V2X05_SetpointBelowDischargeLimit_Rejected) {
+    auto periods = create_charging_schedule_periods(0, 1, std::nullopt, std::nullopt);
+    periods.at(0).operationMode = OperationModeEnum::CentralSetpoint;
+    periods.at(0).setpoint = -5000.0F;
+    periods.at(0).dischargeLimit = -3000.0F;
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::W, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
+
+    auto sut = smart_charging.validate_setpoint_within_limit_range(profile);
+
+    EXPECT_EQ(sut, ProfileValidationResultEnum::ChargingSchedulePeriodSetpointOutOfRange);
+}
+
+// V2X.05: Accept if setpoint within range
+TEST_F(SmartChargingTestV21, V2X05_SetpointWithinRange_Accepted) {
+    auto periods = create_charging_schedule_periods(0, 1, std::nullopt, std::nullopt);
+    periods.at(0).operationMode = OperationModeEnum::CentralSetpoint;
+    periods.at(0).setpoint = 5000.0F;
+    periods.at(0).limit = 7000.0F;
+    periods.at(0).dischargeLimit = -3000.0F;
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::W, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
+
+    auto sut = smart_charging.validate_setpoint_within_limit_range(profile);
+
+    EXPECT_EQ(sut, ProfileValidationResultEnum::Valid);
+}
+
+// V2X.05: Accept if setpoint with no limits (limits are optional per Q03.FR.03)
+TEST_F(SmartChargingTestV21, V2X05_SetpointWithNoLimits_Accepted) {
+    auto periods = create_charging_schedule_periods(0, 1, std::nullopt, std::nullopt);
+    periods.at(0).operationMode = OperationModeEnum::CentralSetpoint;
+    periods.at(0).setpoint = 5000.0F;
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::W, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
+
+    auto sut = smart_charging.validate_setpoint_within_limit_range(profile);
+
+    EXPECT_EQ(sut, ProfileValidationResultEnum::Valid);
+}
+
+// V2X.10 (V2X.09 branch): reject non-TxProfile carrying _L2/_L3 fields with PhaseConflict
+TEST_F(SmartChargingTestV21, V2X10_NonTxProfile_WithDischargeLimitL2_Rejected) {
+    auto periods = create_charging_schedule_periods(0, 1, std::nullopt, std::nullopt);
+    periods.at(0).dischargeLimit_L2 = -2000.0F;
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxDefaultProfile,
+        create_charge_schedule(ChargingRateUnitEnum::W, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+
+    auto sut = smart_charging.validate_phase_conflict(profile);
+
+    EXPECT_EQ(sut, ProfileValidationResultEnum::ChargingSchedulePeriodPhaseConflict);
+}
+
+TEST_F(SmartChargingTestV21, V2X10_NonTxProfile_WithSetpointReactiveL3_Rejected) {
+    auto periods = create_charging_schedule_periods(0, 1, std::nullopt, std::nullopt);
+    periods.at(0).setpointReactive_L3 = 1000.0F;
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::W, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+
+    auto sut = smart_charging.validate_phase_conflict(profile);
+
+    EXPECT_EQ(sut, ProfileValidationResultEnum::ChargingSchedulePeriodPhaseConflict);
+}
+
+TEST_F(SmartChargingTestV21, V2X10_TxProfile_WithDischargeLimitL2_Accepted) {
+    auto periods = create_charging_schedule_periods(0, 1, std::nullopt, std::nullopt);
+    periods.at(0).dischargeLimit_L2 = -2000.0F;
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::W, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
+
+    auto sut = smart_charging.validate_phase_conflict(profile);
+
+    EXPECT_EQ(sut, ProfileValidationResultEnum::Valid);
+}
+
+TEST_F(SmartChargingTestV21, V2X10_NonTxProfile_NoL2L3Fields_Accepted) {
+    auto periods = create_charging_schedule_periods(0, 1, std::nullopt, std::nullopt);
+    periods.at(0).limit = 16.0F;
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxDefaultProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+
+    auto sut = smart_charging.validate_phase_conflict(profile);
+
+    EXPECT_EQ(sut, ProfileValidationResultEnum::Valid);
+}
+
 } // namespace ocpp::v2

@@ -723,4 +723,107 @@ TEST(OCPPTypesTest, ChargingSchedule_Equality) {
     ASSERT_EQ(schedule1, schedule2);
 }
 
+TEST(ProfileEffectiveModeTest, NulloptMapsToChargingOnly) {
+    EXPECT_EQ(effective_mode(std::nullopt), OperationModeEnum::ChargingOnly);
+}
+
+TEST(ProfileEffectiveModeTest, ExplicitChargingOnlyMapsToChargingOnly) {
+    EXPECT_EQ(effective_mode(std::optional<OperationModeEnum>{OperationModeEnum::ChargingOnly}),
+              OperationModeEnum::ChargingOnly);
+}
+
+TEST(ProfileEffectiveModeTest, V2XModePassesThrough) {
+    EXPECT_EQ(effective_mode(std::optional<OperationModeEnum>{OperationModeEnum::LocalLoadBalancing}),
+              OperationModeEnum::LocalLoadBalancing);
+    EXPECT_EQ(effective_mode(std::optional<OperationModeEnum>{OperationModeEnum::Idle}), OperationModeEnum::Idle);
+    EXPECT_EQ(effective_mode(std::optional<OperationModeEnum>{OperationModeEnum::CentralSetpoint}),
+              OperationModeEnum::CentralSetpoint);
+}
+
+namespace {
+// Build an IntermediatePeriod with all numeric fields at their "unspecified"
+// sentinel values, leaving only startPeriod and operationMode meaningful.
+// Used by tests that need to differentiate periods solely by operationMode.
+IntermediatePeriod make_default_period(std::int32_t start_period,
+                                       std::optional<OperationModeEnum> op_mode = std::nullopt) {
+    IntermediatePeriod p;
+    p.startPeriod = start_period;
+    p.current_limit = {NO_LIMIT_SPECIFIED, NO_LIMIT_SPECIFIED, NO_LIMIT_SPECIFIED};
+    p.power_limit = {NO_LIMIT_SPECIFIED, NO_LIMIT_SPECIFIED, NO_LIMIT_SPECIFIED};
+    p.current_discharge_limit = {NO_DISCHARGE_LIMIT_SPECIFIED, NO_DISCHARGE_LIMIT_SPECIFIED,
+                                 NO_DISCHARGE_LIMIT_SPECIFIED};
+    p.power_discharge_limit = {NO_DISCHARGE_LIMIT_SPECIFIED, NO_DISCHARGE_LIMIT_SPECIFIED,
+                               NO_DISCHARGE_LIMIT_SPECIFIED};
+    p.current_setpoint = {NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED};
+    p.power_setpoint = {NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED, NO_SETPOINT_SPECIFIED};
+    p.numberPhases = std::nullopt;
+    p.phaseToUse = std::nullopt;
+    p.operationMode = op_mode;
+    return p;
+}
+} // namespace
+
+// Two adjacent intermediate periods that differ only in operationMode must not
+// be collapsed by the merge dedup. The relevant scenarios are setpoint-less V2X
+// modes whose meaning is carried by operationMode alone (LocalLoadBalancing,
+// Idle, LocalFrequency, ExternalLimits — see OperationModeEnum table at p.505
+// of the OCPP 2.1 Edition 2 spec).
+TEST(MergeLowestLimitDedupTest, AdjacentPeriodsWithDifferentOperationModesNotCollapsed) {
+    IntermediateProfile profile = {
+        make_default_period(0, OperationModeEnum::LocalLoadBalancing),
+        make_default_period(1800, OperationModeEnum::Idle),
+    };
+
+    auto merged = merge_profiles_by_lowest_limit({profile}, OcppProtocolVersion::v21);
+    ASSERT_EQ(merged.size(), 2);
+    EXPECT_EQ(effective_mode(merged[0].operationMode), OperationModeEnum::LocalLoadBalancing);
+    EXPECT_EQ(effective_mode(merged[1].operationMode), OperationModeEnum::Idle);
+}
+
+// A non-default operationMode on any contributor must propagate even when the
+// period carries no setpoint. LocalLoadBalancing is the canonical example: per
+// the OCPP 2.1 Edition 2 operation-mode table (p.505), the mode has neither a
+// limit nor a setpoint of its own; the setpoint is computed from load readings.
+TEST(MergeLowestLimitOperationModeTest, NoSetpointModePropagates) {
+    IntermediateProfile llb_profile = {
+        make_default_period(0, OperationModeEnum::LocalLoadBalancing),
+    };
+    IntermediateProfile limit_profile = {make_default_period(0)};
+    limit_profile[0].current_limit = {16.0F, 16.0F, 16.0F};
+
+    auto merged = merge_profiles_by_lowest_limit({llb_profile, limit_profile}, OcppProtocolVersion::v21);
+    ASSERT_FALSE(merged.empty());
+    EXPECT_EQ(effective_mode(merged[0].operationMode), OperationModeEnum::LocalLoadBalancing);
+    EXPECT_FLOAT_EQ(merged[0].current_limit.limit, 16.0F);
+}
+
+// On a cross-purpose conflict (two contributors with distinct non-default
+// operationModes), the first contributor's mode wins deterministically.
+// Proper resolution requires SmartChargingCtrlr.SetpointPriority (Q06.FR.20–22)
+// which is not implemented yet.
+TEST(MergeLowestLimitOperationModeTest, ConflictKeepsFirstContributor) {
+    IntermediateProfile a = {make_default_period(0, OperationModeEnum::LocalLoadBalancing)};
+    IntermediateProfile b = {make_default_period(0, OperationModeEnum::Idle)};
+
+    auto merged = merge_profiles_by_lowest_limit({a, b}, OcppProtocolVersion::v21);
+    ASSERT_FALSE(merged.empty());
+    EXPECT_EQ(effective_mode(merged[0].operationMode), OperationModeEnum::LocalLoadBalancing);
+}
+
+// Per OCPP 2.1 Edition 2 §3.6, TxProfile overrules TxDefaultProfile. A TxProfile
+// period whose only override is a non-default operationMode (e.g. LocalLoadBalancing
+// with no numeric fields) must win the pick — otherwise the TxDefaultProfile's
+// limits leak through and the V2X mode is silently dropped.
+TEST(MergeTxWithDefaultTest, TxProfileWithOnlyOperationModeWins) {
+    IntermediateProfile tx = {make_default_period(0, OperationModeEnum::LocalLoadBalancing)};
+
+    IntermediateProfile tx_default = {make_default_period(0)};
+    tx_default[0].current_limit = {32.0F, 32.0F, 32.0F};
+
+    auto merged = merge_tx_profile_with_tx_default_profile(tx, tx_default);
+    ASSERT_FALSE(merged.empty());
+    EXPECT_EQ(effective_mode(merged[0].operationMode), OperationModeEnum::LocalLoadBalancing);
+    EXPECT_TRUE(is_equal(merged[0].current_limit.limit, NO_LIMIT_SPECIFIED));
+}
+
 } // namespace

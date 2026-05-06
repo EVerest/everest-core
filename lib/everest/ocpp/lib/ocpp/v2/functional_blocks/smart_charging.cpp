@@ -196,6 +196,10 @@ std::string profile_validation_result_to_string(ProfileValidationResultEnum e) {
         return "ChargingSchedulePeriodNoFreqWattCurve";
     case ocpp::v2::ProfileValidationResultEnum::ChargingSchedulePeriodSignDifference:
         return "ChargingSchedulePeriodSignDifference";
+    case ocpp::v2::ProfileValidationResultEnum::ChargingSchedulePeriodSetpointOutOfRange:
+        return "ChargingSchedulePeriodSetpointOutOfRange";
+    case ocpp::v2::ProfileValidationResultEnum::ChargingSchedulePeriodPhaseConflict:
+        return "ChargingSchedulePeriodPhaseConflict";
     case ProfileValidationResultEnum::ChargingStationMaxProfileCannotBeRelative:
         return "ChargingStationMaxProfileCannotBeRelative";
     case ProfileValidationResultEnum::ChargingStationMaxProfileEvseIdGreaterThanZero:
@@ -262,7 +266,10 @@ std::string profile_validation_result_to_reason_code(ProfileValidationResultEnum
     case ProfileValidationResultEnum::ChargingSchedulePeriodUnsupportedLimitSetpoint:
     case ProfileValidationResultEnum::ChargingSchedulePeriodSignDifference:
     case ProfileValidationResultEnum::ChargingSchedulePeriodNonFiniteValue:
+    case ProfileValidationResultEnum::ChargingSchedulePeriodSetpointOutOfRange:
         return "InvalidSchedule";
+    case ProfileValidationResultEnum::ChargingSchedulePeriodPhaseConflict:
+        return "PhaseConflict";
     case ProfileValidationResultEnum::ChargingSchedulePeriodNoPhaseForDC:
         return "NoPhaseForDC";
     case ProfileValidationResultEnum::ChargingSchedulePeriodNoFreqWattCurve:
@@ -397,6 +404,49 @@ ProfileValidationResultEnum SmartCharging::verify_rate_limit(const ChargingProfi
     return result;
 }
 
+ProfileValidationResultEnum SmartCharging::validate_setpoint_within_limit_range(const ChargingProfile& profile) const {
+    // V2X.05: reject setpoints outside [dischargeLimit, limit].
+    // Kept out of validate_profile_schedules so stored profiles retain clamping behavior during
+    // composite-schedule calculation.
+    if (this->context.ocpp_version != OcppProtocolVersion::v21) {
+        return ProfileValidationResultEnum::Valid;
+    }
+    for (const auto& schedule : profile.chargingSchedule) {
+        for (const auto& period : schedule.chargingSchedulePeriod) {
+            if (!period.setpoint.has_value()) {
+                continue;
+            }
+            const float sp = period.setpoint.value();
+            if ((period.limit.has_value() && sp > period.limit.value()) ||
+                (period.dischargeLimit.has_value() && sp < period.dischargeLimit.value())) {
+                return ProfileValidationResultEnum::ChargingSchedulePeriodSetpointOutOfRange;
+            }
+        }
+    }
+    return ProfileValidationResultEnum::Valid;
+}
+
+ProfileValidationResultEnum SmartCharging::validate_phase_conflict(const ChargingProfile& profile) const {
+    // V2X.10 (V2X.09 branch): non-TxProfile carrying any per-phase dischargeLimit /
+    // setpoint / setpointReactive value must be rejected with reasonCode "PhaseConflict".
+    if (this->context.ocpp_version != OcppProtocolVersion::v21) {
+        return ProfileValidationResultEnum::Valid;
+    }
+    if (profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile) {
+        return ProfileValidationResultEnum::Valid;
+    }
+    for (const auto& schedule : profile.chargingSchedule) {
+        for (const auto& period : schedule.chargingSchedulePeriod) {
+            if (period.dischargeLimit_L2.has_value() || period.dischargeLimit_L3.has_value() ||
+                period.setpoint_L2.has_value() || period.setpoint_L3.has_value() ||
+                period.setpointReactive_L2.has_value() || period.setpointReactive_L3.has_value()) {
+                return ProfileValidationResultEnum::ChargingSchedulePeriodPhaseConflict;
+            }
+        }
+    }
+    return ProfileValidationResultEnum::Valid;
+}
+
 std::pair<bool, bool> SmartCharging::validate_profile_with_offline_time(const ChargingProfile& profile) {
     const auto time_disconnected = this->context.connectivity_manager.get_time_disconnected();
     // Being online means the profile is valid
@@ -476,6 +526,14 @@ SetChargingProfileResponse SmartCharging::conform_validate_and_add_profile(Charg
     response.status = ChargingProfileStatusEnum::Rejected;
 
     auto result = this->conform_and_validate_profile(profile, evse_id, source_of_request);
+
+    if (result == ProfileValidationResultEnum::Valid) {
+        result = validate_setpoint_within_limit_range(profile);
+    }
+
+    if (result == ProfileValidationResultEnum::Valid) {
+        result = validate_phase_conflict(profile);
+    }
 
     if (result == ProfileValidationResultEnum::Valid) {
         result = verify_rate_limit(profile);

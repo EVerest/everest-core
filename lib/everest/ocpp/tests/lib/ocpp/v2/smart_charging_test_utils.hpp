@@ -134,7 +134,9 @@ public:
     using SmartCharging::get_valid_profiles;
     using SmartCharging::SmartCharging;
     using SmartCharging::validate_evse_exists;
+    using SmartCharging::validate_phase_conflict;
     using SmartCharging::validate_profile_schedules;
+    using SmartCharging::validate_setpoint_within_limit_range;
     using SmartCharging::validate_tx_default_profile;
     using SmartCharging::validate_tx_profile;
     using SmartCharging::verify_no_conflicting_external_constraints_id;
