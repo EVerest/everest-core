@@ -165,10 +165,12 @@ void MQTTAbstractionImpl::publish(const std::string& topic, const std::string& d
         }
     }
 
-    if (!this->mqtt_is_connected) {
+    {
         auto handle = messages_before_connected.handle();
-        handle->push_back(std::make_shared<MessageWithQOS>(topic, data, qos, retain));
-        return;
+        if (!this->mqtt_is_connected) {
+            handle->push_back(std::make_shared<MessageWithQOS>(topic, data, qos, retain));
+            return;
+        }
     }
 
     const auto error = this->mqtt_client->publish(topic, data, mqtt_qos, retain, {});
@@ -393,14 +395,17 @@ void MQTTAbstractionImpl::on_mqtt_connect() {
 
     EVLOG_debug << "Connected to MQTT broker";
 
-    // this will allow new handlers to subscribe directly, if needed
+    // Drain the messages_before_connected under the lock, then publish outside it.
+    // publish() itself acquires the same monitor lock, so calling it
+    // while holding the handle would deadlock
+    shared_messages to_publish;
     {
         auto handle = messages_before_connected.handle();
         this->mqtt_is_connected = true;
-        for (auto& message : *handle) {
-            this->publish(message->topic, message->payload, message->qos, message->retain);
-        }
-        handle->clear();
+        to_publish = std::move(*handle);
+    }
+    for (auto& message : to_publish) {
+        this->publish(message->topic, message->payload, message->qos, message->retain);
     }
 }
 

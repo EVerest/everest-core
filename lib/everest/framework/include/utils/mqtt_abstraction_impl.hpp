@@ -81,7 +81,7 @@ private:
         std::unordered_set<std::string> subscribed_topics;
     };
 
-    bool mqtt_is_connected;
+    std::atomic_bool mqtt_is_connected;
     std::atomic_bool running;
     MessageHandler message_handler;
     everest::lib::util::simple_queue<Message> message_queue;
