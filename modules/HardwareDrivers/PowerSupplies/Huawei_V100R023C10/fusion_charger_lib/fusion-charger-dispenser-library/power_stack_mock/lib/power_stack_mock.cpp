@@ -138,106 +138,114 @@ parse_goose_frame(const goose_ethernet::EthernetFrame& frame,
 
 void PowerStackMock::goose_receiver_thread_run() {
     while (running) {
-        auto p = eth.receive_packet();
-        if (!p.has_value()) {
-            continue;
-        }
-
-        auto eth_mac = eth.get_mac_address();
-        if (memcmp(p.value().destination, eth_mac, 6) != 0) {
-            continue;
-        }
-
-        if (p.value().ethertype != goose::frame::GOOSE_ETHERTYPE) {
-            continue;
-        }
-
-        auto packet = p.value();
-        // Settings tag, because it is lost during transmission
-        packet.eth_802_1q_tag = 0x8100A000;
-        std::unique_ptr<goose::frame::GooseFrameIntf> frame;
         try {
-            if (config.verify_hmac) {
-                frame = parse_goose_frame(packet, std::vector<std::uint8_t>(config.hmac_key, config.hmac_key + 48));
-            } else {
-                frame = parse_goose_frame(packet);
+            auto p = eth.receive_packet();
+            if (!p.has_value()) {
+                continue;
             }
-        } catch (std::runtime_error& e) {
-            fail_printf("Could not parse goose frame as secure: %s", e.what());
+
+            auto eth_mac = eth.get_mac_address();
+            if (memcmp(p.value().destination, eth_mac, 6) != 0) {
+                continue;
+            }
+
+            if (p.value().ethertype != goose::frame::GOOSE_ETHERTYPE) {
+                continue;
+            }
+
+            auto packet = p.value();
+            // Settings tag, because it is lost during transmission
+            packet.eth_802_1q_tag = 0x8100A000;
+            std::unique_ptr<goose::frame::GooseFrameIntf> frame;
+            try {
+                if (config.verify_hmac) {
+                    frame = parse_goose_frame(packet, std::vector<std::uint8_t>(config.hmac_key, config.hmac_key + 48));
+                } else {
+                    frame = parse_goose_frame(packet);
+                }
+            } catch (const std::runtime_error& e) {
+                fail_printf("Could not parse goose frame as secure: %s", e.what());
+                continue;
+            }
+
+            goose::frame::GoosePDU pdu = frame->pdu;
+
+            if (strcmp(pdu.go_id, "CC/0$GO$PowerRequest") == 0) {
+                fusion_charger::goose::PowerRequirementRequest new_request;
+                new_request.from_pdu(pdu);
+                if (config.power_requirement_request_callback) {
+                    config.power_requirement_request_callback(new_request);
+                }
+                auto global_connector_number = new_request.charging_connector_no;
+
+                if (power_requirement_request_counter.find(global_connector_number) ==
+                    power_requirement_request_counter.end()) {
+                    power_requirement_request_counter[global_connector_number] = 0;
+                }
+                power_requirement_request_counter[global_connector_number] += 1;
+
+                if (new_request.requirement_type == fusion_charger::goose::RequirementType::ModulePlaceholderRequest &&
+                    answer_module_placeholder_allocation) {
+                    printf("Received module placeholder request; sending answer\n");
+                    // send a reply
+                    fusion_charger::goose::PowerRequirementResponse response;
+                    response.charging_connector_no = new_request.charging_connector_no;
+                    response.charging_sn = new_request.charging_sn;
+                    response.requirement_type = new_request.requirement_type;
+                    response.mode = new_request.mode;
+                    response.voltage = new_request.voltage;
+                    response.current = new_request.current;
+                    response.result = fusion_charger::goose::PowerRequirementResponse::Result::SUCCESS;
+
+                    goose::frame::GoosePDU response_pdu = response.to_pdu();
+                    std::unique_ptr<goose::frame::GooseFrameIntf> response_frame;
+                    if (config.enable_hmac) {
+                        response_frame = std::make_unique<goose::frame::SecureGooseFrame>();
+                    } else {
+                        response_frame = std::make_unique<goose::frame::GooseFrame>();
+                    }
+                    memcpy(response_frame->destination_mac_address, frame->source_mac_address, 6);
+                    memcpy(response_frame->source_mac_address, eth.get_mac_address(), 6);
+                    response_frame->vlan_id = 0;
+                    response_frame->priority = 5;
+                    response_frame->appid[0] = 0x30;
+                    response_frame->appid[1] = 0x01;
+                    response_frame->pdu = response_pdu;
+
+                    goose_ethernet::EthernetFrame frame;
+                    if (config.enable_hmac) {
+                        std::vector<std::uint8_t> hmac_key(config.hmac_key, config.hmac_key + 48);
+                        frame = ((goose::frame::SecureGooseFrame*)response_frame.get())->serialize(hmac_key);
+                    } else {
+                        frame = ((goose::frame::GooseFrame*)response_frame.get())->serialize();
+                    }
+                    eth.send_packet(frame);
+                }
+
+                last_power_requirement_requests[global_connector_number] = new_request;
+            }
+
+            if (strcmp(pdu.go_id, "CC/0$GO$ShutdownRequest") == 0) {
+                fusion_charger::goose::StopChargeRequest new_request;
+                new_request.from_pdu(pdu);
+                if (config.stop_charge_request_callback) {
+                    config.stop_charge_request_callback(new_request);
+                }
+                auto global_connector_number = new_request.charging_connector_no;
+
+                if (stop_charge_request_counter.find(global_connector_number) == stop_charge_request_counter.end()) {
+                    stop_charge_request_counter[global_connector_number] = 0;
+                }
+                stop_charge_request_counter[global_connector_number] += 1;
+
+                last_stop_charge_requests[global_connector_number] = new_request;
+            }
+        } catch (const std::exception& e) {
+            fail_printf("Dropping malformed goose frame: %s", e.what());
             continue;
-        }
-
-        goose::frame::GoosePDU pdu = frame->pdu;
-
-        if (strcmp(pdu.go_id, "CC/0$GO$PowerRequest") == 0) {
-            fusion_charger::goose::PowerRequirementRequest new_request;
-            new_request.from_pdu(pdu);
-            if (config.power_requirement_request_callback) {
-                config.power_requirement_request_callback(new_request);
-            }
-            auto global_connector_number = new_request.charging_connector_no;
-
-            if (power_requirement_request_counter.find(global_connector_number) ==
-                power_requirement_request_counter.end()) {
-                power_requirement_request_counter[global_connector_number] = 0;
-            }
-            power_requirement_request_counter[global_connector_number] += 1;
-
-            if (new_request.requirement_type == fusion_charger::goose::RequirementType::ModulePlaceholderRequest &&
-                answer_module_placeholder_allocation) {
-                printf("Received module placeholder request; sending answer\n");
-                // send a reply
-                fusion_charger::goose::PowerRequirementResponse response;
-                response.charging_connector_no = new_request.charging_connector_no;
-                response.charging_sn = new_request.charging_sn;
-                response.requirement_type = new_request.requirement_type;
-                response.mode = new_request.mode;
-                response.voltage = new_request.voltage;
-                response.current = new_request.current;
-                response.result = fusion_charger::goose::PowerRequirementResponse::Result::SUCCESS;
-
-                goose::frame::GoosePDU response_pdu = response.to_pdu();
-                std::unique_ptr<goose::frame::GooseFrameIntf> response_frame;
-                if (config.enable_hmac) {
-                    response_frame = std::make_unique<goose::frame::SecureGooseFrame>();
-                } else {
-                    response_frame = std::make_unique<goose::frame::GooseFrame>();
-                }
-                memcpy(response_frame->destination_mac_address, frame->source_mac_address, 6);
-                memcpy(response_frame->source_mac_address, eth.get_mac_address(), 6);
-                response_frame->vlan_id = 0;
-                response_frame->priority = 5;
-                response_frame->appid[0] = 0x30;
-                response_frame->appid[1] = 0x01;
-                response_frame->pdu = response_pdu;
-
-                goose_ethernet::EthernetFrame frame;
-                if (config.enable_hmac) {
-                    std::vector<std::uint8_t> hmac_key(config.hmac_key, config.hmac_key + 48);
-                    frame = ((goose::frame::SecureGooseFrame*)response_frame.get())->serialize(hmac_key);
-                } else {
-                    frame = ((goose::frame::GooseFrame*)response_frame.get())->serialize();
-                }
-                eth.send_packet(frame);
-            }
-
-            last_power_requirement_requests[global_connector_number] = new_request;
-        }
-
-        if (strcmp(pdu.go_id, "CC/0$GO$ShutdownRequest") == 0) {
-            fusion_charger::goose::StopChargeRequest new_request;
-            new_request.from_pdu(pdu);
-            if (config.stop_charge_request_callback) {
-                config.stop_charge_request_callback(new_request);
-            }
-            auto global_connector_number = new_request.charging_connector_no;
-
-            if (stop_charge_request_counter.find(global_connector_number) == stop_charge_request_counter.end()) {
-                stop_charge_request_counter[global_connector_number] = 0;
-            }
-            stop_charge_request_counter[global_connector_number] += 1;
-
-            last_stop_charge_requests[global_connector_number] = new_request;
+        } catch (...) {
+            fail_printf("Dropping malformed goose frame due to unknown exception");
+            continue;
         }
     }
 

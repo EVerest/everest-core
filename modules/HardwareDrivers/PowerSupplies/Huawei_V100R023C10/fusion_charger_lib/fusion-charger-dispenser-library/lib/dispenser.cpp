@@ -53,90 +53,119 @@ void Dispenser::modbus_unsolicitated_event_thread_run() {
 
 void Dispenser::goose_receiver_thread_run() {
     while (psu_communication_is_ok()) {
-        auto p = eth_interface.receive_packet();
-        if (!p.has_value()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            continue;
-        }
-
-        auto packet = p.value();
-
-        // we are only interested in GOOSE packets and there a other packets
-        if (packet.ethertype != goose::frame::GOOSE_ETHERTYPE) {
-            continue;
-        }
-
-        // filter src, if the source mac is our own mac, we ignore the packet
-        if (std::memcmp(packet.source, eth_interface.get_mac_address(), 6) == 0) {
-            continue;
-        }
-
-        // Settings tag, because it is lost during transmission
-        packet.eth_802_1q_tag = 0x8100A000;
-
-        goose::frame::GoosePDU pdu;
-
-        bool decoded = false;
-
         try {
-            goose::frame::SecureGooseFrame frame(packet); // note: hmac is verified below (only if configured)
-            pdu = frame.pdu;
-            decoded = true;
-            log.verbose << "Received secure goose frame";
-        } catch (std::runtime_error& e) {
-            log.verbose << "Could not parse goose frame as secure: " + std::string(e.what());
-        }
+            auto p = eth_interface.receive_packet();
+            if (!p.has_value()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                continue;
+            }
 
-        if (this->dispenser_config.allow_unsecured_goose && !decoded) {
+            auto packet = p.value();
+
+            // we are only interested in GOOSE packets and there are other packets
+            if (packet.ethertype != goose::frame::GOOSE_ETHERTYPE) {
+                continue;
+            }
+
+            // filter src, if the source mac is our own mac, we ignore the packet
+            if (std::memcmp(packet.source, eth_interface.get_mac_address(), 6) == 0) {
+                continue;
+            }
+
+            // Settings tag, because it is lost during transmission
+            packet.eth_802_1q_tag = 0x8100A000;
+
+            goose::frame::GoosePDU pdu;
+            bool decoded = false;
+
             try {
-                goose::frame::GooseFrame frame(packet);
+                goose::frame::SecureGooseFrame frame(packet);
                 pdu = frame.pdu;
                 decoded = true;
-                log.verbose << "Received non-secure goose frame";
-            } catch (std::runtime_error& e) {
-                log.verbose << "Could not parse goose frame as non-secure: " + std::string(e.what());
+                log.verbose << "Received secure goose frame";
+            } catch (const std::runtime_error& e) {
+                log.verbose << "Could not parse goose frame as secure: " + std::string(e.what());
             }
-        }
 
-        if (!decoded) {
-            log.warning << "Received frame could not be decoded";
-            continue;
-        }
+            if (this->dispenser_config.allow_unsecured_goose && !decoded) {
+                try {
+                    goose::frame::GooseFrame frame(packet);
+                    pdu = frame.pdu;
+                    decoded = true;
+                    log.verbose << "Received non-secure goose frame";
+                } catch (const std::runtime_error& e) {
+                    log.verbose << "Could not parse goose frame as non-secure: " + std::string(e.what());
+                }
+            }
 
-        if (strcmp(pdu.go_id, "CC/0$GO$PowerRequestReply") != 0) {
-            log.info << "Received goose frame with weird go_id: " + std::string(pdu.go_id);
-            continue;
-        }
+            if (!decoded) {
+                log.warning << "Received frame could not be decoded";
+                continue;
+            }
 
-        fusion_charger::goose::PowerRequirementResponse response;
-        response.from_pdu(pdu);
+            if (strcmp(pdu.go_id, "CC/0$GO$PowerRequestReply") != 0) {
+                log.info << "Received goose frame with weird go_id: " + std::string(pdu.go_id);
+                continue;
+            }
 
-        bool corresponding_connector_found = false;
-        for (auto& c : connectors) {
-            if (c->connector_config.global_connector_number == response.charging_connector_no) {
-                corresponding_connector_found = true;
+            std::optional<std::uint16_t> hmac_verified_connector_number;
 
-                // verify hmac if configured
-                if (dispenser_config.verify_secure_goose_hmac) {
+            // Verify secure GOOSE HMAC before parsing application payload.
+            if (dispenser_config.verify_secure_goose_hmac) {
+                bool hmac_verified = false;
+                for (const auto& c : connectors) {
                     try {
                         goose::frame::SecureGooseFrame secure_frame(packet, c->get_hmac_key());
-                        log.verbose << "HMAC verified for secure goose frame";
-                    } catch (std::exception& e) {
-                        log.error << "Received secure goose frame, but HMAC verification "
-                                     "failed: " +
-                                         std::string(e.what());
-                        continue;
+                        pdu = secure_frame.pdu;
+                        hmac_verified_connector_number =
+                            static_cast<std::uint16_t>(c->connector_config.global_connector_number);
+                        hmac_verified = true;
+                        break;
+                    } catch (const std::exception&) {
+                        // Try remaining connector keys.
                     }
                 }
 
-                c->on_module_placeholder_allocation_response(
-                    response.result == fusion_charger::goose::PowerRequirementResponse::Result::SUCCESS);
-            }
-        }
+                if (!hmac_verified) {
+                    log.error << "Received secure goose frame, but HMAC verification failed";
+                    continue;
+                }
 
-        if (!corresponding_connector_found) {
-            log.verbose << "Received module replacement goose frame but charging "
-                           "connector no is wrong!";
+                log.verbose << "HMAC verified for secure goose frame";
+            }
+
+            fusion_charger::goose::PowerRequirementResponse response;
+            response.from_pdu(pdu);
+
+            // Bind frame authenticity to the connector identity carried in the payload.
+            if (hmac_verified_connector_number.has_value() &&
+                hmac_verified_connector_number.value() != response.charging_connector_no) {
+                log.error << "Dropping secure goose frame: payload connector " +
+                                 std::to_string(response.charging_connector_no) +
+                                 " does not match HMAC-verified connector " +
+                                 std::to_string(hmac_verified_connector_number.value());
+                continue;
+            }
+
+            bool corresponding_connector_found = false;
+            for (auto& c : connectors) {
+                if (c->connector_config.global_connector_number == response.charging_connector_no) {
+                    corresponding_connector_found = true;
+                    c->on_module_placeholder_allocation_response(
+                        response.result == fusion_charger::goose::PowerRequirementResponse::Result::SUCCESS);
+                }
+            }
+
+            if (!corresponding_connector_found) {
+                log.verbose << "Received module replacement goose frame but charging "
+                               "connector no is wrong!";
+            }
+        } catch (const std::exception& e) {
+            log.error << "Dropping malformed goose frame: " + std::string(e.what());
+            continue;
+        } catch (...) {
+            log.error << "Dropping malformed goose frame due to unknown exception";
+            continue;
         }
     }
 

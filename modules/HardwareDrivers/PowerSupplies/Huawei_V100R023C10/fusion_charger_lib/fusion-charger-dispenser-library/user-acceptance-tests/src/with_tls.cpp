@@ -6,6 +6,8 @@
 #include "dispenser.hpp"
 #include "fusion_charger/goose/power_request.hpp"
 #include "fusion_charger/modbus/registers/error.hpp"
+#include "goose-ethernet/driver.hpp"
+#include "goose/frame.hpp"
 #include "power_stack_mock/power_stack_mock.hpp"
 #include "user_acceptance_tests/dispenser_test_fixture.hpp"
 #include "gmock/gmock.h"
@@ -42,6 +44,49 @@ TEST_F(DispenserWithTlsTest, CarConnectedAndReadyToCharge) {
     EXPECT_EQ(connector()->get_working_status(), WorkingStatus::CHARGING_STARTING);
     EXPECT_EQ(get_last_power_requirement_request()->requirement_type,
               fusion_charger::goose::RequirementType::ModulePlaceholderRequest);
+}
+
+TEST_F(DispenserWithTlsTest, MalformedButAuthenticatedGooseDoesNotKillReceiverThread) {
+    power_stack_mock->set_psu_running_mode(PSURunningMode::RUNNING);
+    power_stack_mock->send_mac_address();
+
+    connector()->on_car_connected();
+    power_stack_mock->send_hmac_key(1);
+    sleep_for_ms(5);
+
+    // Send a forged secure GOOSE frame with valid HMAC but malformed APDU entry count,
+    // to ensure the dispenser receiver thread drops it without terminating.
+    goose_ethernet::EthernetInterface attacker_eth("veth1");
+    const auto attacker_mac = attacker_eth.get_mac_address();
+
+    fusion_charger::goose::PowerRequirementResponse response;
+    response.charging_connector_no = global_connector_number;
+    response.result = fusion_charger::goose::PowerRequirementResponse::Result::SUCCESS;
+    response.requirement_type = fusion_charger::goose::RequirementType::ModulePlaceholderRequest;
+    response.mode = fusion_charger::goose::Mode::None;
+    response.voltage = 0;
+    response.current = 0;
+
+    auto pdu = response.to_pdu();
+    pdu.apdu_entries.resize(1); // malformed-but-parseable; from_pdu() would throw
+
+    auto secure_frame = std::make_unique<goose::frame::SecureGooseFrame>();
+    std::memset(secure_frame->destination_mac_address, 0xFF, 6); // broadcast
+    std::memcpy(secure_frame->source_mac_address, attacker_mac, 6);
+    secure_frame->vlan_id = 0;
+    secure_frame->priority = 5;
+    secure_frame->appid[0] = 0x30;
+    secure_frame->appid[1] = 0x01;
+    secure_frame->pdu = pdu;
+
+    std::vector<std::uint8_t> hmac_key(power_stack_mock_config.hmac_key, power_stack_mock_config.hmac_key + 48);
+    const auto eth_frame = static_cast<goose::frame::SecureGooseFrame*>(secure_frame.get())->serialize(hmac_key);
+    attacker_eth.send_packet(eth_frame);
+
+    // Verify the dispenser remains functional by observing state transitions driven by subsequent GOOSE traffic.
+    sleep_for_ms(20);
+    EXPECT_EQ(connector()->get_working_status(), WorkingStatus::CHARGING_STARTING);
+    EXPECT_TRUE(get_last_power_requirement_request().has_value());
 }
 
 TEST_F(DispenserWithTlsTest, ChargingACarUpToRegularDisconnect) {
