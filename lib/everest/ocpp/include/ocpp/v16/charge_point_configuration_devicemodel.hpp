@@ -464,7 +464,7 @@ public:
     std::optional<std::int32_t> getWaitForSetUserPriceTimeout() override;
     std::optional<std::uint32_t> getPriceNumberOfDecimalsForCostValues() override;
 
-    KeyValue getCustomDisplayCostAndPriceEnabledKeyValue() override;
+    std::optional<KeyValue> getCustomDisplayCostAndPriceEnabledKeyValue() override;
     KeyValue getDefaultPriceTextKeyValue(const std::string& language) override;
 
     std::optional<KeyValue> getCustomIdleFeeAfterStopKeyValue() override;

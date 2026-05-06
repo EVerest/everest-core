@@ -2647,8 +2647,8 @@ std::optional<std::uint32_t> ChargePointConfigurationDeviceModel::getPriceNumber
     return get_optional<std::int32_t>(*storage, keys::valid_keys::NumberOfDecimalsForCostValues);
 }
 
-KeyValue ChargePointConfigurationDeviceModel::getCustomDisplayCostAndPriceEnabledKeyValue() {
-    return get_key_value(*storage, keys::valid_keys::CustomDisplayCostAndPrice);
+std::optional<KeyValue> ChargePointConfigurationDeviceModel::getCustomDisplayCostAndPriceEnabledKeyValue() {
+    return get_key_value_optional(*storage, keys::valid_keys::CustomDisplayCostAndPrice);
 }
 
 KeyValue ChargePointConfigurationDeviceModel::getDefaultPriceTextKeyValue(const std::string& language) {

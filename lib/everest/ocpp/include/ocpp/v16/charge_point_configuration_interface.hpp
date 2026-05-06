@@ -384,8 +384,8 @@ public:
     virtual std::optional<std::int32_t> getWaitForSetUserPriceTimeout() = 0;
     virtual std::optional<std::uint32_t> getPriceNumberOfDecimalsForCostValues() = 0;
 
-    virtual KeyValue getCustomDisplayCostAndPriceEnabledKeyValue() = 0;
     virtual KeyValue getDefaultPriceTextKeyValue(const std::string& language) = 0;
+    virtual std::optional<KeyValue> getCustomDisplayCostAndPriceEnabledKeyValue() = 0;
 
     virtual std::optional<KeyValue> getCustomIdleFeeAfterStopKeyValue() = 0;
     virtual std::optional<KeyValue> getCustomMultiLanguageMessagesEnabledKeyValue() = 0;

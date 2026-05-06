@@ -70,6 +70,18 @@ ChargePointConfiguration::ChargePointConfiguration(const std::string& config, co
     }
 
     try {
+        const auto cost_schema_path = schemas_path / "CostAndPrice.json";
+        if (fs::exists(cost_schema_path)) {
+            std::ifstream ifs(cost_schema_path.c_str());
+            std::string cost_schema_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+            this->cost_and_price_schema = json::parse(cost_schema_file);
+        }
+    } catch (const json::parse_error& e) {
+        EVLOG_error << "Error while parsing CostAndPrice.json file.";
+        EVLOG_AND_THROW(e);
+    }
+
+    try {
         auto patch = schemas.get_validator()->validate(this->config);
         if (patch.is_null()) {
             // no defaults substituted
@@ -2383,13 +2395,17 @@ bool ChargePointConfiguration::getCustomDisplayCostAndPriceEnabled() {
     return false;
 }
 
-KeyValue ChargePointConfiguration::getCustomDisplayCostAndPriceEnabledKeyValue() {
-    const bool enabled = getCustomDisplayCostAndPriceEnabled();
-    KeyValue kv;
-    kv.key = "CustomDisplayCostAndPrice";
-    kv.value = ocpp::conversions::bool_to_string(enabled);
-    kv.readonly = true;
-    return kv;
+std::optional<KeyValue> ChargePointConfiguration::getCustomDisplayCostAndPriceEnabledKeyValue() {
+    if (this->config.contains("CostAndPrice") and this->config["CostAndPrice"].contains("CustomDisplayCostAndPrice")) {
+        const bool enabled = getCustomDisplayCostAndPriceEnabled();
+        KeyValue kv;
+        kv.key = "CustomDisplayCostAndPrice";
+        kv.value = ocpp::conversions::bool_to_string(enabled);
+        kv.readonly = this->cost_and_price_schema["properties"]["CustomDisplayCostAndPrice"]["readOnly"];
+        return kv;
+    }
+
+    return std::nullopt;
 }
 
 std::optional<std::uint32_t> ChargePointConfiguration::getPriceNumberOfDecimalsForCostValues() {
@@ -2953,6 +2969,18 @@ bool ChargePointConfiguration::setMeterPublicKey(const std::int32_t connector_id
 
     this->setInUserConfig("Internal", "MeterPublicKeys", this->config["Internal"]["MeterPublicKeys"]);
     return true;
+}
+
+ConfigurationStatus ChargePointConfiguration::setCustomDisplayCostAndPrice(const bool& value) {
+    auto status = ConfigurationStatus::Rejected;
+
+    if (!this->cost_and_price_schema["properties"]["CustomDisplayCostAndPrice"]["readOnly"]) {
+        this->config["CostAndPrice"]["CustomDisplayCostAndPrice"] = value;
+        this->setInUserConfig("CostAndPrice", "CustomDisplayCostAndPrice", value);
+        status = ConfigurationStatus::Accepted;
+    }
+
+    return status;
 }
 
 void ChargePointConfiguration::setLanguage(const std::string& language) {
@@ -3980,6 +4008,12 @@ std::optional<ConfigurationStatus> ChargePointConfiguration::set(const CiString<
             this->setAllowChargingProfileWithoutStartSchedule(ocpp::conversions::string_to_bool(value.get()));
         } else {
             return ConfigurationStatus::NotSupported;
+        }
+    } else if (key == "CustomDisplayCostAndPrice") {
+        const ConfigurationStatus result =
+            this->setCustomDisplayCostAndPrice(ocpp::conversions::string_to_bool(value.get()));
+        if (result != ConfigurationStatus::Accepted) {
+            return result;
         }
     } else if (key.get().find("DefaultPriceText") == 0) {
         const ConfigurationStatus result = this->setDefaultPriceText(key, value);

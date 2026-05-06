@@ -23,6 +23,7 @@ private:
     json config;
     json custom_schema;
     json internal_schema;
+    json cost_and_price_schema;
     bool core_schema_unlock_connector_on_ev_side_disconnect_ro_value;
     fs::path user_config_path;
 
@@ -475,7 +476,8 @@ public:
 
     // California Pricing Requirements
     bool getCustomDisplayCostAndPriceEnabled() override;
-    KeyValue getCustomDisplayCostAndPriceEnabledKeyValue() override;
+    std::optional<KeyValue> getCustomDisplayCostAndPriceEnabledKeyValue();
+    ConfigurationStatus setCustomDisplayCostAndPrice(const bool& value);
 
     std::optional<std::uint32_t> getPriceNumberOfDecimalsForCostValues() override;
     std::optional<KeyValue> getPriceNumberOfDecimalsForCostValuesKeyValue() override;

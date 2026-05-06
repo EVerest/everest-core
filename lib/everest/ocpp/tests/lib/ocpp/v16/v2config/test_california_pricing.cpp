@@ -44,11 +44,11 @@ using namespace ocpp::v16::stubs;
 
 TEST_P(Configuration, CustomDisplayCostAndPriceEnabled) {
     ASSERT_NE(get(), nullptr);
-    EXPECT_FALSE(get()->getCustomDisplayCostAndPriceEnabled());
     auto kv = get()->getCustomDisplayCostAndPriceEnabledKeyValue();
-    EXPECT_EQ(kv.key, "CustomDisplayCostAndPrice");
-    EXPECT_EQ(kv.value, "false");
-    EXPECT_TRUE(kv.readonly);
+    ASSERT_TRUE(kv.has_value());
+    EXPECT_EQ(kv.value().key, "CustomDisplayCostAndPrice");
+    EXPECT_EQ(kv.value().value, "false");
+    EXPECT_TRUE(kv.value().readonly);
 }
 
 TEST_P(Configuration, DefaultTariffMessage) {
