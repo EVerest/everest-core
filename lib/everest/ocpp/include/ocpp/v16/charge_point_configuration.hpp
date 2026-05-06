@@ -13,6 +13,7 @@
 #include <ocpp/v16/charge_point_configuration_interface.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
 #include <ocpp/v16/types.hpp>
+#include <ocpp/v16/utils.hpp>
 
 namespace ocpp {
 namespace v16 {
@@ -31,6 +32,8 @@ private:
     bool validate_measurands(const json& config);
     json get_user_config();
     void setInUserConfig(const std::string& profile, const std::string& key, json value);
+    std::optional<KeyValue> getCustomKeyValue(const CiString<50>& key);
+    ConfigurationStatus setCustomKey(const CiString<50>& key, const CiString<500>& value, bool force);
 
     void setChargepointInformationProperty(json& user_config, const std::string& key,
                                            const std::optional<std::string>& value);
@@ -485,6 +488,7 @@ public:
     ConfigurationStatus setDefaultPriceText(const CiString<50>& key, const CiString<500>& value) override;
     KeyValue getDefaultPriceTextKeyValue(const std::string& language) override;
     std::optional<std::vector<KeyValue>> getAllDefaultPriceTextKeyValues() override;
+    std::optional<json> getDefaultPriceText();
 
     std::optional<std::string> getDefaultPrice() override;
     ConfigurationStatus setDefaultPrice(const std::string& value) override;
@@ -523,11 +527,10 @@ public:
     // Signed Meter Values
     std::optional<KeyValue> getPublicKeyKeyValue(std::uint32_t connector_id) override;
     std::optional<std::vector<KeyValue>> getAllMeterPublicKeyKeyValues() override;
-    bool setMeterPublicKey(std::int32_t connector_id, const std::string& public_key_pem) override;
+    std::optional<std::string> getMeterPublicKeysCsl();
+    std::optional<json> getMeterPublicKeys();
 
-    // custom
-    std::optional<KeyValue> getCustomKeyValue(const CiString<50>& key) override;
-    ConfigurationStatus setCustomKey(const CiString<50>& key, const CiString<500>& value, bool force) override;
+    bool setMeterPublicKey(std::int32_t connector_id, const std::string& public_key_pem) override;
 
     std::optional<KeyValue> get(const CiString<50>& key) override;
 

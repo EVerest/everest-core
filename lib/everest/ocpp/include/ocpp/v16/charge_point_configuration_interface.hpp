@@ -114,7 +114,6 @@ public:
     virtual KeyValue getChargePointIdKeyValue() = 0;
     virtual KeyValue getChargePointModelKeyValue() = 0;
     virtual KeyValue getChargePointVendorKeyValue() = 0;
-    virtual KeyValue getEnableTLSKeylogKeyValue() = 0;
     virtual KeyValue getLogMessagesFormatKeyValue() = 0;
     virtual KeyValue getLogMessagesKeyValue() = 0;
     virtual KeyValue getLogMessagesRawKeyValue() = 0;
@@ -133,15 +132,16 @@ public:
     virtual KeyValue getSupportedCiphers12KeyValue() = 0;
     virtual KeyValue getSupportedCiphers13KeyValue() = 0;
     virtual KeyValue getSupportedMeasurandsKeyValue() = 0;
-    virtual KeyValue getTLSKeylogFileKeyValue() = 0;
     virtual KeyValue getUseSslDefaultVerifyPathsKeyValue() = 0;
-    virtual KeyValue getUseTPMKeyValue() = 0;
-    virtual KeyValue getUseTPMSeccLeafCertificateKeyValue() = 0;
     virtual KeyValue getVerifyCsmsAllowWildcardsKeyValue() = 0;
     virtual KeyValue getVerifyCsmsCommonNameKeyValue() = 0;
     virtual KeyValue getWaitForStopTransactionsOnResetTimeoutKeyValue() = 0;
     virtual KeyValue getWebsocketPingPayloadKeyValue() = 0;
     virtual KeyValue getWebsocketPongTimeoutKeyValue() = 0;
+    virtual KeyValue getEnableTLSKeylogKeyValue() = 0;
+    virtual KeyValue getTLSKeylogFileKeyValue() = 0;
+    virtual KeyValue getUseTPMKeyValue() = 0;
+    virtual KeyValue getUseTPMSeccLeafCertificateKeyValue() = 0;
 
     virtual std::optional<KeyValue> getAllowChargingProfileWithoutStartScheduleKeyValue() = 0;
     virtual std::optional<KeyValue> getCompositeScheduleDefaultLimitAmpsKeyValue() = 0;
@@ -412,11 +412,9 @@ public:
     // Signed Meter Values
 
     // Custom
-    virtual std::optional<KeyValue> getCustomKeyValue(const CiString<50>& key) = 0;
     virtual std::optional<KeyValue> get(const CiString<50>& key) = 0;
     virtual std::vector<KeyValue> get_all_key_value() = 0;
 
-    virtual ConfigurationStatus setCustomKey(const CiString<50>& key, const CiString<500>& value, bool force) = 0;
     virtual std::optional<ConfigurationStatus> set(const CiString<50>& key, const CiString<500>& value) = 0;
 };
 

@@ -3,6 +3,7 @@
 #include "OCPP.hpp"
 
 #include <cmath>
+#include <everest/database/sqlite/connection.hpp>
 #include <fstream>
 #include <memory>
 #include <optional>
@@ -12,7 +13,13 @@
 #include "generated/types/ocpp.hpp"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v16/charge_point_configuration.hpp"
+#include "ocpp/v16/charge_point_configuration_devicemodel.hpp"
 #include "ocpp/v16/types.hpp"
+#include "ocpp/v2/device_model.hpp"
+#include "ocpp/v2/device_model_storage_sqlite.hpp"
+#include "ocpp/v2/init_device_model_db.hpp"
+#include "ocpp/v2/ocpp16_component_config_patcher.hpp"
+#include "ocpp/v2/ocpp16_custom_config_mappings.hpp"
 #include <everest/conversions/ocpp/ocpp_conversions.hpp>
 #include <fmt/core.h>
 
@@ -31,9 +38,10 @@ template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 const std::string CERTS_SUB_DIR = "certs";
 const std::string SQL_CORE_MIGRTATIONS = "core_migrations";
+constexpr int OCPP16_DEVICE_MODEL_MIGRATION_MARKER_VERSION = 4;
 const std::string INOPERATIVE_ERROR_TYPE = "evse_manager/Inoperative";
 const std::string SWITCHING_PHASES_REASON = "SwitchingPhases";
-const ocpp::CiString<50> CONNECTION_TIMEOUT_CONFIG_KEY = "ConnectionTimeout";
+const ocpp::CiString<50> CONNECTION_TIMEOUT_CONFIG_KEY = "ConnectionTimeOut";
 const ocpp::CiString<50> ISO15118_PNC_ENABLED_CONFIG_KEY = "ISO15118PnCEnabled";
 const ocpp::CiString<50> CENTRAL_CONTRACT_VALIDATION_ALLOWED_CONFIG_KEY = "CentralContractValidationAllowed";
 const std::string OCPP_VERSION = "1.6";
@@ -132,6 +140,183 @@ void create_empty_user_config(const fs::path& user_config_path) {
         EVLOG_AND_THROW(
             std::runtime_error(fmt::format("Provided UserConfigPath is invalid: {}", user_config_path.string())));
     }
+}
+
+std::optional<fs::path> resolve_device_model_resource_path(const fs::path& ocpp_share_path,
+                                                           const fs::path& configured_resource_path) {
+    const auto resolved =
+        configured_resource_path.is_absolute() ? configured_resource_path : ocpp_share_path / configured_resource_path;
+    if (fs::exists(resolved)) {
+        return resolved;
+    }
+    return std::nullopt;
+}
+
+std::optional<uint32_t> get_database_user_version(const fs::path& database_path) {
+    everest::db::sqlite::Connection database(database_path);
+    if (!database.open_connection()) {
+        return std::nullopt;
+    }
+
+    try {
+        const auto user_version = database.get_user_version();
+        database.close_connection();
+        return user_version;
+    } catch (...) {
+        database.close_connection();
+        return std::nullopt;
+    }
+}
+
+struct DeviceModelInitializationContext {
+    fs::path sql_init_path;
+    fs::path database_path;
+    fs::path migration_files_path;
+    fs::path component_config_path;
+    std::optional<fs::path> custom_mappings_path;
+};
+
+DeviceModelInitializationContext resolve_device_model_initialization_context(const fs::path& ocpp_share_path,
+                                                                             const module::Conf& config) {
+    DeviceModelInitializationContext context;
+    context.sql_init_path = ocpp_share_path / SQL_CORE_MIGRTATIONS;
+
+    const auto configured_device_model_database_path = fs::path(config.DeviceModelDatabasePath);
+    if (configured_device_model_database_path.is_absolute()) {
+        context.database_path = configured_device_model_database_path;
+    } else if (const auto resolved_existing =
+                   resolve_device_model_resource_path(ocpp_share_path, configured_device_model_database_path);
+               resolved_existing.has_value()) {
+        context.database_path = resolved_existing.value();
+    } else {
+        context.database_path = ocpp_share_path / configured_device_model_database_path;
+    }
+
+    const auto migration_files_path =
+        resolve_device_model_resource_path(ocpp_share_path, fs::path(config.DeviceModelDatabaseMigrationPath));
+    if (!migration_files_path.has_value()) {
+        EVLOG_AND_THROW(std::runtime_error(fmt::format("Could not locate device model migration files at '{}'.",
+                                                       config.DeviceModelDatabaseMigrationPath)));
+    }
+    context.migration_files_path = migration_files_path.value();
+
+    const auto component_config_path =
+        resolve_device_model_resource_path(ocpp_share_path, fs::path(config.DeviceModelConfigPath));
+    if (!component_config_path.has_value()) {
+        EVLOG_AND_THROW(std::runtime_error(
+            fmt::format("Could not locate device model component config at '{}'.", config.DeviceModelConfigPath)));
+    }
+    context.component_config_path = component_config_path.value();
+
+    if (!config.DeviceModelConfigMappings.empty()) {
+        const auto custom_mappings_path =
+            resolve_device_model_resource_path(ocpp_share_path, fs::path(config.DeviceModelConfigMappings));
+        if (!custom_mappings_path.has_value()) {
+            EVLOG_AND_THROW(std::runtime_error(fmt::format(
+                "Could not locate OCPP1.6 custom config mapping file at '{}'.", config.DeviceModelConfigMappings)));
+        }
+        context.custom_mappings_path = custom_mappings_path.value();
+    }
+
+    return context;
+}
+
+bool should_run_ocpp16_to_device_model_migration(const fs::path& database_path) {
+
+    if (!fs::exists(database_path)) {
+        EVLOG_info << "Device model database not found at " << database_path
+                   << ". OCPP1.6 configuration migration is required.";
+        return true;
+    }
+
+    const auto user_version = get_database_user_version(database_path);
+    if (!user_version.has_value()) {
+        EVLOG_info << "Could not read user_version from existing device model database at " << database_path
+                   << ". OCPP1.6 configuration migration is required.";
+        return true;
+    }
+
+    const auto migration_required = user_version.value() < OCPP16_DEVICE_MODEL_MIGRATION_MARKER_VERSION;
+    EVLOG_info << "Device model database user_version=" << user_version.value()
+               << ", OCPP1.6 migration marker version=" << OCPP16_DEVICE_MODEL_MIGRATION_MARKER_VERSION
+               << ". OCPP1.6 configuration migration required: " << std::boolalpha << migration_required;
+    return migration_required;
+}
+
+void initialize_device_model_database(const fs::path& ocpp_share_path, const fs::path& user_config_path,
+                                      const std::string& charge_point_config_json,
+                                      const DeviceModelInitializationContext& context, const module::Conf& config) {
+    const auto migration_required_by_database_state =
+        should_run_ocpp16_to_device_model_migration(context.database_path);
+    const auto should_run_ocpp16_config_migration =
+        config.EnableOCPP16ConfigMigration &&
+        (config.ForceDeviceModelDatabaseOverride || migration_required_by_database_state);
+
+    if (!config.EnableOCPP16ConfigMigration) {
+        if (config.ForceDeviceModelDatabaseOverride) {
+            EVLOG_info << "ForceDeviceModelDatabaseOverride=true: recreating device model database from component "
+                          "config with OCPP1.6 JSON migration disabled.";
+        } else {
+            EVLOG_info << "OCPP1.6 JSON-to-device-model migration disabled. Initializing device model from component "
+                          "config only.";
+        }
+
+        auto component_configs = ocpp::v2::get_all_component_configs(context.component_config_path);
+        ocpp::v2::InitDeviceModelDb init_device_model_db(context.database_path, context.migration_files_path);
+        init_device_model_db.initialize_database(component_configs, config.ForceDeviceModelDatabaseOverride);
+
+        EVLOG_info << "Device model database initialized from component config at " << context.database_path;
+        return;
+    }
+
+    if (should_run_ocpp16_config_migration) {
+        if (config.ForceDeviceModelDatabaseOverride && !migration_required_by_database_state) {
+            EVLOG_info << "ForceDeviceModelDatabaseOverride=true: rerunning OCPP1.6 JSON migration and overwriting "
+                          "the existing device model database.";
+        }
+
+        EVLOG_info << "Starting one-time OCPP1.6 configuration migration to device model database.";
+
+        const auto legacy_charge_point_config = std::make_unique<ocpp::v16::ChargePointConfiguration>(
+            charge_point_config_json, ocpp_share_path, user_config_path);
+
+        auto component_configs = ocpp::v2::get_all_component_configs(context.component_config_path);
+        ocpp::v2::Ocpp16CustomConfigMappings custom_mappings;
+        if (context.custom_mappings_path.has_value()) {
+            EVLOG_info << "Custom OCPP1.6 to device model config mappings provided, attempting to load them from "
+                       << context.custom_mappings_path.value();
+
+            custom_mappings =
+                ocpp::v2::load_ocpp16_custom_config_mappings_from_yaml(context.custom_mappings_path.value());
+        }
+
+        ocpp::v2::patch_component_config_with_ocpp16(component_configs, *legacy_charge_point_config, custom_mappings);
+
+        ocpp::v2::InitDeviceModelDb init_device_model_db(context.database_path, context.migration_files_path);
+        init_device_model_db.initialize_database(component_configs, true);
+
+        EVLOG_info << "Successfully migrated OCPP1.6 configuration to device model database at "
+                   << context.database_path;
+        return;
+    }
+
+    EVLOG_info << "Skipping OCPP1.6 configuration migration because migration marker is present in the "
+                  "device model database.";
+}
+
+std::unique_ptr<ocpp::v16::ChargePointConfigurationInterface>
+create_device_model_charge_point_configuration(const fs::path& ocpp_share_path,
+                                               const DeviceModelInitializationContext& context) {
+    auto device_model_storage = std::make_unique<ocpp::v2::DeviceModelStorageSqlite>(context.database_path);
+    auto device_model = std::make_unique<ocpp::v2::DeviceModel>(std::move(device_model_storage));
+
+    ocpp::v2::Ocpp16CustomConfigMappings custom_mappings;
+    if (context.custom_mappings_path.has_value()) {
+        custom_mappings = ocpp::v2::load_ocpp16_custom_config_mappings_from_yaml(context.custom_mappings_path.value());
+    }
+
+    return std::make_unique<ocpp::v16::ChargePointConfigurationDeviceModel>(
+        ocpp_share_path.string(), std::move(device_model), std::move(custom_mappings));
 }
 
 void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules) {
@@ -593,7 +778,6 @@ void OCPP::init() {
         create_empty_user_config(user_config_path);
     }
 
-    const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRTATIONS;
     if (!fs::exists(this->config.MessageLogPath)) {
         try {
             fs::create_directory(this->config.MessageLogPath);
@@ -603,8 +787,13 @@ void OCPP::init() {
     }
 
     const auto charge_point_config_json = json_config.dump();
-    charge_point_config = std::make_unique<ocpp::v16::ChargePointConfiguration>(charge_point_config_json,
-                                                                                ocpp_share_path, user_config_path);
+    const auto device_model_init_context =
+        resolve_device_model_initialization_context(this->ocpp_share_path, this->config);
+    initialize_device_model_database(this->ocpp_share_path, user_config_path, charge_point_config_json,
+                                     device_model_init_context, this->config);
+    charge_point_config =
+        create_device_model_charge_point_configuration(this->ocpp_share_path, device_model_init_context);
+
     std::shared_ptr<ocpp::EvseSecurity> security = std::make_shared<EvseSecurity>(*r_security);
     std::function<void(const std::string& message, ocpp::MessageDirection direction)> message_callback =
         [this](const std::string& message, ocpp::MessageDirection direction) {
@@ -631,9 +820,9 @@ void OCPP::init() {
             }
         };
 
-    charge_point = std::make_unique<ocpp::v16::ChargePoint>(*charge_point_config, ocpp_share_path, config.DatabasePath,
-                                                            sql_init_path, config.MessageLogPath, security,
-                                                            std::nullopt, message_callback);
+    charge_point = std::make_unique<ocpp::v16::ChargePoint>(
+        *charge_point_config, ocpp_share_path, config.DatabasePath, device_model_init_context.sql_init_path,
+        config.MessageLogPath, security, std::nullopt, message_callback);
 
     this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(config.MessageQueueResumeDelay));
 

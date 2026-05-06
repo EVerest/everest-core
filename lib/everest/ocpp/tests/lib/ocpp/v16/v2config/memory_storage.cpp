@@ -282,7 +282,29 @@ std::optional<MemoryStorage::Storage::iterator> MemoryStorage::locate_v16(const 
     return std::nullopt;
 }
 
+std::optional<std::string> MemoryStorage::get_meter_public_keys_v16() const {
+    std::vector<std::string> meter_public_keys;
+    for (std::uint32_t i = 1;; i++) {
+        const auto key = "MeterPublicKey" + std::to_string(i);
+        auto it = locate_v16(key);
+        if (!it.has_value()) {
+            break;
+        }
+        meter_public_keys.push_back(it.value()->second);
+    }
+
+    if (meter_public_keys.empty()) {
+        return std::nullopt;
+    }
+
+    return ocpp::v16::utils::to_csl(meter_public_keys);
+}
+
 std::optional<std::string> MemoryStorage::get_v16(const std::string& name) const {
+    if (name == std::string{ocpp::v16::keys::convert(ocpp::v16::keys::valid_keys::MeterPublicKeys)}) {
+        return get_meter_public_keys_v16();
+    }
+
     // since V16 items are unique, just search through the storage items
     // to locate it
     auto it = locate_v16(name);
@@ -392,26 +414,20 @@ void MemoryStorage::add_to_report(std::vector<ocpp::v2::ReportData>& report, con
     // they don't need a VariableAttribute entry in the report.
     const auto key = keys::convert(name);
     if (key) {
-        const auto max_limit_cv = keys::convert_v2_max_limit(*key);
-        if (max_limit_cv) {
+        if (keys::is_max_limit_key(*key)) {
             return;
         }
     }
 
     const auto cv = ocpp::v16::keys::convert_v2(name);
     if (cv) {
-        auto component = std::get<ocpp::v2::Component>(*cv);
-        auto variable = std::get<ocpp::v2::Variable>(*cv);
-        auto attribute = std::get<ocpp::v2::AttributeEnum>(*cv);
         ocpp::v2::ReportData data;
-        data.component = std::move(component);
-        data.variable = std::move(variable);
+        data.component = cv->first;
+        data.variable = cv->second;
         ocpp::v2::VariableAttribute va;
-        va.type = attribute;
+        va.type = ocpp::v2::AttributeEnum::Actual;
         va.mutability = get_mutability(name_str);
-        if (!value_str.empty()) {
-            va.value = std::move(value_str);
-        }
+        va.value = std::move(value_str);
 
         if (key == keys::valid_keys::MeterValuesAlignedData) {
             add_supported_measureands_values_list(data);
@@ -487,7 +503,7 @@ void MemoryStorage::set(const std::string_view& component, const std::string_vie
         // std::cout << "Custom[" << variable << "]=" << value << '\n';
         vars_custom[variable_v] = value;
     } else {
-        std::cerr << "set not implemented for: " << component << '\n';
+        vars_additional[variable_v] = value;
     }
 }
 
@@ -524,7 +540,7 @@ void MemoryStorage::clear(const std::string_view& component, const std::string_v
     } else if (component == "Custom") {
         vars_custom.erase(var);
     } else {
-        std::cerr << "clear not implemented for: " << component << '\n';
+        vars_additional.erase(var);
     }
 }
 
@@ -648,7 +664,7 @@ std::optional<MemoryStorage::VariableMetaData> MemoryStorage::get_variable_meta_
         if (result) {
             return; // already found
         }
-        const auto cv = keys::convert_v2_max_limit(key);
+        const auto cv = keys::convert_v2(key);
         if (cv && cv->first.name == component_id.name && cv->second.name == variable_id.name &&
             cv->second.instance == variable_id.instance) {
             const auto retrieved = get_v16(std::string{keys::convert(key)});
@@ -686,7 +702,7 @@ std::optional<MemoryStorage::VariableMetaData> MemoryStorage::get_variable_meta_
 }
 
 std::vector<MemoryStorage::ReportData> MemoryStorage::get_base_report_data(const ReportBaseEnum& report_base) {
-    if (report_base == v2::ReportBaseEnum::ConfigurationInventory) {
+    if (report_base == v2::ReportBaseEnum::FullInventory || report_base == v2::ReportBaseEnum::ConfigurationInventory) {
         std::vector<MemoryStorage::ReportData> result;
         generate_report(result);
         return result;

@@ -1381,19 +1381,19 @@ const ComponentVariable WaitForSetUserPriceTimeout = {
     }),
 };
 const ComponentVariable AuthorizationKey16 = {
-    ControllerComponents::CustomLegacyController,
+    ControllerComponents::OCPP16LegacyCtrlr,
     std::optional<Variable>({
         "AuthorizationKey",
     }),
 };
 const RequiredComponentVariable CentralSystemURI16 = {
-    ControllerComponents::CustomLegacyController,
+    ControllerComponents::OCPP16LegacyCtrlr,
     std::optional<Variable>({
         "CentralSystemURI",
     }),
 };
 const RequiredComponentVariable SecurityProfile16 = {
-    ControllerComponents::CustomLegacyController,
+    ControllerComponents::OCPP16LegacyCtrlr,
     std::optional<Variable>({
         "SecurityProfile",
     }),

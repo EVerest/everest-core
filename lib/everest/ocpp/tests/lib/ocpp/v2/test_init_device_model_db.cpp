@@ -2,6 +2,7 @@
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 
 #include <gtest/gtest.h>
+#include <nlohmann/json.hpp>
 
 #include <ocpp/v2/device_model_storage_sqlite.hpp>
 
@@ -9,9 +10,12 @@
 // database_exists must be set with this test, but std::filesystem::exists is hard to stub, so this way we can set it
 // in the test.
 #include <ocpp/v2/init_device_model_db.hpp>
+#include <ocpp/v2/ocpp16_component_config_patcher.hpp>
 #undef private
 
 #include <lib/ocpp/common/database_testing_utils.hpp>
+
+#include "ocpp16_test_config.hpp"
 
 using namespace everest::db;
 using namespace everest::db::sqlite;
@@ -26,8 +30,14 @@ protected:
     const std::string CONFIGS_PATH_CHANGED = "./resources/config/v2/changed/component_config";
     const std::string CONFIGS_PATH_REQUIRED_NO_VALUE = "./resources/config/v2/wrong/component_config_required_no_value";
     const std::string CONFIGS_PATH_WRONG_VALUE_TYPE = "./resources/config/v2/wrong/component_config_wrong_value_type";
+    const std::string STANDARD_CONFIGS_PATH = "./resources/example_config/v2/component_config";
 
 public:
+    enum class ValueCompareMode {
+        Exact,
+        JsonSemantic
+    };
+
     InitDeviceModelDbTest() {
     }
 
@@ -135,7 +145,7 @@ public:
                              const std::optional<int>& component_evse_id,
                              const std::optional<int>& component_connector_id, const std::string& variable_name,
                              const std::optional<std::string>& variable_instance, const AttributeEnum& type,
-                             const std::string& value);
+                             const std::string& value, const ValueCompareMode compare_mode = ValueCompareMode::Exact);
 
     ///
     /// \brief set_attribute_source     Set the source of a given variable attribute.
@@ -721,13 +731,11 @@ bool InitDeviceModelDbTest::characteristics_exists(
     return statement->get_number_of_rows() == 1;
 }
 
-bool InitDeviceModelDbTest::attribute_has_value(const std::string& component_name,
-                                                const std::optional<std::string>& component_instance,
-                                                const std::optional<int>& component_evse_id,
-                                                const std::optional<int>& component_connector_id,
-                                                const std::string& variable_name,
-                                                const std::optional<std::string>& variable_instance,
-                                                const AttributeEnum& type, const std::string& value) {
+bool InitDeviceModelDbTest::attribute_has_value(
+    const std::string& component_name, const std::optional<std::string>& component_instance,
+    const std::optional<int>& component_evse_id, const std::optional<int>& component_connector_id,
+    const std::string& variable_name, const std::optional<std::string>& variable_instance, const AttributeEnum& type,
+    const std::string& value, const ValueCompareMode compare_mode) {
     const std::string select_attribute_statement = "SELECT VALUE "
                                                    "FROM VARIABLE_ATTRIBUTE va "
                                                    "WHERE va.VARIABLE_ID=("
@@ -781,7 +789,34 @@ bool InitDeviceModelDbTest::attribute_has_value(const std::string& component_nam
     if (statement->column_type(0) == SQLITE_NULL) {
         return false;
     }
-    return value == statement->column_text(0);
+
+    const std::string actual_value = statement->column_text(0);
+
+    if (value == actual_value) {
+        return true;
+    }
+
+    if (compare_mode == ValueCompareMode::Exact) {
+        EVLOG_info << "Actual value is: " << actual_value << ", expected value is: " << value;
+        return false;
+    }
+
+    if (compare_mode == ValueCompareMode::JsonSemantic) {
+        try {
+            const auto expected_json = nlohmann::json::parse(value);
+            const auto actual_json = nlohmann::json::parse(actual_value);
+
+            const auto result = expected_json == actual_json;
+            if (!result) {
+                EVLOG_info << "Actual JSON value is: " << actual_json.dump()
+                           << ", expected JSON value is: " << expected_json.dump();
+            }
+            return result;
+        } catch (const nlohmann::json::parse_error&) {
+            return false;
+        }
+    }
+    return false;
 }
 
 void InitDeviceModelDbTest::set_attribute_source(const std::string& component_name,
@@ -843,6 +878,382 @@ void InitDeviceModelDbTest::set_attribute_source(const std::string& component_na
         EVLOG_error << "Could not set source of variable " << variable_name << " (component: " << component_name
                     << ") attribute " << static_cast<int>(type) << ": " << this->database->get_error_message();
     }
+}
+
+// Verifies that a full OCPP 1.6 config is patched into mapped variable attributes and maxLimit characteristics.
+TEST_F(InitDeviceModelDbTest, patch_with_ocpp16_full_config_maps_values) {
+    const auto ocpp16_config = std::make_unique<ocpp::v16::ChargePointConfiguration>(
+        ocpp::tests::make_ocpp16_test_config_full(), CONFIG_DIR_V16, USER_CONFIG_FILE_LOCATION_V16);
+
+    InitDeviceModelDb db(DATABASE_PATH, MIGRATION_FILES_PATH);
+    db.database_exists = false;
+
+    // Get initial component configs
+    auto component_configs = get_all_component_configs(STANDARD_CONFIGS_PATH);
+    patch_component_config_with_ocpp16(component_configs, *ocpp16_config);
+
+    db.initialize_database(component_configs, true);
+
+    // ============================================================================
+    // Core Profile
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("AuthCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "OfflineTxForUnknownIdEnabled", std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("AuthCacheCtrlr", std::nullopt, std::nullopt, std::nullopt, "Enabled", std::nullopt,
+                                    AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("AuthCtrlr", std::nullopt, std::nullopt, std::nullopt, "AuthorizeRemoteStart",
+                                    std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("AlignedDataCtrlr", std::nullopt, std::nullopt, std::nullopt, "Interval",
+                                    std::nullopt, AttributeEnum::Actual, "700"));
+    EXPECT_TRUE(attribute_has_value("TxCtrlr", std::nullopt, std::nullopt, std::nullopt, "EVConnectionTimeOut",
+                                    std::nullopt, AttributeEnum::Actual, "123"));
+    EXPECT_TRUE(attribute_has_value("OCPPCommCtrlr", std::nullopt, std::nullopt, std::nullopt, "HeartbeatInterval",
+                                    std::nullopt, AttributeEnum::Actual, "905"));
+    EXPECT_TRUE(attribute_has_value("AuthCtrlr", std::nullopt, std::nullopt, std::nullopt, "LocalAuthorizeOffline",
+                                    std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("AuthCtrlr", std::nullopt, std::nullopt, std::nullopt, "LocalPreAuthorize",
+                                    std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("TxCtrlr", std::nullopt, std::nullopt, std::nullopt, "MaxEnergyOnInvalidId",
+                                    std::nullopt, AttributeEnum::Actual, "503"));
+    EXPECT_TRUE(attribute_has_value("AlignedDataCtrlr", std::nullopt, std::nullopt, std::nullopt, "Measurands",
+                                    std::nullopt, AttributeEnum::Actual, "Energy.Active.Import.Register,Frequency"));
+    EXPECT_TRUE(attribute_has_value("SampledDataCtrlr", std::nullopt, std::nullopt, std::nullopt, "TxUpdatedMeasurands",
+                                    std::nullopt, AttributeEnum::Actual,
+                                    "Energy.Active.Import.Register,Power.Active.Import"));
+    EXPECT_TRUE(attribute_has_value("SampledDataCtrlr", std::nullopt, std::nullopt, std::nullopt, "TxUpdatedInterval",
+                                    std::nullopt, AttributeEnum::Actual, "301"));
+    EXPECT_TRUE(attribute_has_value("OCPPCommCtrlr", std::nullopt, std::nullopt, std::nullopt, "ResetRetries",
+                                    std::nullopt, AttributeEnum::Actual, "2"));
+    EXPECT_TRUE(attribute_has_value("TxCtrlr", std::nullopt, std::nullopt, std::nullopt, "StopTxOnInvalidId",
+                                    std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("AlignedDataCtrlr", std::nullopt, std::nullopt, std::nullopt, "TxEndedMeasurands",
+                                    std::nullopt, AttributeEnum::Actual, "Energy.Active.Import.Register"));
+    EXPECT_TRUE(attribute_has_value("SampledDataCtrlr", std::nullopt, std::nullopt, std::nullopt, "TxEndedMeasurands",
+                                    std::nullopt, AttributeEnum::Actual, "Energy.Active.Import.Register"));
+    EXPECT_TRUE(attribute_has_value("OCPPCommCtrlr", std::nullopt, std::nullopt, std::nullopt, "MessageAttempts",
+                                    "TransactionEvent", AttributeEnum::Actual, "2"));
+    EXPECT_TRUE(attribute_has_value("OCPPCommCtrlr", std::nullopt, std::nullopt, std::nullopt, "MessageAttemptInterval",
+                                    "TransactionEvent", AttributeEnum::Actual, "11"));
+    EXPECT_TRUE(attribute_has_value("OCPPCommCtrlr", std::nullopt, std::nullopt, std::nullopt, "WebSocketPingInterval",
+                                    std::nullopt, AttributeEnum::Actual, "11"));
+
+    // ============================================================================
+    // Local Auth List Management
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("LocalAuthListCtrlr", std::nullopt, std::nullopt, std::nullopt, "Enabled",
+                                    std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("LocalAuthListCtrlr", std::nullopt, std::nullopt, std::nullopt, "ItemsPerMessage",
+                                    std::nullopt, AttributeEnum::Actual, "512"));
+
+    // ============================================================================
+    // Smart Charging
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("SmartChargingCtrlr", std::nullopt, std::nullopt, std::nullopt, "ProfileStackLevel",
+                                    std::nullopt, AttributeEnum::Actual, "1001"));
+    EXPECT_TRUE(attribute_has_value("SmartChargingCtrlr", std::nullopt, std::nullopt, std::nullopt, "RateUnit",
+                                    std::nullopt, AttributeEnum::Actual, "Current,Power"));
+    EXPECT_TRUE(attribute_has_value("SmartChargingCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "PeriodsPerSchedule", std::nullopt, AttributeEnum::Actual, "1001"));
+    EXPECT_TRUE(attribute_has_value("SmartChargingCtrlr", std::nullopt, std::nullopt, std::nullopt, "Phases3to1",
+                                    std::nullopt, AttributeEnum::Actual, "false"));
+
+    // ============================================================================
+    // Firmware Management
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("OCPPCommCtrlr", std::nullopt, std::nullopt, std::nullopt, "FileTransferProtocols",
+                                    std::nullopt, AttributeEnum::Actual, "FTP,FTPS"));
+
+    // ============================================================================
+    // Internal - Device Information
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "ChargePointId",
+                                    std::nullopt, AttributeEnum::Actual, "cp002"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "ChargeBoxSerialNumber",
+                                    std::nullopt, AttributeEnum::Actual, "cp002"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "ChargePointModel",
+                                    std::nullopt, AttributeEnum::Actual, "Model"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "ChargePointSerialNumber", std::nullopt, AttributeEnum::Actual, "serial"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "ChargePointVendor",
+                                    std::nullopt, AttributeEnum::Actual, "EVerest"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "FirmwareVersion",
+                                    std::nullopt, AttributeEnum::Actual, "0.2"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "ICCID", std::nullopt,
+                                    AttributeEnum::Actual, "8914800000000000000"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "IMSI", std::nullopt,
+                                    AttributeEnum::Actual, "262 012345678901"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "MeterSerialNumber",
+                                    std::nullopt, AttributeEnum::Actual, "meter-serial"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "MeterType",
+                                    std::nullopt, AttributeEnum::Actual, "DC"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "NumberOfConnectors",
+                                    std::nullopt, AttributeEnum::Actual, "3"));
+
+    // ============================================================================
+    // Internal - Security & Communication
+    // ============================================================================
+
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "SupportedCiphers12",
+                                    std::nullopt, AttributeEnum::Actual,
+                                    "ECDHE-ECDSA-AES128-GCM-SHA256:AES256-GCM-SHA384"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "SupportedCiphers13",
+                                    std::nullopt, AttributeEnum::Actual,
+                                    "TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "UseTPM", std::nullopt,
+                                    AttributeEnum::Actual, "true"));
+    EXPECT_TRUE(attribute_has_value("OCPPCommCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "RetryBackOffRandomRange", std::nullopt, AttributeEnum::Actual, "12"));
+    EXPECT_TRUE(attribute_has_value("OCPPCommCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "RetryBackOffRepeatTimes", std::nullopt, AttributeEnum::Actual, "4"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "AuthorizeConnectorZeroOnConnectorOne", std::nullopt, AttributeEnum::Actual,
+                                    "false"));
+
+    // ============================================================================
+    // Internal - Logging
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "LogMessages",
+                                    std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "LogMessagesFormat",
+                                    std::nullopt, AttributeEnum::Actual, "log,html,session_logging,security"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "LogRotation",
+                                    std::nullopt, AttributeEnum::Actual, "true"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "LogRotationDateSuffix",
+                                    std::nullopt, AttributeEnum::Actual, "true"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "LogRotationMaximumFileSize", std::nullopt, AttributeEnum::Actual, "1"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "LogRotationMaximumFileCount", std::nullopt, AttributeEnum::Actual, "2"));
+
+    // ============================================================================
+    // Internal - Charging Profile Configuration
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "SupportedChargingProfilePurposeTypes", std::nullopt, AttributeEnum::Actual,
+                                    "ChargePointMaxProfile,TxProfile"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "MaxCompositeScheduleDuration", std::nullopt, AttributeEnum::Actual, "31536000"));
+
+    // ============================================================================
+    // Internal - WebSocket Configuration
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "WebsocketPingPayload",
+                                    std::nullopt, AttributeEnum::Actual, "Hello from EVerest!"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "WebsocketPongTimeout",
+                                    std::nullopt, AttributeEnum::Actual, "6"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "UseSslDefaultVerifyPaths", std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "VerifyCsmsCommonName",
+                                    std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "VerifyCsmsAllowWildcards", std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "OcspRequestInterval",
+                                    std::nullopt, AttributeEnum::Actual, "604800"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "IFace", std::nullopt,
+                                    AttributeEnum::Actual, "eth0"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "UseTPMSeccLeafCertificate", std::nullopt, AttributeEnum::Actual, "true"));
+    EXPECT_TRUE(attribute_has_value("OCPPCommCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "RetryBackOffWaitMinimum", std::nullopt, AttributeEnum::Actual, "4"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "LogMessagesRaw",
+                                    std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("SmartChargingCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "IgnoredProfilePurposesOffline", std::nullopt, AttributeEnum::Actual,
+                                    "ChargePointMaxProfile,TxProfile"));
+    EXPECT_TRUE(attribute_has_value("SmartChargingCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "CompositeScheduleDefaultLimitAmps", std::nullopt, AttributeEnum::Actual, "92"));
+    EXPECT_TRUE(attribute_has_value("SmartChargingCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "CompositeScheduleDefaultLimitWatts", std::nullopt, AttributeEnum::Actual, "42"));
+    EXPECT_TRUE(attribute_has_value("SmartChargingCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "CompositeScheduleDefaultNumberPhases", std::nullopt, AttributeEnum::Actual, "2"));
+    EXPECT_TRUE(attribute_has_value("SmartChargingCtrlr", std::nullopt, std::nullopt, std::nullopt, "SupplyVoltage",
+                                    std::nullopt, AttributeEnum::Actual, "220"));
+
+    // ============================================================================
+    // Internal - ISO 15118 Configuration
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("ISO15118Ctrlr", std::nullopt, std::nullopt, std::nullopt, "SeccId", std::nullopt,
+                                    AttributeEnum::Actual, "DEPNX100002"));
+    EXPECT_TRUE(attribute_has_value("ISO15118Ctrlr", std::nullopt, std::nullopt, std::nullopt, "CountryName",
+                                    std::nullopt, AttributeEnum::Actual, "EN"));
+    EXPECT_TRUE(attribute_has_value("ISO15118Ctrlr", std::nullopt, std::nullopt, std::nullopt, "OrganizationName",
+                                    std::nullopt, AttributeEnum::Actual, "Pionix"));
+
+    // ============================================================================
+    // Internal - Message Queue Configuration
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("OCPPCommCtrlr", std::nullopt, std::nullopt, std::nullopt, "QueueAllMessages",
+                                    std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("OCPPCommCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "MessageTypesDiscardForQueueing", std::nullopt, AttributeEnum::Actual,
+                                    "Heartbeat,StatusNotification"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "MessageQueueSizeThreshold", std::nullopt, AttributeEnum::Actual, "6000"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "MaxMessageSize",
+                                    std::nullopt, AttributeEnum::Actual, "65000"));
+
+    // ============================================================================
+    // Internal - TLS Keylog (Debug)
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "TLSKeylogFile",
+                                    std::nullopt, AttributeEnum::Actual, "/tmp/ocpp_tls_keylog.txt"));
+    EXPECT_TRUE(attribute_has_value("InternalCtrlr", std::nullopt, std::nullopt, std::nullopt, "EnableTLSKeylog",
+                                    std::nullopt, AttributeEnum::Actual, "true"));
+
+    // ============================================================================
+    // Security Profile
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("SecurityCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "AdditionalRootCertificateCheck", std::nullopt, AttributeEnum::Actual, "true"));
+    // BasicAuthPassword is not changed by migration: AuthorizationKey now maps to OCPP16LegacyCtrlr
+    EXPECT_TRUE(attribute_has_value("SecurityCtrlr", std::nullopt, std::nullopt, std::nullopt, "BasicAuthPassword",
+                                    std::nullopt, AttributeEnum::Actual, "DEADBEEFDEADBEEF"));
+    EXPECT_TRUE(attribute_has_value("SecurityCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "MaxCertificateChainSize", std::nullopt, AttributeEnum::Actual, "6000"));
+    EXPECT_TRUE(attribute_has_value("SecurityCtrlr", std::nullopt, std::nullopt, std::nullopt, "OrganizationName",
+                                    std::nullopt, AttributeEnum::Actual, "EVerest"));
+    // SecurityProfile now maps to OCPP16LegacyCtrlr, so this retains the default value from the component config
+    EXPECT_TRUE(attribute_has_value("SecurityCtrlr", std::nullopt, std::nullopt, std::nullopt, "SecurityProfile",
+                                    std::nullopt, AttributeEnum::Actual, "1"));
+    EXPECT_TRUE(attribute_has_value("SecurityCtrlr", std::nullopt, std::nullopt, std::nullopt, "CertSigningWaitMinimum",
+                                    std::nullopt, AttributeEnum::Actual, "15"));
+    EXPECT_TRUE(attribute_has_value("SecurityCtrlr", std::nullopt, std::nullopt, std::nullopt, "CertSigningRepeatTimes",
+                                    std::nullopt, AttributeEnum::Actual, "3"));
+
+    // ============================================================================
+    // PnC (Plug and Charge)
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("ISO15118Ctrlr", std::nullopt, std::nullopt, std::nullopt, "PnCEnabled",
+                                    std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("ISO15118Ctrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "CentralContractValidationAllowed", std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("ISO15118Ctrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "ContractValidationOffline", std::nullopt, AttributeEnum::Actual, "false"));
+
+    // ============================================================================
+    // Cost and Price
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("TariffCostCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "NumberOfDecimalsForCostValues", std::nullopt, AttributeEnum::Actual, "5"));
+    EXPECT_TRUE(attribute_has_value("ClockCtrlr", std::nullopt, std::nullopt, std::nullopt, "TimeOffset", std::nullopt,
+                                    AttributeEnum::Actual, "02:00"));
+    EXPECT_TRUE(attribute_has_value("ClockCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "NextTimeOffsetTransitionDateTime", std::nullopt, AttributeEnum::Actual,
+                                    "2024-01-01T00:00:00"));
+    EXPECT_TRUE(attribute_has_value("ClockCtrlr", std::nullopt, std::nullopt, std::nullopt, "TimeOffset",
+                                    "NextTransition", AttributeEnum::Actual, "01:00"));
+
+    // ============================================================================
+    // Keys that do not exist in OCPP2.x
+    // ============================================================================
+
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt, "BlinkRepeat",
+                                    std::nullopt, AttributeEnum::Actual, "10"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "ConnectorPhaseRotationMaxLength", std::nullopt, AttributeEnum::Actual, "101"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "GetConfigurationMaxKeys", std::nullopt, AttributeEnum::Actual, "512"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt, "LightIntensity",
+                                    std::nullopt, AttributeEnum::Actual, "12"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "MinimumStatusDuration", std::nullopt, AttributeEnum::Actual, "2"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "StopTransactionOnEVSideDisconnect", std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(
+        attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt, "SupportedFeatureProfiles",
+                            std::nullopt, AttributeEnum::Actual,
+                            "Core,FirmwareManagement,RemoteTrigger,Reservation,LocalAuthListManagement,SmartCharging"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "SupportedFeatureProfilesMaxLength", std::nullopt, AttributeEnum::Actual, "512"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "UnlockConnectorOnEVSideDisconnect", std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "ReserveConnectorZeroSupported", std::nullopt, AttributeEnum::Actual, "true"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt, "HostName",
+                                    std::nullopt, AttributeEnum::Actual, "cp002.local"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "AllowChargingProfileWithoutStartSchedule", std::nullopt, AttributeEnum::Actual,
+                                    "true"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "WaitForStopTransactionsOnResetTimeout", std::nullopt, AttributeEnum::Actual,
+                                    "30"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "StopTransactionIfUnlockNotSupported", std::nullopt, AttributeEnum::Actual,
+                                    "false"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt, "MeterPublicKeys",
+                                    std::nullopt, AttributeEnum::Actual, "PUBLIC_KEY_1,PUBLIC_KEY_2"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "DisableSecurityEventNotifications", std::nullopt, AttributeEnum::Actual, "true"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "ISO15118CertificateManagementEnabled", std::nullopt, AttributeEnum::Actual,
+                                    "false"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "CustomDisplayCostAndPrice", std::nullopt, AttributeEnum::Actual, "false"));
+
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt, "DefaultPrice",
+                                    std::nullopt, AttributeEnum::Actual,
+                                    "{\"priceText\":\"This is the price\",\"priceTextOffline\":\"Show this price text "
+                                    "when offline!\",\"chargingPrice\":{\"kWhPrice\":3.14,\"hourPrice\":0.42}}",
+                                    ValueCompareMode::JsonSemantic));
+    EXPECT_TRUE(attribute_has_value(
+        "OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt, "DefaultPriceText", std::nullopt,
+        AttributeEnum::Actual,
+        "{\"priceTexts\":[{\"priceText\":\"This is the price\",\"priceTextOffline\":\"Show this price text when "
+        "offline!\",\"language\":\"en\"},{\"priceText\":\"Dit is de prijs\",\"priceTextOffline\":\"Laat dit zien "
+        "wanneer de charging station offline is!\",\"language\":\"nl\"},{\"priceText\":\"Dette er "
+        "prisen\",\"priceTextOffline\":\"Vis denne pristeksten når du er frakoblet\",\"language\":\"nb_NO\"}]}",
+        ValueCompareMode::JsonSemantic));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "CustomIdleFeeAfterStop", std::nullopt, AttributeEnum::Actual, "false"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt, "SupportedLanguages",
+                                    std::nullopt, AttributeEnum::Actual, "en, nl, de, nb_NO"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "CustomMultiLanguageMessages", std::nullopt, AttributeEnum::Actual, "true"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt, "Language",
+                                    std::nullopt, AttributeEnum::Actual, "en"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                    "WaitForSetUserPriceTimeout", std::nullopt, AttributeEnum::Actual, "5000"));
+
+    // ============================================================================
+    // OCPP 1.6 keys with problematic OCPP 2.x mappings (MAPPING_MISC_ADDITIONAL)
+    // AuthorizationKey is handled via special case (WriteOnly, not in get_all_key_value)
+    // CentralSystemURI and SecurityProfile go through the generic loop
+    // ============================================================================
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt, "AuthorizationKey",
+                                    std::nullopt, AttributeEnum::Actual, "SECRETSECRETSECRET"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt, "CentralSystemURI",
+                                    std::nullopt, AttributeEnum::Actual,
+                                    "127.0.0.1:8181/steve/websocket/CentralSystemService/"));
+    EXPECT_TRUE(attribute_has_value("OCPP16LegacyCtrlr", std::nullopt, std::nullopt, std::nullopt, "SecurityProfile",
+                                    std::nullopt, AttributeEnum::Actual, "1"));
+
+    const auto measurands_values_list = "Energy.Active.Import.Register,Energy.Active.Export.Register,Power.Active."
+                                        "Import,Voltage,Current.Import,Frequency,Current.Offered,Power.Offered,SoC";
+
+    EXPECT_TRUE(characteristics_exists("AlignedDataCtrlr", std::nullopt, std::nullopt, std::nullopt, "Measurands",
+                                       std::nullopt, DataEnum::MemberList, 611, std::nullopt, true, std::nullopt,
+                                       measurands_values_list));
+    EXPECT_TRUE(characteristics_exists("SampledDataCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                       "TxUpdatedMeasurands", std::nullopt, DataEnum::MemberList, 622, std::nullopt,
+                                       true, std::nullopt, measurands_values_list));
+    EXPECT_TRUE(characteristics_exists("AlignedDataCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                       "TxEndedMeasurands", std::nullopt, DataEnum::MemberList, 633, std::nullopt, true,
+                                       std::nullopt, measurands_values_list));
+    EXPECT_TRUE(characteristics_exists("SampledDataCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                       "TxEndedMeasurands", std::nullopt, DataEnum::MemberList, 644, std::nullopt, true,
+                                       std::nullopt, measurands_values_list));
+    EXPECT_TRUE(characteristics_exists("SampledDataCtrlr", std::nullopt, std::nullopt, std::nullopt,
+                                       "TxStartedMeasurands", std::nullopt, DataEnum::MemberList, std::nullopt,
+                                       std::nullopt, true, std::nullopt, measurands_values_list));
+    EXPECT_TRUE(characteristics_exists("LocalAuthListCtrlr", std::nullopt, std::nullopt, std::nullopt, "Entries",
+                                       std::nullopt, DataEnum::integer, 512, std::nullopt, true, std::nullopt,
+                                       std::nullopt));
+    EXPECT_TRUE(characteristics_exists("SecurityCtrlr", std::nullopt, std::nullopt, std::nullopt, "CertificateEntries",
+                                       std::nullopt, DataEnum::integer, 700, std::nullopt, true, std::nullopt,
+                                       std::nullopt));
+    EXPECT_TRUE(characteristics_exists("SmartChargingCtrlr", std::nullopt, std::nullopt, std::nullopt, "Entries",
+                                       "ChargingProfiles", DataEnum::integer, 1001, std::nullopt, true, std::nullopt,
+                                       std::nullopt));
 }
 
 } // namespace ocpp::v2

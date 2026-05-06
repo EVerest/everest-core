@@ -29,86 +29,87 @@ namespace ocpp::v16::keys {
 // - SampledDataTxUpdatedMeasurands
 
 #define MAPPING_STANDARD(mapping) \
-    mapping(AllowOfflineTxForUnknownId, OfflineTxForUnknownIdEnabled, Actual) \
-    mapping(AuthorizationCacheEnabled, AuthCacheCtrlrEnabled, Actual) \
-    mapping(AuthorizeRemoteTxRequests, AuthorizeRemoteStart, Actual) \
-    mapping(ClockAlignedDataInterval, AlignedDataInterval, Actual) \
-    mapping(ConnectionTimeOut, EVConnectionTimeOut, Actual) \
-    mapping(HeartbeatInterval, HeartbeatInterval, Actual) \
-    mapping(LocalAuthorizeOffline, LocalAuthorizeOffline, Actual) \
-    mapping(LocalPreAuthorize, LocalPreAuthorize, Actual) \
-    mapping(MaxEnergyOnInvalidId, MaxEnergyOnInvalidId, Actual) \
-    mapping(MeterValuesAlignedData, AlignedDataMeasurands, Actual) \
-    mapping(MeterValuesSampledData, SampledDataTxUpdatedMeasurands, Actual) \
-    mapping(MeterValueSampleInterval, SampledDataTxUpdatedInterval, Actual) \
-    mapping(ResetRetries, ResetRetries, Actual) \
-    mapping(StopTransactionOnInvalidId, StopTxOnInvalidId, Actual) \
-    mapping(StopTxnAlignedData, AlignedDataTxEndedMeasurands, Actual) \
-    mapping(StopTxnSampledData, SampledDataTxEndedMeasurands, Actual) \
-    mapping(TransactionMessageAttempts, MessageAttempts, Actual) \
-    mapping(TransactionMessageRetryInterval, MessageAttemptInterval, Actual) \
-    mapping(WebSocketPingInterval, WebSocketPingInterval, Actual) \
-    mapping(LocalAuthListEnabled, LocalAuthListCtrlrEnabled, Actual) \
-    mapping(ChargeProfileMaxStackLevel, ChargingProfileMaxStackLevel, Actual) \
-    mapping(ChargingScheduleAllowedChargingRateUnit, ChargingScheduleChargingRateUnit, Actual) \
-    mapping(ChargingScheduleMaxPeriods, PeriodsPerSchedule, Actual) \
-    mapping(ConnectorSwitch3to1PhaseSupported, Phases3to1, Actual) \
-    mapping(SupportedFileTransferProtocols, FileTransferProtocols, Actual)
+    mapping(AllowOfflineTxForUnknownId, OfflineTxForUnknownIdEnabled) \
+    mapping(AuthorizationCacheEnabled, AuthCacheCtrlrEnabled) \
+    mapping(AuthorizeRemoteTxRequests, AuthorizeRemoteStart) \
+    mapping(ClockAlignedDataInterval, AlignedDataInterval) \
+    mapping(ConnectionTimeOut, EVConnectionTimeOut) \
+    mapping(HeartbeatInterval, HeartbeatInterval) \
+    mapping(LocalAuthorizeOffline, LocalAuthorizeOffline) \
+    mapping(LocalPreAuthorize, LocalPreAuthorize) \
+    mapping(MaxEnergyOnInvalidId, MaxEnergyOnInvalidId) \
+    mapping(MeterValuesAlignedData, AlignedDataMeasurands) \
+    mapping(MeterValuesSampledData, SampledDataTxUpdatedMeasurands) \
+    mapping(MeterValueSampleInterval, SampledDataTxUpdatedInterval) \
+    mapping(ResetRetries, ResetRetries) \
+    mapping(StopTransactionOnInvalidId, StopTxOnInvalidId) \
+    mapping(StopTxnAlignedData, AlignedDataTxEndedMeasurands) \
+    mapping(StopTxnSampledData, SampledDataTxEndedMeasurands) \
+    mapping(TransactionMessageAttempts, MessageAttempts) \
+    mapping(TransactionMessageRetryInterval, MessageAttemptInterval) \
+    mapping(WebSocketPingInterval, WebSocketPingInterval) \
+    mapping(LocalAuthListEnabled, LocalAuthListCtrlrEnabled) \
+    mapping(SendLocalListMaxLength, ItemsPerMessageSendLocalList) \
+    mapping(ChargeProfileMaxStackLevel, ChargingProfileMaxStackLevel) \
+    mapping(ChargingScheduleAllowedChargingRateUnit, ChargingScheduleChargingRateUnit) \
+    mapping(ChargingScheduleMaxPeriods, PeriodsPerSchedule) \
+    mapping(ConnectorSwitch3to1PhaseSupported, Phases3to1) \
+    mapping(SupportedFileTransferProtocols, FileTransferProtocols)
 
 // ============================================================================
 // Internal configuration keys
 // ============================================================================
 
 #define MAPPING_INTERNAL(mapping) \
-    mapping(ChargePointId, ChargePointId, Actual) \
-    mapping(ChargeBoxSerialNumber, ChargeBoxSerialNumber, Actual) \
-    mapping(ChargePointModel, ChargePointModel, Actual) \
-    mapping(ChargePointSerialNumber, ChargePointSerialNumber, Actual) \
-    mapping(ChargePointVendor, ChargePointVendor, Actual) \
-    mapping(FirmwareVersion, FirmwareVersion, Actual) \
-    mapping(ICCID, ICCID, Actual) \
-    mapping(IFace, IFace, Actual) \
-    mapping(IMSI, IMSI, Actual) \
-    mapping(MeterSerialNumber, MeterSerialNumber, Actual) \
-    mapping(MeterType, MeterType, Actual) \
-    mapping(SupportedCiphers12, SupportedCiphers12, Actual) \
-    mapping(SupportedCiphers13, SupportedCiphers13, Actual) \
-    mapping(UseTPM, UseTPM, Actual) \
-    mapping(UseTPMSeccLeafCertificate, UseTPMSeccLeafCertificate, Actual) \
-    mapping(RetryBackoffRandomRange, RetryBackOffRandomRange, Actual) \
-    mapping(RetryBackoffRepeatTimes, RetryBackOffRepeatTimes, Actual) \
-    mapping(AuthorizeConnectorZeroOnConnectorOne,AuthorizeConnectorZeroOnConnectorOne, Actual) \
-    mapping(LogMessages, LogMessages, Actual) \
-    mapping(LogMessagesRaw, LogMessagesRaw, Actual) \
-    mapping(LogMessagesFormat, LogMessagesFormat, Actual) \
-    mapping(LogRotation, LogRotation, Actual) \
-    mapping(LogRotationDateSuffix, LogRotationDateSuffix, Actual) \
-    mapping(LogRotationMaximumFileSize, LogRotationMaximumFileSize, Actual) \
-    mapping(LogRotationMaximumFileCount, LogRotationMaximumFileCount, Actual) \
-    mapping(SupportedChargingProfilePurposeTypes,SupportedChargingProfilePurposeTypes, Actual) \
-    mapping(IgnoredProfilePurposesOffline, IgnoredProfilePurposesOffline, Actual) \
-    mapping(MaxCompositeScheduleDuration, MaxCompositeScheduleDuration, Actual) \
-    mapping(CompositeScheduleDefaultLimitAmps, CompositeScheduleDefaultLimitAmps, Actual) \
-    mapping(CompositeScheduleDefaultLimitWatts, CompositeScheduleDefaultLimitWatts, Actual) \
-    mapping(CompositeScheduleDefaultNumberPhases, CompositeScheduleDefaultNumberPhases, Actual) \
-    mapping(SupplyVoltage, SupplyVoltage, Actual) \
-    mapping(WebsocketPingPayload, WebsocketPingPayload, Actual) \
-    mapping(WebsocketPongTimeout, WebsocketPongTimeout, Actual) \
-    mapping(UseSslDefaultVerifyPaths, UseSslDefaultVerifyPaths, Actual) \
-    mapping(VerifyCsmsCommonName, VerifyCsmsCommonName, Actual) \
-    mapping(VerifyCsmsAllowWildcards, VerifyCsmsAllowWildcards, Actual) \
-    mapping(OcspRequestInterval, OcspRequestInterval, Actual) \
-    mapping(SeccLeafSubjectCommonName, ISO15118CtrlrSeccId, Actual) \
-    mapping(SeccLeafSubjectCountry, ISO15118CtrlrCountryName, Actual) \
-    mapping(SeccLeafSubjectOrganization, ISO15118CtrlrOrganizationName, Actual) \
-    mapping(QueueAllMessages, QueueAllMessages, Actual) \
-    mapping(MessageTypesDiscardForQueueing, MessageTypesDiscardForQueueing, Actual) \
-    mapping(MessageQueueSizeThreshold, MessageQueueSizeThreshold, Actual) \
-    mapping(MaxMessageSize, MaxMessageSize, Actual) \
-    mapping(TLSKeylogFile, TLSKeylogFile, Actual) \
-    mapping(EnableTLSKeylog, EnableTLSKeylog, Actual) \
-    mapping(NumberOfConnectors, NumberOfConnectors, Actual) \
-    mapping(RetryBackoffWaitMinimum, RetryBackOffWaitMinimum, Actual)
+    mapping(ChargePointId, ChargePointId) \
+    mapping(ChargeBoxSerialNumber, ChargeBoxSerialNumber) \
+    mapping(ChargePointModel, ChargePointModel) \
+    mapping(ChargePointSerialNumber, ChargePointSerialNumber) \
+    mapping(ChargePointVendor, ChargePointVendor) \
+    mapping(FirmwareVersion, FirmwareVersion) \
+    mapping(ICCID, ICCID) \
+    mapping(IFace, IFace) \
+    mapping(IMSI, IMSI) \
+    mapping(MeterSerialNumber, MeterSerialNumber) \
+    mapping(MeterType, MeterType) \
+    mapping(SupportedCiphers12, SupportedCiphers12) \
+    mapping(SupportedCiphers13, SupportedCiphers13) \
+    mapping(UseTPM, UseTPM) \
+    mapping(UseTPMSeccLeafCertificate, UseTPMSeccLeafCertificate) \
+    mapping(RetryBackoffRandomRange, RetryBackOffRandomRange) \
+    mapping(RetryBackoffRepeatTimes, RetryBackOffRepeatTimes) \
+    mapping(AuthorizeConnectorZeroOnConnectorOne,AuthorizeConnectorZeroOnConnectorOne) \
+    mapping(LogMessages, LogMessages) \
+    mapping(LogMessagesRaw, LogMessagesRaw) \
+    mapping(LogMessagesFormat, LogMessagesFormat) \
+    mapping(LogRotation, LogRotation) \
+    mapping(LogRotationDateSuffix, LogRotationDateSuffix) \
+    mapping(LogRotationMaximumFileSize, LogRotationMaximumFileSize) \
+    mapping(LogRotationMaximumFileCount, LogRotationMaximumFileCount) \
+    mapping(SupportedChargingProfilePurposeTypes,SupportedChargingProfilePurposeTypes) \
+    mapping(IgnoredProfilePurposesOffline, IgnoredProfilePurposesOffline) \
+    mapping(MaxCompositeScheduleDuration, MaxCompositeScheduleDuration) \
+    mapping(CompositeScheduleDefaultLimitAmps, CompositeScheduleDefaultLimitAmps) \
+    mapping(CompositeScheduleDefaultLimitWatts, CompositeScheduleDefaultLimitWatts) \
+    mapping(CompositeScheduleDefaultNumberPhases, CompositeScheduleDefaultNumberPhases) \
+    mapping(SupplyVoltage, SupplyVoltage) \
+    mapping(WebsocketPingPayload, WebsocketPingPayload) \
+    mapping(WebsocketPongTimeout, WebsocketPongTimeout) \
+    mapping(UseSslDefaultVerifyPaths, UseSslDefaultVerifyPaths) \
+    mapping(VerifyCsmsCommonName, VerifyCsmsCommonName) \
+    mapping(VerifyCsmsAllowWildcards, VerifyCsmsAllowWildcards) \
+    mapping(OcspRequestInterval, OcspRequestInterval) \
+    mapping(SeccLeafSubjectCommonName, ISO15118CtrlrSeccId) \
+    mapping(SeccLeafSubjectCountry, ISO15118CtrlrCountryName) \
+    mapping(SeccLeafSubjectOrganization, ISO15118CtrlrOrganizationName) \
+    mapping(QueueAllMessages, QueueAllMessages) \
+    mapping(MessageTypesDiscardForQueueing, MessageTypesDiscardForQueueing) \
+    mapping(MessageQueueSizeThreshold, MessageQueueSizeThreshold) \
+    mapping(MaxMessageSize, MaxMessageSize) \
+    mapping(TLSKeylogFile, TLSKeylogFile) \
+    mapping(EnableTLSKeylog, EnableTLSKeylog) \
+    mapping(NumberOfConnectors, NumberOfConnectors) \
+    mapping(RetryBackoffWaitMinimum, RetryBackOffWaitMinimum)
 
 // ============================================================================
 // VariableCharacteristics.maxLimit mappings
@@ -122,7 +123,6 @@ namespace ocpp::v16::keys {
     mapping(StopTxnAlignedDataMaxLength, AlignedDataTxEndedMeasurands) \
     mapping(StopTxnSampledDataMaxLength, SampledDataTxEndedMeasurands) \
     mapping(LocalAuthListMaxLength, LocalAuthListCtrlrEntries) \
-    mapping(SendLocalListMaxLength, ItemsPerMessageSendLocalList) \
     mapping(MaxChargingProfilesInstalled, EntriesChargingProfiles)
 
 // ============================================================================
@@ -130,72 +130,72 @@ namespace ocpp::v16::keys {
 // ============================================================================
 
 #define MAPPING_SECURITY(mapping) \
-    mapping(AdditionalRootCertificateCheck, AdditionalRootCertificateCheck, Actual) \
-    mapping(CertificateSignedMaxChainSize, MaxCertificateChainSize, Actual) \
-    mapping(CpoName, OrganizationName, Actual) \
-    mapping(CertSigningWaitMinimum, CertSigningWaitMinimum, Actual) \
-    mapping(CertSigningRepeatTimes, CertSigningRepeatTimes, Actual) \
-    mapping(CertificateStoreMaxLength, CertificateEntries, Actual)
+    mapping(AdditionalRootCertificateCheck, AdditionalRootCertificateCheck) \
+    mapping(CertificateSignedMaxChainSize, MaxCertificateChainSize) \
+    mapping(CpoName, OrganizationName) \
+    mapping(CertSigningWaitMinimum, CertSigningWaitMinimum) \
+    mapping(CertSigningRepeatTimes, CertSigningRepeatTimes) \
+    mapping(CertificateStoreMaxLength, CertificateEntries)
 
 // ============================================================================
 // PnC Section
 // ============================================================================
 
 #define MAPPING_PNC(mapping) \
-    mapping(ISO15118PnCEnabled, PnCEnabled, Actual) \
-    mapping(CentralContractValidationAllowed, CentralContractValidationAllowed, Actual) \
-    mapping(ContractValidationOffline, ContractValidationOffline, Actual)
+    mapping(ISO15118PnCEnabled, PnCEnabled) \
+    mapping(CentralContractValidationAllowed, CentralContractValidationAllowed) \
+    mapping(ContractValidationOffline, ContractValidationOffline)
 
 // ============================================================================
 // CostAndPrice Section
 // ============================================================================
 
 #define MAPPING_COST(mapping) \
-    mapping(NumberOfDecimalsForCostValues, NumberOfDecimalsForCostValues, Actual) \
-    mapping(TimeOffset, TimeOffset, Actual) \
-    mapping(NextTimeOffsetTransitionDateTime, NextTimeOffsetTransitionDateTime, Actual) \
-    mapping(TimeOffsetNextTransition, TimeOffsetNextTransition, Actual)
+    mapping(NumberOfDecimalsForCostValues, NumberOfDecimalsForCostValues) \
+    mapping(TimeOffset, TimeOffset) \
+    mapping(NextTimeOffsetTransitionDateTime, NextTimeOffsetTransitionDateTime) \
+    mapping(TimeOffsetNextTransition, TimeOffsetNextTransition)
 
 // ============================================================================
 // Mavericks Section - OCPP 1.6 keys without direct OCPP 2.x equivalents
 // ============================================================================
 
 #define MAPPING_MISC(mapping) \
-    mapping(BlinkRepeat, BlinkRepeat, Actual) \
-    mapping(ConnectorPhaseRotation, ConnectorPhaseRotation, Actual) \
-    mapping(ConnectorPhaseRotationMaxLength, ConnectorPhaseRotationMaxLength, Actual) \
-    mapping(GetConfigurationMaxKeys, GetConfigurationMaxKeys, Actual) \
-    mapping(LightIntensity, LightIntensity, Actual) \
-    mapping(MinimumStatusDuration, MinimumStatusDuration, Actual) \
-    mapping(StopTransactionOnEVSideDisconnect, StopTransactionOnEVSideDisconnect, Actual) \
-    mapping(SupportedFeatureProfiles, SupportedFeatureProfiles, Actual) \
-    mapping(SupportedFeatureProfilesMaxLength, SupportedFeatureProfilesMaxLength, Actual) \
-    mapping(UnlockConnectorOnEVSideDisconnect, UnlockConnectorOnEVSideDisconnect, Actual) \
-    mapping(ReserveConnectorZeroSupported, ReserveConnectorZeroSupported, Actual) \
-    mapping(HostName, HostName, Actual) \
-    mapping(AllowChargingProfileWithoutStartSchedule, AllowChargingProfileWithoutStartSchedule, Actual) \
-    mapping(WaitForStopTransactionsOnResetTimeout, WaitForStopTransactionsOnResetTimeout, Actual) \
-    mapping(StopTransactionIfUnlockNotSupported, StopTransactionIfUnlockNotSupported, Actual) \
-    mapping(MeterPublicKeys, MeterPublicKeys, Actual) \
-    mapping(DisableSecurityEventNotifications, DisableSecurityEventNotifications, Actual) \
-    mapping(ISO15118CertificateManagementEnabled, ISO15118CertificateManagementEnabled, Actual) \
-    mapping(CustomDisplayCostAndPrice, CustomDisplayCostAndPrice, Actual) \
-    mapping(DefaultPrice, DefaultPrice, Actual) \
-    mapping(DefaultPriceText, DefaultPriceText, Actual) \
-    mapping(CustomIdleFeeAfterStop, CustomIdleFeeAfterStop, Actual) \
-    mapping(SupportedLanguages, SupportedLanguages, Actual) \
-    mapping(CustomMultiLanguageMessages, CustomMultiLanguageMessages, Actual) \
-    mapping(Language, Language, Actual) \
-    mapping(WaitForSetUserPriceTimeout, WaitForSetUserPriceTimeout, Actual)
+    mapping(BlinkRepeat, BlinkRepeat) \
+    mapping(ConnectorPhaseRotation, ConnectorPhaseRotation) \
+    mapping(ConnectorPhaseRotationMaxLength, ConnectorPhaseRotationMaxLength) \
+    mapping(GetConfigurationMaxKeys, GetConfigurationMaxKeys) \
+    mapping(LightIntensity, LightIntensity) \
+    mapping(MinimumStatusDuration, MinimumStatusDuration) \
+    mapping(StopTransactionOnEVSideDisconnect, StopTransactionOnEVSideDisconnect) \
+    mapping(SupportedFeatureProfiles, SupportedFeatureProfiles) \
+    mapping(SupportedFeatureProfilesMaxLength, SupportedFeatureProfilesMaxLength) \
+    mapping(UnlockConnectorOnEVSideDisconnect, UnlockConnectorOnEVSideDisconnect) \
+    mapping(ReserveConnectorZeroSupported, ReserveConnectorZeroSupported) \
+    mapping(HostName, HostName) \
+    mapping(AllowChargingProfileWithoutStartSchedule, AllowChargingProfileWithoutStartSchedule) \
+    mapping(WaitForStopTransactionsOnResetTimeout, WaitForStopTransactionsOnResetTimeout) \
+    mapping(StopTransactionIfUnlockNotSupported, StopTransactionIfUnlockNotSupported) \
+    mapping(MeterPublicKeys, MeterPublicKeys) \
+    mapping(DisableSecurityEventNotifications, DisableSecurityEventNotifications) \
+    mapping(ISO15118CertificateManagementEnabled, ISO15118CertificateManagementEnabled) \
+    mapping(CustomDisplayCostAndPrice, CustomDisplayCostAndPrice) \
+    mapping(DefaultPrice, DefaultPrice) \
+    mapping(DefaultPriceText, DefaultPriceText) \
+    mapping(CustomIdleFeeAfterStop, CustomIdleFeeAfterStop) \
+    mapping(SupportedLanguages, SupportedLanguages) \
+    mapping(CustomMultiLanguageMessages, CustomMultiLanguageMessages) \
+    mapping(Language, Language) \
+    mapping(WaitForSetUserPriceTimeout, WaitForSetUserPriceTimeout)
 
 // ============================================================================
 // Mavericks Section - OCPP 1.6 keys where OCPP 2.x mapping is problematic
 // ============================================================================
 
 #define MAPPING_MISC_ADDITIONAL(mapping) \
-    mapping(AuthorizationKey, AuthorizationKey16, Actual) \
-    mapping(CentralSystemURI, CentralSystemURI16, Actual) \
-    mapping(SecurityProfile, SecurityProfile16, Actual)
+    mapping(AuthorizationKey, AuthorizationKey16) \
+    mapping(CentralSystemURI, CentralSystemURI16) \
+    mapping(SecurityProfile, SecurityProfile16)
 
 #define MAPPING_ALL(mapping) \
     MAPPING_MISC_ADDITIONAL(mapping) \
@@ -204,7 +204,8 @@ namespace ocpp::v16::keys {
     MAPPING_INTERNAL(mapping) \
     MAPPING_SECURITY(mapping) \
     MAPPING_PNC(mapping) \
-    MAPPING_COST(mapping)
+    MAPPING_COST(mapping) \
+    MAPPING_MAX_LIMIT(mapping)
 
 #define FOR_ALL_MAPPED_KEYS(key) \
     key(Core, AllowOfflineTxForUnknownId) \
@@ -378,16 +379,13 @@ inline bool is_in_section(sections section, valid_keys key) {
 bool is_hidden(valid_keys key);
 std::optional<ocpp::v16::SupportedFeatureProfiles> get_profile(valid_keys key);
 
-using DeviceModel_CV = std::optional<std::tuple<ocpp::v2::Component, ocpp::v2::Variable, ocpp::v2::AttributeEnum>>;
+using DeviceModel_CV = std::optional<std::pair<ocpp::v2::Component, ocpp::v2::Variable>>;
 DeviceModel_CV convert_v2(const std::string_view& str);
 DeviceModel_CV convert_v2(valid_keys key);
 std::optional<std::string> convert_v2(const ocpp::v2::Component& component, const ocpp::v2::Variable& variable,
                                       ocpp::v2::AttributeEnum attribute);
 
-/// Returns the (Component, Variable) pair for keys that map to VariableCharacteristics.maxLimit,
-/// or std::nullopt if the key uses a regular VariableAttribute mapping.
-using DeviceModel_MaxLimitCV = std::optional<std::pair<ocpp::v2::Component, ocpp::v2::Variable>>;
-DeviceModel_MaxLimitCV convert_v2_max_limit(valid_keys key);
+bool is_max_limit_key(valid_keys key);
 
 } // namespace ocpp::v16::keys
 

@@ -1,9 +1,10 @@
 
-# OCPP 1.6 to OCPP 2.x mapping
+# OCPP 1.6 to DeviceModel Mapping Reference
 
-This documents how OCPP 1.6 configuration keys map to the OCPP 2.x Device Model.
+This documents how OCPP 1.6 configuration keys map to the Device Model representation. OCPP introduced the device model with OCPP2.0.1. Initially the configuration parameters and storage were strictly separated in this 
+library. In order to support a common configuration backend for all protocol versions, the OCPP 1.6 configuration keys are now mapped to the Device Model as well. This allows for a unified configuration management and storage approach across protocol versions.
 
-It is intended as a **human-readable reference** for integrators and maintainers.
+This document is intended as a **human-readable reference** for integrators and maintainers.
 The implementation in code (for example `known_keys` conversion logic and patching behaviour) remains authoritative.
 
 ## Core Profile
@@ -99,7 +100,7 @@ The implementation in code (for example `known_keys` conversion logic and patchi
 | ID | OCPP1.6 key | Mapping type | Component | Variable | Target field |
 | ---: | --- | --- | --- | --- | --- |
 | 80 | `LocalAuthListMaxLength` | VariableCharacteristics | `LocalAuthListCtrlr` | `Entries` | `maxLimit` |
-| 81 | `SendLocalListMaxLength` | VariableAttribute | `LocalAuthListCtrlr` | `ItemsPerMessage` | `maxLimit` |
+| 81 | `SendLocalListMaxLength` | VariableAttribute | `LocalAuthListCtrlr` | `ItemsPerMessage` | `Actual` |
 
 ## Smart Charging Profile
 
@@ -166,7 +167,7 @@ The implementation in code (for example `known_keys` conversion logic and patchi
 | 120 | `Language` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `Language` | `Actual` |
 | 121 | `WaitForSetUserPriceTimeout` | OCPP1.6-specific | `OCPP16LegacyCtrlr` | `WaitForSetUserPriceTimeout` | `Actual` |
 
-## Mavericks Section
+## Legacy Section
 
 Direct mapping is not supported. An additional key is used instead.
 

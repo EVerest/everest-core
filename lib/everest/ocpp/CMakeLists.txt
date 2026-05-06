@@ -55,6 +55,7 @@ else()
     find_package(date REQUIRED)
     find_package(nlohmann_json REQUIRED)
     find_package(nlohmann_json_schema_validator REQUIRED)
+    find_package(ryml REQUIRED)
     find_package(libwebsockets REQUIRED)
 endif()
 

@@ -9,6 +9,16 @@
 namespace {
 using namespace ocpp::v16::stubs;
 
+ocpp::v2::Ocpp16CustomConfigMappings create_custom_mappings(
+    std::initializer_list<std::pair<const std::string, std::pair<std::string, std::string>>> entries) {
+    ocpp::v2::Ocpp16CustomConfigMappings mappings;
+    for (const auto& [key, target] : entries) {
+        const auto& [component, variable] = target;
+        mappings.emplace(key, std::make_pair(ocpp::v2::Component{component}, ocpp::v2::Variable{variable}));
+    }
+    return mappings;
+}
+
 // expected values extracted from the JSON configuration files
 // also see memory_storage.cpp
 const std::map<std::string, std::string> expected_key_value = {
@@ -98,12 +108,10 @@ TEST_P(Configuration, CustomKey) {
     const std::string key{"GTCustom"};
     const std::string value{"GTCustomValue"};
 
-    EXPECT_FALSE(get()->getCustomKeyValue(key).has_value());
-    EXPECT_EQ(get()->setCustomKey(key, value, false), ConfigurationStatus::Rejected);
+    EXPECT_FALSE(get()->get(key).has_value());
+    EXPECT_EQ(get()->set(key, value), std::nullopt);
 
-    // no point in testing setCustomKey(key, value, true)
-    // since force==true still requires that the key exists
-    // in only allows read-only keys to be changed
+    // Generic set/get API treats unmapped custom keys as unknown keys.
 }
 
 TEST_P(Configuration, Get) {
@@ -186,12 +194,12 @@ TEST_P(Configuration, Set) {
     EXPECT_EQ(kv.value().value, "1201");
     EXPECT_FALSE(kv.value().readonly);
 
-    // check if read-only key exists and has a value
+    // read-only key
+
+    // check key exists and has a value
     EXPECT_EQ(get()->getTLSKeylogFile(), "/tmp/ocpp_tls_keylog.txt");
     kv = get()->get("TLSKeylogFile");
     ASSERT_TRUE(kv);
-    EXPECT_EQ(kv.value().key, "TLSKeylogFile");
-    EXPECT_EQ(kv.value().value, "/tmp/ocpp_tls_keylog.txt");
     EXPECT_TRUE(kv.value().readonly);
     EXPECT_EQ(get()->set("TLSKeylogFile", "1201"), std::nullopt);
     EXPECT_EQ(get()->getTLSKeylogFile(), "/tmp/ocpp_tls_keylog.txt");
@@ -247,19 +255,20 @@ TEST_F(Configuration, setCustomKeyV2) {
 
     const std::string key{"GTCustom"};
     const std::string value{"GTCustomValue"};
+    createV2Config(create_custom_mappings({{key, {"SomeOtherCtrlr", "GTCustomVar"}}}));
 
     // set an initial value
-    device_model->set("Custom", key, "");
+    device_model->set("SomeOtherCtrlr", "GTCustomVar", "");
 
-    EXPECT_TRUE(v2_config->getCustomKeyValue(key).has_value());
-    auto kv = v2_config->getCustomKeyValue(key);
+    EXPECT_TRUE(v2_config->get(key).has_value());
+    auto kv = v2_config->get(key);
     ASSERT_TRUE(kv);
     EXPECT_EQ(kv.value().key, key.c_str());
     EXPECT_EQ(kv.value().value, "");
     EXPECT_FALSE(kv.value().readonly);
 
-    EXPECT_EQ(v2_config->setCustomKey(key, value, false), ConfigurationStatus::Accepted);
-    kv = v2_config->getCustomKeyValue(key);
+    EXPECT_EQ(v2_config->set(key, value), ConfigurationStatus::Accepted);
+    kv = v2_config->get(key);
     ASSERT_TRUE(kv);
     EXPECT_EQ(kv.value().key, key.c_str());
     EXPECT_EQ(kv.value().value, value.c_str());
@@ -272,11 +281,13 @@ TEST_F(Configuration, setCustomKeyV2) {
 TEST_F(Configuration, SetV2) {
     using ConfigurationStatus = ocpp::v16::ConfigurationStatus;
     ASSERT_TRUE(device_model);
+    createV2Config(create_custom_mappings({{"ACustomKey", {"SomeOtherCtrlr", "ACustomKeyVar"}},
+                                           {"ACustomRWKey", {"SomeOtherCtrlr", "ACustomRWKeyVar"}}}));
 
     // set an initial custom key value
-    device_model->set("Custom", "ACustomKey", "");
-    device_model->set("Custom", "ACustomRWKey", "");
-    device_model->set_readonly("ACustomKey");
+    device_model->set("SomeOtherCtrlr", "ACustomKeyVar", "");
+    device_model->set("SomeOtherCtrlr", "ACustomRWKeyVar", "");
+    device_model->set_readonly("ACustomKeyVar");
 
     // non-existent key
     EXPECT_FALSE(v2_config->get("DoesNotExist").has_value());
@@ -309,6 +320,16 @@ TEST_F(Configuration, SetV2) {
     EXPECT_EQ(kv.value().key, "ClockAlignedDataInterval");
     EXPECT_EQ(kv.value().value, "1201");
     EXPECT_FALSE(kv.value().readonly);
+
+    // read-only key
+
+    // check key exists and has a value
+    EXPECT_EQ(v2_config->getTLSKeylogFile(), "/tmp/ocpp_tls_keylog.txt");
+    kv = v2_config->get("TLSKeylogFile");
+    ASSERT_TRUE(kv);
+    EXPECT_TRUE(kv.value().readonly);
+    EXPECT_EQ(v2_config->set("TLSKeylogFile", "1201"), std::nullopt);
+    EXPECT_EQ(v2_config->getTLSKeylogFile(), "/tmp/ocpp_tls_keylog.txt");
 
     // custom key (read only)
     kv = v2_config->get("ACustomKey");

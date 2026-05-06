@@ -1,0 +1,6 @@
+mappings:
+  - ocpp16_key: ExampleConfigurationKey
+    component:
+      name: OCPP16LegacyCtrlr
+    variable:
+      name: ExampleConfigurationKey

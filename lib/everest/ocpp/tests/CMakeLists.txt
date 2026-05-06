@@ -28,6 +28,10 @@ set(GCOVR_DEPENDENCIES)
 
 add_libocpp_unittest(NAME libocpp_unit_tests PATH "")
 
+target_include_directories(libocpp_unit_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/ocpp
+)
+
 target_link_libraries(libocpp_unit_tests PRIVATE
         ocpp
         ${GTEST_LIBRARIES}

@@ -824,6 +824,9 @@ TEST_P(Configuration, AllMeterPublicKeys) {
 TEST_P(Configuration, PublicKey) {
     ASSERT_NE(get(), nullptr);
 
+    // Internal CSL representation is not exposed via GetConfiguration.
+    EXPECT_FALSE(get()->get("MeterPublicKeys").has_value());
+
     const auto max = get()->getNumberOfConnectors();
     for (std::uint8_t i = 0; i <= max; i++) {
         SCOPED_TRACE(std::to_string(i));

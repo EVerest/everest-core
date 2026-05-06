@@ -1874,6 +1874,7 @@ ChargePointImpl::set_configuration_key_internal(CiString<50> key, CiString<500> 
                                                 std::optional<MessageId> uniqueId) {
     ConfigurationStatus result{ConfigurationStatus::NotSupported};
     std::optional<ChangeConfigurationResponse> response = ChangeConfigurationResponse();
+
     const auto kv = configuration.get(key);
 
     if (kv || key == "AuthorizationKey") {
@@ -1961,7 +1962,7 @@ ChargePointImpl::set_configuration_key_internal(CiString<50> key, CiString<500> 
                     } catch (const std::invalid_argument& e) {
                         result = ConfigurationStatus::Rejected;
                     }
-                } else if (key == "ConnectionTimeout") {
+                } else if (key == "ConnectionTimeOut") {
                     call_set_connection_timeout();
                 } else if (key == "TransactionMessageAttempts") {
                     message_queue->update_transaction_message_attempts(configuration.getTransactionMessageAttempts());

@@ -71,9 +71,12 @@ bool is_rfc3339_datetime(const std::string& value) {
     static std::regex datetime_pattern{};
     static std::once_flag datetime_regex_once;
     std::call_once(datetime_regex_once, []() {
-        datetime_pattern =
-            std::regex{"\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2]\\d|3[0-1])T(?:[0-1]\\d|2[0-3]):[0-5]\\d:["
-                       "0-5]\\d(?:\\.\\d{0,3}|)(?:Z|(?:\\+|\\-)(?:\\d{2}):?(?:\\d{2}))"};
+        datetime_pattern = std::regex{
+            "\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2]\\d|3[0-1])"
+            "T(?:[0-1]\\d|2[0-3]):[0-5]\\d:[0-5]\\d"
+            "(?:\\.\\d{1,3})?"          // Optional fractional seconds
+            "(?:Z|[+-]\\d{2}:?\\d{2})?" // Optional timezone
+        };
     });
     return std::regex_match(value, datetime_pattern);
 }

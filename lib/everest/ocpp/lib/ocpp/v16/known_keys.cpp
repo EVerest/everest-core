@@ -131,13 +131,10 @@ inline std::string mapping_name(const ocpp::v2::Component& component, const ocpp
 class V2ConfigMap {
 private:
     bool configured{false};
-    using v2details = std::pair<const ocpp::v2::ComponentVariable*, ocpp::v2::AttributeEnum>;
-
-    std::map<std::string_view, v2details> map;
+    std::map<std::string_view, const ocpp::v2::ComponentVariable*> map;
     std::map<std::string, std::string_view> reverse_map;
 
-    void configure(const std::string_view& v16, const ocpp::v2::ComponentVariable& cv,
-                   ocpp::v2::AttributeEnum attribute);
+    void configure(const std::string_view& v16, const ocpp::v2::ComponentVariable& cv);
     void configure();
     void warn_no_mapping(const std::string_view& v16);
     void check();
@@ -148,18 +145,25 @@ public:
                                           ocpp::v2::AttributeEnum attribute);
 };
 
-void V2ConfigMap::configure(const std::string_view& v16, const ocpp::v2::ComponentVariable& cv,
-                            ocpp::v2::AttributeEnum attribute) {
+void V2ConfigMap::configure(const std::string_view& v16, const ocpp::v2::ComponentVariable& cv) {
     if (cv.variable) {
         if (const auto it = map.find(v16); it != map.end()) {
-            const auto& tmp_cv = std::get<const ocpp::v2::ComponentVariable*>(it->second);
-            if (tmp_cv->variable) {
-                EVLOG_warning << "V16 " << v16 << ": '" << tmp_cv->variable->name << "' replaced with '"
+            if (it->second->variable) {
+                EVLOG_warning << "V16 " << v16 << ": '" << it->second->variable->name << "' replaced with '"
                               << cv.variable->name << '\'';
             }
         }
-        map.insert_or_assign(v16, v2details{&cv, attribute});
-        std::string name = mapping_name(cv.component, cv.variable.value(), attribute);
+        map.insert_or_assign(v16, &cv);
+
+        // Max-limit keys share the same v2 variable as their corresponding data key, but they map to
+        // VariableCharacteristics.maxLimit rather than VariableAttribute.value. Skip the reverse map
+        // so the data key (e.g. MeterValuesAlignedData) remains the canonical reverse mapping.
+        const auto key = ocpp::v16::keys::convert(v16);
+        if (key && ocpp::v16::keys::is_max_limit_key(key.value())) {
+            return;
+        }
+
+        std::string name = mapping_name(cv.component, cv.variable.value(), ocpp::v2::AttributeEnum::Actual);
         if (const auto it = reverse_map.find(name); it != reverse_map.end()) {
             EVLOG_error << "V2 " << name << ": '" << it->second << "' replaced with '" << v16 << '\'';
         }
@@ -167,7 +171,7 @@ void V2ConfigMap::configure(const std::string_view& v16, const ocpp::v2::Compone
     }
 }
 
-#define VALUE(a, b, c) configure(#a, ocpp::v2::ControllerComponentVariables::b, ocpp::v2::AttributeEnum::c);
+#define VALUE(a, b) configure(#a, ocpp::v2::ControllerComponentVariables::b);
 void V2ConfigMap::configure() {
     if (!configured) {
         configured = true;
@@ -178,13 +182,6 @@ void V2ConfigMap::configure() {
 #undef VALUE
 
 void V2ConfigMap::warn_no_mapping(const std::string_view& v16) {
-    // Keys in MAPPING_MAX_LIMIT map to VariableCharacteristics.maxLimit, not to a VariableAttribute,
-    // so they intentionally have no entry in the attribute map.
-#define VALUE(a, b)                                                                                                    \
-    if (v16 == #a)                                                                                                     \
-        return;
-    MAPPING_MAX_LIMIT(VALUE)
-#undef VALUE
     const auto it = map.find(v16);
     if (it == map.end()) {
         EVLOG_error << "No V2 mapping for " << v16;
@@ -203,12 +200,8 @@ ocpp::v16::keys::DeviceModel_CV V2ConfigMap::convert_v2(const std::string_view& 
     configure();
     ocpp::v16::keys::DeviceModel_CV result;
     std::string name{v16_key};
-    if (const auto it = map.find(name); it != map.end()) {
-        const auto& cv = std::get<const ocpp::v2::ComponentVariable*>(it->second);
-        const auto attribute = std::get<ocpp::v2::AttributeEnum>(it->second);
-        if (cv->variable) {
-            result = std::make_tuple(cv->component, cv->variable.value(), attribute);
-        }
+    if (const auto it = map.find(name); it != map.end() && it->second->variable) {
+        result = std::make_pair(it->second->component, it->second->variable.value());
     }
     return result;
 }
@@ -310,11 +303,14 @@ std::optional<ocpp::v16::SupportedFeatureProfiles> get_profile(valid_keys key) {
 #undef VALUE
 
 DeviceModel_CV convert_v2(const std::string_view& str) {
+    if (const auto key = convert(str)) {
+        return convert_v2(*key);
+    }
     return v2_map.convert_v2(str);
 }
 
 DeviceModel_CV convert_v2(valid_keys key) {
-    return convert_v2(convert(key));
+    return v2_map.convert_v2(convert(key));
 }
 
 std::optional<std::string> convert_v2(const ocpp::v2::Component& component, const ocpp::v2::Variable& variable,
@@ -322,13 +318,12 @@ std::optional<std::string> convert_v2(const ocpp::v2::Component& component, cons
     return v2_map.convert_v2(component, variable, attribute);
 }
 
-DeviceModel_MaxLimitCV convert_v2_max_limit(valid_keys key) {
+bool is_max_limit_key(valid_keys key) {
     for (const auto& [k, cv] : max_limit_entries) {
-        if (k == key && cv->variable) {
-            return std::make_pair(cv->component, cv->variable.value());
-        }
+        if (k == key)
+            return true;
     }
-    return std::nullopt;
+    return false;
 }
 
 } // namespace ocpp::v16::keys

@@ -51,6 +51,7 @@ private:
     std::set<std::string> read_only;
 
     std::optional<MemoryStorage::Storage::iterator> locate_v16(const std::string& name) const;
+    std::optional<std::string> get_meter_public_keys_v16() const;
     std::optional<std::string> get_v16(const std::string& name) const;
     std::optional<std::string> get_v16(ocpp::v16::keys::valid_keys key) const;
     SetVariableStatusEnum set_v16(const std::string& name, const std::string& value);

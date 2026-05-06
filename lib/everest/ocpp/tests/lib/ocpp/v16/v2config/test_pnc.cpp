@@ -168,4 +168,36 @@ TEST_F(Configuration, SetCertSigningWaitMinimumV2) {
     EXPECT_FALSE(kv.value().readonly);
 }
 
+TEST_F(Configuration, PnCProfileNotEnabledWhenPnCConfigAbsentV2) {
+    ASSERT_TRUE(device_model);
+
+    // Simulate migration input where the PnC section was not configured in OCPP 1.6.
+    device_model->clear("PnC", "ISO15118PnCEnabled");
+    device_model->clear("PnC", "ContractValidationOffline");
+
+    std::unique_ptr<ocpp::v2::DeviceModelInterface> proxy = std::make_unique<MemoryStorageProxy>(*device_model);
+    v2_config = std::make_unique<ocpp::v16::ChargePointConfigurationDeviceModel>(".", std::move(proxy));
+
+    const auto supported_profiles = v2_config->getSupportedFeatureProfilesSet();
+    EXPECT_EQ(supported_profiles.count(ocpp::v16::SupportedFeatureProfiles::PnC), 0);
+
+    // Profile keys are filtered when PnC is not supported.
+    EXPECT_FALSE(v2_config->get("ISO15118PnCEnabled").has_value());
+}
+
+TEST_F(Configuration, CostAndPriceProfileNotEnabledWhenConfigAbsentV2) {
+    ASSERT_TRUE(device_model);
+
+    // Simulate migration input where the CostAndPrice section was not configured in OCPP 1.6.
+    device_model->clear("CostAndPrice", "CustomDisplayCostAndPrice");
+
+    createV2Config();
+
+    const auto supported_profiles = v2_config->getSupportedFeatureProfilesSet();
+    EXPECT_EQ(supported_profiles.count(ocpp::v16::SupportedFeatureProfiles::CostAndPrice), 0);
+
+    // Profile keys are filtered when CostAndPrice is not supported.
+    EXPECT_FALSE(v2_config->get("CustomDisplayCostAndPrice").has_value());
+}
+
 } // namespace

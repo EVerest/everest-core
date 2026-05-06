@@ -2444,6 +2444,18 @@ std::optional<std::string> ChargePointConfiguration::getDefaultPriceText(const s
     return std::nullopt;
 }
 
+std::optional<json> ChargePointConfiguration::getDefaultPriceText() {
+    std::optional<json> result;
+    try {
+        auto default_price_texts = config["CostAndPrice"]["DefaultPriceText"];
+        if (default_price_texts.is_object()) {
+            result = default_price_texts;
+        }
+    } catch (...) {
+    }
+    return result;
+}
+
 TariffMessage ChargePointConfiguration::getDefaultTariffMessage(bool offline) {
     TariffMessage tariff_message;
 
@@ -2929,6 +2941,34 @@ std::optional<std::vector<KeyValue>> ChargePointConfiguration::getAllMeterPublic
     return key_values;
 }
 
+std::optional<std::string> ChargePointConfiguration::getMeterPublicKeysCsl() {
+    std::optional<std::string> result;
+    try {
+        auto meter_public_keys = config["Internal"]["MeterPublicKeys"];
+        if (meter_public_keys.is_array()) {
+            std::vector<std::string> keys;
+            for (const auto& key : meter_public_keys) {
+                keys.push_back(key.get<std::string>());
+            }
+            result = utils::to_csl(keys);
+        }
+    } catch (...) {
+    }
+    return result;
+}
+
+std::optional<json> ChargePointConfiguration::getMeterPublicKeys() {
+    std::optional<json> result;
+    try {
+        auto meter_public_keys = config["Internal"]["MeterPublicKeys"];
+        if (meter_public_keys.is_array()) {
+            result = meter_public_keys;
+        }
+    } catch (...) {
+    }
+    return result;
+}
+
 bool ChargePointConfiguration::setMeterPublicKey(const std::int32_t connector_id, const std::string& public_key_pem) {
     if (connector_id > this->getNumberOfConnectors() or connector_id < 1) {
         EVLOG_warning << "Cannot set MeterPublicKey for connector " << connector_id
@@ -3151,6 +3191,9 @@ std::optional<KeyValue> ChargePointConfiguration::get(const CiString<50>& key) {
     }
     if (key == "SupportedChargingProfilePurposeTypes") {
         return this->getSupportedChargingProfilePurposeTypesKeyValue();
+    }
+    if (key == "IFace") {
+        return this->getIFaceKeyValue();
     }
     if (key == "IgnoredProfilePurposesOffline") {
         return this->getIgnoredProfilePurposesOfflineKeyValue();

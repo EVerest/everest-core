@@ -6,7 +6,9 @@
 
 #include <ocpp/v16/charge_point_configuration_base.hpp>
 #include <ocpp/v16/charge_point_configuration_interface.hpp>
+#include <ocpp/v16/known_keys.hpp>
 #include <ocpp/v16/types.hpp>
+#include <ocpp/v2/ocpp16_custom_config_mappings.hpp>
 
 #include <set>
 #include <vector>
@@ -16,6 +18,9 @@ namespace v2 {
 class DeviceModelInterface;
 }
 namespace v16 {
+namespace utils {
+class OrderedUniqueStringList;
+}
 
 /// \brief contains the configuration of the charge point
 class ChargePointConfigurationDeviceModel : private ChargePointConfigurationBase,
@@ -25,6 +30,7 @@ public:
 
 protected:
     std::unique_ptr<v2::DeviceModelInterface> storage;
+    ocpp::v2::Ocpp16CustomConfigMappings custom_config_mappings;
 
     SetResult setInternalAllowChargingProfileWithoutStartSchedule(const std::string& value);
     SetResult setInternalCentralSystemURI(const std::string& value);
@@ -98,7 +104,8 @@ protected:
 
 public:
     explicit ChargePointConfigurationDeviceModel(const std::string_view& ocpp_main_path,
-                                                 std::unique_ptr<v2::DeviceModelInterface> device_model_interface);
+                                                 std::unique_ptr<v2::DeviceModelInterface> device_model_interface,
+                                                 ocpp::v2::Ocpp16CustomConfigMappings custom_config_mappings = {});
     virtual ~ChargePointConfigurationDeviceModel() = default;
 
     // UserConfig and Internal
@@ -194,7 +201,6 @@ public:
     KeyValue getChargePointIdKeyValue() override;
     KeyValue getChargePointModelKeyValue() override;
     KeyValue getChargePointVendorKeyValue() override;
-    KeyValue getEnableTLSKeylogKeyValue() override;
     KeyValue getLogMessagesFormatKeyValue() override;
     KeyValue getLogMessagesKeyValue() override;
     KeyValue getLogMessagesRawKeyValue() override;
@@ -213,15 +219,16 @@ public:
     KeyValue getSupportedCiphers12KeyValue() override;
     KeyValue getSupportedCiphers13KeyValue() override;
     KeyValue getSupportedMeasurandsKeyValue() override;
-    KeyValue getTLSKeylogFileKeyValue() override;
     KeyValue getUseSslDefaultVerifyPathsKeyValue() override;
-    KeyValue getUseTPMKeyValue() override;
-    KeyValue getUseTPMSeccLeafCertificateKeyValue() override;
     KeyValue getVerifyCsmsAllowWildcardsKeyValue() override;
     KeyValue getVerifyCsmsCommonNameKeyValue() override;
     KeyValue getWaitForStopTransactionsOnResetTimeoutKeyValue() override;
     KeyValue getWebsocketPingPayloadKeyValue() override;
     KeyValue getWebsocketPongTimeoutKeyValue() override;
+    KeyValue getEnableTLSKeylogKeyValue() override;
+    KeyValue getTLSKeylogFileKeyValue() override;
+    KeyValue getUseTPMKeyValue() override;
+    KeyValue getUseTPMSeccLeafCertificateKeyValue() override;
 
     std::optional<KeyValue> getAllowChargingProfileWithoutStartScheduleKeyValue() override;
     std::optional<KeyValue> getCompositeScheduleDefaultLimitAmpsKeyValue() override;
@@ -489,13 +496,23 @@ public:
     ConfigurationStatus setTimeOffsetNextTransition(const std::string& offset) override;
     void setWaitForSetUserPriceTimeout(std::int32_t wait_for_set_user_price_timeout) override;
 
-    // Custom
-    std::optional<KeyValue> getCustomKeyValue(const CiString<50>& key) override;
     std::optional<KeyValue> get(const CiString<50>& key) override;
     std::vector<KeyValue> get_all_key_value() override;
 
-    ConfigurationStatus setCustomKey(const CiString<50>& key, const CiString<500>& value, bool force) override;
     std::optional<ConfigurationStatus> set(const CiString<50>& key, const CiString<500>& value) override;
+
+private:
+    bool shouldExposeKey(keys::valid_keys key) const;
+    std::optional<KeyValue> getCustomKeyValue(const std::string& key);
+    void appendDefaultPriceTextKeyValues(std::vector<KeyValue>& all);
+    void appendMeterPublicKeyKeyValues(std::vector<KeyValue>& all, const std::string& meter_public_keys) const;
+    void appendCustomKeyValues(std::vector<KeyValue>& all);
+    void appendReportKeyValue(std::vector<KeyValue>& all, keys::valid_keys key, const std::optional<std::string>& value,
+                              v2::MutabilityEnum mutability);
+    void appendMaxLimitKeyValues(std::vector<KeyValue>& all) const;
+    void appendSupportedMeasurandsKeyValue(std::vector<KeyValue>& all,
+                                           const utils::OrderedUniqueStringList& valid_measurands) const;
+    std::optional<ConfigurationStatus> setCustomKey(const std::string& key, const std::string& value);
 };
 
 } // namespace v16

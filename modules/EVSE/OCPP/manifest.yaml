@@ -19,6 +19,45 @@ config:
       about the database and its structure.
     type: string
     default: /tmp/ocpp_1_6_charge_point
+  DeviceModelDatabasePath:
+    description: >-
+      Path to the SQLite database file for the OCPP device model.
+      Relative paths are resolved against this module's share path.
+    type: string
+    default: device_model_storage.db
+  DeviceModelDatabaseMigrationPath:
+    description: >-
+      Path to the migration files for the OCPP device model database.
+      Relative paths are resolved against this module's share path.
+    type: string
+    default: device_model_migrations
+  DeviceModelConfigPath:
+    description: >-
+      Path to the OCPP device model component config directory used as the migration baseline before
+      applying the OCPP1.6 JSON configuration.
+      Relative paths are resolved against this module's share path.
+    type: string
+    default: component_config
+  DeviceModelConfigMappings:
+    description: >-
+      Optional path to a YAML file with custom OCPP1.6 to device model component-config mappings.
+      Relative paths are resolved against this module's share path.
+      If empty, only built-in mappings are used.
+    type: string
+    default: ""
+  EnableOCPP16ConfigMigration:
+    description: >-
+      If true, migrate effective OCPP1.6 JSON configuration values to the device model at startup.
+      If false, skip OCPP1.6 JSON value migration and initialize/update device model storage from
+      component config only.
+    type: boolean
+    default: true
+  ForceDeviceModelDatabaseOverride:
+    description: >-
+      Development option: if true, always rerun OCPP1.6 JSON-to-device-model migration at startup,
+      overwriting an existing device model database.
+    type: boolean
+    default: false
   EnableExternalWebsocketControl:
     description: If true websocket can be disconnected and connected externally. This parameter is for debug and testing purposes.
     type: boolean
