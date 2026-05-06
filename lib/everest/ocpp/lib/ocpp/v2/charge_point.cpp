@@ -48,6 +48,21 @@ namespace v2 {
 const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 1000;
 
 ChargePoint::ChargePoint(const std::map<std::int32_t, std::int32_t>& evse_connector_structure,
+                         const std::shared_ptr<DeviceModelAbstract> device_model,
+                         const std::shared_ptr<DatabaseHandler> database_handler,
+                         const std::shared_ptr<EvseSecurity> evse_security,
+                         const std::shared_ptr<ConnectivityManagerInterface> connectivity_manager,
+                         const std::string& message_log_path, const Callbacks& callbacks) :
+    ocpp::ChargingStationBase(evse_security),
+    device_model(device_model),
+    database_handler(database_handler),
+    connectivity_manager(connectivity_manager),
+    ocsp_updater(make_ocsp_updater()),
+    callbacks(callbacks) {
+    initialize(evse_connector_structure, message_log_path);
+}
+
+ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
                          std::shared_ptr<DeviceModelAbstract> device_model,
                          std::shared_ptr<DatabaseHandler> database_handler,
                          std::shared_ptr<MessageQueue<v2::MessageType>> message_queue,
@@ -57,37 +72,8 @@ ChargePoint::ChargePoint(const std::map<std::int32_t, std::int32_t>& evse_connec
     message_queue(message_queue),
     device_model(device_model),
     database_handler(database_handler),
-    registration_status(RegistrationStatusEnum::Rejected),
-    skip_invalid_csms_certificate_notifications(false),
-    upload_log_status(UploadLogStatusEnum::Idle),
-    bootreason(BootReasonEnum::PowerUp),
-    ocsp_updater(this->evse_security,
-                 [this](GetCertificateStatusRequest req) -> GetCertificateStatusResponse {
-                     try {
-                         return this->send_callback<GetCertificateStatusRequest, GetCertificateStatusResponse>(
-                             MessageType::GetCertificateStatusResponse)(req);
-                     } catch (const UnexpectedMessageTypeFromCSMS& e) {
-                         EVLOG_warning << e.what();
-                     }
-                     GetCertificateStatusResponse response;
-                     response.status = GetCertificateStatusEnum::Failed;
-                     return response;
-                 }),
+    ocsp_updater(make_ocsp_updater()),
     callbacks(callbacks) {
-
-    if (!this->device_model) {
-        EVLOG_AND_THROW(std::invalid_argument("Device model should not be null"));
-    }
-
-    // Make sure the received callback struct is completely filled early before we actually start running
-    if (!this->callbacks.all_callbacks_valid(this->device_model, evse_connector_structure)) {
-        EVLOG_AND_THROW(std::invalid_argument("All non-optional callbacks must be supplied"));
-    }
-
-    if (!this->database_handler) {
-        EVLOG_AND_THROW(std::invalid_argument("Database handler should not be null"));
-    }
-
     initialize(evse_connector_structure, message_log_path);
 }
 
@@ -122,6 +108,8 @@ ChargePoint::ChargePoint(const std::map<std::int32_t, std::int32_t>& evse_connec
 ChargePoint::~ChargePoint() = default;
 
 void ChargePoint::start(BootReasonEnum bootreason, bool start_connecting) {
+    this->connectivity_manager->set_message_callback(
+        std::bind(&ChargePoint::message_callback, this, std::placeholders::_1));
     this->message_queue->start();
 
     // Publish the initial default price before connecting (offline state at startup).
@@ -139,7 +127,7 @@ void ChargePoint::start(BootReasonEnum bootreason, bool start_connecting) {
     // call clear_invalid_charging_profiles when system boots
     this->clear_invalid_charging_profiles();
 
-    if (start_connecting) {
+    if (start_connecting && !this->connectivity_manager->is_websocket_connected()) {
         this->connectivity_manager->connect();
     }
 
@@ -445,6 +433,19 @@ void ChargePoint::on_ev_charging_needs(const NotifyEVChargingNeedsRequest& reque
 
 void ChargePoint::initialize(const std::map<std::int32_t, std::int32_t>& evse_connector_structure,
                              const std::string& message_log_path) {
+    if (this->device_model == nullptr) {
+        EVLOG_AND_THROW(std::invalid_argument("Device model should not be null"));
+    }
+
+    // Make sure the received callback struct is completely filled early before we actually start running
+    if (!this->callbacks.all_callbacks_valid(this->device_model, evse_connector_structure)) {
+        EVLOG_AND_THROW(std::invalid_argument("All non-optional callbacks must be supplied"));
+    }
+
+    if (this->database_handler == nullptr) {
+        EVLOG_AND_THROW(std::invalid_argument("Database handler should not be null"));
+    }
+
     this->device_model->check_integrity(evse_connector_structure);
     this->database_handler->open_connection();
     this->component_state_manager = std::make_shared<ComponentStateManager>(
@@ -500,23 +501,26 @@ void ChargePoint::initialize(const std::map<std::int32_t, std::int32_t>& evse_co
     this->evse_manager = std::make_unique<EvseManager>(
         evse_connector_structure, *this->device_model, this->database_handler, component_state_manager,
         transaction_meter_value_callback, this->callbacks.pause_charging_callback);
+
     this->configure_message_logging_format(message_log_path);
 
-    this->connectivity_manager =
-        std::make_unique<ConnectivityManager>(*this->device_model, this->evse_security, this->logging, this->share_path,
-                                              [this](const std::string& message) { this->message_callback(message); });
-
-    this->connectivity_manager->set_websocket_connected_callback(
-        [this](int configuration_slot, const NetworkConnectionProfile& network_connection_profile,
-               const OcppProtocolVersion ocpp_version) {
-            this->websocket_connected_callback(configuration_slot, network_connection_profile, ocpp_version);
-        });
-    this->connectivity_manager->set_websocket_disconnected_callback(
-        [this](int configuration_slot, const NetworkConnectionProfile& network_connection_profile, auto) {
-            this->websocket_disconnected_callback(configuration_slot, network_connection_profile);
-        });
-    this->connectivity_manager->set_websocket_connection_failed_callback(
-        [this](ConnectionFailedReason reason) { this->websocket_connection_failed(reason); });
+    if (this->connectivity_manager == nullptr) {
+        // connectivity manager was not provided in constructor. Create a new one and set the message callbacks
+        this->connectivity_manager =
+            std::make_shared<ConnectivityManager>(*this->device_model, this->evse_security, this->share_path);
+        this->connectivity_manager->set_websocket_connected_callback(
+            [this](int configuration_slot, const NetworkConnectionProfile& network_connection_profile,
+                   const OcppProtocolVersion ocpp_version) {
+                this->on_websocket_connected(configuration_slot, network_connection_profile, ocpp_version);
+            });
+        this->connectivity_manager->set_websocket_disconnected_callback(
+            [this](int configuration_slot, const NetworkConnectionProfile& network_connection_profile, auto) {
+                this->on_websocket_disconnected(configuration_slot, network_connection_profile);
+            });
+        this->connectivity_manager->set_websocket_connection_failed_callback(
+            std::bind(&ChargePoint::on_websocket_connection_failed, this, std::placeholders::_1));
+    }
+    this->connectivity_manager->set_logging(this->logging);
 
     if (this->message_queue == nullptr) {
         std::set<v2::MessageType> message_types_discard_for_queueing;
@@ -665,6 +669,20 @@ void ChargePoint::initialize(const std::map<std::int32_t, std::int32_t>& evse_co
     this->device_model->set_value(ControllerComponents::OCPPCommCtrlr, field_length, AttributeEnum::Actual,
                                   std::to_string(ISO15118_GET_EV_CERTIFICATE_EXI_RESPONSE_SIZE),
                                   VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL, true);
+}
+
+OcspUpdater ChargePoint::make_ocsp_updater() {
+    return OcspUpdater(this->evse_security, [this](GetCertificateStatusRequest req) -> GetCertificateStatusResponse {
+        try {
+            return this->send_callback<GetCertificateStatusRequest, GetCertificateStatusResponse>(
+                MessageType::GetCertificateStatusResponse)(req);
+        } catch (const UnexpectedMessageTypeFromCSMS& e) {
+            EVLOG_warning << e.what();
+        }
+        GetCertificateStatusResponse response;
+        response.status = GetCertificateStatusEnum::Failed;
+        return response;
+    });
 }
 
 void ChargePoint::handle_message(const EnhancedMessage<v2::MessageType>& message) {
@@ -1103,9 +1121,9 @@ std::optional<DataTransferResponse> ChargePoint::data_transfer_req(const DataTra
     return this->data_transfer->data_transfer_req(request);
 }
 
-void ChargePoint::websocket_connected_callback(const int configuration_slot,
-                                               const NetworkConnectionProfile& network_connection_profile,
-                                               const OcppProtocolVersion ocpp_version) {
+void ChargePoint::on_websocket_connected(const int configuration_slot,
+                                         const NetworkConnectionProfile& network_connection_profile,
+                                         const OcppProtocolVersion ocpp_version) {
     this->message_queue->update_message_timeout(network_connection_profile.messageTimeout);
     this->message_queue->resume(this->message_queue_resume_delay);
     this->ocpp_version = ocpp_version;
@@ -1149,8 +1167,8 @@ void ChargePoint::websocket_connected_callback(const int configuration_slot,
     }
 }
 
-void ChargePoint::websocket_disconnected_callback(const int configuration_slot,
-                                                  const NetworkConnectionProfile& network_connection_profile) {
+void ChargePoint::on_websocket_disconnected(const int configuration_slot,
+                                            const NetworkConnectionProfile& network_connection_profile) {
     this->message_queue->pause();
 
     this->security->stop_certificate_expiration_check_timers();
@@ -1163,7 +1181,7 @@ void ChargePoint::websocket_disconnected_callback(const int configuration_slot,
     }
 }
 
-void ChargePoint::websocket_connection_failed(ConnectionFailedReason reason) {
+void ChargePoint::on_websocket_connection_failed(ConnectionFailedReason reason) {
     switch (reason) {
     case ConnectionFailedReason::InvalidCSMSCertificate:
         if (!this->skip_invalid_csms_certificate_notifications) {
@@ -1174,13 +1192,21 @@ void ChargePoint::websocket_connection_failed(ConnectionFailedReason reason) {
             EVLOG_debug << "Skipping InvalidCsmsCertificate SecurityEvent since it has been sent already";
         }
         break;
-    case ConnectionFailedReason::FailedToAuthenticateAtCsms:
+    case ConnectionFailedReason::FailedToAuthenticateAtCsms: {
         const auto& security_event = ocpp::security_events::FAILEDTOAUTHENTICATEATCSMS;
         this->security->security_event_notification_req(CiString<50>(security_event), std::nullopt, true,
                                                         utils::is_critical(security_event));
         break;
     }
+    default: {
+        const auto& security_event = "WebsocketConnectionFailedWithUnknownReason";
+        EVLOG_error << "Websocket connection failed with unknown reason";
+        this->security->security_event_notification_req(CiString<50>(security_event), std::nullopt, true, false);
+        break;
+    }
+    }
 }
+
 void ChargePoint::update_dm_availability_state(const std::int32_t evse_id, const std::int32_t connector_id,
                                                const ConnectorStatusEnum status) {
     RequiredComponentVariable charging_station = ControllerComponentVariables::ChargingStationAvailabilityState;
