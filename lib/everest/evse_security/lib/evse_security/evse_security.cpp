@@ -348,6 +348,19 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
 
 EvseSecurity::~EvseSecurity() = default;
 
+void EvseSecurity::set_max_fs_certificate_store_entries(std::uintmax_t value) {
+    const std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
+    if (value == 0) {
+        EVLOG_warning << "Ignoring invalid max_fs_certificate_store_entries value 0";
+        return;
+    }
+
+    EVLOG_info << "Updating max_fs_certificate_store_entries from " << this->max_fs_certificate_store_entries << " to "
+               << value;
+    this->max_fs_certificate_store_entries = value;
+}
+
 InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string& certificate,
                                                               CaCertificateType certificate_type) {
     const std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
@@ -375,6 +388,22 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
         }
 
         X509CertificateBundle existing_certs(ca_bundle_path, EncodingFormat::PEM);
+
+        std::uintmax_t total_v2g_mo_ca_count = 0;
+        for (const auto ca_type : {CaCertificateType::V2G, CaCertificateType::MO}) {
+            const auto ca_path = this->ca_bundle_path_map.at(ca_type);
+            if (!fs::is_directory(ca_path)) {
+                filesystem_utils::create_file_if_nonexistent(ca_path);
+            }
+
+            X509CertificateBundle ca_certs(ca_path, EncodingFormat::PEM);
+            total_v2g_mo_ca_count += ca_certs.get_certificate_count();
+        }
+
+        if (total_v2g_mo_ca_count > max_fs_certificate_store_entries) {
+            EVLOG_error << "Max number of certificates reached, install not possible!";
+            return InstallCertificateResult::CertificateStoreMaxLengthExceeded;
+        }
 
         if (existing_certs.is_using_directory()) {
             const std::string filename = conversions::ca_certificate_type_to_string(certificate_type) + "_ROOT_" +
