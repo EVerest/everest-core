@@ -14,7 +14,11 @@
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
+#include <atomic>
+#include <chrono>
 #include <fmt/format.h>
+#include <mutex>
+#include <optional>
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -360,7 +364,10 @@ private:
             return AlarmType::NoAlarm;
         } else if (t == 0x01) {
             return AlarmType::PreWarning;
-        } else if (t == 0x02 and (raw & 0xC0) == 0x00) {
+        } else if (t == 0x02) {
+            // The manual (table 5.3.1.3) lists the device error only with the test bits cleared, but the device
+            // reports a device error found by a self test with the test bit set (e.g. 0x82 for E.02 during an
+            // external test). The alarm type is in bits 0..2 regardless of the test bits.
             return AlarmType::DeviceError;
         } else if (t == 0x04) {
             return AlarmType::Warning;
@@ -378,6 +385,8 @@ private:
         UnitType unit{UnitType::Invalid};
         ValidType valid{ValidType::Invalid};
         ChannelDescription description{ChannelDescription::Undefined};
+        // False when the Modbus reply was missing or short, the other fields are defaults then
+        bool received{false};
     };
 
     MeasurementValue read_register(const ImdRegisters start_register);
@@ -395,8 +404,8 @@ private:
     std::atomic_bool self_test_started{false};
     std::atomic_int self_test_timeout{0};
 
-    TestType last_test{TestType::NoTest};
-    AlarmType last_alarm{AlarmType::NoAlarm};
+    std::atomic<TestType> last_test{TestType::NoTest};
+    std::atomic<AlarmType> last_alarm{AlarmType::NoAlarm};
 
     void set_deviceFault(const std::string& message);
     void clear_deviceFault();
@@ -404,8 +413,46 @@ private:
     void configure_device();
     void start_measurements();
     void stop_measurements();
-    void start_self_test();
+    bool prepare_device_test(uint16_t system_connection_test);
+    bool send_self_test_start();
+    // Values of register 3024 "nEt", system connection test during the self test
+    static constexpr uint16_t SYSTEM_CONNECTION_TEST_OFF{0};
+    static constexpr uint16_t SYSTEM_CONNECTION_TEST_ON{1};
+    static constexpr uint16_t SYSTEM_CONNECTION_TEST_ON_U{2};
+    static constexpr double SYSTEM_CONNECTION_TEST_ON_U_MIN_VOLTAGE_V{100.0};
+    uint16_t system_connection_test_for(double test_voltage_V) const;
+    bool begin_self_test(uint16_t system_connection_test);
+    void start_requested_self_test(double test_voltage_V);
+    void start_self_test_at_start();
+    void finish_self_test(bool result);
+    std::mutex self_test_mutex;
+    bool self_test_at_start_running{false};
+    std::optional<double> pending_self_test_voltage_V;
+    static constexpr uint16_t SELF_TEST_START_REGISTER{8005};
+    static constexpr uint16_t SELF_TEST_START_COMMAND{0x5445};
+    // A device error, e.g. from a failed system connection test, is only cleared by a passing device test. The
+    // recovery runs one without system connection test and repeats it while the device is busy or the error stays.
+    enum class RecoveryState {
+        Idle,
+        Pending,
+        Running,
+    };
+    static constexpr std::chrono::seconds RECOVERY_START_DELAY{5};
+    static constexpr std::chrono::seconds RECOVERY_RETRY_INTERVAL{300};
+    static constexpr std::chrono::seconds RECOVERY_TIMEOUT{60};
+    static constexpr std::chrono::seconds RECOVERY_ASSUME_STARTED{20};
+    static constexpr int RECOVERY_MAX_START_ATTEMPTS{6};
+    std::atomic<RecoveryState> recovery_state{RecoveryState::Idle};
+    std::chrono::steady_clock::time_point recovery_due{};
+    std::chrono::steady_clock::time_point recovery_started{};
+    int recovery_start_attempts{0};
+    bool recovery_seen_test{false};
+    void request_recovery(std::chrono::seconds delay);
+    void start_recovery_test();
+    bool run_recovery();
+    bool write_imd_register(uint16_t address, uint16_t value);
     bool send_to_imd(const uint16_t& command, const uint16_t& value);
+    bool send_to_imd_if_changed(const uint16_t& command, const uint16_t& value);
     void read_imd_values();
     std::string read_device_name();
     std::string read_firmware_version();

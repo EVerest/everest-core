@@ -90,12 +90,20 @@ provides:
         default: false
       selftest_enable_gridconnection:
         description: >-
-          3024: Test grid connection while testing device nEt
+          3024 nEt: Test the system connection (measuring leads L1/+ and L2/-) during self tests started by
+          EVerest. The driver selects "on U" if the self test voltage is above DC 100 V and "on" otherwise
+          and, as the device stores 3024 permanently, keeps that selection until the next self test.
+          3024 is set to off when this option is false, at driver start and for device tests the driver
+          starts to clear a device error: the test needs a monitored system with low internal resistance and
+          voltage, which is not the case at idle. A device error, e.g. left by a failed system connection
+          test, is cleared by a device test without it, which the driver starts on its own and repeats until
+          it passes.
         type: boolean
         default: false
       selftest_enable_at_start:
         description: >-
-          3025 Perform self test at start up of device
+          Perform a self test when the driver starts (without system connection test). The device's own
+          self test at power-on (3025) is always disabled, as it would run with the stored value of 3024.
         type: boolean
         default: true
       relay_k1_alarm_assignment:
